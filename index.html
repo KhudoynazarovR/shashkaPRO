@@ -14,6 +14,58 @@
 .brandRow{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:10px}.brand{display:flex;align-items:center;gap:10px}.brandIcon{width:48px;height:48px;border-radius:15px;display:grid;place-items:center;background:#0e1721;border:1px solid #304153;font-size:27px}.brandName{font-size:27px;font-weight:950;letter-spacing:-.5px}.brandSub{color:#8fa0b1;font-size:12px;margin-top:2px}.onlinePill{background:#0e1721;border:1px solid #304153;border-radius:999px;padding:8px 11px;font-size:12px;color:#9fe5bf;white-space:nowrap}.homeStats{position:relative;z-index:1;margin-top:18px;display:grid;grid-template-columns:1.35fr 1fr 1fr;gap:8px}.homeStat{background:#0d151e;border:1px solid #263544;border-radius:17px;padding:11px}.homeStat .label{color:#8fa0b1;font-size:11px}.homeStat b{font-size:22px;display:block;margin-top:3px}.homeStat .sub{font-size:10px;color:#6f8192;margin-top:3px}.heroAction{position:relative;z-index:1;margin-top:12px;width:100%;border:0;border-radius:17px;padding:16px;background:linear-gradient(135deg,#168bea,#116ec0);color:#fff;font-size:17px;font-weight:900;box-shadow:0 9px 24px #168bea44}.quickGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px}.quickCard{min-height:86px;border-radius:19px;border:1px solid #293846;background:#151e27;color:#fff;padding:13px;text-align:left;display:flex;align-items:center;gap:12px}.quickCard .qicon{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:#202d39;font-size:22px;flex:0 0 auto}.quickCard b{display:block;font-size:14px}.quickCard span{display:block;color:#8596a7;font-size:11px;margin-top:4px}.sectionTitle{display:flex;justify-content:space-between;align-items:center;margin:18px 2px 8px}.sectionTitle b{font-size:15px}.sectionTitle span{font-size:11px;color:#718294}.featureRow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.feature{background:#111a23;border:1px solid #253441;border-radius:16px;padding:12px 8px;text-align:center}.feature i{font-style:normal;font-size:20px}.feature b{display:block;font-size:11px;margin-top:6px}.feature span{display:block;color:#738596;font-size:9px;margin-top:3px}.bottomNav{position:sticky;bottom:8px;z-index:10;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:16px;padding:7px;background:#111923ee;border:1px solid #2b3947;border-radius:21px;backdrop-filter:blur(14px);box-shadow:0 14px 35px #0008}.navBtn{border:0;background:transparent;color:#8493a2;border-radius:15px;padding:8px 3px;font-size:10px;font-weight:800;min-height:54px}.navBtn b{display:block;font-size:20px;margin-bottom:3px}.navBtn.active,.navBtn:hover{background:#1d2a36;color:#fff}.miniBadge{display:inline-block;padding:3px 7px;border-radius:999px;background:#1c704c;color:#9ff0c8;font-size:9px;font-weight:900;margin-left:5px}.homeMenuBtn{width:100%;margin-top:10px;background:#1a242e;color:#dbe5ee;border:1px solid #293947;border-radius:16px;padding:13px;font-weight:850}.homeMenuBtn span{float:right;color:#6f8294}.drawerNote{font-size:11px;color:#728496;margin-top:9px;text-align:center}
 @media(max-width:420px){.menu{grid-template-columns:1fr}.editor-tools{grid-template-columns:1fr 1fr}.actions{grid-template-columns:1fr 1fr}.actions .btn:last-child{grid-column:1/-1}.homeHero{padding:18px 14px}.brandName{font-size:24px}.homeStats{grid-template-columns:1fr 1fr 1fr}.quickCard{min-height:78px;padding:10px}.featureRow{gap:6px}.feature{padding:10px 5px}}
 </style>
+
+<style id="classic-redesign">
+/* SHASHKAPRO — clean classic redesign */
+html,body{background:#101317!important}
+body{font-family:Arial,Helvetica,sans-serif!important}
+.app{width:min(100%,760px)!important;padding:10px 12px 24px!important}
+.screen{min-height:100%}
+
+/* home */
+#home .logo{font-size:27px!important;text-align:left!important;margin:8px 4px 2px!important;letter-spacing:-.5px}
+#home .subtitle{text-align:left!important;margin:0 4px 14px!important;font-size:14px!important;color:#7f8995!important}
+#home>.card{background:transparent!important;border:0!important;padding:0!important;margin:0 0 14px!important}
+.stats{gap:6px!important}
+.stat{background:#181d23!important;border:1px solid #252c34!important;border-radius:9px!important;padding:10px 6px!important;color:#8e98a4!important;font-size:13px!important}
+.stat b{font-size:20px!important;color:#f4f5f6!important}
+.menuGrid{display:flex!important;flex-direction:column!important;gap:7px!important}
+.menuGrid button{min-height:52px!important;text-align:left!important;padding:0 17px!important;border-radius:9px!important;border:1px solid #2b333c!important;background:#181d23!important;color:#f2f3f5!important;font-size:15px!important}
+.menuGrid .primary{background:#d5a83c!important;color:#16120a!important;border-color:#d5a83c!important}
+.menuGrid button:nth-child(2){border-left:3px solid #36a269!important}
+.menuGrid button:nth-child(3){border-left:3px solid #8b6bdc!important}
+.menuGrid button:nth-child(4){border-left:3px solid #d5a83c!important}
+
+/* all screens */
+.card{background:#171b20!important;border:1px solid #272e36!important;border-radius:10px!important;box-shadow:none!important}
+.header{border-bottom:1px solid #252c34!important;padding:5px 2px 10px!important}
+.header b{font-size:19px!important}
+.back{border-radius:8px!important;background:#20262d!important}
+
+/* game */
+.gameInfo{background:#171b20!important;border-radius:8px!important;border:1px solid #272e36!important}
+.timer{font-size:20px!important}
+.boardWrap{width:min(96vw,600px)!important;margin:10px auto!important}
+.board{border:4px solid #252a30!important;border-radius:5px!important;box-shadow:0 8px 25px #0009!important}
+.light{background:#e7d4b4!important}.dark{background:#765037!important}
+.cell.selected{box-shadow:inset 0 0 0 4px #e0b544!important}
+.cell.target{box-shadow:inset 0 0 0 4px #45c77b!important}
+.cell.captureTarget{box-shadow:inset 0 0 0 4px #db6268!important}
+.actions{gap:7px!important}
+.actions button{border-radius:8px!important;background:#20262d!important}
+.actions .danger,.danger{background:#a63a3e!important}
+.gold,.primary{background:#d5a83c!important;color:#17130b!important}
+
+/* editor / lists */
+.toolGrid{gap:5px!important}
+.tool{border-radius:7px!important}
+.listRow{padding:10px 3px!important}
+.big{font-size:30px!important}
+
+/* remove excessive rounded/card feeling */
+#home .menuGrid button,#home .stat,#home>.card{box-shadow:none!important}
+</style>
+
 </head>
 <body>
 <div class="app">
