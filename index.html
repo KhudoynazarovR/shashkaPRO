@@ -166,7 +166,7 @@ button:active{transform:scale(.98)}
 </div>
 
 <div class="card">
- <button class="primary" onclick="startGame()">🤖 AI bilan o‘ynash</button>
+ <button class="primary" onclick="window.startGame()">🤖 AI bilan o‘ynash</button>
  <button onclick="show('online')">🌐 Onlayn</button>
  <button onclick="show('tournaments')">🏆 Turnirlar</button>
  <button onclick="show('top')">👑 TOP 30</button>
@@ -309,6 +309,7 @@ function startGame(){
  show("game");
  newGame();
 }
+window.startGame = startGame;
 
 /* ---------- BOARD ---------- */
 
