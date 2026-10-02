@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>ShashkaPRO</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#0c0f13;color:#fff;font-family:Arial,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -116,7 +117,38 @@ input[type=checkbox]{width:22px;height:22px}
   <div class="card"><h2>🔥 PRO Cup</h2><p class="muted">PRO format</p><button class="gold tournamentBtn" data-name="PRO Cup">Kirish</button></div>
   <div class="card"><h2>👑 Daily Tournament</h2><p class="muted">Kunlik musobaqa</p><button class="gold tournamentBtn" data-name="Daily Tournament">Kirish</button></div>
 </section>
-<section id="online" class="screen"><div class="header"><b>🌐 Onlayn</b><button class="back" id="onlineBack">←</button></div><div class="card" style="text-align:center"><div class="big">🌐</div><h2>Onlayn o‘yin</h2><p class="muted">Haqiqiy 2 kishilik internet o‘yini uchun alohida server kerak. Hozir AI rejimi ishlaydi.</p><button class="primary" id="onlineAI">🤖 AI bilan o‘ynash</button></div></section>
+<section id="online" class="screen">
+  <div class="header">
+    <b>🌐 Onlayn</b>
+    <button class="back" id="onlineBack">←</button>
+  </div>
+
+  <div class="card" style="text-align:center">
+    <div class="big">🌐</div>
+
+    <h2>ShashkaPRO Online</h2>
+
+    <p id="onlineStatus" class="muted">
+      Raqib topish uchun tugmani bosing
+    </p>
+
+    <div id="onlinePlayerInfo" class="muted"></div>
+
+    <button
+      class="primary"
+      id="findOpponentBtn"
+      style="width:100%;margin-top:12px">
+      🎲 Raqib topish
+    </button>
+
+    <button
+      class="danger"
+      id="cancelMatchBtn"
+      style="width:100%;margin-top:8px;display:none">
+      ✖️ Qidiruvni bekor qilish
+    </button>
+  </div>
+</section>
 <section id="settings" class="screen"><div class="header"><b>⚙️ Sozlamalar</b><button class="back" id="settingsBack">←</button></div><div class="card"><div class="switch"><span>🔊 Ovoz</span><input id="sound" type="checkbox" checked></div><div class="switch"><span>📳 Vibratsiya</span><input id="vibration" type="checkbox" checked></div></div><div class="card">
 <label for="timeControl">⏱️ Vaqt nazorati</label>
 <select id="timeControl">
@@ -396,44 +428,1188 @@ function toggleEditorTurn(){
   editorTurn=editorTurn===WHITE?BLACK:WHITE;
   drawEditor();
 }
+// ============================================
+// SHASHKAPRO ONLINE MULTIPLAYER
+// ============================================
+
+let socket=null;
+
+let onlineGame=false;
+let onlineSearching=false;
+
+let onlineRoomId=null;
+let onlineColor=null;
+let onlineTurn=null;
+let onlineBoard=null;
+
+let onlineSelected=null;
+
+let telegramUser=null;
+
+
+// --------------------------------------------
+// Telegram user
+// --------------------------------------------
+
+function getTelegramUser(){
+
+  if(
+    window.Telegram &&
+    Telegram.WebApp
+  ){
+
+    Telegram.WebApp.ready();
+
+    const user=
+      Telegram.WebApp.initDataUnsafe?.user;
+
+    if(user){
+      telegramUser=user;
+
+      return user;
+    }
+  }
+
+  // Browser test
+  let id=
+    localStorage.getItem(
+      "shashkapro_test_user"
+    );
+
+  if(!id){
+
+    id=
+      "test_"+
+
+      Math.random()
+      .toString(36)
+      .substring(2,10);
+
+    localStorage.setItem(
+      "shashkapro_test_user",
+      id
+    );
+  }
+
+  return {
+    id:id,
+    first_name:"Test Player",
+    username:"test"
+  };
+}
+
+
+// --------------------------------------------
+// WebSocket URL
+// --------------------------------------------
+
+// Lokal test:
+// ws://localhost:8080
+
+// Server internetga chiqqach:
+// wss://YOUR-DOMAIN.COM
+
+const ONLINE_SERVER=
+  "ws://localhost:8080";
+
+
+// --------------------------------------------
+// Online init
+// --------------------------------------------
+
+function initOnline(){
+
+  const user=
+    getTelegramUser();
+
+  if($("onlinePlayerInfo")){
+
+    $("onlinePlayerInfo").textContent=
+      "👤 "+
+      (
+        user.username
+        ? "@"+user.username
+        : user.first_name || "Player"
+      );
+  }
+
+  connectOnline();
+}
+
+
+// --------------------------------------------
+// Connect
+// --------------------------------------------
+
+function connectOnline(){
+
+  if(
+    socket &&
+    (
+      socket.readyState===
+      WebSocket.OPEN ||
+
+      socket.readyState===
+      WebSocket.CONNECTING
+    )
+  ){
+    return;
+  }
+
+  setOnlineStatus(
+    "🌐 Serverga ulanmoqda..."
+  );
+
+  try{
+
+    socket=
+      new WebSocket(
+        ONLINE_SERVER
+      );
+
+  }catch(e){
+
+    setOnlineStatus(
+      "❌ WebSocket yaratilmadi"
+    );
+
+    return;
+  }
+
+
+  socket.addEventListener(
+    "open",
+    ()=>{
+
+      console.log(
+        "🌐 ShashkaPRO WebSocket ulandi"
+      );
+
+      const user=
+        getTelegramUser();
+
+      sendOnline({
+        type:"auth",
+
+        userId:String(
+          user.id
+        ),
+
+        username:
+          user.username ||
+          user.first_name ||
+          "Player"
+      });
+    }
+  );
+
+
+  socket.addEventListener(
+    "message",
+    event=>{
+
+      let data;
+
+      try{
+
+        data=
+          JSON.parse(
+            event.data
+          );
+
+      }catch(e){
+
+        console.error(
+          "Server JSON xatosi",
+          e
+        );
+
+        return;
+      }
+
+      console.log(
+        "📩 SERVER:",
+        data
+      );
+
+      handleOnlineMessage(
+        data
+      );
+    }
+  );
+
+
+  socket.addEventListener(
+    "close",
+    ()=>{
+
+      console.log(
+        "🔌 Server uzildi"
+      );
+
+      socket=null;
+
+      if(!onlineGame){
+
+        setOnlineStatus(
+          "🔌 Server bilan aloqa uzildi"
+        );
+      }
+    }
+  );
+
+
+  socket.addEventListener(
+    "error",
+    error=>{
+
+      console.error(
+        "WebSocket:",
+        error
+      );
+
+      setOnlineStatus(
+        "❌ Serverga ulanishda xato"
+      );
+    }
+  );
+}
+
+
+// --------------------------------------------
+// Send
+// --------------------------------------------
+
+function sendOnline(data){
+
+  if(
+    !socket ||
+    socket.readyState!==WebSocket.OPEN
+  ){
+
+    toast(
+      "❌ Serverga ulanish yo‘q"
+    );
+
+    return false;
+  }
+
+  socket.send(
+    JSON.stringify(data)
+  );
+
+  return true;
+}
+
+
+// --------------------------------------------
+// Matchmaking
+// --------------------------------------------
+
+function startMatchmaking(){
+
+  connectOnline();
+
+  setTimeout(()=>{
+
+    if(
+      !socket ||
+      socket.readyState!==WebSocket.OPEN
+    ){
+      setOnlineStatus(
+        "❌ Server hali ulanmagan"
+      );
+
+      return;
+    }
+
+    onlineSearching=true;
+
+    $("findOpponentBtn").style.display=
+      "none";
+
+    $("cancelMatchBtn").style.display=
+      "block";
+
+    setOnlineStatus(
+      "🎲 Raqib qidirilmoqda..."
+    );
+
+    sendOnline({
+      type:"matchmake"
+    });
+
+  },300);
+}
+
+
+// --------------------------------------------
+// Cancel
+// --------------------------------------------
+
+function cancelMatchmaking(){
+
+  onlineSearching=false;
+
+  if(
+    socket &&
+    socket.readyState===WebSocket.OPEN
+  ){
+
+    sendOnline({
+      type:"cancel_matchmake"
+    });
+  }
+
+  $("findOpponentBtn").style.display=
+    "block";
+
+  $("cancelMatchBtn").style.display=
+    "none";
+
+  setOnlineStatus(
+    "🎲 Raqib qidirish bekor qilindi"
+  );
+}
+
+
+// --------------------------------------------
+// Messages
+// --------------------------------------------
+
+function handleOnlineMessage(data){
+
+  switch(data.type){
+
+    case "authenticated":
+
+      console.log(
+        "✅ Authenticated",
+        data.userId
+      );
+
+      break;
+
+
+    case "searching":
+
+      onlineSearching=true;
+
+      setOnlineStatus(
+        "🎲 Raqib qidirilmoqda..."
+      );
+
+      break;
+
+
+    case "match_found":
+
+      startOnlineMatch(
+        data
+      );
+
+      break;
+
+
+    case "move":
+
+      receiveOnlineMove(
+        data
+      );
+
+      break;
+
+
+    case "game_over":
+
+      finishOnlineGame(
+        data
+      );
+
+      break;
+
+
+    case "invalid_move":
+
+      toast(
+        "❌ "+
+        (
+          data.message ||
+          "Yurish noto‘g‘ri"
+        )
+      );
+
+      break;
+
+
+    case "opponent_disconnected":
+
+      onlineGame=false;
+
+      stopTimer();
+
+      setOnlineStatus(
+        "🔌 Raqib o‘yindan chiqdi"
+      );
+
+      toast(
+        "🔌 Raqib o‘yindan chiqdi"
+      );
+
+      break;
+
+
+    case "opponent_resigned":
+
+      onlineGame=false;
+
+      stopTimer();
+
+      setOnlineStatus(
+        "🏆 Raqib taslim bo‘ldi!"
+      );
+
+      toast(
+        "🏆 Siz g‘alaba qozondingiz!"
+      );
+
+      break;
+
+
+    case "error":
+
+      toast(
+        "❌ "+
+        (
+          data.message ||
+          "Server xatosi"
+        )
+      );
+
+      break;
+  }
+}
+
+
+// --------------------------------------------
+// Start online game
+// --------------------------------------------
+
+function startOnlineMatch(data){
+
+  onlineSearching=false;
+  onlineGame=true;
+
+  onlineRoomId=
+    data.roomId;
+
+  onlineColor=
+    data.color;
+
+  onlineTurn=
+    data.turn;
+
+  onlineBoard=
+    data.board;
+
+  onlineSelected=null;
+
+  stopTimer();
+
+  clearTimeout(aiTimer);
+
+  gameOver=false;
+
+  history=[];
+  moveHistory=[];
+
+  $("findOpponentBtn").style.display=
+    "block";
+
+  $("cancelMatchBtn").style.display=
+    "none";
+
+
+  setOnlineStatus(
+    onlineColor==="white"
+      ? "⚪ Siz oq donasiz"
+      : "⚫ Siz qora donasiz"
+  );
+
+
+  openScreen(
+    "game"
+  );
+
+
+  // Online boardni chizamiz
+  drawOnlineBoard();
+
+  updateOnlineStatus();
+
+  updateOnlineTimer(
+    data.whiteSeconds,
+    data.blackSeconds
+  );
+
+  toast(
+    "⚔️ Raqib topildi!"
+  );
+}
+
+
+// --------------------------------------------
+// Online board
+// --------------------------------------------
+
+function drawOnlineBoard(){
+
+  const root=
+    $("gameBoard");
+
+  if(!root || !onlineBoard)
+    return;
+
+  root.innerHTML="";
+
+  const mySide=
+    onlineColor==="white"
+      ? WHITE
+      : BLACK;
+
+
+  for(
+    let r=0;
+    r<8;
+    r++
+  ){
+
+    for(
+      let c=0;
+      c<8;
+      c++
+    ){
+
+      const cell=
+        document.createElement(
+          "div"
+        );
+
+      cell.className=
+        "cell "+
+        (
+          ((r+c)%2)
+          ? "dark"
+          : "light"
+        );
+
+
+      if(
+        onlineSelected &&
+        onlineSelected.r===r &&
+        onlineSelected.c===c
+      ){
+
+        cell.classList.add(
+          "selected"
+        );
+      }
+
+
+      if(
+        onlineSelected
+      ){
+
+        const possible=
+          getAllMoves(
+            onlineBoard,
+            mySide
+          );
+
+        const hit=
+          possible.find(
+            m=>
+              m.from.r===
+              onlineSelected.r &&
+
+              m.from.c===
+              onlineSelected.c &&
+
+              m.to.r===r &&
+
+              m.to.c===c
+          );
+
+        if(hit){
+
+          cell.classList.add(
+            hit.captures.length
+              ? "captureTarget"
+              : "target"
+          );
+        }
+      }
+
+
+      const p=
+        onlineBoard[r][c];
+
+
+      if(p){
+
+        const piece=
+          document.createElement(
+            "div"
+          );
+
+        piece.className=
+          "piece "+
+          (
+            isWhite(p)
+              ? "white"
+              : "black"
+          )+
+          (
+            isKing(p)
+              ? " king"
+              : ""
+          );
+
+        cell.appendChild(
+          piece
+        );
+      }
+
+
+      cell.addEventListener(
+        "click",
+        ()=>{
+          onlineGameClick(
+            r,
+            c
+          );
+        }
+      );
+
+
+      root.appendChild(
+        cell
+      );
+    }
+  }
+}
+
+
+// --------------------------------------------
+// Online click
+// --------------------------------------------
+
+function onlineGameClick(r,c){
+
+  if(
+    !onlineGame ||
+    gameOver
+  ){
+    return;
+  }
+
+
+  const mySide=
+    onlineColor==="white"
+      ? WHITE
+      : BLACK;
+
+
+  if(
+    onlineTurn!==mySide
+  ){
+
+    toast(
+      "⏳ Hozir raqibning navbati"
+    );
+
+    return;
+  }
+
+
+  const p=
+    onlineBoard[r][c];
+
+
+  if(onlineSelected){
+
+    const moves=
+      getAllMoves(
+        onlineBoard,
+        mySide
+      );
+
+
+    const move=
+      moves.find(
+        m=>
+          m.from.r===
+          onlineSelected.r &&
+
+          m.from.c===
+          onlineSelected.c &&
+
+          m.to.r===r &&
+
+          m.to.c===c
+      );
+
+
+    if(move){
+
+      sendOnlineMove(
+        move
+      );
+
+      return;
+    }
+
+
+    if(
+      p &&
+      (
+        mySide===WHITE
+          ? isWhite(p)
+          : isBlack(p)
+      )
+    ){
+
+      const canMove=
+        moves.some(
+          m=>
+            m.from.r===r &&
+            m.from.c===c
+        );
+
+      if(canMove){
+
+        onlineSelected={
+          r,
+          c
+        };
+
+        drawOnlineBoard();
+
+        return;
+      }
+    }
+
+
+    onlineSelected=null;
+
+    drawOnlineBoard();
+
+    return;
+  }
+
+
+  if(
+    p &&
+    (
+      mySide===WHITE
+        ? isWhite(p)
+        : isBlack(p)
+    )
+  ){
+
+    const moves=
+      getAllMoves(
+        onlineBoard,
+        mySide
+      );
+
+
+    if(
+      moves.some(
+        m=>
+          m.from.r===r &&
+          m.from.c===c
+      )
+    ){
+
+      onlineSelected={
+        r,
+        c
+      };
+
+      drawOnlineBoard();
+    }
+  }
+}
+
+
+// --------------------------------------------
+// Send move
+// --------------------------------------------
+
+function sendOnlineMove(move){
+
+  if(
+    !onlineGame ||
+    !onlineRoomId
+  ){
+    return;
+  }
+
+
+  sendOnline({
+
+    type:"move",
+
+    roomId:
+      onlineRoomId,
+
+    from:{
+      r:move.from.r,
+      c:move.from.c
+    },
+
+    to:{
+      r:move.to.r,
+      c:move.to.c
+    }
+  });
+
+
+  onlineSelected=null;
+}
+
+
+// --------------------------------------------
+// Receive move
+// --------------------------------------------
+
+function receiveOnlineMove(data){
+
+  if(!onlineGame)
+    return;
+
+
+  onlineBoard=
+    data.board;
+
+  onlineTurn=
+    data.turn;
+
+  onlineSelected=null;
+
+
+  drawOnlineBoard();
+
+  updateOnlineStatus();
+
+
+  if(
+    data.whiteSeconds!==undefined
+  ){
+
+    updateOnlineTimer(
+      data.whiteSeconds,
+      data.blackSeconds
+    );
+  }
+}
+
+
+// --------------------------------------------
+// Online status
+// --------------------------------------------
+
+function updateOnlineStatus(){
+
+  if(!$("gameStatus"))
+    return;
+
+
+  const mySide=
+    onlineColor==="white"
+      ? WHITE
+      : BLACK;
+
+
+  if(gameOver){
+
+    $("gameStatus").textContent=
+      "🏁 O‘yin tugadi";
+
+    return;
+  }
+
+
+  if(
+    onlineTurn===mySide
+  ){
+
+    $("gameStatus").textContent=
+      onlineColor==="white"
+        ? "⚪ Sizning navbatingiz"
+        : "⚫ Sizning navbatingiz";
+
+  }else{
+
+    $("gameStatus").textContent=
+      "⏳ Raqib yurmoqda...";
+  }
+}
+
+
+// --------------------------------------------
+// Online timer
+// --------------------------------------------
+
+function updateOnlineTimer(
+  white,
+  black
+){
+
+  if(
+    white!==undefined &&
+    $("whiteTimer")
+  ){
+
+    $("whiteTimer").textContent=
+      clockText(
+        white
+      );
+  }
+
+
+  if(
+    black!==undefined &&
+    $("blackTimer")
+  ){
+
+    $("blackTimer").textContent=
+      clockText(
+        black
+      );
+  }
+}
+
+
+// --------------------------------------------
+// Resign
+// --------------------------------------------
+
+function resignOnline(){
+
+  if(
+    !onlineGame ||
+    !onlineRoomId
+  ){
+    return;
+  }
+
+
+  if(
+    !confirm(
+      "O‘yinni taslim bo‘lib tugatmoqchimisiz?"
+    )
+  ){
+    return;
+  }
+
+
+  sendOnline({
+    type:"resign",
+    roomId:onlineRoomId
+  });
+}
+
+
+// --------------------------------------------
+// Finish online
+// --------------------------------------------
+
+function finishOnlineGame(data){
+
+  onlineGame=false;
+
+  gameOver=true;
+
+  stopTimer();
+
+
+  const winner=
+    data.winner;
+
+
+  if(
+    winner===onlineColor
+  ){
+
+    stats.games++;
+    stats.wins++;
+    stats.elo+=25;
+
+    saveStats();
+
+    toast(
+      "🏆 Siz g‘alaba qozondingiz!"
+    );
+
+  }else{
+
+    stats.games++;
+    stats.elo=
+      Math.max(
+        100,
+        stats.elo-20
+      );
+
+    saveStats();
+
+    toast(
+      "😔 Siz yutqazdingiz"
+    );
+  }
+
+
+  updateOnlineStatus();
+}
+
+
+// --------------------------------------------
+// Online give up button
+// --------------------------------------------
+
+// Eski AI giveUp funksiyasini
+// online rejimda ham ishlatamiz.
+
+const oldGiveUp=
+  giveUp;
+
+giveUp=function(){
+
+  if(onlineGame){
+
+    resignOnline();
+
+    return;
+  }
+
+  oldGiveUp();
+};
+
+
+// --------------------------------------------
+// Online draw override
+// --------------------------------------------
+
+const oldDrawGame=
+  drawGame;
+
+drawGame=function(){
+
+  if(onlineGame){
+
+    drawOnlineBoard();
+
+    updateOnlineStatus();
+
+    return;
+  }
+
+  oldDrawGame();
+};
+
+
+// --------------------------------------------
+// Online status helper
+// --------------------------------------------
+
+function setOnlineStatus(text){
+
+  if($("onlineStatus")){
+
+    $("onlineStatus").textContent=
+      text;
+  }
+}
+
 
 function bind(){
-  $("btnAI").addEventListener("click",startGame);
-  $("onlineAI").addEventListener("click",startGame);
 
-  $("btnOnline").addEventListener("click",()=>openScreen("online"));
+  $("btnAI").addEventListener("click",startGame);
+
+  $("btnOnline").addEventListener("click",()=>{
+    openScreen("online");
+    initOnline();
+  });
+
   $("btnTournaments").addEventListener("click",()=>openScreen("tournaments"));
   $("btnTop").addEventListener("click",()=>openScreen("top"));
   $("btnProfile").addEventListener("click",()=>openScreen("profile"));
-  $("btnEditor").addEventListener("click",()=>{resetEditor();openScreen("editor")});
+
+  $("btnEditor").addEventListener("click",()=>{
+    resetEditor();
+    openScreen("editor");
+  });
+
   $("btnAnalysis").addEventListener("click",()=>openScreen("analysis"));
   $("btnSettings").addEventListener("click",()=>openScreen("settings"));
 
-  $("gameBack").addEventListener("click",()=>{stopTimer();clearTimeout(aiTimer);openScreen("home")});
+  $("gameBack").addEventListener("click",()=>{
+    stopTimer();
+    clearTimeout(aiTimer);
+
+    if(onlineGame){
+      resignOnline();
+    }
+
+    openScreen("home");
+  });
+
   $("editorBack").addEventListener("click",()=>openScreen("home"));
   $("analysisBack").addEventListener("click",()=>openScreen("home"));
   $("topBack").addEventListener("click",()=>openScreen("home"));
   $("profileBack").addEventListener("click",()=>openScreen("home"));
   $("tournamentsBack").addEventListener("click",()=>openScreen("home"));
-  $("onlineBack").addEventListener("click",()=>openScreen("home"));
-  $("settingsBack").addEventListener("click",()=>openScreen("home"));
+
+  $("onlineBack").addEventListener("click",()=>{
+    if(onlineSearching){
+      cancelMatchmaking();
+    }
+
+    openScreen("home");
+  });
 
   $("undoBtn").addEventListener("click",undoMove);
   $("restartBtn").addEventListener("click",restartGame);
   $("giveUpBtn").addEventListener("click",giveUp);
-  $("gameAnalysisBtn").addEventListener("click",()=>{openScreen("analysis");updateAnalysis()});
+
+  $("gameAnalysisBtn").addEventListener("click",()=>{
+    openScreen("analysis");
+    updateAnalysis();
+  });
 
   document.querySelectorAll(".tool[data-tool]").forEach(btn=>{
     btn.addEventListener("click",()=>{
       editorTool=btn.dataset.tool;
-      document.querySelectorAll(".tool[data-tool]").forEach(x=>x.classList.remove("active"));
+
+      document
+        .querySelectorAll(".tool[data-tool]")
+        .forEach(x=>x.classList.remove("active"));
+
       btn.classList.add("active");
     });
   });
 
   $("clearEditor").addEventListener("click",()=>{
-    editorState=Array.from({length:8},()=>Array(8).fill(EMPTY));drawEditor();
+    editorState=
+      Array.from(
+        {length:8},
+        ()=>Array(8).fill(EMPTY)
+      );
+
+    drawEditor();
   });
+
   $("startEditor").addEventListener("click",resetEditor);
   $("editorTurnBtn").addEventListener("click",toggleEditorTurn);
   $("playEditor").addEventListener("click",playEditor);
@@ -441,22 +1617,69 @@ function bind(){
 
   $("resetStats").addEventListener("click",()=>{
     if(confirm("Statistikani tozalashni xohlaysizmi?")){
-      stats={elo:1000,wins:0,games:0};saveStats();toast("Statistika tozalandi");
+      stats={
+        elo:1000,
+        wins:0,
+        games:0
+      };
+
+      saveStats();
+      toast("Statistika tozalandi");
     }
   });
 
-  document.querySelectorAll(".tournamentBtn").forEach(btn=>{
-    btn.addEventListener("click",()=>toast("🏆 "+btn.dataset.name+" hozircha demo rejimida."));
+  document
+    .querySelectorAll(".tournamentBtn")
+    .forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        toast(
+          "🏆 "+
+          btn.dataset.name+
+          " hozircha demo rejimida."
+        );
+      });
+    });
+
+  $("timeControl").addEventListener("change",()=>{
+    toast(
+      "⏱️ "+
+      $("timeControl").value+
+      " tanlandi. Keyingi o‘yinda qo‘llanadi."
+    );
   });
 
-  $("timeControl").addEventListener("change",()=>toast("⏱️ "+$("timeControl").value+" tanlandi. Keyingi o‘yinda qo‘llanadi."));
-  $("sound").addEventListener("change",()=>toast($("sound").checked?"🔊 Ovoz yoqildi":"🔇 Ovoz o‘chirildi"));
-  $("vibration").addEventListener("change",()=>toast($("vibration").checked?"📳 Vibratsiya yoqildi":"📳 Vibratsiya o‘chirildi"));
+  $("sound").addEventListener("change",()=>{
+    toast(
+      $("sound").checked
+      ? "🔊 Ovoz yoqildi"
+      : "🔇 Ovoz o‘chirildi"
+    );
+  });
+
+  $("vibration").addEventListener("change",()=>{
+    toast(
+      $("vibration").checked
+      ? "📳 Vibratsiya yoqildi"
+      : "📳 Vibratsiya o‘chirildi"
+    );
+  });
+
+  $("findOpponentBtn").addEventListener(
+    "click",
+    startMatchmaking
+  );
+
+  $("cancelMatchBtn").addEventListener(
+    "click",
+    cancelMatchmaking
+  );
 
   editorState=startPosition();
+
   drawEditor();
   updateStats();
 }
+ 
 
 bind();
 })();
