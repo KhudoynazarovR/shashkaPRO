@@ -7,7 +7,24 @@
 <script>
 const W=1,B=2,WK=3,BK=4,D=[[1,1],[1,-1],[-1,1],[-1,-1]];let b=[],turn=W,sel=null,legal=[],hist=[],over=false,time=600,timerID,last=null,tool='w',eb=[],eturn=W;let st=JSON.parse(localStorage.getItem('spstats')||'{"elo":1000,"wins":0,"games":0}');
 const empty=()=>Array.from({length:8},()=>Array(8).fill(0)),inside=(r,c)=>r>=0&&r<8&&c>=0&&c<8,mine=(p,s)=>s===W?(p===W||p===WK):(p===B||p===BK),king=p=>p===WK||p===BK,copy=x=>x.map(r=>r.slice());
-function show(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');if(id==='top')top();if(id==='editor')drawE()}
+function show(id){
+  document.querySelectorAll('.screen').forEach(x=>{
+    x.classList.remove('active');
+  });
+
+  const page=document.getElementById(id);
+
+  if(!page){
+    console.error('Screen topilmadi:',id);
+    return;
+  }
+
+  page.classList.add('active');
+
+  if(id==='top') top();
+  if(id==='editor') drawE();
+  if(id==='game' && b.length) draw();
+}
 function startGame(){show('game');newGame()} window.startGame=startGame;
 function newGame(){clearInterval(timerID);b=empty();for(let r=0;r<3;r++)for(let c=0;c<8;c++)if((r+c)%2)b[r][c]=B;for(let r=5;r<8;r++)for(let c=0;c<8;c++)if((r+c)%2)b[r][c]=W;turn=W;sel=null;legal=[];hist=[];over=false;last=null;time=600;timerID=setInterval(tick,1000);draw()}
 function normals(x,r,c,s){let p=x[r][c],o=[];if(!p||!mine(p,s))return o;if(king(p)){for(let[dR,dC]of D){let R=r+dR,C=c+dC;while(inside(R,C)&&!x[R][C]){o.push({from:[r,c],to:[R,C],caps:[]});R+=dR;C+=dC}}}else{let dR=s===W?-1:1;for(let dC of[-1,1]){let R=r+dR,C=c+dC;if(inside(R,C)&&!x[R][C])o.push({from:[r,c],to:[R,C],caps:[]})}}return o}
