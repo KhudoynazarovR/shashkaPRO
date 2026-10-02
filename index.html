@@ -75,7 +75,10 @@ input[type=checkbox]{width:22px;height:22px}
 
 <section id="game" class="screen">
   <div class="header"><b>🤖 AI bilan o‘yin</b><button class="back" id="gameBack">←</button></div>
-  <div class="gameInfo"><span id="gameStatus">⚪ Siz yurishingiz kerak</span><span class="timer" id="timer">10:00</span></div>
+  <div class="gameInfo">
+<span id="gameStatus">⚪ Siz yurishingiz kerak</span>
+<span class="timer"><span id="whiteTimer">05:00</span> | <span id="blackTimer">05:00</span></span>
+</div>
   <div class="boardWrap"><div id="gameBoard" class="board"></div></div>
   <div class="actions"><button id="undoBtn">↩️ Orqaga</button><button id="gameAnalysisBtn">🧠 Tahlil</button><button id="restartBtn">🔄 Qayta</button><button class="danger" id="giveUpBtn">🏳️ Taslim</button></div>
   <div class="card"><b>Yurishlar</b><div id="moveList" class="moves">Hali yurish yo‘q</div></div>
@@ -114,18 +117,30 @@ input[type=checkbox]{width:22px;height:22px}
   <div class="card"><h2>👑 Daily Tournament</h2><p class="muted">Kunlik musobaqa</p><button class="gold tournamentBtn" data-name="Daily Tournament">Kirish</button></div>
 </section>
 <section id="online" class="screen"><div class="header"><b>🌐 Onlayn</b><button class="back" id="onlineBack">←</button></div><div class="card" style="text-align:center"><div class="big">🌐</div><h2>Onlayn o‘yin</h2><p class="muted">Haqiqiy 2 kishilik internet o‘yini uchun alohida server kerak. Hozir AI rejimi ishlaydi.</p><button class="primary" id="onlineAI">🤖 AI bilan o‘ynash</button></div></section>
-<section id="settings" class="screen"><div class="header"><b>⚙️ Sozlamalar</b><button class="back" id="settingsBack">←</button></div><div class="card"><div class="switch"><span>🔊 Ovoz</span><input id="sound" type="checkbox" checked></div><div class="switch"><span>📳 Vibratsiya</span><input id="vibration" type="checkbox" checked></div></div><div class="card"><label for="aiLevel">🤖 AI darajasi</label><select id="aiLevel"><option value="1">Oson</option><option value="2" selected>O‘rta</option><option value="3">Qiyin</option></select></div></section>
+<section id="settings" class="screen"><div class="header"><b>⚙️ Sozlamalar</b><button class="back" id="settingsBack">←</button></div><div class="card"><div class="switch"><span>🔊 Ovoz</span><input id="sound" type="checkbox" checked></div><div class="switch"><span>📳 Vibratsiya</span><input id="vibration" type="checkbox" checked></div></div><div class="card">
+<label for="timeControl">⏱️ Vaqt nazorati</label>
+<select id="timeControl">
+<option value="1+1">1+1 — 1 daqiqa + 1 soniya</option>
+<option value="2+2">2+2 — 2 daqiqa + 2 soniya</option>
+<option value="3+2">3+2 — 3 daqiqa + 2 soniya</option>
+<option value="5+3" selected>5+3 — 5 daqiqa + 3 soniya</option>
+</select>
+<label for="aiLevel">🤖 AI darajasi</label>
+<select id="aiLevel"><option value="1">Oson</option><option value="2" selected>O‘rta</option><option value="3">Qiyin</option></select>
+</div></section>
 </div>
 <div id="toast" class="toast"></div>
 
 <script>
-window.addEventListener("error",function(e){const t=document.getElementById("toast");if(t){t.textContent="⚠️ Dastur xatosi: "+(e.message||"JavaScript xatosi");t.classList.add("show")}});
+window.addEventListener("error",function(e){console.error("ShashkaPRO:",e.error||e.message||e);});
 
 (function(){
 "use strict";
 const EMPTY=0,WHITE=1,BLACK=2,WHITE_KING=3,BLACK_KING=4;
 const DIRS=[[1,1],[1,-1],[-1,1],[-1,-1]];
-let boardState=[],turn=WHITE,selected=null,gameOver=false,history=[],moveHistory=[],seconds=600,timerId=null;
+let boardState=[],turn=WHITE,selected=null,gameOver=false,history=[],moveHistory=[];
+let timerId=null,whiteSeconds=300,blackSeconds=300,incrementSeconds=3;
+let timeControl="5+3";
 let editorState=[],editorTool="white",editorTurn=WHITE;
 let aiTimer=null;
 
@@ -150,9 +165,19 @@ function isKing(p){return p===WHITE_KING||p===BLACK_KING}
 function sameSide(a,b){return(isWhite(a)&&isWhite(b))||(isBlack(a)&&isBlack(b))}
 function startPosition(){const b=Array.from({length:8},()=>Array(8).fill(EMPTY));for(let r=0;r<3;r++)for(let c=0;c<8;c++)if((r+c)%2)b[r][c]=BLACK;for(let r=5;r<8;r++)for(let c=0;c<8;c++)if((r+c)%2)b[r][c]=WHITE;return b}
 
+function setTimeControl(){
+  timeControl=$("timeControl")?.value||"5+3";
+  const parts=timeControl.split("+").map(Number);
+  const base=Math.max(1,Number(parts[0])||5);
+  incrementSeconds=Math.max(0,Number(parts[1])||0);
+  whiteSeconds=base*60;
+  blackSeconds=base*60;
+}
 function startGame(){
-  stopTimer();clearTimeout(aiTimer);boardState=startPosition();turn=WHITE;selected=null;gameOver=false;history=[];moveHistory=[];seconds=600;
-  openScreen("game");drawGame();drawMoves();updateStatus();startTimer()
+  stopTimer();clearTimeout(aiTimer);
+  setTimeControl();
+  boardState=startPosition();turn=WHITE;selected=null;gameOver=false;history=[];moveHistory=[];
+  openScreen("game");drawGame();drawMoves();updateStatus();updateTimer();startTimer()
 }
 function drawGame(){
   const root=$("gameBoard");if(!root)return;root.innerHTML="";
@@ -207,8 +232,13 @@ function applyMove(b,m){
   let q=p;if(p===WHITE&&m.to.r===0)q=WHITE_KING;if(p===BLACK&&m.to.r===7)q=BLACK_KING;n[m.to.r][m.to.c]=q;return n
 }
 function makeMove(m){
-  history.push(clone(boardState));boardState=applyMove(boardState,m);moveHistory.push(formatMove(m,turn===WHITE?"Oq":"Qora"));
-  selected=null;turn=BLACK;drawGame();drawMoves();updateStatus();checkEnd();if(!gameOver)aiTimer=setTimeout(aiMove,250)
+  history.push(clone(boardState));
+  boardState=applyMove(boardState,m);
+  if(turn===WHITE)whiteSeconds+=incrementSeconds;
+  else blackSeconds+=incrementSeconds;
+  moveHistory.push(formatMove(m,turn===WHITE?"Oq":"Qora"));
+  selected=null;turn=BLACK;drawGame();drawMoves();updateStatus();updateTimer();checkEnd();
+  if(!gameOver)aiTimer=setTimeout(aiMove,250)
 }
 function evaluate(b){
   let s=0;for(let r=0;r<8;r++)for(let c=0;c<8;c++){const p=b[r][c];if(p===WHITE)s-=100;if(p===BLACK)s+=100;if(p===WHITE_KING)s-=175;if(p===BLACK_KING)s+=175}
@@ -225,7 +255,11 @@ function aiMove(){
   if(!moves.length){finish("white");return}
   let best=moves[0],bestScore=-Infinity;
   for(const m of moves){const score=minimax(applyMove(boardState,m),WHITE,depth-1,-Infinity,Infinity);if(score>bestScore){bestScore=score;best=m}}
-  history.push(clone(boardState));boardState=applyMove(boardState,best);moveHistory.push(formatMove(best,"Qora"));turn=WHITE;drawGame();drawMoves();updateStatus();checkEnd()
+  history.push(clone(boardState));
+  boardState=applyMove(boardState,best);
+  blackSeconds+=incrementSeconds;
+  moveHistory.push(formatMove(best,"Qora"));
+  turn=WHITE;drawGame();drawMoves();updateStatus();updateTimer();checkEnd()
 }
 function checkEnd(){
   let w=0,b=0;for(const row of boardState)for(const p of row){if(isWhite(p))w++;if(isBlack(p))b++}
@@ -243,10 +277,30 @@ function undoMove(){
   boardState=history.pop();if(turn===BLACK)turn=WHITE;if(moveHistory.length)moveHistory.pop();selected=null;drawGame();drawMoves();updateStatus()
 }
 function restartGame(){startGame()}
-function startTimer(){stopTimer();updateTimer();timerId=setInterval(()=>{if(gameOver)return;seconds--;updateTimer();if(seconds<=0){seconds=0;finish("black")}},1000)}
+function startTimer(){
+  stopTimer();updateTimer();
+  timerId=setInterval(()=>{
+    if(gameOver)return;
+    if(turn===WHITE)whiteSeconds=Math.max(0,whiteSeconds-1);
+    else blackSeconds=Math.max(0,blackSeconds-1);
+    updateTimer();
+    if(whiteSeconds<=0){finish("black");return}
+    if(blackSeconds<=0){finish("white");return}
+  },1000)
+}
 function stopTimer(){if(timerId){clearInterval(timerId);timerId=null}}
-function updateTimer(){const m=Math.floor(seconds/60),s=seconds%60;if($("timer"))$("timer").textContent=String(m).padStart(2,"0")+":"+String(s).padStart(2,"0")}
-function updateStatus(){if(!$("gameStatus"))return;$("gameStatus").textContent=gameOver?"🏁 O‘yin tugadi":turn===WHITE?"⚪ Sizning navbatingiz":"⚫ AI o‘ylayapti..."}
+function clockText(v){
+  const n=Math.max(0,Math.floor(v)),m=Math.floor(n/60),s=n%60;
+  return String(m).padStart(2,"0")+":"+String(s).padStart(2,"0")
+}
+function updateTimer(){
+  if($("whiteTimer"))$("whiteTimer").textContent=clockText(whiteSeconds);
+  if($("blackTimer"))$("blackTimer").textContent=clockText(blackSeconds);
+}
+function updateStatus(){
+  if(!$("gameStatus"))return;
+  $("gameStatus").textContent=gameOver?"🏁 O‘yin tugadi":turn===WHITE?"⚪ Sizning navbatingiz":"⚫ AI o‘ylayapti..."
+}
 function formatMove(m,name){const a=String.fromCharCode(65+m.from.c)+(8-m.from.r),z=String.fromCharCode(65+m.to.c)+(8-m.to.r);return name+": "+a+(m.captures.length?"×":"-")+z}
 function drawMoves(){const el=$("moveList");if(!el)return;el.innerHTML=moveHistory.length?moveHistory.slice(-20).map((x,i)=>"<div>"+(i+1)+". "+x+"</div>").join(""):"Hali yurish yo‘q"}
 
@@ -323,8 +377,12 @@ function playEditor(){
   stopTimer();clearTimeout(aiTimer);
   boardState=clone(editorState);
   turn=editorTurn;
-  selected=null;gameOver=false;history=[];moveHistory=[];seconds=600;
-  openScreen("game");drawGame();drawMoves();updateStatus();startTimer();
+  const parts=($("timeControl")?.value||"5+3").split("+").map(Number);
+  const base=Math.max(1,Number(parts[0])||5);
+  incrementSeconds=Math.max(0,Number(parts[1])||0);
+  whiteSeconds=base*60;blackSeconds=base*60;
+  selected=null;gameOver=false;history=[];moveHistory=[];
+  openScreen("game");drawGame();drawMoves();updateStatus();updateTimer();startTimer();
   if(turn===BLACK)aiTimer=setTimeout(aiMove,300);
 }
 
@@ -391,6 +449,7 @@ function bind(){
     btn.addEventListener("click",()=>toast("🏆 "+btn.dataset.name+" hozircha demo rejimida."));
   });
 
+  $("timeControl").addEventListener("change",()=>toast("⏱️ "+$("timeControl").value+" tanlandi. Keyingi o‘yinda qo‘llanadi."));
   $("sound").addEventListener("change",()=>toast($("sound").checked?"🔊 Ovoz yoqildi":"🔇 Ovoz o‘chirildi"));
   $("vibration").addEventListener("change",()=>toast($("vibration").checked?"📳 Vibratsiya yoqildi":"📳 Vibratsiya o‘chirildi"));
 
