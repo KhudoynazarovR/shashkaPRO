@@ -1137,4 +1137,819 @@ function makePlayerMove(m){
 
  checkEnd();
 
- if(!gameOver
+  if(!gameOver){
+  setTimeout(aiMove,300);
+ }
+}
+
+
+/* =========================
+   AI
+========================= */
+
+function evaluate(b){
+
+ let score=0;
+
+ for(let r=0;r<8;r++){
+  for(let c=0;c<8;c++){
+
+   const p=b[r][c];
+
+   if(p===WHITE) score-=100;
+   if(p===BLACK) score+=100;
+
+   if(p===WHITE_KING) score-=175;
+   if(p===BLACK_KING) score+=175;
+  }
+ }
+
+ return score;
+}
+
+
+function minimax(b,side,depth,alpha,beta){
+
+ if(depth<=0)
+  return evaluate(b);
+
+ const moves=getAllMoves(b,side);
+
+ if(!moves.length)
+  return side===BLACK ? -99999 : 99999;
+
+ if(side===BLACK){
+
+  let best=-Infinity;
+
+  for(const m of moves){
+
+   const value=minimax(
+    applyMove(b,m),
+    WHITE,
+    depth-1,
+    alpha,
+    beta
+   );
+
+   best=Math.max(best,value);
+   alpha=Math.max(alpha,best);
+
+   if(beta<=alpha)break;
+  }
+
+  return best;
+
+ }else{
+
+  let best=Infinity;
+
+  for(const m of moves){
+
+   const value=minimax(
+    applyMove(b,m),
+    BLACK,
+    depth-1,
+    alpha,
+    beta
+   );
+
+   best=Math.min(best,value);
+   beta=Math.min(beta,best);
+
+   if(beta<=alpha)break;
+  }
+
+  return best;
+ }
+}
+
+
+function aiMove(){
+
+ if(gameOver || turn!==BLACK)
+  return;
+
+ const level=
+  Math.max(
+   1,
+   Math.min(
+    3,
+    Number($("aiLevel").value)||2
+   )
+  );
+
+ const moves=
+  getAllMoves(boardState,BLACK);
+
+ if(!moves.length){
+  finishGame("white");
+  return;
+ }
+
+ let best=moves[0];
+ let bestScore=-Infinity;
+
+ for(const m of moves){
+
+  const score=minimax(
+   applyMove(boardState,m),
+   WHITE,
+   level-1,
+   -Infinity,
+   Infinity
+  );
+
+  if(score>bestScore){
+   bestScore=score;
+   best=m;
+  }
+ }
+
+ history.push(
+  cloneBoard(boardState)
+ );
+
+ boardState=
+  applyMove(boardState,best);
+
+ moveHistory.push(
+  formatMove(best,"Qora")
+ );
+
+ turn=WHITE;
+
+ drawGame();
+ drawMoves();
+ updateStatus();
+
+ checkEnd();
+}
+
+
+/* =========================
+   CHECK END
+========================= */
+
+function checkEnd(){
+
+ let white=0;
+ let black=0;
+
+ for(let r=0;r<8;r++){
+  for(let c=0;c<8;c++){
+
+   const p=boardState[r][c];
+
+   if(isWhite(p))white++;
+   if(isBlack(p))black++;
+  }
+ }
+
+ if(!white){
+  finishGame("black");
+  return;
+ }
+
+ if(!black){
+  finishGame("white");
+  return;
+ }
+
+ if(!getAllMoves(boardState,WHITE).length){
+  finishGame("black");
+  return;
+ }
+
+ if(!getAllMoves(boardState,BLACK).length){
+  finishGame("white");
+ }
+}
+
+
+function finishGame(winner){
+
+ if(gameOver)return;
+
+ gameOver=true;
+ stopTimer();
+
+ stats.games++;
+
+ if(winner==="white"){
+
+  stats.wins++;
+  stats.elo+=25;
+
+  toast("🎉 Siz g‘alaba qozondingiz!");
+
+ }else{
+
+  stats.elo=
+   Math.max(
+    100,
+    stats.elo-20
+   );
+
+  toast("😔 Qora g‘alaba qozondi");
+ }
+
+ saveStats();
+ updateStatus();
+}
+
+
+/* =========================
+   TIMER
+========================= */
+
+function startTimer(){
+
+ stopTimer();
+
+ updateTimer();
+
+ timerID=setInterval(()=>{
+
+  if(gameOver)return;
+
+  seconds--;
+
+  updateTimer();
+
+  if(seconds<=0){
+
+   seconds=0;
+   finishGame("black");
+  }
+
+ },1000);
+}
+
+
+function stopTimer(){
+
+ if(timerID){
+
+  clearInterval(timerID);
+  timerID=null;
+ }
+}
+
+
+function updateTimer(){
+
+ const m=
+  Math.floor(seconds/60);
+
+ const s=
+  seconds%60;
+
+ $("timer").textContent=
+  String(m).padStart(2,"0")+
+  ":"+
+  String(s).padStart(2,"0");
+}
+
+
+/* =========================
+   STATUS
+========================= */
+
+function updateStatus(){
+
+ if(!$("gameStatus"))return;
+
+ if(gameOver){
+
+  $("gameStatus").textContent=
+   "🏁 O‘yin tugadi";
+
+ }else if(turn===WHITE){
+
+  $("gameStatus").textContent=
+   "⚪ Sizning navbatingiz";
+
+ }else{
+
+  $("gameStatus").textContent=
+   "⚫ AI o‘ylayapti...";
+ }
+}
+
+
+/* =========================
+   MOVE TEXT
+========================= */
+
+function formatMove(m,name){
+
+ const a=
+  String.fromCharCode(65+m.from.c)+
+  (8-m.from.r);
+
+ const z=
+  String.fromCharCode(65+m.to.c)+
+  (8-m.to.r);
+
+ return name+
+  ": "+
+  a+
+  (m.captures.length?"×":"-")+
+  z;
+}
+
+
+function drawMoves(){
+
+ const el=$("moveList");
+
+ if(!el)return;
+
+ if(!moveHistory.length){
+
+  el.textContent=
+   "Hali yurish yo‘q";
+
+  return;
+ }
+
+ el.innerHTML=
+  moveHistory
+   .slice(-30)
+   .map((x,i)=>
+    "<div>"+(i+1)+". "+x+"</div>"
+   )
+   .join("");
+}
+
+
+/* =========================
+   UNDO
+========================= */
+
+function undoMove(){
+
+ if(!history.length || gameOver)
+  return;
+
+ boardState=
+  history.pop();
+
+ if(turn===BLACK)
+  turn=WHITE;
+
+ if(moveHistory.length)
+  moveHistory.pop();
+
+ selected=null;
+
+ drawGame();
+ drawMoves();
+ updateStatus();
+}
+
+
+/* =========================
+   EDITOR
+========================= */
+
+function createEditorStart(){
+
+ editorState=
+  Array.from(
+   {length:8},
+   ()=>Array(8).fill(EMPTY)
+  );
+
+ for(let r=0;r<3;r++){
+  for(let c=0;c<8;c++){
+   if((r+c)%2===1)
+    editorState[r][c]=BLACK;
+  }
+ }
+
+ for(let r=5;r<8;r++){
+  for(let c=0;c<8;c++){
+   if((r+c)%2===1)
+    editorState[r][c]=WHITE;
+  }
+ }
+}
+
+
+function drawEditor(){
+
+ const root=$("editorBoard");
+
+ if(!root)return;
+
+ root.innerHTML="";
+
+ for(let r=0;r<8;r++){
+
+  for(let c=0;c<8;c++){
+
+   const cell=
+    document.createElement("div");
+
+   cell.className=
+    "cell "+
+    (((r+c)%2)?"dark":"light");
+
+   const p=
+    editorState[r][c];
+
+   if(p){
+
+    const piece=
+     document.createElement("div");
+
+    piece.className=
+     "piece "+
+     (isWhite(p)?"white":"black")+
+     (isKing(p)?" king":"");
+
+    cell.appendChild(piece);
+   }
+
+   cell.addEventListener(
+    "click",
+    ()=>{
+     editorClick(r,c);
+    }
+   );
+
+   root.appendChild(cell);
+  }
+ }
+}
+
+
+function editorClick(r,c){
+
+ if(editorTool==="erase"){
+
+  editorState[r][c]=EMPTY;
+
+ }else if(editorTool==="white"){
+
+  editorState[r][c]=WHITE;
+
+ }else if(editorTool==="black"){
+
+  editorState[r][c]=BLACK;
+
+ }else if(editorTool==="whiteKing"){
+
+  editorState[r][c]=WHITE_KING;
+
+ }else if(editorTool==="blackKing"){
+
+  editorState[r][c]=BLACK_KING;
+ }
+
+ drawEditor();
+}
+
+
+function setEditorTool(tool){
+
+ editorTool=tool;
+
+ document
+  .querySelectorAll(".tool[data-tool]")
+  .forEach(btn=>{
+   btn.classList.toggle(
+    "active",
+    btn.dataset.tool===tool
+   );
+  });
+}
+
+
+/* =========================
+   ANALYSIS
+========================= */
+
+function updateAnalysis(){
+
+ const b=
+  boardState.length ?
+  boardState :
+  startPosition();
+
+ let white=0;
+ let black=0;
+ let whiteKings=0;
+ let blackKings=0;
+
+ for(let r=0;r<8;r++){
+  for(let c=0;c<8;c++){
+
+   const p=b[r][c];
+
+   if(p===WHITE)white++;
+   if(p===BLACK)black++;
+   if(p===WHITE_KING)whiteKings++;
+   if(p===BLACK_KING)blackKings++;
+  }
+ }
+
+ const score=
+  (white+whiteKings*1.75)-
+  (black+blackKings*1.75);
+
+ $("analysisScore").textContent=
+  score.toFixed(1);
+
+ $("aWhite").textContent=white;
+ $("aBlack").textContent=black;
+ $("aWhiteKings").textContent=whiteKings;
+ $("aBlackKings").textContent=blackKings;
+
+ $("analysisText").textContent=
+  score>0 ?
+  "⚪ Oq tomon material bo‘yicha ustun." :
+  score<0 ?
+  "⚫ Qora tomon material bo‘yicha ustun." :
+  "⚖️ Material teng.";
+}
+
+
+/* =========================
+   TOP
+========================= */
+
+function drawTop(){
+
+ const el=$("topList");
+
+ if(!el)return;
+
+ el.innerHTML="";
+
+ for(let i=1;i<=30;i++){
+
+  const row=
+   document.createElement("div");
+
+  row.className="listRow";
+
+  row.innerHTML=
+   "<span>👤 Player "+i+
+   "</span><b>"+
+   (1000+(30-i)*10)+
+   "</b>";
+
+  el.appendChild(row);
+ }
+}
+
+
+/* =========================
+   EDITOR PLAY
+========================= */
+
+function playEditor(){
+
+ boardState=
+  cloneBoard(editorState);
+
+ turn=editorTurn;
+ selected=null;
+ gameOver=false;
+
+ history=[];
+ moveHistory=[];
+ seconds=600;
+
+ openScreen("game");
+
+ drawGame();
+ drawMoves();
+ updateStatus();
+ startTimer();
+
+ if(turn===BLACK){
+
+  setTimeout(
+   aiMove,
+   300
+  );
+ }
+}
+
+
+/* =========================
+   EVENTS
+========================= */
+
+$("btnAI").onclick=
+ startGame;
+
+$("btnEditor").onclick=()=>{
+ openScreen("editor");
+};
+
+$("btnAnalysis").onclick=()=>{
+ updateAnalysis();
+ openScreen("analysis");
+};
+
+$("btnTop").onclick=()=>{
+ openScreen("top");
+};
+
+$("btnProfile").onclick=()=>{
+ openScreen("profile");
+};
+
+$("btnOnline").onclick=()=>{
+ openScreen("online");
+};
+
+$("btnTournaments").onclick=()=>{
+ openScreen("tournaments");
+};
+
+$("btnSettings").onclick=()=>{
+ openScreen("settings");
+};
+
+
+/* BACK BUTTONS */
+
+$("gameBack").onclick=()=>{
+ stopTimer();
+ openScreen("home");
+};
+
+$("editorBack").onclick=()=>{
+ openScreen("home");
+};
+
+$("analysisBack").onclick=()=>{
+ openScreen("home");
+};
+
+$("topBack").onclick=()=>{
+ openScreen("home");
+};
+
+$("profileBack").onclick=()=>{
+ openScreen("home");
+};
+
+$("tournamentsBack").onclick=()=>{
+ openScreen("home");
+};
+
+$("onlineBack").onclick=()=>{
+ openScreen("home");
+};
+
+$("settingsBack").onclick=()=>{
+ openScreen("home");
+};
+
+
+/* GAME BUTTONS */
+
+$("undoBtn").onclick=
+ undoMove;
+
+$("restartBtn").onclick=
+ startGame;
+
+$("giveUpBtn").onclick=()=>{
+ finishGame("black");
+};
+
+$("gameAnalysisBtn").onclick=()=>{
+ updateAnalysis();
+ openScreen("analysis");
+};
+
+
+/* EDITOR BUTTONS */
+
+document
+ .querySelectorAll(".tool[data-tool]")
+ .forEach(btn=>{
+
+  btn.onclick=()=>{
+   setEditorTool(
+    btn.dataset.tool
+   );
+  };
+ });
+
+
+$("clearEditor").onclick=()=>{
+
+ editorState=
+  Array.from(
+   {length:8},
+   ()=>Array(8).fill(EMPTY)
+  );
+
+ drawEditor();
+};
+
+
+$("startEditor").onclick=()=>{
+
+ createEditorStart();
+ drawEditor();
+};
+
+
+$("editorTurnBtn").onclick=()=>{
+
+ editorTurn=
+  editorTurn===WHITE ?
+  BLACK :
+  WHITE;
+
+ $("editorTurn").textContent=
+  editorTurn===WHITE ?
+  "⚪ Oq":
+  "⚫ Qora";
+};
+
+
+$("playEditor").onclick=
+ playEditor;
+
+$("editorAnalysis").onclick=()=>{
+ updateAnalysis();
+ openScreen("analysis");
+};
+
+
+/* ONLINE */
+
+$("onlineAI").onclick=
+ startGame;
+
+
+/* TOURNAMENT */
+
+document
+ .querySelectorAll(".tournamentBtn")
+ .forEach(btn=>{
+
+  btn.onclick=()=>{
+
+   toast(
+    btn.dataset.name+
+    " tez orada ishga tushadi"
+   );
+  };
+ });
+
+
+/* PROFILE RESET */
+
+$("resetStats").onclick=()=>{
+
+ if(confirm(
+  "Statistikani tozalaysizmi?"
+ )){
+
+  stats={
+   elo:1000,
+   wins:0,
+   games:0
+  };
+
+  saveStats();
+
+  toast("Statistika tozalandi");
+ }
+};
+
+
+/* SETTINGS */
+
+$("aiLevel").onchange=()=>{
+ toast(
+  "AI darajasi saqlandi"
+ );
+};
+
+
+/* =========================
+   INIT
+========================= */
+
+createEditorStart();
+drawEditor();
+updateStats();
+
+})();
+</script>
+
+</body>
+</html>
