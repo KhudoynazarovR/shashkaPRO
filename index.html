@@ -22,7 +22,69 @@ function click(r,c){if(over||turn!==W)return;if(sel){let m=legal.find(x=>x.to[0]
 function player(m){hist.push({b:copy(b),turn,time,last});b=apply(b,m);last=m;sel=null;legal=[];turn=B;histDraw();draw();if(end())return;setTimeout(ai,180)}
 function score(x){let s=0;for(let r=0;r<8;r++)for(let c=0;c<8;c++){let p=x[r][c];if(p===B)s+=100;if(p===BK)s+=190;if(p===W)s-=100;if(p===WK)s-=190;if(p===B&&r>=4)s+=7;if(p===W&&r<=3)s-=7}return s}
 function mini(x,d,a,z,max){if(!d)return score(x);let ms=moves(x,max?B:W);if(!ms.length)return max?-99999:99999;if(max){let v=-1e9;for(let m of ms){v=Math.max(v,mini(apply(x,m),d-1,a,z,false));a=Math.max(a,v);if(a>=z)break}return v}else{let v=1e9;for(let m of ms){v=Math.min(v,mini(apply(x,m),d-1,a,z,true));z=Math.min(z,v);if(a>=z)break}return v}}
-function ai(){if(over)return;let ms=moves(b,B);if(!ms.length)return endGame('win');let d=+document.getElementById('depth').value,best=-1e9,arr=[];for(let m of ms){let v=mini(apply(b,m),d-1,-1e9,1e9,false)+m.caps.length*60;if(v>best){best=v;arr=[m]}else if(v===best)arr.push(m)}let m=arr[Math.floor(Math.random()*arr.length)];hist.push({b:copy(b),turn,time,last});b=apply(b,m);last=m;turn=W;histDraw();draw();end()}
+function ai(){
+  if(over || turn!==B) return;
+
+  document.getElementById('status').textContent='⚫ AI o‘ylayapti...';
+
+  setTimeout(()=>{
+    try{
+      let ms=moves(b,B);
+
+      if(!ms.length){
+        endGame('win');
+        return;
+      }
+
+      let d=+document.getElementById('depth').value || 2;
+
+      // Telefonda AI juda uzoq hisoblab qolmasligi uchun
+      if(d>3) d=3;
+
+      let best=-Infinity;
+      let choices=[];
+
+      for(let m of ms){
+        let nb=apply(b,m);
+        let v=mini(nb,d-1,-Infinity,Infinity,false);
+
+        // Urishlarni biroz ustun qo'yamiz
+        v += m.caps.length*50;
+
+        if(v>best){
+          best=v;
+          choices=[m];
+        }else if(v===best){
+          choices.push(m);
+        }
+      }
+
+      let m=choices[Math.floor(Math.random()*choices.length)];
+
+      hist.push({
+        b:copy(b),
+        turn,
+        time,
+        last
+      });
+
+      b=apply(b,m);
+      last=m;
+      sel=null;
+      legal=[];
+      turn=W;
+
+      histDraw();
+      draw();
+
+      end();
+
+    }catch(err){
+      console.error('AI ERROR:',err);
+      document.getElementById('status').textContent='⚠️ AI xatosi';
+    }
+  },300);
+}
 function end(){let a=moves(b,W),z=moves(b,B);if(turn===W&&!a.length)return endGame('lose');if(turn===B&&!z.length)return endGame('win');let w=0,k=0;for(let r of b)for(let p of r){if(p===W||p===WK)w++;if(p===B||p===BK)k++}if(!w)return endGame('lose');if(!k)return endGame('win');return false}
 function endGame(r){if(over)return;over=true;clearInterval(timerID);st.games++;if(r==='win'){st.wins++;st.elo+=20;document.getElementById('status').textContent='🎉 G‘ALABA! +20 Elo'}else{st.elo=Math.max(0,st.elo-15);document.getElementById('status').textContent='😔 Mag‘lubiyat. -15 Elo'}localStorage.setItem('spstats',JSON.stringify(st));stats()}
 function tick(){if(over)return;time--;let m=Math.floor(time/60),s=time%60;document.getElementById('timer').textContent=m+':'+(s<10?'0':'')+s;if(time<=0)endGame(turn===W?'lose':'win')}
