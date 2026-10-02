@@ -1,428 +1,116 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="uz">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>ShashkaPRO</title>
 <style>
-*{box-sizing:border-box}
-body{margin:0;background:#0c0f13;color:#fff;font-family:Arial,sans-serif;-webkit-tap-highlight-color:transparent}
-button,select{font:inherit}
-.app{width:min(100%,620px);margin:auto;padding:14px}
-.screen{display:none}.screen.active{display:block}
-.logo{text-align:center;font-size:30px;font-weight:900;margin:12px 0 3px}
-.subtitle{text-align:center;color:#aeb5bf;margin-bottom:18px}
-.card{background:#171b21;border:1px solid #2b3139;border-radius:18px;padding:15px;margin:12px 0}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.stat{text-align:center;background:#11151a;border-radius:12px;padding:12px}
-.stat b{display:block;font-size:21px;margin-top:5px}
-.menuGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-button{border:0;border-radius:13px;padding:13px 10px;font-weight:800;min-height:48px}
-.menu{background:#1d232a;color:#fff;border:1px solid #303740}
-.primary{background:#ddb354;color:#17120a}
-.danger{background:#7d3034;color:#fff}
-.green{background:#246b43;color:#fff}
-.gold{background:#ddb354;color:#111}
-.back{background:#252b33;color:#fff;padding:10px 14px}
-.header{display:flex;justify-content:space-between;align-items:center;margin:4px 0 12px}
-.header b{font-size:21px}
-.boardWrap{width:min(94vw,540px);margin:12px auto}
-.board{width:100%;aspect-ratio:1;display:grid;grid-template-columns:repeat(8,1fr);border:6px solid #342219;border-radius:10px;overflow:hidden;box-shadow:0 12px 35px #0008}
-.cell{position:relative;display:flex;align-items:center;justify-content:center;touch-action:manipulation}
-.light{background:#ead2ad}.dark{background:#6b462c}
-.cell.selected{box-shadow:inset 0 0 0 5px #f0c64d}
-.cell.target{box-shadow:inset 0 0 0 5px #62d58a}
-.cell.captureTarget{box-shadow:inset 0 0 0 5px #e66d70}
-.piece{width:72%;height:72%;border-radius:50%;border:3px solid #222;box-shadow:inset 0 5px 7px #fff8,inset 0 -8px 10px #0009,0 3px 5px #0009;position:relative}
-.white{background:#f4f4f4;border-color:#aaa}.black{background:#171717;border-color:#050505}
-.king:after{content:"♛";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#d6ad4d;font-size:clamp(18px,5vw,30px)}
-.gameInfo{display:flex;justify-content:space-between;align-items:center;background:#171b21;border:1px solid #2b3139;border-radius:14px;padding:10px 12px}
-.timer{font-size:22px;font-weight:900}
-.actions{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
-.actions button{background:#252b33;color:#fff}.actions .danger{background:#7d3034}
-.moves{max-height:180px;overflow:auto;color:#aeb5bf;line-height:1.7}
-.notice{background:#242018;border:1px solid #62502b;border-radius:12px;padding:12px;color:#e9d48e}
-.toolGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
-.tool{background:#252b33;color:#fff}.tool.active{background:#ddb354;color:#111}
-#editorBoard{width:min(94vw,540px);aspect-ratio:1;margin:15px auto;display:grid;grid-template-columns:repeat(8,1fr);border:6px solid #342219;border-radius:10px;overflow:hidden}
-.listRow{display:flex;justify-content:space-between;padding:12px 4px;border-bottom:1px solid #2b3139}.listRow:last-child{border-bottom:0}
-.big{text-align:center;font-size:34px;font-weight:900}
-.muted{color:#aeb5bf}
-label{display:block;color:#c7cdd5;margin:12px 0 6px}
-select{width:100%;background:#252b33;color:#fff;border:0;border-radius:12px;padding:12px}
-.switch{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #2b3139}
-.switch:last-child{border-bottom:0}
-input[type=checkbox]{width:22px;height:22px}
-.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#20262e;color:#fff;border:1px solid #3a424d;padding:12px 16px;border-radius:12px;display:none;z-index:20;max-width:90%;text-align:center}
-.toast.show{display:block}
-@media(max-width:390px){.app{padding:9px}.menuGrid{gap:7px}.menu{font-size:13px}.stats{gap:5px}.stat{padding:9px}}
+*{box-sizing:border-box}html,body{margin:0;background:#0b1118;color:#fff;font-family:Arial,sans-serif}body{min-height:100vh}.app{width:100%;max-width:760px;margin:auto;padding:18px}.screen{display:none}.screen.active{display:block}.card{background:#151d26;border:1px solid #293542;border-radius:24px;padding:18px}.logo{text-align:center;font-size:34px;font-weight:900;margin:8px 0}.muted{text-align:center;color:#9ca8b5}.btn{border:0;border-radius:15px;padding:15px 12px;color:#fff;background:#26313c;font-size:16px;font-weight:800;min-height:54px;touch-action:manipulation}.primary{background:#168bea}.green{background:#16a36a}.gold{background:#9a7414}.red{background:#c93636}.full{width:100%}.menu{display:grid;gap:10px;margin-top:18px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}.stat{background:#0f161e;border-radius:14px;padding:10px;text-align:center;color:#aeb9c5}.stat b{display:block;color:#fff;font-size:20px;margin-top:3px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}.title{font-size:24px;font-weight:900}.smallbtn{padding:10px 12px;border-radius:12px;background:#26313c;color:#fff;border:0;font-weight:800;min-height:44px}.gameinfo{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}.info{background:#0f161e;border-radius:13px;padding:9px;text-align:center;color:#aeb9c5}.info b{display:block;color:#fff;margin-top:2px}.status{text-align:center;font-weight:800;min-height:26px;margin:8px 0}.hint{text-align:center;color:#8d99a6;font-size:13px;margin:10px 0}.board{width:min(92vw,560px);aspect-ratio:1/1;margin:10px auto;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border:6px solid #4b2f20;border-radius:9px;overflow:hidden;background:#6b462c;touch-action:none}.cell{position:relative;display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}.cell.light{background:#ead2ad}.cell.dark{background:#6b462c}.cell.selected{outline:4px solid #22c55e;outline-offset:-4px}.cell.target::before{content:"";position:absolute;width:22%;height:22%;border-radius:50%;background:#22c55e;box-shadow:0 0 0 2px rgba(255,255,255,.35);z-index:1}.piece{width:70%;height:70%;border-radius:50%;position:relative;z-index:2;border:3px solid #222;box-shadow:inset 0 4px 4px rgba(255,255,255,.45),inset 0 -7px 8px rgba(0,0,0,.55),0 3px 5px rgba(0,0,0,.5);pointer-events:none}.piece.white{background:#f5f5f5;border-color:#aaa}.piece.black{background:#171717;border-color:#050505}.piece.king::after{content:"♛";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#d6ae37;font-size:clamp(18px,5vw,30px);font-weight:900}.coord{position:absolute;font-size:9px;font-weight:800;opacity:.55;z-index:3;pointer-events:none}.rank{left:3px;top:2px}.file{right:3px;bottom:2px}.moves{max-height:130px;overflow:auto;background:#0f161e;border-radius:13px;padding:10px;font-size:13px;color:#cbd5df}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.actions .wide{grid-column:1/-1}.btn:disabled{opacity:.4;cursor:not-allowed}.back{margin-top:10px}@media(max-width:420px){.app{padding:12px}.card{padding:12px}.title{font-size:22px}.board{width:94vw}.actions{grid-template-columns:1fr}}
+
+/* PRO+ additions */
+.panelGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}.panelBtn{background:#202a34;color:#fff;border:1px solid #33404d}.pill{display:inline-flex;align-items:center;gap:6px;background:#202a34;padding:7px 10px;border-radius:999px;font-size:12px}.sectionTitle{font-size:18px;font-weight:900;margin:6px 0 10px}.formRow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid #2b3742}.formRow:last-child{border-bottom:0}.formRow select,.formRow input{background:#202a34;color:#fff;border:0;border-radius:10px;padding:9px;max-width:170px}.chat{height:170px;overflow:auto;background:#0d141b;border-radius:12px;padding:8px}.chatMsg{padding:6px 8px;margin:4px 0;border-radius:10px;background:#202a34}.chatMe{text-align:right;background:#173b2b}.onlineGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.invite{word-break:break-all;background:#0d141b;padding:10px;border-radius:10px;font-size:12px}.achievement{display:flex;gap:10px;align-items:center;padding:10px;background:#0f161e;border-radius:12px;margin:7px 0}.achievement.locked{opacity:.45}.badge{font-size:25px}.historyRow{padding:10px 0;border-bottom:1px solid #2b3742}.historyRow:last-child{border-bottom:0}.themeLight{background:#eef2f5;color:#111}.themeLight .card{background:#fff;border-color:#cbd5df}.themeLight .btn,.themeLight .smallbtn{background:#e2e8ef;color:#111}.themeLight .stat,.themeLight .info,.themeLight .moves,.themeLight .chat,.themeLight .invite{background:#eef2f5;color:#111}.lastMove{background:#d4a72c!important}.captureTarget{outline:4px solid #ef6464;outline-offset:-4px}.chatInput{display:flex;gap:7px;margin-top:8px}.chatInput input{flex:1;min-width:0;background:#202a34;color:#fff;border:0;border-radius:10px;padding:11px}.dangerText{color:#ff8d8d}@media(max-width:420px){.panelGrid,.onlineGrid{grid-template-columns:1fr}.formRow{align-items:flex-start;flex-direction:column}.formRow select{max-width:none;width:100%}}
 </style>
 </head>
 <body>
 <div class="app">
+<section id="home" class="screen active"><div class="card">
+<div class="logo">♟️ ShashkaPRO</div><div class="muted">AI bilan shashka o‘ynang</div>
+<div class="stats"><div class="stat">Elo<b id="homeElo">1000</b></div><div class="stat">G‘alaba<b id="homeWins">0</b></div><div class="stat">O‘yin<b id="homeGames">0</b></div></div><div class="card" style="margin-top:12px;padding:12px"><div class="sectionTitle">⏱️ Vaqt nazorati</div><div class="panelGrid"><button class="btn panelBtn timePick" data-time="1+1">1+1</button><button class="btn panelBtn timePick" data-time="2+2">2+2</button><button class="btn panelBtn timePick" data-time="3+2">3+2</button><button class="btn panelBtn timePick" data-time="5+3">5+3</button></div><div class="hint" id="homeTimeLabel">Tanlangan: 2+2</div></div>
+<div class="menu"><button class="btn primary" id="aiBtn">🤖 AI bilan o‘ynash</button><button class="btn green" id="onlineBtn">🌐 Do‘st bilan o‘ynash</button><div class="panelGrid"><button class="btn panelBtn" id="editorBtn">✏️ Doska editor</button><button class="btn gold" id="topBtn">👑 TOP 30</button><button class="btn panelBtn" id="profileBtn">👤 Profil</button><button class="btn panelBtn" id="settingsBtn">⚙️ Sozlamalar</button><button class="btn panelBtn" id="analysisBtn">🧠 Tahlil</button><button class="btn panelBtn" id="historyBtn">📜 Tarix</button><button class="btn panelBtn" id="achievementsBtn">🏅 Yutuqlar</button><button class="btn panelBtn" id="tournamentBtn">🏆 Turnirlar</button></div></div>
+</div></section>
 
-<section id="home" class="screen active">
-  <div class="logo">♟ ShashkaPRO</div>
-  <div class="subtitle">Professional Checkers</div>
-  <div class="card">
-    <div class="stats">
-      <div class="stat">ELO<b id="homeElo">1000</b></div>
-      <div class="stat">G‘alaba<b id="homeWins">0</b></div>
-      <div class="stat">O‘yin<b id="homeGames">0</b></div>
-    </div>
-  </div>
-  <div class="menuGrid">
-    <button class="menu primary" id="btnAI">🤖 AI bilan o‘ynash</button>
-    <button class="menu" id="btnOnline">🌐 Onlayn</button>
-    <button class="menu" id="btnTournaments">🏆 Turnirlar</button>
-    <button class="menu" id="btnTop">👑 TOP 30</button>
-    <button class="menu" id="btnProfile">👤 Profil</button>
-    <button class="menu" id="btnEditor">✏️ Doska</button>
-    <button class="menu" id="btnAnalysis">🧠 Tahlil</button>
-    <button class="menu" id="btnSettings">⚙️ Sozlamalar</button>
-  </div>
-</section>
+<section id="game" class="screen"><div class="card">
+<div class="topbar"><button class="smallbtn" id="gameBack">← Orqaga</button><div class="title">AI bilan o‘yin</div><button class="smallbtn" id="newGame">↻</button></div>
+<div class="gameinfo"><div class="info">Siz<b id="gameWhite">12</b></div><div class="info">AI<b id="gameBlack">12</b></div><div class="info">Vaqt<b id="timer">01:00</b></div></div>
+<div class="hint" id="modeLabel">⏱️ 1+1</div><div class="status" id="gameStatus">Sizning navbatingiz</div>
+<div id="gameBoard" class="board" aria-label="Shashka doskasi"></div>
+<div id="gameMoves" class="moves"></div>
+<div class="actions"><button class="btn red" id="cancelGame">🛑 O‘yinni bekor qilish</button><button class="btn" id="giveUp">🏳 Taslim</button><button class="btn" id="gameAnalysis">🧠 Tahlil</button><button class="btn" id="offerDraw">🤝 Durang</button><button class="btn wide" id="newGame2">🔄 Yangi o‘yin</button></div>
+<div class="hint">🇷🇺 Rossiya shashkasi: urish majburiy. Oddiy dona orqaga ham uradi. Damka uzoq masofadan uradi.</div>
+</div></section>
 
-<section id="game" class="screen">
-  <div class="header"><b>🤖 AI bilan o‘yin</b><button class="back" id="gameBack">←</button></div>
-  <div class="gameInfo"><span id="gameStatus">⚪ Siz yurishingiz kerak</span><span class="timer" id="timer">10:00</span></div>
-  <div class="boardWrap"><div id="gameBoard" class="board"></div></div>
-  <div class="actions">
-    <button id="undoBtn">↩️ Orqaga</button>
-    <button id="gameAnalysisBtn">🧠 Tahlil</button>
-    <button id="restartBtn">🔄 Qayta</button>
-    <button class="danger" id="giveUpBtn">🏳️ Taslim</button>
-  </div>
-  <div class="card"><b>Yurishlar</b><div id="moveList" class="moves">Hali yurish yo‘q</div></div>
-</section>
-
-<section id="editor" class="screen">
-  <div class="header"><b>✏️ Doska editor</b><button class="back" id="editorBack">←</button></div>
-  <div class="notice">Dona turini tanlang va doskadagi katakka bosing.</div>
-  <div class="toolGrid" style="margin-top:10px">
-    <button class="tool active" data-tool="white">⚪ Oq</button>
-    <button class="tool" data-tool="black">⚫ Qora</button>
-    <button class="tool" data-tool="whiteKing">👑 Oq</button>
-    <button class="tool" data-tool="blackKing">👑 Qora</button>
-    <button class="tool" data-tool="erase">🧹 O‘chirish</button>
-    <button class="tool" id="clearEditor">◻️ Tozalash</button>
-    <button class="tool" id="startEditor">♟ Start</button>
-    <button class="tool" id="editorTurnBtn">🔄 Navbat</button>
-  </div>
-  <div id="editorBoard"></div>
-  <div class="card">Navbat: <b id="editorTurn">⚪ Oq</b></div>
-  <div class="actions">
-    <button class="gold" id="playEditor">▶️ Shu pozitsiyada o‘ynash</button>
-    <button id="editorAnalysis">🧠 Tahlil</button>
-  </div>
-</section>
-
-<section id="analysis" class="screen">
-  <div class="header"><b>🧠 Tahlil</b><button class="back" id="analysisBack">←</button></div>
-  <div class="card"><div class="big" id="analysisScore">0</div><div class="muted" style="text-align:center">+ oq uchun, − qora uchun</div></div>
-  <div class="card">
-    <div class="listRow"><span>⚪ Oq</span><b id="aWhite">0</b></div>
-    <div class="listRow"><span>⚫ Qora</span><b id="aBlack">0</b></div>
-    <div class="listRow"><span>👑 Oq shoh</span><b id="aWhiteKings">0</b></div>
-    <div class="listRow"><span>👑 Qora shoh</span><b id="aBlackKings">0</b></div>
-  </div>
-  <div class="card"><b>💡 Xulosa</b><p id="analysisText" class="muted">Pozitsiyani tekshirish uchun o‘yin boshlang.</p></div>
-</section>
-
-<section id="top" class="screen">
-  <div class="header"><b>👑 TOP 30</b><button class="back" id="topBack">←</button></div>
-  <div class="card" id="topList"></div>
-</section>
-
-<section id="profile" class="screen">
-  <div class="header"><b>👤 Profil</b><button class="back" id="profileBack">←</button></div>
-  <div class="card"><div class="big">♟</div><h2 style="text-align:center">ShashkaPRO Player</h2></div>
-  <div class="card">
-    <div class="listRow"><span>🏆 ELO</span><b id="pElo">1000</b></div>
-    <div class="listRow"><span>🥇 G‘alabalar</span><b id="pWins">0</b></div>
-    <div class="listRow"><span>🎮 O‘yinlar</span><b id="pGames">0</b></div>
-    <div class="listRow"><span>📈 Winrate</span><b id="pRate">0%</b></div>
-  </div>
-  <button class="danger" style="width:100%" id="resetStats">🗑 Statistikani tozalash</button>
-</section>
-
-<section id="tournaments" class="screen">
-  <div class="header"><b>🏆 Turnirlar</b><button class="back" id="tournamentsBack">←</button></div>
-  <div class="card"><h2>⚡ Blitz Arena</h2><p class="muted">10 daqiqalik format</p><button class="gold tournamentBtn" data-name="Blitz Arena">Kirish</button></div>
-  <div class="card"><h2>🔥 PRO Cup</h2><p class="muted">PRO format</p><button class="gold tournamentBtn" data-name="PRO Cup">Kirish</button></div>
-  <div class="card"><h2>👑 Daily Tournament</h2><p class="muted">Kunlik musobaqa</p><button class="gold tournamentBtn" data-name="Daily Tournament">Kirish</button></div>
-</section>
-
-<section id="online" class="screen">
-  <div class="header"><b>🌐 Onlayn</b><button class="back" id="onlineBack">←</button></div>
-  <div class="card" style="text-align:center">
-    <div class="big">🌐</div>
-    <h2>Onlayn o‘yin</h2>
-    <p class="muted">Haqiqiy 2 kishilik internet o‘yini uchun alohida server kerak. Hozir AI rejimi ishlaydi.</p>
-    <button class="primary" id="onlineAI">🤖 AI bilan o‘ynash</button>
-  </div>
-</section>
-
-<section id="settings" class="screen">
-  <div class="header"><b>⚙️ Sozlamalar</b><button class="back" id="settingsBack">←</button></div>
-  <div class="card">
-    <div class="switch"><span>🔊 Ovoz</span><input id="sound" type="checkbox" checked></div>
-    <div class="switch"><span>📳 Vibratsiya</span><input id="vibration" type="checkbox" checked></div>
-  </div>
-  <div class="card">
-    <label for="aiLevel">🤖 AI darajasi</label>
-    <select id="aiLevel"><option value="1">Oson</option><option value="2" selected>O‘rta</option><option value="3">Qiyin</option></select>
-  </div>
-</section>
-
+<section id="online" class="screen"><div class="card"><div class="topbar"><div class="title">🌐 Do‘st bilan o‘ynash</div><button class="smallbtn" id="onlineBack">←</button></div><div id="onlineLobby"><p class="muted">Haqiqiy 2 kishilik o‘yin. Xona yarating yoki do‘st yuborgan kodga kiring.</p><div class="onlineGrid"><button class="btn green" id="createRoom">➕ Xona yaratish</button><button class="btn" id="joinRoom">🔗 Xonaga kirish</button></div><div id="roomBox" style="display:none;margin-top:10px"><div class="sectionTitle">Taklif havolasi</div><div class="invite" id="inviteLink"></div><button class="btn full" style="margin-top:8px" id="copyInvite">📋 Nusxalash</button></div><div id="joinBox" style="display:none;margin-top:10px"><input id="roomInput" placeholder="Xona kodi yoki havola" style="width:100%;padding:12px;border:0;border-radius:10px;background:#202a34;color:#fff"><button class="btn primary full" style="margin-top:8px" id="connectRoom">Ulanish</button></div></div><div id="onlineGame" style="display:none"><div class="gameinfo"><div class="info">Siz<b id="onlineYou">⚪</b></div><div class="info">Raqib<b id="onlineOpp">⚫</b></div><div class="info">Vaqt<b id="onlineTimer">02:00</b></div></div><div class="status" id="onlineStatus">Ulanmoqda…</div><div id="onlineBoard" class="board"></div><div class="actions"><button class="btn red" id="onlineCancel">🛑 Bekor qilish</button><button class="btn" id="onlineDraw">🤝 Durang</button><button class="btn" id="onlineResign">🏳 Taslim</button><button class="btn" id="onlineRematch">🔄 Qayta</button></div><div class="chat"><div id="chatMessages"></div></div><div class="chatInput"><input id="chatInput" maxlength="120" placeholder="Xabar…"><button class="btn" id="chatSend">➤</button></div></div></div></section>
+<section id="editor" class="screen"><div class="card"><div class="topbar"><div class="title">✏️ Doska editor</div><button class="smallbtn" id="editorBack">←</button></div><div class="panelGrid"><button class="btn panelBtn etool" data-tool="white">⚪ Oq</button><button class="btn panelBtn etool" data-tool="black">⚫ Qora</button><button class="btn panelBtn etool" data-tool="whiteKing">👑 Oq dama</button><button class="btn panelBtn etool" data-tool="blackKing">👑 Qora dama</button><button class="btn panelBtn etool" data-tool="erase">🧹 O‘chirish</button><button class="btn panelBtn" id="editorStart">♟ Start</button></div><div id="editorBoard" class="board"></div><div class="panelGrid"><button class="btn primary" id="playEditor">▶️ Shu pozitsiyada o‘ynash</button><button class="btn" id="clearEditor">◻️ Tozalash</button></div></div></section>
+<section id="top" class="screen"><div class="card"><div class="title">👑 TOP 30</div><div id="topList"></div><button class="btn back" id="topBack">← Orqaga</button></div></section>
+<section id="profile" class="screen"><div class="card"><div class="topbar"><div class="title">👤 Profil</div><button class="smallbtn backHome">←</button></div><div class="big" style="font-size:52px">♟️</div><h2 style="text-align:center" id="profileName">ShashkaPRO Player</h2><div class="stats"><div class="stat">ELO<b id="profileElo">1000</b></div><div class="stat">G‘alaba<b id="profileWins">0</b></div><div class="stat">O‘yin<b id="profileGames">0</b></div></div><div class="listRow">🔥 Win streak <b id="streak">0</b></div><div class="listRow">🪙 Coin <b id="coins">0</b></div></div></section>
+<section id="settings" class="screen"><div class="card"><div class="topbar"><div class="title">⚙️ Sozlamalar</div><button class="smallbtn backHome">←</button></div><div class="formRow"><span>🤖 AI darajasi</span><select id="aiLevel"><option value="1">Oson</option><option value="2" selected>O‘rta</option><option value="3">Qiyin</option><option value="4">Master</option></select></div><div class="formRow"><span>⏱️ Vaqt</span><select id="timeSelect"><option>1+1</option><option selected>2+2</option><option>3+2</option><option>5+3</option></select></div><div class="formRow"><span>🎨 Mavzu</span><select id="themeSelect"><option value="dark">Dark</option><option value="light">Light</option></select></div><div class="formRow"><span>🔊 Ovoz</span><input type="checkbox" id="soundToggle" checked></div><div class="formRow"><span>📳 Vibratsiya</span><input type="checkbox" id="vibeToggle" checked></div><div class="formRow"><span>🇷🇺 Qoidalar</span><b>Rossiya shashkasi</b></div></div></section>
+<section id="analysis" class="screen"><div class="card"><div class="topbar"><div class="title">🧠 Tahlil</div><button class="smallbtn backHome">←</button></div><div class="big" id="analysisScore">0</div><div class="muted">+ qora / − oq</div><div class="listRow"><span>⚪ Oq</span><b id="anWhite">0</b></div><div class="listRow"><span>⚫ Qora</span><b id="anBlack">0</b></div><div class="listRow"><span>👑 Oq dama</span><b id="anWK">0</b></div><div class="listRow"><span>👑 Qora dama</span><b id="anBK">0</b></div><p class="muted" id="analysisText">O‘yinni boshlang.</p></div></section>
+<section id="history" class="screen"><div class="card"><div class="topbar"><div class="title">📜 Tarix</div><button class="smallbtn backHome">←</button></div><div id="historyList"></div></div></section>
+<section id="achievements" class="screen"><div class="card"><div class="topbar"><div class="title">🏅 Yutuqlar</div><button class="smallbtn backHome">←</button></div><div id="achievementList"></div></div></section>
+<section id="tournament" class="screen"><div class="card"><div class="topbar"><div class="title">🏆 Turnirlar</div><button class="smallbtn backHome">←</button></div><div class="achievement"><span class="badge">⚡</span><div><b>Blitz Arena</b><div class="muted">1+1 format</div></div></div><div class="achievement"><span class="badge">🔥</span><div><b>PRO Cup</b><div class="muted">3+2 format</div></div></div><div class="achievement"><span class="badge">👑</span><div><b>Daily Tournament</b><div class="muted">5+3 format</div></div></div></div></section>
 </div>
-<div id="toast" class="toast"></div>
 
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>
-window.addEventListener("error", function(e){
-  const t=document.getElementById("toast");
-  if(t){
-    t.textContent="⚠️ Dastur xatosi: "+(e.message||"JavaScript xatosi");
-    t.classList.add("show");
-  }
-});
-(function(){
-"use strict";
-
-const EMPTY=0, WHITE=1, BLACK=2, WHITE_KING=3, BLACK_KING=4;
+'use strict';
+const EMPTY=0,WHITE=1,BLACK=2,WHITE_KING=3,BLACK_KING=4;
 const DIRS=[[1,1],[1,-1],[-1,1],[-1,-1]];
-let boardState=[], turn=WHITE, selected=null, gameOver=false;
-let history=[], moveHistory=[], seconds=600, timerId=null;
-let editorState=[], editorTool="white", editorTurn=WHITE;
-
-let stats;
-try{
-  stats=JSON.parse(localStorage.getItem("shashkaPRO_stats")||"null")||{elo:1000,wins:0,games:0};
-}catch(e){stats={elo:1000,wins:0,games:0}}
-
-function $(id){return document.getElementById(id)}
-function toast(msg){
-  const t=$("toast"); if(!t)return;
-  t.textContent=msg; t.classList.add("show");
-  clearTimeout(toast.t); toast.t=setTimeout(()=>t.classList.remove("show"),1800);
-}
-function saveStats(){
-  try{localStorage.setItem("shashkaPRO_stats",JSON.stringify(stats))}catch(e){}
-  updateStats();
-}
-function updateStats(){
-  if($("homeElo"))$("homeElo").textContent=stats.elo;
-  if($("homeWins"))$("homeWins").textContent=stats.wins;
-  if($("homeGames"))$("homeGames").textContent=stats.games;
-  if($("pElo"))$("pElo").textContent=stats.elo;
-  if($("pWins"))$("pWins").textContent=stats.wins;
-  if($("pGames"))$("pGames").textContent=stats.games;
-  if($("pRate"))$("pRate").textContent=(stats.games?Math.round(stats.wins/stats.games*100):0)+"%";
-}
-function openScreen(id){
-  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
-  const s=$(id); if(s)s.classList.add("active");
-  if(id==="top")drawTop();
-  if(id==="analysis")updateAnalysis();
-  updateStats();
-}
+const $=id=>document.getElementById(id);
+let board=[],turn=WHITE,selected=null,targets=[],chain=null,gameOver=false,aiThinking=false,moveNo=0,timerId=null;
+let whiteTime=60,blackTime=60,activeTimer=WHITE;
+let stats=JSON.parse(localStorage.getItem('spStats')||'{"elo":1000,"wins":0,"games":0}');
+const TIME_MODES={'1+1':{base:60,inc:1},'2+2':{base:120,inc:2},'3+2':{base:180,inc:2},'5+3':{base:300,inc:3}};
+let timeMode=localStorage.getItem('spTime')||'2+2';
+let replayMoves=[];
+let lastMove=null, streak=Number(localStorage.getItem('spStreak')||0), coins=Number(localStorage.getItem('spCoins')||0), gameStartAt=0;
+let online={peer:null,conn:null,host:false,room:'',color:WHITE,ready:false,moveNo:0,board:null,turn:WHITE,timer:null,white:120,black:120,active:WHITE};
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');window.scrollTo(0,0)}
 function clone(b){return b.map(r=>r.slice())}
 function inside(r,c){return r>=0&&r<8&&c>=0&&c<8}
-function isWhite(p){return p===WHITE||p===WHITE_KING}
-function isBlack(p){return p===BLACK||p===BLACK_KING}
+function color(p){return p===WHITE||p===WHITE_KING?WHITE:p===BLACK||p===BLACK_KING?BLACK:0}
 function isKing(p){return p===WHITE_KING||p===BLACK_KING}
-function sameSide(a,b){return (isWhite(a)&&isWhite(b))||(isBlack(a)&&isBlack(b))}
+function beep(type='move'){try{if(localStorage.getItem('spSound')==='off')return;const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const a=new C(),o=a.createOscillator(),g=a.createGain();o.frequency.value=type==='win'?740:type==='capture'?420:560;g.gain.value=.035;o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+.08)}catch(e){}}
+function vibrate(){try{if(localStorage.getItem('spVibe')!=='off'&&navigator.vibrate)navigator.vibrate(25)}catch(e){}}
+function saveHistory(result){try{const h=JSON.parse(localStorage.getItem('spHistory')||'[]');h.unshift({date:new Date().toLocaleString('uz-UZ'),result,time:timeMode,moves:moveNo});localStorage.setItem('spHistory',JSON.stringify(h.slice(0,30)))}catch(e){}}
+function renderHistory(){const h=JSON.parse(localStorage.getItem('spHistory')||'[]');$('historyList').innerHTML=h.length?h.map(x=>`<div class="historyRow"><b>${x.result}</b><div class="muted">${x.date} · ${x.time} · ${x.moves} yurish</div></div>`).join(''):'<div class="muted">Hali o‘yinlar yo‘q.</div>'}
+function renderAchievements(){const a=[['♟️','Birinchi o‘yin',stats.games>=1],['🏆','Birinchi g‘alaba',stats.wins>=1],['🔥','3 ta ketma-ket g‘alaba',streak>=3],['👑','1500 ELO',stats.elo>=1500],['💯','10 ta o‘yin',stats.games>=10]];$('achievementList').innerHTML=a.map(x=>`<div class="achievement ${x[2]?'':'locked'}"><span class="badge">${x[0]}</span><div><b>${x[1]}</b><div class="muted">${x[2]?'Ochildi':'Hali ochilmagan'}</div></div></div>`).join('')}
+function renderProfile(){const name=window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name||'ShashkaPRO Player';$('profileName').textContent=name;$('profileElo').textContent=stats.elo;$('profileWins').textContent=stats.wins;$('profileGames').textContent=stats.games;$('streak').textContent=streak;$('coins').textContent=coins}
+function updateAnalysis(){let w=0,b=0,wk=0,bk=0;for(const row of board)for(const p of row){if(p===WHITE)w++;if(p===BLACK)b++;if(p===WHITE_KING)wk++;if(p===BLACK_KING)bk++}const score=b*100+bk*180-w*100-wk*180;$('analysisScore').textContent=score;$('anWhite').textContent=w;$('anBlack').textContent=b;$('anWK').textContent=wk;$('anBK').textContent=bk;$('analysisText').textContent=score>100?'Qora moddiy ustun.':score<-100?'Oq moddiy ustun.':'Pozitsiya nisbatan muvozanatli.'}
+function setTimeMode(v){if(TIME_MODES[v]){timeMode=v;localStorage.setItem('spTime',v);$('homeTimeLabel').textContent='Tanlangan: '+v;if($('modeLabel'))$('modeLabel').textContent='⏱️ '+v;const ts=$('timeSelect');if(ts)ts.value=v}}
+function initGame(){board=Array.from({length:8},()=>Array(8).fill(EMPTY));for(let r=0;r<3;r++)for(let c=0;c<8;c++)if((r+c)%2)board[r][c]=BLACK;for(let r=5;r<8;r++)for(let c=0;c<8;c++)if((r+c)%2)board[r][c]=WHITE}
+function simpleMoves(b,r,c){const p=b[r][c],q=color(p),out=[];if(!q)return out;if(isKing(p)){for(const [dr,dc] of DIRS){let rr=r+dr,cc=c+dc;while(inside(rr,cc)&&b[rr][cc]===EMPTY){out.push({from:{r,c},r:rr,c:cc,capture:false});rr+=dr;cc+=dc}}}else{const dr=q===WHITE?-1:1;for(const dc of [-1,1]){const rr=r+dr,cc=c+dc;if(inside(rr,cc)&&b[rr][cc]===EMPTY)out.push({from:{r,c},r:rr,c:cc,capture:false})}}return out}
+function captures(b,r,c){const p=b[r][c],q=color(p),out=[];if(!q)return out;if(isKing(p)){for(const [dr,dc] of DIRS){let rr=r+dr,cc=c+dc,enemy=null;while(inside(rr,cc)){const x=b[rr][cc];if(x===EMPTY){if(enemy)out.push({from:{r,c},r:rr,c:cc,cap:enemy,capture:true})}else{if(color(x)===q||enemy)break;enemy={r:rr,c:cc}}rr+=dr;cc+=dc}}}else{for(const [dr,dc] of DIRS){const mr=r+dr,mc=c+dc,tr=r+2*dr,tc=c+2*dc;if(inside(mr,mc)&&inside(tr,tc)&&color(b[mr][mc])===3-q&&b[tr][tc]===EMPTY)out.push({from:{r,c},r:tr,c:tc,cap:{r:mr,c:mc},capture:true})}}return out}
+function allMoves(b,q){const caps=[];const normals=[];for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(color(b[r][c])===q)for(const m of captures(b,r,c))caps.push(m);if(caps.length)return caps;for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(color(b[r][c])===q)normals.push(...simpleMoves(b,r,c));return normals}
+function applyMove(b,m){const n=clone(b);let p=n[m.from.r][m.from.c];n[m.from.r][m.from.c]=EMPTY;if(m.cap)n[m.cap.r][m.cap.c]=EMPTY;if(p===WHITE&&m.r===0)p=WHITE_KING;if(p===BLACK&&m.r===7)p=BLACK_KING;n[m.r][m.c]=p;return n}
+function sequenceMoves(b,r,c,prefix=[]){const first=captures(b,r,c);if(!first.length)return prefix.length?[{steps:prefix,board:b}]:[];let out=[];for(const m of first){const nb=applyMove(b,m);out=out.concat(sequenceMoves(nb,m.r,m.c,prefix.concat(m)))}return out}
+function turnMoves(b,q){const caps=[];for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(color(b[r][c])===q){for(const seq of sequenceMoves(b,r,c))caps.push({from:{r,c},steps:seq.steps,board:seq.board,capture:true})}if(caps.length)return caps;return allMoves(b,q).map(m=>({from:m.from,steps:[m],board:applyMove(b,m),capture:false}))}
+function notation(m){const f='ABCDEFGH';return f[m.from.c]+(8-m.from.r)+(m.capture?'×':'-')+f[m.c]+(8-m.r)}
+function count(){let w=0,b=0;for(const row of board)for(const p of row){if(color(p)===WHITE)w++;if(color(p)===BLACK)b++}return[w,b]}
+function renderGame(){const el=$('gameBoard');if(!el)return;el.innerHTML='';for(let r=0;r<8;r++){for(let c=0;c<8;c++){const cell=document.createElement('div');cell.className='cell '+(((r+c)%2)?'dark':'light');if(selected&&selected.r===r&&selected.c===c)cell.classList.add('selected');if(targets.some(m=>m.r===r&&m.c===c))cell.classList.add('target');if(lastMove&&((lastMove.from.r===r&&lastMove.from.c===c)||(lastMove.r===r&&lastMove.c===c)))cell.classList.add('lastMove');if(targets.some(m=>m.r===r&&m.c===c&&m.capture))cell.classList.add('captureTarget');if(c===0){const s=document.createElement('span');s.className='coord rank';s.textContent=8-r;cell.appendChild(s)}if(r===7){const s=document.createElement('span');s.className='coord file';s.textContent='ABCDEFGH'[c];cell.appendChild(s)}const p=board[r]?.[c]||0;if(p){const piece=document.createElement('div');piece.className='piece '+(color(p)===WHITE?'white':'black')+(isKing(p)?' king':'');cell.appendChild(piece)}cell.addEventListener('click',e=>{e.preventDefault();handleCell(r,c)});cell.addEventListener('touchend',e=>{e.preventDefault();handleCell(r,c)},{passive:false});el.appendChild(cell)}}const [w,b]=count();$('gameWhite').textContent=w;$('gameBlack').textContent=b;$('timer').textContent=fmt(activeTimer===WHITE?whiteTime:blackTime);$('cancelGame').disabled=gameOver||moveNo!==0}
+function handleCell(r,c){if(gameOver||aiThinking||turn!==WHITE)return;if(selected){const legal=chain?captures(board,selected.r,selected.c):allMoves(board,WHITE).filter(m=>m.from.r===selected.r&&m.from.c===selected.c);const m=legal.find(x=>x.r===r&&x.c===c);if(m){board=applyMove(board,m);replayMoves.push(m);lastMove=m;beep(m.capture?'capture':'move');vibrate();if(m.capture){chain={r:m.r,c:m.c,steps:(chain?.steps||[]).concat(m)};const more=captures(board,m.r,m.c);if(more.length){selected={r:m.r,c:m.c};targets=more;renderGame();$('gameStatus').textContent='🔥 Yana urishingiz kerak!';return}finishTurn(chain.steps);return}finishTurn([m]);return}}
+const p=board[r]?.[c]||EMPTY;if(color(p)===WHITE){const ms=allMoves(board,WHITE).filter(m=>m.from.r===r&&m.from.c===c);if(ms.length){selected={r,c};targets=ms;renderGame();$('gameStatus').textContent=ms[0].capture?'🔥 Urish majburiy':'Yurishingiz mumkin'}}}
+function finishTurn(steps){moveNo++;selected=null;targets=[];chain=null;turn=BLACK;renderGame();$('gameStatus').textContent='AI o‘ylayapti…';addIncrement(WHITE);checkGame();if(!gameOver)setTimeout(aiTurn,250)}
+function evaluate(b){let s=0;for(let r=0;r<8;r++)for(let c=0;c<8;c++){const p=b[r][c];if(p===BLACK)s+=100;if(p===BLACK_KING)s+=180;if(p===WHITE)s-=100;if(p===WHITE_KING)s-=180}return s}
+function minimax(b,d,a,bb,maxing){const ms=turnMoves(b,maxing?BLACK:WHITE);if(!ms.length)return maxing?-99999:99999;if(d<=0)return evaluate(b);if(maxing){let v=-Infinity;for(const m of ms){v=Math.max(v,minimax(m.board,d-1,a,bb,false));a=Math.max(a,v);if(bb<=a)break}return v}let v=Infinity;for(const m of ms){v=Math.min(v,minimax(m.board,d-1,a,bb,true));bb=Math.min(bb,v);if(bb<=a)break}return v}
+function aiTurn(){if(gameOver)return;aiThinking=true;$('gameStatus').textContent='🤖 AI o‘ylayapti…';setTimeout(()=>{if(gameOver)return;const ms=turnMoves(board,BLACK);if(!ms.length){endGame('Siz g‘olib bo‘ldingiz! 🎉');return}let best=-Infinity,choices=[];for(const m of ms){const depth=Math.max(1,Math.min(4,Number(localStorage.getItem('spAI')||2)));const v=minimax(m.board,depth,-Infinity,Infinity,false);if(v>best){best=v;choices=[m]}else if(v===best)choices.push(m)}const chosen=choices[Math.floor(Math.random()*choices.length)];board=chosen.board;moveNo++;lastMove=chosen.steps[chosen.steps.length-1];replayMoves.push(...chosen.steps);beep(chosen.capture?'capture':'move');addMove('AI',chosen.steps);addIncrement(BLACK);turn=WHITE;aiThinking=false;renderGame();checkGame();if(!gameOver)$('gameStatus').textContent='Sizning navbatingiz'},250)}
+function checkGame(){const [w,b]=count();if(!w)return endGame('AI g‘olib bo‘ldi 🤖');if(!b)return endGame('Siz g‘olib bo‘ldingiz! 🎉');if(!turnMoves(board,turn).length)endGame(turn===WHITE?'AI g‘olib bo‘ldi 🤖':'Siz g‘olib bo‘ldingiz! 🎉')}
+function endGame(msg){if(gameOver)return;gameOver=true;aiThinking=false;stopClock();$('gameStatus').textContent=msg;const win=msg.startsWith('Siz g‘olib');stats.games++;if(win){stats.wins++;stats.elo+=20;streak++;coins+=25;beep('win')}else if(msg.startsWith('AI')){stats.elo=Math.max(100,stats.elo-15);streak=0}saveHistory(win?'G‘alaba':'Mag‘lubiyat');localStorage.setItem('spStreak',String(streak));localStorage.setItem('spCoins',String(coins));localStorage.setItem('spStats',JSON.stringify(stats));updateHome();$('cancelGame').disabled=true}
+function addMove(who,steps){const d=document.createElement('div');d.textContent=(moveNo)+'. '+who+': '+steps.map(notation).join(' × ');$('gameMoves').appendChild(d);$('gameMoves').scrollTop=$('gameMoves').scrollHeight}
+function fmt(t){t=Math.max(0,Math.ceil(t));return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0')}
+function addIncrement(mover){const inc=TIME_MODES[timeMode].inc;if(mover===WHITE)whiteTime+=inc;else blackTime+=inc;activeTimer=3-mover}
+function stopClock(){if(timerId){clearInterval(timerId);timerId=null}}
+function startClock(){stopClock();let last=Date.now();timerId=setInterval(()=>{if(gameOver)return;const now=Date.now();const dt=(now-last)/1000;last=now;if(activeTimer===WHITE)whiteTime-=dt;else blackTime-=dt;const t=activeTimer===WHITE?whiteTime:blackTime;$('timer').textContent=fmt(t);if(t<=0){stopClock();endGame(activeTimer===WHITE?'Vaqt tugadi — AI g‘olib 🤖':'Vaqt tugadi — Siz g‘olib bo‘ldingiz! 🎉')}},200)}
+function newGame(){stopClock();initGame();turn=WHITE;selected=null;targets=[];chain=null;gameOver=false;aiThinking=false;moveNo=0;replayMoves=[];whiteTime=TIME_MODES[timeMode].base;blackTime=TIME_MODES[timeMode].base;activeTimer=WHITE;$('gameMoves').innerHTML='';$('gameStatus').textContent='Sizning navbatingiz';renderGame();startClock()}
+function updateHome(){$('homeElo').textContent=stats.elo;$('homeWins').textContent=stats.wins;$('homeGames').textContent=stats.games}
+function topList(){const names=['ShashkaPRO','Grand Master','Pro Player','Master','Champion','AI Hunter','Draughts King','Uzbek Player','Legend','Player','Arena King','Checkers Star','Blitz Master','Tashkent PRO','Dama King','Fast Player','Board Master','Shashka Expert','Classic King','Elite Player','Golden Dama','Mastermind','Trophy Hunter','Strong Player','Royal Checker','PRO Arena','Strategist','Final Boss','Champion II','Legend II'];$('topList').innerHTML=names.map((n,i)=>'<div style="padding:12px;background:#0f161e;border-radius:12px;margin:7px 0;display:flex;justify-content:space-between"><b>'+(i+1)+'. '+n+'</b><span>'+(2100-i*35)+' Elo</span></div>').join('')}
 
-function startPosition(){
-  const b=Array.from({length:8},()=>Array(8).fill(EMPTY));
-  for(let r=0;r<3;r++)for(let c=0;c<8;c++)if((r+c)%2)b[r][c]=BLACK;
-  for(let r=5;r<8;r++)for(let c=0;c<8;c++)if((r+c)%2)b[r][c]=WHITE;
-  return b;
-}
-function startGame(){
-  stopTimer(); boardState=startPosition(); turn=WHITE; selected=null; gameOver=false;
-  history=[];moveHistory=[];seconds=600;openScreen("game");
-  drawGame();drawMoves();updateStatus();startTimer();
-}
-function drawGame(){
-  const root=$("gameBoard"); if(!root)return;
-  root.innerHTML="";
-  const moves=selected?getAllMoves(boardState,WHITE):[];
-  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
-    const cell=document.createElement("div");
-    cell.className="cell "+(((r+c)%2)?"dark":"light");
-    if(selected&&selected.r===r&&selected.c===c)cell.classList.add("selected");
-    const hit=moves.find(m=>m.from.r===selected?.r&&m.from.c===selected?.c&&m.to.r===r&&m.to.c===c);
-    if(hit)cell.classList.add(hit.captures.length?"captureTarget":"target");
-    const p=boardState[r][c];
-    if(p){
-      const piece=document.createElement("div");
-      piece.className="piece "+(isWhite(p)?"white":"black")+(isKing(p)?" king":"");
-      cell.appendChild(piece);
-    }
-    cell.addEventListener("click",()=>gameClick(r,c));
-    root.appendChild(cell);
-  }
-}
-function gameClick(r,c){
-  if(gameOver||turn!==WHITE)return;
-  const p=boardState[r][c];
-  if(selected){
-    const moves=getAllMoves(boardState,WHITE);
-    const m=moves.find(x=>x.from.r===selected.r&&x.from.c===selected.c&&x.to.r===r&&x.to.c===c);
-    if(m){makeMove(m);return}
-    if(p&&isWhite(p)){selected={r,c};drawGame();return}
-    selected=null;drawGame();return;
-  }
-  if(p&&isWhite(p)){
-    const moves=getAllMoves(boardState,WHITE);
-    if(moves.some(m=>m.from.r===r&&m.from.c===c)){selected={r,c};drawGame()}
-  }
-}
-function simpleMoves(b,r,c){
-  const p=b[r][c],out=[];if(!p)return out;
-  if(isKing(p)){
-    for(const d of DIRS){let nr=r+d[0],nc=c+d[1];while(inside(nr,nc)&&!b[nr][nc]){
-      out.push({from:{r,c},to:{r:nr,c:nc},captures:[]});nr+=d[0];nc+=d[1];
-    }}
-  }else{
-    const dr=isWhite(p)?-1:1;
-    for(const d of DIRS)if(d[0]===dr){
-      const nr=r+d[0],nc=c+d[1];
-      if(inside(nr,nc)&&!b[nr][nc])out.push({from:{r,c},to:{r:nr,c:nc},captures:[]});
-    }
-  }
-  return out;
-}
-function captureSteps(b,r,c){
-  const p=b[r][c],out=[];if(!p)return out;
-  if(isKing(p)){
-    for(const d of DIRS){
-      let nr=r+d[0],nc=c+d[1],enemy=null;
-      while(inside(nr,nc)){
-        const x=b[nr][nc];
-        if(!x){if(enemy)out.push({from:{r,c},to:{r:nr,c:nc},captures:[enemy]})}
-        else{if(sameSide(p,x)||enemy)break;enemy={r:nr,c:nc}}
-        nr+=d[0];nc+=d[1];
-      }
-    }
-  }else{
-    for(const d of DIRS){
-      const mr=r+d[0],mc=c+d[1],lr=r+2*d[0],lc=c+2*d[1];
-      if(inside(mr,mc)&&inside(lr,lc)&&b[mr][mc]&&!sameSide(p,b[mr][mc])&&!b[lr][lc])
-        out.push({from:{r,c},to:{r:lr,c:lc},captures:[{r:mr,c:mc}]});
-    }
-  }
-  return out;
-}
-function applyStep(b,m){
-  const n=clone(b),p=n[m.from.r][m.from.c];
-  n[m.from.r][m.from.c]=EMPTY;
-  m.captures.forEach(x=>n[x.r][x.c]=EMPTY);
-  n[m.to.r][m.to.c]=p;return n;
-}
-function continueCapture(b,r,c,origin,caps,path,out){
-  const steps=captureSteps(b,r,c);
-  if(!steps.length){
-    out.push({from:origin,to:{r,c},captures:caps.slice(),path:path.slice()});return;
-  }
-  for(const s of steps)continueCapture(applyStep(b,s),s.to.r,s.to.c,origin,caps.concat(s.captures),path.concat([s.to]),out);
-}
-function allCaptures(b,side){
-  const out=[];
-  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
-    const p=b[r][c];if(!p||(side===WHITE&&!isWhite(p))||(side===BLACK&&!isBlack(p)))continue;
-    for(const s of captureSteps(b,r,c))
-      continueCapture(applyStep(b,s),s.to.r,s.to.c,{r,c},s.captures,[s.to],out);
-  }
-  return out;
-}
-function getAllMoves(b,side){
-  const caps=allCaptures(b,side);if(caps.length)return caps;
-  const out=[];
-  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
-    const p=b[r][c];if(!p||(side===WHITE&&!isWhite(p))||(side===BLACK&&!isBlack(p)))continue;
-    out.push(...simpleMoves(b,r,c));
-  }
-  return out;
-}
-function applyMove(b,m){
-  const n=clone(b),p=n[m.from.r][m.from.c];
-  n[m.from.r][m.from.c]=EMPTY;m.captures.forEach(x=>n[x.r][x.c]=EMPTY);
-  let q=p;if(p===WHITE&&m.to.r===0)q=WHITE_KING;if(p===BLACK&&m.to.r===7)q=BLACK_KING;
-  n[m.to.r][m.to.c]=q;return n;
-}
-function makeMove(m){
-  history.push(clone(boardState));boardState=applyMove(boardState,m);
-  moveHistory.push(formatMove(m,turn===WHITE?"Oq":"Qora"));
-  selected=null;turn=BLACK;drawGame();drawMoves();updateStatus();checkEnd();
-  if(!gameOver)setTimeout(aiMove,250);
-}
-function evaluate(b){
-  let s=0;
-  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
-    const p=b[r][c];
-    if(p===WHITE)s-=100;
-    if(p===BLACK)s+=100;
-    if(p===WHITE_KING)s-=175;
-    if(p===BLACK_KING)s+=175;
-  }
-  return s;
-}
-function minimax(b,side,depth,alpha,beta){
-  if(depth<=0)return evaluate(b);
-  const moves=getAllMoves(b,side);if(!moves.length)return side===BLACK?-99999:99999;
-  if(side===BLACK){
-    let v=-Infinity;for(const m of moves){v=Math.max(v,minimax(applyMove(b,m),WHITE,depth-1,alpha,beta));alpha=Math.max(alpha,v);if(beta<=alpha)break}return v;
-  }else{
-    let v=Infinity;for(const m of moves){v=Math.min(v,minimax(applyMove(b,m),BLACK,depth-1,alpha,beta));beta=Math.min(beta,v);if(beta<=alpha)break}return v;
-  }
-}
-function aiMove(){
-  if(gameOver||turn!==BLACK)return;
-  const depth=Math.max(1,Math.min(3,Number($("aiLevel").value)||2));
-  const moves=getAllMoves(boardState,BLACK);
-  if(!moves.length){finish("white");return}
-  let best=moves[0],bestScore=-Infinity;
-  for(const m of moves){
-    const score=minimax(applyMove(boardState,m),WHITE,depth-1,-Infinity,Infinity);
-    if(score>bestScore){bestScore=score;best=m}
-  }
-  history.push(clone(boardState));boardState=applyMove(boardState,best);
-  moveHistory.push(formatMove(best,"Qora"));turn=WHITE;drawGame();drawMoves();updateStatus();checkEnd();
-}
-function checkEnd(){
-  let w=0,b=0;for(const row of boardState)for(const p of row){if(isWhite(p))w++;if(isBlack(p))b++}
-  if(!w){finish("black");return}if(!b){finish("white");return}
-  if(!getAllMoves(boardState,WHITE).length){finish("black");return}
-  if(!getAllMoves(boardState,BLACK).length){finish("white");return}
-}
-function finish(winner){
-  if(gameOver)return;gameOver=true;stopTimer();stats.games++;
-  if(winner==="white"){stats.wins++;stats.elo+=25;toast("🎉 Siz g‘alaba qozondingiz!")}
-  else{stats.elo=Math.max(100,stats.elo-20);toast("😔 Qora g‘alaba qozondi")}
-  saveStats();updateStatus();
-}
-function giveUp(){if(!gameOver&&confirm("Taslim bo‘lasizmi?"))finish("black")}
-function undoMove(){
-  if(!history.length||gameOver)return;
-  boardState=history.pop();if(turn===BLACK)turn=WHITE;if(moveHistory.length)moveHistory.pop();
-  selected=null;drawGame();drawMoves();updateStatus();
-}
-function restartGame(){startGame()}
-function startTimer(){
-  stopTimer();updateTimer();timerId=setInterval(()=>{if(gameOver)return;seconds--;updateTimer();if(seconds<=0){seconds=0;finish("black")}},1000);
-}
-function stopTimer(){if(timerId){clearInterval(timerId);timerId=null}}
-function updateTimer(){const m=Math.floor(seconds/60),s=seconds%60;if($("timer"))$("timer").textContent=String(m).padStart(2,"0")+":"+String(s).padStart(2,"0")}
-function updateStatus(){
-  if(!$("gameStatus"))return;
-  $("gameStatus").textContent=gameOver?"🏁 O‘yin tugadi":turn===WHITE?"⚪ Sizning navbatingiz":"⚫ AI o‘ylayapti...";
-}
-function formatMove(m,name){
-  const a=String.fromCharCode(65+m.from.c)+(8-m.from.r),z=String.fromCharCode(65+m.to.c)+(8-m.to.r);
-  return name+": "+a+(m.captures.length?"×":"-")+z;
-}
-function drawMoves(){
-  const el=$("moveList");if(!el)return;
-  el.innerHTML=moveHistory.length?moveHistory.slice(-20).map
+let editorState=startPositionForOnline(),editorTool='white';
+function drawEditor(){const el=$('editorBoard');if(!el)return;el.innerHTML='';for(let r=0;r<8;r++)for(let c=0;c<8;c++){const cell=document.createElement('div');cell.className='cell '+(((r+c)%2)?'dark':'light');const p=editorState[r][c];if(p){const pc=document.createElement('div');pc.className='piece '+(color(p)===WHITE?'white':'black')+(isKing(p)?' king':'');cell.appendChild(pc)}cell.addEventListener('click',()=>{const map={white:WHITE,black:BLACK,whiteKing:WHITE_KING,blackKing:BLACK_KING,erase:EMPTY};editorState[r][c]=map[editorTool];drawEditor()});el.appendChild(cell)}}
+function onlineUrl(room){return location.origin+location.pathname+'#room='+encodeURIComponent(room)}
+function cleanupOnline(){try{online.peer&&online.peer.destroy()}catch(e){}online={peer:null,conn:null,host:false,room:'',color:WHITE,ready:false,moveNo:0,board:null,turn:WHITE,timer:null,white:120,black:120,active:WHITE}}
+function onlineRender(){const el=$('onlineBoard');if(!el||!online.board)return;el.innerHTML='';for(let r=0;r<8;r++)for(let c=0;c<8;c++){const cell=document.createElement('div');cell.className='cell '+(((r+c)%2)?'dark':'light');const p=online.board[r][c];if(p){const pc=document.createElement('div');pc.className='piece '+(color(p)===WHITE?'white':'black')+(isKing(p)?' king':'');cell.appendChild(pc)}cell.addEventListener('click',()=>onlineClick(r,c));el.appendChild(cell)}$('onlineCancel').disabled=online.moveNo>0}
+function onlineSend(o){try{online.conn&&online.conn.open&&online.conn.send(o)}catch(e){}}
+function onlineClick(r,c){if(!online.ready||online.turn!==online.color)return;const key=online.selected;if(!online.selected){const p=online.board[r][c];if(color(p)!==online.color)return;const ms=allMoves(online.board,online.color).filter(m=>m.from.r===r&&m.from.c===c);if(ms.length){online.selected={r,c};onlineTargets=ms;onlineRender();}return}const ms=allMoves(online.board,online.color).filter(m=>m.from.r===online.selected.r&&m.from.c===online.selected.c);const m=ms.find(x=>x.r===r&&x.c===c);if(!m){online.selected=null;onlineRender();return}online.board=applyMove(online.board,m);online.moveNo++;online.turn=3-online.turn;online.selected=null;onlineSend({type:'move',m,board:online.board,moveNo:online.moveNo,turn:online.turn});onlineRender();onlineStatus('Raqib yurmoqda…');}
+let onlineTargets=[];
+function onlineStatus(t){$('onlineStatus').textContent=t}
+function startOnlineHost(){if(typeof Peer==='undefined'){toast('PeerJS yuklanmadi');return}cleanupOnline();online.host=true;online.color=WHITE;online.room='sp'+Math.random().toString(36).slice(2,8);online.board=startPositionForOnline();online.turn=WHITE;online.moveNo=0;online.peer=new Peer(online.room);online.peer.on('open',()=>{$('roomBox').style.display='block';$('inviteLink').textContent=onlineUrl(online.room);onlineStatus('Do‘stingizni havola orqali chaqiring.')});online.peer.on('connection',c=>{online.conn=c;onlineSetupConn();showOnlineGame()});}
+function startPositionForOnline(){const b=Array.from({length:8},()=>Array(8).fill(EMPTY));for(let r=0;r<3;r++)for(let c=0;c<8;c++)if((r+c)%2)b[r][c]=BLACK;for(let r=5;r<8;r++)for(let c=0;c<8;c++)if((r+c)%2)b[r][c]=WHITE;return b}
+function joinOnline(room){if(typeof Peer==='undefined'){toast('PeerJS yuklanmadi');return}cleanupOnline();online.host=false;online.color=BLACK;online.room=room.replace(/^.*#room=/,'');online.peer=new Peer();online.peer.on('open',()=>{online.conn=online.peer.connect(online.room);onlineSetupConn()});}
+function onlineSetupConn(){online.conn.on('open',()=>{online.ready=true;onlineStatus(online.host?'Raqibni kuting…':'O‘yin boshlandi');if(!online.host)onlineSend({type:'hello'})});online.conn.on('data',d=>{if(d.type==='hello'&&online.host){online.conn.send({type:'state',board:online.board,turn:online.turn,moveNo:online.moveNo})}else if(d.type==='state'){online.board=d.board;online.turn=d.turn;online.moveNo=d.moveNo;online.ready=true;showOnlineGame();onlineRender()}else if(d.type==='move'){online.board=d.board;online.turn=d.turn;online.moveNo=d.moveNo;onlineRender();onlineStatus(online.turn===online.color?'Sizning navbatingiz':'Raqib yurmoqda…')}else if(d.type==='cancel'){onlineStatus('O‘yin raqib tomonidan bekor qilindi.');toast('🛑 O‘yin bekor qilindi');show('online');}else if(d.type==='chat'){addChat(d.text,false)}else if(d.type==='draw'){if(confirm('Raqib durang taklif qildi. Qabul qilasizmi?')){onlineSend({type:'draw_accept'})}}else if(d.type==='draw_accept'){toast('🤝 Durang qabul qilindi');show('online')}else if(d.type==='resign'){toast('🏳 Raqib taslim bo‘ldi — siz yutdingiz');show('online')}else if(d.type==='rematch'){toast('🔄 Qayta o‘yin so‘rovi qabul qilindi')}});online.conn.on('close',()=>onlineStatus('Raqib uzildi.'))}
+function showOnlineGame(){$('onlineLobby').style.display='none';$('onlineGame').style.display='block';$('onlineYou').textContent=online.color===WHITE?'⚪':'⚫';$('onlineOpp').textContent=online.color===WHITE?'⚫':'⚪';onlineRender()}
+function addChat(t,me){const d=document.createElement('div');d.className='chatMsg'+(me?' chatMe':'');d.textContent=t;$('chatMessages').appendChild(d);$('chatMessages').scrollTop=$('chatMessages').scrollHeight}
+function joinFromHash(){const m=location.hash.match(/room=([^&]+)/);if(m){show('online');$('roomInput').value=decodeURIComponent(m[1]);$('joinBox').style.display='block'}}
+$('aiBtn').addEventListener('click',()=>{show('game');newGame()});$('newGame').addEventListener('click',newGame);$('newGame2').addEventListener('click',newGame);$('gameBack').addEventListener('click',()=>{stopClock();show('home')});$('giveUp').addEventListener('click',()=>{if(!gameOver)endGame('Siz taslim bo‘ldingiz. AI g‘olib 🤖')});$('cancelGame').addEventListener('click',()=>{if(gameOver||moveNo!==0)return;if(confirm('O‘yinni bekor qilmoqchimisiz?')){stopClock();gameOver=true;show('home')}});$('gameAnalysis').addEventListener('click',()=>{updateAnalysis();show('analysis')});$('offerDraw').addEventListener('click',()=>toast('AI bilan durang taklifi mavjud emas'));$('onlineBtn').addEventListener('click',()=>show('online'));$('onlineBack').addEventListener('click',()=>{cleanupOnline();show('home')});$('createRoom').addEventListener('click',startOnlineHost);$('joinRoom').addEventListener('click',()=>{$('joinBox').style.display='block'});$('connectRoom').addEventListener('click',()=>{const v=$('roomInput').value.trim();if(v)joinOnline(v);else toast('Xona kodi kerak')});$('copyInvite').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('inviteLink').textContent);toast('Havola nusxalandi')}catch(e){toast('Havolani qo‘lda nusxalang')}});$('onlineCancel').addEventListener('click',()=>{if(online.moveNo!==0)return;onlineSend({type:'cancel'});cleanupOnline();show('home')});$('onlineDraw').addEventListener('click',()=>onlineSend({type:'draw'}));$('onlineResign').addEventListener('click',()=>{onlineSend({type:'resign'});cleanupOnline();show('home')});$('onlineRematch').addEventListener('click',()=>onlineSend({type:'rematch'}));$('chatSend').addEventListener('click',()=>{const v=$('chatInput').value.trim();if(v){addChat(v,true);onlineSend({type:'chat',text:v});$('chatInput').value=''}});$('editorBtn').addEventListener('click',()=>{show('editor');drawEditor()});$('editorBack').addEventListener('click',()=>show('home'));$('topBtn').addEventListener('click',()=>{topList();show('top')});$('topBack').addEventListener('click',()=>show('home'));$('profileBtn').addEventListener('click',()=>{renderProfile();show('profile')});$('settingsBtn').addEventListener('click',()=>{show('settings');$('timeSelect').value=timeMode});$('analysisBtn').addEventListener('click',()=>{updateAnalysis();show('analysis')});$('historyBtn').addEventListener('click',()=>{renderHistory();show('history')});$('achievementsBtn').addEventListener('click',()=>{renderAchievements();show('achievements')});$('tournamentBtn').addEventListener('click',()=>show('tournament'));document.querySelectorAll('.backHome').forEach(b=>b.addEventListener('click',()=>show('home')));document.querySelectorAll('.timePick').forEach(b=>b.addEventListener('click',()=>{setTimeMode(b.dataset.time);document.querySelectorAll('.timePick').forEach(x=>x.classList.remove('gold'));b.classList.add('gold');toast('⏱️ '+b.dataset.time+' tanlandi')}));$('timeSelect').addEventListener('change',e=>setTimeMode(e.target.value));document.querySelectorAll('.etool').forEach(b=>b.addEventListener('click',()=>{editorTool=b.dataset.tool}));$('editorStart').addEventListener('click',()=>{editorState=startPositionForOnline();drawEditor()});$('clearEditor').addEventListener('click',()=>{editorState=Array.from({length:8},()=>Array(8).fill(EMPTY));drawEditor()});$('playEditor').addEventListener('click',()=>{stopClock();board=clone(editorState);turn=WHITE;selected=null;targets=[];chain=null;gameOver=false;aiThinking=false;moveNo=0;replayMoves=[];whiteTime=TIME_MODES[timeMode].base;blackTime=whiteTime;activeTimer=WHITE;$('gameMoves').innerHTML='';show('game');renderGame();startClock()});$('aiLevel').addEventListener('change',e=>localStorage.setItem('spAI',e.target.value));$('themeSelect').addEventListener('change',e=>{document.body.classList.toggle('themeLight',e.target.value==='light');localStorage.setItem('spTheme',e.target.value)});$('soundToggle').addEventListener('change',e=>localStorage.setItem('spSound',e.target.checked?'on':'off'));$('vibeToggle').addEventListener('change',e=>localStorage.setItem('spVibe',e.target.checked?'on':'off'));updateHome();setTimeMode(timeMode);if(localStorage.getItem('spTheme')==='light'){$('themeSelect').value='light';document.body.classList.add('themeLight')}if(window.Telegram?.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand()}joinFromHash();</script>
+</body>
+</html>
