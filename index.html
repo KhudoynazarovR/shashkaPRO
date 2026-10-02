@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>ShashkaPRO</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0d1117;color:#f0f6fc;font-family:system-ui,sans-serif}.app{max-width:700px;margin:auto;padding:14px}.head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.logo{font-size:25px;font-weight:900}.logo b{color:#58a6ff}.card{background:#161b22;border:1px solid #30363d;border-radius:18px;padding:14px;margin-bottom:12px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}button{background:#21262d;color:#fff;border:0;border-radius:13px;padding:13px;font-weight:800;font-size:14px}button:active{transform:scale(.98)}.screen{display:none}.screen.on{display:block}.title{font-size:22px;font-weight:900;margin:8px 0 12px}.muted{color:#8b949e}.board{width:min(94vw,600px);aspect-ratio:1;display:grid;grid-template-columns:repeat(8,1fr);margin:auto;border:3px solid #35251b;border-radius:9px;overflow:hidden}.sq{position:relative;display:grid;place-items:center}.light{background:#e7c99a}.dark{background:#70482e}.sq.sel{outline:4px solid #58a6ff;outline-offset:-4px}.sq.legal:after{content:"";width:23%;height:23%;background:#58a6ffcc;border-radius:50%;position:absolute}.piece{width:73%;height:73%;border-radius:50%;border:3px solid #0007;box-shadow:inset 0 4px 6px #fff4,0 4px 7px #0009;z-index:2;display:grid;place-items:center;font-size:25px}.white{background:#f4f4f4;color:#111}.black{background:#171717;color:white}.bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}.timer{font-size:20px;font-weight:900}.actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:9px}.row{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid #30363d}.row:last-child{border:0}.nav{position:sticky;bottom:8px;background:#161b22ee;border:1px solid #30363d;border-radius:16px;padding:7px;display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:14px}.nav button{font-size:11px;padding:9px 3px}.langs{display:grid;grid-template-columns:1fr 1fr;gap:8px}.lang.active{outline:2px solid #58a6ff}.avatar{font-size:45px;text-align:center}table{width:100%;border-collapse:collapse}td,th{padding:9px 5px;border-bottom:1px solid #30363d;text-align:left}.toast{position:fixed;left:50%;bottom:85px;transform:translateX(-50%);background:#111827;border:1px solid #374151;padding:11px 15px;border-radius:12px;display:none}.toast.on{display:block}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="head"><div class="logo">♟️ Shashka<b>PRO</b></div><button onclick="page('settings')">⚙️</button></div>
+
+<section id="home" class="screen on">
+<div class="card" style="text-align:center"><h1>♟️ ShashkaPRO</h1><p class="muted" data-i="desc">O‘ynang, reyting yig‘ing va turnirlarda qatnashing.</p></div>
+<div class="card grid">
+<button onclick="start()">🤖 <span data-i="ai">AI bilan o‘ynash</span></button>
+<button onclick="page('online')">🌐 <span data-i="online">Onlayn</span></button>
+<button onclick="page('tournaments')">🏆 <span data-i="tour">Turnirlar</span></button>
+<button onclick="page('top')">👑 TOP 30</button>
+<button onclick="page('profile')">👤 <span data-i="profile">Profil</span></button>
+<button onclick="page('settings')">⚙️ <span data-i="settings">Sozlamalar</span></button>
+</div>
+<div class="card"><div class="row">⭐ Elo <b id="hr">1000</b></div><div class="row">🏆 <span data-i="wins">G‘alabalar</span><b id="hw">0</b></div><div class="row">🎮 <span data-i="games">O‘yinlar</span><b id="hg">0</b></div></div>
+</section>
+
+<section id="game" class="screen">
+<div class="title">🤖 <span data-i="ai">AI bilan o‘ynash</span></div>
+<div class="bar"><div><b id="turn">⚪ Sizning yurishingiz</b><div class="muted" id="status">Majburiy urish faol</div></div><div class="timer" id="clock">10:00</div></div>
+<div id="board" class="board"></div>
+<div class="actions"><button onclick="newGame()">🔄 Yangi</button><button onclick="undo()">↩️ Bekor</button><button onclick="giveUp()">🏳️ Taslim</button></div>
+</section>
+
+<section id="top" class="screen"><div class="title">👑 TOP 30</div><div class="card"><table><thead><tr><th>#</th><th>O‘yinchi</th><th>Elo</th></tr></thead><tbody id="topbody"></tbody></table></div></section>
+
+<section id="profile" class="screen"><div class="title">👤 <span data-i="profile">Profil</span></div><div class="card"><div class="avatar">♟️</div><h2 id="name" style="text-align:center">Player</h2><div class="row">⭐ Elo <b id="pr">1000</b></div><div class="row">🏆 G‘alaba <b id="pw">0</b></div><div class="row">❌ Mag‘lubiyat <b id="pl">0</b></div><div class="row">🤝 Durang <b id="pd">0</b></div></div><div class="card"><b>🏅 Yutuqlar</b><p id="ach" class="muted">🔒 Birinchi g‘alabani qo‘lga kiriting</p></div></section>
+
+<section id="tournaments" class="screen"><div class="title">🏆 <span data-i="tour">Turnirlar</span></div><div class="card"><div class="row">🥇 ShashkaPRO Cup <b>10 min</b></div><div class="row">⚡ Blitz Arena <b>3 min</b></div><div class="row">🌍 Open Championship <b>15 min</b></div><button style="width:100%;margin-top:10px" onclick="toast('Turnir serveri ulanadi')">🏆 Qatnashish</button></div></section>
+
+<section id="online" class="screen"><div class="title">🌐 <span data-i="online">Onlayn</span></div><div class="card"><p class="muted">Do‘st bilan xona yaratish. Haqiqiy umumiy multiplayer uchun server/WebSocket kerak.</p><button style="width:100%" onclick="room()">🔗 Xona yaratish</button><div id="code"></div></div></section>
+
+<section id="settings" class="screen"><div class="title">⚙️ <span data-i="settings">Sozlamalar</span></div><div class="card"><b>🌐 Til</b><div class="langs" style="margin-top:10px"><button class="lang" data-l="uz">🇺🇿 O‘zbek</button><button class="lang" data-l="ru">🇷🇺 Русский</button><button class="lang" data-l="en">🇬🇧 English</button><button class="lang" data-l="tr">🇹🇷 Türkçe</button></div></div><div class="card"><div class="row">🔊 Ovoz <button onclick="sound()">ON/OFF</button></div><div class="row">🌙 Dark rejim <b>ON</b></div></div></section>
+
+<div class="nav"><button onclick="page('home')">🏠<br>Home</button><button onclick="start()">🎮<br>Play</button><button onclick="page('top')">👑<br>TOP</button><button onclick="page('profile')">👤<br>Profile</button></div>
+</div><div id="toast" class="toast"></div>
+
+<script>
+const tr={
+uz:{desc:"O‘ynang, reyting yig‘ing va turnirlarda qatnashing.",ai:"AI bilan o‘ynash",online:"Onlayn",tour:"Turnirlar",profile:"Profil",settings:"Sozlamalar",wins:"G‘alabalar",games:"O‘yinlar"},
+ru:{desc:"Играйте, набирайте рейтинг и участвуйте в турнирах.",ai:"Играть с ИИ",online:"Онлайн",tour:"Турниры",profile:"Профиль",settings:"Настройки",wins:"Победы",games:"Игры"},
+en:{desc:"Play, earn rating and join tournaments.",ai:"Play with AI",online:"Online",tour:"Tournaments",profile:"Profile",settings:"Settings",wins:"Wins",games:"Games"},
+tr:{desc:"Oyna, puan kazan ve turnuvalara katıl.",ai:"Yapay zekâ ile oyna",online:"Çevrimiçi",tour:"Turnuvalar",profile:"Profil",settings:"Ayarlar",wins:"Galibiyet",games:"Oyunlar"}};
+let u=JSON.parse(localStorage.getItem("sp")||"null")||{name:"Player",lang:"uz",elo:1000,w:0,l:0,d:0,g:0};
+function save(){localStorage.setItem("sp",JSON.stringify(u));update()}
+function lang(){let x=tr[u.lang];document.querySelectorAll("[data-i]").forEach(e=>e.textContent=x[e.dataset.i]);document.querySelectorAll(".lang").forEach(e=>e.classList.toggle("active",e.dataset.l==u.lang))}
+document.querySelectorAll(".lang").forEach(e=>e.onclick=()=>{u.lang=e.dataset.l;save();lang()});
+function update(){hr.textContent=pr.textContent=u.elo;hw.textContent=pw.textContent=u.w;hg.textContent=u.g;pl.textContent=u.l;pd.textContent=u.d;name.textContent=u.name;ach.textContent=u.w?"🏅 Birinchi g‘alaba":"🔒 Birinchi g‘alabani qo‘lga kiriting";lang()}
+function page(id){document.querySelectorAll(".screen").forEach(x=>x.classList.remove("on"));document.getElementById(id).classList.add("on");if(id=="top")top();scrollTo(0,0)}
+function toast(s){let x=document.getElementById("toast");x.textContent=s;x.classList.add("on");setTimeout(()=>x.classList.remove("on"),1800)}
+function room(){let c=Math.random().toString(36).slice(2,8).toUpperCase();code.innerHTML='<div class="row">🔗 '+c+' <button onclick="navigator.clipboard?.writeText(\''+c+'\');toast(\'Nusxalandi\')">📋</button></div>'}
+function sound(){toast("Ovoz sozlamasi saqlandi")}
+function top(){let a=["GrandMaster","DamaKing","CheckMaster","UzbekPro","ShashkaStar","Champion","Master","Legend","Arena","Falcon","Tiger","Dragon","Samurai","Wizard","Ace","ProPlayer","Storm","Knight","Alpha","Beta","Turbo","Rival","Winner","King","DamaPro","TopPlayer","MasterX","ChampionX","ShashkaFan","PlayerX"];a=a.map((n,i)=>({n,e:2100-i*32}));a[10]={n:u.name,e:u.elo};a.sort((a,b)=>b.e-a.e);topbody.innerHTML=a.slice(0,30).map((x,i)=>'<tr><td>'+(i+1)+'</td><td>'+x.n+'</td><td>'+x.e+'</td></tr>').join("")}
+
+// Russian checkers engine: 8x8, mandatory captures, men capture both directions,
+// flying kings, multiple captures and promotion during a capture sequence.
+let B,sel=null,turn=1,hist=[],chain=null,over=false,time=600,interval;
+const D=[[1,1],[1,-1],[-1,1],[-1,-1]];
+function own(p,t){return t==1?(p==1||p==3):(p==2||p==4)}function en(p,t){return t==1?(p==2||p==4):(p==1||p==3)}
+function inside(r,c){return r>=0&&r<8&&c>=0&&c<8}
+function init(){B=Array.from({length:8},()=>Array(8).fill(0));for(let r=0;r<3;r++)for(let c=0;c<8;c++)if((r+c)%2)B[r][c]=2;for(let r=5;r<8;r++)for(let c=0;c<8;c++)if((r+c)%2)B[r][c]=1;sel=null;chain=null;turn=1;hist=[];over=false}
+function caps(r,c){let p=B[r][c],t=p==1||p==3?1:2,a=[];if(!p)return a;if(p<3){for(let d of D){let mr=r+d[0],mc=c+d[1],rr=r+2*d[0],cc=c+2*d[1];if(inside(rr,cc)&&en(B[mr][mc],t)&&!B[rr][cc])a.push({r:rr,c:cc,mr,mc})}}else{for(let d of D){let rr=r+d[0],cc=c+d[1],hit=null;while(inside(rr,cc)){if(B[rr][cc]){if(!hit&&en(B[rr][cc],t))hit={r:rr,c:cc};else break;break}if(hit)a.push({r:rr,c:cc,mr:hit.r,mc:hit.c});rr+=d[0];cc+=d[1]}}}return a}
+function moves(r,c){let p=B[r][c],t=p==1||p==3?1:2,a=[];if(p<3){let dr=t==1?-1:1;for(let dc of[-1,1]){let rr=r+dr,cc=c+dc;if(inside(rr,cc)&&!B[rr][cc])a.push({r:rr,c:cc})}}else for(let d of D){let rr=r+d[0],cc=c+d[1];while(inside(rr,cc)&&!B[rr][cc]){a.push({r:rr,c:cc});rr+=d[0];cc+=d[1]}}return a}
+function allCaps(t){let a=[];for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(own(B[r][c],t))a.push(...caps(r,c).map(m=>({...m,sr:r,sc:c})));return a}
+function legal(r,c){return allCaps(turn).length?caps(r,c):moves(r,c)}
+function draw(){board.innerHTML="";for(let r=0;r<8;r++)for(let c=0;c<8;c++){let x=document.createElement("div");x.className="sq "+((r+c)%2?"dark":"light");if(sel&&sel.r==r&&sel.c==c)x.classList.add("sel");if(sel&&legal(sel.r,sel.c).some(m=>m.r==r&&m.c==c))x.classList.add("legal");let p=B[r][c];if(p){let q=document.createElement("div");q.className="piece "+(p==1||p==3?"white":"black");q.textContent=p>=3?"♛":"";x.appendChild(q)}x.onclick=()=>click(r,c);board.appendChild(x)}turn.textContent=turn==1?"⚪ Sizning yurishingiz":"⚫ AI yurishi";status.textContent=allCaps(turn).length?"🔥 Majburiy urish mavjud":"Oddiy yurish"}
+function snap(){hist.push(JSON.stringify({B,turn,time,chain}));if(hist.length>30)hist.shift()}
+function click(r,c){if(over||turn!=1)return;let p=B[r][c];if(sel){let m=legal(sel.r,sel.c).find(x=>x.r==r&&x.c==c);if(m){snap();move(sel.r,sel.c,m);return}}if(own(p,1)&&(!chain||chain.r==r&&chain.c==c)){sel={r,c};draw()}}
+function move(sr,sc,m){let p=B[sr][sc],capture=m.mr!==undefined;B[m.r][m.c]=p;B[sr][sc]=0;if(capture)B[m.mr][m.mc]=0;if(p==1&&m.r==0)B[m.r][m.c]=3;if(p==2&&m.r==7)B[m.r][m.c]=4;if(capture&&caps(m.r,m.c).length){chain={r:m.r,c:m.c};sel=chain;draw();return}chain=null;sel=null;turn=turn==1?2:1;draw();check();if(turn==2&&!over)setTimeout(ai,300)}
+function check(){if(!allCaps(turn).length){let ok=false;for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(own(B[r][c],turn)&&moves(r,c).length)ok=true;if(!ok){over=true;clearInterval(interval);result(turn==1?"loss":"win")}}}
+function ai(){if(over)return;let a=allCaps(2);if(!a.length)for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(own(B[r][c],2))for(let m of moves(r,c))a.push({...m,sr:r,sc:c});if(!a.length)return result("win");let m=a[Math.floor(Math.random()*a.length)];snap();move(m.sr,m.sc,m)}
+function result(x){u.g++;if(x=="win"){u.w++;u.elo+=25;toast("🏆 G‘alaba! +25 Elo")}else if(x=="loss"){u.l++;u.elo=Math.max(100,u.elo-20);toast("❌ Mag‘lubiyat")}else u.d++;save()}
+function tick(){if(over)return;time--;clock.textContent=Math.floor(time/60)+":"+String(time%60).padStart(2,"0");if(time<=0){over=true;clearInterval(interval);result("loss")}}
+function newGame(){init();clearInterval(interval);time=600;clock.textContent="10:00";interval=setInterval(tick,1000);draw()}
+function start(){page("game");newGame()}
+function undo(){if(hist.length&&turn==1){let s=JSON.parse(hist.pop());B=s.B;turn=s.turn;time=s.time;chain=s.chain;over=false;draw()}}
+function giveUp(){if(!over){over=true;clearInterval(interval);result("loss")}}
+update();top();draw=function(){let el=document.getElementById("board");el.innerHTML="";for(let r=0;r<8;r++)for(let c=0;c<8;c++){let x=document.createElement("div");x.className="sq "+((r+c)%2?"dark":"light");if(sel&&sel.r==r&&sel.c==c)x.classList.add("sel");if(sel&&legal(sel.r,sel.c).some(m=>m.r==r&&m.c==c))x.classList.add("legal");let p=B[r][c];if(p){let q=document.createElement("div");q.className="piece "+(p==1||p==3?"white":"black");q.textContent=p>=3?"♛":"";x.appendChild(q)}x.onclick=()=>click(r,c);el.appendChild(x)}document.getElementById("turn").textContent=turn==1?"⚪ Sizning yurishingiz":"⚫ AI yurishi";document.getElementById("status").textContent=allCaps(turn).length?"🔥 Majburiy urish mavjud":"Oddiy yurish"};init();draw();lang();
+</script>
+</body></html>
