@@ -251,51 +251,155 @@ function formatMove(m,name){const a=String.fromCharCode(65+m.from.c)+(8-m.from.r
 function drawMoves(){const el=$("moveList");if(!el)return;el.innerHTML=moveHistory.length?moveHistory.slice(-20).map((x,i)=>"<div>"+(i+1)+". "+x+"</div>").join(""):"Hali yurish yo‘q"}
 
 function updateAnalysis(){
-  let w=0,b=0,wk=0,bk=0;for(const row of boardState)for(const p of row){if(p===WHITE)w++;if(p===BLACK)b++;if(p===WHITE_KING)wk++;if(p===BLACK_KING)bk++}
-  const score=(w+wk*1.75)-(b+bk*1.75);if($("analysisScore"))$("analysisScore").textContent=(score>0?"+":"")+score.toFixed(1);
-  if($("aWhite"))$("aWhite").textContent=w;if($("aBlack"))$("aBlack").textContent=b;if($("aWhiteKings"))$("aWhiteKings").textContent=wk;if($("aBlackKings"))$("aBlackKings").textContent=bk;
-  if($("analysisText"))$("analysisText").textContent=score>2?"⚪ Oq tomon moddiy jihatdan ustun.":score<-2?"⚫ Qora tomon moddiy jihatdan ustun.":"⚖️ Pozitsiya taxminan teng."
+  let w=0,b=0,wk=0,bk=0;
+  for(const row of boardState)for(const p of row){
+    if(p===WHITE)w++;
+    if(p===BLACK)b++;
+    if(p===WHITE_KING)wk++;
+    if(p===BLACK_KING)bk++;
+  }
+  const score=(w+wk*1.75)-(b+bk*1.75);
+  if($("analysisScore"))$("analysisScore").textContent=(score>0?"+":"")+score.toFixed(1);
+  if($("aWhite"))$("aWhite").textContent=w;
+  if($("aBlack"))$("aBlack").textContent=b;
+  if($("aWhiteKings"))$("aWhiteKings").textContent=wk;
+  if($("aBlackKings"))$("aBlackKings").textContent=bk;
+  if($("analysisText")){
+    $("analysisText").textContent=
+      score>2?"⚪ Oq tomon moddiy jihatdan ustun.":
+      score<-2?"⚫ Qora tomon moddiy jihatdan ustun.":
+      "⚖️ Pozitsiya nisbatan teng.";
+  }
 }
+
 function drawTop(){
-  const el=$("topList");if(!el)return;const names=["Magnus","ChessMaster","ProPlayer","ShashkaKing","GrandMaster","Champion","Tactical","Legend","Master","Player"];el.innerHTML="";
-  for(let i=1;i<=30;i++){const row=document.createElement("div");row.className="listRow";row.innerHTML="<span>"+i+". "+(i===1?"ShashkaPRO":names[(i-1)%names.length])+"</span><b>"+(1800-(i-1)*20)+"</b>";el.appendChild(row)}
+  const el=$("topList");if(!el)return;
+  const names=["Shashka Master","PRO Player","Checkers King","Uzbek Player","Grand Master"];
+  let html="";
+  for(let i=0;i<30;i++){
+    const name=names[i%names.length]+" "+(i+1);
+    const elo=1850-i*25;
+    html+='<div class="listRow"><span>#'+(i+1)+" "+name+'</span><b>'+elo+"</b></div>";
+  }
+  el.innerHTML=html;
 }
-function editorStartPosition(){editorState=startPosition();editorTurn=WHITE;updateEditorTurn();drawEditor()}
-function initEditor(){editorStartPosition()}
+
 function drawEditor(){
-  const root=$("editorBoard");if(!root)return;root.innerHTML="";
-  for(let r=0;r<8;r++)for(let c=0;c<8;c++){const cell=document.createElement("div");cell.className="cell "+(((r+c)%2)?"dark":"light");const p=editorState[r][c];
-    if(p){const piece=document.createElement("div");piece.className="piece "+(isWhite(p)?"white":"black")+(isKing(p)?" king":"");cell.appendChild(piece)}
-    cell.addEventListener("click",()=>{if(editorTool==="erase")editorState[r][c]=EMPTY;else if(editorTool==="white")editorState[r][c]=WHITE;else if(editorTool==="black")editorState[r][c]=BLACK;else if(editorTool==="whiteKing")editorState[r][c]=WHITE_KING;else if(editorTool==="blackKing")editorState[r][c]=BLACK_KING;drawEditor()});root.appendChild(cell)}
+  const root=$("editorBoard");if(!root)return;
+  root.innerHTML="";
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+    const cell=document.createElement("div");
+    cell.className="cell "+(((r+c)%2)?"dark":"light");
+    const p=editorState[r][c];
+    if(p){
+      const piece=document.createElement("div");
+      piece.className="piece "+(isWhite(p)?"white":"black")+(isKing(p)?" king":"");
+      cell.appendChild(piece);
+    }
+    cell.addEventListener("click",()=>editorClick(r,c));
+    root.appendChild(cell);
+  }
+  if($("editorTurn"))$("editorTurn").textContent=editorTurn===WHITE?"⚪ Oq":"⚫ Qora";
 }
-function updateEditorTurn(){if($("editorTurn"))$("editorTurn").textContent=editorTurn===WHITE?"⚪ Oq":"⚫ Qora"}
+
+function editorClick(r,c){
+  if(!editorState.length)return;
+  if(editorTool==="erase")editorState[r][c]=EMPTY;
+  else if(editorTool==="white")editorState[r][c]=WHITE;
+  else if(editorTool==="black")editorState[r][c]=BLACK;
+  else if(editorTool==="whiteKing")editorState[r][c]=WHITE_KING;
+  else if(editorTool==="blackKing")editorState[r][c]=BLACK_KING;
+  drawEditor();
+}
+
+function resetEditor(){
+  editorState=startPosition();
+  editorTurn=WHITE;
+  drawEditor();
+}
+
 function playEditor(){
-  stopTimer();clearTimeout(aiTimer);boardState=clone(editorState);turn=editorTurn;selected=null;gameOver=false;history=[];moveHistory=[];seconds=600;
-  openScreen("game");drawGame();drawMoves();updateStatus();startTimer();if(turn===BLACK)aiTimer=setTimeout(aiMove,300)
+  if(!editorState.length)return;
+  stopTimer();clearTimeout(aiTimer);
+  boardState=clone(editorState);
+  turn=editorTurn;
+  selected=null;gameOver=false;history=[];moveHistory=[];seconds=600;
+  openScreen("game");drawGame();drawMoves();updateStatus();startTimer();
+  if(turn===BLACK)aiTimer=setTimeout(aiMove,300);
 }
-function editorAnalysis(){boardState=clone(editorState);openScreen("analysis");updateAnalysis()}
-function clearEditor(){editorState=Array.from({length:8},()=>Array(8).fill(EMPTY));drawEditor()}
-function selectEditorTool(tool){editorTool=tool;document.querySelectorAll("[data-tool]").forEach(btn=>btn.classList.toggle("active",btn.dataset.tool===tool))}
-function toggleEditorTurn(){editorTurn=editorTurn===WHITE?BLACK:WHITE;updateEditorTurn()}
-function resetStats(){if(!confirm("Statistikani tozalaysizmi?"))return;stats={elo:1000,wins:0,games:0};saveStats();toast("🗑 Statistikalar tozalandi")}
+
+function analyzeEditor(){
+  boardState=clone(editorState);
+  openScreen("analysis");
+  updateAnalysis();
+}
+
+function toggleEditorTurn(){
+  editorTurn=editorTurn===WHITE?BLACK:WHITE;
+  drawEditor();
+}
 
 function bind(){
-  $("btnAI").addEventListener("click",startGame);$("onlineAI").addEventListener("click",startGame);
-  $("btnOnline").addEventListener("click",()=>openScreen("online"));$("btnTournaments").addEventListener("click",()=>openScreen("tournaments"));$("btnTop").addEventListener("click",()=>openScreen("top"));
-  $("btnProfile").addEventListener("click",()=>openScreen("profile"));$("btnEditor").addEventListener("click",()=>{openScreen("editor");initEditor()});
-  $("btnAnalysis").addEventListener("click",()=>{openScreen("analysis");updateAnalysis()});$("btnSettings").addEventListener("click",()=>openScreen("settings"));
-  $("gameBack").addEventListener("click",()=>{stopTimer();clearTimeout(aiTimer);openScreen("home")});$("editorBack").addEventListener("click",()=>openScreen("home"));
-  $("analysisBack").addEventListener("click",()=>openScreen("home"));$("topBack").addEventListener("click",()=>openScreen("home"));$("profileBack").addEventListener("click",()=>openScreen("home"));
-  $("tournamentsBack").addEventListener("click",()=>openScreen("home"));$("onlineBack").addEventListener("click",()=>openScreen("home"));$("settingsBack").addEventListener("click",()=>openScreen("home"));
-  $("undoBtn").addEventListener("click",undoMove);$("restartBtn").addEventListener("click",restartGame);$("giveUpBtn").addEventListener("click",giveUp);
-  $("gameAnalysisBtn").addEventListener("click",()=>{updateAnalysis();openScreen("analysis")});
-  document.querySelectorAll("[data-tool]").forEach(btn=>btn.addEventListener("click",()=>selectEditorTool(btn.dataset.tool)));
-  $("clearEditor").addEventListener("click",clearEditor);$("startEditor").addEventListener("click",editorStartPosition);$("editorTurnBtn").addEventListener("click",toggleEditorTurn);
-  $("playEditor").addEventListener("click",playEditor);$("editorAnalysis").addEventListener("click",editorAnalysis);$("resetStats").addEventListener("click",resetStats);
-  document.querySelectorAll(".tournamentBtn").forEach(btn=>btn.addEventListener("click",()=>toast("🏆 "+btn.dataset.name+" turniri hozircha demo rejimida.")));
+  $("btnAI").addEventListener("click",startGame);
+  $("onlineAI").addEventListener("click",startGame);
+
+  $("btnOnline").addEventListener("click",()=>openScreen("online"));
+  $("btnTournaments").addEventListener("click",()=>openScreen("tournaments"));
+  $("btnTop").addEventListener("click",()=>openScreen("top"));
+  $("btnProfile").addEventListener("click",()=>openScreen("profile"));
+  $("btnEditor").addEventListener("click",()=>{resetEditor();openScreen("editor")});
+  $("btnAnalysis").addEventListener("click",()=>openScreen("analysis"));
+  $("btnSettings").addEventListener("click",()=>openScreen("settings"));
+
+  $("gameBack").addEventListener("click",()=>{stopTimer();clearTimeout(aiTimer);openScreen("home")});
+  $("editorBack").addEventListener("click",()=>openScreen("home"));
+  $("analysisBack").addEventListener("click",()=>openScreen("home"));
+  $("topBack").addEventListener("click",()=>openScreen("home"));
+  $("profileBack").addEventListener("click",()=>openScreen("home"));
+  $("tournamentsBack").addEventListener("click",()=>openScreen("home"));
+  $("onlineBack").addEventListener("click",()=>openScreen("home"));
+  $("settingsBack").addEventListener("click",()=>openScreen("home"));
+
+  $("undoBtn").addEventListener("click",undoMove);
+  $("restartBtn").addEventListener("click",restartGame);
+  $("giveUpBtn").addEventListener("click",giveUp);
+  $("gameAnalysisBtn").addEventListener("click",()=>{openScreen("analysis");updateAnalysis()});
+
+  document.querySelectorAll(".tool[data-tool]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      editorTool=btn.dataset.tool;
+      document.querySelectorAll(".tool[data-tool]").forEach(x=>x.classList.remove("active"));
+      btn.classList.add("active");
+    });
+  });
+
+  $("clearEditor").addEventListener("click",()=>{
+    editorState=Array.from({length:8},()=>Array(8).fill(EMPTY));drawEditor();
+  });
+  $("startEditor").addEventListener("click",resetEditor);
+  $("editorTurnBtn").addEventListener("click",toggleEditorTurn);
+  $("playEditor").addEventListener("click",playEditor);
+  $("editorAnalysis").addEventListener("click",analyzeEditor);
+
+  $("resetStats").addEventListener("click",()=>{
+    if(confirm("Statistikani tozalashni xohlaysizmi?")){
+      stats={elo:1000,wins:0,games:0};saveStats();toast("Statistika tozalandi");
+    }
+  });
+
+  document.querySelectorAll(".tournamentBtn").forEach(btn=>{
+    btn.addEventListener("click",()=>toast("🏆 "+btn.dataset.name+" hozircha demo rejimida."));
+  });
+
+  $("sound").addEventListener("change",()=>toast($("sound").checked?"🔊 Ovoz yoqildi":"🔇 Ovoz o‘chirildi"));
+  $("vibration").addEventListener("change",()=>toast($("vibration").checked?"📳 Vibratsiya yoqildi":"📳 Vibratsiya o‘chirildi"));
+
+  editorState=startPosition();
+  drawEditor();
+  updateStats();
 }
-function boot(){updateStats();bind();initEditor();updateTimer()}
-boot();
+
+bind();
 })();
 </script>
 </body>
