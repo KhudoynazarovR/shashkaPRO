@@ -422,5 +422,521 @@ function drawMoves(){
 }
 
 function updateAnalysis(){
-  const b=boardState.length?boardState:startPosition();let w=0,k=0,wk=0,bk=0;
-  for(const row of b)for(const p 
+  const b=boardState.length?boardState:startPosition();
+
+  let white=0;
+  let black=0;
+  let whiteKings=0;
+  let blackKings=0;
+
+  for(const row of b){
+    for(const p of row){
+      if(p===WHITE) white++;
+      if(p===BLACK) black++;
+      if(p===WHITE_KING){
+        white++;
+        whiteKings++;
+      }
+      if(p===BLACK_KING){
+        black++;
+        blackKings++;
+      }
+    }
+  }
+
+  if($("aWhite")) $("aWhite").textContent=white;
+  if($("aBlack")) $("aBlack").textContent=black;
+  if($("aWhiteKings")) $("aWhiteKings").textContent=whiteKings;
+  if($("aBlackKings")) $("aBlackKings").textContent=blackKings;
+
+  const score=black-white;
+
+  if($("analysisScore")){
+    $("analysisScore").textContent=
+      score>0 ? "+"+score : score;
+  }
+
+  let text="Pozitsiya tengga yaqin.";
+
+  if(white>black+2){
+    text="⚪ Oq donalar soni bo‘yicha ustun.";
+  }else if(black>white+2){
+    text="⚫ Qora donalar soni bo‘yicha ustun.";
+  }
+
+  if(whiteKings>blackKings){
+    text+=" Oq shohlar ko‘proq.";
+  }else if(blackKings>whiteKings){
+    text+=" Qora shohlar ko‘proq.";
+  }
+
+  if($("analysisText")){
+    $("analysisText").textContent=text;
+  }
+}
+
+
+/* =========================
+   EDITOR
+========================= */
+
+function startEditorPosition(){
+  editorState=Array.from(
+    {length:8},
+    ()=>Array(8).fill(EMPTY)
+  );
+
+  for(let r=0;r<3;r++){
+    for(let c=0;c<8;c++){
+      if((r+c)%2===1){
+        editorState[r][c]=BLACK;
+      }
+    }
+  }
+
+  for(let r=5;r<8;r++){
+    for(let c=0;c<8;c++){
+      if((r+c)%2===1){
+        editorState[r][c]=WHITE;
+      }
+    }
+  }
+
+  editorTurn=WHITE;
+  drawEditor();
+}
+
+function clearEditor(){
+  editorState=Array.from(
+    {length:8},
+    ()=>Array(8).fill(EMPTY)
+  );
+  drawEditor();
+}
+
+function drawEditor(){
+  const root=$("editorBoard");
+  if(!root)return;
+
+  root.innerHTML="";
+
+  for(let r=0;r<8;r++){
+    for(let c=0;c<8;c++){
+
+      const cell=document.createElement("div");
+
+      cell.className=
+        "cell "+
+        (((r+c)%2) ? "dark" : "light");
+
+      const p=editorState[r][c];
+
+      if(p){
+
+        const piece=document.createElement("div");
+
+        piece.className=
+          "piece "+
+          (isWhite(p) ? "white" : "black")+
+          (isKing(p) ? " king" : "");
+
+        cell.appendChild(piece);
+      }
+
+      cell.addEventListener(
+        "click",
+        ()=>editorClick(r,c)
+      );
+
+      root.appendChild(cell);
+    }
+  }
+
+  if($("editorTurn")){
+    $("editorTurn").textContent=
+      editorTurn===WHITE ? "⚪ Oq" : "⚫ Qora";
+  }
+}
+
+function editorClick(r,c){
+
+  if((r+c)%2===0){
+    toast("Faqat qora kataklarga dona qo‘yiladi");
+    return;
+  }
+
+  if(editorTool==="erase"){
+    editorState[r][c]=EMPTY;
+  }else if(editorTool==="white"){
+    editorState[r][c]=WHITE;
+  }else if(editorTool==="black"){
+    editorState[r][c]=BLACK;
+  }else if(editorTool==="whiteKing"){
+    editorState[r][c]=WHITE_KING;
+  }else if(editorTool==="blackKing"){
+    editorState[r][c]=BLACK_KING;
+  }
+
+  drawEditor();
+}
+
+
+/* =========================
+   EDITOR → GAME
+========================= */
+
+function playEditorPosition(){
+
+  let count=0;
+
+  for(const row of editorState){
+    for(const p of row){
+      if(p)count++;
+    }
+  }
+
+  if(count<2){
+    toast("Kamida 2 ta dona kerak");
+    return;
+  }
+
+  stopTimer();
+
+  boardState=clone(editorState);
+  turn=editorTurn;
+  selected=null;
+  gameOver=false;
+  history=[];
+  moveHistory=[];
+  seconds=600;
+
+  openScreen("game");
+
+  drawGame();
+  drawMoves();
+  updateStatus();
+  startTimer();
+
+  if(turn===BLACK){
+    setTimeout(aiMove,400);
+  }
+}
+
+
+/* =========================
+   TOP 30
+========================= */
+
+function drawTop(){
+
+  const el=$("topList");
+
+  if(!el)return;
+
+  const players=[
+    ["ShashkaPRO Player",stats.elo],
+    ["Checkers Master",1450],
+    ["PRO Player",1380],
+    ["Grand Player",1320],
+    ["Champion",1280],
+    ["Master",1240],
+    ["Expert",1190],
+    ["Player 8",1160],
+    ["Player 9",1130],
+    ["Player 10",1100]
+  ];
+
+  el.innerHTML="";
+
+  players.forEach((p,i)=>{
+
+    const row=document.createElement("div");
+
+    row.className="listRow";
+
+    row.innerHTML=
+      "<span>"+
+      (i+1)+". "+p[0]+
+      "</span>"+
+      "<b>"+p[1]+"</b>";
+
+    el.appendChild(row);
+  });
+}
+
+
+/* =========================
+   BUTTONLAR
+========================= */
+
+$("btnAI")?.addEventListener(
+  "click",
+  startGame
+);
+
+$("onlineAI")?.addEventListener(
+  "click",
+  startGame
+);
+
+$("restartBtn")?.addEventListener(
+  "click",
+  restartGame
+);
+
+$("giveUpBtn")?.addEventListener(
+  "click",
+  giveUp
+);
+
+$("undoBtn")?.addEventListener(
+  "click",
+  undoMove
+);
+
+$("gameAnalysisBtn")?.addEventListener(
+  "click",
+  ()=>{
+    updateAnalysis();
+    openScreen("analysis");
+  }
+);
+
+$("btnAnalysis")?.addEventListener(
+  "click",
+  ()=>{
+    updateAnalysis();
+    openScreen("analysis");
+  }
+);
+
+$("btnEditor")?.addEventListener(
+  "click",
+  ()=>{
+    openScreen("editor");
+    drawEditor();
+  }
+);
+
+$("btnOnline")?.addEventListener(
+  "click",
+  ()=>openScreen("online")
+);
+
+$("btnTournaments")?.addEventListener(
+  "click",
+  ()=>openScreen("tournaments")
+);
+
+$("btnTop")?.addEventListener(
+  "click",
+  ()=>openScreen("top")
+);
+
+$("btnProfile")?.addEventListener(
+  "click",
+  ()=>openScreen("profile")
+);
+
+$("btnSettings")?.addEventListener(
+  "click",
+  ()=>openScreen("settings")
+);
+
+
+/* =========================
+   ORQAGA
+========================= */
+
+$("gameBack")?.addEventListener(
+  "click",
+  ()=>{
+    stopTimer();
+    openScreen("home");
+  }
+);
+
+$("editorBack")?.addEventListener(
+  "click",
+  ()=>openScreen("home")
+);
+
+$("analysisBack")?.addEventListener(
+  "click",
+  ()=>openScreen("home")
+);
+
+$("topBack")?.addEventListener(
+  "click",
+  ()=>openScreen("home")
+);
+
+$("profileBack")?.addEventListener(
+  "click",
+  ()=>openScreen("home")
+);
+
+$("tournamentsBack")?.addEventListener(
+  "click",
+  ()=>openScreen("home")
+);
+
+$("onlineBack")?.addEventListener(
+  "click",
+  ()=>openScreen("home")
+);
+
+$("settingsBack")?.addEventListener(
+  "click",
+  ()=>openScreen("home")
+);
+
+
+/* =========================
+   EDITOR TUGMALARI
+========================= */
+
+document.querySelectorAll("[data-tool]")
+.forEach(btn=>{
+
+  btn.addEventListener("click",()=>{
+
+    document
+      .querySelectorAll("[data-tool]")
+      .forEach(x=>x.classList.remove("active"));
+
+    btn.classList.add("active");
+
+    editorTool=btn.dataset.tool;
+  });
+
+});
+
+
+$("clearEditor")?.addEventListener(
+  "click",
+  clearEditor
+);
+
+$("startEditor")?.addEventListener(
+  "click",
+  startEditorPosition
+);
+
+$("editorTurnBtn")?.addEventListener(
+  "click",
+  ()=>{
+    editorTurn=
+      editorTurn===WHITE
+      ? BLACK
+      : WHITE;
+
+    drawEditor();
+  }
+);
+
+$("playEditor")?.addEventListener(
+  "click",
+  playEditorPosition
+);
+
+$("editorAnalysis")?.addEventListener(
+  "click",
+  ()=>{
+    boardState=clone(editorState);
+    updateAnalysis();
+    openScreen("analysis");
+  }
+);
+
+
+/* =========================
+   PROFIL
+========================= */
+
+$("resetStats")?.addEventListener(
+  "click",
+  ()=>{
+
+    if(!confirm("Statistikani tozalaysizmi?")){
+      return;
+    }
+
+    stats={
+      elo:1000,
+      wins:0,
+      games:0
+    };
+
+    saveStats();
+
+    toast("Statistika tozalandi");
+  }
+);
+
+
+/* =========================
+   TURNIR
+========================= */
+
+document
+.querySelectorAll(".tournamentBtn")
+.forEach(btn=>{
+
+  btn.addEventListener(
+    "click",
+    ()=>{
+      toast(
+        "🏆 "+
+        btn.dataset.name+
+        " hozircha demo rejimda"
+      );
+    }
+  );
+
+});
+
+
+/* =========================
+   SETTINGS
+========================= */
+
+$("sound")?.addEventListener(
+  "change",
+  ()=>{
+    toast(
+      $("sound").checked
+      ? "🔊 Ovoz yoqildi"
+      : "🔇 Ovoz o‘chirildi"
+    );
+  }
+);
+
+$("vibration")?.addEventListener(
+  "change",
+  ()=>{
+    toast(
+      $("vibration").checked
+      ? "📳 Vibratsiya yoqildi"
+      : "Vibratsiya o‘chirildi"
+    );
+  }
+);
+
+
+/* =========================
+   BOSHLANG‘ICH HOLAT
+========================= */
+
+updateStats();
+
+editorState=startPosition();
+
+drawEditor();
+
+updateAnalysis();
+
+})();
+</script>
+</body>
+</html>
