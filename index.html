@@ -1,134 +1,584 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="uz">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>ShashkaPRO</title>
+
 <style>
-*{box-sizing:border-box}html,body{margin:0;padding:0;background:#0b1118;color:#fff;font-family:Arial,sans-serif}body{min-height:100vh}.app{width:min(100%,760px);margin:auto;padding:18px}.screen{display:none}.screen.active{display:block}.card{background:#151d26;border:1px solid #293542;border-radius:24px;padding:18px;box-shadow:0 12px 35px #0005}.logo{text-align:center;font-size:34px;font-weight:900;margin:8px 0}.muted{text-align:center;color:#9ca8b5}.grid{display:grid;gap:10px}.menu{margin-top:18px;grid-template-columns:1fr 1fr}.btn{border:0;border-radius:15px;padding:15px 12px;color:#fff;background:#222d38;font-size:16px;font-weight:800;min-height:54px}.btn.primary{background:#168bea}.btn.green{background:#16a36a}.btn.gold{background:#9a7414}.btn.red{background:#c93636}.btn.full{width:100%}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}.stat{background:#0f161e;border-radius:14px;padding:10px;text-align:center;color:#aeb9c5}.stat b{display:block;color:#fff;font-size:20px;margin-top:3px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}.title{font-size:24px;font-weight:900}.smallbtn{padding:10px 12px;border-radius:12px;background:#26313c;color:#fff;border:0;font-weight:800}.status{text-align:center;min-height:25px;font-weight:800;margin:8px 0 12px}.gameinfo{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}.info{background:#0f161e;border-radius:13px;padding:9px;text-align:center;color:#aeb9c5}.info b{display:block;color:#fff;margin-top:2px}.board{width:min(92vw,500px);aspect-ratio:1;margin:auto;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border:6px solid #4b2f20;border-radius:9px;overflow:hidden;touch-action:manipulation}.cell{position:relative;display:flex;align-items:center;justify-content:center}.light{background:#ead2ad}.dark{background:#6b462c}.piece{width:72%;height:72%;border-radius:50%;border:3px solid #222;box-shadow:inset 0 4px 4px #fff7,inset 0 -7px 8px #0009,0 3px 5px #0008;position:relative;z-index:2}.white{background:#f5f5f5;border-color:#aaa}.black{background:#171717;border-color:#050505}.king:after{content:'K';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#d6ae37;font-weight:900;font-size:clamp(14px,4vw,23px)}.selected{outline:4px solid #22c55e;outline-offset:-4px}.target:before{content:'';position:absolute;width:24%;height:24%;border-radius:50%;background:#22c55e;box-shadow:0 0 0 2px #fff5}.coords{position:absolute;font-size:9px;font-weight:800;opacity:.55;z-index:3}.rank{left:3px;top:2px}.file{right:3px;bottom:2px}.actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}.moves{max-height:130px;overflow:auto;margin-top:10px;background:#0f161e;border-radius:13px;padding:10px;color:#cbd5df;font-size:13px;line-height:1.55}.editor-tools{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}.tool{min-height:52px;border:0;border-radius:13px;background:#222d38;color:#fff;font-weight:800}.tool.active{outline:3px solid #168bea}.editorboard{width:min(92vw,500px);aspect-ratio:1;margin:auto;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border:6px solid #4b2f20;border-radius:9px;overflow:hidden}.editorcell{position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer}.ranked{position:absolute;font-size:8px;opacity:.5;font-weight:800}.rleft{left:2px;top:1px}.fbottom{right:2px;bottom:1px}.empty-note{text-align:center;color:#8995a2;padding:22px}.list{margin-top:12px}.row{display:flex;justify-content:space-between;align-items:center;background:#0f161e;border-radius:13px;padding:12px;margin-bottom:8px}.row b{font-size:16px}.profile{text-align:center}.avatar{width:86px;height:86px;border-radius:50%;background:#26313c;display:flex;align-items:center;justify-content:center;font-size:42px;margin:10px auto}.settings label{display:flex;justify-content:space-between;align-items:center;background:#0f161e;padding:14px;border-radius:13px;margin-bottom:8px}.settings input{width:20px;height:20px}.back{margin-top:12px}.hint{font-size:12px;color:#8d99a6;text-align:center;margin-top:12px}@media(max-width:420px){.menu{grid-template-columns:1fr}.editor-tools{grid-template-columns:1fr 1fr}.actions{grid-template-columns:1fr 1fr}.actions .btn:last-child{grid-column:1/-1}}
+*{box-sizing:border-box}
+
+body{
+ margin:0;
+ background:#0d0f12;
+ color:#fff;
+ font-family:Arial,sans-serif;
+}
+
+button,select{
+ border:0;
+ border-radius:12px;
+ padding:12px 15px;
+ font-size:15px;
+ font-weight:bold;
+ cursor:pointer;
+}
+
+button:active{transform:scale(.97)}
+
+.app{
+ max-width:600px;
+ margin:auto;
+ padding:16px;
+}
+
+.screen{display:none}
+.screen.active{display:block}
+
+.header{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ margin-bottom:15px;
+}
+
+.logo{
+ font-size:26px;
+ font-weight:900;
+}
+
+.back{
+ background:#252a31;
+ color:white;
+}
+
+.card{
+ background:#171a20;
+ border:1px solid #292e36;
+ border-radius:18px;
+ padding:16px;
+ margin:12px 0;
+}
+
+.hero{
+ text-align:center;
+ padding:25px 10px;
+}
+
+.hero h1{
+ font-size:34px;
+ margin:5px 0;
+}
+
+.hero p{
+ color:#aeb4bd;
+}
+
+.grid{
+ display:grid;
+ grid-template-columns:repeat(2,1fr);
+ gap:10px;
+}
+
+.menu{
+ width:100%;
+ min-height:65px;
+ background:#1d2229;
+ color:white;
+ border:1px solid #303640;
+}
+
+.menu.primary{
+ background:#d5a94f;
+ color:#111;
+}
+
+.stat{
+ display:flex;
+ justify-content:space-between;
+ padding:12px 0;
+ border-bottom:1px solid #292e36;
+}
+
+.stat:last-child{border-bottom:0}
+
+.board-wrap{
+ width:min(94vw,540px);
+ margin:10px auto;
+}
+
+.board{
+ width:100%;
+ aspect-ratio:1;
+ display:grid;
+ grid-template-columns:repeat(8,1fr);
+ grid-template-rows:repeat(8,1fr);
+ border:6px solid #332219;
+ border-radius:10px;
+ overflow:hidden;
+ box-shadow:0 15px 40px #0008;
+}
+
+.cell{
+ position:relative;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ user-select:none;
+}
+
+.light{background:#ead2ad}
+.dark{background:#6b462c}
+
+.cell.selected{
+ box-shadow:inset 0 0 0 5px #f0c75e;
+}
+
+.cell.move{
+ box-shadow:inset 0 0 0 5px #64d68a;
+}
+
+.cell.capture{
+ box-shadow:inset 0 0 0 5px #e56b6f;
+}
+
+.piece{
+ width:73%;
+ height:73%;
+ border-radius:50%;
+ position:relative;
+ border:3px solid #222;
+ box-shadow:
+   inset 0 6px 7px #fff7,
+   inset 0 -8px 10px #0009,
+   0 4px 6px #0009;
+}
+
+.white{
+ background:#f3f3f3;
+ border-color:#aaa;
+}
+
+.black{
+ background:#111;
+ border-color:#050505;
+}
+
+.king:after{
+ content:"♛";
+ position:absolute;
+ left:0;
+ top:0;
+ width:100%;
+ height:100%;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ color:#d5a94f;
+ font-size:clamp(18px,5vw,32px);
+}
+
+.info{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ background:#171a20;
+ border-radius:14px;
+ padding:12px;
+ margin:8px 0;
+}
+
+.timer{
+ font-size:22px;
+ font-weight:900;
+}
+
+.actions{
+ display:grid;
+ grid-template-columns:repeat(2,1fr);
+ gap:8px;
+ margin-top:10px;
+}
+
+.action{
+ background:#252a31;
+ color:#fff;
+}
+
+.danger{
+ background:#7b3030;
+ color:white;
+}
+
+.green{
+ background:#24663e;
+ color:white;
+}
+
+.gold{
+ background:#d5a94f;
+ color:#111;
+}
+
+.list-item{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ padding:13px 4px;
+ border-bottom:1px solid #292e36;
+}
+
+.list-item:last-child{border:0}
+
+.muted{color:#9ca3ad}
+
+.big{
+ font-size:30px;
+ font-weight:900;
+}
+
+.editor-tools{
+ display:grid;
+ grid-template-columns:repeat(3,1fr);
+ gap:7px;
+}
+
+.tool{
+ background:#252a31;
+ color:white;
+}
+
+.tool.active{
+ background:#d5a94f;
+ color:#111;
+}
+
+#editorBoard{
+ width:min(94vw,540px);
+ aspect-ratio:1;
+ margin:15px auto;
+ display:grid;
+ grid-template-columns:repeat(8,1fr);
+ border:6px solid #332219;
+ border-radius:10px;
+ overflow:hidden;
+}
+
+.notice{
+ background:#242018;
+ border:1px solid #604e28;
+ padding:12px;
+ border-radius:12px;
+ color:#e9d18b;
+}
+
+label{
+ display:block;
+ margin:12px 0 6px;
+ color:#c5cad1;
+}
+
+select{
+ width:100%;
+ background:#252a31;
+ color:white;
+}
+
+.switch{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ padding:12px 0;
+ border-bottom:1px solid #292e36;
+}
+
+input[type=checkbox]{
+ width:22px;
+ height:22px;
+}
+
+@media(max-width:380px){
+ .app{padding:10px}
+ .hero h1{font-size:28px}
+ .menu{font-size:13px}
+}
 </style>
 </head>
+
 <body>
+
 <div class="app">
 
+<!-- HOME -->
 <section id="home" class="screen active">
-<div class="card">
-<div class="logo">♟ ShashkaPRO</div>
-<div class="muted">AI bilan shashka o‘ynang</div>
-<div class="stats"><div class="stat">Elo<b id="homeElo">1000</b></div><div class="stat">G‘alaba<b id="homeWins">0</b></div><div class="stat">O‘yin<b id="homeGames">0</b></div></div>
-<div class="grid menu">
-<button class="btn primary" id="aiBtn">🤖 AI bilan o‘ynash</button>
-<button class="btn green" id="editorBtn">✏️ Doska editor</button>
-<button class="btn gold" id="topBtn">👑 TOP 30</button>
-<button class="btn" id="profileBtn">👤 Profil</button>
-<button class="btn" id="settingsBtn">⚙️ Sozlamalar</button>
-<button class="btn" id="analysisBtn">🧠 Tahlil</button>
-</div>
-</div>
+
+ <div class="hero">
+   <div class="logo">♟ ShashkaPRO</div>
+   <h1>SHASHKAPRO</h1>
+   <p>Professional Checkers</p>
+ </div>
+
+ <div class="card">
+   <div class="stat">
+     <span>ELO</span>
+     <b id="homeElo">1000</b>
+   </div>
+   <div class="stat">
+     <span>G‘alabalar</span>
+     <b id="homeWins">0</b>
+   </div>
+   <div class="stat">
+     <span>O‘yinlar</span>
+     <b id="homeGames">0</b>
+   </div>
+ </div>
+
+ <div class="grid">
+
+   <button class="menu primary" onclick="startGame()">
+     🤖 AI bilan o‘ynash
+   </button>
+
+   <button class="menu" onclick="openScreen('online')">
+     🌐 Onlayn
+   </button>
+
+   <button class="menu" onclick="openScreen('tournaments')">
+     🏆 Turnirlar
+   </button>
+
+   <button class="menu" onclick="openScreen('top')">
+     👑 TOP 30
+   </button>
+
+   <button class="menu" onclick="openScreen('profile')">
+     👤 Profil
+   </button>
+
+   <button class="menu" onclick="openScreen('editor')">
+     ✏️ Doska
+   </button>
+
+   <button class="menu" onclick="openAnalysis()">
+     🧠 Tahlil
+   </button>
+
+   <button class="menu" onclick="openScreen('settings')">
+     ⚙️ Sozlamalar
+   </button>
+
+ </div>
 </section>
 
+
+<!-- GAME -->
 <section id="game" class="screen">
-<div class="card">
-<div class="topbar"><button class="smallbtn" id="gameBack">← Orqaga</button><div class="title">AI bilan o‘yin</div><button class="smallbtn" id="newGame">↻</button></div>
-<div class="gameinfo"><div class="info">Siz<b id="gameWhite">12</b></div><div class="info">AI<b id="gameBlack">12</b></div><div class="info">Vaqt<b id="timer">10:00</b></div></div>
-<div id="gameStatus" class="status">Sizning navbatingiz</div>
-<div id="gameBoard" class="board"></div>
-<div id="gameMoves" class="moves"></div>
-<div class="actions"><button class="btn" id="undo">↩ Orqaga</button><button class="btn" id="analyzeGame">🧠 Tahlil</button><button class="btn red" id="giveUp">🏳 Taslim</button></div>
-<div class="hint">Oq donalar — siz. Qora donalar — AI. Urish majburiy.</div>
-</div>
+
+ <div class="header">
+   <b>🤖 AI O‘yini</b>
+   <button class="back" onclick="openScreen('home')">←</button>
+ </div>
+
+ <div class="info">
+   <div>
+     ⚪ Siz
+     <br>
+     <small class="muted">Oq</small>
+   </div>
+
+   <div id="gameStatus">Sizning navbatingiz</div>
+
+   <div class="timer" id="timer">10:00</div>
+ </div>
+
+ <div class="board-wrap">
+   <div id="gameBoard" class="board"></div>
+ </div>
+
+ <div class="actions">
+   <button class="action" onclick="undoMove()">↩️ Orqaga</button>
+   <button class="action" onclick="showAnalysis()">🧠 Tahlil</button>
+   <button class="action" onclick="restartGame()">🔄 Qayta</button>
+   <button class="danger" onclick="giveUp()">🏳️ Taslim</button>
+ </div>
+
+ <div class="card">
+   <b>Yurishlar</b>
+   <div id="moveList" class="muted">Hali yurish yo‘q</div>
+ </div>
+
 </section>
 
+
+<!-- EDITOR -->
 <section id="editor" class="screen">
-<div class="card">
-<div class="topbar"><button class="smallbtn" id="editorBack">← Orqaga</button><div class="title">✏️ Doska editor</div><span></span></div>
-<div class="muted">Asbobni tanlang, keyin qora katakka bosing.</div>
-<div class="editor-tools">
-<button class="tool active" data-tool="white">⚪ Oq</button>
-<button class="tool" data-tool="black">⚫ Qora</button>
-<button class="tool" data-tool="whiteKing">♕ Oq</button>
-<button class="tool" data-tool="blackKing">♛ Qora</button>
-<button class="tool" data-tool="erase">🧹 O‘chirish</button>
-<button class="tool" data-tool="clear">◼ Tozalash</button>
-<button class="tool" data-tool="start">♟ Start</button>
-<button class="tool" data-tool="turn">🔄 Navbat</button>
-</div>
-<div id="editorBoard" class="editorboard"></div>
-<div class="actions"><button class="btn primary" id="playPosition">▶ Shu pozitsiyada o‘ynash</button><button class="btn" id="editorAnalyze">🧠 Tahlil</button></div>
-</div>
+
+ <div class="header">
+   <b>✏️ Doska editor</b>
+   <button class="back" onclick="openScreen('home')">←</button>
+ </div>
+
+ <div class="notice">
+   Kerakli donani tanlang va doskaga bosing.
+ </div>
+
+ <div class="editor-tools">
+
+   <button id="toolWhite" class="tool active"
+   onclick="setEditorTool('white')">
+   ⚪ Oq
+   </button>
+
+   <button id="toolBlack" class="tool"
+   onclick="setEditorTool('black')">
+   ⚫ Qora
+   </button>
+
+   <button id="toolWhiteKing" class="tool"
+   onclick="setEditorTool('whiteKing')">
+   👑 Oq
+   </button>
+
+   <button id="toolBlackKing" class="tool"
+   onclick="setEditorTool('blackKing')">
+   👑 Qora
+   </button>
+
+   <button id="toolErase" class="tool"
+   onclick="setEditorTool('erase')">
+   🧹 O‘chirish
+   </button>
+
+   <button class="tool"
+   onclick="clearEditor()">
+   ◻️ Tozalash
+   </button>
+
+   <button class="tool"
+   onclick="startEditorPosition()">
+   ♟ Start
+   </button>
+
+   <button class="tool"
+   onclick="toggleEditorTurn()">
+   🔄 Navbat
+   </button>
+
+ </div>
+
+ <div id="editorBoard"></div>
+
+ <div class="card">
+   <b>Navbat:</b>
+   <span id="editorTurn">⚪ Oq</span>
+ </div>
+
+ <div class="actions">
+   <button class="gold" onclick="playEditorPosition()">
+     ▶️ Shu pozitsiyada o‘ynash
+   </button>
+
+   <button class="action" onclick="openAnalysis()">
+     🧠 Tahlil
+   </button>
+ </div>
+
 </section>
 
-<section id="top" class="screen"><div class="card"><div class="topbar"><button class="smallbtn" id="topBack">← Orqaga</button><div class="title">👑 TOP 30</div><span></span></div><div id="topList" class="list"></div></div></section>
 
-<section id="profile" class="screen"><div class="card profile"><div class="topbar"><button class="smallbtn" id="profileBack">← Orqaga</button><div class="title">👤 Profil</div><span></span></div><div class="avatar">♟</div><h2>ShashkaPRO o‘yinchisi</h2><div class="stats"><div class="stat">Elo<b id="pElo">1000</b></div><div class="stat">G‘alaba<b id="pWins">0</b></div><div class="stat">O‘yin<b id="pGames">0</b></div></div></div></section>
+<!-- ANALYSIS -->
+<section id="analysis" class="screen">
 
-<section id="settings" class="screen"><div class="card settings"><div class="topbar"><button class="smallbtn" id="settingsBack">← Orqaga</button><div class="title">⚙️ Sozlamalar</div><span></span></div><label>Tovush <input type="checkbox" id="sound" checked></label><label>Animatsiya <input type="checkbox" id="animation" checked></label><button class="btn red full" id="resetStats">Statistikani nolga tushirish</button></div></section>
+ <div class="header">
+   <b>🧠 Tahlil</b>
+   <button class="back" onclick="openScreen('home')">←</button>
+ </div>
 
-<section id="analysis" class="screen"><div class="card"><div class="topbar"><button class="smallbtn" id="analysisBack">← Orqaga</button><div class="title">🧠 Tahlil</div><span></span></div><div id="analysisText" class="empty-note">O‘yinni boshlang yoki editor orqali pozitsiya yarating.</div></div></section>
+ <div class="card">
+   <div class="big" id="analysisScore">0</div>
+   <p class="muted">
+     Musbat — oq uchun, manfiy — qora uchun.
+   </p>
+ </div>
 
-</div>
+ <div class="card">
+   <b>📊 Pozitsiya</b>
 
-<script>
-'use strict';
-const EMPTY=0,WHITE=1,BLACK=2,WHITE_KING=3,BLACK_KING=4;
-const DIRS=[[1,1],[1,-1],[-1,1],[-1,-1]];
-let board=[],turn=WHITE,selected=null,targets=[],gameOver=false,aiThinking=false,history=[],moveNo=0,seconds=600,timerId=null;
-let editorBoard=Array.from({length:8},()=>Array(8).fill(0)),editorTool='white',editorTurn=WHITE;
-let stats=JSON.parse(localStorage.getItem('spStats')||'{"elo":1000,"wins":0,"games":0}');
-const $=id=>document.getElementById(id);
-function saveStats(){localStorage.setItem('spStats',JSON.stringify(stats));updateStats()}
-function updateStats(){['homeElo','pElo'].forEach(id=>$(id).textContent=stats.elo);['homeWins','pWins'].forEach(id=>$(id).textContent=stats.wins);['homeGames','pGames'].forEach(id=>$(id).textContent=stats.games)}
-function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');window.scrollTo(0,0)}
-function inside(r,c){return r>=0&&r<8&&c>=0&&c<8}
-function clone(b){return b.map(r=>r.slice())}
-function color(p){return p===WHITE||p===WHITE_KING?WHITE:p===BLACK||p===BLACK_KING?BLACK:0}
-function isKing(p){return p===WHITE_KING||p===BLACK_KING}
-function initGame(){board=Array.from({length:8},()=>Array(8).fill(EMPTY));for(let r=0;r<3;r++)for(let c=0;c<8;c++)if((r+c)%2)board[r][c]=BLACK;for(let r=5;r<8;r++)for(let c=0;c<8;c++)if((r+c)%2)board[r][c]=WHITE}
-function simpleMoves(b,r,c){let p=b[r][c],q=color(p),out=[];if(!q)return out;if(isKing(p)){for(const [dr,dc] of DIRS){let rr=r+dr,cc=c+dc;while(inside(rr,cc)&&b[rr][cc]===EMPTY){out.push({r:rr,c:cc});rr+=dr;cc+=dc}}}else{let dr=q===WHITE?-1:1;for(const dc of [-1,1]){let rr=r+dr,cc=c+dc;if(inside(rr,cc)&&b[rr][cc]===EMPTY)out.push({r:rr,c:cc})}}return out}
-function captures(b,r,c){let p=b[r][c],q=color(p),out=[];if(!q)return out;if(isKing(p)){for(const [dr,dc] of DIRS){let rr=r+dr,cc=c+dc,enemy=null;while(inside(rr,cc)){if(b[rr][cc]===EMPTY){if(enemy)out.push({r:rr,c:cc,cap:enemy})}else{if(color(b[rr][cc])===q||enemy)break;enemy={r:rr,c:cc}}rr+=dr;cc+=dc}}}else{for(const [dr,dc] of DIRS){let mr=r+dr,mc=c+dc,tr=r+2*dr,tc=c+2*dc;if(inside(mr,mc)&&inside(tr,tc)&&color(b[mr][mc])===3-q&&b[tr][tc]===EMPTY)out.push({r:tr,c:tc,cap:{r:mr,c:mc}})}}return out}
-function allMoves(b,q){let caps=[],norm=[];for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(color(b[r][c])===q){for(const m of captures(b,r,c))caps.push({from:{r,c},...m,capture:true});for(const m of simpleMoves(b,r,c))norm.push({from:{r,c},...m,capture:false})}return caps.length?caps:norm}
-function applyMove(b,m){let n=clone(b),p=n[m.from.r][m.from.c];n[m.from.r][m.from.c]=EMPTY;if(m.cap)n[m.cap.r][m.cap.c]=EMPTY;if(p===WHITE&&m.r===0)p=WHITE_KING;if(p===BLACK&&m.r===7)p=BLACK_KING;n[m.r][m.c]=p;return n}
-function notation(m){const f='ABCDEFGH';return f[m.from.c]+(8-m.from.r)+'-'+f[m.c]+(8-m.r)+(m.capture?' ×':'')}
-function count(){let w=0,b=0;for(const row of board)for(const p of row){if(color(p)===WHITE)w++;if(color(p)===BLACK)b++}return [w,b]}
-function renderGame(){const el=$('gameBoard');el.innerHTML='';const files='ABCDEFGH';for(let r=0;r<8;r++)for(let c=0;c<8;c++){const cell=document.createElement('div');cell.className='cell '+((r+c)%2?'dark':'light');if(c===0){const z=document.createElement('span');z.className='coords rank';z.textContent=8-r;cell.append(z)}if(r===7){const z=document.createElement('span');z.className='coords file';z.textContent=files[c];cell.append(z)}if(selected&&selected.r===r&&selected.c===c)cell.classList.add('selected');if(targets.some(x=>x.r===r&&x.c===c))cell.classList.add('target');const p=board[r][c];if(p){const z=document.createElement('div');z.className='piece '+(color(p)===WHITE?'white':'black')+(isKing(p)?' king':'');cell.append(z)}cell.onclick=()=>gameClick(r,c);el.append(cell)}const [w,b]=count();$('gameWhite').textContent=w;$('gameBlack').textContent=b;clock()}
-function gameClick(r,c){if(gameOver||aiThinking||turn!==WHITE)return;if(selected){const m=allMoves(board,WHITE).find(x=>x.from.r===selected.r&&x.from.c===selected.c&&x.r===r&&x.c===c);if(m){history.push(clone(board));board=applyMove(board,m);moveNo++;addMove('Siz',m);selected=null;targets=[];turn=BLACK;renderGame();checkGame();if(!gameOver)setTimeout(aiTurn,250);return}}if(color(board[r][c])===WHITE){const ms=allMoves(board,WHITE).filter(x=>x.from.r===r&&x.from.c===c);if(ms.length){selected={r,c};targets=ms;renderGame()}}}
-function addMove(who,m){const d=document.createElement('div');d.textContent=moveNo+'. '+who+': '+notation(m);$('gameMoves').append(d);$('gameMoves').scrollTop=$('gameMoves').scrollHeight}
-function evaluate(b){let s=0;for(let r=0;r<8;r++)for(let c=0;c<8;c++){const p=b[r][c];if(p===BLACK)s+=100;if(p===BLACK_KING)s+=180;if(p===WHITE)s-=100;if(p===WHITE_KING)s-=180;if(p===BLACK)s+=(7-r)*2;if(p===WHITE)s-=r*2}return s}
-function minimax(b,d,alpha,beta,max){const ms=allMoves(b,max?BLACK:WHITE);if(!ms.length)return max?-99999:99999;if(d===0)return evaluate(b);if(max){let v=-Infinity;for(const m of ms){v=Math.max(v,minimax(applyMove(b,m),d-1,alpha,beta,false));alpha=Math.max(alpha,v);if(beta<=alpha)break}return v}else{let v=Infinity;for(const m of ms){v=Math.min(v,minimax(applyMove(b,m),d-1,alpha,beta,true));beta=Math.min(beta,v);if(beta<=alpha)break}return v}}
-function aiTurn(){if(gameOver)return;aiThinking=true;$('gameStatus').textContent='AI o‘ylayapti…';setTimeout(()=>{const ms=allMoves(board,BLACK);if(!ms.length){endGame('Siz g‘olib bo‘ldingiz! 🎉');return}let best=-Infinity,choices=[];for(const m of ms){const v=minimax(applyMove(board,m),3,-Infinity,Infinity,false);if(v>best){best=v;choices=[m]}else if(v===best)choices.push(m)}const m=choices[Math.floor(Math.random()*choices.length)];history.push(clone(board));board=applyMove(board,m);moveNo++;addMove('AI',m);turn=WHITE;aiThinking=false;renderGame();checkGame();if(!gameOver)$('gameStatus').textContent='Sizning navbatingiz'},300)}
-function checkGame(){const wm=allMoves(board,WHITE),bm=allMoves(board,BLACK),[w,b]=count();if(!w||!wm.length)endGame('AI g‘olib bo‘ldi 🤖');else if(!b||!bm.length)endGame('Siz g‘olib bo‘ldingiz! 🎉')}
-function endGame(msg){if(gameOver)return;gameOver=true;aiThinking=false;$('gameStatus').textContent=msg;if(timerId){clearInterval(timerId);timerId=null}stats.games++;if(msg.startsWith('Siz g‘olib')){stats.wins++;stats.elo+=20}else if(msg.startsWith('AI')){stats.elo=Math.max(100,stats.elo-15)}saveStats()}
-function clock(){const m=Math.floor(seconds/60),s=seconds%60;$('timer').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')}
-function startTimer(){if(timerId)clearInterval(timerId);timerId=setInterval(()=>{if(gameOver)return;seconds--;clock();if(seconds<=0)endGame('Vaqt tugadi — AI g‘olib 🤖')},1000)}
-function newGame(position=null){board=position?clone(position):null;if(!board)initGame();turn=WHITE;selected=null;targets=[];gameOver=false;aiThinking=false;history=[];moveNo=0;seconds=600;$('gameMoves').innerHTML='';$('gameStatus').textContent='Sizning navbatingiz';renderGame();startTimer()}
-function undo(){if(gameOver||aiThinking||!history.length)return;board=history.pop();turn=WHITE;selected=null;targets=[];moveNo=Math.max(0,moveNo-1);renderGame();$('gameStatus').textContent='Sizning navbatingiz'}
-function drawEditor(){const el=$('editorBoard');el.innerHTML='';const files='ABCDEFGH';for(let r=0;r<8;r++)for(let c=0;c<8;c++){const cell=document.createElement('div');cell.className='editorcell '+((r+c)%2?'dark':'light');if(c===0){const z=document.createElement('span');z.className='ranked rleft';z.textContent=8-r;cell.append(z)}if(r===7){const z=document.createElement('span');z.className='ranked fbottom';z.textContent=files[c];cell.append(z)}const p=editorBoard[r][c];if(p){const z=document.createElement('div');z.className='piece '+(p===WHITE||p===WHITE_KING?'white':'black')+(p===WHITE_KING||p===BLACK_KING?' king':'');cell.append(z)}cell.onclick=()=>editorClick(r,c);el.append(cell)}}
-function editorClick(r,c){if(editorTool==='clear'){editorBoard=Array.from({length:8},()=>Array(8).fill(0));drawEditor();return}if(editorTool==='start'){editorBoard=Array.from({length:8},()=>Array(8).fill(0));for(let rr=0;rr<3;rr++)for(let cc=0;cc<8;cc++)if((rr+cc)%2)editorBoard[rr][cc]=BLACK;for(let rr=5;rr<8;rr++)for(let cc=0;cc<8;cc++)if((rr+cc)%2)editorBoard[rr][cc]=WHITE;drawEditor();return}if(editorTool==='turn'){editorTurn=editorTurn===WHITE?BLACK:WHITE;$('editorTurnText').textContent='Navbat: '+(editorTurn===WHITE?'Oq':'Qora');return}editorBoard[r][c]=editorTool==='erase'?0:({white:WHITE,black:BLACK,whiteKing:WHITE_KING,blackKing:BLACK_KING}[editorTool]);drawEditor()}
-function positionFromEditor(){let w=0,b=0;for(const row of editorBoard)for(const p of row){if(color(p)===WHITE)w++;if(color(p)===BLACK)b++}if(!w&&!b)return null;return clone(editorBoard)}
-function topList(){const names=['ShashkaPRO','Grand Master','Pro Player','Master','Champion','Uzbek Player','AI Hunter','Draughts King','Player 09','Player 10'];$('topList').innerHTML=names.map((n,i)=>`<div class="row"><b>${i+1}. ${n}</b><span>${Math.max(1000-i*18,820)} Elo</span></div>`).join('')}
-function analyze(){let [w,b]=count();$('analysisText').innerHTML=`<h3>Pozitsiya tahlili</h3><p>Oq donalar: <b>${w}</b></p><p>Qora donalar: <b>${b}</b></p><p>Majburiy urish: ${allMoves(board,WHITE).some(m=>m.capture)?'<b>Oqda bor</b>':'yo‘q'}</p>`}
+   <div class="stat">
+     <span>⚪ Oq</span>
+     <b id="analysisWhite">0</b>
+   </div>
 
-$('aiBtn').onclick=()=>{show('game');newGame()};
-$('gameBack').onclick=()=>{if(timerId)clearInterval(timerId);show('home')};
-$('newGame').onclick=()=>newGame();
-$('undo').onclick=undo;
-$('giveUp').onclick=()=>{if(!gameOver)endGame('Siz taslim bo‘ldingiz. AI g‘olib 🤖')};
-$('analyzeGame').onclick=()=>{analyze();show('analysis')};
-$('editorBtn').onclick=()=>{show('editor');drawEditor()};
-$('editorBack').onclick=()=>show('home');
-$('playPosition').onclick=()=>{const p=positionFromEditor();if(!p){alert('Avval doskaga dona qo‘ying.');return}show('game');newGame(p)};
-$('editorAnalyze').onclick=()=>{const p=positionFromEditor();if(!p){alert('Avval pozitsiya yarating.');return}board=clone(p);analyze();show('analysis')};
-$('topBtn').onclick=()=>{topList();show('top')};
-$('topBack').onclick=()=>show('home');
-$('profileBtn').onclick=()=>{updateStats();show('profile')};
-$('profileBack').onclick=()=>show('home');
-$('settingsBtn').onclick=()=>show('settings');
-$('settingsBack').onclick=()=>show('home');
-$('analysisBtn').onclick=()=>{if(board.length)analyze();show('analysis')};
-$('analysisBack').onclick=()=>show('home');
-$('resetStats').onclick=()=>{stats={elo:1000,wins:0,games:0};saveStats();alert('Statistika yangilandi.')};
-document.querySelectorAll('[data-tool]').forEach(btn=>btn.onclick=()=>{const t=btn.dataset.tool;if(t==='turn'){editorTool='turn';}else editorTool=t;document.querySelectorAll('[data-tool]').forEach(x=>x.classList.toggle('active',x===btn));if(t==='turn'){editorTurn=editorTurn===WHITE?BLACK:WHITE;btn.textContent='🔄 '+(editorTurn===WHITE?'Oq':'Qora')} });
-updateStats();drawEditor();
-</script>
-</body>
-</html>
+   <div class="stat">
+     <span>⚫ Qora</span>
+     <b id="analysisBlack">0</b>
+   </div>
+
+   <div class="stat">
+     <span>👑 Oq shoh</span>
+     <b id="analysisWhiteKings">0</b>
+   </div>
+
+   <div class="stat">
+     <span>👑 Qora shoh</span>
+     <b id="analysisBlackKings">0</b>
+   </div>
+ </div>
+
+ <div class="card">
+   <b>💡 Tavsiya</b>
+   <p id="analysisText" class="muted">
+     Pozitsiyani tekshirish uchun o‘yin boshlang.
+   </p>
+ </div>
+
+</section>
+
+
+<!-- TOP -->
+<section id="top" class="screen">
+
+ <div class="header">
+   <b>👑 TOP 30</b>
+   <button class="back" onclick="openScreen('home')">←</button>
+ </div>
+
+ <div class="card" id="topList"></div>
+
+</section>
+
+
+<!-- PROFILE -->
+<section id="profile" class="screen">
+
+ <div class="header">
+   <b>👤 Profil</b>
+   <button class="back" onclick="openScreen('home')">←</button>
+ </div>
+
+ <div class="card" style="text-align:center">
+   <div class="big">♟</div>
+   <h2>ShashkaPRO Player</h2>
+   <p class="muted">Professional Checkers</p>
+ </div>
+
+ <div class="card">
+
+   <div class="stat">
+     <span>🏆 ELO</span>
+     <b id="profileElo">1000</b>
+   </div>
+
+   <div class="stat">
+     <span>🥇 G‘alaba</span>
+     <b id="profileWins">0</b>
+   </div>
+
+   <div class="stat">
+     <span>🎮 O‘yin</span>
+     <b id="profileGames">0</b>
+   </div>
+
+   <div class="stat">
+     <span>📈 Winrate</span>
+     <b id="profileRate
