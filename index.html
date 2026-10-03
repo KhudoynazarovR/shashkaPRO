@@ -412,20 +412,22 @@ function captureSteps(b,r,c){
 
 function applyStep(b,m){
   const n=clone(b);
-  let p=n[m.from.r][m.from.c];
+  const p=n[m.from.r][m.from.c];
 
   n[m.from.r][m.from.c]=EMPTY;
 
-  for(const x of m.captures){
+  m.captures.forEach(x=>{
     n[x.r][x.c]=EMPTY;
-  }
+  });
 
-  // MUHIM:
-  // Rus shashkasida urish kombinatsiyasi vaqtida
-  // oxirgi qatorga yetgan oddiy dona DARHOL damkaga aylanadi.
-  p=promotePiece(p,m.to.r);
+  let q=p;
 
-  n[m.to.r][m.to.c]=p;
+  // Rus shashkasida: urish vaqtida oxirgi qatorga
+  // yetgan oddiy dona DARHOL damkaga aylanadi.
+  if(p===WHITE && m.to.r===0) q=WHITE_KING;
+  if(p===BLACK && m.to.r===7) q=BLACK_KING;
+
+  n[m.to.r][m.to.c]=q;
 
   return n;
 }
@@ -523,19 +525,34 @@ function getAllMoves(b,side){
 
 function applyMove(b,m){
   const n=clone(b);
-  let p=n[m.from.r][m.from.c];
+  const p=n[m.from.r][m.from.c];
 
   n[m.from.r][m.from.c]=EMPTY;
 
-  for(const x of m.captures){
+  m.captures.forEach(x=>{
     n[x.r][x.c]=EMPTY;
+  });
+
+  let q=p;
+
+  // Multi-capture davomida oxirgi qatorga tegilgan bo‘lsa,
+  // dona shu zahoti damkaga aylanadi.
+  if(Array.isArray(m.path)){
+    for(const step of m.path){
+      if(q===WHITE && step.r===0){
+        q=WHITE_KING;
+      }
+      if(q===BLACK && step.r===7){
+        q=BLACK_KING;
+      }
+    }
   }
 
-  // Oddiy yurishda yoki kombinatsiyaning yakunida
-  // oxirgi qatorga yetgan dona damkaga aylanadi.
-  p=promotePiece(p,m.to.r);
+  // Oddiy yurishda ham oxirgi qatorga yetgan dona damka bo‘ladi.
+  if(q===WHITE && m.to.r===0) q=WHITE_KING;
+  if(q===BLACK && m.to.r===7) q=BLACK_KING;
 
-  n[m.to.r][m.to.c]=p;
+  n[m.to.r][m.to.c]=q;
 
   return n;
 }
