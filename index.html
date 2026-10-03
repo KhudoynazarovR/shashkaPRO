@@ -419,6 +419,9 @@ function startGame(){
   boardState=startPosition();turn=WHITE;selected=null;gameOver=false;history=[];moveHistory=[];
   openScreen("game");drawGame();drawMoves();updateStatus();updateTimer();startTimer()
 }
+var boardTheme=localStorage.getItem("shashkaPRO_boardTheme")||"classic";
+var pieceStyle=localStorage.getItem("shashkaPRO_pieceStyle")||"classic";
+
 function drawGame(){
   const root=$("gameBoard");if(!root)return;root.innerHTML="";
   root.className="board theme-"+boardTheme;
@@ -1404,8 +1407,8 @@ bind();
 })();
 
 /* ===== BOARD / PIECE DESIGN SYSTEM ===== */
-let boardTheme=localStorage.getItem("shashkaPRO_boardTheme")||"classic";
-let pieceStyle=localStorage.getItem("shashkaPRO_pieceStyle")||"classic";
+boardTheme=localStorage.getItem("shashkaPRO_boardTheme")||"classic";
+pieceStyle=localStorage.getItem("shashkaPRO_pieceStyle")||"classic";
 
 function applyBoardDesign(){
   const b=$("gameBoard");
