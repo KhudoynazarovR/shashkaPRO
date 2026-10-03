@@ -422,14 +422,70 @@ function startGame(){
 function drawGame(){
   const root=$("gameBoard");if(!root)return;root.innerHTML="";
   root.className="board theme-"+boardTheme;
+
+  /* SHASHKAPRO INLINE BOARD FIX */
+  root.style.display="grid";
+  root.style.gridTemplateColumns="repeat(8,1fr)";
+  root.style.gridTemplateRows="repeat(8,1fr)";
+  root.style.width="100%";
+  root.style.maxWidth="640px";
+  root.style.aspectRatio="1 / 1";
+  root.style.height="auto";
+  root.style.margin="0 auto";
+  root.style.padding="0";
+  root.style.boxSizing="border-box";
+  root.style.overflow="hidden";
+  root.style.position="relative";
   const moves=selected?getAllMoves(boardState,turn):[];
   for(let r=0;r<8;r++)for(let c=0;c<8;c++){
-    const cell=document.createElement("div");cell.className="cell "+(((r+c)%2)?"dark":"light");
+    const cell=document.createElement("div");
+    cell.className="cell "+(((r+c)%2)?"dark":"light");
+
+    cell.style.width="100%";
+    cell.style.height="100%";
+    cell.style.minWidth="0";
+    cell.style.minHeight="0";
+    cell.style.display="flex";
+    cell.style.alignItems="center";
+    cell.style.justifyContent="center";
+    cell.style.position="relative";
+    cell.style.boxSizing="border-box";
+    cell.style.background=((r+c)%2)?"#6b462c":"#ead2ad";
     if(selected&&selected.r===r&&selected.c===c)cell.classList.add("selected");
     const hit=moves.find(m=>m.from.r===selected?.r&&m.from.c===selected?.c&&m.to.r===r&&m.to.c===c);
     if(hit)cell.classList.add(hit.captures.length?"captureTarget":"target");
     const p=boardState[r][c];
-    if(p){const piece=document.createElement("div");piece.className="piece style-"+pieceStyle+" "+(isWhite(p)?"white":"black")+(isKing(p)?" king":"");cell.appendChild(piece)}
+    if(p){
+      const piece=document.createElement("div");
+      piece.className="piece style-"+pieceStyle+" "+(isWhite(p)?"white":"black")+(isKing(p)?" king":"");
+
+      piece.style.width="72%";
+      piece.style.height="72%";
+      piece.style.maxWidth="70px";
+      piece.style.maxHeight="70px";
+      piece.style.aspectRatio="1 / 1";
+      piece.style.borderRadius="50%";
+      piece.style.display="block";
+      piece.style.position="relative";
+      piece.style.zIndex="2";
+      piece.style.boxSizing="border-box";
+
+      if(isWhite(p)){
+        piece.style.background="radial-gradient(circle at 35% 30%,#fff,#e9e9e9 45%,#aaa)";
+        piece.style.border="3px solid #777";
+      }else{
+        piece.style.background="radial-gradient(circle at 35% 30%,#555,#222 45%,#050505)";
+        piece.style.border="3px solid #000";
+      }
+
+      if(isKing(p)){
+        piece.style.boxShadow="0 0 0 4px #d4af37 inset,0 4px 8px #0008";
+      }else{
+        piece.style.boxShadow="0 4px 8px #0008";
+      }
+
+      cell.appendChild(piece);
+    }
     cell.addEventListener("click",()=>gameClick(r,c));root.appendChild(cell)
   }
 }
