@@ -55,7 +55,49 @@ select{width:100%;background:#252b33;color:#fff;border:0;border-radius:12px;padd
 input[type=checkbox]{width:22px;height:22px}
 .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#20262e;color:#fff;border:1px solid #3a424d;padding:12px 16px;border-radius:12px;display:none;z-index:20;max-width:90%;text-align:center}
 .toast.show{display:block}
-@media(max-width:390px){.app{padding:9px}.menuGrid{gap:7px}.menu{font-size:13px}.stats{gap:5px}.stat{padding:9px}}
+
+/* ===== SHASHKAPRO BOARD THEMES ===== */
+.board.theme-classic{border-color:#342219}
+.board.theme-classic .light{background:#ead2ad}
+.board.theme-classic .dark{background:#6b462c}
+
+.board.theme-blue{border-color:#17243b}
+.board.theme-blue .light{background:#d9e7f5}
+.board.theme-blue .dark{background:#315b82}
+
+.board.theme-green{border-color:#203b2b}
+.board.theme-green .light{background:#e7dfc5}
+.board.theme-green .dark{background:#55734f}
+
+.board.theme-purple{border-color:#291b3f}
+.board.theme-purple .light{background:#eadff5}
+.board.theme-purple .dark{background:#65418a}
+
+.board.theme-neon{border-color:#161b29;box-shadow:0 0 25px #7b4dff88}
+.board.theme-neon .light{background:#25243d}
+.board.theme-neon .dark{background:#11101f}
+.board.theme-neon .cell.selected{box-shadow:inset 0 0 0 4px #00e5ff,0 0 14px #00e5ff}
+.board.theme-neon .cell.target{box-shadow:inset 0 0 0 4px #55ff9a,0 0 12px #55ff9a}
+
+.board.theme-gold{border-color:#6d531b}
+.board.theme-gold .light{background:#f4e2a8}
+.board.theme-gold .dark{background:#76551f}
+
+.board.theme-dark{border-color:#111}
+.board.theme-dark .light{background:#59616b}
+.board.theme-dark .dark{background:#20252b}
+
+.piece.style-classic{box-shadow:inset 0 5px 7px #fff8,inset 0 -8px 10px #0009,0 3px 5px #0009}
+.piece.style-flat{box-shadow:none;border-width:2px}
+.piece.style-neon{box-shadow:0 0 13px currentColor,inset 0 0 10px #fff5}
+.piece.style-glass{background:linear-gradient(145deg,#ffffffaa,#ffffff22)!important;backdrop-filter:blur(4px);box-shadow:inset 0 2px 5px #fff9,0 4px 10px #0008}
+.piece.style-gold.white{background:linear-gradient(145deg,#fff7c7,#c69b35)!important;border-color:#ffe99a}
+.piece.style-gold.black{background:linear-gradient(145deg,#8b6b25,#17130a)!important;border-color:#d7ad45}
+.piece.style-silver.white{background:linear-gradient(145deg,#fff,#9ca5ae)!important;border-color:#eef2f5}
+.piece.style-silver.black{background:linear-gradient(145deg,#5c6570,#111)!important;border-color:#9da7b2}
+.piece.style-neon.white{background:#eaffff!important;border-color:#00e5ff}
+.piece.style-neon.black{background:#160f25!important;border-color:#bd55ff}
+\n@media(max-width:390px){.app{padding:9px}.menuGrid{gap:7px}.menu{font-size:13px}.stats{gap:5px}.stat{padding:9px}}
 
 <style>
 .extraGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
@@ -74,6 +116,12 @@ input[type=checkbox]{width:22px;height:22px}
 .langBtn.active{background:#ddb354;color:#111}
 @media(max-width:390px){.extraGrid{gap:7px}.langRow{gap:4px}.langBtn{font-size:12px}}
 </style>
+</style>
+
+<style>
+.themeGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.designBtn,.pieceBtn{background:#252b33;color:#fff;border:1px solid #353d47}
+.designBtn.active,.pieceBtn.active{background:#ddb354;color:#111;border-color:#f0c64d}
 </style>
 </head>
 <body>
@@ -192,7 +240,33 @@ input[type=checkbox]{width:22px;height:22px}
   </div>
 </div>
 <div class="card">
-<label for="timeControl">⏱️ Vaqt nazorati</label>
+
+
+<div class="card">
+  <label>🎨 Doska dizayni</label>
+  <div class="themeGrid">
+    <button class="designBtn" data-board-theme="classic">🟫 Klassik</button>
+    <button class="designBtn" data-board-theme="blue">🟦 Blue</button>
+    <button class="designBtn" data-board-theme="green">🟩 Green</button>
+    <button class="designBtn" data-board-theme="purple">🟪 Purple</button>
+    <button class="designBtn" data-board-theme="neon">💜 Neon</button>
+    <button class="designBtn" data-board-theme="gold">🏆 Gold</button>
+    <button class="designBtn" data-board-theme="dark">🌑 Dark</button>
+  </div>
+</div>
+
+<div class="card">
+  <label>⚪ Dona dizayni</label>
+  <div class="themeGrid">
+    <button class="pieceBtn" data-piece-style="classic">⚪ Klassik</button>
+    <button class="pieceBtn" data-piece-style="flat">⚪ Flat</button>
+    <button class="pieceBtn" data-piece-style="neon">💜 Neon</button>
+    <button class="pieceBtn" data-piece-style="glass">🔮 Glass</button>
+    <button class="pieceBtn" data-piece-style="gold">🏆 Gold</button>
+    <button class="pieceBtn" data-piece-style="silver">🥈 Silver</button>
+  </div>
+</div>
+\n<label for="timeControl">⏱️ Vaqt nazorati</label>
 <select id="timeControl">
 <option value="1+1">1+1 — 1 daqiqa + 1 soniya</option>
 <option value="2+2">2+2 — 2 daqiqa + 2 soniya</option>
@@ -269,6 +343,7 @@ function startGame(){
 }
 function drawGame(){
   const root=$("gameBoard");if(!root)return;root.innerHTML="";
+  root.className="board theme-"+boardTheme;
   const moves=selected?getAllMoves(boardState,turn):[];
   for(let r=0;r<8;r++)for(let c=0;c<8;c++){
     const cell=document.createElement("div");cell.className="cell "+(((r+c)%2)?"dark":"light");
@@ -276,7 +351,7 @@ function drawGame(){
     const hit=moves.find(m=>m.from.r===selected?.r&&m.from.c===selected?.c&&m.to.r===r&&m.to.c===c);
     if(hit)cell.classList.add(hit.captures.length?"captureTarget":"target");
     const p=boardState[r][c];
-    if(p){const piece=document.createElement("div");piece.className="piece "+(isWhite(p)?"white":"black")+(isKing(p)?" king":"");cell.appendChild(piece)}
+    if(p){const piece=document.createElement("div");piece.className="piece style-"+pieceStyle+" "+(isWhite(p)?"white":"black")+(isKing(p)?" king":"");cell.appendChild(piece)}
     cell.addEventListener("click",()=>gameClick(r,c));root.appendChild(cell)
   }
 }
@@ -1130,6 +1205,14 @@ function bind(){
   $("onlineBack").addEventListener("click",()=>{leaveOnline();openScreen("home")});
   $("playersBack").addEventListener("click",()=>openScreen("home"));
   $("settingsBack").addEventListener("click",()=>openScreen("home"));
+  document.querySelectorAll(".designBtn").forEach(b=>{
+    b.addEventListener("click",()=>setBoardDesign(b.dataset.boardTheme));
+  });
+  document.querySelectorAll(".pieceBtn").forEach(b=>{
+    b.addEventListener("click",()=>setPieceDesign(b.dataset.pieceStyle));
+  });
+  applyBoardDesign();
+
   $("achievementsBack").addEventListener("click",()=>openScreen("home"));
   $("historyBack").addEventListener("click",()=>openScreen("home"));
 
@@ -1185,6 +1268,44 @@ function bind(){
 
 bind();
 })();
+
+/* ===== BOARD / PIECE DESIGN SYSTEM ===== */
+let boardTheme=localStorage.getItem("shashkaPRO_boardTheme")||"classic";
+let pieceStyle=localStorage.getItem("shashkaPRO_pieceStyle")||"classic";
+
+function applyBoardDesign(){
+  const b=$("gameBoard");
+  if(b){
+    b.classList.remove(
+      "theme-classic","theme-blue","theme-green","theme-purple",
+      "theme-neon","theme-gold","theme-dark"
+    );
+    b.classList.add("theme-"+boardTheme);
+  }
+
+  document.querySelectorAll(".designBtn").forEach(x=>{
+    x.classList.toggle("active",x.dataset.boardTheme===boardTheme);
+  });
+
+  document.querySelectorAll(".pieceBtn").forEach(x=>{
+    x.classList.toggle("active",x.dataset.pieceStyle===pieceStyle);
+  });
+}
+
+function setBoardDesign(v){
+  boardTheme=v;
+  localStorage.setItem("shashkaPRO_boardTheme",v);
+  applyBoardDesign();
+  drawGame();
+}
+
+function setPieceDesign(v){
+  pieceStyle=v;
+  localStorage.setItem("shashkaPRO_pieceStyle",v);
+  applyBoardDesign();
+  drawGame();
+}
+
 </script>
 </body>
 </html>
