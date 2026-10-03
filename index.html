@@ -623,10 +623,25 @@ function onlineConnect(){
       else if(m.type==='requestRemoved'){onlineRequests=onlineRequests.filter(x=>x.id!==m.requestId);onlineRenderRequests()}
       else if(m.type==='matchFound'){onlineStartMatch(m)}
       else if(m.type==='move'){
-        if(m.matchId!==onlineMatchId)return;
-        boardState=applyMove(boardState,m.move);history.push(clone(boardState));moveHistory.push(formatMove(m.move,turn===WHITE?'Oq':'Qora'));selected=null;turn=turn===WHITE?BLACK:WHITE;drawGame();drawMoves();updateStatus();updateTimer();checkEnd();
-      }
-      else if(m.type==='matchFinished'){gameOver=true;stopTimer();toast(m.winner===({white:WHITE,black:BLACK}[onlineColor])?'🎉 Siz g‘alaba qozondingiz!':'🏁 O‘yin tugadi');updateStatus();onlineMatchId='';}
+  if(m.matchId!==onlineMatchId)return;
+
+  const mySide=({white:WHITE,black:BLACK}[onlineColor]);
+  const moveSide=(m.turn==='black'?BLACK:WHITE);
+
+  if(moveSide!==mySide){
+    boardState=applyMove(boardState,m.move);
+    history.push(clone(boardState));
+    moveHistory.push(formatMove(m.move,moveSide===WHITE?'Oq':'Qora'));
+    selected=null;
+    turn=turn===WHITE?BLACK:WHITE;
+    drawGame();
+    drawMoves();
+    updateStatus();
+    updateTimer();
+    checkEnd();
+  }
+}
+else if(m.type==='matchFinished'){gameOver=true;stopTimer();toast(m.winner===({white:WHITE,black:BLACK}[onlineColor])?'🎉 Siz g‘alaba qozondingiz!':'🏁 O‘yin tugadi');updateStatus();onlineMatchId='';}
       else if(m.type==='opponentLeft'){finish(m.winner||({white:WHITE,black:BLACK}[onlineColor]));toast('👋 Raqib o‘yindan chiqdi')}
       else if(m.type==='error'){toast('⚠️ '+m.message)}
     };
