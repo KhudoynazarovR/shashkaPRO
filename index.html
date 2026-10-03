@@ -449,73 +449,121 @@ var boardTheme=localStorage.getItem("shashkaPRO_boardTheme")||"classic";
 var pieceStyle=localStorage.getItem("shashkaPRO_pieceStyle")||"classic";
 
 function drawGame(){
-  const root=$("gameBoard");if(!root)return;root.innerHTML="";
-  root.className="board theme-"+boardTheme;
+  const root=$("gameBoard");
+  if(!root)return;
 
-  /* SHASHKAPRO INLINE BOARD FIX */
+  root.innerHTML="";
+  root.className="board theme-"+(boardTheme||"classic");
+
   root.style.display="grid";
-  root.style.gridTemplateColumns="repeat(8,1fr)";
-  root.style.gridTemplateRows="repeat(8,1fr)";
+  root.style.gridTemplateColumns="repeat(8,minmax(0,1fr))";
+  root.style.gridTemplateRows="repeat(8,minmax(0,1fr))";
   root.style.width="100%";
-  root.style.maxWidth="640px";
   root.style.aspectRatio="1 / 1";
+  root.style.maxWidth="640px";
   root.style.height="auto";
   root.style.margin="0 auto";
   root.style.padding="0";
-  root.style.boxSizing="border-box";
   root.style.overflow="hidden";
-  root.style.position="relative";
+
+  const themes={
+    classic:["#ead2ad","#6b462c"],
+    blue:["#d9e7f5","#315b82"],
+    green:["#e7dfc5","#55734f"],
+    purple:["#eadcf5","#6b4b7a"],
+    neon:["#20252b","#3b1f4a"],
+    gold:["#f4e2a8","#76551f"],
+    dark:["#59616b","#111111"]
+  };
+
+  const pcs={
+    classic:["radial-gradient(circle at 35% 30%,#fff,#e9e9e9 45%,#bdbdbd)","radial-gradient(circle at 35% 30%,#555,#222 45%,#050505)"],
+    flat:["#f2f2f2","#202020"],
+    neon:["#ffffff","#151515"],
+    glass:["rgba(255,255,255,.75)","rgba(20,20,30,.85)"],
+    gold:["linear-gradient(145deg,#fff0a8,#d4af37,#8b6914)","linear-gradient(145deg,#555,#171717,#000)"],
+    silver:["linear-gradient(145deg,#fff,#cfd3d8,#777)","linear-gradient(145deg,#666,#333,#111)"]
+  };
+
+  const colors=themes[boardTheme]||themes.classic;
+  const pieceColors=pcs[pieceStyle]||pcs.classic;
+
   const moves=selected?getAllMoves(boardState,turn):[];
-  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
-    const cell=document.createElement("div");
-    cell.className="cell "+(((r+c)%2)?"dark":"light");
 
-    cell.style.width="100%";
-    cell.style.height="100%";
-    cell.style.minWidth="0";
-    cell.style.minHeight="0";
-    cell.style.display="flex";
-    cell.style.alignItems="center";
-    cell.style.justifyContent="center";
-    cell.style.position="relative";
-    cell.style.boxSizing="border-box";
-    cell.style.background=((r+c)%2)?"#6b462c":"#ead2ad";
-    if(selected&&selected.r===r&&selected.c===c)cell.classList.add("selected");
-    const hit=moves.find(m=>m.from.r===selected?.r&&m.from.c===selected?.c&&m.to.r===r&&m.to.c===c);
-    if(hit)cell.classList.add(hit.captures.length?"captureTarget":"target");
-    const p=boardState[r][c];
-    if(p){
-      const piece=document.createElement("div");
-      piece.className="piece style-"+pieceStyle+" "+(isWhite(p)?"white":"black")+(isKing(p)?" king":"");
+  for(let r=0;r<8;r++){
+    for(let c=0;c<8;c++){
 
-      piece.style.width="72%";
-      piece.style.height="72%";
-      piece.style.maxWidth="70px";
-      piece.style.maxHeight="70px";
-      piece.style.aspectRatio="1 / 1";
-      piece.style.borderRadius="50%";
-      piece.style.display="block";
-      piece.style.position="relative";
-      piece.style.zIndex="2";
-      piece.style.boxSizing="border-box";
+      const cell=document.createElement("div");
+      cell.className="cell "+(((r+c)%2)?"dark":"light");
 
-      if(isWhite(p)){
-        piece.style.background="radial-gradient(circle at 35% 30%,#fff,#e9e9e9 45%,#aaa)";
-        piece.style.border="3px solid #777";
-      }else{
-        piece.style.background="radial-gradient(circle at 35% 30%,#555,#222 45%,#050505)";
-        piece.style.border="3px solid #000";
+      cell.style.position="relative";
+      cell.style.display="flex";
+      cell.style.alignItems="center";
+      cell.style.justifyContent="center";
+      cell.style.width="100%";
+      cell.style.height="100%";
+      cell.style.boxSizing="border-box";
+      cell.style.background=((r+c)%2)?colors[1]:colors[0];
+
+      if(selected&&selected.r===r&&selected.c===c){
+        cell.classList.add("selected");
+        cell.style.boxShadow="inset 0 0 0 4px #00e5ff";
       }
 
-      if(isKing(p)){
-        piece.style.boxShadow="0 0 0 4px #d4af37 inset,0 4px 8px #0008";
-      }else{
-        piece.style.boxShadow="0 4px 8px #0008";
+      const hit=moves.find(
+        m=>m.from.r===selected?.r &&
+           m.from.c===selected?.c &&
+           m.to.r===r &&
+           m.to.c===c
+      );
+
+      if(hit){
+        cell.classList.add(hit.captures.length?"captureTarget":"target");
+        cell.style.boxShadow=hit.captures.length
+          ?"inset 0 0 0 4px #ff4d4d"
+          :"inset 0 0 0 4px #55ff9a";
       }
 
-      cell.appendChild(piece);
+      const p=boardState[r][c];
+
+      if(p){
+        const piece=document.createElement("div");
+
+        piece.className=
+          "piece style-"+(pieceStyle||"classic")+" "+
+          (isWhite(p)?"white":"black")+
+          (isKing(p)?" king":"");
+
+        piece.style.width="72%";
+        piece.style.height="72%";
+        piece.style.maxWidth="70px";
+        piece.style.maxHeight="70px";
+        piece.style.borderRadius="50%";
+        piece.style.position="relative";
+        piece.style.zIndex="2";
+        piece.style.boxSizing="border-box";
+        piece.style.background=isWhite(p)?pieceColors[0]:pieceColors[1];
+        piece.style.border=isWhite(p)?"3px solid #777":"3px solid #000";
+        piece.style.boxShadow=isKing(p)
+          ?"inset 0 0 0 4px #d4af37,0 4px 8px #0008"
+          :"0 4px 8px #0008";
+
+        if(pieceStyle==="neon"){
+          piece.style.boxShadow=isWhite(p)
+            ?"0 0 10px #fff,0 0 22px #00e5ff"
+            :"0 0 10px #ff1744,0 0 22px #7c00ff";
+        }
+
+        if(pieceStyle==="glass"){
+          piece.style.backdropFilter="blur(6px)";
+          piece.style.border="2px solid rgba(255,255,255,.7)";
+        }
+
+        cell.appendChild(piece);
+      }
+
+      root.appendChild(cell);
     }
-    cell.addEventListener("click",()=>gameClick(r,c));root.appendChild(cell)
   }
 }
 function gameClick(r,c){
