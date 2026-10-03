@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ShashkaPRO</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0c0f13;color:#fff;font-family:Arial,sans-serif;-webkit-tap-highlight-color:transparent}
+button,select{font:inherit}
+.app{width:min(100%,620px);margin:auto;padding:14px}
+.screen{display:none}.screen.active{display:block}
+.logo{text-align:center;font-size:30px;font-weight:900;margin:12px 0 3px}
+.subtitle{text-align:center;color:#aeb5bf;margin-bottom:18px}
+.card{background:#171b21;border:1px solid #2b3139;border-radius:18px;padding:15px;margin:12px 0}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{text-align:center;background:#11151a;border-radius:12px;padding:12px}
+.stat b{display:block;font-size:21px;margin-top:5px}
+.menuGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+button{border:0;border-radius:13px;padding:13px 10px;font-weight:800;min-height:48px}
+.menu{background:#1d232a;color:#fff;border:1px solid #303740}
+.primary{background:#ddb354;color:#17120a}
+.danger{background:#7d3034;color:#fff}
+.green{background:#246b43;color:#fff}
+.gold{background:#ddb354;color:#111}
+.back{background:#252b33;color:#fff;padding:10px 14px}
+.header{display:flex;justify-content:space-between;align-items:center;margin:4px 0 12px}
+.header b{font-size:21px}
+.boardWrap{width:min(94vw,540px);margin:12px auto}
+.board{width:100%;aspect-ratio:1;display:grid;grid-template-columns:repeat(8,1fr);border:6px solid #342219;border-radius:10px;overflow:hidden;box-shadow:0 12px 35px #0008}
+.cell{position:relative;display:flex;align-items:center;justify-content:center;touch-action:manipulation}
+.light{background:#ead2ad}.dark{background:#6b462c}
+.cell.selected{box-shadow:inset 0 0 0 5px #f0c64d}
+.cell.target{box-shadow:inset 0 0 0 5px #62d58a}
+.cell.captureTarget{box-shadow:inset 0 0 0 5px #e66d70}
+.piece{width:72%;height:72%;border-radius:50%;border:3px solid #222;box-shadow:inset 0 5px 7px #fff8,inset 0 -8px 10px #0009,0 3px 5px #0009;position:relative}
+.white{background:#f4f4f4;border-color:#aaa}.black{background:#171717;border-color:#050505}
+.king:after{content:"♛";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#d6ad4d;font-size:clamp(18px,5vw,30px)}
+.gameInfo{display:flex;justify-content:space-between;align-items:center;background:#171b21;border:1px solid #2b3139;border-radius:14px;padding:10px 12px}
+.timer{font-size:22px;font-weight:900}
+.actions{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+.actions button{background:#252b33;color:#fff}.actions .danger{background:#7d3034}
+.moves{max-height:180px;overflow:auto;color:#aeb5bf;line-height:1.7}
+.notice{background:#242018;border:1px solid #62502b;border-radius:12px;padding:12px;color:#e9d48e}
+.toolGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.tool{background:#252b33;color:#fff}.tool.active{background:#ddb354;color:#111}
+#editorBoard{width:min(94vw,540px);aspect-ratio:1;margin:15px auto;display:grid;grid-template-columns:repeat(8,1fr);border:6px solid #342219;border-radius:10px;overflow:hidden}
+.listRow{display:flex;justify-content:space-between;padding:12px 4px;border-bottom:1px solid #2b3139}.listRow:last-child{border-bottom:0}
+.big{text-align:center;font-size:34px;font-weight:900}
+.muted{color:#aeb5bf}
+label{display:block;color:#c7cdd5;margin:12px 0 6px}
+select{width:100%;background:#252b33;color:#fff;border:0;border-radius:12px;padding:12px}
+.switch{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #2b3139}
+.switch:last-child{border-bottom:0}
+input[type=checkbox]{width:22px;height:22px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#20262e;color:#fff;border:1px solid #3a424d;padding:12px 16px;border-radius:12px;display:none;z-index:20;max-width:90%;text-align:center}
+.toast.show{display:block}
+@media(max-width:390px){.app{padding:9px}.menuGrid{gap:7px}.menu{font-size:13px}.stats{gap:5px}.stat{padding:9px}}
+
+<style>
+.extraGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.playerCard{background:#111820;border:1px solid #2b3947;border-radius:15px;padding:12px;margin:8px 0}
+.playerLine{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.avatar{width:44px;height:44px;border-radius:12px;background:#202d3b;display:flex;align-items:center;justify-content:center;font-size:25px}
+.smallBtn{min-height:40px;padding:9px 12px}
+.badge{display:inline-block;background:#246b43;border-radius:999px;padding:4px 8px;font-size:11px}
+.achievement{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid #2b3139}
+.achievement:last-child{border-bottom:0}
+.achIcon{font-size:28px;width:42px;text-align:center}
+.historyItem{padding:12px 4px;border-bottom:1px solid #2b3139}
+.historyItem:last-child{border-bottom:0}
+.langRow{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.langBtn{background:#252b33;color:#fff;padding:10px 5px}
+.langBtn.active{background:#ddb354;color:#111}
+@media(max-width:390px){.extraGrid{gap:7px}.langRow{gap:4px}.langBtn{font-size:12px}}
+</style>
+</style>
+</head>
+<body>
+<div class="app">
+<section id="home" class="screen active">
+  <div class="logo">♟ ShashkaPRO</div><div class="subtitle">Professional Checkers</div>
+  <div class="card"><div class="stats">
+    <div class="stat">ELO<b id="homeElo">1000</b></div><div class="stat">G‘alaba<b id="homeWins">0</b></div><div class="stat">O‘yin<b id="homeGames">0</b></div>
+  </div></div>
+  <div class="menuGrid">
+    <button class="menu primary" id="btnAI">🤖 AI bilan o‘ynash</button><button class="menu" id="btnOnline">🌐 Onlayn</button>
+    <button class="menu" id="btnTournaments">🏆 Turnirlar</button><button class="menu" id="btnTop">👑 TOP 30</button>
+    <button class="menu" id="btnProfile">👤 Profil</button><button class="menu" id="btnPlayers">👥 O‘yinchilar</button><button class="menu" id="btnEditor">✏️ Doska</button>
+    <button class="menu" id="btnAnalysis">🧠 Tahlil</button><button class="menu" id="btnAchievements">🏅 Yutuqlar</button>
+    <button class="menu" id="btnHistory">📜 Tarix</button><button class="menu" id="btnSettings">⚙️ Sozlamalar</button>
+  </div>
+</section>
+
+<section id="game" class="screen">
+  <div class="header"><b id="gameTitle">🤖 AI bilan o‘yin</b><button class="back" id="gameBack">←</button></div>
+  <div class="gameInfo">
+<span id="gameStatus">⚪ Siz yurishingiz kerak</span>
+<span class="timer"><span id="whiteTimer">05:00</span> | <span id="blackTimer">05:00</span></span>
+</div>
+  <div class="boardWrap"><div id="gameBoard" class="board"></div></div>
+  <div class="actions"><button id="undoBtn">↩️ Orqaga</button><button id="gameAnalysisBtn">🧠 Tahlil</button><button id="restartBtn">🔄 Qayta</button><button class="danger" id="giveUpBtn">🏳️ Taslim</button></div>
+  <div class="card"><b>Yurishlar</b><div id="moveList" class="moves">Hali yurish yo‘q</div></div>
+</section>
+
+<section id="editor" class="screen">
+  <div class="header"><b>✏️ Doska editor</b><button class="back" id="editorBack">←</button></div>
+  <div class="notice">Dona turini tanlang va doskadagi katakka bosing.</div>
+  <div class="toolGrid" style="margin-top:10px">
+    <button class="tool active" data-tool="white">⚪ Oq</button><button class="tool" data-tool="black">⚫ Qora</button><button class="tool" data-tool="whiteKing">👑 Oq</button>
+    <button class="tool" data-tool="blackKing">👑 Qora</button><button class="tool" data-tool="erase">🧹 O‘chirish</button><button class="tool" id="clearEditor">◻️ Tozalash</button>
+    <button class="tool" id="startEditor">♟ Start</button><button class="tool" id="editorTurnBtn">🔄 Navbat</button>
+  </div>
+  <div id="editorBoard"></div><div class="card">Navbat: <b id="editorTurn">⚪ Oq</b></div>
+  <div class="actions"><button class="gold" id="playEditor">▶️ Shu pozitsiyada o‘ynash</button><button id="editorAnalysis">🧠 Tahlil</button></div>
+</section>
+
+<section id="analysis" class="screen">
+  <div class="header"><b>🧠 Tahlil</b><button class="back" id="analysisBack">←</button></div>
+  <div class="card"><div class="big" id="analysisScore">0</div><div class="muted" style="text-align:center">+ oq uchun, − qora uchun</div></div>
+  <div class="card"><div class="listRow"><span>⚪ Oq</span><b id="aWhite">0</b></div><div class="listRow"><span>⚫ Qora</span><b id="aBlack">0</b></div><div class="listRow"><span>👑 Oq shoh</span><b id="aWhiteKings">0</b></div><div class="listRow"><span>👑 Qora shoh</span><b id="aBlackKings">0</b></div></div>
+  <div class="card"><b>💡 Xulosa</b><p id="analysisText" class="muted">Pozitsiyani tekshirish uchun o‘yin boshlang.</p></div>
+</section>
+
+<section id="top" class="screen"><div class="header"><b>👑 TOP 30</b><button class="back" id="topBack">←</button></div><div class="card" id="topList"></div></section>
+<section id="profile" class="screen">
+  <div class="header"><b>👤 Profil</b><button class="back" id="profileBack">←</button></div>
+  <div class="card"><div class="big">♟</div><h2 style="text-align:center">ShashkaPRO Player</h2></div>
+  <div class="card"><div class="listRow"><span>🏆 ELO</span><b id="pElo">1000</b></div><div class="listRow"><span>🥇 G‘alabalar</span><b id="pWins">0</b></div><div class="listRow"><span>🎮 O‘yinlar</span><b id="pGames">0</b></div><div class="listRow"><span>📈 Winrate</span><b id="pRate">0%</b></div></div>
+  <button class="danger" style="width:100%" id="resetStats">🗑 Statistikani tozalash</button>
+</section>
+<section id="tournaments" class="screen">
+  <div class="header"><b>🏆 Turnirlar</b><button class="back" id="tournamentsBack">←</button></div>
+  <div class="card"><h2>⚡ Blitz Arena</h2><p class="muted">10 daqiqalik format</p><button class="gold tournamentBtn" data-name="Blitz Arena">Kirish</button></div>
+  <div class="card"><h2>🔥 PRO Cup</h2><p class="muted">PRO format</p><button class="gold tournamentBtn" data-name="PRO Cup">Kirish</button></div>
+  <div class="card"><h2>👑 Daily Tournament</h2><p class="muted">Kunlik musobaqa</p><button class="gold tournamentBtn" data-name="Daily Tournament">Kirish</button></div>
+</section>
+<section id="online" class="screen">
+  <div class="header"><b>🌐 Onlayn o‘yin</b><button class="back" id="onlineBack">←</button></div>
+  <div class="card">
+    <h2>👥 Jonli o‘yinchilar</h2>
+    <p class="muted">Xonasiz real o‘yinchilar bilan o‘ynang. So‘rov yuboring yoki tasodifiy raqib toping.</p>
+    <label for="onlineName">👤 Ismingiz</label>
+    <input id="onlineName" value="ShashkaPRO Player" maxlength="20" style="width:100%;background:#252b33;color:#fff;border:0;border-radius:12px;padding:12px">
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="primary" style="flex:1" id="onlineConnectBtn">🌐 Ulanish</button>
+      <button class="gold" style="flex:1" id="randomMatchBtn">🎲 Tasodifiy raqib</button>
+    </div>
+    <div class="listRow" style="margin-top:10px"><span>📡 Holat</span><b id="onlineStatus">Ulanmagan</b></div>
+  </div>
+  <div class="card">
+    <h3>🟢 Onlayn o‘yinchilar <span class="muted" id="onlinePlayerCount">0</span></h3>
+    <div id="onlinePlayersList"><p class="muted">Avval serverga ulaning.</p></div>
+  </div>
+  <div class="card" id="onlineRequestsCard">
+    <h3>🔔 O‘yin so‘rovlari</h3>
+    <div id="onlineRequestsList"><p class="muted">Kelgan so‘rovlar shu yerda chiqadi.</p></div>
+  </div>
+  <div class="notice">ℹ️ Haqiqiy odamlar bilan o‘yin uchun bu HTML faylni WebSocket serveri bilan birga ishga tushiring. AI va taymer rejimlari o‘zgarishsiz qoladi.</div>
+</section>
+<section id="players" class="screen">
+  <div class="header"><b>👥 O‘yinchilar</b><button class="back" id="playersBack">←</button></div>
+  <div class="card">
+    <h2>👥 Bir-biri bilan o‘ynash</h2>
+    <p class="muted">Bir qurilmada 2 o‘yinchi navbatma-navbat o‘ynashi mumkin.</p>
+    <label for="whiteName">⚪ Oq o‘yinchi</label>
+    <input id="whiteName" value="Siz" style="width:100%;background:#252b33;color:#fff;border:0;border-radius:12px;padding:12px">
+    <label for="blackName">⚫ Qora o‘yinchi</label>
+    <input id="blackName" value="Do'st" style="width:100%;background:#252b33;color:#fff;border:0;border-radius:12px;padding:12px">
+    <button class="primary" style="width:100%;margin-top:12px" id="startLocal">👥 2 kishilik o‘yin</button>
+  </div>
+  <div class="card"><h3>🤖 Bot raqiblar</h3><p class="muted">Turli darajadagi botlarni tanlab o‘ynang.</p><div id="botList"></div></div>
+</section>
+<section id="achievements" class="screen">
+  <div class="header"><b>🏅 Yutuqlar</b><button class="back" id="achievementsBack">←</button></div>
+  <div class="card" id="achievementList"></div>
+</section>
+<section id="history" class="screen">
+  <div class="header"><b>📜 O‘yinlar tarixi</b><button class="back" id="historyBack">←</button></div>
+  <div class="card">
+    <button class="danger smallBtn" id="clearHistory">🗑 Tarixni tozalash</button>
+    <div id="historyList" style="margin-top:8px"></div>
+  </div>
+</section>
+<section id="settings" class="screen"><div class="header"><b>⚙️ Sozlamalar</b><button class="back" id="settingsBack">←</button></div><div class="card"><div class="switch"><span>🔊 Ovoz</span><input id="sound" type="checkbox" checked></div><div class="switch"><span>📳 Vibratsiya</span><input id="vibration" type="checkbox" checked></div></div><div class="card">
+  <label>🌐 Til</label>
+  <div class="langRow">
+    <button class="langBtn active" data-lang="uz">🇺🇿 O‘zbek</button>
+    <button class="langBtn" data-lang="ru">🇷🇺 Русский</button>
+    <button class="langBtn" data-lang="en">🇬🇧 English</button>
+    <button class="langBtn" data-lang="tr">🇹🇷 Türkçe</button>
+  </div>
+</div>
+<div class="card">
+<label for="timeControl">⏱️ Vaqt nazorati</label>
+<select id="timeControl">
+<option value="1+1">1+1 — 1 daqiqa + 1 soniya</option>
+<option value="2+2">2+2 — 2 daqiqa + 2 soniya</option>
+<option value="3+2">3+2 — 3 daqiqa + 2 soniya</option>
+<option value="5+3" selected>5+3 — 5 daqiqa + 3 soniya</option>
+</select>
+<label for="aiLevel">🤖 AI darajasi</label>
+<select id="aiLevel"><option value="1">Oson</option><option value="2" selected>O‘rta</option><option value="3">Qiyin</option></select>
+</div></section>
+</div>
+<div id="toast" class="toast"></div>
+
+<script>
+window.addEventListener("error",function(e){console.error("ShashkaPRO:",e.error||e.message||e);});
+
+(function(){
+"use strict";
+const EMPTY=0,WHITE=1,BLACK=2,WHITE_KING=3,BLACK_KING=4;
+const DIRS=[[1,1],[1,-1],[-1,1],[-1,-1]];
+let boardState=[],turn=WHITE,selected=null,gameOver=false,history=[],moveHistory=[];
+let timerId=null,whiteSeconds=300,blackSeconds=300,incrementSeconds=3;
+let timeControl="5+3";
+let gameMode="ai";
+let localPlayers={white:"Siz",black:"Do'st"};
+let socket=null, onlineRoom="", onlineColor="", onlineConnected=false, onlineId="", onlineOpponent="", onlineMatchId="", onlinePlayers=[], onlineRequests=[];
+let editorState=[],editorTool="white",editorTurn=WHITE;
+let aiTimer=null;
+
+let stats;
+try{stats=JSON.parse(localStorage.getItem("shashkaPRO_stats")||"null")||{elo:1000,wins:0,games:0}}
+catch(e){stats={elo:1000,wins:0,games:0}}
+
+function $(id){return document.getElementById(id)}
+function toast(msg){const t=$("toast");if(!t)return;t.textContent=msg;t.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove("show"),1800)}
+function saveStats(){try{localStorage.setItem("shashkaPRO_stats",JSON.stringify(stats))}catch(e){}updateStats()}
+function updateStats(){
+  if($("homeElo"))$("homeElo").textContent=stats.elo;if($("homeWins"))$("homeWins").textContent=stats.wins;if($("homeGames"))$("homeGames").textContent=stats.games;
+  if($("pElo"))$("pElo").textContent=stats.elo;if($("pWins"))$("pWins").textContent=stats.wins;if($("pGames"))$("pGames").textContent=stats.games;
+  if($("pRate"))$("pRate").textContent=(stats.games?Math.round(stats.wins/stats.games*100):0)+"%"
+}
+function openScreen(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  const s=$(id);if(s)s.classList.add("active");
+  if(id==="top")drawTop();
+  if(id==="analysis")updateAnalysis();
+  if(id==="history")drawHistory();
+  if(id==="achievements")drawAchievements();
+  if(id==="players")drawBots();
+  updateStats();
+}
+function clone(b){return b.map(r=>r.slice())}
+function inside(r,c){return r>=0&&r<8&&c>=0&&c<8}
+function isWhite(p){return p===WHITE||p===WHITE_KING}
+function isBlack(p){return p===BLACK||p===BLACK_KING}
+function isKing(p){return p===WHITE_KING||p===BLACK_KING}
+function sameSide(a,b){return(isWhite(a)&&isWhite(b))||(isBlack(a)&&isBlack(b))}
+function startPosition(){const b=Array.from({length:8},()=>Array(8).fill(EMPTY));for(let r=0;r<3;r++)for(let c=0;c<8;c++)if((r+c)%2)b[r][c]=BLACK;for(let r=5;r<8;r++)for(let c=0;c<8;c++)if((r+c)%2)b[r][c]=WHITE;return b}
+
+function setTimeControl(){
+  timeControl=$("timeControl")?.value||"5+3";
+  const parts=timeControl.split("+").map(Number);
+  const base=Math.max(1,Number(parts[0])||5);
+  incrementSeconds=Math.max(0,Number(parts[1])||0);
+  whiteSeconds=base*60;
+  blackSeconds=base*60;
+}
+function startGame(){
+  stopTimer();clearTimeout(aiTimer);
+  gameMode="ai";
+  if($("gameTitle"))$("gameTitle").textContent="🤖 AI bilan o‘yin";
+  setTimeControl();
+  boardState=startPosition();turn=WHITE;selected=null;gameOver=false;history=[];moveHistory=[];
+  openScreen("game");drawGame();drawMoves();updateStatus();updateTimer();startTimer()
+}
+function drawGame(){
+  const root=$("gameBoard");if(!root)return;root.innerHTML="";
+  const moves=selected?getAllMoves(boardState,turn):[];
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+    const cell=document.createElement("div");cell.className="cell "+(((r+c)%2)?"dark":"light");
+    if(selected&&selected.r===r&&selected.c===c)cell.classList.add("selected");
+    const hit=moves.find(m=>m.from.r===selected?.r&&m.from.c===selected?.c&&m.to.r===r&&m.to.c===c);
+    if(hit)cell.classList.add(hit.captures.length?"captureTarget":"target");
+    const p=boardState[r][c];
+    if(p){const piece=document.createElement("div");piece.className="piece "+(isWhite(p)?"white":"black")+(isKing(p)?" king":"");cell.appendChild(piece)}
+    cell.addEventListener("click",()=>gameClick(r,c));root.appendChild(cell)
+  }
+}
+function gameClick(r,c){
+  if(gameOver)return;
+  if(gameMode==="ai" && turn!==WHITE)return;
+  if(gameMode==="online" && turn!==({white:WHITE,black:BLACK}[onlineColor]))return;
+  const p=boardState[r][c],side=turn;
+  if(selected){
+    const moves=getAllMoves(boardState,side);
+    const m=moves.find(x=>x.from.r===selected.r&&x.from.c===selected.c&&x.to.r===r&&x.to.c===c);
+    if(m){makeMove(m);return}
+    if(p&&((side===WHITE&&isWhite(p))||(side===BLACK&&isBlack(p)))){
+      selected={r,c};drawGame();return
+    }
+    selected=null;drawGame();return
+  }
+  if(p&&((side===WHITE&&isWhite(p))||(side===BLACK&&isBlack(p)))){
+    const moves=getAllMoves(boardState,side);
+    if(moves.some(m=>m.from.r===r&&m.from.c===c)){selected={r,c};drawGame()}
+  }
+}
+function simpleMoves(b,r,c){
+  const p=b[r][c],out=[];if(!p)return out;
+  if(isKing(p)){for(const d of DIRS){let nr=r+d[0],nc=c+d[1];while(inside(nr,nc)&&!b[nr][nc]){out.push({from:{r,c},to:{r:nr,c:nc},captures:[]});nr+=d[0];nc+=d[1]}}}
+  else{const dr=isWhite(p)?-1:1;for(const d of DIRS)if(d[0]===dr){const nr=r+d[0],nc=c+d[1];if(inside(nr,nc)&&!b[nr][nc])out.push({from:{r,c},to:{r:nr,c:nc},captures:[]})}}
+  return out
+}
+function captureSteps(b,r,c){
+  const p=b[r][c],out=[];if(!p)return out;
+  if(isKing(p)){for(const d of DIRS){let nr=r+d[0],nc=c+d[1],enemy=null;while(inside(nr,nc)){const x=b[nr][nc];if(!x){if(enemy)out.push({from:{r,c},to:{r:nr,c:nc},captures:[enemy]})}else{if(sameSide(p,x)||enemy)break;enemy={r:nr,c:nc}}nr+=d[0];nc+=d[1]}}}
+  else{for(const d of DIRS){const mr=r+d[0],mc=c+d[1],lr=r+2*d[0],lc=c+2*d[1];if(inside(mr,mc)&&inside(lr,lc)&&b[mr][mc]&&!sameSide(p,b[mr][mc])&&!b[lr][lc])out.push({from:{r,c},to:{r:lr,c:lc},captures:[{r:mr,c:mc}]})}}
+  return out
+}
+function applyStep(b,m){const n=clone(b),p=n[m.from.r][m.from.c];n[m.from.r][m.from.c]=EMPTY;m.captures.forEach(x=>n[x.r][x.c]=EMPTY);n[m.to.r][m.to.c]=p;return n}
+function continueCapture(b,r,c,origin,caps,path,out){
+  const steps=captureSteps(b,r,c);
+  if(!steps.length){out.push({from:origin,to:{r,c},captures:caps.slice(),path:path.slice()});return}
+  for(const s of steps)continueCapture(applyStep(b,s),s.to.r,s.to.c,origin,caps.concat(s.captures),path.concat([s.to]),out)
+}
+function allCaptures(b,side){
+  const out=[];for(let r=0;r<8;r++)for(let c=0;c<8;c++){const p=b[r][c];if(!p||(side===WHITE&&!isWhite(p))||(side===BLACK&&!isBlack(p)))continue;for(const s of captureSteps(b,r,c))continueCapture(applyStep(b,s),s.to.r,s.to.c,{r,c},s.captures,[s.to],out)}return out
+}
+function getAllMoves(b,side){
+  const caps=allCaptures(b,side);if(caps.length)return caps;const out=[];
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){const p=b[r][c];if(!p||(side===WHITE&&!isWhite(p))||(side===BLACK&&!isBlack(p)))continue;out.push(...simpleMoves(b,r,c))}
+  return out
+}
+function applyMove(b,m){
+  const n=clone(b),p=n[m.from.r][m.from.c];n[m.from.r][m.from.c]=EMPTY;m.captures.forEach(x=>n[x.r][x.c]=EMPTY);
+  let q=p;if(p===WHITE&&m.to.r===0)q=WHITE_KING;if(p===BLACK&&m.to.r===7)q=BLACK_KING;n[m.to.r][m.to.c]=q;return n
+}
+function makeMove(m){
+  if(gameMode==="online" && turn!==({white:WHITE,black:BLACK}[onlineColor]))return;
+  history.push(clone(boardState));
+  boardState=applyMove(boardState,m);
+  if(turn===WHITE)whiteSeconds+=incrementSeconds;
+  else blackSeconds+=incrementSeconds;
+  moveHistory.push(formatMove(m,turn===WHITE?"Oq":"Qora"));
+  if(gameMode==="online" && socket?.readyState===WebSocket.OPEN){
+    socket.send(JSON.stringify({type:"move",matchId:onlineMatchId,move:m}));
+  }
+  selected=null;
+  turn=turn===WHITE?BLACK:WHITE;
+  drawGame();drawMoves();updateStatus();updateTimer();checkEnd();
+  if(!gameOver && gameMode==="ai" && turn===BLACK)aiTimer=setTimeout(aiMove,250);
+}
+
+function evaluate(b){
+  let s=0;for(let r=0;r<8;r++)for(let c=0;c<8;c++){const p=b[r][c];if(p===WHITE)s-=100;if(p===BLACK)s+=100;if(p===WHITE_KING)s-=175;if(p===BLACK_KING)s+=175}
+  return s
+}
+function minimax(b,side,depth,alpha,beta){
+  if(depth<=0)return evaluate(b);const moves=getAllMoves(b,side);if(!moves.length)return side===BLACK?-99999:99999;
+  if(side===BLACK){let v=-Infinity;for(const m of moves){v=Math.max(v,minimax(applyMove(b,m),WHITE,depth-1,alpha,beta));alpha=Math.max(alpha,v);if(beta<=alpha)break}return v}
+  let v=Infinity;for(const m of moves){v=Math.min(v,minimax(applyMove(b,m),BLACK,depth-1,alpha,beta));beta=Math.min(beta,v);if(beta<=alpha)break}return v
+}
+function aiMove(){
+  aiTimer=null;if(gameOver||turn!==BLACK)return;
+  const depth=Math.max(1,Math.min(3,Number($("aiLevel").value)||2)),moves=getAllMoves(boardState,BLACK);
+  if(!moves.length){finish("white");return}
+  let best=moves[0],bestScore=-Infinity;
+  for(const m of moves){const score=minimax(applyMove(boardState,m),WHITE,depth-1,-Infinity,Infinity);if(score>bestScore){bestScore=score;best=m}}
+  history.push(clone(boardState));
+  boardState=applyMove(boardState,best);
+  blackSeconds+=incrementSeconds;
+  moveHistory.push(formatMove(best,"Qora"));
+  turn=WHITE;drawGame();drawMoves();updateStatus();updateTimer();checkEnd()
+}
+function checkEnd(){
+  let w=0,b=0;for(const row of boardState)for(const p of row){if(isWhite(p))w++;if(isBlack(p))b++}
+  if(!w){finish("black");return}if(!b){finish("white");return}
+  if(!getAllMoves(boardState,WHITE).length){finish("black");return}if(!getAllMoves(boardState,BLACK).length){finish("white");return}
+}
+function finish(winner){
+  if(gameOver)return;gameOver=true;stopTimer();clearTimeout(aiTimer);
+  if(gameMode==="online" && socket?.readyState===WebSocket.OPEN){
+    socket.send(JSON.stringify({type:"finishMatch",matchId:onlineMatchId,winner}));
+    const mySide={white:WHITE,black:BLACK}[onlineColor];
+    if(winner===mySide)toast("🎉 Siz g‘alaba qozondingiz!");else toast("😔 Raqib g‘alaba qozondi");
+    updateStatus();return;
+  }
+  stats.games++;
+  if(winner==="white"){stats.wins++;stats.elo+=25;toast("🎉 Siz g‘alaba qozondingiz!")}else{stats.elo=Math.max(100,stats.elo-20);toast("😔 Qora g‘alaba qozondi")}
+  saveStats();saveHistory(winner==="white"?"🏆 G‘alaba":"❌ Mag‘lubiyat");updateStatus();
+}
+
+function giveUp(){if(!gameOver&&confirm("Taslim bo‘lasizmi?"))finish("black")}
+function undoMove(){
+  if(!history.length||gameOver)return;clearTimeout(aiTimer);
+  boardState=history.pop();if(turn===BLACK)turn=WHITE;if(moveHistory.length)moveHistory.pop();selected=null;drawGame();drawMoves();updateStatus()
+}
+function restartGame(){if(gameMode==="online"){onlineStartMatch({matchId:onlineMatchId,color:onlineColor,opponentName:onlineOpponent});return}startGame()}
+function startTimer(){
+  stopTimer();updateTimer();
+  timerId=setInterval(()=>{
+    if(gameOver)return;
+    if(turn===WHITE)whiteSeconds=Math.max(0,whiteSeconds-1);
+    else blackSeconds=Math.max(0,blackSeconds-1);
+    updateTimer();
+    if(whiteSeconds<=0){finish("black");return}
+    if(blackSeconds<=0){finish("white");return}
+  },1000)
+}
+function stopTimer(){if(timerId){clearInterval(timerId);timerId=null}}
+function clockText(v){
+  const n=Math.max(0,Math.floor(v)),m=Math.floor(n/60),s=n%60;
+  return String(m).padStart(2,"0")+":"+String(s).padStart(2,"0")
+}
+function updateTimer(){
+  if($("whiteTimer"))$("whiteTimer").textContent=clockText(whiteSeconds);
+  if($("blackTimer"))$("blackTimer").textContent=clockText(blackSeconds);
+}
+function updateStatus(){
+  if(!$('gameStatus'))return;
+  if(gameOver){$('gameStatus').textContent="🏁 O‘yin tugadi";return}
+  if(gameMode==="local"){$('gameStatus').textContent=turn===WHITE?"⚪ "+localPlayers.white+" yuradi":"⚫ "+localPlayers.black+" yuradi";}
+  else if(gameMode==="online"){
+    const mySide={white:WHITE,black:BLACK}[onlineColor];
+    $('gameStatus').textContent=turn===mySide?"🎮 Sizning navbatingiz":"⏳ "+(onlineOpponent||"Raqib")+" yuradi";
+  }else{$('gameStatus').textContent=turn===WHITE?"⚪ Sizning navbatingiz":"⚫ AI o‘ylayapti...";}
+}
+
+function formatMove(m,name){const a=String.fromCharCode(65+m.from.c)+(8-m.from.r),z=String.fromCharCode(65+m.to.c)+(8-m.to.r);return name+": "+a+(m.captures.length?"×":"-")+z}
+function drawMoves(){const el=$("moveList");if(!el)return;el.innerHTML=moveHistory.length?moveHistory.slice(-20).map((x,i)=>"<div>"+(i+1)+". "+x+"</div>").join(""):"Hali yurish yo‘q"}
+
+function updateAnalysis(){
+  let w=0,b=0,wk=0,bk=0;
+  for(const row of boardState)for(const p of row){
+    if(p===WHITE)w++;
+    if(p===BLACK)b++;
+    if(p===WHITE_KING)wk++;
+    if(p===BLACK_KING)bk++;
+  }
+  const score=(w+wk*1.75)-(b+bk*1.75);
+  if($("analysisScore"))$("analysisScore").textContent=(score>0?"+":"")+score.toFixed(1);
+  if($("aWhite"))$("aWhite").textContent=w;
+  if($("aBlack"))$("aBlack").textContent=b;
+  if($("aWhiteKings"))$("aWhiteKings").textContent=wk;
+  if($("aBlackKings"))$("aBlackKings").textContent=bk;
+  if($("analysisText")){
+    $("analysisText").textContent=
+      score>2?"⚪ Oq tomon moddiy jihatdan ustun.":
+      score<-2?"⚫ Qora tomon moddiy jihatdan ustun.":
+      "⚖️ Pozitsiya nisbatan teng.";
+  }
+}
+
+function drawTop(){
+  const el=$("topList");if(!el)return;
+  const names=["Shashka Master","PRO Player","Checkers King","Uzbek Player","Grand Master"];
+  let html="";
+  for(let i=0;i<30;i++){
+    const name=names[i%names.length]+" "+(i+1);
+    const elo=1850-i*25;
+    html+='<div class="listRow"><span>#'+(i+1)+" "+name+'</span><b>'+elo+"</b></div>";
+  }
+  el.innerHTML=html;
+}
+
+function drawEditor(){
+  const root=$("editorBoard");if(!root)return;
+  root.innerHTML="";
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+    const cell=document.createElement("div");
+    cell.className="cell "+(((r+c)%2)?"dark":"light");
+    const p=editorState[r][c];
+    if(p){
+      const piece=document.createElement("div");
+      piece.className="piece "+(isWhite(p)?"white":"black")+(isKing(p)?" king":"");
+      cell.appendChild(piece);
+    }
+    cell.addEventListener("click",()=>editorClick(r,c));
+    root.appendChild(cell);
+  }
+  if($("editorTurn"))$("editorTurn").textContent=editorTurn===WHITE?"⚪ Oq":"⚫ Qora";
+}
+
+function editorClick(r,c){
+  if(!editorState.length)return;
+  if(editorTool==="erase")editorState[r][c]=EMPTY;
+  else if(editorTool==="white")editorState[r][c]=WHITE;
+  else if(editorTool==="black")editorState[r][c]=BLACK;
+  else if(editorTool==="whiteKing")editorState[r][c]=WHITE_KING;
+  else if(editorTool==="blackKing")editorState[r][c]=BLACK_KING;
+  drawEditor();
+}
+
+function resetEditor(){
+  editorState=startPosition();
+  editorTurn=WHITE;
+  drawEditor();
+}
+
+function startLocalGame(){
+  stopTimer();clearTimeout(aiTimer);
+  gameMode="local";
+  localPlayers.white=(($("whiteName")?.value||"Siz").trim()||"Siz");
+  localPlayers.black=(($("blackName")?.value||"Do'st").trim()||"Do'st");
+  setTimeControl();
+  boardState=startPosition();turn=WHITE;selected=null;gameOver=false;history=[];moveHistory=[];
+  if($("gameTitle"))$("gameTitle").textContent="👥 "+localPlayers.white+" vs "+localPlayers.black;
+  openScreen("game");drawGame();drawMoves();updateStatus();updateTimer();startTimer();
+}
+
+function playEditor(){
+  if(!editorState.length)return;
+  stopTimer();clearTimeout(aiTimer);
+  gameMode="ai";
+  if($("gameTitle"))$("gameTitle").textContent="🤖 AI bilan o‘yin";
+  boardState=clone(editorState);
+  turn=editorTurn;
+  const parts=($("timeControl")?.value||"5+3").split("+").map(Number);
+  const base=Math.max(1,Number(parts[0])||5);
+  incrementSeconds=Math.max(0,Number(parts[1])||0);
+  whiteSeconds=base*60;blackSeconds=base*60;
+  selected=null;gameOver=false;history=[];moveHistory=[];
+  openScreen("game");drawGame();drawMoves();updateStatus();updateTimer();startTimer();
+  if(turn===BLACK)aiTimer=setTimeout(aiMove,300);
+}
+
+function analyzeEditor(){
+  boardState=clone(editorState);
+  openScreen("analysis");
+  updateAnalysis();
+}
+
+function toggleEditorTurn(){
+  editorTurn=editorTurn===WHITE?BLACK:WHITE;
+  drawEditor();
+}
+
+
+const LANG={
+  uz:{ai:"🤖 AI bilan o‘ynash",online:"🌐 Onlayn",tournaments:"🏆 Turnirlar",top:"👑 TOP 30",profile:"👤 Profil",players:"👥 O‘yinchilar",editor:"✏️ Doska",analysis:"🧠 Tahlil",achievements:"🏅 Yutuqlar",history:"📜 Tarix",settings:"⚙️ Sozlamalar"},
+  ru:{ai:"🤖 Играть с AI",online:"🌐 Онлайн",tournaments:"🏆 Турниры",top:"👑 ТОП 30",profile:"👤 Профиль",players:"👥 Игроки",editor:"✏️ Доска",analysis:"🧠 Анализ",achievements:"🏅 Достижения",history:"📜 История",settings:"⚙️ Настройки"},
+  en:{ai:"🤖 Play with AI",online:"🌐 Online",tournaments:"🏆 Tournaments",top:"👑 TOP 30",profile:"👤 Profile",players:"👥 Players",editor:"✏️ Board",analysis:"🧠 Analysis",achievements:"🏅 Achievements",history:"📜 History",settings:"⚙️ Settings"},
+  tr:{ai:"🤖 Yapay zekâ ile oyna",online:"🌐 Çevrim içi",tournaments:"🏆 Turnuvalar",top:"👑 İLK 30",profile:"👤 Profil",players:"👥 Oyuncular",editor:"✏️ Tahta",analysis:"🧠 Analiz",achievements:"🏅 Başarımlar",history:"📜 Geçmiş",settings:"⚙️ Ayarlar"}
+};
+let currentLang=localStorage.getItem("shashkaPRO_lang")||"uz";
+function applyLanguage(){
+  const l=LANG[currentLang]||LANG.uz;
+  const map={btnAI:"ai",btnOnline:"online",btnTournaments:"tournaments",btnTop:"top",btnProfile:"profile",btnPlayers:"players",btnEditor:"editor",btnAnalysis:"analysis",btnAchievements:"achievements",btnHistory:"history",btnSettings:"settings"};
+  Object.keys(map).forEach(id=>{if($(id))$(id).textContent=l[map[id]]});
+  document.querySelectorAll(".langBtn").forEach(b=>b.classList.toggle("active",b.dataset.lang===currentLang));
+  try{localStorage.setItem("shashkaPRO_lang",currentLang)}catch(e){}
+}
+function saveHistory(result){
+  const item={result,time:timeControl,mode:gameMode,date:new Date().toLocaleString()};
+  let arr=[];try{arr=JSON.parse(localStorage.getItem("shashkaPRO_history")||"[]")||[]}catch(e){}
+  arr.unshift(item);arr=arr.slice(0,30);
+  try{localStorage.setItem("shashkaPRO_history",JSON.stringify(arr))}catch(e){}
+}
+function drawHistory(){
+  const el=$("historyList");if(!el)return;
+  let arr=[];try{arr=JSON.parse(localStorage.getItem("shashkaPRO_history")||"[]")||[]}catch(e){}
+  if(!arr.length){el.innerHTML='<p class="muted">Hali o‘yinlar tarixi yo‘q.</p>';return}
+  el.innerHTML=arr.map((x,i)=>'<div class="historyItem"><b>#'+(i+1)+' '+x.result+'</b><br><span class="muted">⏱ '+x.time+' · '+(x.mode==="local"?"👥 2 kishi":x.mode==="online"?"🌐 Onlayn":"🤖 AI")+' · '+x.date+'</span></div>').join("");
+}
+function drawAchievements(){
+  const el=$("achievementList");if(!el)return;
+  const list=[
+    ["🥇","Birinchi g‘alaba",stats.wins>=1],
+    ["🔥","3 ta g‘alaba",stats.wins>=3],
+    ["👑","5 ta g‘alaba",stats.wins>=5],
+    ["🎯","10 ta o‘yin",stats.games>=10],
+    ["⭐","1100 ELO",stats.elo>=1100]
+  ];
+  el.innerHTML=list.map(x=>'<div class="achievement"><div class="achIcon">'+x[0]+'</div><div><b>'+x[1]+'</b><br><span class="muted">'+(x[2]?"✅ Ochildi":"🔒 Hali ochilmagan")+'</span></div></div>').join("");
+}
+function drawBots(){
+  const el=$("botList");if(!el)return;
+  const bots=[
+    ["🤖","Rustam Bot","Oson",1],
+    ["🧠","Pro Bot","O‘rta",2],
+    ["👑","Master Bot","Qiyin",3],
+    ["🔥","Blitz Bot","O‘rta",2]
+  ];
+  el.innerHTML=bots.map(b=>'<div class="playerCard"><div class="playerLine"><div style="display:flex;gap:10px;align-items:center"><div class="avatar">'+b[0]+'</div><div><b>'+b[1]+'</b><br><span class="muted">'+b[2]+' · 🤖 AI</span></div></div><button class="gold smallBtn botChallenge" data-level="'+b[3]+'" data-name="'+b[1]+'">O‘ynash</button></div></div>').join("");
+  document.querySelectorAll(".botChallenge").forEach(btn=>btn.onclick=()=>{
+    $("aiLevel").value=btn.dataset.level;
+    toast("🤖 "+btn.dataset.name+" ga qarshi o‘yin");
+    startGame();
+  });
+}
+
+function onlineServerUrl(){
+  try{
+    if(location.protocol==="file:")return "";
+    return (location.protocol==="https:"?"wss://":"ws://")+location.host;
+  }catch(e){return ""}
+}
+function onlineSetStatus(msg){if($("onlineStatus"))$("onlineStatus").textContent=msg}
+function onlineRenderPlayers(){
+  const el=$("onlinePlayersList");if(!el)return;
+  const list=onlinePlayers.filter(p=>p.id!==onlineId);
+  $("onlinePlayerCount").textContent=list.length;
+  if(!list.length){el.innerHTML='<p class="muted">Hozircha boshqa o‘yinchi yo‘q.</p>';return}
+  el.innerHTML=list.map(p=>'<div class="playerCard"><div class="playerLine"><div style="display:flex;gap:10px;align-items:center"><div class="avatar">👤</div><div><b>'+escapeHtml(p.name)+'</b><br><span class="muted">⭐ '+(p.elo||1000)+(p.busy?' · 🎮 O‘yinda':' · 🟢 Bo‘sh')+'</span></div></div><button class="gold smallBtn challengeBtn" data-id="'+p.id+'" '+(p.busy?'disabled':'')+'>⚔️ So‘rov</button></div></div>').join('');
+  document.querySelectorAll('.challengeBtn').forEach(b=>b.onclick=()=>onlineRequest(b.dataset.id));
+}
+function onlineRenderRequests(){
+  const el=$("onlineRequestsList");if(!el)return;
+  if(!onlineRequests.length){el.innerHTML='<p class="muted">Kelgan so‘rovlar yo‘q.</p>';return}
+  el.innerHTML=onlineRequests.map(r=>'<div class="playerCard"><div class="playerLine"><div><b>🎮 '+escapeHtml(r.fromName)+'</b><br><span class="muted">Siz bilan o‘ynamoqchi</span></div><div style="display:flex;gap:6px"><button class="green smallBtn reqAccept" data-id="'+r.id+'">Qabul</button><button class="danger smallBtn reqDecline" data-id="'+r.id+'">Rad</button></div></div></div>').join('');
+  document.querySelectorAll('.reqAccept').forEach(b=>b.onclick=()=>onlineRespond(b.dataset.id,true));
+  document.querySelectorAll('.reqDecline').forEach(b=>b.onclick=()=>onlineRespond(b.dataset.id,false));
+}
+function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]))}
+function onlineConnect(){
+  const url=onlineServerUrl();
+  if(!url){toast('🌐 HTML faylni server orqali oching');return false}
+  try{
+    if(socket&&socket.readyState===WebSocket.OPEN){onlineRegister();return true}
+    socket=new WebSocket(url);
+    socket.onopen=()=>{onlineConnected=true;onlineSetStatus('Serverga ulandi');onlineRegister();toast('🌐 Serverga ulandi')};
+    socket.onclose=()=>{onlineConnected=false;onlineSetStatus('Ulanish uzildi')};
+    socket.onerror=()=>{onlineConnected=false;onlineSetStatus('Server topilmadi');toast('⚠️ Server ishlamayapti')};
+    socket.onmessage=e=>{
+      let m;try{m=JSON.parse(e.data)}catch(_){return}
+      if(m.type==='registered'){onlineId=m.id;onlinePlayers=m.players||[];onlineRequests=m.requests||[];onlineRenderPlayers();onlineRenderRequests();onlineSetStatus('Onlayn 🟢')}
+      else if(m.type==='players'){onlinePlayers=m.players||[];onlineRenderPlayers()}
+      else if(m.type==='requestReceived'){onlineRequests.push(m.request);onlineRenderRequests();toast('🔔 '+m.request.fromName+' o‘yin so‘rovi yubordi')}
+      else if(m.type==='requestRemoved'){onlineRequests=onlineRequests.filter(x=>x.id!==m.requestId);onlineRenderRequests()}
+      else if(m.type==='matchFound'){onlineStartMatch(m)}
+      else if(m.type==='move'){
+        if(m.matchId!==onlineMatchId)return;
+        boardState=applyMove(boardState,m.move);history.push(clone(boardState));moveHistory.push(formatMove(m.move,turn===WHITE?'Oq':'Qora'));selected=null;turn=turn===WHITE?BLACK:WHITE;drawGame();drawMoves();updateStatus();updateTimer();checkEnd();
+      }
+      else if(m.type==='matchFinished'){gameOver=true;stopTimer();toast(m.winner===({white:WHITE,black:BLACK}[onlineColor])?'🎉 Siz g‘alaba qozondingiz!':'🏁 O‘yin tugadi');updateStatus();onlineMatchId='';}
+      else if(m.type==='opponentLeft'){finish(m.winner||({white:WHITE,black:BLACK}[onlineColor]));toast('👋 Raqib o‘yindan chiqdi')}
+      else if(m.type==='error'){toast('⚠️ '+m.message)}
+    };
+    return true;
+  }catch(e){toast('⚠️ '+e.message);return false}
+}
+function onlineRegister(){
+  if(!socket||socket.readyState!==WebSocket.OPEN)return;
+  const name=(($("onlineName")?.value||'ShashkaPRO Player').trim()||'ShashkaPRO Player').slice(0,20);
+  socket.send(JSON.stringify({type:'register',name}));
+}
+function onlineRequest(toId){
+  if(!onlineConnect())return;
+  const send=()=>socket.send(JSON.stringify({type:'gameRequest',toId}));
+  if(socket.readyState===WebSocket.OPEN)send();else socket.addEventListener('open',send,{once:true});
+  toast('📨 O‘yin so‘rovi yuborildi');
+}
+function onlineRespond(requestId,accept){
+  if(socket?.readyState===WebSocket.OPEN)socket.send(JSON.stringify({type:'respondRequest',requestId,accept}));
+  onlineRequests=onlineRequests.filter(x=>x.id!==requestId);onlineRenderRequests();
+}
+function randomMatch(){
+  if(!onlineConnect())return;
+  const send=()=>socket.send(JSON.stringify({type:'randomMatch'}));
+  if(socket.readyState===WebSocket.OPEN)send();else socket.addEventListener('open',send,{once:true});
+}
+function onlineStartMatch(m){
+  stopTimer();clearTimeout(aiTimer);gameMode='online';onlineMatchId=m.matchId;onlineColor=m.color;onlineOpponent=m.opponentName||'Raqib';
+  setTimeControl();boardState=startPosition();turn=WHITE;selected=null;gameOver=false;history=[];moveHistory=[];
+  if($("gameTitle"))$("gameTitle").textContent='🌐 '+onlineOpponent+' bilan o‘yin';
+  openScreen('game');drawGame();drawMoves();updateStatus();updateTimer();startTimer();
+  toast('🎮 O‘yin boshlandi: '+onlineOpponent);
+}
+function leaveOnline(){
+  try{if(socket?.readyState===WebSocket.OPEN)socket.send(JSON.stringify({type:'leaveMatch',matchId:onlineMatchId}));}catch(e){}
+  onlineMatchId='';onlineOpponent='';
+}
+
+function bind(){
+  $("btnAI").addEventListener("click",startGame);
+
+  $("btnOnline").addEventListener("click",()=>openScreen("online"));
+  $("btnPlayers").addEventListener("click",()=>openScreen("players"));
+  $("btnTournaments").addEventListener("click",()=>openScreen("tournaments"));
+  $("btnTop").addEventListener("click",()=>openScreen("top"));
+  $("btnProfile").addEventListener("click",()=>openScreen("profile"));
+  $("btnEditor").addEventListener("click",()=>{resetEditor();openScreen("editor")});
+  $("btnAnalysis").addEventListener("click",()=>openScreen("analysis"));
+  $("btnAchievements").addEventListener("click",()=>openScreen("achievements"));
+  $("btnHistory").addEventListener("click",()=>openScreen("history"));
+  $("btnSettings").addEventListener("click",()=>openScreen("settings"));
+
+  $("gameBack").addEventListener("click",()=>{stopTimer();clearTimeout(aiTimer);openScreen("home")});
+  $("editorBack").addEventListener("click",()=>openScreen("home"));
+  $("analysisBack").addEventListener("click",()=>openScreen("home"));
+  $("topBack").addEventListener("click",()=>openScreen("home"));
+  $("profileBack").addEventListener("click",()=>openScreen("home"));
+  $("tournamentsBack").addEventListener("click",()=>openScreen("home"));
+  $("onlineBack").addEventListener("click",()=>{leaveOnline();openScreen("home")});
+  $("playersBack").addEventListener("click",()=>openScreen("home"));
+  $("settingsBack").addEventListener("click",()=>openScreen("home"));
+  $("achievementsBack").addEventListener("click",()=>openScreen("home"));
+  $("historyBack").addEventListener("click",()=>openScreen("home"));
+
+  $("startLocal").addEventListener("click",startLocalGame);
+  $("onlineConnectBtn").addEventListener("click",onlineConnect);
+  $("randomMatchBtn").addEventListener("click",randomMatch);
+  $("onlineName").addEventListener("change",()=>{if(onlineConnected)onlineRegister()});
+  $("undoBtn").addEventListener("click",undoMove);
+  $("restartBtn").addEventListener("click",restartGame);
+  $("giveUpBtn").addEventListener("click",giveUp);
+  $("gameAnalysisBtn").addEventListener("click",()=>{openScreen("analysis");updateAnalysis()});
+
+  document.querySelectorAll(".tool[data-tool]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      editorTool=btn.dataset.tool;
+      document.querySelectorAll(".tool[data-tool]").forEach(x=>x.classList.remove("active"));
+      btn.classList.add("active");
+    });
+  });
+
+  $("clearEditor").addEventListener("click",()=>{
+    editorState=Array.from({length:8},()=>Array(8).fill(EMPTY));drawEditor();
+  });
+  $("startEditor").addEventListener("click",resetEditor);
+  $("editorTurnBtn").addEventListener("click",toggleEditorTurn);
+  $("playEditor").addEventListener("click",playEditor);
+  $("editorAnalysis").addEventListener("click",analyzeEditor);
+
+  $("resetStats").addEventListener("click",()=>{
+    if(confirm("Statistikani tozalashni xohlaysizmi?")){
+      stats={elo:1000,wins:0,games:0};saveStats();toast("Statistika tozalandi");
+    }
+  });
+
+  document.querySelectorAll(".tournamentBtn").forEach(btn=>{
+    btn.addEventListener("click",()=>toast("🏆 "+btn.dataset.name+" hozircha demo rejimida."));
+  });
+
+  document.querySelectorAll(".langBtn").forEach(btn=>btn.addEventListener("click",()=>{currentLang=btn.dataset.lang;applyLanguage();toast("🌐 Til o‘zgartirildi");}));
+  $("clearHistory").addEventListener("click",()=>{try{localStorage.removeItem("shashkaPRO_history")}catch(e){}drawHistory();toast("📜 Tarix tozalandi")});
+  $("timeControl").addEventListener("change",()=>toast("⏱️ "+$("timeControl").value+" tanlandi. Keyingi o‘yinda qo‘llanadi."));
+  $("sound").addEventListener("change",()=>toast($("sound").checked?"🔊 Ovoz yoqildi":"🔇 Ovoz o‘chirildi"));
+  $("vibration").addEventListener("change",()=>toast($("vibration").checked?"📳 Vibratsiya yoqildi":"📳 Vibratsiya o‘chirildi"));
+
+  editorState=startPosition();
+  drawEditor();
+  updateStats();
+  applyLanguage();
+  drawBots();
+  drawAchievements();
+  drawHistory();
+}
+
+bind();
+})();
+</script>
+
+<script>
+(() => {
+  const API=(window.SHASHKAPRO_API||"").replace(/\/$/,"");
+  if(!API)return;
+  const api=async(path,opts={})=>{
+    const headers={"Content-Type":"application/json",...(opts.headers||{})};
+    const t=localStorage.getItem("shashkaPRO_session");
+    if(t)headers.Authorization="Bearer "+t;
+    const r=await fetch(API+path,{...opts,headers});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok)throw Error(d.error||"Server xatosi");
+    return d;
+  };
+  window.ShashkaPRO={api,profile:()=>api("/api/profile"),leaderboard:()=>api("/api/leaderboard"),
+    missions:()=>api("/api/missions"),shop:()=>api("/api/shop"),friends:()=>api("/api/friends"),
+    tournaments:()=>api("/api/tournaments")};
+  const b=document.createElement("div");
+  b.textContent="● PRO SERVER";
+  b.style.cssText="position:fixed;right:10px;bottom:10px;z-index:99999;padding:7px 10px;border-radius:999px;background:#18251d;color:#7cff9b;font:700 11px system-ui";
+  document.body.appendChild(b);
+})();
+</script>
+</body>
+</html>

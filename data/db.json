@@ -1,0 +1,133 @@
+{
+  "users": {
+    "uc57788c09155b28a": {
+      "id": "uc57788c09155b28a",
+      "username": "ShashkaPRO Player",
+      "avatar": "♟",
+      "elo": 1000,
+      "xp": 0,
+      "level": 1,
+      "diamonds": 100,
+      "wins": 0,
+      "losses": 0,
+      "draws": 0,
+      "games": 0,
+      "streak": 0,
+      "bestStreak": 0,
+      "inventory": [],
+      "_token": "3c07f066ac8eca8cb65aa8a1ae5fc36efbe5d5ce8b965de0"
+    },
+    "ud4398acd24572a70": {
+      "id": "ud4398acd24572a70",
+      "username": "ShashkaPRO Player",
+      "avatar": "♟",
+      "elo": 1000,
+      "xp": 0,
+      "level": 1,
+      "diamonds": 100,
+      "wins": 0,
+      "losses": 0,
+      "draws": 0,
+      "games": 0,
+      "streak": 0,
+      "bestStreak": 0,
+      "inventory": [],
+      "_token": "ad2911c62e4aae97f4a392cf935cf5222535a034c94d6967"
+    },
+    "u28e2ff971eba938f": {
+      "id": "u28e2ff971eba938f",
+      "username": "ShashkaPRO Player",
+      "avatar": "♟",
+      "elo": 1000,
+      "xp": 0,
+      "level": 1,
+      "diamonds": 100,
+      "wins": 0,
+      "losses": 0,
+      "draws": 0,
+      "games": 0,
+      "streak": 0,
+      "bestStreak": 0,
+      "inventory": [],
+      "_token": "d9d8b20179889eb03654b404893e3bc5290c1b4601e58eda"
+    }
+  },
+  "sessions": {
+    "3c07f066ac8eca8cb65aa8a1ae5fc36efbe5d5ce8b965de0": "uc57788c09155b28a",
+    "ad2911c62e4aae97f4a392cf935cf5222535a034c94d6967": "ud4398acd24572a70",
+    "d9d8b20179889eb03654b404893e3bc5290c1b4601e58eda": "u28e2ff971eba938f"
+  },
+  "friends": {},
+  "missionProgress": {},
+  "purchases": {},
+  "matches": {},
+  "missions": [
+    {
+      "id": "daily-game",
+      "title": "🎮 3 ta o‘yin o‘yna",
+      "reward": 25,
+      "target": 3
+    },
+    {
+      "id": "daily-win",
+      "title": "🏆 1 ta g‘alaba qozon",
+      "reward": 50,
+      "target": 1
+    },
+    {
+      "id": "daily-capture",
+      "title": "⚔️ 5 ta dona ur",
+      "reward": 35,
+      "target": 5
+    }
+  ],
+  "shop": [
+    {
+      "id": "board-gold",
+      "name": "👑 Gold Board",
+      "price": 100,
+      "type": "board"
+    },
+    {
+      "id": "pieces-royal",
+      "name": "♟ Royal Donalar",
+      "price": 150,
+      "type": "pieces"
+    },
+    {
+      "id": "frame-pro",
+      "name": "💎 PRO Ramka",
+      "price": 250,
+      "type": "frame"
+    },
+    {
+      "id": "win-fire",
+      "name": "🔥 G‘alaba effekti",
+      "price": 300,
+      "type": "effect"
+    }
+  ],
+  "tournaments": [
+    {
+      "id": "daily",
+      "name": "👑 Daily Shashka",
+      "format": "5+3",
+      "status": "open",
+      "prize": 100
+    },
+    {
+      "id": "blitz",
+      "name": "⚡ Blitz Arena",
+      "format": "3+2",
+      "status": "open",
+      "prize": 200
+    },
+    {
+      "id": "pro",
+      "name": "🔥 PRO Cup",
+      "format": "10+0",
+      "status": "open",
+      "prize": 500
+    }
+  ]
+}
