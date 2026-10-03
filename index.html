@@ -212,7 +212,7 @@ window.addEventListener("error",function(e){console.error("ShashkaPRO:",e.error|
 "use strict";
 const EMPTY=0,WHITE=1,BLACK=2,WHITE_KING=3,BLACK_KING=4;
 const DIRS=[[1,1],[1,-1],[-1,1],[-1,-1]];
-let boardState=[],turn=WHITE,selected=null,gameOver=false,history=[],moveHistory=[];
+let boardState=[],turn=WHITE,selected=null,forcedCapturePiece=null,gameOver=false,history=[],moveHistory=[];
 let timerId=null,whiteSeconds=300,blackSeconds=300,incrementSeconds=3;
 let timeControl="5+3";
 let gameMode="ai";
@@ -282,21 +282,104 @@ function drawGame(){
 }
 function gameClick(r,c){
   if(gameOver)return;
+
   if(gameMode==="ai" && turn!==WHITE)return;
   if(gameMode==="online" && turn!==({white:WHITE,black:BLACK}[onlineColor]))return;
-  const p=boardState[r][c],side=turn;
-  if(selected){
-    const moves=getAllMoves(boardState,side);
-    const m=moves.find(x=>x.from.r===selected.r&&x.from.c===selected.c&&x.to.r===r&&x.to.c===c);
-    if(m){makeMove(m);return}
-    if(p&&((side===WHITE&&isWhite(p))||(side===BLACK&&isBlack(p)))){
-      selected={r,c};drawGame();return
+
+  const side=turn;
+  const p=boardState[r][c];
+
+  // Agar oldingi urishdan keyin yana urish majburiy bo‘lsa,
+  // faqat o‘sha dona bilan davom etish mumkin.
+  if(forcedCapturePiece){
+    if(r===forcedCapturePiece.r && c===forcedCapturePiece.c){
+      selected={r,c};
+      drawGame();
+      return;
     }
-    selected=null;drawGame();return
+
+    if(selected){
+      const steps=captureSteps(boardState,selected.r,selected.c);
+      const step=steps.find(x=>x.to.r===r&&x.to.c===c);
+
+      if(step){
+        makeMove(step);
+        return;
+      }
+    }
+
+    return;
   }
-  if(p&&((side===WHITE&&isWhite(p))||(side===BLACK&&isBlack(p)))){
+
+  if(selected){
+    // Oddiy yurish
+    const pSelected=boardState[selected.r][selected.c];
+
+    // Avval majburiy urish bor-yo‘qligini tekshiramiz
+    const allCaps=allCaptures(boardState,side);
+
+    if(allCaps.length){
+      const steps=captureSteps(boardState,selected.r,selected.c);
+      const step=steps.find(x=>x.to.r===r&&x.to.c===c);
+
+      if(step){
+        makeMove(step);
+        return;
+      }
+
+      // Boshqa o‘z donasini tanlash mumkin
+      if(p&&((side===WHITE&&isWhite(p))||(side===BLACK&&isBlack(p)))){
+        if(captureSteps(boardState,r,c).length){
+          selected={r,c};
+          drawGame();
+        }
+      }
+      return;
+    }
+
+    // Majburiy urish bo‘lmasa oddiy yurish
     const moves=getAllMoves(boardState,side);
-    if(moves.some(m=>m.from.r===r&&m.from.c===c)){selected={r,c};drawGame()}
+    const m=moves.find(
+      x=>x.from.r===selected.r &&
+         x.from.c===selected.c &&
+         x.to.r===r &&
+         x.to.c===c
+    );
+
+    if(m){
+      makeMove(m);
+      return;
+    }
+
+    if(p&&((side===WHITE&&isWhite(p))||(side===BLACK&&isBlack(p)))){
+      selected={r,c};
+      drawGame();
+      return;
+    }
+
+    selected=null;
+    drawGame();
+    return;
+  }
+
+  if(p&&((side===WHITE&&isWhite(p))||(side===BLACK&&isBlack(p)))){
+    const caps=allCaptures(boardState,side);
+
+    if(caps.length){
+      // Faqat urishi bor dona tanlanadi
+      if(captureSteps(boardState,r,c).length){
+        selected={r,c};
+        drawGame();
+      }
+      return;
+    }
+
+    const moves=getAllMoves(boardState,side);
+
+    if(moves.some(m=>m.from.r===r&&m.from.c===c)){
+      selected={r,c};
+      drawGame();
+    }
   }
 }
 function simpleMoves(b,r,c){
@@ -559,18 +642,61 @@ function applyMove(b,m){
 
 function makeMove(m){
   if(gameMode==="online" && turn!==({white:WHITE,black:BLACK}[onlineColor]))return;
+
   history.push(clone(boardState));
-  boardState=applyMove(boardState,m);
+
+  const movingSide=turn;
+  const wasCapture=m.captures&&m.captures.length>0;
+
+  // Bitta urish qadamini bajarish
+  boardState=applyStep(boardState,m);
+
   if(turn===WHITE)whiteSeconds+=incrementSeconds;
   else blackSeconds+=incrementSeconds;
+
   moveHistory.push(formatMove(m,turn===WHITE?"Oq":"Qora"));
-  if(gameMode==="online" && socket?.readyState===WebSocket.OPEN){
-    socket.send(JSON.stringify({type:"move",matchId:onlineMatchId,move:m}));
+
+  // Shu dona yana urishi mumkinmi?
+  if(wasCapture){
+    const nextSteps=captureSteps(boardState,m.to.r,m.to.c);
+
+    if(nextSteps.length){
+      // Navbat o‘tmaydi!
+      forcedCapturePiece={r:m.to.r,c:m.to.c};
+      selected={r:m.to.r,c:m.to.c};
+
+      drawGame();
+      drawMoves();
+      updateStatus();
+      updateTimer();
+
+      return;
+    }
   }
+
+  // Urish kombinatsiyasi tugadi
+  forcedCapturePiece=null;
   selected=null;
+
+  if(gameMode==="online" && socket?.readyState===WebSocket.OPEN){
+    socket.send(JSON.stringify({
+      type:"move",
+      matchId:onlineMatchId,
+      move:m
+    }));
+  }
+
   turn=turn===WHITE?BLACK:WHITE;
-  drawGame();drawMoves();updateStatus();updateTimer();checkEnd();
-  if(!gameOver && gameMode==="ai" && turn===BLACK)aiTimer=setTimeout(aiMove,250);
+
+  drawGame();
+  drawMoves();
+  updateStatus();
+  updateTimer();
+  checkEnd();
+
+  if(!gameOver && gameMode==="ai" && turn===BLACK){
+    aiTimer=setTimeout(aiMove,250);
+  }
 }
 
 function evaluate(b){
