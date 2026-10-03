@@ -709,16 +709,89 @@ function minimax(b,side,depth,alpha,beta){
   let v=Infinity;for(const m of moves){v=Math.min(v,minimax(applyMove(b,m),BLACK,depth-1,alpha,beta));beta=Math.min(beta,v);if(beta<=alpha)break}return v
 }
 function aiMove(){
-  aiTimer=null;if(gameOver||turn!==BLACK)return;
-  const depth=Math.max(1,Math.min(3,Number($("aiLevel").value)||2)),moves=getAllMoves(boardState,BLACK);
-  if(!moves.length){finish("white");return}
+  aiTimer=null;
+  if(gameOver||turn!==BLACK)return;
+
+  const depth=Math.max(1,Math.min(3,Number($("aiLevel").value)||2));
+  const moves=getAllMoves(boardState,BLACK);
+
+  if(!moves.length){
+    finish("white");
+    return;
+  }
+
   let best=moves[0],bestScore=-Infinity;
-  for(const m of moves){const score=minimax(applyMove(boardState,m),WHITE,depth-1,-Infinity,Infinity);if(score>bestScore){bestScore=score;best=m}}
+
+  for(const m of moves){
+    const next=applyStep(boardState,m);
+    const score=minimax(next,WHITE,depth-1,-Infinity,Infinity);
+
+    if(score>bestScore){
+      bestScore=score;
+      best=m;
+    }
+  }
+
   history.push(clone(boardState));
-  boardState=applyMove(boardState,best);
-  blackSeconds+=incrementSeconds;
-  moveHistory.push(formatMove(best,"Qora"));
-  turn=WHITE;drawGame();drawMoves();updateStatus();updateTimer();checkEnd()
+
+  let currentMove=best;
+
+  while(true){
+    boardState=applyStep(boardState,currentMove);
+
+    blackSeconds+=incrementSeconds;
+    moveHistory.push(formatMove(currentMove,"Qora"));
+
+    drawGame();
+    drawMoves();
+    updateStatus();
+    updateTimer();
+
+    if(!(currentMove.captures&&currentMove.captures.length)){
+      break;
+    }
+
+    const nextSteps=captureSteps(
+      boardState,
+      currentMove.to.r,
+      currentMove.to.c
+    );
+
+    if(!nextSteps.length){
+      break;
+    }
+
+    let nextBest=nextSteps[0];
+    let nextBestScore=-Infinity;
+
+    for(const step of nextSteps){
+      const nextBoard=applyStep(boardState,step);
+      const score=minimax(
+        nextBoard,
+        WHITE,
+        Math.max(0,depth-1),
+        -Infinity,
+        Infinity
+      );
+
+      if(score>nextBestScore){
+        nextBestScore=score;
+        nextBest=step;
+      }
+    }
+
+    currentMove=nextBest;
+  }
+
+  turn=WHITE;
+  forcedCapturePiece=null;
+  selected=null;
+
+  drawGame();
+  drawMoves();
+  updateStatus();
+  updateTimer();
+  checkEnd();
 }
 function checkEnd(){
   let w=0,b=0;for(const row of boardState)for(const p of row){if(isWhite(p))w++;if(isBlack(p))b++}
