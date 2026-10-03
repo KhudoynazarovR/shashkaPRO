@@ -628,7 +628,7 @@ function onlineConnect(){
   const mySide=({white:WHITE,black:BLACK}[onlineColor]);
   const moveSide=(m.turn==='black'?BLACK:WHITE);
 
-  if(moveSide!==mySide){
+  if(turn!==moveSide){
     boardState=applyMove(boardState,m.move);
     history.push(clone(boardState));
     moveHistory.push(formatMove(m.move,moveSide===WHITE?'Oq':'Qora'));
