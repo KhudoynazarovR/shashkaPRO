@@ -1121,8 +1121,7 @@ function drawReplay(){
     piece.className=
       "piece "+
       (isWhite(p)?"white":"black")+
-      (isKing(p)?" king ":"")+
-      "style-"+pieceStyle;
+      (isKing(p)?" king":"");
     cell.appendChild(piece);
    }
 
