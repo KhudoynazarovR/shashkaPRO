@@ -28,7 +28,7 @@ button:active{transform:scale(.97)}
 .actions{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0}
 
 .boardWrap{width:min(94vw,600px);margin:12px auto}
-#gameBoard,#editorBoard{
+#gameBoard,#editorBoard,#replayBoard{
  width:100%;aspect-ratio:1;display:grid;
  grid-template-columns:repeat(8,1fr);
  grid-template-rows:repeat(8,1fr);
@@ -118,12 +118,35 @@ input{accent-color:#d7aa3d}
 <button id="undoBtn">↩️ Orqaga</button>
 <button id="restartBtn">🔄 Qayta</button>
 <button id="analysisGameBtn">🧠 Tahlil</button>
+<button id="replayBtn">🎬 Replay</button>
 <button class="danger" id="giveUpBtn">🏳️ Taslim</button>
 </div>
 
 <div class="card">
 <b>📜 Yurishlar</b>
 <div id="moveList" class="moves">Hali yurish yo‘q</div>
+</div>
+</section>
+
+<section id="replay" class="screen">
+<div class="header">
+<b>🎬 O‘yin Replay</b>
+<button class="back" id="replayBack">←</button>
+</div>
+
+<div class="boardWrap">
+<div id="replayBoard"></div>
+</div>
+
+<div class="actions">
+<button id="replayPrev">⏮️ Oldingi</button>
+<button id="replayNext">⏭️ Keyingi</button>
+<button id="replayPlay">▶️ Avtomatik</button>
+<button id="replayStop">⏹️ To‘xtatish</button>
+</div>
+
+<div class="card">
+<b id="replayInfo">Boshlang‘ich holat</b>
 </div>
 </section>
 
@@ -236,6 +259,8 @@ let whiteSeconds=300;
 let blackSeconds=300;
 let increment=3;
 let aiTimer=null;
+let replayStates=[];
+let replayIndex=0;
 let boardTheme=localStorage.getItem("boardTheme")||"classic";
 let pieceStyle=localStorage.getItem("pieceStyle")||"classic";
 
@@ -487,6 +512,8 @@ function applyFullMove(b,m){
 
 function startGame(){
  clearTimeout(aiTimer);
+ replayStates=[clone(initialBoard())];
+ replayIndex=0;
  stopTimer();
 
  board=initialBoard();
@@ -594,6 +621,9 @@ function makeHumanStep(move){
 
  board=applyStep(board,move);
 
+ replayStates.push(clone(board));
+ replayIndex=replayStates.length-1;
+
  movesHistory.push(formatMove(move,"Oq"));
 
  selected={r:move.to.r,c:move.to.c};
@@ -657,6 +687,9 @@ function aiMove(){
  while(true){
 
   board=applyStep(board,current);
+
+  replayStates.push(clone(board));
+  replayIndex=replayStates.length-1;
 
   movesHistory.push(formatMove(current,"Qora"));
 
@@ -1052,6 +1085,110 @@ $("analysisGameBtn").onclick=()=>{
  updateAnalysis();
  show("analysis");
 };
+
+let replayTimer=null;
+
+function drawReplay(){
+
+ const root=$("replayBoard");
+ if(!root)return;
+
+ root.innerHTML="";
+
+ const b=replayStates[replayIndex]||initialBoard();
+
+ for(let r=0;r<8;r++){
+  for(let c=0;c<8;c++){
+
+   const cell=document.createElement("div");
+   cell.className="cell "+(((r+c)%2)?"dark":"light");
+
+   const file=document.createElement("span");
+   file.className="coord file";
+   file.textContent="abcdefgh"[c];
+
+   const rank=document.createElement("span");
+   rank.className="coord rank";
+   rank.textContent=8-r;
+
+   cell.appendChild(file);
+   cell.appendChild(rank);
+
+   const p=b[r][c];
+
+   if(p){
+    const piece=document.createElement("div");
+    piece.className=
+      "piece "+
+      (isWhite(p)?"white":"black")+
+      (isKing(p)?" king ":"")+
+      "style-"+pieceStyle;
+    cell.appendChild(piece);
+   }
+
+   root.appendChild(cell);
+  }
+ }
+
+ $("replayInfo").textContent=
+   "Yurish: "+replayIndex+" / "+Math.max(0,replayStates.length-1);
+}
+
+function openReplay(){
+
+ if(replayStates.length<2){
+  alert("Avval kamida bitta yurish qiling.");
+  return;
+ }
+
+ clearInterval(replayTimer);
+ replayIndex=0;
+ drawReplay();
+ show("replay");
+}
+
+$("replayBtn").onclick=openReplay;
+
+$("replayBack").onclick=()=>{
+ clearInterval(replayTimer);
+ show("game");
+};
+
+$("replayPrev").onclick=()=>{
+ clearInterval(replayTimer);
+ if(replayIndex>0){
+  replayIndex--;
+  drawReplay();
+ }
+};
+
+$("replayNext").onclick=()=>{
+ if(replayIndex<replayStates.length-1){
+  replayIndex++;
+  drawReplay();
+ }
+};
+
+$("replayPlay").onclick=()=>{
+ clearInterval(replayTimer);
+
+ replayTimer=setInterval(()=>{
+  if(replayIndex>=replayStates.length-1){
+   clearInterval(replayTimer);
+   return;
+  }
+
+  replayIndex++;
+  drawReplay();
+
+ },700);
+};
+
+$("replayStop").onclick=()=>{
+ clearInterval(replayTimer);
+};
+
+
 
 /* ===== SETTINGS ===== */
 
