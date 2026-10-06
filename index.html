@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>ShashkaPRO - Lidraughts & Gambler Edition</title>
+<title>ShashkaPRO - Uchuvchi Shashka & Gambler Edition</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#0b1017;color:#fff;font-family:Arial,sans-serif;user-select:none;transition:background 0.3s}
@@ -32,7 +32,6 @@ body.bg-dark{background:#0b1017;color:#fff}
 body.bg-blue{background:linear-gradient(135deg, #0d1b2a, #1b263b, #415a77);color:#fff}
 body.bg-purple{background:linear-gradient(135deg, #16001e, #2c003e, #0e0b16);color:#fff}
 body.bg-wood{background:radial-gradient(circle, #2d1b0e, #140b05);color:#fff}
-body.bg-gray{background:linear-gradient(135deg, #1f2421, #212529, #343a40);color:#fff}
 
 .boardWrap{width:min(94vw,600px);margin:12px auto;position:relative}
 #gameBoard,#editorBoard,#replayBoard{
@@ -46,21 +45,12 @@ body.bg-gray{background:linear-gradient(135deg, #1f2421, #212529, #343a40);color
 }
 .cell{position:relative;display:flex;align-items:center;justify-content:center}
 
-/* =========================================================
-   LIDRAUGHTS & GAMBLER DOSKA MAVZULARI
-   ========================================================= */
-/* Gambler Wood */
+/* LIDRAUGHTS & GAMBLER DOSKA MAVZULARI */
 .theme-gambler-wood .light{background:#e8cb9a}.theme-gambler-wood .dark{background:#8a5229}
-/* Gambler Green Felt */
 .theme-gambler-green .light{background:#dedede}.theme-gambler-green .dark{background:#2a6e3b}
-/* Lidraughts Slate */
 .theme-lid-slate .light{background:#c4ce32}.theme-lid-slate .dark{background:#758391}
-/* Lidraughts Canvas */
 .theme-lid-canvas .light{background:#f0e2cc}.theme-lid-canvas .dark{background:#aa8259}
-/* Lidraughts Wood */
 .theme-lid-wood .light{background:#e6be8a}.theme-lid-wood .dark{background:#9e6332}
-/* Lidraughts Blue */
-.theme-lid-blue .light{background:#dbe4eb}.theme-lid-blue .dark{background:#6082a3}
 
 .cell.selected{box-shadow:inset 0 0 0 4px #00e5ff!important}
 .cell.target{box-shadow:inset 0 0 0 4px #55ff9a!important}
@@ -71,9 +61,7 @@ body.bg-gray{background:linear-gradient(135deg, #1f2421, #212529, #343a40);color
 .coord{position:absolute;font-size:9px;opacity:.55;pointer-events:none}
 .coord.file{bottom:2px;left:3px}.coord.rank{top:2px;right:3px}
 
-/* =========================================================
-   LIDRAUGHTS & GAMBLER DONA STULLARI (PIECES)
-   ========================================================= */
+/* GAMBLER & LIDRAUGHTS DONALAR */
 .piece{
  width:82%;height:82%;max-width:72px;max-height:72px;
  border-radius:50%;z-index:2;
@@ -83,7 +71,7 @@ body.bg-gray{background:linear-gradient(135deg, #1f2421, #212529, #343a40);color
  transition:all 0.15s ease-in-out;
 }
 
-/* 1. GAMBLER CLASSIC (Relyefli disklar) */
+/* GAMBLER CLASSIC */
 .style-gambler .white{
  background: radial-gradient(circle at 35% 35%, #ffffff, #e0e0e0 60%, #b0b0b0);
  border: 3px solid #888;
@@ -103,7 +91,7 @@ body.bg-gray{background:linear-gradient(135deg, #1f2421, #212529, #343a40);color
  box-shadow: 0 0 5px #000;
 }
 
-/* 2. LIDRAUGHTS 3D CROWN */
+/* LIDRAUGHTS 3D */
 .style-lid-3d .white{
  background: radial-gradient(circle at 35% 25%, #ffffff, #e6e6e6 50%, #b8b8b8);
  border: 3px solid #999;
@@ -117,32 +105,8 @@ body.bg-gray{background:linear-gradient(135deg, #1f2421, #212529, #343a40);color
 .style-lid-3d .white:after{content:"👑";font-size:20px;opacity:0.85}
 .style-lid-3d .black:after{content:"👑";font-size:20px;filter:invert(1);opacity:0.85}
 
-/* 3. LIDRAUGHTS FLAT VECTOR */
-.style-lid-flat .white{
- background: #ffffff;
- border: 4px solid #333333;
- box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-}
-.style-lid-flat .black{
- background: #222222;
- border: 4px solid #ffffff;
- box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-}
-.style-lid-flat .king:before{
- content:"♔";
- font-size:32px;
- color: inherit;
-}
-.style-lid-flat .white.king{color:#222}
-.style-lid-flat .black.king{color:#fff}
-
-/* 4. NEON GLOW */
-.style-neon .white{background:#0e1d2f;border:3px solid #00e5ff;box-shadow:0 0 12px #00e5ff, inset 0 0 8px #00e5ff;color:#00e5ff}
-.style-neon .black{background:#220022;border:3px solid #ff00ff;box-shadow:0 0 12px #ff00ff, inset 0 0 8px #ff00ff;color:#ff00ff}
-
-/* GENERAL KING ICON FOR OTHERS */
 .king:before{content:"♛";font-size:26px;color:#d9ad36;text-shadow:0 2px 4px #000}
-.style-gambler .king:before, .style-lid-3d .king:before, .style-lid-flat .king:after{display:none}
+.style-gambler .king:before, .style-lid-3d .king:before{display:none}
 
 .themeGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .designBtn.active,.pieceBtn.active,.appBgBtn.active{background:#d7aa3d;color:#111;font-weight:bold}
@@ -183,13 +147,14 @@ select,input[type="text"]{width:100%;padding:11px;border-radius:10px;background:
 
 <div class="menuGrid">
 <button class="menu" id="aiBtn"><span>🤖</span>Kestog AI bilan</button>
+<button class="menu" id="flyingBtn"><span>🚀</span>Uchuvchi Shashka</button>
 <button class="menu" id="onlineBtn"><span>🌐</span>Online Server</button>
 <button class="menu" id="tournamentBtn"><span>🏆</span>Turnirlar</button>
 <button class="menu" id="topBtn"><span>🥇</span>TOP 30 Reyting</button>
 <button class="menu" id="analysisBtn"><span>🧠</span>Pozitsiya Tahlili</button>
 <button class="menu" id="editorBtn"><span>♟️</span>Doska Muharriri</button>
 <button class="menu" id="historyBtn"><span>📜</span>O'yinlar Tarixi</button>
-<button class="menu" id="settingsBtn"><span>⚙️</span>Sozlamalar</button>
+<button class="menu" id="settingsBtn" style="grid-column: span 2"><span>⚙️</span>Sozlamalar</button>
 </div>
 </section>
 
@@ -234,6 +199,22 @@ select,input[type="text"]{width:100%;padding:11px;border-radius:10px;background:
 </div>
 </section>
 
+<!-- FLYING CHECKERS POSITIONS SCREEN -->
+<section id="flying" class="screen">
+<div class="header"><b>🚀 Uchuvchi Shashka Pozitsiyalari</b><button class="back" data-back>←</button></div>
+<div class="card">
+<label>📌 Debyut Pozitsiyasini Tanlang:</label>
+<select id="positionSelect">
+<option value="random">🎲 Tasodifiy Uchuvchi Pozitsiya</option>
+<option value="kiev">🇺🇦 Kiyevcha Debyut (c3-d4, f6-e5)</option>
+<option value="cross">⚔️ Krest Debyuti (cd4, fe5, bc3)</option>
+<option value="corner">📐 Burchak Debyuti (gh4, fe5)</option>
+<option value="reverse">🔄 Teskari Qo'shaloq Kolik</option>
+</select>
+<button class="primary" id="startFlyingBtn" style="width:100%;margin-top:10px">▶️ Pozitsiya Bilan O'yinni Boshlash</button>
+</div>
+</section>
+
 <!-- PROFILE SCREEN -->
 <section id="profile" class="screen">
 <div class="header"><b>👤 Profil</b><button class="back" data-back>←</button></div>
@@ -275,8 +256,8 @@ select,input[type="text"]{width:100%;padding:11px;border-radius:10px;background:
 <section id="tournaments" class="screen">
 <div class="header"><b>🏆 Turnirlar</b><button class="back" data-back>←</button></div>
 <div class="card">
-<h3>🏆 Lidraughts & Gambler Arena 64</h3>
-<p>Format: Rus shashkasi arena (1 soatlik o'yinlar)</p>
+<h3>🏆 Uchuvchi Shashka Arena 64</h3>
+<p>Format: Har bir turda yangi uchuvchi pozitsiya</p>
 <button class="primary" onclick="alert('Turnirga ro\'yxatdan o\'tildi!')">Ro'yxatdan o'tish</button>
 </div>
 </section>
@@ -341,16 +322,12 @@ select,input[type="text"]{width:100%;padding:11px;border-radius:10px;background:
 <button class="designBtn" data-theme="gambler-green">🟩 Gambler Green</button>
 <button class="designBtn" data-theme="lid-slate">🔘 Lidraughts Slate</button>
 <button class="designBtn" data-theme="lid-canvas">🎨 Lidraughts Canvas</button>
-<button class="designBtn" data-theme="lid-wood">🪵 Lidraughts Wood</button>
-<button class="designBtn" data-theme="lid-blue">🟦 Lidraughts Blue</button>
 </div>
 
 <label>⚪ Donalar Dizayni (Piece Styles)</label>
 <div class="themeGrid">
 <button class="pieceBtn active" data-piece="gambler">🎲 Gambler Classic</button>
 <button class="pieceBtn" data-piece="lid-3d">👑 Lidraughts 3D</button>
-<button class="pieceBtn" data-piece="lid-flat">⚪ Lidraughts Flat</button>
-<button class="pieceBtn" data-piece="neon">💜 Neon Glow</button>
 </div>
 
 <label style="margin-top:10px;display:block">🖼️ Ilova Foni (App Background)</label>
@@ -444,6 +421,26 @@ function initialBoard(){
  const b=Array.from({length:8},()=>Array(8).fill(null));
  for(let r=0;r<3;r++){ for(let c=0;c<8;c++){ if((r+c)%2===1)b[r][c]=BLACK; }}
  for(let r=5;r<8;r++){ for(let c=0;c<8;c++){ if((r+c)%2===1)b[r][c]=WHITE; }}
+ return b;
+}
+
+/* UCHUVCHI SHASHKA (POSITIONS ENGINE) */
+function getFlyingBoard(type) {
+ let b = initialBoard();
+ if(type === "kiev") {
+  b[5][2]=null; b[4][3]=WHITE; // c3-d4
+  b[2][5]=null; b[3][4]=BLACK; // f6-e5
+ } else if(type === "cross") {
+  b[5][2]=null; b[4][3]=WHITE; // c3-d4
+  b[2][5]=null; b[3][4]=BLACK; // f6-e5
+  b[5][1]=null; b[4][2]=WHITE; // b3-c3
+ } else if(type === "corner") {
+  b[5][6]=null; b[4][7]=WHITE; // g3-h4
+  b[2][5]=null; b[3][4]=BLACK; // f6-e5
+ } else if(type === "random") {
+  const presets = ["kiev", "cross", "corner"];
+  return getFlyingBoard(presets[Math.floor(Math.random()*presets.length)]);
+ }
  return b;
 }
 
@@ -673,10 +670,11 @@ function aiMove(){
 }
 
 /* CONTROLLERS */
-function startGame(){
+function startGame(customBoard){
  clearTimeout(aiTimer); clearInterval(replayInterval);
- replayStates=[clone(initialBoard())]; replayIndex=0; stopTimer();
- board=initialBoard(); turn=WHITE; selected=null; forcedPiece=null; gameOver=false; history=[]; movesHistory=[]; activeHint=null;
+ board=customBoard && Array.isArray(customBoard) ? customBoard : initialBoard();
+ replayStates=[clone(board)]; replayIndex=0; stopTimer();
+ turn=WHITE; selected=null; forcedPiece=null; gameOver=false; history=[]; movesHistory=[]; activeHint=null;
 
  const tc=$("timeControl").value.split("+");
  whiteSeconds=Number(tc[0])*60; blackSeconds=whiteSeconds; increment=Number(tc[1]);
@@ -897,7 +895,7 @@ $("editorBoard").onclick=(e)=>{
 };
 $("clearEditor").onclick=()=>{ editorBoardData=Array.from({length:8},()=>Array(8).fill(null)); renderEditor(); };
 $("resetEditor").onclick=()=>{ editorBoardData=initialBoard(); renderEditor(); };
-$("playEditor").onclick=()=>{ board=clone(editorBoardData); turn=WHITE; history=[]; movesHistory=[]; gameOver=false; show("game"); drawBoard(); updateStatus(); startTimer(); };
+$("playEditor").onclick=()=>{ startGame(clone(editorBoardData)); };
 
 /* Leaderboard */
 function renderTop(){
@@ -917,8 +915,13 @@ $("saveNameBtn").onclick=()=>{
 
 /* Event Routing */
 $("flipBtn").onclick=()=>{ isFlipped = !isFlipped; $("gameBoard").classList.toggle("flipped", isFlipped); };
-$("aiBtn").onclick=startGame;
-$("restartBtn").onclick=startGame;
+$("aiBtn").onclick=()=>startGame();
+$("flyingBtn").onclick=()=>show("flying");
+$("startFlyingBtn").onclick=()=>{
+ const pType = $("positionSelect").value;
+ startGame(getFlyingBoard(pType));
+};
+$("restartBtn").onclick=()=>startGame();
 $("undoBtn").onclick=undoMove;
 $("hintBtn").onclick=getHint;
 $("giveUpBtn").onclick=giveUp;
