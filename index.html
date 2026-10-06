@@ -38,7 +38,16 @@ button:active{transform:scale(.97)}
  transition:transform 0.4s ease;
 }
 .cell{position:relative;display:flex;align-items:center;justify-content:center}
-.light{background:#ead2ad}.dark{background:#315b82}
+
+/* LIDRAUGHTS DOSKA RANG MAVZULARI */
+.theme-classic .light{background:#ead2ad}.theme-classic .dark{background:#b88b4a}
+.theme-blue .light{background:#d8e2dc}.theme-blue .dark{background:#5c768d}
+.theme-slate .light{background:#c0c9d0}.theme-slate .dark{background:#4d6475}
+.theme-wood .light{background:#d2a679}.theme-wood .dark{background:#8a5a36}
+.theme-green .light{background:#e2e8c0}.theme-green .dark{background:#7a9a60}
+.theme-purple .light{background:#dcd0e8}.theme-purple .dark{background:#7b5294}
+.theme-dark .light{background:#888888}.theme-dark .dark{background:#333333}
+
 .cell.selected{box-shadow:inset 0 0 0 4px #00e5ff!important}
 .cell.target{box-shadow:inset 0 0 0 4px #55ff9a!important}
 .cell.capture{box-shadow:inset 0 0 0 4px #ff4545!important}
@@ -48,36 +57,45 @@ button:active{transform:scale(.97)}
 .coord{position:absolute;font-size:9px;opacity:.55;pointer-events:none}
 .coord.file{bottom:2px;left:3px}.coord.rank{top:2px;right:3px}
 
+/* LIDRAUGHTS DONA STULLARI */
 .piece{
- width:74%;height:74%;max-width:70px;max-height:70px;
- border-radius:50%;border:3px solid #555;z-index:2;
- box-shadow:inset 0 5px 7px #fff8,inset 0 -8px 10px #0009,0 4px 8px #0009;
- transition:all 0.2s;
+ width:76%;height:76%;max-width:70px;max-height:70px;
+ border-radius:50%;z-index:2;
  position:relative;
+ display:flex;align-items:center;justify-content:center;
+ font-weight:bold;
+ transition:all 0.2s;
 }
-.white{background:radial-gradient(circle at 35% 28%,#fff,#eee 42%,#aaa)}
-.black{background:radial-gradient(circle at 35% 28%,#666,#222 45%,#050505);border-color:#000}
-.king:after{content:"♛";display:flex;align-items:center;justify-content:center;height:100%;color:#d9ad36;font-size:30px;text-shadow:0 2px 3px #000}
 
-/* DOSKA MAVZULARI */
-.theme-classic .dark{background:#315b82}
-.theme-blue .dark{background:#1e3d59}
-.theme-green .dark{background:#2d5a27}
-.theme-purple .dark{background:#4a2545}
-.theme-dark .dark{background:#222222}
-.theme-gold .dark{background:#5c4d18}
-.theme-ruby .dark{background:#6b1111}
-.theme-wood .dark{background:#4a2f13}
+/* 3D Gold Crown */
+.style-3d-crown .white{background:radial-gradient(circle at 35% 25%,#fff,#ddd 50%,#999);border:3px solid #888;box-shadow:inset 0 5px 6px #fff,inset 0 -6px 8px #0008,0 4px 6px #0008}
+.style-3d-crown .black{background:radial-gradient(circle at 35% 25%,#555,#222 50%,#050505);border:3px solid #111;box-shadow:inset 0 4px 6px #888,inset 0 -6px 8px #000d,0 4px 6px #0008}
+.style-3d-crown .white:after{content:"👑";font-size:18px;opacity:0.8}
+.style-3d-crown .black:after{content:"👑";font-size:18px;filter:invert(1);opacity:0.8}
 
-/* DONA STULLARI (SKINS) */
-.style-flat{box-shadow:none;border-width:2px}
-.style-neon{box-shadow:0 0 12px #00e5ff, inset 0 0 8px #00e5ff}
-.style-gold .white{background:radial-gradient(circle at 35% 28%,#ffe082,#d4af37 45%,#8c6d15);border-color:#b8860b}
-.style-gold .black{background:radial-gradient(circle at 35% 28%,#888,#333 45%,#111);border-color:#000}
-.style-metal .white{background:radial-gradient(circle at 35% 28%,#e0e0e0,#b0b0b0 45%,#707070)}
-.style-metal .black{background:radial-gradient(circle at 35% 28%,#4f5b66,#232b32 45%,#0f1418)}
-.style-ruby .white{background:radial-gradient(circle at 35% 28%,#ffcdd2,#e57373 45%,#b71c1c);border-color:#880e4f}
-.style-ruby .black{background:radial-gradient(circle at 35% 28%,#4a148c,#1a237e 45%,#000);border-color:#000}
+/* 3D Classic */
+.style-3d-classic .white{background:radial-gradient(circle at 35% 28%,#fff,#eee 42%,#aaa);border:3px solid #666;box-shadow:inset 0 5px 7px #fff8,inset 0 -8px 10px #0009,0 4px 8px #0009}
+.style-3d-classic .black{background:radial-gradient(circle at 35% 28%,#666,#222 45%,#050505);border:3px solid #000;box-shadow:inset 0 5px 7px #fff4,inset 0 -8px 10px #000d,0 4px 8px #0009}
+
+/* Flat Minimal */
+.style-flat .white{background:#ffffff;border:3px solid #cccccc;box-shadow:none}
+.style-flat .black{background:#222222;border:3px solid #000000;box-shadow:none}
+
+/* Neon Light */
+.style-neon .white{background:#112233;border:3px solid #00e5ff;box-shadow:0 0 10px #00e5ff, inset 0 0 10px #00e5ff;color:#00e5ff}
+.style-neon .black{background:#2a002a;border:3px solid #ff00ff;box-shadow:0 0 10px #ff00ff, inset 0 0 10px #ff00ff;color:#ff00ff}
+
+/* Bronze/Gold Coin */
+.style-coin .white{background:radial-gradient(circle at 30% 30%,#ffe082,#d4af37 50%,#8c6d15);border:3px solid #b8860b;box-shadow:inset 0 4px 5px #fff8,0 3px 6px #000a}
+.style-coin .black{background:radial-gradient(circle at 30% 30%,#a1887f,#4e342e 50%,#1b0000);border:3px solid #3e2723;box-shadow:inset 0 4px 5px #fff4,0 3px 6px #000a}
+
+/* Pixel Art (8-Bit) */
+.style-pixel .piece{border-radius:4px;border:3px solid #000}
+.style-pixel .white{background:#fff;box-shadow:inset -4px -4px 0 #aaa}
+.style-pixel .black{background:#333;box-shadow:inset -4px -4px 0 #000}
+
+/* KING STYLES */
+.king:before{content:"♛";font-size:26px;color:#d9ad36;text-shadow:0 2px 4px #000}
 
 .themeGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .designBtn.active,.pieceBtn.active{background:#d7aa3d;color:#111}
@@ -91,7 +109,6 @@ select,input[type="text"]{width:100%;padding:11px;border-radius:10px;background:
 .chatBtn{padding:6px 12px;font-size:13px;white-space:nowrap;background:#1c2733;border:1px solid #2e3d4e;border-radius:20px}
 .chatBubble{position:absolute;top:-35px;left:50%;transform:translateX(-50%);background:#d6a936;color:#000;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:bold;z-index:10;white-space:nowrap;box-shadow:0 4px 10px #0008;display:none}
 
-/* BADGES */
 .badge-gold{background:linear-gradient(45deg,#ffe082,#d4af37);color:#111;padding:3px 8px;border-radius:10px;font-size:11px;font-weight:bold}
 .avatarBox{width:70px;height:70px;border-radius:50%;background:#202b38;border:3px solid #d7aa3d;display:flex;align-items:center;justify-content:center;font-size:32px;margin:auto}
 </style>
@@ -149,13 +166,11 @@ select,input[type="text"]{width:100%;padding:11px;border-radius:10px;background:
 <div id="gameBoard"></div>
 </div>
 
-<!-- EMOTES / QUICK CHAT BAR -->
 <div class="chatBar">
 <button class="chatBtn" onclick="sendEmote('😎 Oson o\'yin!')">😎 Oson!</button>
 <button class="chatBtn" onclick="sendEmote('🔥 Yaxshi yurish!')">🔥 Yaxshi!</button>
 <button class="chatBtn" onclick="sendEmote('👏 Berekalla!')">👏 Berekalla!</button>
-<button class="chatBtn" onclick="sendEmote('🎯 Tuzoqqa tushdingiz!')">🎯 Tuzoq!</button>
-<button class="chatBtn" onclick="sendEmote('👑 Damka!')">👑 Damka!</button>
+<button class="chatBtn" onclick="sendEmote('🎯 Tuzoq!')">🎯 Tuzoq!</button>
 </div>
 
 <div class="actions">
@@ -175,7 +190,7 @@ select,input[type="text"]{width:100%;padding:11px;border-radius:10px;background:
 
 <!-- PROFILE SCREEN -->
 <section id="profile" class="screen">
-<div class="header"><b>👤 Profil & Sozlamalar</b><button class="back" data-back>←</button></div>
+<div class="header"><b>👤 Profil</b><button class="back" data-back>←</button></div>
 <div class="card" style="text-align:center">
 <div class="avatarBox" id="profileAvatar">👑</div>
 <h2 style="margin:10px 0" id="profName">O'yinchi</h2>
@@ -212,28 +227,23 @@ select,input[type="text"]{width:100%;padding:11px;border-radius:10px;background:
 
 <!-- TOURNAMENTS SCREEN -->
 <section id="tournaments" class="screen">
-<div class="header"><b>🏆 Rus Shashkasi Turnirlari</b><button class="back" data-back>←</button></div>
+<div class="header"><b>🏆 Turnirlar</b><button class="back" data-back>←</button></div>
 <div class="card">
-<h3>🏆 Kestog Arena 64</h3>
-<p>Format: Rus shashkasi arena (1 soatlik tezkor o'yinlar)</p>
+<h3>🏆 Lidraughts Style Arena</h3>
+<p>Format: Rus shashkasi arena (1 soatlik o'yinlar)</p>
 <button class="primary" onclick="alert('Turnirga ro\'yxatdan o\'tildi!')">Ro'yxatdan o'tish</button>
-</div>
-<div class="card">
-<h3>⚡ Blitz Rus Shashkasi Cup</h3>
-<p>Format: 3+2 vaqt nazorati bilan pley-off</p>
-<button class="primary" onclick="alert('Turnirga ro\'yxatdan o\'tildi!')">Kirish</button>
 </div>
 </section>
 
 <!-- TOP 30 SCREEN -->
 <section id="top" class="screen">
-<div class="header"><b>🥇 Rus Shashkasi TOP 30</b><button class="back" data-back>←</button></div>
+<div class="header"><b>🥇 Reyting TOP 30</b><button class="back" data-back>←</button></div>
 <div class="card" id="topList"></div>
 </section>
 
 <!-- ANALYSIS SCREEN -->
 <section id="analysis" class="screen">
-<div class="header"><b>🧠 Rus Shashkasi Tahlili</b><button class="back" data-back>←</button></div>
+<div class="header"><b>🧠 Pozitsiya Tahlili</b><button class="back" data-back>←</button></div>
 <div class="card">
 <p>⚪ Oq donalar: <b id="aw">0</b> | 👑 Damkalar: <b id="awk">0</b></p>
 <p>⚫ Qora donalar: <b id="ab">0</b> | 👑 Damkalar: <b id="abk">0</b></p>
@@ -258,9 +268,9 @@ select,input[type="text"]{width:100%;padding:11px;border-radius:10px;background:
 <div class="card" id="historyList">Hali o‘yin yo‘q</div>
 </section>
 
-<!-- SETTINGS & CUSTOMIZATION SCREEN -->
+<!-- SETTINGS SCREEN (LIDRAUGHTS STYLES INCLUDED) -->
 <section id="settings" class="screen">
-<div class="header"><b>⚙️ Sozlamalar & Do'kon</b><button class="back" data-back>←</button></div>
+<div class="header"><b>⚙️️ Sozlamalar & Visual</b><button class="back" data-back>←</button></div>
 
 <div class="card">
 <label>🤖 Kestog AI Darajasi</label>
@@ -276,35 +286,28 @@ select,input[type="text"]{width:100%;padding:11px;border-radius:10px;background:
 <option value="3+2">3+2 rapid</option>
 <option value="5+3" selected>5+3 standart</option>
 </select>
-
-<label>🔊 Ovozlar</label>
-<select id="soundOpt">
-<option value="on" selected>Yoqilgan</option>
-<option value="off">O'chirilgan</option>
-</select>
 </div>
 
 <div class="card">
-<label>🎨 Doska Ranglari</label>
+<label>🎨 Doska Ranglari (Board Themes)</label>
 <div class="themeGrid" style="margin-bottom:12px">
-<button class="designBtn active" data-theme="classic">🟫 Klassik</button>
-<button class="designBtn" data-theme="blue">🟦 Moviy</button>
-<button class="designBtn" data-theme="green">🟩 Yashil</button>
-<button class="designBtn" data-theme="purple">🟪 Siyohrang</button>
-<button class="designBtn" data-theme="dark">🌑 Qorong'u</button>
-<button class="designBtn" data-theme="gold">🏆 Oltin</button>
-<button class="designBtn" data-theme="ruby">🔴 Rubin</button>
-<button class="designBtn" data-theme="wood">🪵 Yog'och</button>
+<button class="designBtn active" data-theme="classic">🟫 Classic</button>
+<button class="designBtn" data-theme="blue">🟦 Blue</button>
+<button class="designBtn" data-theme="slate">🔘 Slate</button>
+<button class="designBtn" data-theme="wood">🪵 Wood</button>
+<button class="designBtn" data-theme="green">🟩 Green</button>
+<button class="designBtn" data-theme="purple">🟪 Purple</button>
+<button class="designBtn" data-theme="dark">🌑 Dark</button>
 </div>
 
-<label>⚪ Donalar Stili (Skins)</label>
+<label>⚪ Donalar Dizayni (Piece Styles)</label>
 <div class="themeGrid">
-<button class="pieceBtn active" data-piece="classic">⚪ Klassik</button>
+<button class="pieceBtn active" data-piece="3d-crown">👑 3D Crown</button>
+<button class="pieceBtn" data-piece="3d-classic">⚪ 3D Classic</button>
 <button class="pieceBtn" data-piece="flat">⚪ Flat</button>
 <button class="pieceBtn" data-piece="neon">💜 Neon</button>
-<button class="pieceBtn" data-piece="gold">✨ Oltin</button>
-<button class="pieceBtn" data-piece="metal">⚙️ Metal</button>
-<button class="pieceBtn" data-piece="ruby">🔴 Rubin</button>
+<button class="pieceBtn" data-piece="coin">✨ Gold Coin</button>
+<button class="pieceBtn" data-piece="pixel">👾 Pixel 8-Bit</button>
 </div>
 </div>
 </section>
@@ -314,9 +317,6 @@ select,input[type="text"]{width:100%;padding:11px;border-radius:10px;background:
 <script>
 "use strict";
 
-/* =========================================================
-   1. GLOBAL O'ZGARUVCHILAR VA PROFIL
-   ========================================================= */
 const $=id=>document.getElementById(id);
 
 const WHITE="w";
@@ -341,18 +341,15 @@ let isFlipped=false;
 let activeHint=null;
 
 let boardTheme=localStorage.getItem("boardTheme")||"classic";
-let pieceStyle=localStorage.getItem("pieceStyle")||"classic";
+let pieceStyle=localStorage.getItem("pieceStyle")||"3d-crown";
 let playerName=localStorage.getItem("playerName")||"O'yinchi";
 let stats=JSON.parse(localStorage.getItem("shashkaStats")||'{"elo":1000,"wins":0,"games":0}');
 
-/* =========================================================
-   2. OVOZLAR (AUDIO SYSTEM)
-   ========================================================= */
+/* AUDIO SYSTEM */
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 let audioCtx = null;
 
 function playSound(type) {
- if($("soundOpt") && $("soundOpt").value === "off") return;
  try {
   if(!audioCtx) audioCtx = new AudioContext();
   const osc = audioCtx.createOscillator();
@@ -363,25 +360,19 @@ function playSound(type) {
   if(type === "move") {
    osc.frequency.setValueAtTime(320, audioCtx.currentTime);
    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-   osc.start();
-   osc.stop(audioCtx.currentTime + 0.05);
+   osc.start(); osc.stop(audioCtx.currentTime + 0.05);
   } else if(type === "capture") {
    osc.frequency.setValueAtTime(650, audioCtx.currentTime);
    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-   osc.start();
-   osc.stop(audioCtx.currentTime + 0.08);
+   osc.start(); osc.stop(audioCtx.currentTime + 0.08);
   } else if(type === "king") {
    osc.frequency.setValueAtTime(850, audioCtx.currentTime);
    gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-   osc.start();
-   osc.stop(audioCtx.currentTime + 0.18);
+   osc.start(); osc.stop(audioCtx.currentTime + 0.18);
   }
  } catch(e) {}
 }
 
-/* =========================================================
-   3. SHASHKA MANTIQLARI (RUS SHASHKASI 64)
-   ========================================================= */
 function show(id){
  document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));
  $(id).classList.add("active");
@@ -398,16 +389,8 @@ function updateStats(){
 
 function initialBoard(){
  const b=Array.from({length:8},()=>Array(8).fill(null));
- for(let r=0;r<3;r++){
-  for(let c=0;c<8;c++){
-   if((r+c)%2===1)b[r][c]=BLACK;
-  }
- }
- for(let r=5;r<8;r++){
-  for(let c=0;c<8;c++){
-   if((r+c)%2===1)b[r][c]=WHITE;
-  }
- }
+ for(let r=0;r<3;r++){ for(let c=0;c<8;c++){ if((r+c)%2===1)b[r][c]=BLACK; }}
+ for(let r=5;r<8;r++){ for(let c=0;c<8;c++){ if((r+c)%2===1)b[r][c]=WHITE; }}
  return b;
 }
 
@@ -420,14 +403,10 @@ function sameSide(p,s){ return s===WHITE?isWhite(p):isBlack(p); }
 function enemy(p,s){ return p && (s===WHITE?isBlack(p):isWhite(p)); }
 function kingPiece(s){ return s===WHITE?"W":"B"; }
 
-/* =========================================================
-   4. YURISH VA URISH QOIDALARI (FLYING KINGS)
-   ========================================================= */
+/* MOVES & CAPTURES */
 function simpleSteps(b,r,c){
- const p=b[r][c];
- if(!p)return [];
- const side=isWhite(p)?WHITE:BLACK;
- const result=[];
+ const p=b[r][c]; if(!p)return [];
+ const side=isWhite(p)?WHITE:BLACK; const result=[];
 
  if(isKing(p)){
   const dirs=[[1,1],[1,-1],[-1,1],[-1,-1]];
@@ -451,37 +430,26 @@ function simpleSteps(b,r,c){
 }
 
 function captureSteps(b,r,c){
- const p=b[r][c];
- if(!p)return [];
- const side=isWhite(p)?WHITE:BLACK;
- const result=[];
+ const p=b[r][c]; if(!p)return [];
+ const side=isWhite(p)?WHITE:BLACK; const result=[];
  const dirs=[[1,1],[1,-1],[-1,1],[-1,-1]];
 
  if(isKing(p)){
   for(const [dr,dc] of dirs){
-   let nr=r+dr,nc=c+dc;
-   let enemyFound=null;
+   let nr=r+dr,nc=c+dc; let enemyFound=null;
    while(inside(nr,nc)){
     const q=b[nr][nc];
     if(!q){
-     if(enemyFound){
-      result.push({from:{r,c},to:{r:nr,c:nc},captures:[enemyFound]});
-     }
-     nr+=dr; nc+=dc;
-     continue;
+     if(enemyFound){ result.push({from:{r,c},to:{r:nr,c:nc},captures:[enemyFound]}); }
+     nr+=dr; nc+=dc; continue;
     }
-    if(enemy(q,side)&&!enemyFound){
-     enemyFound={r:nr,c:nc};
-     nr+=dr; nc+=dc;
-     continue;
-    }
+    if(enemy(q,side)&&!enemyFound){ enemyFound={r:nr,c:nc}; nr+=dr; nc+=dc; continue; }
     break;
    }
   }
  }else{
   for(const [dr,dc] of dirs){
-   const er=r+dr,ec=c+dc;
-   const lr=r+2*dr,lc=c+2*dc;
+   const er=r+dr,ec=c+dc; const lr=r+2*dr,lc=c+2*dc;
    if(inside(er,ec)&&inside(lr,lc)&&b[er][ec]&&enemy(b[er][ec],side)&&!b[lr][lc]){
     result.push({from:{r,c},to:{r:lr,c:lc},captures:[{r:er,c:ec}]});
    }
@@ -492,65 +460,42 @@ function captureSteps(b,r,c){
 
 function allCaptures(b,side){
  const result=[];
- for(let r=0;r<8;r++){
-  for(let c=0;c<8;c++){
-   if(sameSide(b[r][c],side)){
-    result.push(...captureSteps(b,r,c));
-   }
-  }
- }
+ for(let r=0;r<8;r++){ for(let c=0;c<8;c++){ if(sameSide(b[r][c],side)) result.push(...captureSteps(b,r,c)); }}
  return result;
 }
 
 function allMoves(b,side){
- const caps=allCaptures(b,side);
- if(caps.length)return caps;
+ const caps=allCaptures(b,side); if(caps.length)return caps;
  const result=[];
- for(let r=0;r<8;r++){
-  for(let c=0;c<8;c++){
-   if(sameSide(b[r][c],side)){
-    result.push(...simpleSteps(b,r,c));
-   }
-  }
- }
+ for(let r=0;r<8;r++){ for(let c=0;c<8;c++){ if(sameSide(b[r][c],side)) result.push(...simpleSteps(b,r,c)); }}
  return result;
 }
 
 function applyStep(b,m){
- const n=clone(b);
- let p=n[m.from.r][m.from.c];
+ const n=clone(b); let p=n[m.from.r][m.from.c];
  n[m.from.r][m.from.c]=null;
-
- for(const x of m.captures){
-  n[x.r][x.c]=null;
- }
+ for(const x of m.captures){ n[x.r][x.c]=null; }
 
  let nr=m.to.r;
  if(!isKing(p)){
   if((isWhite(p)&&nr===0)||(isBlack(p)&&nr===7)){
-   p=kingPiece(isWhite(p)?WHITE:BLACK);
-   playSound("king");
+   p=kingPiece(isWhite(p)?WHITE:BLACK); playSound("king");
   }
  }
- n[m.to.r][m.to.c]=p;
- return n;
+ n[m.to.r][m.to.c]=p; return n;
 }
 
 function applyFullMove(b,m){
- let n=applyStep(b,m);
- let current=m;
+ let n=applyStep(b,m); let current=m;
  while(current.captures.length){
   const next=captureSteps(n,current.to.r,current.to.c);
   if(!next.length)break;
-  current=next[0];
-  n=applyStep(n,current);
+  current=next[0]; n=applyStep(n,current);
  }
  return n;
 }
 
-/* =========================================================
-   5. KESTOG 64 ENGINE (ALPHA-BETA AI)
-   ========================================================= */
+/* AI ENGINE */
 const POSITION_WEIGHTS = [
   [0, 0, 0, 0, 0, 0, 0, 0],
   [4, 0, 4, 0, 4, 0, 5, 0],
@@ -566,12 +511,10 @@ function evaluatePro(b) {
   let score = 0;
   for (let r = 0; r < 8; r++) {
     for (let c = 0; c < 8; c++) {
-      const p = b[r][c];
-      if (!p) continue;
+      const p = b[r][c]; if (!p) continue;
       let posBonus = POSITION_WEIGHTS[r][c];
       let val = isKing(p) ? 22 : (6 + posBonus);
-      if (isBlack(p)) score += val;
-      else score -= val;
+      if (isBlack(p)) score += val; else score -= val;
     }
   }
   const blackMoves = allMoves(b, BLACK).length;
@@ -623,8 +566,7 @@ function aiMove(){
  if(!moves.length){ finishGame("white"); return; }
 
  history.push(clone(board));
- let bestMove=moves[0];
- let bestScore=-Infinity;
+ let bestMove=moves[0]; let bestScore=-Infinity;
  moves.sort((a, b) => b.captures.length - a.captures.length);
 
  for(const m of moves){
@@ -635,12 +577,9 @@ function aiMove(){
 
  let current=bestMove;
  while(true){
-  if(current.captures.length) playSound("capture");
-  else playSound("move");
-
+  if(current.captures.length) playSound("capture"); else playSound("move");
   board=applyStep(board,current);
-  replayStates.push(clone(board));
-  replayIndex=replayStates.length-1;
+  replayStates.push(clone(board)); replayIndex=replayStates.length-1;
   movesHistory.push(formatMove(current,"Qora"));
 
   const next=captureSteps(board,current.to.r,current.to.c);
@@ -653,9 +592,7 @@ function aiMove(){
  drawBoard(); drawMoves(); updateStatus(); updateTimers(); checkEnd();
 }
 
-/* =========================================================
-   6. INTERFEYS VA HODISALAR
-   ========================================================= */
+/* CONTROLLERS */
 function startGame(){
  clearTimeout(aiTimer); clearInterval(replayInterval);
  replayStates=[clone(initialBoard())]; replayIndex=0; stopTimer();
@@ -683,19 +620,15 @@ function gameClick(r,c){
  if(!selected){
   if(!sameSide(p,turn))return;
   const captures=allCaptures(board,turn);
-  if(captures.length){
-   if(captureSteps(board,r,c).length){ selected={r,c}; drawBoard(); }
-   return;
-  }
+  if(captures.length){ if(captureSteps(board,r,c).length){ selected={r,c}; drawBoard(); } return; }
   if(simpleSteps(board,r,c).length){ selected={r,c}; drawBoard(); }
   return;
  }
 
  if(sameSide(p,turn)){
   const caps=allCaptures(board,turn);
-  if(caps.length){
-   if(captureSteps(board,r,c).length){ selected={r,c}; drawBoard(); }
-  }else if(simpleSteps(board,r,c).length){ selected={r,c}; drawBoard(); }
+  if(caps.length){ if(captureSteps(board,r,c).length){ selected={r,c}; drawBoard(); } }
+  else if(simpleSteps(board,r,c).length){ selected={r,c}; drawBoard(); }
   return;
  }
 
@@ -710,8 +643,7 @@ function makeHumanStep(move){
  if(move.captures.length) playSound("capture"); else playSound("move");
 
  board=applyStep(board,move);
- replayStates.push(clone(board));
- replayIndex=replayStates.length-1;
+ replayStates.push(clone(board)); replayIndex=replayStates.length-1;
  movesHistory.push(formatMove(move,"Oq"));
  selected={r:move.to.r,c:move.to.c}; activeHint=null;
 
@@ -728,15 +660,13 @@ function makeHumanStep(move){
 }
 
 function sendEmote(txt){
- const el=$("chatBubble");
- el.textContent=txt; el.style.display="block";
+ const el=$("chatBubble"); el.textContent=txt; el.style.display="block";
  setTimeout(()=>{ el.style.display="none"; },2000);
 }
 
 function getHint(){
  if(gameOver || turn !== WHITE) return;
- const moves = allMoves(board, WHITE);
- if(!moves.length) return;
+ const moves = allMoves(board, WHITE); if(!moves.length) return;
  let bestMove = moves[0]; let minScore = Infinity;
  moves.sort((a,b)=>b.captures.length - a.captures.length);
 
@@ -749,12 +679,10 @@ function getHint(){
 }
 
 function square(r,c){ return "abcdefgh"[c]+(8-r); }
-function formatMove(m,name){
- return name+": "+square(m.from.r,m.from.c)+(m.captures.length?"x":"-")+square(m.to.r,m.to.c);
-}
+function formatMove(m,name){ return name+": "+square(m.from.r,m.from.c)+(m.captures.length?"x":"-")+square(m.to.r,m.to.c); }
 
 function drawBoardGeneric(targetId, bData){
- const root=$(targetId); root.innerHTML=""; root.className="theme-"+boardTheme;
+ const root=$(targetId); root.innerHTML=""; root.className="theme-"+boardTheme+" style-"+pieceStyle;
 
  for(let r=0;r<8;r++){
   for(let c=0;c<8;c++){
@@ -782,7 +710,7 @@ function drawBoardGeneric(targetId, bData){
    const p=bData[r][c];
    if(p){
     const piece=document.createElement("div");
-    piece.className="piece "+(isWhite(p)?"white":"black")+" "+(isKing(p)?"king ":"")+"style-"+pieceStyle;
+    piece.className="piece "+(isWhite(p)?"white":"black")+" "+(isKing(p)?"king ":"");
     cell.appendChild(piece);
    }
    root.appendChild(cell);
@@ -793,8 +721,7 @@ function drawBoardGeneric(targetId, bData){
 function drawBoard(){ drawBoardGeneric("gameBoard", board); }
 
 $("gameBoard").addEventListener("click",function(e){
- const cell=e.target.closest(".cell");
- if(!cell)return;
+ const cell=e.target.closest(".cell"); if(!cell)return;
  gameClick(Number(cell.dataset.r), Number(cell.dataset.c));
 });
 
@@ -859,7 +786,7 @@ function saveHistoryRecord(winner){
 function renderHistory(){
  let list=JSON.parse(localStorage.getItem("shashkaHistory")||"[]");
  if(!list.length){ $("historyList").innerHTML="Hali o‘yin yo‘q"; return; }
- $("historyList").innerHTML=list.map(x=>`<div style="display:flex;justify-space-between;margin:6px 0;border-bottom:1px solid #2c3947;padding-bottom:4px"><span>${x.date}</span><b>${x.res}</b><span>${x.moves} yurish</span></div>`).join("");
+ $("historyList").innerHTML=list.map(x=>`<div style="display:flex;justify-content:space-between;margin:6px 0;border-bottom:1px solid #2c3947;padding-bottom:4px"><span>${x.date}</span><b>${x.res}</b><span>${x.moves} yurish</span></div>`).join("");
 }
 
 /* Replay */
@@ -908,7 +835,7 @@ $("saveNameBtn").onclick=()=>{
  updateStats(); alert("Ism saqlandi!");
 };
 
-/* Button Routes */
+/* Event Routing */
 $("flipBtn").onclick=()=>{ isFlipped = !isFlipped; $("gameBoard").classList.toggle("flipped", isFlipped); };
 $("aiBtn").onclick=startGame;
 $("restartBtn").onclick=startGame;
