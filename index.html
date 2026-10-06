@@ -525,4 +525,376 @@ function evaluateAurora(b) {
 }
 
 function quiescenceSearch(b, alpha, beta, isMaximizing) {
-  let standPat = e
+  let standPat = evaluateAurora(b);
+  if (isMaximizing) {
+    if (standPat >= beta) return beta;
+    if (alpha < standPat) alpha = standPat;
+    const captures = allCaptures(b, BLACK);
+    for (const m of captures) {
+      const nextBoard = applyFullMove(b, m);
+      let score = quiescenceSearch(nextBoard, alpha, beta, false);
+      if (score >= beta) return beta;
+      if (score > alpha) alpha = score;
+    }
+    return alpha;
+  } else {
+    if (standPat <= alpha) return alpha;
+    if (beta > standPat) beta = standPat;
+    const captures = allCaptures(b, WHITE);
+    for (const m of captures) {
+      const nextBoard = applyFullMove(b, m);
+      let score = quiescenceSearch(nextBoard, alpha, beta, true);
+      if (score <= alpha) return alpha;
+      if (score < beta) beta = score;
+    }
+    return beta;
+  }
+}
+
+function alphaBetaAurora(b, depth, alpha, beta, isMaximizing) {
+  if (depth === 0) return quiescenceSearch(b, alpha, beta, isMaximizing);
+
+  const currentSide = isMaximizing ? BLACK : WHITE;
+  const moves = allMoves(b, currentSide);
+
+  if (!moves.length) return isMaximizing ? -5000 : 5000;
+  moves.sort((a, b) => b.captures.length - a.captures.length);
+
+  if (isMaximizing) {
+    let maxEval = -Infinity;
+    for (const m of moves) {
+      const nextBoard = applyFullMove(b, m);
+      const evalVal = alphaBetaAurora(nextBoard, depth - 1, alpha, beta, false);
+      maxEval = Math.max(maxEval, evalVal);
+      alpha = Math.max(alpha, evalVal);
+      if (beta <= alpha) break;
+    }
+    return maxEval;
+  } else {
+    let minEval = Infinity;
+    for (const m of moves) {
+      const nextBoard = applyFullMove(b, m);
+      const evalVal = alphaBetaAurora(nextBoard, depth - 1, alpha, beta, true);
+      minEval = Math.min(minEval, evalVal);
+      beta = Math.min(beta, evalVal);
+      if (beta <= alpha) break;
+    }
+    return minEval;
+  }
+}
+
+function aiMove(){
+ if(gameOver||turn!==BLACK)return;
+ const level=Number($("aiLevel").value)||3;
+ const depthMap = { 1: 3, 2: 5, 3: 7 };
+ const maxDepth = depthMap[level] || 5;
+
+ const moves=allMoves(board,BLACK);
+ if(!moves.length){ finishGame("white"); return; }
+
+ history.push(clone(board));
+ let bestMove=moves[0]; let bestScore=-Infinity;
+ moves.sort((a, b) => b.captures.length - a.captures.length);
+
+ for(const m of moves){
+  const nextBoard=applyFullMove(board,m);
+  const score=alphaBetaAurora(nextBoard, maxDepth - 1, -Infinity, Infinity, false);
+  if(score>bestScore){ bestScore=score; bestMove=m; }
+ }
+
+ let current=bestMove;
+ while(true){
+  if(current.captures.length) playSound("capture"); else playSound("move");
+  board=applyStep(board,current);
+  replayStates.push(clone(board));
+  movesHistory.push(formatMove(current,"Qora"));
+
+  const next=captureSteps(board,current.to.r,current.to.c);
+  if(!current.captures.length||!next.length)break;
+  current=next[0];
+ }
+
+ blackSeconds+=increment;
+ selected=null; forcedPiece=null; activeHint=null; turn=WHITE;
+ drawBoard(); drawMoves(); updateTimers(); checkEnd();
+}
+
+/* CONTROLLERS */
+function startGame(customBoard){
+ clearTimeout(aiTimer);
+ board=customBoard && Array.isArray(customBoard) ? customBoard : initialBoard();
+ replayStates=[clone(board)]; stopTimer();
+ turn=WHITE; selected=null; forcedPiece=null; gameOver=false; history=[]; movesHistory=[]; activeHint=null;
+
+ const tc=$("timeControl").value.split("+");
+ whiteSeconds=Number(tc[0])*60; blackSeconds=whiteSeconds; increment=Number(tc[1]);
+
+ drawBoard(); drawMoves(); updateTimers(); startTimer(); show("game");
+}
+
+function gameClick(r,c){
+ if(gameOver||turn===BLACK)return;
+ const p=board[r][c];
+
+ if(forcedPiece){
+  if(selected){
+   const opts=captureSteps(board,selected.r,selected.c);
+   const move=opts.find(x=>x.to.r===r&&x.to.c===c);
+   if(move) makeHumanStep(move);
+  }
+  return;
+ }
+
+ if(!selected){
+  if(!sameSide(p,turn))return;
+  const captures=allCaptures(board,turn);
+  if(captures.length){ if(captureSteps(board,r,c).length){ selected={r,c}; drawBoard(); } return; }
+  if(simpleSteps(board,r,c).length){ selected={r,c}; drawBoard(); }
+  return;
+ }
+
+ if(sameSide(p,turn)){
+  const caps=allCaptures(board,turn);
+  if(caps.length){ if(captureSteps(board,r,c).length){ selected={r,c}; drawBoard(); } }
+  else if(simpleSteps(board,r,c).length){ selected={r,c}; drawBoard(); }
+  return;
+ }
+
+ const captures=allCaptures(board,turn);
+ const opts=captures.length?captureSteps(board,selected.r,selected.c):simpleSteps(board,selected.r,selected.c);
+ const move=opts.find(x=>x.to.r===r&&x.to.c===c);
+ if(move) makeHumanStep(move);
+}
+
+function makeHumanStep(move){
+ history.push(clone(board));
+ if(move.captures.length) playSound("capture"); else playSound("move");
+
+ board=applyStep(board,move);
+ replayStates.push(clone(board));
+ movesHistory.push(formatMove(move,"Oq"));
+ selected={r:move.to.r,c:move.to.c}; activeHint=null;
+
+ const next=captureSteps(board,move.to.r,move.to.c);
+ if(move.captures.length&&next.length){
+  forcedPiece={r:move.to.r,c:move.to.c};
+  drawBoard(); drawMoves(); return;
+ }
+
+ forcedPiece=null; selected=null; turn=BLACK; whiteSeconds+=increment;
+ drawBoard(); drawMoves(); updateTimers();
+ if(checkEnd())return;
+ aiTimer=setTimeout(aiMove,300);
+}
+
+function getHint(){
+ if(gameOver || turn !== WHITE) return;
+ const moves = allMoves(board, WHITE); if(!moves.length) return;
+ let bestMove = moves[0]; let minScore = Infinity;
+ moves.sort((a,b)=>b.captures.length - a.captures.length);
+
+ for(const m of moves){
+  const next = applyFullMove(board, m);
+  const score = alphaBetaAurora(next, 4, -Infinity, Infinity, true);
+  if(score < minScore){ minScore = score; bestMove = m; }
+ }
+ activeHint = bestMove; drawBoard();
+}
+
+function offerDraw(){
+ if(gameOver) return;
+ if(confirm("Durang taklif qilasizmi?")){
+  const evalScore = evaluateAurora(board);
+  if(Math.abs(evalScore) < 15) {
+   alert("🤝 Aurora AI durang taklifingizni qabul qildi!");
+   finishGame("draw");
+  } else {
+   alert("❌ Aurora AI durang taklifini rad etdi!");
+  }
+ }
+}
+
+function square(r,c){ return "abcdefgh"[c]+(8-r); }
+function formatMove(m,name){ return square(m.from.r,m.from.c)+(m.captures.length?"x":"-")+square(m.to.r,m.to.c); }
+
+function drawBoardGeneric(targetId, bData){
+ const root=$(targetId); root.innerHTML=""; root.className="theme-"+boardTheme+" style-"+pieceStyle;
+
+ for(let r=0;r<8;r++){
+  for(let c=0;c<8;c++){
+   const cell=document.createElement("div");
+   cell.className="cell "+(((r+c)%2)?"dark":"light");
+   cell.dataset.r=r; cell.dataset.c=c;
+
+   if(targetId==="gameBoard" && selected && selected.r===r && selected.c===c) cell.classList.add("selected");
+   if(targetId==="gameBoard" && activeHint){
+    if(activeHint.from.r===r && activeHint.from.c===c) cell.classList.add("hint-from");
+    if(activeHint.to.r===r && activeHint.to.c===c) cell.classList.add("hint-to");
+   }
+
+   if(targetId==="gameBoard" && selected){
+    const caps=allCaptures(bData,turn);
+    const opts=caps.length?captureSteps(bData,selected.r,selected.c):simpleSteps(bData,selected.r,selected.c);
+    const hit=opts.find(m=>m.to.r===r&&m.to.c===c);
+    if(hit) cell.classList.add(hit.captures.length?"capture":"target");
+   }
+
+   const file=document.createElement("span"); file.className="coord file"; file.textContent="abcdefgh"[c];
+   const rank=document.createElement("span"); rank.className="coord rank"; rank.textContent=8-r;
+   cell.appendChild(file); cell.appendChild(rank);
+
+   const p=bData[r][c];
+   if(p){
+    const piece=document.createElement("div");
+    piece.className="piece "+(isWhite(p)?"white":"black")+" "+(isKing(p)?"king ":"");
+    cell.appendChild(piece);
+   }
+   root.appendChild(cell);
+  }
+ }
+}
+
+function drawBoard(){ drawBoardGeneric("gameBoard", board); }
+
+$("gameBoard").addEventListener("click",function(e){
+ const cell=e.target.closest(".cell"); if(!cell)return;
+ gameClick(Number(cell.dataset.r), Number(cell.dataset.c));
+});
+
+function drawMoves(){
+ let text = "";
+ for(let i=0; i<movesHistory.length; i+=2){
+  const num = Math.floor(i/2) + 1;
+  const w = movesHistory[i] || "";
+  const b = movesHistory[i+1] || "";
+  text += `${num}. ${w}  ${b}\n`;
+ }
+ $("moveList").textContent = text || "1. Yurishlar protokoli bu yerda ko'rinadi";
+ $("moveList").scrollTop=$("moveList").scrollHeight;
+}
+
+function checkEnd(){
+ const moves=allMoves(board,turn);
+ if(!moves.length){ finishGame(turn===WHITE?"black":"white"); return true; }
+ return false;
+}
+
+function finishGame(winner){
+ if(gameOver)return; gameOver=true; stopTimer(); clearTimeout(aiTimer); stats.games++;
+ if(winner==="white"){ stats.wins++; stats.elo+=18; }
+ else if(winner==="black"){ stats.elo=Math.max(400, stats.elo-14); }
+
+ localStorage.setItem("shashkaStats",JSON.stringify(stats)); updateStats();
+ saveHistoryRecord(winner);
+ setTimeout(()=>{
+  if(winner==="draw") alert("🤝 O'yin durang bilan yakunlandi!");
+  else alert(winner==="white"?"🏆 Oq (Siz) g‘alaba qozondingiz!":"🏆 Qora (Aurora AI) g‘alaba qozondi!");
+ },100);
+}
+
+function giveUp(){ if(!gameOver && confirm("Taslim bo‘lasizmi?")) finishGame("black"); }
+
+function undoMove(){
+ if(!history.length||gameOver)return; clearTimeout(aiTimer);
+ board=history.pop(); turn=WHITE; selected=null; forcedPiece=null; activeHint=null;
+ if(movesHistory.length) movesHistory.pop();
+ drawBoard(); drawMoves();
+}
+
+function startTimer(){
+ stopTimer();
+ timer=setInterval(()=>{
+  if(gameOver)return;
+  if(turn===WHITE){
+   whiteSeconds=Math.max(0,whiteSeconds-1); if(whiteSeconds<=0) finishGame("black");
+  }else{
+   blackSeconds=Math.max(0,blackSeconds-1); if(blackSeconds<=0) finishGame("white");
+  }
+  updateTimers();
+ },1000);
+}
+
+function stopTimer(){ if(timer){ clearInterval(timer); timer=null; } }
+function timeText(s){ return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0"); }
+function updateTimers(){ $("whiteTime").textContent=timeText(whiteSeconds); $("blackTime").textContent=timeText(blackSeconds); }
+
+function saveHistoryRecord(winner){
+ let list=JSON.parse(localStorage.getItem("shashkaHistory")||"[]");
+ list.unshift({ date: new Date().toLocaleDateString(), res: winner==="white"?"G'alaba":(winner==="draw"?"Durang":"Mag'lubiyat"), moves: movesHistory.length });
+ localStorage.setItem("shashkaHistory", JSON.stringify(list.slice(0, 20)));
+}
+
+function renderHistory(){
+ let list=JSON.parse(localStorage.getItem("shashkaHistory")||"[]");
+ if(!list.length){ $("historyList").innerHTML="Hali o‘yin yo‘q"; return; }
+ $("historyList").innerHTML=list.map(x=>`<div style="display:flex;justify-content:space-between;margin:6px 0;border-bottom:1px solid #2c3947;padding-bottom:4px"><span>${x.date}</span><b>${x.res}</b><span>${x.moves} yurish</span></div>`).join("");
+}
+
+function renderAnalysis(){
+ let w=0, b=0, wk=0, bk=0;
+ for(let r=0;r<8;r++){ for(let c=0;c<8;c++){ let p=board[r][c]; if(p===WHITE)w++; if(p===BLACK)b++; if(p==="W")wk++; if(p==="B")bk++; }}
+ $("aw").textContent=w; $("ab").textContent=b; $("awk").textContent=wk; $("abk").textContent=bk;
+ $("score").textContent=(evaluateAurora(board)*-1).toFixed(1); show("analysis");
+}
+
+let editorBoardData=initialBoard();
+function renderEditor(){ drawBoardGeneric("editorBoard", editorBoardData); show("editor"); }
+$("editorBoard").onclick=(e)=>{
+ const cell=e.target.closest(".cell"); if(!cell)return;
+ const r=Number(cell.dataset.r), c=Number(cell.dataset.c); if((r+c)%2===0)return;
+ const curr=editorBoardData[r][c]; const cycle=[null, WHITE, "W", BLACK, "B"];
+ editorBoardData[r][c]=cycle[(cycle.indexOf(curr)+1)%cycle.length];
+ drawBoardGeneric("editorBoard", editorBoardData);
+};
+$("clearEditor").onclick=()=>{ editorBoardData=Array.from({length:8},()=>Array(8).fill(null)); renderEditor(); };
+$("resetEditor").onclick=()=>{ editorBoardData=initialBoard(); renderEditor(); };
+$("playEditor").onclick=()=>{ startGame(clone(editorBoardData)); };
+
+$("saveNameBtn").onclick=()=>{
+ playerName=$("nameInput").value||"O'yinchi";
+ localStorage.setItem("playerName", playerName);
+ updateStats(); alert("Ism saqlandi!");
+};
+
+/* EVENT ROUTING & LISTENERS */
+$("flipBtn").onclick=()=>{ isFlipped = !isFlipped; $("gameBoard").classList.toggle("flipped", isFlipped); };
+$("aiBtn").onclick=()=>startGame();
+$("flyingBtn").onclick=()=>show("flying");
+$("startFlyingBtn").onclick=()=>{
+ const pType = $("positionSelect").value;
+ startGame(getFlyingBoard(pType));
+};
+$("undoBtn").onclick=undoMove;
+$("hintBtn").onclick=getHint;
+$("drawBtn").onclick=offerDraw;
+$("giveUpBtn").onclick=giveUp;
+$("analysisBtn").onclick=renderAnalysis;
+$("editorBtn").onclick=renderEditor;
+$("historyBtn").onclick=()=>{ renderHistory(); show("history"); };
+$("topBtn").onclick=()=>show("top");
+$("profileBtn").onclick=()=>show("profile");
+$("settingsBtn").onclick=()=>show("settings");
+$("onlineBtn").onclick=()=>show("online");
+$("tournamentBtn").onclick=()=>show("tournaments");
+
+document.querySelectorAll("[data-back], .back").forEach(btn=>{ btn.onclick=()=>{ show("home"); }; });
+
+document.querySelectorAll(".designBtn").forEach(btn=>{
+ btn.onclick=function(){
+  document.querySelectorAll(".designBtn").forEach(b=>b.classList.remove("active"));
+  this.classList.add("active"); boardTheme=this.dataset.theme; localStorage.setItem("boardTheme", boardTheme); drawBoard();
+ };
+});
+
+document.querySelectorAll(".pieceBtn").forEach(btn=>{
+ btn.onclick=function(){
+  document.querySelectorAll(".pieceBtn").forEach(b=>b.classList.remove("active"));
+  this.classList.add("active"); pieceStyle=this.dataset.piece; localStorage.setItem("pieceStyle", pieceStyle); drawBoard();
+ };
+});
+
+/* STARTUP */
+updateStats();
+</script>
+</body>
+</html>
