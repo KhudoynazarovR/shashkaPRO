@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>ShashkaPRO - Aurora Grandmaster Engine</title>
+<title>Kestog GrandMaster - Rus Shashkasi PRO</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#0b1017;color:#fff;font-family:Arial,sans-serif;user-select:none;transition:background 0.3s}
@@ -13,7 +13,7 @@ button:active{transform:scale(.97)}
 .app{max-width:700px;margin:auto;padding:10px}
 .screen{display:none}.screen.active{display:block}
 .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-.header b{font-size:18px}
+.header b{font-size:18px;color:#e3b746}
 .card{background:rgba(21, 30, 40, 0.9);border:1px solid #2c3947;border-radius:16px;padding:14px;margin:10px 0}
 .menuGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 .menu{min-height:75px;background:rgba(24, 35, 47, 0.9);border:1px solid #2c3a49;font-weight:bold;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
@@ -24,23 +24,24 @@ button:active{transform:scale(.97)}
 .stat{background:#101720;border-radius:12px;padding:10px;text-align:center}
 .stat b{display:block;color:#e3b746;font-size:20px}
 
-/* PLAYER & TIMER PANEL */
+/* TAYMER VA O'YINCHI PANELI */
 .playerInfo{display:flex;justify-content:space-between;align-items:center;background:#151e28;border:1px solid #2c3947;border-radius:10px;padding:8px 12px;margin:6px 0}
 .timerBox{background:#0d131d;color:#e3b746;padding:6px 14px;border-radius:8px;font-weight:bold;font-size:16px;font-family:monospace;border:1px solid #3a4857}
 
-/* BOARD WRAPPER */
+/* DOSKA CHIZILISHI */
 .boardWrap{width:min(94vw,580px);margin:6px auto;position:relative}
-#gameBoard,#editorBoard,#replayBoard{
+#gameBoard,#editorBoard{
  width:100%;aspect-ratio:1;display:grid;
  grid-template-columns:repeat(8,1fr);
  grid-template-rows:repeat(8,1fr);
  border:8px solid #2b1d0c;border-radius:8px;overflow:hidden;
  box-shadow:0 14px 40px rgba(0,0,0,0.8);
  touch-action:manipulation;
+ transition:transform 0.3s ease;
 }
 .cell{position:relative;display:flex;align-items:center;justify-content:center}
 
-/* DOSKA MAVZULARI */
+/* DOSKA MAVZULARI (THEMES) */
 .theme-gambler-wood .light{background:#e8cb9a}.theme-gambler-wood .dark{background:#8a5229}
 .theme-gambler-green .light{background:#dedede}.theme-gambler-green .dark{background:#2a6e3b}
 .theme-lid-slate .light{background:#c4ce32}.theme-lid-slate .dark{background:#758391}
@@ -55,7 +56,7 @@ button:active{transform:scale(.97)}
 .coord{position:absolute;font-size:9px;opacity:.55;pointer-events:none}
 .coord.file{bottom:2px;left:3px}.coord.rank{top:2px;right:3px}
 
-/* DONALAR */
+/* GAMBLER VA LIDRAUGHTS DONALAR */
 .piece{
  width:82%;height:82%;max-width:72px;max-height:72px;
  border-radius:50%;z-index:2;
@@ -96,17 +97,17 @@ select,input[type="text"]{width:100%;padding:11px;border-radius:10px;background:
 
 <div class="app">
 
-<!-- HOME SCREEN -->
+<!-- BOSH SAHIFA -->
 <section id="home" class="screen active">
 <div class="header">
-<b>♟️ Rus Shashkasi Aurora Engine</b>
+<b>♟️ Rus Shashkasi GrandMaster</b>
 <button id="profileBtn">👤 Profil</button>
 </div>
 
 <div class="card" style="text-align:center">
 <div class="avatarBox" id="homeAvatar">👑</div>
 <h3 style="margin:8px 0 4px 0" id="homePlayerName">O'yinchi</h3>
-<span class="badge-gold">👑 GRANDMASTER EDITION</span>
+<span class="badge-gold">👑 AURORA PRO ENGINE</span>
 <div class="stats" style="margin-top:12px">
 <div class="stat"><b id="elo">1200</b>ELO</div>
 <div class="stat"><b id="wins">0</b>G‘alaba</div>
@@ -115,7 +116,7 @@ select,input[type="text"]{width:100%;padding:11px;border-radius:10px;background:
 </div>
 
 <div class="menuGrid">
-<button class="menu" id="aiBtn"><span>🤖</span>Aurora Pro AI bilan</button>
+<button class="menu" id="aiBtn"><span>🤖</span>Kestog Pro AI bilan</button>
 <button class="menu" id="flyingBtn"><span>🚀</span>IDF Uchuvchi Shashka</button>
 <button class="menu" id="onlineBtn"><span>🌐</span>Online Server</button>
 <button class="menu" id="tournamentBtn"><span>🏆</span>Turnirlar</button>
@@ -127,18 +128,18 @@ select,input[type="text"]{width:100%;padding:11px;border-radius:10px;background:
 </div>
 </section>
 
-<!-- GAME SCREEN -->
+<!-- O'YIN SAHIFASI -->
 <section id="game" class="screen">
 <div class="header">
-<b id="gameTitle">🤖 Aurora Engine 64</b>
+<b id="gameTitle">🤖 Kestog Pro AI (Aurora Engine)</b>
 <button class="back" id="gameBack">←</button>
 </div>
 
-<!-- TOP PLAYER (BLACK / AI) -->
+<!-- QORA DONA TAYMERI (AI) -->
 <div class="playerInfo">
 <div style="display:flex;align-items:center;gap:8px">
  <div style="width:12px;height:12px;border-radius:50%;background:#000;border:1px solid #fff"></div>
- <b>Aurora / Kestog Pro AI</b>
+ <b>Kestog Pro AI (Qora)</b>
 </div>
 <div class="timerBox" id="blackTime">05:00</div>
 </div>
@@ -147,7 +148,7 @@ select,input[type="text"]{width:100%;padding:11px;border-radius:10px;background:
 <div id="gameBoard"></div>
 </div>
 
-<!-- BOTTOM PLAYER (WHITE / HUMAN) -->
+<!-- OQ DONA TAYMERI (INSON) -->
 <div class="playerInfo">
 <div style="display:flex;align-items:center;gap:8px">
  <div style="width:12px;height:12px;border-radius:50%;background:#fff"></div>
@@ -156,8 +157,8 @@ select,input[type="text"]{width:100%;padding:11px;border-radius:10px;background:
 <div class="timerBox" id="whiteTime">05:00</div>
 </div>
 
-<!-- NOTATION / MOVES RECORD -->
-<div class="notationBar" id="moveList">1. Yurishlar protokoli bu yerda ko'rinadi</div>
+<!-- YURISHLAR PROTOKOLI (NOTATION) -->
+<div class="notationBar" id="moveList">1. Yurishlar protokoli bu yerda ko'rinadi (cd4 ba5)</div>
 
 <div class="actionsGrid">
 <button id="drawBtn">🤝 Durang Taklif Etish</button>
@@ -168,28 +169,27 @@ select,input[type="text"]{width:100%;padding:11px;border-radius:10px;background:
 </div>
 </section>
 
-<!-- FLYING CHECKERS (IDF POSITIONS) -->
+<!-- UCHUVCHI SHASHKA (IDF DEBYUTLAR) -->
 <section id="flying" class="screen">
-<div class="header"><b>🚀 IDF Uchuvchi Shashka</b><button class="back" data-back>←</button></div>
+<div class="header"><b>🚀 IDF Uchuvchi Shashka Pozitsiyalari</b><button class="back" data-back>←</button></div>
 <div class="card">
-<label>📌 Rasmiy IDF Debyut Kurasini Tanlang:</label>
+<label>📌 Rasmiy Debyut Kurasini Tanlang:</label>
 <select id="positionSelect">
-<option value="random">🎲 Rasmiy IDF Tasodifiy Debyut Kura (1-2 Dona)</option>
+<option value="random">🎲 Rasmiy IDF Tasodifiy Debyut Kura</option>
 <option value="idf_1">🇺🇦 Kiyevcha Debyut (c3-d4, f6-e5)</option>
 <option value="idf_2">⚔️ Krest Debyuti (c3-d4, h6-g5)</option>
 <option value="idf_3">📐 Burchak Debyuti (g3-h4, f6-e5)</option>
-<option value="idf_4">⚡ Fabrika Debyuti (c3-b4, f6-e5, b4-a5)</option>
-<option value="idf_5">🔄 Teskari Qo'shaloq Kolik (c3-d4, d6-c5)</option>
+<option value="idf_4">⚡ Fabrika Debyuti (c3-b4, f6-e5)</option>
 </select>
 <button class="primary" id="startFlyingBtn" style="width:100%;margin-top:10px">▶️ Pozitsiya Bilan O'yinni Boshlash</button>
 </div>
 </section>
 
-<!-- PROFILE SCREEN -->
+<!-- PROFIL SAHIFASI -->
 <section id="profile" class="screen">
 <div class="header"><b>👤 Profil</b><button class="back" data-back>←</button></div>
 <div class="card" style="text-align:center">
-<div class="avatarBox" id="profileAvatar">👑</div>
+<div class="avatarBox">👑</div>
 <h2 style="margin:10px 0" id="profName">O'yinchi</h2>
 <p><span class="badge-gold">👑 Grandmaster Engine Status</span></p>
 <label style="text-align:left;display:block;margin-top:10px">Ismingizni o'zgartirish:</label>
@@ -198,46 +198,19 @@ select,input[type="text"]{width:100%;padding:11px;border-radius:10px;background:
 </div>
 </section>
 
-<!-- ONLINE SCREEN -->
-<section id="online" class="screen">
-<div class="header"><b>🌐 Online Server</b><button class="back" data-back>←</button></div>
-<div class="card">
-<p>Aurora / Lidraughts Engine Serveri</p>
-<button class="primary" id="connectBtn" style="width:100%">🔌 Serverga ulanish</button>
-<button id="findBtn" style="width:100%;margin-top:8px">🎲 Raqib topish</button>
-<div id="onlineStatus" style="margin-top:10px;font-weight:bold">Status: Offline</div>
-</div>
-</section>
-
-<!-- TOURNAMENTS SCREEN -->
-<section id="tournaments" class="screen">
-<div class="header"><b>🏆 Turnirlar</b><button class="back" data-back>←</button></div>
-<div class="card">
-<h3>🏆 IDF Aurora World Championship</h3>
-<p>Format: Rus shashkasi uchuvchi debyutlar kura tizimi</p>
-<button class="primary" onclick="alert('Turnirga ro\'yxatdan o\'tildi!')">Ro'yxatdan o'tish</button>
-</div>
-</section>
-
-<!-- TOP 30 SCREEN -->
-<section id="top" class="screen">
-<div class="header"><b>🥇 Reyting TOP 30</b><button class="back" data-back>←</button></div>
-<div class="card" id="topList"></div>
-</section>
-
-<!-- ANALYSIS SCREEN -->
+<!-- TAHLIL SAHIFASI -->
 <section id="analysis" class="screen">
 <div class="header"><b>🧠 Deep Analysis (Tahlil)</b><button class="back" data-back>←</button></div>
 <div class="card">
 <p>⚪ Oq donalar: <b id="aw">0</b> | 👑 Damkalar: <b id="awk">0</b></p>
 <p>⚫ Qora donalar: <b id="ab">0</b> | 👑 Damkalar: <b id="abk">0</b></p>
-<p>Aurora Pro Evaluator: <b id="score">0.0</b></p>
+<p>Kestog AI Bahosi: <b id="score">0.0</b></p>
 </div>
 </section>
 
-<!-- EDITOR SCREEN -->
+<!-- MUHARRIR SAHIFASI -->
 <section id="editor" class="screen">
-<div class="header"><b>♟️️ Doska Muharriri</b><button class="back" data-back>←</button></div>
+<div class="header"><b>♟ Doska Muharriri</b><button class="back" data-back>←</button></div>
 <div class="actionsGrid">
 <button id="clearEditor">🧹 Tozalash</button>
 <button id="resetEditor">♻️ Boshlang‘ich</button>
@@ -246,24 +219,16 @@ select,input[type="text"]{width:100%;padding:11px;border-radius:10px;background:
 <div class="boardWrap"><div id="editorBoard"></div></div>
 </section>
 
-<!-- HISTORY SCREEN -->
-<section id="history" class="screen">
-<div class="header"><b>📜 O'yinlar Tarixi</b><button class="back" data-back>←</button></div>
-<div class="card" id="historyList">Hali o‘yin yo‘q</div>
-</section>
-
-<!-- SETTINGS SCREEN -->
+<!-- SOZLAMALAR SAHIFASI -->
 <section id="settings" class="screen">
 <div class="header"><b>⚙ Sozlamalar</b><button class="back" data-back>←</button></div>
-
 <div class="card">
-<label>🤖 Aurora Engine Darajasi (Chuqurlik)</label>
+<label>🤖 Kestog AI Chuqurligi</label>
 <select id="aiLevel">
-<option value="1">Oson (4 Ply Search)</option>
-<option value="2">O‘rta (7 Ply Search)</option>
-<option value="3" selected>Qiyin - Aurora Pro Engine (10-12 Ply Search)</option>
+<option value="1">Oson (4-qadam)</option>
+<option value="2">O‘rta (7-qadam)</option>
+<option value="3" selected>Qiyin - Aurora Pro Engine (10-12 qadam)</option>
 </select>
-
 <label>⏱ Vaqt Nazorati</label>
 <select id="timeControl">
 <option value="1+1">1+1 blitz</option>
@@ -271,22 +236,26 @@ select,input[type="text"]{width:100%;padding:11px;border-radius:10px;background:
 <option value="5+3" selected>5+3 standart</option>
 </select>
 </div>
-
 <div class="card">
-<label>🎨 Doska Ranglari (Board Themes)</label>
+<label>🎨 Doska Ranglari</label>
 <div class="themeGrid" style="margin-bottom:12px">
 <button class="designBtn active" data-theme="gambler-wood">🪵 Gambler Wood</button>
 <button class="designBtn" data-theme="gambler-green">🟩 Gambler Green</button>
 <button class="designBtn" data-theme="lid-slate">🔘 Lidraughts Slate</button>
 <button class="designBtn" data-theme="lid-canvas">🎨 Lidraughts Canvas</button>
 </div>
-
-<label>⚪ Donalar Dizayni (Piece Styles)</label>
+<label>⚪ Donalar Dizayni</label>
 <div class="themeGrid">
 <button class="pieceBtn active" data-piece="gambler">🎲 Gambler Classic</button>
 <button class="pieceBtn" data-piece="lid-3d">👑 Lidraughts 3D</button>
 </div>
 </div>
+</section>
+
+<!-- TARIX SAHIFASI -->
+<section id="history" class="screen">
+<div class="header"><b>📜 O'yinlar Tarixi</b><button class="back" data-back>←</button></div>
+<div class="card" id="historyList">Hali o‘yin yo‘q</div>
 </section>
 
 </div>
@@ -295,31 +264,17 @@ select,input[type="text"]{width:100%;padding:11px;border-radius:10px;background:
 "use strict";
 
 const $=id=>document.getElementById(id);
+const WHITE="w", BLACK="b";
 
-const WHITE="w";
-const BLACK="b";
-
-let board=[];
-let turn=WHITE;
-let selected=null;
-let forcedPiece=null;
-let gameOver=false;
-let history=[];
-let movesHistory=[];
-let timer=null;
-let whiteSeconds=300;
-let blackSeconds=300;
-let increment=3;
-let aiTimer=null;
-let isFlipped=false;
-let activeHint=null;
+let board=[], turn=WHITE, selected=null, forcedPiece=null, gameOver=false;
+let history=[], movesHistory=[], timer=null, whiteSeconds=300, blackSeconds=300, increment=3;
+let aiTimer=null, isFlipped=false, activeHint=null;
 
 let boardTheme=localStorage.getItem("boardTheme")||"gambler-wood";
 let pieceStyle=localStorage.getItem("pieceStyle")||"gambler";
 let playerName=localStorage.getItem("playerName")||"O'yinchi";
 let stats=JSON.parse(localStorage.getItem("shashkaStats")||'{"elo":1200,"wins":0,"games":0}');
 
-/* AUDIO ENGINE */
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 let audioCtx = null;
 
@@ -329,17 +284,9 @@ function playSound(type) {
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
   osc.connect(gain); gain.connect(audioCtx.destination);
-
-  if(type === "move") {
-   osc.frequency.setValueAtTime(320, audioCtx.currentTime); gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-   osc.start(); osc.stop(audioCtx.currentTime + 0.05);
-  } else if(type === "capture") {
-   osc.frequency.setValueAtTime(650, audioCtx.currentTime); gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-   osc.start(); osc.stop(audioCtx.currentTime + 0.08);
-  } else if(type === "king") {
-   osc.frequency.setValueAtTime(850, audioCtx.currentTime); gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-   osc.start(); osc.stop(audioCtx.currentTime + 0.18);
-  }
+  if(type === "move") { osc.frequency.setValueAtTime(320, audioCtx.currentTime); gain.gain.setValueAtTime(0.1, audioCtx.currentTime); osc.start(); osc.stop(audioCtx.currentTime + 0.05); }
+  else if(type === "capture") { osc.frequency.setValueAtTime(650, audioCtx.currentTime); gain.gain.setValueAtTime(0.2, audioCtx.currentTime); osc.start(); osc.stop(audioCtx.currentTime + 0.08); }
+  else if(type === "king") { osc.frequency.setValueAtTime(850, audioCtx.currentTime); gain.gain.setValueAtTime(0.25, audioCtx.currentTime); osc.start(); osc.stop(audioCtx.currentTime + 0.18); }
  } catch(e) {}
 }
 
@@ -371,9 +318,8 @@ function getFlyingBoard(type) {
  else if(type === "idf_2") { b[5][2]=null; b[4][3]=WHITE; b[2][7]=null; b[3][6]=BLACK; }
  else if(type === "idf_3") { b[5][6]=null; b[4][7]=WHITE; b[2][5]=null; b[3][4]=BLACK; }
  else if(type === "idf_4") { b[5][2]=null; b[3][0]=WHITE; b[2][5]=null; b[3][4]=BLACK; }
- else if(type === "idf_5") { b[5][2]=null; b[4][3]=WHITE; b[1][2]=null; b[3][2]=BLACK; }
  else if(type === "random") {
-  const whiteMoves = [{f:[5,2],t:[4,3]}, {f:[5,2],t:[4,1]}, {f:[5,6],t:[4,7]}, {f:[5,4],t:[4,5]}];
+  const whiteMoves = [{f:[5,2],t:[4,3]}, {f:[5,2],t:[4,1]}, {f:[5,6],t:[4,7]}];
   const blackMoves = [{f:[2,5],t:[3,4]}, {f:[2,5],t:[3,6]}, {f:[2,3],t:[3,2]}];
   const wm = whiteMoves[Math.floor(Math.random()*whiteMoves.length)];
   const bm = blackMoves[Math.floor(Math.random()*blackMoves.length)];
@@ -395,23 +341,17 @@ function kingPiece(s){ return s===WHITE?"W":"B"; }
 function simpleSteps(b,r,c){
  const p=b[r][c]; if(!p)return [];
  const side=isWhite(p)?WHITE:BLACK; const result=[];
-
  if(isKing(p)){
   const dirs=[[1,1],[1,-1],[-1,1],[-1,-1]];
   for(const [dr,dc] of dirs){
    let nr=r+dr,nc=c+dc;
-   while(inside(nr,nc)&&!b[nr][nc]){
-    result.push({from:{r,c},to:{r:nr,c:nc},captures:[]});
-    nr+=dr; nc+=dc;
-   }
+   while(inside(nr,nc)&&!b[nr][nc]){ result.push({from:{r,c},to:{r:nr,c:nc},captures:[]}); nr+=dr; nc+=dc; }
   }
  }else{
   const dr=side===WHITE?-1:1;
   for(const dc of [-1,1]){
    const nr=r+dr,nc=c+dc;
-   if(inside(nr,nc)&&!b[nr][nc]){
-    result.push({from:{r,c},to:{r:nr,c:nc},captures:[]});
-   }
+   if(inside(nr,nc)&&!b[nr][nc]){ result.push({from:{r,c},to:{r:nr,c:nc},captures:[]}); }
   }
  }
  return result;
@@ -466,9 +406,7 @@ function applyStep(b,m){
 
  let nr=m.to.r;
  if(!isKing(p)){
-  if((isWhite(p)&&nr===0)||(isBlack(p)&&nr===7)){
-   p=kingPiece(isWhite(p)?WHITE:BLACK); playSound("king");
-  }
+  if((isWhite(p)&&nr===0)||(isBlack(p)&&nr===7)){ p=kingPiece(isWhite(p)?WHITE:BLACK); playSound("king"); }
  }
  n[m.to.r][m.to.c]=p; return n;
 }
@@ -483,7 +421,7 @@ function applyFullMove(b,m){
  return n;
 }
 
-/* AURORA GRANDMASTER EVALUATOR & ENGINE */
+/* KESTOG AURORA ENGINE EVALUATOR */
 const POSITIONAL_MATRIX = [
   [0, 0, 0, 0, 0, 0, 0, 0],
   [12, 0, 12, 0, 12, 0, 14, 0],
@@ -497,30 +435,15 @@ const POSITIONAL_MATRIX = [
 
 function evaluateAurora(b) {
   let score = 0;
-  let whiteKings = 0, blackKings = 0;
-
   for (let r = 0; r < 8; r++) {
     for (let c = 0; c < 8; c++) {
       const p = b[r][c]; if (!p) continue;
       let posVal = POSITIONAL_MATRIX[r][c];
-
-      if (isBlack(p)) {
-        if (isKing(p)) { score += 55; blackKings++; }
-        else { score += (15 + posVal); }
-      } else {
-        if (isKing(p)) { score -= 55; whiteKings++; }
-        else { score -= (15 + posVal); }
-      }
+      if (isBlack(p)) { score += isKing(p) ? 55 : (15 + posVal); }
+      else { score -= isKing(p) ? 55 : (15 + posVal); }
     }
   }
-
-  const blackMobility = allMoves(b, BLACK).length;
-  const whiteMobility = allMoves(b, WHITE).length;
-  score += (blackMobility - whiteMobility) * 1.2;
-
-  if (blackMobility === 0) score -= 5000;
-  if (whiteMobility === 0) score += 5000;
-
+  score += (allMoves(b, BLACK).length - allMoves(b, WHITE).length) * 1.2;
   return score;
 }
 
@@ -529,23 +452,17 @@ function quiescenceSearch(b, alpha, beta, isMaximizing) {
   if (isMaximizing) {
     if (standPat >= beta) return beta;
     if (alpha < standPat) alpha = standPat;
-    const captures = allCaptures(b, BLACK);
-    for (const m of captures) {
-      const nextBoard = applyFullMove(b, m);
-      let score = quiescenceSearch(nextBoard, alpha, beta, false);
-      if (score >= beta) return beta;
-      if (score > alpha) alpha = score;
+    for (const m of allCaptures(b, BLACK)) {
+      let score = quiescenceSearch(applyFullMove(b, m), alpha, beta, false);
+      if (score >= beta) return beta; if (score > alpha) alpha = score;
     }
     return alpha;
   } else {
     if (standPat <= alpha) return alpha;
     if (beta > standPat) beta = standPat;
-    const captures = allCaptures(b, WHITE);
-    for (const m of captures) {
-      const nextBoard = applyFullMove(b, m);
-      let score = quiescenceSearch(nextBoard, alpha, beta, true);
-      if (score <= alpha) return alpha;
-      if (score < beta) beta = score;
+    for (const m of allCaptures(b, WHITE)) {
+      let score = quiescenceSearch(applyFullMove(b, m), alpha, beta, true);
+      if (score <= alpha) return alpha; if (score < beta) beta = score;
     }
     return beta;
   }
@@ -553,30 +470,25 @@ function quiescenceSearch(b, alpha, beta, isMaximizing) {
 
 function alphaBetaAurora(b, depth, alpha, beta, isMaximizing) {
   if (depth === 0) return quiescenceSearch(b, alpha, beta, isMaximizing);
-
   const currentSide = isMaximizing ? BLACK : WHITE;
   const moves = allMoves(b, currentSide);
-
   if (!moves.length) return isMaximizing ? -5000 : 5000;
+
   moves.sort((a, b) => b.captures.length - a.captures.length);
 
   if (isMaximizing) {
     let maxEval = -Infinity;
     for (const m of moves) {
-      const nextBoard = applyFullMove(b, m);
-      const evalVal = alphaBetaAurora(nextBoard, depth - 1, alpha, beta, false);
-      maxEval = Math.max(maxEval, evalVal);
-      alpha = Math.max(alpha, evalVal);
+      const evalVal = alphaBetaAurora(applyFullMove(b, m), depth - 1, alpha, beta, false);
+      maxEval = Math.max(maxEval, evalVal); alpha = Math.max(alpha, evalVal);
       if (beta <= alpha) break;
     }
     return maxEval;
   } else {
     let minEval = Infinity;
     for (const m of moves) {
-      const nextBoard = applyFullMove(b, m);
-      const evalVal = alphaBetaAurora(nextBoard, depth - 1, alpha, beta, true);
-      minEval = Math.min(minEval, evalVal);
-      beta = Math.min(beta, evalVal);
+      const evalVal = alphaBetaAurora(applyFullMove(b, m), depth - 1, alpha, beta, true);
+      minEval = Math.min(minEval, evalVal); beta = Math.min(beta, evalVal);
       if (beta <= alpha) break;
     }
     return minEval;
@@ -606,9 +518,7 @@ function aiMove(){
  while(true){
   if(current.captures.length) playSound("capture"); else playSound("move");
   board=applyStep(board,current);
-  replayStates.push(clone(board));
   movesHistory.push(formatMove(current,"Qora"));
-
   const next=captureSteps(board,current.to.r,current.to.c);
   if(!current.captures.length||!next.length)break;
   current=next[0];
@@ -619,12 +529,10 @@ function aiMove(){
  drawBoard(); drawMoves(); updateTimers(); checkEnd();
 }
 
-/* CONTROLLERS */
 function startGame(customBoard){
  clearTimeout(aiTimer);
  board=customBoard && Array.isArray(customBoard) ? customBoard : initialBoard();
- replayStates=[clone(board)]; stopTimer();
- turn=WHITE; selected=null; forcedPiece=null; gameOver=false; history=[]; movesHistory=[]; activeHint=null;
+ stopTimer(); turn=WHITE; selected=null; forcedPiece=null; gameOver=false; history=[]; movesHistory=[]; activeHint=null;
 
  const tc=$("timeControl").value.split("+");
  whiteSeconds=Number(tc[0])*60; blackSeconds=whiteSeconds; increment=Number(tc[1]);
@@ -671,7 +579,6 @@ function makeHumanStep(move){
  if(move.captures.length) playSound("capture"); else playSound("move");
 
  board=applyStep(board,move);
- replayStates.push(clone(board));
  movesHistory.push(formatMove(move,"Oq"));
  selected={r:move.to.r,c:move.to.c}; activeHint=null;
 
@@ -694,8 +601,7 @@ function getHint(){
  moves.sort((a,b)=>b.captures.length - a.captures.length);
 
  for(const m of moves){
-  const next = applyFullMove(board, m);
-  const score = alphaBetaAurora(next, 4, -Infinity, Infinity, true);
+  const score = alphaBetaAurora(applyFullMove(board, m), 4, -Infinity, Infinity, true);
   if(score < minScore){ minScore = score; bestMove = m; }
  }
  activeHint = bestMove; drawBoard();
@@ -704,12 +610,11 @@ function getHint(){
 function offerDraw(){
  if(gameOver) return;
  if(confirm("Durang taklif qilasizmi?")){
-  const evalScore = evaluateAurora(board);
-  if(Math.abs(evalScore) < 15) {
-   alert("🤝 Aurora AI durang taklifingizni qabul qildi!");
+  if(Math.abs(evaluateAurora(board)) < 15) {
+   alert("🤝 Kestog AI durang taklifingizni qabul qildi!");
    finishGame("draw");
   } else {
-   alert("❌ Aurora AI durang taklifini rad etdi!");
+   alert("❌ Kestog AI durang taklifini rad etdi!");
   }
  }
 }
@@ -788,7 +693,7 @@ function finishGame(winner){
  saveHistoryRecord(winner);
  setTimeout(()=>{
   if(winner==="draw") alert("🤝 O'yin durang bilan yakunlandi!");
-  else alert(winner==="white"?"🏆 Oq (Siz) g‘alaba qozondingiz!":"🏆 Qora (Aurora AI) g‘alaba qozondi!");
+  else alert(winner==="white"?"🏆 Oq (Siz) g‘alaba qozondingiz!":"🏆 Qora (Kestog AI) g‘alaba qozondi!");
  },100);
 }
 
@@ -805,11 +710,8 @@ function startTimer(){
  stopTimer();
  timer=setInterval(()=>{
   if(gameOver)return;
-  if(turn===WHITE){
-   whiteSeconds=Math.max(0,whiteSeconds-1); if(whiteSeconds<=0) finishGame("black");
-  }else{
-   blackSeconds=Math.max(0,blackSeconds-1); if(blackSeconds<=0) finishGame("white");
-  }
+  if(turn===WHITE){ whiteSeconds=Math.max(0,whiteSeconds-1); if(whiteSeconds<=0) finishGame("black"); }
+  else{ blackSeconds=Math.max(0,blackSeconds-1); if(blackSeconds<=0) finishGame("white"); }
   updateTimers();
  },1000);
 }
@@ -856,7 +758,7 @@ $("saveNameBtn").onclick=()=>{
  updateStats(); alert("Ism saqlandi!");
 };
 
-/* EVENT ROUTING & LISTENERS */
+/* KNOPKALAR VA ROUTING */
 $("flipBtn").onclick=()=>{ isFlipped = !isFlipped; $("gameBoard").classList.toggle("flipped", isFlipped); };
 $("aiBtn").onclick=()=>startGame();
 $("flyingBtn").onclick=()=>show("flying");
@@ -874,8 +776,6 @@ $("historyBtn").onclick=()=>{ renderHistory(); show("history"); };
 $("topBtn").onclick=()=>show("top");
 $("profileBtn").onclick=()=>show("profile");
 $("settingsBtn").onclick=()=>show("settings");
-$("onlineBtn").onclick=()=>show("online");
-$("tournamentBtn").onclick=()=>show("tournaments");
 
 document.querySelectorAll("[data-back], .back").forEach(btn=>{ btn.onclick=()=>{ show("home"); }; });
 
@@ -893,7 +793,7 @@ document.querySelectorAll(".pieceBtn").forEach(btn=>{
  };
 });
 
-/* STARTUP */
+/* DASTURNI ISHGA TUSHIRISH */
 updateStats();
 </script>
 </body>
