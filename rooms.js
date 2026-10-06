@@ -5,6 +5,11 @@ const crypto = require("crypto");
 const ROOM_RE = /^[A-Za-z0-9_-]{3,64}$/;
 const MAX_MOVES = 1000;
 const IDLE_MS = 6 * 60 * 60 * 1000;
+// Vaqt rejimlari: [boshlang'ich soniya, har yurishdan keyin qo'shiladigan soniya]
+const TCS = { "1+1": [60, 1], "2+2": [120, 2], "3+2": [180, 2], "5+3": [300, 3], "7+5": [420, 5] };
+const DEFAULT_TC = "5+3";
+const CHAT_KEEP = 50;
+const CHAT_MAX = 200;
 
 // Telegram Mini App initData imzosini tekshirish (BOT_TOKEN Render'da Environment'ga yoziladi)
 function verifyInitData(initData) {
@@ -51,6 +56,19 @@ function createRooms({ send, clients }) {
     return !!(seat && clients.get(seat.clientId));
   }
 
+  // Soat: har ikki tomonning birinchi yurishi bepul, undan keyin navbatdagi o'yinchi vaqti ketadi.
+  function clockRunning(room) {
+    return !!(room.white && room.black && !room.finished && room.plies >= 2);
+  }
+
+  function currentClock(room) {
+    const c = { white: room.clock.white, black: room.clock.black };
+    if (clockRunning(room)) {
+      c[room.turn] = Math.max(0, c[room.turn] - (Date.now() - room.turnStartedAt));
+    }
+    return c;
+  }
+
   function snapshot(room, color) {
     return {
       type: "roomState",
@@ -64,7 +82,16 @@ function createRooms({ send, clients }) {
       moves: room.moves,
       turn: room.turn,
       finished: room.finished,
-      winner: room.winner
+      winner: room.winner,
+      reason: room.reason,
+      clock: currentClock(room),
+      clockRunning: clockRunning(room),
+      timeMs: room.timeMs,
+      incMs: room.incMs,
+      tc: room.tc,
+      tcs: Object.keys(TCS),
+      drawOffer: room.drawOffer,
+      chat: room.chat
     };
   }
 
@@ -82,13 +109,17 @@ function createRooms({ send, clients }) {
     }
   }
 
-  function finish(room, winner) {
+  function finish(room, winner, reason) {
     if (room.finished) return;
+    room.clock = currentClock(room); // soatni to'xtatamiz
     room.finished = true;
+    room.drawOffer = null;
     room.winner = winner;
+    room.reason = reason || null;
     results.push({
       roomId: room.id,
       winner,
+      reason: room.reason,
       white: room.white && room.white.uid,
       black: room.black && room.black.uid,
       whiteName: room.white && room.white.name,
@@ -97,7 +128,7 @@ function createRooms({ send, clients }) {
       at: Date.now()
     });
     if (results.length > 500) results.shift();
-    broadcast(room, { type: "roomFinished", roomId: room.id, winner });
+    broadcast(room, { type: "roomFinished", roomId: room.id, winner, reason: room.reason, clock: room.clock });
   }
 
   function err(c, message) {
@@ -126,7 +157,9 @@ function createRooms({ send, clients }) {
         return true;
       } else {
         const nm = String(m.name || "Mehmon").trim().slice(0, 20) || "Mehmon";
-        user = { id: c.id, name: nm };
+        // Telegramsiz: brauzer oynasi o'z guestId'si bilan taniladi, qayta ulansa joyi saqlanadi
+        const gid = /^[A-Za-z0-9]{8,32}$/.test(String(m.guestId || "")) ? "g_" + m.guestId : c.id;
+        user = { id: gid, name: nm };
       }
 
       let room = rooms.get(roomId);
@@ -140,6 +173,17 @@ function createRooms({ send, clients }) {
           turn: "white",
           finished: false,
           winner: null,
+          reason: null,
+          plies: 0, // tugallangan navbatlar soni
+          tc: DEFAULT_TC,
+          timeMs: TCS[DEFAULT_TC][0] * 1000,
+          incMs: TCS[DEFAULT_TC][1] * 1000,
+          clock: { white: TCS[DEFAULT_TC][0] * 1000, black: TCS[DEFAULT_TC][0] * 1000 },
+          drawOffer: null,
+          offerPly: { white: -1, black: -1 },
+          chat: [],
+          names: new Map(),
+          turnStartedAt: 0,
           lastActive: Date.now()
         };
         rooms.set(roomId, room);
@@ -149,6 +193,7 @@ function createRooms({ send, clients }) {
       c.roomIds = c.roomIds || new Set();
       c.roomIds.add(roomId);
       room.members.add(c.id);
+      room.names.set(c.id, user.name);
       room.lastActive = Date.now();
 
       const seat = { uid: user.id, name: user.name, clientId: c.id };
@@ -175,9 +220,31 @@ function createRooms({ send, clients }) {
       if (!room.white || !room.black) return err(c, "Raqib hali qo‘shilmagan"), true;
       if (col !== room.turn) return err(c, "Hozir navbat sizniki emas"), true;
       if (room.moves.length >= MAX_MOVES) return err(c, "Yurishlar limiti"), true;
+      const now = Date.now();
+      const wasRunning = clockRunning(room);
+      if (wasRunning) {
+        room.clock[col] -= now - room.turnStartedAt;
+        if (room.clock[col] <= 0) {
+          room.clock[col] = 0;
+          finish(room, other(col), "timeout");
+          return true;
+        }
+      }
+      if (wasRunning && !m.keepTurn) room.clock[col] += room.incMs; // inkrement
       room.moves.push(m.move);
-      if (!m.keepTurn) room.turn = other(room.turn); // ketma-ket olishda keepTurn:true yuboring
-      broadcast(room, { type: "roomMove", roomId, move: m.move, turn: room.turn, color: col });
+      if (room.drawOffer) {
+        room.drawOffer = null; // yurish bilan taklif rad etiladi
+        broadcast(room, { type: "roomDraw", roomId, offer: null });
+      }
+      if (!m.keepTurn) {
+        room.turn = other(room.turn); // ketma-ket olishda keepTurn:true yuboring
+        room.plies++;
+      }
+      room.turnStartedAt = now;
+      broadcast(room, {
+        type: "roomMove", roomId, move: m.move, turn: room.turn, color: col,
+        clock: currentClock(room), clockRunning: clockRunning(room)
+      });
       return true;
     }
 
@@ -185,7 +252,61 @@ function createRooms({ send, clients }) {
       if (!col) return err(c, "Siz tomoshabinsiz"), true;
       let winner = m.type === "roomFinish" ? m.winner : null;
       if (winner !== "white" && winner !== "black" && winner !== "draw") winner = other(col);
-      finish(room, winner);
+      finish(room, winner, m.type === "roomResign" ? "resign" : "finish");
+      return true;
+    }
+
+    if (m.type === "roomSetTime") {
+      if (col !== "white") return err(c, "Vaqtni faqat xona egasi (oq) tanlaydi"), true;
+      if (room.moves.length > 0 || room.finished) return err(c, "O‘yin boshlangan, vaqtni o‘zgartirib bo‘lmaydi"), true;
+      const t = TCS[m.tc];
+      if (!t) return err(c, "Noma’lum vaqt rejimi"), true;
+      room.tc = m.tc;
+      room.timeMs = t[0] * 1000;
+      room.incMs = t[1] * 1000;
+      room.clock = { white: room.timeMs, black: room.timeMs };
+      pushState(room);
+      return true;
+    }
+
+    if (m.type === "roomDrawOffer") {
+      if (!col) return err(c, "Siz tomoshabinsiz"), true;
+      if (room.finished || !room.white || !room.black) return true;
+      if (room.moves.length < 2) return err(c, "Avval kamida bittadan yurish qiling"), true;
+      if (room.drawOffer) return true;
+      if (room.offerPly[col] >= room.plies) return err(c, "Durang taklifini keyingi yurishdan so‘ng qayta yuboring"), true;
+      room.drawOffer = col;
+      room.offerPly[col] = room.plies;
+      broadcast(room, { type: "roomDraw", roomId, offer: col });
+      return true;
+    }
+
+    if (m.type === "roomDrawAccept") {
+      if (!col || room.finished) return true;
+      if (!room.drawOffer || room.drawOffer === col) return true;
+      room.drawOffer = null;
+      finish(room, "draw", "agreed");
+      return true;
+    }
+
+    if (m.type === "roomDrawDecline") {
+      if (!col || !room.drawOffer || room.drawOffer === col) return true;
+      room.drawOffer = null;
+      broadcast(room, { type: "roomDraw", roomId, offer: null, declined: true });
+      return true;
+    }
+
+    if (m.type === "roomChat") {
+      if (!room.members.has(c.id)) return true;
+      const text = String(m.text || "").replace(/[\u0000-\u001f]/g, " ").trim().slice(0, CHAT_MAX);
+      if (!text) return true;
+      const now = Date.now();
+      if (c.lastChat && now - c.lastChat < 700) return err(c, "Juda tez yozyapsiz"), true;
+      c.lastChat = now;
+      const msg = { name: room.names.get(c.id) || "Mehmon", color: col || "spectator", text, at: now };
+      room.chat.push(msg);
+      if (room.chat.length > CHAT_KEEP) room.chat.shift();
+      broadcast(room, { type: "roomChat", roomId, msg });
       return true;
     }
 
@@ -209,6 +330,17 @@ function createRooms({ send, clients }) {
       }, 0);
     }
   }
+
+  // Vaqti tugaganini tekshirish
+  setInterval(() => {
+    const now = Date.now();
+    for (const room of rooms.values()) {
+      if (!clockRunning(room)) continue;
+      if (room.clock[room.turn] - (now - room.turnStartedAt) <= 0) {
+        finish(room, other(room.turn), "timeout");
+      }
+    }
+  }, 500).unref();
 
   setInterval(() => {
     const now = Date.now();

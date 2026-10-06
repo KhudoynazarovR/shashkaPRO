@@ -23,17 +23,49 @@
     if (!roomId && q.get("room")) roomId = q.get("room");
     if (!ROOM_RE.test(roomId)) return; // xona rejimi emas
     try { if (tg) { tg.ready(); tg.expand(); if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); } } catch (e) {}
+    var missing = missingFns();
+    if (missing.length) {
+      var d = document.createElement("div");
+      d.style.cssText = "position:fixed;inset:0;z-index:9999;background:#0b1017;color:#fff;padding:24px;font-family:Arial,sans-serif";
+      d.textContent = "⚠️ index.html da kerakli funksiyalar topilmadi: " + missing.join(", ");
+      document.body.appendChild(d);
+      return;
+    }
     start(roomId, tg);
   });
+
+  // index.html dan olinadigan funksiya/o'zgaruvchilar bormi — tekshiramiz
+  function missingFns() {
+    var need = ["WHITE", "BLACK", "initialBoard", "applyStep", "captureSteps", "simpleSteps",
+      "allCaptures", "allMoves", "sameSide", "isWhite", "isKing"];
+    var out = [];
+    for (var i = 0; i < need.length; i++) {
+      try { if (new Function("return typeof " + need[i])() === "undefined") out.push(need[i]); } catch (e) {}
+    }
+    return out;
+  }
+
+  // Telegramsiz kirganda har bir oyna (tab) o'z id'sini saqlaydi — qayta ulansa joyi yo'qolmaydi
+  function guestId() {
+    var k = "rcGuest", v = "";
+    try { v = sessionStorage.getItem(k) || ""; } catch (e) {}
+    if (!/^[A-Za-z0-9]{8,32}$/.test(v)) {
+      v = Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
+      try { sessionStorage.setItem(k, v); } catch (e) {}
+    }
+    return v;
+  }
 
   function start(roomId, tg) {
     var st = {
       color: "spectator", turn: "white", board: initialBoard(), moves: [],
       white: null, black: null, whiteOnline: false, blackOnline: false,
-      spectators: 0, finished: false, winner: null,
+      spectators: 0, finished: false, winner: null, reason: null,
+      clock: { white: 0, black: 0 }, clockRunning: false, clockAt: 0, timeMs: 0, incMs: 0, tc: "", tcs: [],
+      drawOffer: null, chat: [], unread: 0, chatOpen: false,
       selected: null, forced: null, pending: false, connected: false, joined: false
     };
-    var ws = null, hb = null;
+    var ws = null, hb = null, gid = guestId();
 
     // ---------- UI ----------
     var root = document.createElement("div");
@@ -44,14 +76,25 @@
     root.innerHTML =
       '<div style="font-weight:bold;font-size:18px">♟️ ShashkaPRO</div>' +
       '<div id="rcStatus" style="margin:8px 0;color:#e3b746;min-height:22px;text-align:center"></div>' +
+      '<div id="rcTc" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:6px"></div>' +
       '<div id="rcTop" style="width:min(94vw,520px);padding:4px 2px;font-size:15px"></div>' +
       '<div id="rcBoard" style="width:min(94vw,520px);aspect-ratio:1;display:grid;grid-template-columns:repeat(8,1fr);' +
       'grid-template-rows:repeat(8,1fr);border:6px solid #302217;border-radius:10px;overflow:hidden;' +
       'box-shadow:0 12px 35px #0009;touch-action:manipulation"></div>' +
       '<div id="rcBottom" style="width:min(94vw,520px);padding:4px 2px;font-size:15px"></div>' +
-      '<div style="display:flex;gap:10px;margin-top:10px">' +
+      '<div id="rcDraw" style="display:none;margin-top:10px;padding:8px 12px;border-radius:10px;background:#1c2733;text-align:center">' +
+      '<div id="rcDrawText" style="margin-bottom:6px"></div>' +
+      '<button id="rcDrawYes">✅ Qabul</button> <button id="rcDrawNo">❌ Rad etish</button></div>' +
+      '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;justify-content:center">' +
+      '<button id="rcDrawOffer" style="display:none">🤝 Durang</button>' +
       '<button id="rcResign" style="display:none">🏳️ Taslim</button>' +
+      '<button id="rcChatBtn">💬 Chat</button>' +
       '<button id="rcClose">✖️ Yopish</button></div>' +
+      '<div id="rcChat" style="display:none;width:min(94vw,520px);margin-top:10px">' +
+      '<div id="rcMsgs" style="height:150px;overflow:auto;background:#101a24;border-radius:8px;padding:6px 8px;font-size:14px"></div>' +
+      '<div style="display:flex;gap:6px;margin-top:6px">' +
+      '<input id="rcInput" maxlength="200" placeholder="Xabar yozing…" style="flex:1;min-width:0;padding:8px;border-radius:8px;border:1px solid #2a3a4a;background:#0b1017;color:#fff;font-size:16px">' +
+      '<button id="rcSend">➤</button></div></div>' +
       '<div id="rcInfo" style="margin-top:10px;font-size:13px;opacity:.7;text-align:center"></div>';
     document.body.appendChild(root);
 
@@ -61,6 +104,18 @@
     var elBoard = root.querySelector("#rcBoard");
     var elResign = root.querySelector("#rcResign");
     var elInfo = root.querySelector("#rcInfo");
+    var elTc = root.querySelector("#rcTc");
+    var elDraw = root.querySelector("#rcDraw");
+    var elDrawText = root.querySelector("#rcDrawText");
+    var elDrawOffer = root.querySelector("#rcDrawOffer");
+    var elChat = root.querySelector("#rcChat");
+    var elChatBtn = root.querySelector("#rcChatBtn");
+    var elMsgs = root.querySelector("#rcMsgs");
+    var elInput = root.querySelector("#rcInput");
+
+    window.addEventListener("error", function (e) {
+      elInfo.textContent = "⚠️ JS xato: " + (e && e.message);
+    });
 
     root.querySelector("#rcClose").onclick = function () {
       if (tg && tg.close) tg.close(); else root.style.display = "none";
@@ -69,6 +124,63 @@
       if (st.finished || st.color === "spectator") return;
       if (confirm("Taslim bo‘lasizmi?")) send({ type: "roomResign", roomId: roomId });
     };
+
+    elDrawOffer.onclick = function () {
+      if (st.finished || st.color === "spectator") return;
+      send({ type: "roomDrawOffer", roomId: roomId });
+    };
+    root.querySelector("#rcDrawYes").onclick = function () { send({ type: "roomDrawAccept", roomId: roomId }); };
+    root.querySelector("#rcDrawNo").onclick = function () { send({ type: "roomDrawDecline", roomId: roomId }); };
+
+    elChatBtn.onclick = function () {
+      st.chatOpen = !st.chatOpen;
+      if (st.chatOpen) st.unread = 0;
+      renderChat();
+      if (st.chatOpen) elMsgs.scrollTop = elMsgs.scrollHeight;
+    };
+    function sendChat() {
+      var t = elInput.value.trim();
+      if (!t) return;
+      send({ type: "roomChat", roomId: roomId, text: t });
+      elInput.value = "";
+    }
+    root.querySelector("#rcSend").onclick = sendChat;
+    elInput.addEventListener("keydown", function (e) { if (e.key === "Enter") sendChat(); });
+
+    function addMsg(msg) {
+      var row = document.createElement("div");
+      var who = document.createElement("b");
+      who.textContent = (msg.color === "white" ? "⚪ " : msg.color === "black" ? "⚫ " : "👁 ") + msg.name + ": ";
+      who.style.color = msg.color === "spectator" ? "#8aa" : "#e3b746";
+      var tx = document.createElement("span");
+      tx.textContent = msg.text;
+      row.appendChild(who); row.appendChild(tx);
+      elMsgs.appendChild(row);
+    }
+    function renderChat() {
+      elChat.style.display = st.chatOpen ? "" : "none";
+      elChatBtn.textContent = "💬 Chat" + (st.unread ? " (" + st.unread + ")" : "");
+    }
+    function rebuildChat() {
+      elMsgs.innerHTML = "";
+      for (var i = 0; i < st.chat.length; i++) addMsg(st.chat[i]);
+      elMsgs.scrollTop = elMsgs.scrollHeight;
+    }
+
+    // vaqt rejimi tugmalari (faqat o'yin boshlanmaguncha, faqat oq tanlaydi)
+    function renderTc() {
+      elTc.innerHTML = "";
+      var canPick = st.color === "white" && st.moves.length === 0 && !st.finished;
+      if (!canPick) { elTc.style.display = "none"; return; }
+      elTc.style.display = "flex";
+      st.tcs.forEach(function (tc) {
+        var b = document.createElement("button");
+        b.textContent = tc;
+        b.style.cssText = tc === st.tc ? "background:#2b4a1f;color:#fff;font-weight:bold" : "";
+        b.onclick = function () { send({ type: "roomSetTime", roomId: roomId, tc: tc }); };
+        elTc.appendChild(b);
+      });
+    }
 
     // ---------- yordamchilar ----------
     function myCode() { return st.color === "white" ? WHITE : BLACK; }
@@ -117,12 +229,56 @@
         (st.color === color ? "  (siz)" : "");
     }
 
+    // ismi chapda, soat o'ngda
+    function fillLine(el, color) {
+      el.innerHTML = "";
+      el.style.display = "flex";
+      el.style.justifyContent = "space-between";
+      el.style.alignItems = "center";
+      var l = document.createElement("span");
+      l.textContent = nameLine(color);
+      var r = document.createElement("span");
+      r.setAttribute("data-clock", color);
+      r.style.cssText = "font-weight:bold;min-width:64px;text-align:center;padding:3px 8px;border-radius:6px;background:#1c2733";
+      el.appendChild(l);
+      el.appendChild(r);
+    }
+
+    function remaining(color) {
+      var ms = st.clock[color] || 0;
+      if (st.clockRunning && !st.finished && st.turn === color) ms -= performance.now() - st.clockAt;
+      return Math.max(0, ms);
+    }
+
+    function fmt(ms) {
+      var sec = Math.ceil(ms / 1000), m = Math.floor(sec / 60), s = sec % 60;
+      return m + ":" + (s < 10 ? "0" : "") + s;
+    }
+
+    function updateClocks() {
+      var els = root.querySelectorAll("[data-clock]");
+      for (var i = 0; i < els.length; i++) {
+        var color = els[i].getAttribute("data-clock"), ms = remaining(color);
+        els[i].textContent = fmt(ms);
+        var active = st.clockRunning && !st.finished && st.turn === color;
+        els[i].style.background = active ? (ms < 30000 ? "#7a1f1f" : "#2b4a1f") : "#1c2733";
+        els[i].style.color = ms < 30000 && active ? "#ffb4b4" : "#fff";
+      }
+    }
+
+    function setClock(clock, running) {
+      if (clock) st.clock = clock;
+      st.clockRunning = !!running;
+      st.clockAt = performance.now();
+    }
+
     function render() {
       var fl = flipped();
       var topColor = fl ? "white" : "black";
       var bottomColor = fl ? "black" : "white";
-      elTop.textContent = nameLine(topColor);
-      elBottom.textContent = nameLine(bottomColor);
+      fillLine(elTop, topColor);
+      fillLine(elBottom, bottomColor);
+      updateClocks();
 
       var opts = options();
       elBoard.innerHTML = "";
@@ -151,9 +307,10 @@
       if (!st.connected) t = "🔌 Ulanmoqda… (server uyg‘onishi 50 soniyagacha cho‘zilishi mumkin)";
       else if (!st.joined) t = "⏳ Xonaga kirilmoqda…";
       else if (st.finished) {
-        if (st.winner === "draw") t = "🤝 Durang";
-        else if (st.color === "spectator") t = "🏆 " + sideName(st.winner) + " g‘alaba qozondi";
-        else t = st.winner === st.color ? "🏆 Siz g‘alaba qozondingiz!" : "😔 Siz yutqazdingiz";
+        var tm = st.reason === "timeout" ? "⏰ Vaqt tugadi · " : "";
+        if (st.winner === "draw") t = "🤝 Durang (kelishildi)";
+        else if (st.color === "spectator") t = tm + "🏆 " + sideName(st.winner) + " g‘alaba qozondi";
+        else t = tm + (st.winner === st.color ? "🏆 Siz g‘alaba qozondingiz!" : "😔 Siz yutqazdingiz");
       }
       else if (!bothIn()) t = "⏳ Raqib kutilmoqda…";
       else if (st.color === "spectator") t = "👁 Tomoshabin · navbat: " + sideName(st.turn);
@@ -161,10 +318,25 @@
       else t = "⏳ Raqib yurishi kutilmoqda";
       elStatus.textContent = t;
 
-      elResign.style.display = (st.color !== "spectator" && !st.finished && bothIn()) ? "" : "none";
-      elInfo.textContent = st.color === "spectator"
+      var playing = st.color !== "spectator" && !st.finished && bothIn();
+      elResign.style.display = playing ? "" : "none";
+      elDrawOffer.style.display = (playing && st.moves.length >= 2 && !st.drawOffer) ? "" : "none";
+      if (!st.finished && st.drawOffer && st.color !== "spectator") {
+        elDraw.style.display = "";
+        var mine = st.drawOffer === st.color;
+        elDrawText.textContent = mine ? "🤝 Durang taklif qildingiz. Raqib javobi kutilmoqda…" : "🤝 Raqib durang taklif qilmoqda";
+        root.querySelector("#rcDrawYes").style.display = mine ? "none" : "";
+        root.querySelector("#rcDrawNo").style.display = mine ? "none" : "";
+      } else elDraw.style.display = "none";
+      renderTc();
+      renderChat();
+      elInfo.textContent = (st.color === "spectator"
         ? "Siz tomoshabinsiz" + (st.spectators ? " · " + st.spectators + " ta tomoshabin" : "")
-        : (st.spectators ? "👁 Tomoshabinlar: " + st.spectators : "");
+        : (st.spectators ? "👁 Tomoshabinlar: " + st.spectators : "")) +
+        (bothIn() && !st.finished && !st.clockRunning && st.timeMs
+          ? (st.spectators || st.color === "spectator" ? "\n" : "") + "⏱ " + st.tc + " (daqiqa + soniya) · soat birinchi ikki yurishdan keyin ishga tushadi"
+          : "");
+      elInfo.style.whiteSpace = "pre-line";
     }
 
     // ---------- bosish ----------
@@ -221,12 +393,21 @@
         st.turn = m.turn;
         st.finished = !!m.finished;
         st.winner = m.winner;
+        st.reason = m.reason || null;
+        st.timeMs = m.timeMs || 0;
+        st.incMs = m.incMs || 0;
+        st.tc = m.tc || "";
+        st.tcs = m.tcs || [];
+        st.drawOffer = m.drawOffer || null;
+        if (m.chat) { st.chat = m.chat; rebuildChat(); }
+        setClock(m.clock, m.clockRunning);
         if (!same) rebuild();   // yurishlar o'zgarmagan bo'lsa, tanlov saqlanadi
         render();
       } else if (m.type === "roomMove" && m.roomId === roomId) {
         st.moves.push(m.move);
         st.board = applyStep(st.board, m.move);
         st.turn = m.turn;
+        setClock(m.clock, m.clockRunning);
         st.pending = false;
         st.selected = null;
         st.forced = computeForced(m.move);
@@ -237,9 +418,23 @@
             send({ type: "roomFinish", roomId: roomId, winner: m.color });
           }
         }
+      } else if (m.type === "roomDraw" && m.roomId === roomId) {
+        st.drawOffer = m.offer || null;
+        if (m.declined) elInfo.textContent = "❌ Durang taklifi rad etildi";
+        render();
+        if (m.declined) elInfo.textContent = "❌ Durang taklifi rad etildi";
+      } else if (m.type === "roomChat" && m.roomId === roomId) {
+        st.chat.push(m.msg);
+        if (st.chat.length > 50) st.chat.shift();
+        addMsg(m.msg);
+        if (st.chatOpen) elMsgs.scrollTop = elMsgs.scrollHeight;
+        else { st.unread++; renderChat(); }
       } else if (m.type === "roomFinished" && m.roomId === roomId) {
         st.finished = true;
+        st.drawOffer = null;
         st.winner = m.winner;
+        st.reason = m.reason || null;
+        setClock(m.clock, false);
         render();
         try { if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred("success"); } catch (e) {}
       } else if (m.type === "error") {
@@ -258,7 +453,8 @@
         send({
           type: "roomJoin", roomId: roomId,
           initData: (tg && tg.initData) || "",
-          name: name || "Mehmon"
+          name: name || ("Mehmon-" + gid.slice(0, 3).toUpperCase()),
+          guestId: gid
         });
         render();
       };
@@ -275,6 +471,7 @@
     }
 
     hb = setInterval(function () { send({ type: "roomSync", roomId: roomId }); }, 25000);
+    setInterval(updateClocks, 250);
     render();
     connect();
   }
