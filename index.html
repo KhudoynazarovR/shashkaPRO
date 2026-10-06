@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>ShashkaPRO Ultimate</title>
+<title>ShashkaPRO GrandMaster Edition</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#0b1017;color:#fff;font-family:Arial,sans-serif}
-button,select{font:inherit}
-button{border:0;border-radius:12px;padding:12px;color:#fff;background:#202b38;cursor:pointer}
+body{margin:0;background:#0b1017;color:#fff;font-family:Arial,sans-serif;user-select:none}
+button,select{font:inherit;cursor:pointer}
+button{border:0;border-radius:12px;padding:12px;color:#fff;background:#202b38;transition:transform 0.1s, background 0.2s}
 button:active{transform:scale(.97)}
 .app{max-width:700px;margin:auto;padding:12px}
 .screen{display:none}.screen.active{display:block}
@@ -27,7 +27,7 @@ button:active{transform:scale(.97)}
 .timer{color:#e3b746;font-weight:bold}
 .actions{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0}
 
-.boardWrap{width:min(94vw,600px);margin:12px auto}
+.boardWrap{width:min(94vw,600px);margin:12px auto;position:relative}
 #gameBoard,#editorBoard,#replayBoard{
  width:100%;aspect-ratio:1;display:grid;
  grid-template-columns:repeat(8,1fr);
@@ -35,12 +35,16 @@ button:active{transform:scale(.97)}
  border:6px solid #302217;border-radius:10px;overflow:hidden;
  box-shadow:0 12px 35px #0009;
  touch-action:manipulation;
+ transition:transform 0.4s ease;
 }
 .cell{position:relative;display:flex;align-items:center;justify-content:center}
 .light{background:#ead2ad}.dark{background:#315b82}
 .cell.selected{box-shadow:inset 0 0 0 4px #00e5ff!important}
 .cell.target{box-shadow:inset 0 0 0 4px #55ff9a!important}
 .cell.capture{box-shadow:inset 0 0 0 4px #ff4545!important}
+.cell.hint-from{box-shadow:inset 0 0 0 4px #ffea00!important}
+.cell.hint-to{box-shadow:inset 0 0 0 4px #ff9100!important}
+
 .coord{position:absolute;font-size:9px;opacity:.55;pointer-events:none}
 .coord.file{bottom:2px;left:3px}.coord.rank{top:2px;right:3px}
 
@@ -48,20 +52,36 @@ button:active{transform:scale(.97)}
  width:72%;height:72%;max-width:70px;max-height:70px;
  border-radius:50%;border:3px solid #555;z-index:2;
  box-shadow:inset 0 5px 7px #fff8,inset 0 -8px 10px #0009,0 4px 8px #0009;
- transition: transform 0.15s ease;
+ transition:all 0.2s;
 }
 .white{background:radial-gradient(circle at 35% 28%,#fff,#eee 42%,#aaa)}
 .black{background:radial-gradient(circle at 35% 28%,#666,#222 45%,#050505);border-color:#000}
 .king:after{content:"♛";display:flex;align-items:center;justify-content:center;height:100%;color:#d9ad36;font-size:30px;text-shadow:0 2px 3px #000}
 
-.themeGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-.moves{max-height:180px;overflow:auto;line-height:1.7}
-select{width:100%;padding:11px;border-radius:10px;background:#202b38;color:#fff;border:1px solid #3a4857}
+/* DOSKA MAVZULARI (THEMES) */
+.theme-classic .dark{background:#315b82}
+.theme-blue .dark{background:#1e3d59}
+.theme-green .dark{background:#2d5a27}
+.theme-purple .dark{background:#4a2545}
+.theme-dark .dark{background:#222222}
+.theme-gold .dark{background:#5c4d18}
+.theme-ruby .dark{background:#6b1111}
+.theme-wood .dark{background:#4a2f13}
 
-@media(max-width:390px){
- .app{padding:8px}.menuGrid{gap:7px}.menu{font-size:13px}
- .stat{padding:9px}.actions{gap:6px}
-}
+/* DONA STULLARI */
+.style-flat{box-shadow:none;border-width:2px}
+.style-neon{box-shadow:0 0 12px #00e5ff, inset 0 0 8px #00e5ff}
+.style-gold .white{background:radial-gradient(circle at 35% 28%,#ffe082,#d4af37 45%,#8c6d15);border-color:#b8860b}
+.style-gold .black{background:radial-gradient(circle at 35% 28%,#888,#333 45%,#111);border-color:#000}
+.style-metal .white{background:radial-gradient(circle at 35% 28%,#e0e0e0,#b0b0b0 45%,#707070)}
+.style-metal .black{background:radial-gradient(circle at 35% 28%,#4f5b66,#232b32 45%,#0f1418)}
+
+.themeGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.designBtn.active,.pieceBtn.active{background:#d7aa3d;color:#111}
+.moves{max-height:180px;overflow-y:auto;line-height:1.7;font-family:monospace}
+select{width:100%;padding:11px;border-radius:10px;background:#202b38;color:#fff;border:1px solid #3a4857;margin-bottom:8px}
+.flipped{transform:rotate(180deg)}
+.flipped .piece,.flipped .coord{transform:rotate(180deg)}
 </style>
 </head>
 <body>
@@ -70,12 +90,12 @@ select{width:100%;padding:11px;border-radius:10px;background:#202b38;color:#fff;
 
 <section id="home" class="screen active">
 <div class="header">
-<b>♟️ ShashkaPRO</b>
+<b>♟️ ShashkaPRO Engine</b>
 <button id="profileBtn">👤</button>
 </div>
 
 <div class="card">
-<h2>ShashkaPRO</h2>
+<h2>ShashkaPRO GrandMaster</h2>
 <div class="stats">
 <div class="stat"><b id="elo">1000</b>ELO</div>
 <div class="stat"><b id="wins">0</b>G‘alaba</div>
@@ -84,7 +104,7 @@ select{width:100%;padding:11px;border-radius:10px;background:#202b38;color:#fff;
 </div>
 
 <div class="menuGrid">
-<button class="menu" id="aiBtn">🤖<br>AI bilan o‘ynash</button>
+<button class="menu" id="aiBtn">🤖<br>Kestog AI bilan</button>
 <button class="menu" id="onlineBtn">🌐<br>Online</button>
 <button class="menu" id="tournamentBtn">🏆<br>Turnirlar</button>
 <button class="menu" id="topBtn">🥇<br>TOP 30</button>
@@ -97,7 +117,7 @@ select{width:100%;padding:11px;border-radius:10px;background:#202b38;color:#fff;
 
 <section id="game" class="screen">
 <div class="header">
-<b id="gameTitle">🤖 AI bilan o‘yin</b>
+<b id="gameTitle">🤖 Kestog 64 AI</b>
 <button class="back" id="gameBack">←</button>
 </div>
 
@@ -115,14 +135,15 @@ select{width:100%;padding:11px;border-radius:10px;background:#202b38;color:#fff;
 
 <div class="actions">
 <button id="undoBtn">↩️ Orqaga</button>
+<button id="hintBtn">💡 Maslahat</button>
+<button id="flipBtn">🔄 Aylantirish</button>
 <button id="restartBtn">🔄 Qayta</button>
-<button id="analysisGameBtn">🧠 Tahlil</button>
 <button id="replayBtn" style="grid-column:1 / -1">🎬 Replay</button>
-<button class="danger" id="giveUpBtn">🏳️ Taslim</button>
+<button class="danger" id="giveUpBtn" style="grid-column:1 / -1">🏳️ Taslim bo'lish</button>
 </div>
 
 <div class="card">
-<b>📜 Yurishlar</b>
+<b>📜 Yurishlar tarixi</b>
 <div id="moveList" class="moves">Hali yurish yo‘q</div>
 </div>
 </section>
@@ -150,34 +171,34 @@ select{width:100%;padding:11px;border-radius:10px;background:#202b38;color:#fff;
 </section>
 
 <section id="online" class="screen">
-<div class="header"><b>🌐 Online</b><button class="back" data-back>←</button></div>
+<div class="header"><b>🌐 Online Server</b><button class="back" data-back>←</button></div>
 <div class="card">
-<p>Online server simulyatsiyasi</p>
+<p>Kestog Online Serveri</p>
 <button class="primary" id="connectBtn">🔌 Serverga ulanish</button>
 <button id="findBtn" style="width:100%;margin-top:8px">🎲 Raqib topish</button>
-<div id="onlineStatus" style="margin-top:10px;font-weight:bold">Ulanilmagan</div>
+<div id="onlineStatus" style="margin-top:8px">Status: Ulanilmagan</div>
 </div>
 </section>
 
 <section id="tournaments" class="screen">
 <div class="header"><b>🏆 Turnirlar</b><button class="back" data-back>←</button></div>
-<div class="card"><h3>🏆 ShashkaPRO Cup</h3><p>Online haftalik turnir</p><button class="primary">Kirish</button></div>
-<div class="card"><h3>⚡ Blitz Arena</h3><p>3+2 vaqt nazorati</p><button>Kirish</button></div>
+<div class="card"><h3>🏆 ShashkaPRO Grand Cup</h3><p>Mukofot jamg'armasi bilan online turnir</p><button class="primary">Ro'yxatdan o'tish</button></div>
+<div class="card"><h3>⚡ Kestog Blitz Arena</h3><p>3+2 vaqt nazorati bo'yicha turnir</p><button class="primary">Kirish</button></div>
 </section>
 
 <section id="top" class="screen">
-<div class="header"><b>🥇 TOP 30</b><button class="back" data-back>←</button></div>
+<div class="header"><b>🥇 TOP 30 Peşvolar</b><button class="back" data-back>←</button></div>
 <div class="card" id="topList"></div>
 </section>
 
 <section id="analysis" class="screen">
-<div class="header"><b>🧠 Tahlil</b><button class="back" data-back>←</button></div>
+<div class="header"><b>🧠 Pozitsiya Tahlili</b><button class="back" data-back>←</button></div>
 <div class="card">
-<p>⚪ Oq dona: <b id="aw">0</b></p>
-<p>⚫ Qora dona: <b id="ab">0</b></p>
-<p>👑 Oq damka: <b id="awk">0</b></p>
-<p>👑 Qora damka: <b id="abk">0</b></p>
-<p>Pozitsiya bahosi: <b id="score">0.0</b></p>
+<p>⚪ Oq donalar: <b id="aw">0</b></p>
+<p>⚫ Qora donalar: <b id="ab">0</b></p>
+<p>👑 Oq damkalar: <b id="awk">0</b></p>
+<p>👑 Qora damkalar: <b id="abk">0</b></p>
+<p>AI Bahosi (Kestog Evaluation): <b id="score">0.0</b></p>
 </div>
 </section>
 
@@ -192,35 +213,57 @@ select{width:100%;padding:11px;border-radius:10px;background:#202b38;color:#fff;
 </section>
 
 <section id="history" class="screen">
-<div class="header"><b>📜 Tarix</b><button class="back" data-back>←</button></div>
-<div class="card" id="historyList">Hali saqlangan o‘yinlar yo‘q</div>
+<div class="header"><b>📜 O'yinlar Tarixi</b><button class="back" data-back>←</button></div>
+<div class="card" id="historyList">Hali o‘yin yo‘q</div>
 </section>
 
 <section id="settings" class="screen">
 <div class="header"><b>⚙️ Sozlamalar</b><button class="back" data-back>←</button></div>
 
 <div class="card">
-<label>🤖 AI Darajasi (Qiyinlik)</label>
+<label>🤖 Kestog AI Darajasi (Dvigatel chuqurligi)</label>
 <select id="aiLevel">
-<option value="1">Oson (Tasodifiy)</option>
-<option value="2" selected>O‘rta (Taktik)</option>
-<option value="3">Qiyin (Minimax AI 🧠)</option>
+<option value="1">Oson (2 qadam oldinga)</option>
+<option value="2" selected>O‘rta (4 qadam oldinga)</option>
+<option value="3">Qiyin - Callisto Engine (6 qadam)</option>
 </select>
 
-<br><br>
-<label>🔊 Ovoz effektlari</label>
-<select id="soundToggle">
-<option value="on" selected>Yoqilgan</option>
-<option value="off">O‘chirilgan</option>
-</select>
-
-<br><br>
-<label>⏱️ Vaqt nazorati</label>
+<label>⏱️️ Vaqt Nazorati</label>
 <select id="timeControl">
-<option value="1+1">1 daqiqa (+1 sn)</option>
-<option value="3+2">3 daqiqa (+2 sn)</option>
-<option value="5+3" selected>5 daqiqa (+3 sn)</option>
+<option value="1+1">1+1 blitz</option>
+<option value="2+2">2+2 blitz</option>
+<option value="3+2">3+2 rapid</option>
+<option value="5+3" selected>5+3 standart</option>
 </select>
+
+<label>🔊 Ovozlar</label>
+<select id="soundOpt">
+<option value="on" selected>Yoqilgan</option>
+<option value="off">O'chirilgan</option>
+</select>
+</div>
+
+<div class="card">
+<label>🎨 Doska Ranglari</label>
+<div class="themeGrid" style="margin-bottom:12px">
+<button class="designBtn active" data-theme="classic">🟫 Klassik</button>
+<button class="designBtn" data-theme="blue">🟦 Moviy</button>
+<button class="designBtn" data-theme="green">🟩 Yashil</button>
+<button class="designBtn" data-theme="purple">🟪 Siyohrang</button>
+<button class="designBtn" data-theme="dark">🌑 Qorong'u</button>
+<button class="designBtn" data-theme="gold">🏆 Oltin</button>
+<button class="designBtn" data-theme="ruby">🔴 Rubin</button>
+<button class="designBtn" data-theme="wood">🪵 Yog'och</button>
+</div>
+
+<label>⚪ Donalar Ko'rinishi</label>
+<div class="themeGrid">
+<button class="pieceBtn active" data-piece="classic">⚪ Klassik</button>
+<button class="pieceBtn" data-piece="flat">⚪ Flat</button>
+<button class="pieceBtn" data-piece="neon">💜 Neon</button>
+<button class="pieceBtn" data-piece="gold">✨ Oltin</button>
+<button class="pieceBtn" data-piece="metal">⚙️ Metal</button>
+</div>
 </div>
 </section>
 
@@ -229,6 +272,9 @@ select{width:100%;padding:11px;border-radius:10px;background:#202b38;color:#fff;
 <script>
 "use strict";
 
+/* =========================================================
+   1. GLOBAL O'ZGARUVCHILAR VA SOZLAMALAR
+   ========================================================= */
 const $=id=>document.getElementById(id);
 
 const WHITE="w";
@@ -248,65 +294,60 @@ let increment=3;
 let aiTimer=null;
 let replayStates=[];
 let replayIndex=0;
+let replayInterval=null;
+let isFlipped=false;
+let activeHint=null;
 
+let boardTheme=localStorage.getItem("boardTheme")||"classic";
+let pieceStyle=localStorage.getItem("pieceStyle")||"classic";
 let stats=JSON.parse(localStorage.getItem("shashkaStats")||'{"elo":1000,"wins":0,"games":0}');
 
-/* ===== 1. AUDIO API (OVOZ EFFEKTLARI) ===== */
-const AudioCtx = window.AudioContext || window.webkitAudioContext;
+/* =========================================================
+   2. OVOZ EFFEKTLARI (WEB AUDIO API)
+   ========================================================= */
+const AudioContext = window.AudioContext || window.webkitAudioContext;
 let audioCtx = null;
 
 function playSound(type) {
- if($("soundToggle").value === "off") return;
- if(!audioCtx) audioCtx = new AudioCtx();
- if(audioCtx.state === "suspended") audioCtx.resume();
+ if($("soundOpt") && $("soundOpt").value === "off") return;
+ try {
+  if(!audioCtx) audioCtx = new AudioContext();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
 
- const osc = audioCtx.createOscillator();
- const gain = audioCtx.createGain();
- osc.connect(gain);
- gain.connect(audioCtx.destination);
-
- const now = audioCtx.currentTime;
-
- if(type === "move") {
-  osc.type = "sine";
-  osc.frequency.setValueAtTime(300, now);
-  osc.frequency.exponentialRampToValueAtTime(150, now + 0.08);
-  gain.gain.setValueAtTime(0.3, now);
-  gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
-  osc.start(now);
-  osc.stop(now + 0.08);
- } else if(type === "capture") {
-  osc.type = "triangle";
-  osc.frequency.setValueAtTime(600, now);
-  osc.frequency.exponentialRampToValueAtTime(120, now + 0.12);
-  gain.gain.setValueAtTime(0.5, now);
-  gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
-  osc.start(now);
-  osc.stop(now + 0.12);
- } else if(type === "king") {
-  osc.type = "square";
-  osc.frequency.setValueAtTime(400, now);
-  osc.frequency.setValueAtTime(800, now + 0.1);
-  gain.gain.setValueAtTime(0.2, now);
-  gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
-  osc.start(now);
-  osc.stop(now + 0.25);
- } else if(type === "win") {
-  osc.type = "sine";
-  osc.frequency.setValueAtTime(400, now);
-  osc.frequency.setValueAtTime(600, now + 0.15);
-  osc.frequency.setValueAtTime(900, now + 0.3);
-  gain.gain.setValueAtTime(0.3, now);
-  gain.gain.linearRampToValueAtTime(0.01, now + 0.5);
-  osc.start(now);
-  osc.stop(now + 0.5);
- }
+  if(type === "move") {
+   osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+   gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+   osc.start();
+   osc.stop(audioCtx.currentTime + 0.05);
+  } else if(type === "capture") {
+   osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+   gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+   osc.start();
+   osc.stop(audioCtx.currentTime + 0.1);
+  } else if(type === "king") {
+   osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+   gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+   osc.start();
+   osc.stop(audioCtx.currentTime + 0.2);
+  }
+ } catch(e) {}
 }
 
-/* ===== MONITOR SAHIFALARI ===== */
+/* =========================================================
+   3. YORDAMCHI VA MANTIQLIY FUNKSIYALAR
+   ========================================================= */
 function show(id){
  document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));
  $(id).classList.add("active");
+}
+
+function updateStats(){
+ $("elo").textContent=stats.elo;
+ $("wins").textContent=stats.wins;
+ $("games").textContent=stats.games;
 }
 
 function initialBoard(){
@@ -330,10 +371,12 @@ function isWhite(p){ return p===WHITE||p==="W"; }
 function isBlack(p){ return p===BLACK||p==="B"; }
 function isKing(p){ return p==="W"||p==="B"; }
 function sameSide(p,s){ return s===WHITE?isWhite(p):isBlack(p); }
-function enemy(p,s){ return p && (s===WHITE ? isBlack(p) : isWhite(p)); }
+function enemy(p,s){ return p && (s===WHITE?isBlack(p):isWhite(p)); }
 function kingPiece(s){ return s===WHITE?"W":"B"; }
 
-/* ===== YURISHLARNI MANTIQLARI ===== */
+/* =========================================================
+   4. QOIDALAR: YURISH VA URISH
+   ========================================================= */
 function simpleSteps(b,r,c){
  const p=b[r][c];
  if(!p)return [];
@@ -378,11 +421,13 @@ function captureSteps(b,r,c){
      if(enemyFound){
       result.push({from:{r,c},to:{r:nr,c:nc},captures:[enemyFound]});
      }
-     nr+=dr; nc+=dc; continue;
+     nr+=dr; nc+=dc;
+     continue;
     }
     if(enemy(q,side)&&!enemyFound){
      enemyFound={r:nr,c:nc};
-     nr+=dr; nc+=dc; continue;
+     nr+=dr; nc+=dc;
+     continue;
     }
     break;
    }
@@ -428,89 +473,183 @@ function allMoves(b,side){
 function applyStep(b,m){
  const n=clone(b);
  let p=n[m.from.r][m.from.c];
- let becameKing = false;
-
  n[m.from.r][m.from.c]=null;
- for(const x of m.captures) n[x.r][x.c]=null;
+
+ for(const x of m.captures){
+  n[x.r][x.c]=null;
+ }
 
  let nr=m.to.r;
  if(!isKing(p)){
   if((isWhite(p)&&nr===0)||(isBlack(p)&&nr===7)){
    p=kingPiece(isWhite(p)?WHITE:BLACK);
-   becameKing = true;
+   playSound("king");
   }
  }
  n[m.to.r][m.to.c]=p;
- return {board: n, becameKing};
+ return n;
 }
 
 function applyFullMove(b,m){
- let res=applyStep(b,m);
- let n=res.board;
+ let n=applyStep(b,m);
  let current=m;
-
  while(current.captures.length){
   const next=captureSteps(n,current.to.r,current.to.c);
   if(!next.length)break;
   current=next[0];
-  n=applyStep(n,current).board;
+  n=applyStep(n,current);
  }
  return n;
 }
 
-/* ===== 2. KUCHAYTIRILGAN AI (MINIMAX + ALPHA-BETA PRUNING) ===== */
-function evaluate(b){
- let score=0;
- for(let r=0;r<8;r++){
-  for(let c=0;c<8;c++){
-   const p=b[r][c];
-   if(!p)continue;
-   let v=isKing(p)?10:3;
-   if(!isKing(p)){
-    if(isBlack(p)) v+=r*0.1;
-    else v+=(7-r)*0.1;
-   }
-   if(isBlack(p)) score+=v;
-   else score-=v;
+/* =========================================================
+   5. KESTOG 64 / CALLISTO KUCHLI AI DVIGATELI (ENGINE)
+   ========================================================= */
+
+// Pozitsion Baholash Matratsasi (Kestog Engine Style)
+const POSITION_WEIGHTS = [
+  [0, 0, 0, 0, 0, 0, 0, 0],
+  [4, 0, 4, 0, 4, 0, 5, 0],
+  [0, 3, 0, 3, 0, 3, 0, 2],
+  [2, 0, 5, 0, 5, 0, 2, 0], // Markaziy kataklar yuqori baholanadi
+  [0, 2, 0, 5, 0, 5, 0, 2],
+  [2, 0, 3, 0, 3, 0, 3, 0],
+  [0, 5, 0, 4, 0, 4, 0, 4],
+  [0, 0, 0, 0, 0, 0, 0, 0]
+];
+
+function evaluatePro(b) {
+  let score = 0;
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      const p = b[r][c];
+      if (!p) continue;
+
+      let posBonus = POSITION_WEIGHTS[r][c];
+      let val = isKing(p) ? 22 : (6 + posBonus);
+
+      if (isBlack(p)) {
+        score += val;
+      } else {
+        score -= val;
+      }
+    }
   }
- }
- score += allCaptures(b,BLACK).length * 0.3;
- score -= allCaptures(b,WHITE).length * 0.3;
- return score;
+
+  // Taktik harakatchanlik (Mobillik)
+  const blackMoves = allMoves(b, BLACK).length;
+  const whiteMoves = allMoves(b, WHITE).length;
+  score += (blackMoves - whiteMoves) * 0.4;
+
+  if (blackMoves === 0) score -= 800;
+  if (whiteMoves === 0) score += 800;
+
+  return score;
 }
 
-function minimax(b, depth, alpha, beta, isMax) {
- if(depth===0) return evaluate(b);
- const side = isMax ? BLACK : WHITE;
- const moves = allMoves(b, side);
- if(!moves.length) return isMax ? -100 : 100;
+function alphaBeta(b, depth, alpha, beta, isMaximizing) {
+  if (depth === 0) {
+    return evaluatePro(b);
+  }
 
- if(isMax) {
-  let maxEval = -Infinity;
-  for(const m of moves) {
-   const next = applyFullMove(b, m);
-   const ev = minimax(next, depth - 1, alpha, beta, false);
-   maxEval = Math.max(maxEval, ev);
-   alpha = Math.max(alpha, ev);
-   if(beta <= alpha) break;
+  const currentSide = isMaximizing ? BLACK : WHITE;
+  const moves = allMoves(b, currentSide);
+
+  if (!moves.length) {
+    return isMaximizing ? -1000 : 1000;
   }
-  return maxEval;
- } else {
-  let minEval = Infinity;
-  for(const m of moves) {
-   const next = applyFullMove(b, m);
-   const ev = minimax(next, depth - 1, alpha, beta, true);
-   minEval = Math.min(minEval, ev);
-   beta = Math.min(beta, ev);
-   if(beta <= alpha) break;
+
+  // Urish imkoniyatlarini birinchi tekshirish (Move ordering)
+  moves.sort((a, b) => b.captures.length - a.captures.length);
+
+  if (isMaximizing) {
+    let maxEval = -Infinity;
+    for (const m of moves) {
+      const nextBoard = applyFullMove(b, m);
+      const evalVal = alphaBeta(nextBoard, depth - 1, alpha, beta, false);
+      maxEval = Math.max(maxEval, evalVal);
+      alpha = Math.max(alpha, evalVal);
+      if (beta <= alpha) break; // Cut-off (Kesish)
+    }
+    return maxEval;
+  } else {
+    let minEval = Infinity;
+    for (const m of moves) {
+      const nextBoard = applyFullMove(b, m);
+      const evalVal = alphaBeta(nextBoard, depth - 1, alpha, beta, true);
+      minEval = Math.min(minEval, evalVal);
+      beta = Math.min(beta, evalVal);
+      if (beta <= alpha) break; // Cut-off (Kesish)
+    }
+    return minEval;
   }
-  return minEval;
- }
 }
 
-/* ===== O‘YIN QOIDALARI VA NAVBATLAR ===== */
+function aiMove(){
+ if(gameOver||turn!==BLACK)return;
+
+ const level=Number($("aiLevel").value)||2;
+ const depthMap = { 1: 2, 2: 4, 3: 6 };
+ const maxDepth = depthMap[level] || 4;
+
+ const moves=allMoves(board,BLACK);
+
+ if(!moves.length){
+  finishGame("white");
+  return;
+ }
+
+ history.push(clone(board));
+
+ let bestMove=moves[0];
+ let bestScore=-Infinity;
+
+ moves.sort((a, b) => b.captures.length - a.captures.length);
+
+ for(const m of moves){
+  const nextBoard=applyFullMove(board,m);
+  const score=alphaBeta(nextBoard, maxDepth - 1, -Infinity, Infinity, false);
+
+  if(score>bestScore){
+   bestScore=score;
+   bestMove=m;
+  }
+ }
+
+ let current=bestMove;
+ while(true){
+  if(current.captures.length) playSound("capture");
+  else playSound("move");
+
+  board=applyStep(board,current);
+  replayStates.push(clone(board));
+  replayIndex=replayStates.length-1;
+  movesHistory.push(formatMove(current,"Qora"));
+
+  const next=captureSteps(board,current.to.r,current.to.c);
+  if(!current.captures.length||!next.length)break;
+  current=next[0];
+ }
+
+ blackSeconds+=increment;
+ selected=null;
+ forcedPiece=null;
+ activeHint=null;
+ turn=WHITE;
+
+ drawBoard();
+ drawMoves();
+ updateStatus();
+ updateTimers();
+ checkEnd();
+}
+
+/* =========================================================
+   6. O'YIN OQIMI (GAME CONTROLLER)
+   ========================================================= */
 function startGame(){
  clearTimeout(aiTimer);
+ clearInterval(replayInterval);
  replayStates=[clone(initialBoard())];
  replayIndex=0;
  stopTimer();
@@ -522,6 +661,7 @@ function startGame(){
  gameOver=false;
  history=[];
  movesHistory=[];
+ activeHint=null;
 
  const tc=$("timeControl").value.split("+");
  whiteSeconds=Number(tc[0])*60;
@@ -554,18 +694,30 @@ function gameClick(r,c){
   if(!sameSide(p,turn))return;
   const captures=allCaptures(board,turn);
   if(captures.length){
-   if(captureSteps(board,r,c).length){ selected={r,c}; drawBoard(); }
+   if(captureSteps(board,r,c).length){
+    selected={r,c};
+    drawBoard();
+   }
    return;
   }
-  if(simpleSteps(board,r,c).length){ selected={r,c}; drawBoard(); }
+  if(simpleSteps(board,r,c).length){
+   selected={r,c};
+   drawBoard();
+  }
   return;
  }
 
  if(sameSide(p,turn)){
   const caps=allCaptures(board,turn);
   if(caps.length){
-   if(captureSteps(board,r,c).length){ selected={r,c}; drawBoard(); }
-  }else if(simpleSteps(board,r,c).length){ selected={r,c}; drawBoard(); }
+   if(captureSteps(board,r,c).length){
+    selected={r,c};
+    drawBoard();
+   }
+  }else if(simpleSteps(board,r,c).length){
+   selected={r,c};
+   drawBoard();
+  }
   return;
  }
 
@@ -581,96 +733,78 @@ function gameClick(r,c){
 function makeHumanStep(move){
  history.push(clone(board));
 
- const res = applyStep(board,move);
- board = res.board;
-
  if(move.captures.length) playSound("capture");
  else playSound("move");
- if(res.becameKing) playSound("king");
 
+ board=applyStep(board,move);
  replayStates.push(clone(board));
  replayIndex=replayStates.length-1;
+
  movesHistory.push(formatMove(move,"Oq"));
-
  selected={r:move.to.r,c:move.to.c};
- const next=captureSteps(board,move.to.r,move.to.c);
+ activeHint=null;
 
+ const next=captureSteps(board,move.to.r,move.to.c);
  if(move.captures.length&&next.length){
   forcedPiece={r:move.to.r,c:move.to.c};
-  drawBoard(); drawMoves(); updateStatus();
+  drawBoard();
+  drawMoves();
+  updateStatus();
   return;
  }
 
- forcedPiece=null; selected=null; turn=BLACK;
+ forcedPiece=null;
+ selected=null;
+ turn=BLACK;
  whiteSeconds+=increment;
 
- drawBoard(); drawMoves(); updateStatus(); updateTimers();
+ drawBoard();
+ drawMoves();
+ updateStatus();
+ updateTimers();
 
  if(checkEnd())return;
- aiTimer=setTimeout(aiMove, 400);
+ aiTimer=setTimeout(aiMove,400);
 }
 
-function aiMove(){
- if(gameOver||turn!==BLACK)return;
- const level=Number($("aiLevel").value)||2;
- const moves=allMoves(board,BLACK);
+function getHint(){
+ if(gameOver || turn !== WHITE) return;
+ const moves = allMoves(board, WHITE);
+ if(!moves.length) return;
 
- if(!moves.length){ finishGame("white"); return; }
- history.push(clone(board));
+ let bestMove = moves[0];
+ let minScore = Infinity;
 
- let best=moves[0];
+ moves.sort((a,b)=>b.captures.length - a.captures.length);
 
- if(level === 1) {
-  best = moves[Math.floor(Math.random() * moves.length)];
- } else if(level === 2) {
-  let bestScore = -Infinity;
-  for(const m of moves){
-   const next = applyFullMove(board,m);
-   const score = evaluate(next);
-   if(score > bestScore){ bestScore = score; best = m; }
-  }
- } else {
-  // Minimax AI
-  let bestScore = -Infinity;
-  for(const m of moves){
-   const next = applyFullMove(board,m);
-   const score = minimax(next, 3, -Infinity, Infinity, false);
-   if(score > bestScore){ bestScore = score; best = m; }
+ for(const m of moves){
+  const next = applyFullMove(board, m);
+  const score = alphaBeta(next, 3, -Infinity, Infinity, true);
+  if(score < minScore){
+   minScore = score;
+   bestMove = m;
   }
  }
 
- let current=best;
- while(true){
-  const res = applyStep(board,current);
-  board = res.board;
-
-  if(current.captures.length) playSound("capture");
-  else playSound("move");
-
-  replayStates.push(clone(board));
-  replayIndex=replayStates.length-1;
-  movesHistory.push(formatMove(current,"Qora"));
-
-  const next=captureSteps(board,current.to.r,current.to.c);
-  if(!current.captures.length||!next.length)break;
-  current=next[0];
- }
-
- blackSeconds+=increment;
- selected=null; forcedPiece=null; turn=WHITE;
-
- drawBoard(); drawMoves(); updateStatus(); updateTimers();
- checkEnd();
+ activeHint = bestMove;
+ drawBoard();
 }
 
+/* =========================================================
+   7. INTERFEYS VA RENDERING
+   ========================================================= */
 function square(r,c){ return "abcdefgh"[c]+(8-r); }
+
 function formatMove(m,name){
- return name+": "+square(m.from.r,m.from.c)+(m.captures.length?"x":"-")+square(m.to.r,m.to.c);
+ const from=square(m.from.r,m.from.c);
+ const to=square(m.to.r,m.to.c);
+ return name+": "+from+(m.captures.length?"x":"-")+to;
 }
 
-function drawBoard(){
- const root=$("gameBoard");
+function drawBoardGeneric(targetId, bData){
+ const root=$(targetId);
  root.innerHTML="";
+ root.className="theme-"+boardTheme;
 
  for(let r=0;r<8;r++){
   for(let c=0;c<8;c++){
@@ -678,23 +812,33 @@ function drawBoard(){
    cell.className="cell "+(((r+c)%2)?"dark":"light");
    cell.dataset.r=r; cell.dataset.c=c;
 
-   if(selected&&selected.r===r&&selected.c===c){ cell.classList.add("selected"); }
-
-   if(selected){
-    const caps=allCaptures(board,turn);
-    const opts=caps.length?captureSteps(board,selected.r,selected.c):simpleSteps(board,selected.r,selected.c);
-    const hit=opts.find(m=>m.to.r===r&&m.to.c===c);
-    if(hit){ cell.classList.add(hit.captures.length?"capture":"target"); }
+   if(targetId==="gameBoard" && selected && selected.r===r && selected.c===c){
+    cell.classList.add("selected");
    }
 
-   const file=document.createElement("span"); file.className="coord file"; file.textContent="abcdefgh"[c];
-   const rank=document.createElement("span"); rank.className="coord rank"; rank.textContent=8-r;
+   if(targetId==="gameBoard" && activeHint){
+    if(activeHint.from.r===r && activeHint.from.c===c) cell.classList.add("hint-from");
+    if(activeHint.to.r===r && activeHint.to.c===c) cell.classList.add("hint-to");
+   }
+
+   if(targetId==="gameBoard" && selected){
+    const caps=allCaptures(bData,turn);
+    const opts=caps.length?captureSteps(bData,selected.r,selected.c):simpleSteps(bData,selected.r,selected.c);
+    const hit=opts.find(m=>m.to.r===r&&m.to.c===c);
+    if(hit) cell.classList.add(hit.captures.length?"capture":"target");
+   }
+
+   const file=document.createElement("span");
+   file.className="coord file"; file.textContent="abcdefgh"[c];
+   const rank=document.createElement("span");
+   rank.className="coord rank"; rank.textContent=8-r;
+
    cell.appendChild(file); cell.appendChild(rank);
 
-   const p=board[r][c];
+   const p=bData[r][c];
    if(p){
     const piece=document.createElement("div");
-    piece.className="piece "+(isWhite(p)?"white":"black")+(isKing(p)?" king":"");
+    piece.className="piece "+(isWhite(p)?"white":"black")+" "+(isKing(p)?"king ":"")+"style-"+pieceStyle;
     cell.appendChild(piece);
    }
    root.appendChild(cell);
@@ -702,10 +846,18 @@ function drawBoard(){
  }
 }
 
-$("gameBoard").addEventListener("click",e=>{
+function drawBoard(){ drawBoardGeneric("gameBoard", board); }
+
+$("gameBoard").addEventListener("click",function(e){
  const cell=e.target.closest(".cell");
- if(cell) gameClick(Number(cell.dataset.r), Number(cell.dataset.c));
+ if(!cell)return;
+ gameClick(Number(cell.dataset.r), Number(cell.dataset.c));
 });
+
+function drawMoves(){
+ $("moveList").innerHTML=movesHistory.length?movesHistory.join("<br>"):"Hali yurish yo‘q";
+ $("moveList").scrollTop=$("moveList").scrollHeight;
+}
 
 function checkEnd(){
  const moves=allMoves(board,turn);
@@ -719,48 +871,40 @@ function checkEnd(){
 function finishGame(winner){
  if(gameOver)return;
  gameOver=true;
- stopTimer(); clearTimeout(aiTimer);
-
+ stopTimer();
+ clearTimeout(aiTimer);
  stats.games++;
+
  if(winner==="white"){
-  stats.wins++; stats.elo+=15;
-  playSound("win");
+  stats.wins++;
+  stats.elo+=15;
  }else{
-  stats.elo=Math.max(800, stats.elo-10);
+  stats.elo=Math.max(400, stats.elo-12);
  }
 
  localStorage.setItem("shashkaStats",JSON.stringify(stats));
  updateStats();
-
- saveHistory(winner);
+ updateStatus(winner==="white"?"🏆 Siz g'alaba qozondingiz!":"❌ Kestog AI g'alaba qozondi!");
+ saveHistoryRecord(winner);
 
  setTimeout(()=>{
-  alert(winner==="white"?"🏆 Siz g‘alaba qozondingiz!":"🏆 AI g‘alaba qozondi!");
+  alert(winner==="white"?"🏆 Oq g‘alaba qildi!":"🏆 Qora g‘alaba qildi!");
  },100);
 }
 
-function saveHistory(winner) {
- let hist = JSON.parse(localStorage.getItem("shashkaHistory")||"[]");
- hist.unshift({ date: new Date().toLocaleDateString(), result: winner==='white'?'G‘alaba':'Mag‘lubiyat', moves: movesHistory.length });
- localStorage.setItem("shashkaHistory", JSON.stringify(hist.slice(0, 10)));
- renderHistory();
-}
-
-function renderHistory() {
- let hist = JSON.parse(localStorage.getItem("shashkaHistory")||"[]");
- if(!hist.length) { $("historyList").innerHTML = "Hali saqlangan o‘yinlar yo‘q"; return; }
- $("historyList").innerHTML = hist.map(h => `<p>📅 ${h.date} - <b>${h.result}</b> (${h.moves} yurish)</p>`).join("");
-}
-
 function giveUp(){
- if(!gameOver && confirm("Taslim bo‘lasizmi?")) finishGame("black");
+ if(gameOver)return;
+ if(confirm("Taslim bo‘lasizmi?")) finishGame("black");
 }
 
 function undoMove(){
  if(!history.length||gameOver)return;
  clearTimeout(aiTimer);
  board=history.pop();
- turn=WHITE; selected=null; forcedPiece=null;
+ turn=WHITE;
+ selected=null;
+ forcedPiece=null;
+ activeHint=null;
  if(movesHistory.length) movesHistory.pop();
  drawBoard(); drawMoves(); updateStatus();
 }
@@ -781,130 +925,161 @@ function startTimer(){
 }
 
 function stopTimer(){ if(timer){ clearInterval(timer); timer=null; } }
-function timeText(s){ return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0"); }
-function updateTimers(){ $("whiteTime").textContent=timeText(whiteSeconds); $("blackTime").textContent=timeText(blackSeconds); }
-
-function updateStatus(){
- if(gameOver)return;
- $("status").textContent = turn===WHITE ? (forcedPiece ? "🔴 Yana urish majburiy!" : "⚪ Sizning navbatingiz") : "⚫ AI o‘ylayapti...";
+function timeText(s){
+ const m=Math.floor(s/60), sec=s%60;
+ return String(m).padStart(2,"0")+":"+String(sec).padStart(2,"0");
+}
+function updateTimers(){
+ $("whiteTime").textContent=timeText(whiteSeconds);
+ $("blackTime").textContent=timeText(blackSeconds);
+}
+function updateStatus(customMsg){
+ if(customMsg){ $("status").textContent=customMsg; return; }
+ $("status").textContent=turn===WHITE?"⚪ Siz yurishingiz kerak":"⚫ Kestog AI o'ylamoqda...";
 }
 
-function drawMoves(){
- $("moveList").innerHTML=movesHistory.length?movesHistory.map((x,i)=>(i+1)+". "+x).join("<br>"):"Hali yurish yo‘q";
+/* History */
+function saveHistoryRecord(winner){
+ let list=JSON.parse(localStorage.getItem("shashkaHistory")||"[]");
+ list.unshift({
+  date: new Date().toLocaleDateString(),
+  res: winner==="white"?"G'alaba":"Mag'lubiyat",
+  moves: movesHistory.length
+ });
+ localStorage.setItem("shashkaHistory", JSON.stringify(list.slice(0, 20)));
 }
 
-function updateAnalysis(){
- let w=0,b=0,wk=0,bk=0;
- for(const row of board){
-  for(const p of row){
-   if(isWhite(p)){ w++; if(isKing(p))wk++; }
-   if(isBlack(p)){ b++; if(isKing(p))bk++; }
-  }
- }
- $("aw").textContent=w; $("ab").textContent=b; $("awk").textContent=wk; $("abk").textContent=bk;
- $("score").textContent=evaluate(board).toFixed(1);
+function renderHistory(){
+ let list=JSON.parse(localStorage.getItem("shashkaHistory")||"[]");
+ if(!list.length){ $("historyList").innerHTML="Hali o‘yin yo‘q"; return; }
+ $("historyList").innerHTML=list.map(x=>`<div style="display:flex;justify-content:space-between;margin:6px 0;border-bottom:1px solid #2c3947;padding-bottom:4px">
+  <span>${x.date}</span><b>${x.res}</b><span>${x.moves} yurish</span>
+ </div>`).join("");
 }
 
-function updateStats(){
- $("elo").textContent=stats.elo; $("wins").textContent=stats.wins; $("games").textContent=stats.games;
+/* Replay */
+function startReplay(){
+ if(!replayStates.length)return;
+ show("replay");
+ replayIndex=0;
+ renderReplayFrame();
 }
-
-updateStats();
-renderHistory();
-
-/* ===== TUGMALAR EVENTLARI ===== */
-$("aiBtn").onclick=startGame;
-$("profileBtn").onclick=()=>alert(`♟️ Player\nELO: ${stats.elo}\nG‘alaba: ${stats.wins}\nO‘yinlar: ${stats.games}`);
-$("onlineBtn").onclick=()=>show("online");
-$("tournamentBtn").onclick=()=>show("tournaments");
-$("topBtn").onclick=()=>show("top");
-$("analysisBtn").onclick=()=>{ updateAnalysis(); show("analysis"); };
-$("editorBtn").onclick=()=>show("editor");
-$("historyBtn").onclick=()=>show("history");
-$("settingsBtn").onclick=()=>show("settings");
-
-$("gameBack").onclick=()=>{ stopTimer(); clearTimeout(aiTimer); show("home"); };
-document.querySelectorAll("[data-back]").forEach(btn=>{ btn.onclick=()=>show("home"); });
-
-$("restartBtn").onclick=startGame;
-$("giveUpBtn").onclick=giveUp;
-$("undoBtn").onclick=undoMove;
-$("analysisGameBtn").onclick=()=>{ updateAnalysis(); show("analysis"); };
-
-/* ===== REPLAY BO‘LIMI ===== */
-$("replayBtn").onclick=()=>{
- if(replayStates.length<2){ alert("Hali yurish qilmadingiz."); return; }
- replayIndex=0; drawReplay(); show("replay");
-};
-$("replayBack").onclick=()=>show("game");
-$("replayPrev").onclick=()=>{ if(replayIndex>0){ replayIndex--; drawReplay(); } };
-$("replayNext").onclick=()=>{ if(replayIndex<replayStates.length-1){ replayIndex++; drawReplay(); } };
-
-function drawReplay(){
- const root=$("replayBoard"); root.innerHTML="";
- const b=replayStates[replayIndex]||initialBoard();
- for(let r=0;r<8;r++){
-  for(let c=0;c<8;c++){
-   const cell=document.createElement("div"); cell.className="cell "+(((r+c)%2)?"dark":"light");
-   const p=b[r][c];
-   if(p){
-    const piece=document.createElement("div");
-    piece.className="piece "+(isWhite(p)?"white":"black")+(isKing(p)?" king":"");
-    cell.appendChild(piece);
-   }
-   root.appendChild(cell);
-  }
- }
+function renderReplayFrame(){
+ drawBoardGeneric("replayBoard", replayStates[replayIndex]);
  $("replayInfo").textContent=`Yurish: ${replayIndex} / ${replayStates.length-1}`;
 }
-
-/* ===== TOP PLAYERS ===== */
-$("topList").innerHTML=[
- ["1","ShashkaPRO Master","2450"],["2","Grandmaster","2380"],
- ["3","Champion","2310"],["4","Strategist","2240"]
-].map(x=>`<p>🥇 ${x[0]}. <b>${x[1]}</b> — ${x[2]} ELO</p>`).join("");
-
-/* ===== ONLINE SIMULATSIYA ===== */
-$("connectBtn").onclick=()=>{
- $("onlineStatus").textContent="🟡 Ulanilmoqda...";
- setTimeout(()=> { $("onlineStatus").textContent="🟢 Demo serverga ulandi"; }, 1000);
+$("replayPrev").onclick=()=>{ if(replayIndex>0){ replayIndex--; renderReplayFrame(); } };
+$("replayNext").onclick=()=>{ if(replayIndex<replayStates.length-1){ replayIndex++; renderReplayFrame(); } };
+$("replayPlay").onclick=()=>{
+ clearInterval(replayInterval);
+ replayInterval=setInterval(()=>{
+  if(replayIndex<replayStates.length-1){ replayIndex++; renderReplayFrame(); }
+  else clearInterval(replayInterval);
+ },700);
 };
-$("findBtn").onclick=()=>alert("Raqiblar qidirilmoqda... (Hozircha AI bilan o'ynab turing)");
+$("replayStop").onclick=()=>clearInterval(replayInterval);
 
-/* ===== DOSKA EDITOR ===== */
-let editorBoard=initialBoard();
-function drawEditor(){
- const root=$("editorBoard"); root.innerHTML="";
+/* Analysis */
+function renderAnalysis(){
+ let w=0, b=0, wk=0, bk=0;
  for(let r=0;r<8;r++){
   for(let c=0;c<8;c++){
-   const cell=document.createElement("div"); cell.className="cell "+(((r+c)%2)?"dark":"light");
-   cell.dataset.r=r; cell.dataset.c=c;
-   const p=editorBoard[r][c];
-   if(p){
-    const piece=document.createElement("div");
-    piece.className="piece "+(isWhite(p)?"white":"black")+(isKing(p)?" king":"");
-    cell.appendChild(piece);
-   }
-   root.appendChild(cell);
+   let p=board[r][c];
+   if(p===WHITE)w++; if(p===BLACK)b++;
+   if(p==="W")wk++; if(p==="B")bk++;
   }
  }
+ $("aw").textContent=w; $("ab").textContent=b;
+ $("awk").textContent=wk; $("abk").textContent=bk;
+ $("score").textContent=(evaluatePro(board)*-1).toFixed(1);
+ show("analysis");
 }
 
-$("editorBoard").addEventListener("click",e=>{
- const cell=e.target.closest(".cell"); if(!cell)return;
+/* Editor */
+let editorBoardData=initialBoard();
+function renderEditor(){
+ drawBoardGeneric("editorBoard", editorBoardData);
+ show("editor");
+}
+$("editorBoard").onclick=(e)=>{
+ const cell=e.target.closest(".cell");
+ if(!cell)return;
  const r=Number(cell.dataset.r), c=Number(cell.dataset.c);
- const p=editorBoard[r][c];
- editorBoard[r][c] = !p ? WHITE : (isWhite(p) ? BLACK : (isBlack(p) ? "W" : null));
- drawEditor();
-});
-$("clearEditor").onclick=()=>{ editorBoard=Array.from({length:8},()=>Array(8).fill(null)); drawEditor(); };
-$("resetEditor").onclick=()=>{ editorBoard=initialBoard(); drawEditor(); };
-$("playEditor").onclick=()=>{
- board=clone(editorBoard); turn=WHITE; selected=null; forcedPiece=null; gameOver=false;
- history=[]; movesHistory=[]; show("game"); drawBoard(); drawMoves(); updateStatus(); startTimer();
+ if((r+c)%2===0)return;
+ const curr=editorBoardData[r][c];
+ const cycle=[null, WHITE, "W", BLACK, "B"];
+ editorBoardData[r][c]=cycle[(cycle.indexOf(curr)+1)%cycle.length];
+ drawBoardGeneric("editorBoard", editorBoardData);
 };
-drawEditor();
+$("clearEditor").onclick=()=>{ editorBoardData=Array.from({length:8},()=>Array(8).fill(null)); renderEditor(); };
+$("resetEditor").onclick=()=>{ editorBoardData=initialBoard(); renderEditor(); };
+$("playEditor").onclick=()=>{
+ board=clone(editorBoardData);
+ turn=WHITE; history=[]; movesHistory=[]; gameOver=false;
+ show("game"); drawBoard(); updateStatus(); startTimer();
+};
 
+/* Leaderboard */
+function renderTop(){
+ let html="<ol style='padding-left:20px'>";
+ const names=["GrandMaster_Callisto","Kestog_Bot_v2","Sardor_PRO","ShashkaMaster","Alisher_99","Champion2026"];
+ names.forEach((n,i)=>{ html+=`<li style='margin:6px 0'>${n} - <b>${2400 - i*95} ELO</b></li>`; });
+ html+=`<li style='margin:6px 0;color:#e3b746'>Siz (${stats.elo} ELO)</li>`;
+ html+="</ol>";
+ $("topList").innerHTML=html;
+ show("top");
+}
+
+/* Flip Board */
+$("flipBtn").onclick=()=>{
+ isFlipped = !isFlipped;
+ $("gameBoard").classList.toggle("flipped", isFlipped);
+};
+
+/* Button Routes */
+$("aiBtn").onclick=startGame;
+$("restartBtn").onclick=startGame;
+$("undoBtn").onclick=undoMove;
+$("hintBtn").onclick=getHint;
+$("giveUpBtn").onclick=giveUp;
+$("replayBtn").onclick=startReplay;
+$("analysisBtn").onclick=renderAnalysis;
+$("editorBtn").onclick=renderEditor;
+$("historyBtn").onclick=()=>{ renderHistory(); show("history"); };
+$("topBtn").onclick=renderTop;
+$("settingsBtn").onclick=()=>show("settings");
+$("onlineBtn").onclick=()=>show("online");
+$("tournamentBtn").onclick=()=>show("tournaments");
+
+document.querySelectorAll("[data-back], .back").forEach(btn=>{
+ btn.onclick=()=>{ clearInterval(replayInterval); show("home"); };
+});
+
+document.querySelectorAll(".designBtn").forEach(btn=>{
+ btn.onclick=function(){
+  document.querySelectorAll(".designBtn").forEach(b=>b.classList.remove("active"));
+  this.classList.add("active");
+  boardTheme=this.dataset.theme;
+  localStorage.setItem("boardTheme", boardTheme);
+  drawBoard();
+ };
+});
+
+document.querySelectorAll(".pieceBtn").forEach(btn=>{
+ btn.onclick=function(){
+  document.querySelectorAll(".pieceBtn").forEach(b=>b.classList.remove("active"));
+  this.classList.add("active");
+  pieceStyle=this.dataset.piece;
+  localStorage.setItem("pieceStyle", pieceStyle);
+  drawBoard();
+ };
+});
+
+$("connectBtn").onclick=()=>{$("onlineStatus").textContent="Ulanmoqda..."; setTimeout(()=>{$("onlineStatus").textContent="Offline Mode (Server topilmadi)";}, 1200);};
+$("findBtn").onclick=()=>{$("onlineStatus").textContent="Raqib izlanmoqda..."; setTimeout(()=>{$("onlineStatus").textContent="Xatolik: Serverga ulanib bo'lmadi";}, 1500);};
+
+/* Startup */
+updateStats();
 </script>
 </body>
 </html>
