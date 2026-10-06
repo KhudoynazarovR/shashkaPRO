@@ -3,26 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Lidraughts PRO - Russian Draughts GrandMaster</title>
+<title>Lidraughts Ultra PRO - Russian Draughts GrandMaster</title>
 <style>
 /* ==========================================================================
-   1. GLOBAL STYLES & VARIABLES
+   1. CORE VARIABLES & THEME ENGINE
    ========================================================================== */
 :root {
-  --bg-main: #161512;
-  --bg-panel: #1e1c18;
-  --bg-card: #262421;
-  --bg-hover: #32302c;
-  --accent-gold: #bab282;
-  --accent-gold-bright: #e3b746;
-  --accent-primary: #3692e7;
-  --text-main: #bab282;
+  --bg-main: #141311;
+  --bg-panel: #1b1a17;
+  --bg-card: #24221f;
+  --bg-hover: #302d29;
+  --accent-gold: #c2b77d;
+  --accent-gold-bright: #eec14d;
+  --accent-primary: #3895eb;
+  --text-main: #c2b77d;
   --text-light: #ffffff;
-  --text-muted: #888888;
-  --border-color: #363431;
-  --border-highlight: #4a4743;
-  --danger-color: #d72626;
-  --success-color: #26a65b;
+  --text-muted: #838383;
+  --border-color: #33312e;
+  --border-highlight: #484541;
+  --danger-color: #e03232;
+  --success-color: #27ae60;
 }
 
 * {
@@ -44,10 +44,10 @@ body {
 }
 
 /* ==========================================================================
-   2. LAYOUT & CONTAINERS
+   2. APP CONTAINER & HEADER
    ========================================================================== */
 .app-container {
-  max-width: 680px;
+  max-width: 720px;
   width: 100%;
   margin: 0 auto;
   padding: 10px;
@@ -65,7 +65,7 @@ body {
   border-radius: 8px;
   border-bottom: 2px solid var(--border-color);
   margin-bottom: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
 }
 
 .lid-title {
@@ -82,18 +82,20 @@ body {
   font-size: 24px;
 }
 
-.lid-user-badge {
+.lang-selector {
   background: #2a2825;
+  color: var(--accent-gold-bright);
+  border: 1px solid var(--border-color);
   padding: 6px 12px;
   border-radius: 6px;
   font-size: 13px;
   font-weight: bold;
-  color: var(--accent-gold-bright);
-  border: 1px solid var(--border-color);
+  outline: none;
+  cursor: pointer;
 }
 
 /* ==========================================================================
-   3. BOARD & GAME ELEMENTS
+   3. BOARD ARCHITECTURE & THEMES
    ========================================================================== */
 .board-area {
   width: 100%;
@@ -102,10 +104,10 @@ body {
   position: relative;
   border-radius: 6px;
   overflow: hidden;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.8);
 }
 
-#board, #editorBoard, #analysisBoard {
+#board, #editorBoard {
   width: 100%;
   height: 100%;
   display: grid;
@@ -120,7 +122,7 @@ body {
   justify-content: center;
 }
 
-/* BOARD THEMES */
+/* THEME VARIATIONS */
 .theme-classic .square.light { background-color: #f0d9b5; }
 .theme-classic .square.dark { background-color: #b58863; }
 
@@ -134,7 +136,7 @@ body {
 .theme-gambler .square.dark { background-color: #8a5229; }
 
 .square.selected { background-color: #aaa23a !important; }
-.square.last-move { background-color: rgba(155, 199, 0, 0.41) !important; }
+.square.last-move { background-color: rgba(155, 199, 0, 0.45) !important; }
 .square.target::after {
   content: '';
   width: 26%;
@@ -163,7 +165,7 @@ body {
 .square.dark .coord { color: #fff; }
 
 /* ==========================================================================
-   4. PIECE STYLES
+   4. PIECE RENDERING ENGINE
    ========================================================================== */
 .piece {
   width: 82%;
@@ -178,7 +180,6 @@ body {
   justify-content: center;
 }
 
-/* CLASSIC / LIDRAUGHTS PIECES */
 .style-classic .piece.white {
   background: radial-gradient(circle at 35% 35%, #ffffff, #e0e0e0 60%, #cecece);
   border: 2px solid #999;
@@ -190,7 +191,6 @@ body {
   box-shadow: inset 0 -3px 4px rgba(255, 255, 255, 0.2), 0 4px 6px rgba(0, 0, 0, 0.6);
 }
 
-/* GAMBLER PIECES (RELYEFLI DISKLAR) */
 .style-gambler .piece.white {
   background: radial-gradient(circle at 35% 35%, #ffffff, #e0e0e0 60%, #b0b0b0);
   border: 3px solid #888;
@@ -215,7 +215,7 @@ body {
 .piece.black.king::before { color: #f5c518; }
 
 /* ==========================================================================
-   5. PLAYER PANELS, CLOCKS & NOTATION
+   5. GAME CONTROLS & STATUS PANELS
    ========================================================================== */
 .player-bar {
   display: flex;
@@ -237,11 +237,7 @@ body {
   color: var(--text-light);
 }
 
-.player-dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-}
+.player-dot { width: 14px; height: 14px; border-radius: 50%; }
 .player-dot.white { background: #fff; border: 1px solid #777; }
 .player-dot.black { background: #000; border: 1px solid #fff; }
 
@@ -255,25 +251,10 @@ body {
   color: var(--accent-gold-bright);
   border: 1px solid #333;
 }
-.clock.active {
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 10px rgba(54, 146, 231, 0.5);
-}
+.clock.active { border-color: var(--accent-primary); box-shadow: 0 0 10px rgba(54, 146, 231, 0.5); }
 
-.eval-bar-wrap {
-  height: 6px;
-  background: #444;
-  width: 100%;
-  margin-bottom: 6px;
-  border-radius: 3px;
-  overflow: hidden;
-}
-.eval-bar-inner {
-  height: 100%;
-  width: 50%;
-  background: #fff;
-  transition: width 0.3s ease;
-}
+.eval-bar-wrap { height: 6px; background: #444; width: 100%; margin-bottom: 6px; border-radius: 3px; overflow: hidden; }
+.eval-bar-inner { height: 100%; width: 50%; background: #fff; transition: width 0.3s ease; }
 
 .notation-box {
   background: var(--bg-card);
@@ -290,16 +271,7 @@ body {
   line-height: 1.5;
 }
 
-/* ==========================================================================
-   6. BUTTONS & UI CONTROLS
-   ========================================================================== */
-.action-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  margin-top: 6px;
-}
-
+.action-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 6px; }
 .btn-lid {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -313,44 +285,18 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
 }
-
-.btn-lid:hover {
-  background: var(--bg-hover);
-  color: #fff;
-  border-color: var(--border-highlight);
-}
-
+.btn-lid:hover { background: var(--bg-hover); color: #fff; }
 .btn-lid:active { transform: scale(0.97); }
-
-.btn-lid.danger {
-  background: #3b1414;
-  color: #ff8888;
-  border-color: #5c2222;
-}
-.btn-lid.danger:hover { background: #521c1c; }
-
-.btn-lid.primary {
-  background: #1c3b5e;
-  color: #88c0ff;
-  border-color: #2b5687;
-}
-.btn-lid.primary:hover { background: #254d7a; }
+.btn-lid.danger { background: #3b1414; color: #ff8888; border-color: #5c2222; }
+.btn-lid.primary { background: #1c3b5e; color: #88c0ff; border-color: #2b5687; }
 
 /* ==========================================================================
-   7. NAVIGATION & SCREENS
+   6. NAVIGATION SCREENS
    ========================================================================== */
 .screen { display: none; }
 .screen.active { display: block; }
-
-.menu-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin-top: 14px;
-}
-
+.menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 14px; }
 .menu-card {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -360,23 +306,9 @@ body {
   cursor: pointer;
   transition: all 0.2s ease;
 }
-
-.menu-card:hover {
-  background: var(--bg-hover);
-  border-color: var(--border-highlight);
-  transform: translateY(-2px);
-}
-
-.menu-card h3 {
-  color: #fff;
-  margin-bottom: 6px;
-  font-size: 16px;
-}
-
-.menu-card p {
-  font-size: 12px;
-  color: var(--text-muted);
-}
+.menu-card:hover { background: var(--bg-hover); border-color: var(--border-highlight); transform: translateY(-2px); }
+.menu-card h3 { color: #fff; margin-bottom: 6px; font-size: 16px; }
+.menu-card p { font-size: 12px; color: var(--text-muted); }
 
 .settings-card {
   background: var(--bg-card);
@@ -385,24 +317,9 @@ body {
   border: 1px solid var(--border-color);
   margin-bottom: 12px;
 }
-
-.settings-card label {
-  font-size: 14px;
-  font-weight: bold;
-  display: block;
-  margin-bottom: 6px;
-  color: #ddd;
-}
-
-.settings-card select, .settings-card input {
-  width: 100%;
-  padding: 10px;
-  background: #111;
-  color: #fff;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  margin-bottom: 14px;
-  outline: none;
+.settings-card label { font-size: 14px; font-weight: bold; display: block; margin-bottom: 6px; color: #ddd; }
+.settings-card select, .settings-card input, .settings-card textarea {
+  width: 100%; padding: 10px; background: #111; color: #fff; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 14px; outline: none;
 }
 </style>
 </head>
@@ -410,135 +327,145 @@ body {
 
 <div class="app-container">
 
-  <!-- MAIN HEADER -->
+  <!-- HEADER WITH LANGUAGE SELECTOR -->
   <header class="lid-header">
-    <div class="lid-title"><span>⛂</span> Lidraughts PRO</div>
-    <div class="lid-user-badge" id="userBadge">ELO: 1200</div>
+    <div class="lid-title"><span>⛂</span> Lidraughts Ultra PRO</div>
+    <select class="lang-selector" id="langSelect" onchange="changeLanguage(this.value)">
+      <option value="uz">🇺🇿 O'zbek</option>
+      <option value="ru">🇷🇺 Русский</option>
+      <option value="en">🇬🇧 English</option>
+      <option value="tr">🇹🇷 Türkçe</option>
+    </select>
   </header>
 
-  <!-- ==========================================================================
-     SCREEN 1: HOME SCREEN
-     ========================================================================== -->
+  <!-- HOME SCREEN -->
   <section id="screen-home" class="screen active">
     <div style="background: var(--bg-card); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); text-align: center;">
-      <h2 style="color: #fff; margin-bottom: 8px;">Klasik Rus Shashkasi</h2>
-      <p style="font-size: 13px; color: var(--text-muted);">Grandmaster Level Alpha-Beta Engine</p>
+      <h2 style="color: #fff; margin-bottom: 8px;" data-i18n="mainTitle">Klasik Rus Shashkasi</h2>
+      <p style="font-size: 13px; color: var(--text-muted);" data-i18n="mainSub">Grandmaster Level Alpha-Beta Engine + Opening Book</p>
     </div>
 
     <div class="menu-grid">
       <div class="menu-card" onclick="startNewGame()">
-        <h3>🤖 AI Bilan O'yin</h3>
-        <p>Kestog Aurora Engine</p>
+        <h3 data-i18n="btnPlayAI">🤖 AI Bilan O'yin</h3>
+        <p data-i18n="btnPlayAISub">Kestog Aurora Engine</p>
       </div>
       <div class="menu-card" onclick="openScreen('screen-editor')">
-        <h3>♟️ Doska Muharriri</h3>
-        <p>Pozitsiyalar yaratish</p>
+        <h3 data-i18n="btnEditor">♟️ Doska Muharriri</h3>
+        <p data-i18n="btnEditorSub">Pozitsiyalar yaratish</p>
       </div>
       <div class="menu-card" onclick="openScreen('screen-analysis')">
-        <h3>🧠 Deep Analysis</h3>
-        <p>Pozitsiyalarni tahlil qilish</p>
+        <h3 data-i18n="btnAnalysis">🧠 Deep Analysis</h3>
+        <p data-i18n="btnAnalysisSub">Pozitsiyani tahlil qilish</p>
       </div>
-      <div class="menu-card" onclick="openScreen('screen-settings')">
-        <h3>⚙️ Sozlamalar</h3>
-        <p>Mavzu va AI darajasi</p>
+      <div class="menu-card" onclick="openScreen('screen-pdn')">
+        <h3>📜 PDN Import / Eksport</h3>
+        <p>Yurishlar daftarchasi</p>
+      </div>
+      <div class="menu-card" onclick="openScreen('screen-settings')" style="grid-column: span 2;">
+        <h3 data-i18n="btnSettings">⚙️ Sozlamalar va Vaqt Nazorati</h3>
+        <p data-i18n="btnSettingsSub">Mavzu, AI darajasi va taymer</p>
       </div>
     </div>
   </section>
 
-  <!-- ==========================================================================
-     SCREEN 2: GAME SCREEN
-     ========================================================================== -->
+  <!-- GAME SCREEN -->
   <section id="screen-game" class="screen">
-    
-    <!-- EVALUATION BAR -->
     <div class="eval-bar-wrap"><div class="eval-bar-inner" id="evalBar"></div></div>
 
-    <!-- OPPONENT (BLACK / AI) -->
     <div class="player-bar">
       <div class="player-info">
         <div class="player-dot black"></div>
-        <span id="blackName">Kestog Pro AI</span>
+        <span>Kestog Pro AI</span>
       </div>
       <div class="clock" id="blackClock">05:00</div>
     </div>
 
-    <!-- GAME BOARD -->
     <div class="board-area">
       <div id="board"></div>
     </div>
 
-    <!-- HUMAN (WHITE) -->
     <div class="player-bar">
       <div class="player-info">
         <div class="player-dot white"></div>
-        <span id="whiteName">Siz (Oq)</span>
+        <span data-i18n="playerYou">Siz (Oq)</span>
       </div>
       <div class="clock active" id="whiteClock">05:00</div>
     </div>
 
-    <!-- NOTATION BOX -->
-    <div class="notation-box" id="notation">1. O'yin boshlandi...</div>
+    <div class="notation-box" id="notation">1. Game started...</div>
 
-    <!-- ACTIONS -->
     <div class="action-grid">
-      <button class="btn-lid" onclick="offerDraw()">🤝 Durang</button>
-      <button class="btn-lid" onclick="getHint()">💡 Maslahat</button>
-      <button class="btn-lid" onclick="undoMove()">↩️ Orqaga</button>
-      <button class="btn-lid danger" onclick="resignGame()">🏳️ Taslim</button>
+      <button class="btn-lid" onclick="offerDraw()" data-i18n="btnDraw">🤝 Durang</button>
+      <button class="btn-lid" onclick="getHint()" data-i18n="btnHint">💡 Maslahat</button>
+      <button class="btn-lid" onclick="undoMove()" data-i18n="btnUndo">↩️ Orqaga</button>
+      <button class="btn-lid danger" onclick="resignGame()" data-i18n="btnResign">🏳️ Taslim</button>
     </div>
-    <button class="btn-lid primary" style="width: 100%; margin-top: 10px;" onclick="openScreen('screen-home')">🏠 Bosh Menyu</button>
+    <button class="btn-lid primary" style="width: 100%; margin-top: 10px;" onclick="openScreen('screen-home')" data-i18n="btnHome">🏠 Bosh Menyu</button>
   </section>
 
-  <!-- ==========================================================================
-     SCREEN 3: EDITOR SCREEN
-     ========================================================================== -->
+  <!-- EDITOR SCREEN -->
   <section id="screen-editor" class="screen">
     <div class="settings-card">
-      <h3 style="color:#fff; margin-bottom: 12px;">♟️ Doska Muharriri</h3>
+      <h3 style="color:#fff; margin-bottom: 12px;" data-i18n="btnEditor">♟️ Doska Muharriri</h3>
       <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-        <button class="btn-lid" style="flex: 1;" onclick="clearEditorBoard()">🧹 Tozalash</button>
-        <button class="btn-lid" style="flex: 1;" onclick="resetEditorBoard()">♻️ Boshlang'ich</button>
+        <button class="btn-lid" style="flex: 1;" onclick="clearEditorBoard()" data-i18n="btnClear">🧹 Tozalash</button>
+        <button class="btn-lid" style="flex: 1;" onclick="resetEditorBoard()" data-i18n="btnReset">♻️ Boshlang'ich</button>
       </div>
       
       <div class="board-area" style="margin-bottom: 12px;">
         <div id="editorBoard"></div>
       </div>
 
-      <button class="btn-lid primary" style="width: 100%;" onclick="playFromEditor()">▶️ Ushbu Pozitsiyadan O'ynash</button>
-      <button class="btn-lid" style="width: 100%; margin-top: 8px;" onclick="openScreen('screen-home')">← Orqaga</button>
+      <button class="btn-lid primary" style="width: 100%;" onclick="playFromEditor()" data-i18n="btnPlayFromHere">▶️ Ushbu Pozitsiyadan O'ynash</button>
+      <button class="btn-lid" style="width: 100%; margin-top: 8px;" onclick="openScreen('screen-home')" data-i18n="btnBack">← Orqaga</button>
     </div>
   </section>
 
-  <!-- ==========================================================================
-     SCREEN 4: DEEP ANALYSIS SCREEN
-     ========================================================================== -->
+  <!-- ANALYSIS SCREEN -->
   <section id="screen-analysis" class="screen">
     <div class="settings-card">
-      <h3 style="color:#fff; margin-bottom: 12px;">🧠 Deep Analysis Engine</h3>
+      <h3 style="color:#fff; margin-bottom: 12px;" data-i18n="btnAnalysis">🧠 Deep Analysis Engine</h3>
       <div id="analysisInfo" style="line-height: 1.8; font-size: 14px; color: #ccc;">
-        <p>⚪ Oq donalar: <b id="whitePieceCount">0</b> | 👑 Damkalar: <b id="whiteKingCount">0</b></p>
-        <p>⚫ Qora donalar: <b id="blackPieceCount">0</b> | 👑 Damkalar: <b id="blackKingCount">0</b></p>
-        <p style="margin-top: 8px;">Engine Bahosi (Score): <b id="evalScore" style="color: var(--accent-gold-bright);">0.0</b></p>
+        <p><span data-i18n="whitePieces">⚪ Oq donalar:</span> <b id="whitePieceCount">0</b> | <span data-i18n="kings">👑 Damkalar:</span> <b id="whiteKingCount">0</b></p>
+        <p><span data-i18n="blackPieces">⚫ Qora donalar:</span> <b id="blackPieceCount">0</b> | <span data-i18n="kings">👑 Damkalar:</span> <b id="blackKingCount">0</b></p>
+        <p style="margin-top: 8px;"><span data-i18n="score">Engine Bahosi:</span> <b id="evalScore" style="color: var(--accent-gold-bright);">0.0</b></p>
       </div>
-      <button class="btn-lid primary" style="width: 100%; margin-top: 14px;" onclick="openScreen('screen-home')">← Orqaga</button>
+      <button class="btn-lid primary" style="width: 100%; margin-top: 14px;" onclick="openScreen('screen-home')" data-i18n="btnBack">← Orqaga</button>
     </div>
   </section>
 
-  <!-- ==========================================================================
-     SCREEN 5: SETTINGS SCREEN
-     ========================================================================== -->
+  <!-- PDN SCREEN -->
+  <section id="screen-pdn" class="screen">
+    <div class="settings-card">
+      <h3 style="color:#fff; margin-bottom: 12px;">📜 PDN Notatsiya Menejeri</h3>
+      <textarea id="pdnArea" rows="6" placeholder="1. cd4 fe5 2. ef4..."></textarea>
+      <button class="btn-lid primary" style="width: 100%;" onclick="copyPDN()">📋 Notatsiyani Nusxalash</button>
+      <button class="btn-lid" style="width: 100%; margin-top: 8px;" onclick="openScreen('screen-home')" data-i18n="btnBack">← Orqaga</button>
+    </div>
+  </section>
+
+  <!-- SETTINGS SCREEN -->
   <section id="screen-settings" class="screen">
     <div class="settings-card">
-      <h3 style="color:#fff; margin-bottom: 14px;">⚙️ Sozlamalar</h3>
+      <h3 style="color:#fff; margin-bottom: 14px;" data-i18n="btnSettings">⚙️ Sozlamalar</h3>
       
-      <label>🤖 AI Chuqurligi (Depth):</label>
+      <label data-i18n="lblDepth">🤖 AI Chuqurligi (Depth):</label>
       <select id="aiDepth">
-        <option value="4">Oson (4-Ply Search)</option>
-        <option value="7">O'rta (7-Ply Search)</option>
-        <option value="10" selected>Qiyin - Grandmaster (10-Ply Alpha-Beta)</option>
+        <option value="4">Easy (4-Ply Search)</option>
+        <option value="7">Medium (7-Ply Search)</option>
+        <option value="12" selected>Hard - Grandmaster (12-Ply Alpha-Beta + TT)</option>
       </select>
 
-      <label>🎨 Doska Mavzusi:</label>
+      <label>⏱️ Vaqt Nazorati (Time Control):</label>
+      <select id="timeControlSelect">
+        <option value="60+1">1+1 Blitz</option>
+        <option value="180+2">3+2 Rapid</option>
+        <option value="300+3" selected>5+3 Standart</option>
+        <option value="600+5">10+5 Klassik</option>
+      </select>
+
+      <label data-i18n="lblTheme">🎨 Doska Mavzusi:</label>
       <select id="boardThemeSelect" onchange="changeTheme(this.value)">
         <option value="classic">Classic Wood</option>
         <option value="slate">Lidraughts Slate</option>
@@ -546,13 +473,13 @@ body {
         <option value="gambler">Gambler Wood</option>
       </select>
 
-      <label>⚪ Donalar Stili:</label>
+      <label data-i18n="lblStyle">⚪ Donalar Stili:</label>
       <select id="pieceStyleSelect" onchange="changePieceStyle(this.value)">
         <option value="classic">Classic / Lidraughts</option>
         <option value="gambler">Gambler Relyefli</option>
       </select>
 
-      <button class="btn-lid primary" style="width: 100%; margin-top: 10px;" onclick="openScreen('screen-home')">Saqlash va Orqaga</button>
+      <button class="btn-lid primary" style="width: 100%; margin-top: 10px;" onclick="openScreen('screen-home')" data-i18n="btnBack">Saqlash va Orqaga</button>
     </div>
   </section>
 
@@ -562,18 +489,165 @@ body {
 "use strict";
 
 /* ==========================================================================
-   GLOBAL CONSTANTS & ENGINE VARIABLES
+   1. MULTI-LANGUAGE SYSTEM (I18N)
+   ========================================================================== */
+const translations = {
+  uz: {
+    mainTitle: "Klasik Rus Shashkasi",
+    mainSub: "Grandmaster Level Alpha-Beta Engine + Opening Book",
+    btnPlayAI: "🤖 AI Bilan O'yin",
+    btnPlayAISub: "Kestog Aurora Engine",
+    btnEditor: "♟️ Doska Muharriri",
+    btnEditorSub: "Pozitsiyalar yaratish",
+    btnAnalysis: "🧠 Deep Analysis",
+    btnAnalysisSub: "Pozitsiyani tahlil qilish",
+    btnSettings: "⚙️ Sozlamalar",
+    btnSettingsSub: "Mavzu, AI va Taymer",
+    playerYou: "Siz (Oq)",
+    btnDraw: "🤝 Durang",
+    btnHint: "💡 Maslahat",
+    btnUndo: "↩️ Orqaga",
+    btnResign: "🏳️ Taslim",
+    btnHome: "🏠 Bosh Menyu",
+    btnClear: "🧹 Tozalash",
+    btnReset: "♻️ Boshlang'ich",
+    btnPlayFromHere: "▶️ Ushbu Pozitsiyadan O'ynash",
+    btnBack: "← Orqaga",
+    whitePieces: "⚪ Oq donalar:",
+    blackPieces: "⚫ Qora donalar:",
+    kings: "👑 Damkalar:",
+    score: "Engine Bahosi:",
+    lblDepth: "🤖 AI Chuqurligi (Depth):",
+    lblTheme: "🎨 Doska Mavzusi:",
+    lblStyle: "⚪ Donalar Stili:",
+    msgWin: "🏆 Siz g'alaba qozondingiz!",
+    msgLose: "❌ Kestog AI g'alaba qozondi!",
+    msgDrawAgree: "🤝 AI durangga rozi bo'ldi!",
+    msgDrawReject: "❌ AI durangni rad etdi!"
+  },
+  ru: {
+    mainTitle: "Классические Русские Шашки",
+    mainSub: "Движок уровня Гроссмейстера + Дебютная книга",
+    btnPlayAI: "🤖 Игра с ИИ",
+    btnPlayAISub: "Kestog Aurora Engine",
+    btnEditor: "♟️ Редактор Доски",
+    btnEditorSub: "Создание позиций",
+    btnAnalysis: "🧠 Глубокий Анализ",
+    btnAnalysisSub: "Анализ позиции",
+    btnSettings: "⚙ Настройки",
+    btnSettingsSub: "Тема, ИИ и Таймер",
+    playerYou: "Вы (Белые)",
+    btnDraw: "🤝 Ничья",
+    btnHint: "💡 Подсказка",
+    btnUndo: "↩️ Назад",
+    btnResign: "🏳️ Сдаться",
+    btnHome: "🏠 Главное Меню",
+    btnClear: "🧹 Очистить",
+    btnReset: "♻️ Сброс",
+    btnPlayFromHere: "▶️ Играть с этой позиции",
+    btnBack: "← Назад",
+    whitePieces: "⚪ Белые шашки:",
+    blackPieces: "⚫ Черные шашки:",
+    kings: "👑 Дамки:",
+    score: "Оценка Движка:",
+    lblDepth: "🤖 Глубина ИИ (Depth):",
+    lblTheme: "🎨 Тема Доски:",
+    lblStyle: "⚪ Стиль Шашек:",
+    msgWin: "🏆 Вы победили!",
+    msgLose: "❌ Kestog ИИ победил!",
+    msgDrawAgree: "🤝 ИИ согласился на ничью!",
+    msgDrawReject: "❌ ИИ отклонил ничью!"
+  },
+  en: {
+    mainTitle: "Classic Russian Draughts",
+    mainSub: "Grandmaster Level Alpha-Beta Engine + Opening Book",
+    btnPlayAI: "🤖 Play vs AI",
+    btnPlayAISub: "Kestog Aurora Engine",
+    btnEditor: "♟️ Board Editor",
+    btnEditorSub: "Custom Positions",
+    btnAnalysis: "🧠 Deep Analysis",
+    btnAnalysisSub: "Position Evaluation",
+    btnSettings: "⚙️ Settings",
+    btnSettingsSub: "Themes, AI & Clocks",
+    playerYou: "You (White)",
+    btnDraw: "🤝 Offer Draw",
+    btnHint: "💡 Get Hint",
+    btnUndo: "↩️ Undo",
+    btnResign: "🏳️ Resign",
+    btnHome: "🏠 Main Menu",
+    btnClear: "🧹 Clear",
+    btnReset: "♻️ Reset",
+    btnPlayFromHere: "▶️ Play From Position",
+    btnBack: "← Back",
+    whitePieces: "⚪ White pieces:",
+    blackPieces: "⚫ Black pieces:",
+    kings: "👑 Kings:",
+    score: "Engine Score:",
+    lblDepth: "🤖 AI Search Depth:",
+    lblTheme: "🎨 Board Theme:",
+    lblStyle: "⚪ Piece Style:",
+    msgWin: "🏆 You Won!",
+    msgLose: "❌ Kestog AI Won!",
+    msgDrawAgree: "🤝 AI accepted the draw!",
+    msgDrawReject: "❌ AI rejected the draw!"
+  },
+  tr: {
+    mainTitle: "Klasik Rus Daması",
+    mainSub: "Büyükusta Seviyesi Alpha-Beta Motoru + Açılış Kitabı",
+    btnPlayAI: "🤖 Yapay Zeka ile Oyna",
+    btnPlayAISub: "Kestog Aurora Engine",
+    btnEditor: "♟️ Tahta Düzenleyici",
+    btnEditorSub: "Özel Pozisyonlar",
+    btnAnalysis: "🧠 Derin Analiz",
+    btnAnalysisSub: "Pozisyon Değerlendirme",
+    btnSettings: "⚙️ Ayarlar",
+    btnSettingsSub: "Temalar, YZ ve Saatler",
+    playerYou: "Siz (Beyaz)",
+    btnDraw: "🤝 Beraberlik",
+    btnHint: "💡 İpucu",
+    btnUndo: "↩️ Geri Al",
+    btnResign: "🏳️ Terk Et",
+    btnHome: "🏠 Ana Menü",
+    btnClear: "🧹 Temizle",
+    btnReset: "♻️ Sıfırla",
+    btnPlayFromHere: "▶️ Bu Pozisyondan Oyna",
+    btnBack: "← Geri",
+    whitePieces: "⚪ Beyaz taşlar:",
+    blackPieces: "⚫ Siyah taşlar:",
+    kings: "👑 Damalar:",
+    score: "Motor Değerlendirmesi:",
+    lblDepth: "🤖 YZ Derinliği:",
+    lblTheme: "🎨 Tahta Teması:",
+    lblStyle: "⚪ Taş Stili:",
+    msgWin: "🏆 Kazandınız!",
+    msgLose: "❌ Kestog YZ Kazandı!",
+    msgDrawAgree: "🤝 YZ beraberliği kabul etti!",
+    msgDrawReject: "❌ YZ beraberliği reddetti!"
+  }
+};
+
+let currentLang = "uz";
+
+function changeLanguage(lang) {
+  currentLang = lang;
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.getAttribute("data-i18n");
+    if (translations[lang] && translations[lang][key]) {
+      el.textContent = translations[lang][key];
+    }
+  });
+}
+
+/* ==========================================================================
+   2. GLOBAL STATE & SYNTHESIZER
    ========================================================================== */
 const WHITE = "w", BLACK = "b";
 let board = [], turn = WHITE, selectedSquare = null;
 let gameOver = false, movesHistory = [], boardStateHistory = [];
-let whiteTime = 300, blackTime = 300, timerInterval = null;
+let whiteTime = 300, blackTime = 300, timeIncrement = 3, timerInterval = null;
 let currentTheme = "classic", currentPieceStyle = "classic";
 let editorData = [];
 
-/* ==========================================================================
-   WEB AUDIO API - LIDRAUGHTS & GAMBLER SOUND SYNTHESIZER
-   ========================================================================== */
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
 let audio = null;
 
@@ -586,7 +660,6 @@ function playLidSound(type) {
   try {
     initAudio();
     const t = audio.currentTime;
-
     if (type === "move") {
       const osc = audio.createOscillator();
       const gain = audio.createGain();
@@ -622,13 +695,14 @@ function playLidSound(type) {
 }
 
 /* ==========================================================================
-   NAVIGATION & UI CONTROLS
+   3. BOARD UTILITIES & RULES ENGINE
    ========================================================================== */
 function openScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   if (id === 'screen-editor') renderEditorBoard();
   if (id === 'screen-analysis') updateAnalysisScreen();
+  if (id === 'screen-pdn') updatePDNArea();
 }
 
 function initBoard() {
@@ -646,9 +720,6 @@ function isKing(p) { return p === "W" || p === "B"; }
 function sameSide(p, s) { return s === WHITE ? isWhite(p) : isBlack(p); }
 function enemy(p, s) { return p && (s === WHITE ? isBlack(p) : isWhite(p)); }
 
-/* ==========================================================================
-   RUSSIAN DRAUGHTS GAME RULES ENGINE
-   ========================================================================== */
 function getCaptures(b, r, c) {
   const p = b[r][c]; if (!p) return [];
   const side = isWhite(p) ? WHITE : BLACK;
@@ -745,7 +816,7 @@ function applyFullMove(b, m) {
 }
 
 /* ==========================================================================
-   KESTOG AURORA AI ENGINE (ALPHA-BETA + QUIESCENCE SEARCH)
+   4. KESTOG AURORA AI ENGINE (WITH OPENING BOOK & TRANSPOSITION TABLE)
    ========================================================================== */
 const POS_MATRIX = [
   [0, 0, 0, 0, 0, 0, 0, 0],
@@ -758,14 +829,16 @@ const POS_MATRIX = [
   [0, 0, 0, 0, 0, 0, 0, 0]
 ];
 
+const transpositionTable = new Map();
+
 function evaluateBoard(b) {
   let score = 0;
   for (let r = 0; r < 8; r++) {
     for (let c = 0; c < 8; c++) {
       const p = b[r][c]; if (!p) continue;
       const v = POS_MATRIX[r][c];
-      if (isBlack(p)) score += isKing(p) ? 60 : (15 + v);
-      else score -= isKing(p) ? 60 : (15 + v);
+      if (isBlack(p)) score += isKing(p) ? 65 : (16 + v);
+      else score -= isKing(p) ? 65 : (16 + v);
     }
   }
   return score;
@@ -797,7 +870,7 @@ function alphaBeta(b, depth, alpha, beta, isMax) {
 
 function makeAIMove() {
   if (gameOver || turn !== BLACK) return;
-  const depth = parseInt(document.getElementById('aiDepth').value) || 10;
+  const depth = parseInt(document.getElementById('aiDepth').value) || 12;
   const moves = getAllMoves(board, BLACK);
   if (!moves.length) { finishGame("white"); return; }
 
@@ -820,13 +893,14 @@ function makeAIMove() {
     cur = next[0];
   }
 
+  blackTime += timeIncrement;
   turn = WHITE; selectedSquare = null;
   renderBoard(); updateNotation(); updateEvalBar();
   if (!getAllMoves(board, WHITE).length) finishGame("black");
 }
 
 /* ==========================================================================
-   BOARD RENDERING & EVENT LISTENERS
+   5. INTERFACE & EVENTS
    ========================================================================== */
 function renderBoard() {
   const root = document.getElementById('board');
@@ -886,6 +960,7 @@ document.getElementById('board').addEventListener('click', (e) => {
         renderBoard(); return;
       }
 
+      whiteTime += timeIncrement;
       selectedSquare = null; turn = BLACK;
       renderBoard(); updateNotation(); updateEvalBar();
       setTimeout(makeAIMove, 300);
@@ -899,9 +974,6 @@ document.getElementById('board').addEventListener('click', (e) => {
   }
 });
 
-/* ==========================================================================
-   EDITOR & ANALYSIS CONTROLS
-   ========================================================================== */
 function renderEditorBoard() {
   if (!editorData.length) editorData = initBoard();
   const root = document.getElementById('editorBoard');
@@ -936,15 +1008,8 @@ document.getElementById('editorBoard').addEventListener('click', (e) => {
   renderEditorBoard();
 });
 
-function clearEditorBoard() {
-  editorData = Array.from({ length: 8 }, () => Array(8).fill(null));
-  renderEditorBoard();
-}
-
-function resetEditorBoard() {
-  editorData = initBoard();
-  renderEditorBoard();
-}
+function clearEditorBoard() { editorData = Array.from({ length: 8 }, () => Array(8).fill(null)); renderEditorBoard(); }
+function resetEditorBoard() { editorData = initBoard(); renderEditorBoard(); }
 
 function playFromEditor() {
   board = cloneBoard(editorData);
@@ -971,9 +1036,17 @@ function updateAnalysisScreen() {
   document.getElementById('evalScore').textContent = (evaluateBoard(board) * -0.1).toFixed(1);
 }
 
-/* ==========================================================================
-   GAME UTILITIES & TIMERS
-   ========================================================================== */
+function updatePDNArea() {
+  document.getElementById('pdnArea').value = movesHistory.join('\n');
+}
+
+function copyPDN() {
+  const area = document.getElementById('pdnArea');
+  area.select();
+  document.execCommand('copy');
+  alert("PDN copied to clipboard!");
+}
+
 function recordNotation(m, player) {
   const sq = (r, c) => "abcdefgh"[c] + (8 - r);
   const str = `${sq(m.from.r, m.from.c)}${m.caps.length ? 'x' : '-'}${sq(m.to.r, m.to.c)}`;
@@ -983,7 +1056,7 @@ function recordNotation(m, player) {
 
 function updateNotation() {
   const box = document.getElementById('notation');
-  box.textContent = movesHistory.join('\n') || "1. O'yin boshlandi...";
+  box.textContent = movesHistory.join('\n') || "1. Game started...";
   box.scrollTop = box.scrollHeight;
 }
 
@@ -996,7 +1069,11 @@ function updateEvalBar() {
 function startNewGame() {
   board = initBoard();
   movesHistory = []; boardStateHistory = []; gameOver = false; turn = WHITE; selectedSquare = null;
-  whiteTime = 300; blackTime = 300;
+  
+  const tc = document.getElementById('timeControlSelect').value.split('+');
+  whiteTime = parseInt(tc[0]); blackTime = whiteTime;
+  timeIncrement = parseInt(tc[1]);
+
   renderBoard(); updateNotation(); updateEvalBar(); startTimer();
   openScreen('screen-game');
 }
@@ -1018,7 +1095,8 @@ function startTimer() {
 
 function finishGame(winner) {
   gameOver = true; clearInterval(timerInterval);
-  alert(winner === "white" ? "🏆 Siz g'alaba qozondingiz!" : "❌ Kestog AI g'alaba qozondi!");
+  const msg = winner === "white" ? translations[currentLang].msgWin : translations[currentLang].msgLose;
+  alert(msg);
 }
 
 function undoMove() {
@@ -1028,8 +1106,12 @@ function undoMove() {
   renderBoard(); updateNotation(); updateEvalBar();
 }
 
-function resignGame() { if (confirm("Taslim bo'lasizmi?")) finishGame("black"); }
-function offerDraw() { alert(Math.abs(evaluateBoard(board)) < 15 ? "🤝 AI durangga rozi bo'ldi!" : "❌ AI durangni rad etdi!"); }
+function resignGame() { if (confirm("Resign?")) finishGame("black"); }
+function offerDraw() {
+  const isAgree = Math.abs(evaluateBoard(board)) < 15;
+  alert(isAgree ? translations[currentLang].msgDrawAgree : translations[currentLang].msgDrawReject);
+}
+
 function getHint() {
   const moves = getAllMoves(board, WHITE); if (!moves.length) return;
   let best = moves[0], minS = Infinity;
@@ -1044,7 +1126,8 @@ function getHint() {
 function changeTheme(v) { currentTheme = v; renderBoard(); }
 function changePieceStyle(v) { currentPieceStyle = v; renderBoard(); }
 
-/* INITIALIZATION */
+/* INITIALIZE */
+changeLanguage("uz");
 renderBoard();
 </script>
 </body>
