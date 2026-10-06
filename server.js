@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const { WebSocketServer } = require("ws");
+const { createRooms } = require("./rooms");
 
 const PORT = Number(process.env.PORT || 8080);
 const HOST = process.env.HOST || "0.0.0.0";
@@ -22,6 +23,9 @@ function send(ws, data) {
   }
 }
 
+// Guruh o'yinlari (Mini App xonalari)
+const roomsApi = createRooms({ send, clients });
+
 function broadcast(data, exceptId = null) {
   for (const c of clients.values()) {
     if (c.id !== exceptId) send(c.ws, data);
@@ -29,12 +33,14 @@ function broadcast(data, exceptId = null) {
 }
 
 function playerList() {
-  return [...clients.values()].map(c => ({
-    id: c.id,
-    name: c.name,
-    elo: c.elo,
-    busy: !!c.matchId
-  }));
+  return [...clients.values()]
+    .filter(c => !c.hidden)
+    .map(c => ({
+      id: c.id,
+      name: c.name,
+      elo: c.elo,
+      busy: !!c.matchId
+    }));
 }
 
 function notifyPlayers() {
@@ -205,8 +211,21 @@ const server = http.createServer((req, res) => {
       ok: true,
       players: clients.size,
       matches: matches.size,
-      waiting: waiting.size
+      waiting: waiting.size,
+      rooms: roomsApi.rooms.size
     }));
+  }
+
+  // Bot uchun: tugagan guruh o'yinlari natijalari (RESULTS_SECRET kerak)
+  if (url.pathname === "/api/results") {
+    const secret = process.env.RESULTS_SECRET;
+    if (!secret || url.searchParams.get("secret") !== secret) {
+      res.writeHead(403, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ ok: false }));
+    }
+    const out = roomsApi.results.splice(0, roomsApi.results.length);
+    res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+    return res.end(JSON.stringify({ ok: true, results: out }));
   }
 
   serveFile(req, res);
@@ -244,6 +263,12 @@ wss.on("connection", ws => {
         type: "error",
         message: "Noto‘g‘ri JSON"
       });
+    }
+
+    // Guruh xonalari (room...) xabarlari
+    if (roomsApi.handle(c, m)) {
+      notifyPlayers();
+      return;
     }
 
     if (m.type === "register") {
@@ -464,6 +489,7 @@ wss.on("connection", ws => {
 
   ws.on("close", () => {
     leaveClient(c);
+    roomsApi.onClose(c);
   });
 
   ws.on("error", () => {});
