@@ -161,10 +161,32 @@ function leaveClient(c) {
   notifyPlayers();
 }
 
+const BLOCKED = new Set([
+  "server.js", "rooms.js", "users.json", "package.json", "package-lock.json"
+]);
+
 function serveFile(req, res) {
   let requested = new URL(req.url, "http://localhost").pathname;
 
   if (requested === "/") requested = "/index.html";
+
+  const types = {
+    ".html": "text/html; charset=utf-8",
+    ".js": "application/javascript; charset=utf-8",
+    ".css": "text/css; charset=utf-8",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".svg": "image/svg+xml"
+  };
+
+  const ext = path.extname(requested);
+  const base = path.basename(requested);
+
+  // xavfsizlik: faqat ruxsat etilgan turdagi fayllar, server fayllari yopiq
+  if (!types[ext] || BLOCKED.has(base)) {
+    res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+    return res.end("Not found");
+  }
 
   const candidates = [
     path.join(__dirname, requested),
@@ -180,20 +202,21 @@ function serveFile(req, res) {
     return res.end("Not found");
   }
 
-  const ext = path.extname(file);
-
-  const types = {
-    ".html": "text/html; charset=utf-8",
-    ".js": "application/javascript; charset=utf-8",
-    ".css": "text/css; charset=utf-8",
-    ".json": "application/json; charset=utf-8",
-    ".png": "image/png",
-    ".jpg": "image/jpeg",
-    ".svg": "image/svg+xml"
-  };
+  // index.html ga guruh (xona) rejimi skriptini avtomatik ulaymiz
+  if (base === "index.html") {
+    let html = fs.readFileSync(file, "utf8");
+    if (!html.includes("roomclient.js")) {
+      html = html.replace("</body>", '<script src="/roomclient.js"></script>\n</body>');
+    }
+    res.writeHead(200, {
+      "Content-Type": types[".html"],
+      "Cache-Control": "no-cache"
+    });
+    return res.end(html);
+  }
 
   res.writeHead(200, {
-    "Content-Type": types[ext] || "application/octet-stream"
+    "Content-Type": types[ext]
   });
 
   fs.createReadStream(file).pipe(res);
