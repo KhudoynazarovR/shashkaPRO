@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>ShashkaPRO - Aurora & Tosha Grandmaster Engine</title>
+<title>ShashkaPRO - Aurora Grandmaster Engine</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#0b1017;color:#fff;font-family:Arial,sans-serif;user-select:none;transition:background 0.3s}
@@ -40,7 +40,7 @@ button:active{transform:scale(.97)}
 }
 .cell{position:relative;display:flex;align-items:center;justify-content:center}
 
-/* LIDRAUGHTS & GAMBLER DOSKA MAVZULARI */
+/* DOSKA MAVZULARI */
 .theme-gambler-wood .light{background:#e8cb9a}.theme-gambler-wood .dark{background:#8a5229}
 .theme-gambler-green .light{background:#dedede}.theme-gambler-green .dark{background:#2a6e3b}
 .theme-lid-slate .light{background:#c4ce32}.theme-lid-slate .dark{background:#758391}
@@ -55,7 +55,7 @@ button:active{transform:scale(.97)}
 .coord{position:absolute;font-size:9px;opacity:.55;pointer-events:none}
 .coord.file{bottom:2px;left:3px}.coord.rank{top:2px;right:3px}
 
-/* GAMBLER & LIDRAUGHTS DONALAR */
+/* DONALAR */
 .piece{
  width:82%;height:82%;max-width:72px;max-height:72px;
  border-radius:50%;z-index:2;
@@ -79,12 +79,11 @@ button:active{transform:scale(.97)}
 .king:before{content:"♛";font-size:26px;color:#d9ad36;text-shadow:0 2px 4px #000}
 .style-gambler .king:before{display:none}
 
-/* NOTATION & LIVE MOVES */
-.notationBar{background:#0d131d;border:1px solid #2c3947;border-radius:10px;padding:10px;height:70px;overflow-y:auto;font-family:monospace;font-size:13px;color:#d7aa3d;margin:8px 0}
+.notationBar{background:#0d131d;border:1px solid #2c3947;border-radius:10px;padding:10px;height:75px;overflow-y:auto;font-family:monospace;font-size:13px;color:#d7aa3d;margin:8px 0;white-space:pre-wrap}
 .actionsGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:8px 0}
 
 .themeGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-.designBtn.active,.pieceBtn.active,.appBgBtn.active{background:#d7aa3d;color:#111;font-weight:bold}
+.designBtn.active,.pieceBtn.active{background:#d7aa3d;color:#111;font-weight:bold}
 select,input[type="text"]{width:100%;padding:11px;border-radius:10px;background:#202b38;color:#fff;border:1px solid #3a4857;margin-bottom:8px}
 .flipped{transform:rotate(180deg)}
 .flipped .piece,.flipped .coord{transform:rotate(180deg)}
@@ -131,7 +130,7 @@ select,input[type="text"]{width:100%;padding:11px;border-radius:10px;background:
 <!-- GAME SCREEN -->
 <section id="game" class="screen">
 <div class="header">
-<b id="gameTitle">🤖 Aurora / Tosha Engine 64</b>
+<b id="gameTitle">🤖 Aurora Engine 64</b>
 <button class="back" id="gameBack">←</button>
 </div>
 
@@ -158,7 +157,7 @@ select,input[type="text"]{width:100%;padding:11px;border-radius:10px;background:
 </div>
 
 <!-- NOTATION / MOVES RECORD -->
-<div class="notationBar" id="moveList">1. Yurishlar bu yerda ko'rinadi (e.g. cd4 ba5)</div>
+<div class="notationBar" id="moveList">1. Yurishlar protokoli bu yerda ko'rinadi</div>
 
 <div class="actionsGrid">
 <button id="drawBtn">🤝 Durang Taklif Etish</button>
@@ -169,9 +168,9 @@ select,input[type="text"]{width:100%;padding:11px;border-radius:10px;background:
 </div>
 </section>
 
-<!-- FLYING CHECKERS (IDF 780 POSITIONS) -->
+<!-- FLYING CHECKERS (IDF POSITIONS) -->
 <section id="flying" class="screen">
-<div class="header"><b>🚀 IDF / Lidraughts Uchuvchi Shashka (780 Pozitsiya)</b><button class="back" data-back>←</button></div>
+<div class="header"><b>🚀 IDF Uchuvchi Shashka</b><button class="back" data-back>←</button></div>
 <div class="card">
 <label>📌 Rasmiy IDF Debyut Kurasini Tanlang:</label>
 <select id="positionSelect">
@@ -238,7 +237,7 @@ select,input[type="text"]{width:100%;padding:11px;border-radius:10px;background:
 
 <!-- EDITOR SCREEN -->
 <section id="editor" class="screen">
-<div class="header"><b>♟️ Doska Muharriri</b><button class="back" data-back>←</button></div>
+<div class="header"><b>♟️️ Doska Muharriri</b><button class="back" data-back>←</button></div>
 <div class="actionsGrid">
 <button id="clearEditor">🧹 Tozalash</button>
 <button id="resetEditor">♻️ Boshlang‘ich</button>
@@ -366,7 +365,6 @@ function initialBoard(){
  return b;
 }
 
-/* IDF 780 POSITIONS / FLYING DRAUGHTS GENERATOR */
 function getFlyingBoard(type) {
  let b = initialBoard();
  if(type === "idf_1") { b[5][2]=null; b[4][3]=WHITE; b[2][5]=null; b[3][4]=BLACK; }
@@ -375,7 +373,6 @@ function getFlyingBoard(type) {
  else if(type === "idf_4") { b[5][2]=null; b[3][0]=WHITE; b[2][5]=null; b[3][4]=BLACK; }
  else if(type === "idf_5") { b[5][2]=null; b[4][3]=WHITE; b[1][2]=null; b[3][2]=BLACK; }
  else if(type === "random") {
-  // Tasodifiy IDF Kura (1 va 2 dona surilgan debyut)
   const whiteMoves = [{f:[5,2],t:[4,3]}, {f:[5,2],t:[4,1]}, {f:[5,6],t:[4,7]}, {f:[5,4],t:[4,5]}];
   const blackMoves = [{f:[2,5],t:[3,4]}, {f:[2,5],t:[3,6]}, {f:[2,3],t:[3,2]}];
   const wm = whiteMoves[Math.floor(Math.random()*whiteMoves.length)];
@@ -395,7 +392,6 @@ function sameSide(p,s){ return s===WHITE?isWhite(p):isBlack(p); }
 function enemy(p,s){ return p && (s===WHITE?isBlack(p):isWhite(p)); }
 function kingPiece(s){ return s===WHITE?"W":"B"; }
 
-/* MOVES & CAPTURES */
 function simpleSteps(b,r,c){
  const p=b[r][c]; if(!p)return [];
  const side=isWhite(p)?WHITE:BLACK; const result=[];
@@ -487,17 +483,12 @@ function applyFullMove(b,m){
  return n;
 }
 
-/* =========================================================
-   AURORA BOREALIS / TOSHA GRANDMASTER EVALUATOR & ENGINE
-   ========================================================= */
-
-const TRANSPOSITION_TABLE = new Map();
-
+/* AURORA GRANDMASTER EVALUATOR & ENGINE */
 const POSITIONAL_MATRIX = [
   [0, 0, 0, 0, 0, 0, 0, 0],
-  [12, 0, 12, 0, 12, 0, 14, 0], // Damka chizig'iga yaqinlashuv
+  [12, 0, 12, 0, 12, 0, 14, 0],
   [0, 8, 0, 9, 0, 9, 0, 6],
-  [6, 0, 15, 0, 15, 0, 6, 0],  // Markaziy strategik ustunlik (c4, d4, e4, f4)
+  [6, 0, 15, 0, 15, 0, 6, 0],
   [0, 6, 0, 15, 0, 15, 0, 6],
   [6, 0, 9, 0, 9, 0, 8, 0],
   [0, 14, 0, 12, 0, 12, 0, 12],
@@ -507,7 +498,6 @@ const POSITIONAL_MATRIX = [
 function evaluateAurora(b) {
   let score = 0;
   let whiteKings = 0, blackKings = 0;
-  let whiteMen = 0, blackMen = 0;
 
   for (let r = 0; r < 8; r++) {
     for (let c = 0; c < 8; c++) {
@@ -516,17 +506,12 @@ function evaluateAurora(b) {
 
       if (isBlack(p)) {
         if (isKing(p)) { score += 55; blackKings++; }
-        else { score += (15 + posVal); blackMen++; }
+        else { score += (15 + posVal); }
       } else {
         if (isKing(p)) { score -= 55; whiteKings++; }
-        else { score -= (15 + posVal); whiteMen++; }
+        else { score -= (15 + posVal); }
       }
     }
-  }
-
-  // End-game va Petrov Uchburchagi taktikasi
-  if (blackKings > 0 && whiteKings > 0) {
-    score += (blackKings - whiteKings) * 15;
   }
 
   const blackMobility = allMoves(b, BLACK).length;
@@ -540,375 +525,4 @@ function evaluateAurora(b) {
 }
 
 function quiescenceSearch(b, alpha, beta, isMaximizing) {
-  let standPat = evaluateAurora(b);
-  if (isMaximizing) {
-    if (standPat >= beta) return beta;
-    if (alpha < standPat) alpha = standPat;
-    const captures = allCaptures(b, BLACK);
-    for (const m of captures) {
-      const nextBoard = applyFullMove(b, m);
-      let score = quiescenceSearch(nextBoard, alpha, beta, false);
-      if (score >= beta) return beta;
-      if (score > alpha) alpha = score;
-    }
-    return alpha;
-  } else {
-    if (standPat <= alpha) return alpha;
-    if (beta > standPat) beta = standPat;
-    const captures = allCaptures(b, WHITE);
-    for (const m of captures) {
-      const nextBoard = applyFullMove(b, m);
-      let score = quiescenceSearch(nextBoard, alpha, beta, true);
-      if (score <= alpha) return alpha;
-      if (score < beta) beta = score;
-    }
-    return beta;
-  }
-}
-
-function alphaBetaAurora(b, depth, alpha, beta, isMaximizing) {
-  if (depth === 0) return quiescenceSearch(b, alpha, beta, isMaximizing);
-
-  const currentSide = isMaximizing ? BLACK : WHITE;
-  const moves = allMoves(b, currentSide);
-
-  if (!moves.length) return isMaximizing ? -5000 : 5000;
-  moves.sort((a, b) => b.captures.length - a.captures.length);
-
-  if (isMaximizing) {
-    let maxEval = -Infinity;
-    for (const m of moves) {
-      const nextBoard = applyFullMove(b, m);
-      const evalVal = alphaBetaAurora(nextBoard, depth - 1, alpha, beta, false);
-      maxEval = Math.max(maxEval, evalVal);
-      alpha = Math.max(alpha, evalVal);
-      if (beta <= alpha) break; // Transposition Cut-off
-    }
-    return maxEval;
-  } else {
-    let minEval = Infinity;
-    for (const m of moves) {
-      const nextBoard = applyFullMove(b, m);
-      const evalVal = alphaBetaAurora(nextBoard, depth - 1, alpha, beta, true);
-      minEval = Math.min(minEval, evalVal);
-      beta = Math.min(beta, evalVal);
-      if (beta <= alpha) break; // Transposition Cut-off
-    }
-    return minEval;
-  }
-}
-
-function aiMove(){
- if(gameOver||turn!==BLACK)return;
- const level=Number($("aiLevel").value)||3;
- const depthMap = { 1: 4, 2: 7, 3: 10 };
- const maxDepth = depthMap[level] || 10;
-
- const moves=allMoves(board,BLACK);
- if(!moves.length){ finishGame("white"); return; }
-
- history.push(clone(board));
- let bestMove=moves[0]; let bestScore=-Infinity;
- moves.sort((a, b) => b.captures.length - a.captures.length);
-
- for(const m of moves){
-  const nextBoard=applyFullMove(board,m);
-  const score=alphaBetaAurora(nextBoard, maxDepth - 1, -Infinity, Infinity, false);
-  if(score>bestScore){ bestScore=score; bestMove=m; }
- }
-
- let current=bestMove;
- while(true){
-  if(current.captures.length) playSound("capture"); else playSound("move");
-  board=applyStep(board,current);
-  replayStates.push(clone(board));
-  movesHistory.push(formatMove(current,"Qora"));
-
-  const next=captureSteps(board,current.to.r,current.to.c);
-  if(!current.captures.length||!next.length)break;
-  current=next[0];
- }
-
- blackSeconds+=increment;
- selected=null; forcedPiece=null; activeHint=null; turn=WHITE;
- drawBoard(); drawMoves(); updateTimers(); checkEnd();
-}
-
-/* CONTROLLERS */
-function startGame(customBoard){
- clearTimeout(aiTimer);
- board=customBoard && Array.isArray(customBoard) ? customBoard : initialBoard();
- replayStates=[clone(board)]; stopTimer();
- turn=WHITE; selected=null; forcedPiece=null; gameOver=false; history=[]; movesHistory=[]; activeHint=null;
-
- const tc=$("timeControl").value.split("+");
- whiteSeconds=Number(tc[0])*60; blackSeconds=whiteSeconds; increment=Number(tc[1]);
-
- drawBoard(); drawMoves(); updateTimers(); startTimer(); show("game");
-}
-
-function gameClick(r,c){
- if(gameOver||turn===BLACK)return;
- const p=board[r][c];
-
- if(forcedPiece){
-  if(selected){
-   const opts=captureSteps(board,selected.r,selected.c);
-   const move=opts.find(x=>x.to.r===r&&x.to.c===c);
-   if(move) makeHumanStep(move);
-  }
-  return;
- }
-
- if(!selected){
-  if(!sameSide(p,turn))return;
-  const captures=allCaptures(board,turn);
-  if(captures.length){ if(captureSteps(board,r,c).length){ selected={r,c}; drawBoard(); } return; }
-  if(simpleSteps(board,r,c).length){ selected={r,c}; drawBoard(); }
-  return;
- }
-
- if(sameSide(p,turn)){
-  const caps=allCaptures(board,turn);
-  if(caps.length){ if(captureSteps(board,r,c).length){ selected={r,c}; drawBoard(); } }
-  else if(simpleSteps(board,r,c).length){ selected={r,c}; drawBoard(); }
-  return;
- }
-
- const captures=allCaptures(board,turn);
- const opts=captures.length?captureSteps(board,selected.r,selected.c):simpleSteps(board,selected.r,selected.c);
- const move=opts.find(x=>x.to.r===r&&x.to.c===c);
- if(move) makeHumanStep(move);
-}
-
-function makeHumanStep(move){
- history.push(clone(board));
- if(move.captures.length) playSound("capture"); else playSound("move");
-
- board=applyStep(board,move);
- replayStates.push(clone(board));
- movesHistory.push(formatMove(move,"Oq"));
- selected={r:move.to.r,c:move.to.c}; activeHint=null;
-
- const next=captureSteps(board,move.to.r,move.to.c);
- if(move.captures.length&&next.length){
-  forcedPiece={r:move.to.r,c:move.to.c};
-  drawBoard(); drawMoves(); return;
- }
-
- forcedPiece=null; selected=null; turn=BLACK; whiteSeconds+=increment;
- drawBoard(); drawMoves(); updateTimers();
- if(checkEnd())return;
- aiTimer=setTimeout(aiMove,300);
-}
-
-function getHint(){
- if(gameOver || turn !== WHITE) return;
- const moves = allMoves(board, WHITE); if(!moves.length) return;
- let bestMove = moves[0]; let minScore = Infinity;
- moves.sort((a,b)=>b.captures.length - a.captures.length);
-
- for(const m of moves){
-  const next = applyFullMove(board, m);
-  const score = alphaBetaAurora(next, 5, -Infinity, Infinity, true);
-  if(score < minScore){ minScore = score; bestMove = m; }
- }
- activeHint = bestMove; drawBoard();
-}
-
-function offerDraw(){
- if(gameOver) return;
- if(confirm("Durang taklif qilasizmi?")){
-  const evalScore = evaluateAurora(board);
-  if(Math.abs(evalScore) < 10) {
-   alert("🤝 Aurora AI durang taklifingizni qabul qildi!");
-   finishGame("draw");
-  } else {
-   alert("❌ Aurora AI durang taklifini rad etdi. Pozitsiya teng emas!");
-  }
- }
-}
-
-function square(r,c){ return "abcdefgh"[c]+(8-r); }
-function formatMove(m,name){ return square(m.from.r,m.from.c)+(m.captures.length?"x":"-")+square(m.to.r,m.to.c); }
-
-function drawBoardGeneric(targetId, bData){
- const root=$(targetId); root.innerHTML=""; root.className="theme-"+boardTheme+" style-"+pieceStyle;
-
- for(let r=0;r<8;r++){
-  for(let c=0;c<8;c++){
-   const cell=document.createElement("div");
-   cell.className="cell "+(((r+c)%2)?"dark":"light");
-   cell.dataset.r=r; cell.dataset.c=c;
-
-   if(targetId==="gameBoard" && selected && selected.r===r && selected.c===c) cell.classList.add("selected");
-   if(targetId==="gameBoard" && activeHint){
-    if(activeHint.from.r===r && activeHint.from.c===c) cell.classList.add("hint-from");
-    if(activeHint.to.r===r && activeHint.to.c===c) cell.classList.add("hint-to");
-   }
-
-   if(targetId==="gameBoard" && selected){
-    const caps=allCaptures(bData,turn);
-    const opts=caps.length?captureSteps(bData,selected.r,selected.c):simpleSteps(bData,selected.r,selected.c);
-    const hit=opts.find(m=>m.to.r===r&&m.to.c===c);
-    if(hit) cell.classList.add(hit.captures.length?"capture":"target");
-   }
-
-   const file=document.createElement("span"); file.className="coord file"; file.textContent="abcdefgh"[c];
-   const rank=document.createElement("span"); rank.className="coord rank"; rank.textContent=8-r;
-   cell.appendChild(file); cell.appendChild(rank);
-
-   const p=bData[r][c];
-   if(p){
-    const piece=document.createElement("div");
-    piece.className="piece "+(isWhite(p)?"white":"black")+" "+(isKing(p)?"king ":"");
-    cell.appendChild(piece);
-   }
-   root.appendChild(cell);
-  }
- }
-}
-
-function drawBoard(){ drawBoardGeneric("gameBoard", board); }
-
-$("gameBoard").addEventListener("click",function(e){
- const cell=e.target.closest(".cell"); if(!cell)return;
- gameClick(Number(cell.dataset.r), Number(cell.dataset.c));
-});
-
-function drawMoves(){
- let text = "";
- for(let i=0; i<movesHistory.length; i+=2){
-  const num = Math.floor(i/2) + 1;
-  const w = movesHistory[i] || "";
-  const b = movesHistory[i+1] || "";
-  text += `${num}. ${w}  ${b}\n`;
- }
- $("moveList").textContent = text || "1. Yurishlar protokoli bu yerda ko'rinadi";
- $("moveList").scrollTop=$("moveList").scrollHeight;
-}
-
-function checkEnd(){
- const moves=allMoves(board,turn);
- if(!moves.length){ finishGame(turn===WHITE?"black":"white"); return true; }
- return false;
-}
-
-function finishGame(winner){
- if(gameOver)return; gameOver=true; stopTimer(); clearTimeout(aiTimer); stats.games++;
- if(winner==="white"){ stats.wins++; stats.elo+=18; }
- else if(winner==="black"){ stats.elo=Math.max(400, stats.elo-14); }
-
- localStorage.setItem("shashkaStats",JSON.stringify(stats)); updateStats();
- saveHistoryRecord(winner);
- setTimeout(()=>{
-  if(winner==="draw") alert("🤝 O'yin durang bilan yakunlandi!");
-  else alert(winner==="white"?"🏆 Oq (Siz) g‘alaba qozondingiz!":"🏆 Qora (Aurora AI) g‘alaba qozondi!");
- },100);
-}
-
-function giveUp(){ if(!gameOver && confirm("Taslim bo‘lasizmi?")) finishGame("black"); }
-
-function undoMove(){
- if(!history.length||gameOver)return; clearTimeout(aiTimer);
- board=history.pop(); turn=WHITE; selected=null; forcedPiece=null; activeHint=null;
- if(movesHistory.length) movesHistory.pop();
- drawBoard(); drawMoves();
-}
-
-function startTimer(){
- stopTimer();
- timer=setInterval(()=>{
-  if(gameOver)return;
-  if(turn===WHITE){
-   whiteSeconds=Math.max(0,whiteSeconds-1); if(whiteSeconds<=0) finishGame("black");
-  }else{
-   blackSeconds=Math.max(0,blackSeconds-1); if(blackSeconds<=0) finishGame("white");
-  }
-  updateTimers();
- },1000);
-}
-
-function stopTimer(){ if(timer){ clearInterval(timer); timer=null; } }
-function timeText(s){ return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0"); }
-function updateTimers(){ $("whiteTime").textContent=timeText(whiteSeconds); $("blackTime").textContent=timeText(blackSeconds); }
-
-/* History */
-function saveHistoryRecord(winner){
- let list=JSON.parse(localStorage.getItem("shashkaHistory")||"[]");
- list.unshift({ date: new Date().toLocaleDateString(), res: winner==="white"?"G'alaba":(winner==="draw"?"Durang":"Mag'lubiyat"), moves: movesHistory.length });
- localStorage.setItem("shashkaHistory", JSON.stringify(list.slice(0, 20)));
-}
-
-/* Analysis */
-function renderAnalysis(){
- let w=0, b=0, wk=0, bk=0;
- for(let r=0;r<8;r++){ for(let c=0;c<8;c++){ let p=board[r][c]; if(p===WHITE)w++; if(p===BLACK)b++; if(p==="W")wk++; if(p==="B")bk++; }}
- $("aw").textContent=w; $("ab").textContent=b; $("awk").textContent=wk; $("abk").textContent=bk;
- $("score").textContent=(evaluateAurora(board)*-1).toFixed(1); show("analysis");
-}
-
-/* Editor */
-let editorBoardData=initialBoard();
-function renderEditor(){ drawBoardGeneric("editorBoard", editorBoardData); show("editor"); }
-$("editorBoard").onclick=(e)=>{
- const cell=e.target.closest(".cell"); if(!cell)return;
- const r=Number(cell.dataset.r), c=Number(cell.dataset.c); if((r+c)%2===0)return;
- const curr=editorBoardData[r][c]; const cycle=[null, WHITE, "W", BLACK, "B"];
- editorBoardData[r][c]=cycle[(cycle.indexOf(curr)+1)%cycle.length];
- drawBoardGeneric("editorBoard", editorBoardData);
-};
-$("clearEditor").onclick=()=>{ editorBoardData=Array.from({length:8},()=>Array(8).fill(null)); renderEditor(); };
-$("resetEditor").onclick=()=>{ editorBoardData=initialBoard(); renderEditor(); };
-$("playEditor").onclick=()=>{ startGame(clone(editorBoardData)); };
-
-/* Profile Save */
-$("saveNameBtn").onclick=()=>{
- playerName=$("nameInput").value||"O'yinchi";
- localStorage.setItem("playerName", playerName);
- updateStats(); alert("Ism saqlandi!");
-};
-
-/* Event Routing */
-$("flipBtn").onclick=()=>{ isFlipped = !isFlipped; $("gameBoard").classList.toggle("flipped", isFlipped); };
-$("aiBtn").onclick=()=>startGame();
-$("flyingBtn").onclick=()=>show("flying");
-$("startFlyingBtn").onclick=()=>{
- const pType = $("positionSelect").value;
- startGame(getFlyingBoard(pType));
-};
-$("undoBtn").onclick=undoMove;
-$("hintBtn").onclick=getHint;
-$("drawBtn").onclick=offerDraw;
-$("giveUpBtn").onclick=giveUp;
-$("analysisBtn").onclick=renderAnalysis;
-$("editorBtn").onclick=renderEditor;
-$("historyBtn").onclick=()=>{ renderHistory(); show("history"); };
-$("topBtn").onclick=()=>show("top");
-$("profileBtn").onclick=()=>show("profile");
-$("settingsBtn").onclick=()=>show("settings");
-$("onlineBtn").onclick=()=>show("online");
-$("tournamentBtn").onclick=()=>show("tournaments");
-
-document.querySelectorAll("[data-back], .back").forEach(btn=>{ btn.onclick=()=>{ show("home"); }; });
-
-document.querySelectorAll(".designBtn").forEach(btn=>{
- btn.onclick=function(){
-  document.querySelectorAll(".designBtn").forEach(b=>b.classList.remove("active"));
-  this.classList.add("active"); boardTheme=this.dataset.theme; localStorage.setItem("boardTheme", boardTheme); drawBoard();
- };
-});
-
-document.querySelectorAll(".pieceBtn").forEach(btn=>{
- btn.onclick=function(){
-  document.querySelectorAll(".pieceBtn").forEach(b=>b.classList.remove("active"));
-  this.classList.add("active"); pieceStyle=this.dataset.piece; localStorage.setItem("pieceStyle", pieceStyle); drawBoard();
- };
-});
-
-/* Startup Initialization */
-updateStats();
-</script>
-</body>
-</html>
-
+  let standPat = e
