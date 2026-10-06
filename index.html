@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>ShashkaPRO - Kestog GrandMaster</title>
+<title>ShashkaPRO - Lidraughts & Gambler Edition</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#0b1017;color:#fff;font-family:Arial,sans-serif;user-select:none;transition:background 0.3s}
@@ -27,7 +27,7 @@ button:active{transform:scale(.97)}
 .timer{color:#e3b746;font-weight:bold;font-size:16px}
 .actions{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0}
 
-/* APP BACKGROUND THEMES */
+/* APP BACKGROUNDS */
 body.bg-dark{background:#0b1017;color:#fff}
 body.bg-blue{background:linear-gradient(135deg, #0d1b2a, #1b263b, #415a77);color:#fff}
 body.bg-purple{background:linear-gradient(135deg, #16001e, #2c003e, #0e0b16);color:#fff}
@@ -39,21 +39,28 @@ body.bg-gray{background:linear-gradient(135deg, #1f2421, #212529, #343a40);color
  width:100%;aspect-ratio:1;display:grid;
  grid-template-columns:repeat(8,1fr);
  grid-template-rows:repeat(8,1fr);
- border:6px solid #302217;border-radius:10px;overflow:hidden;
- box-shadow:0 12px 35px #0009;
+ border:8px solid #2b1d0c;border-radius:8px;overflow:hidden;
+ box-shadow:0 14px 40px rgba(0,0,0,0.8);
  touch-action:manipulation;
  transition:transform 0.4s ease;
 }
 .cell{position:relative;display:flex;align-items:center;justify-content:center}
 
-/* LIDRAUGHTS BOARD THEMES */
-.theme-classic .light{background:#ead2ad}.theme-classic .dark{background:#b88b4a}
-.theme-blue .light{background:#d8e2dc}.theme-blue .dark{background:#5c768d}
-.theme-slate .light{background:#c0c9d0}.theme-slate .dark{background:#4d6475}
-.theme-wood .light{background:#d2a679}.theme-wood .dark{background:#8a5a36}
-.theme-green .light{background:#e2e8c0}.theme-green .dark{background:#7a9a60}
-.theme-purple .light{background:#dcd0e8}.theme-purple .dark{background:#7b5294}
-.theme-dark .light{background:#888888}.theme-dark .dark{background:#333333}
+/* =========================================================
+   LIDRAUGHTS & GAMBLER DOSKA MAVZULARI
+   ========================================================= */
+/* Gambler Wood */
+.theme-gambler-wood .light{background:#e8cb9a}.theme-gambler-wood .dark{background:#8a5229}
+/* Gambler Green Felt */
+.theme-gambler-green .light{background:#dedede}.theme-gambler-green .dark{background:#2a6e3b}
+/* Lidraughts Slate */
+.theme-lid-slate .light{background:#c4ce32}.theme-lid-slate .dark{background:#758391}
+/* Lidraughts Canvas */
+.theme-lid-canvas .light{background:#f0e2cc}.theme-lid-canvas .dark{background:#aa8259}
+/* Lidraughts Wood */
+.theme-lid-wood .light{background:#e6be8a}.theme-lid-wood .dark{background:#9e6332}
+/* Lidraughts Blue */
+.theme-lid-blue .light{background:#dbe4eb}.theme-lid-blue .dark{background:#6082a3}
 
 .cell.selected{box-shadow:inset 0 0 0 4px #00e5ff!important}
 .cell.target{box-shadow:inset 0 0 0 4px #55ff9a!important}
@@ -64,42 +71,80 @@ body.bg-gray{background:linear-gradient(135deg, #1f2421, #212529, #343a40);color
 .coord{position:absolute;font-size:9px;opacity:.55;pointer-events:none}
 .coord.file{bottom:2px;left:3px}.coord.rank{top:2px;right:3px}
 
-/* PIECE STYLES */
+/* =========================================================
+   LIDRAUGHTS & GAMBLER DONA STULLARI (PIECES)
+   ========================================================= */
 .piece{
- width:76%;height:76%;max-width:70px;max-height:70px;
+ width:82%;height:82%;max-width:72px;max-height:72px;
  border-radius:50%;z-index:2;
  position:relative;
  display:flex;align-items:center;justify-content:center;
  font-weight:bold;
- transition:all 0.2s;
+ transition:all 0.15s ease-in-out;
 }
 
-/* 3D Crown */
-.style-3d-crown .white{background:radial-gradient(circle at 35% 25%,#fff,#ddd 50%,#999);border:3px solid #888;box-shadow:inset 0 5px 6px #fff,inset 0 -6px 8px #0008,0 4px 6px #0008}
-.style-3d-crown .black{background:radial-gradient(circle at 35% 25%,#555,#222 50%,#050505);border:3px solid #111;box-shadow:inset 0 4px 6px #888,inset 0 -6px 8px #000d,0 4px 6px #0008}
-.style-3d-crown .white:after{content:"👑";font-size:18px;opacity:0.8}
-.style-3d-crown .black:after{content:"👑";font-size:18px;filter:invert(1);opacity:0.8}
+/* 1. GAMBLER CLASSIC (Relyefli disklar) */
+.style-gambler .white{
+ background: radial-gradient(circle at 35% 35%, #ffffff, #e0e0e0 60%, #b0b0b0);
+ border: 3px solid #888;
+ box-shadow: inset 0 0 0 3px #fff, inset 0 0 0 6px #ccc, inset 0 -6px 8px rgba(0,0,0,0.4), 0 5px 8px rgba(0,0,0,0.6);
+}
+.style-gambler .black{
+ background: radial-gradient(circle at 35% 35%, #444444, #111111 60%, #000000);
+ border: 3px solid #000;
+ box-shadow: inset 0 0 0 3px #555, inset 0 0 0 6px #222, inset 0 -6px 8px rgba(0,0,0,0.9), 0 5px 8px rgba(0,0,0,0.6);
+}
+.style-gambler .king:after{
+ content:"";
+ width:50%;height:50%;
+ border-radius:50%;
+ border: 3px double #d9ad36;
+ background: radial-gradient(circle, #ffe082, #c59b27);
+ box-shadow: 0 0 5px #000;
+}
 
-/* 3D Classic */
-.style-3d-classic .white{background:radial-gradient(circle at 35% 28%,#fff,#eee 42%,#aaa);border:3px solid #666;box-shadow:inset 0 5px 7px #fff8,inset 0 -8px 10px #0009,0 4px 8px #0009}
-.style-3d-classic .black{background:radial-gradient(circle at 35% 28%,#666,#222 45%,#050505);border:3px solid #000;box-shadow:inset 0 5px 7px #fff4,inset 0 -8px 10px #000d,0 4px 8px #0009}
+/* 2. LIDRAUGHTS 3D CROWN */
+.style-lid-3d .white{
+ background: radial-gradient(circle at 35% 25%, #ffffff, #e6e6e6 50%, #b8b8b8);
+ border: 3px solid #999;
+ box-shadow: inset 0 4px 5px #fff, inset 0 -5px 8px rgba(0,0,0,0.4), 0 4px 6px rgba(0,0,0,0.5);
+}
+.style-lid-3d .black{
+ background: radial-gradient(circle at 35% 25%, #555555, #222222 50%, #0a0a0a);
+ border: 3px solid #111;
+ box-shadow: inset 0 4px 5px #777, inset 0 -5px 8px rgba(0,0,0,0.9), 0 4px 6px rgba(0,0,0,0.5);
+}
+.style-lid-3d .white:after{content:"👑";font-size:20px;opacity:0.85}
+.style-lid-3d .black:after{content:"👑";font-size:20px;filter:invert(1);opacity:0.85}
 
-/* Flat Minimal */
-.style-flat .white{background:#ffffff;border:3px solid #cccccc;box-shadow:none}
-.style-flat .black{background:#222222;border:3px solid #000000;box-shadow:none}
+/* 3. LIDRAUGHTS FLAT VECTOR */
+.style-lid-flat .white{
+ background: #ffffff;
+ border: 4px solid #333333;
+ box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+.style-lid-flat .black{
+ background: #222222;
+ border: 4px solid #ffffff;
+ box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+.style-lid-flat .king:before{
+ content:"♔";
+ font-size:32px;
+ color: inherit;
+}
+.style-lid-flat .white.king{color:#222}
+.style-lid-flat .black.king{color:#fff}
 
-/* Neon Light */
-.style-neon .white{background:#112233;border:3px solid #00e5ff;box-shadow:0 0 10px #00e5ff, inset 0 0 10px #00e5ff;color:#00e5ff}
-.style-neon .black{background:#2a002a;border:3px solid #ff00ff;box-shadow:0 0 10px #ff00ff, inset 0 0 10px #ff00ff;color:#ff00ff}
+/* 4. NEON GLOW */
+.style-neon .white{background:#0e1d2f;border:3px solid #00e5ff;box-shadow:0 0 12px #00e5ff, inset 0 0 8px #00e5ff;color:#00e5ff}
+.style-neon .black{background:#220022;border:3px solid #ff00ff;box-shadow:0 0 12px #ff00ff, inset 0 0 8px #ff00ff;color:#ff00ff}
 
-/* Gold Coin */
-.style-coin .white{background:radial-gradient(circle at 30% 30%,#ffe082,#d4af37 50%,#8c6d15);border:3px solid #b8860b;box-shadow:inset 0 4px 5px #fff8,0 3px 6px #000a}
-.style-coin .black{background:radial-gradient(circle at 30% 30%,#a1887f,#4e342e 50%,#1b0000);border:3px solid #3e2723;box-shadow:inset 0 4px 5px #fff4,0 3px 6px #000a}
-
-/* KING STYLES */
+/* GENERAL KING ICON FOR OTHERS */
 .king:before{content:"♛";font-size:26px;color:#d9ad36;text-shadow:0 2px 4px #000}
+.style-gambler .king:before, .style-lid-3d .king:before, .style-lid-flat .king:after{display:none}
 
-.themeGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.themeGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .designBtn.active,.pieceBtn.active,.appBgBtn.active{background:#d7aa3d;color:#111;font-weight:bold}
 .moves{max-height:160px;overflow-y:auto;line-height:1.7;font-family:monospace;background:#0d131d;padding:8px;border-radius:8px}
 select,input[type="text"]{width:100%;padding:11px;border-radius:10px;background:#202b38;color:#fff;border:1px solid #3a4857;margin-bottom:8px}
@@ -151,7 +196,7 @@ select,input[type="text"]{width:100%;padding:11px;border-radius:10px;background:
 <!-- GAME SCREEN -->
 <section id="game" class="screen">
 <div class="header">
-<b id="gameTitle">🤖 Rus Shashkasi (Kestog Engine)</b>
+<b id="gameTitle">🤖 Kestog 64 Engine</b>
 <button class="back" id="gameBack">←</button>
 </div>
 
@@ -230,7 +275,7 @@ select,input[type="text"]{width:100%;padding:11px;border-radius:10px;background:
 <section id="tournaments" class="screen">
 <div class="header"><b>🏆 Turnirlar</b><button class="back" data-back>←</button></div>
 <div class="card">
-<h3>🏆 Lidraughts Arena 64</h3>
+<h3>🏆 Lidraughts & Gambler Arena 64</h3>
 <p>Format: Rus shashkasi arena (1 soatlik o'yinlar)</p>
 <button class="primary" onclick="alert('Turnirga ro\'yxatdan o\'tildi!')">Ro'yxatdan o'tish</button>
 </div>
@@ -290,33 +335,30 @@ select,input[type="text"]{width:100%;padding:11px;border-radius:10px;background:
 </div>
 
 <div class="card">
-<label>🖼️ Ilova Foni (App Background)</label>
-<div class="themeGrid" style="margin-bottom:12px">
-<button class="appBgBtn active" data-bg="bg-dark">🌑 Dark</button>
-<button class="appBgBtn" data-bg="bg-blue">🟦 Blue</button>
-<button class="appBgBtn" data-bg="bg-purple">🟪 Purple</button>
-<button class="appBgBtn" data-bg="bg-wood">🪵 Wood</button>
-<button class="appBgBtn" data-bg="bg-gray">🔘 Gray</button>
-</div>
-
 <label>🎨 Doska Ranglari (Board Themes)</label>
 <div class="themeGrid" style="margin-bottom:12px">
-<button class="designBtn active" data-theme="classic">🟫 Classic</button>
-<button class="designBtn" data-theme="blue">🟦 Blue</button>
-<button class="designBtn" data-theme="slate">🔘 Slate</button>
-<button class="designBtn" data-theme="wood">🪵 Wood</button>
-<button class="designBtn" data-theme="green">🟩 Green</button>
-<button class="designBtn" data-theme="purple">🟪 Purple</button>
-<button class="designBtn" data-theme="dark">🌑 Dark</button>
+<button class="designBtn active" data-theme="gambler-wood">🪵 Gambler Wood</button>
+<button class="designBtn" data-theme="gambler-green">🟩 Gambler Green</button>
+<button class="designBtn" data-theme="lid-slate">🔘 Lidraughts Slate</button>
+<button class="designBtn" data-theme="lid-canvas">🎨 Lidraughts Canvas</button>
+<button class="designBtn" data-theme="lid-wood">🪵 Lidraughts Wood</button>
+<button class="designBtn" data-theme="lid-blue">🟦 Lidraughts Blue</button>
 </div>
 
 <label>⚪ Donalar Dizayni (Piece Styles)</label>
 <div class="themeGrid">
-<button class="pieceBtn active" data-piece="3d-crown">👑 3D Crown</button>
-<button class="pieceBtn" data-piece="3d-classic">⚪ 3D Classic</button>
-<button class="pieceBtn" data-piece="flat">⚪ Flat</button>
-<button class="pieceBtn" data-piece="neon">💜 Neon</button>
-<button class="pieceBtn" data-piece="coin">✨ Gold Coin</button>
+<button class="pieceBtn active" data-piece="gambler">🎲 Gambler Classic</button>
+<button class="pieceBtn" data-piece="lid-3d">👑 Lidraughts 3D</button>
+<button class="pieceBtn" data-piece="lid-flat">⚪ Lidraughts Flat</button>
+<button class="pieceBtn" data-piece="neon">💜 Neon Glow</button>
+</div>
+
+<label style="margin-top:10px;display:block">🖼️ Ilova Foni (App Background)</label>
+<div class="themeGrid">
+<button class="appBgBtn active" data-bg="bg-dark">🌑 Dark</button>
+<button class="appBgBtn" data-bg="bg-blue">🟦 Blue</button>
+<button class="appBgBtn" data-bg="bg-purple">🟪 Purple</button>
+<button class="appBgBtn" data-bg="bg-wood">🪵 Wood</button>
 </div>
 </div>
 </section>
@@ -350,8 +392,8 @@ let isFlipped=false;
 let activeHint=null;
 
 let appBg=localStorage.getItem("appBg")||"bg-dark";
-let boardTheme=localStorage.getItem("boardTheme")||"classic";
-let pieceStyle=localStorage.getItem("pieceStyle")||"3d-crown";
+let boardTheme=localStorage.getItem("boardTheme")||"gambler-wood";
+let pieceStyle=localStorage.getItem("pieceStyle")||"gambler";
 let playerName=localStorage.getItem("playerName")||"O'yinchi";
 let stats=JSON.parse(localStorage.getItem("shashkaStats")||'{"elo":1000,"wins":0,"games":0}');
 
@@ -511,7 +553,7 @@ const POSITION_WEIGHTS = [
   [0, 0, 0, 0, 0, 0, 0, 0],
   [6, 0, 6, 0, 6, 0, 7, 0],
   [0, 4, 0, 4, 0, 4, 0, 3],
-  [3, 0, 8, 0, 8, 0, 3, 0], // Markaz nazorati yuqori baholanadi
+  [3, 0, 8, 0, 8, 0, 3, 0],
   [0, 3, 0, 8, 0, 8, 0, 3],
   [3, 0, 5, 0, 5, 0, 4, 0],
   [0, 7, 0, 6, 0, 6, 0, 6],
@@ -536,7 +578,6 @@ function evaluatePro(b) {
   return score;
 }
 
-// Quiescence Search (Urishlar tugaguncha chuqur tahlil)
 function quiescence(b, alpha, beta, isMaximizing) {
   let standPat = evaluatePro(b);
   if (isMaximizing) {
