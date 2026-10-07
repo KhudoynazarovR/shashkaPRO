@@ -1,4 +1,5 @@
 <!DOCTYPE html><html lang="uz"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Shashka Pro</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 :root{--bg:#ece8dd;--pn:#faf8f2;--tx:#25221c;--mu:#7a7466;--bd:#d3ccba;--ac:#1f6f5c;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#15130f;--pn:#201d18;--tx:#e9e3d2;--mu:#968f7e;--bd:#38342b;--ac:#4fb59a}}
@@ -125,6 +126,10 @@ const T=k=>(L[S.lang]||L.en).split('|')[K.indexOf(k)];
 /* ---------- settings ---------- */
 let S={lang:'uz',lvl:'2',mode:'ai',col:'w',tc:'300+3',th:'classic',ps:'img',theme:'auto',co:true,dots:true,hl:true,mc:true,snd:true,open:'std',mm:false,km:'♛',bw:'100',pz:'80'};
 try{Object.assign(S,JSON.parse(localStorage.getItem('sp_s')||'{}'))}catch(e){}
+const TG=window.Telegram&&Telegram.WebApp;
+if(TG){try{TG.ready();TG.expand();if(TG.disableVerticalSwipes)TG.disableVerticalSwipes();
+ TG.setHeaderColor&&TG.setHeaderColor('bg_color');TG.setBackgroundColor&&TG.setBackgroundColor('bg_color')}catch(e){}}
+const hap=t=>{try{TG&&TG.HapticFeedback&&TG.HapticFeedback.impactOccurred(t)}catch(e){}};
 const sv=()=>{try{localStorage.setItem('sp_s',JSON.stringify(S))}catch(e){}};
 if(!S.v2){S.ps='img';S.pz='90';S.v2=1;sv()}
 let ST={w:0,l:0,d:0};try{Object.assign(ST,JSON.parse(localStorage.getItem('sp_st')||'{}'))}catch(e){}
@@ -521,7 +526,7 @@ function newGame(){G.tok++;const[a,b]=String(S.tc).split('+').map(Number);
  if(e){if(playOpen(e))G.opn={...e,k:S.open};else{G.pos=[init()];G.mv=[];G.cur=0;toast('✗ '+e.n)}}}
  G.flip=G.mode==='ai'&&G.me===-1;G.tc=a>0;G.t=[a*1000,a*1000];G.inc=(b||0)*1000;G.last=Date.now();G.sel=null;G.hint=null;TT.clear();$('an').textContent=G.opn?G.opn.n+': '+G.opn.mv.join(' '):'';tab('play');render();kick()}
 function kick(){if(!G.over&&!G.edit&&G.mode==='ai'&&sideAt(G.cur)!==G.me&&atEnd())aiMove()}
-function doMove(m){const side=sideAt(G.cur);tick();pushMove(m);if(G.tc)G.t[side>0?0:1]+=G.inc;beep(m.caps.length?330:200,.1);checkEnd();render();kick()}
+function doMove(m){const side=sideAt(G.cur);tick();pushMove(m);hap(m.caps.length?'medium':'light');if(G.tc)G.t[side>0?0:1]+=G.inc;beep(m.caps.length?330:200,.1);checkEnd();render();kick()}
 function aiMove(){const tok=++G.tok,side=sideAt(G.cur);G.busy=true;render();
  setTimeout(()=>{if(tok!==G.tok||G.over){G.busy=false;return}const r=bestMove(G.pos[G.cur],side,+S.lvl);G.busy=false;if(!r)return;
   $('an').textContent=`d${r.d} · ${nodes} nodes · ${(r.v/100).toFixed(2)}`;doMove(r.m)},40)}
@@ -597,7 +602,7 @@ $('board').onclick=e=>{const el=e.target.closest('.sq');if(!el)return;const i=+e
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>tab(b.dataset.t));
 document.querySelectorAll('[data-s]').forEach(el=>{const k=el.dataset.s;if(el.type==='checkbox')el.checked=!!S[k];else el.value=S[k];
  el.onchange=()=>{S[k]=el.type==='checkbox'?el.checked:el.value;sv();skin();if(k==='mode'||k==='col'||k==='tc'||k==='lvl'){}render()}});
-function skin(){const r=document.documentElement;if(S.theme==='auto')r.removeAttribute('data-theme');else r.dataset.theme=S.theme;
+function skin(){const r=document.documentElement;if(S.theme==='auto'){if(TG&&TG.initData)r.dataset.theme=TG.colorScheme;else r.removeAttribute('data-theme')}else r.dataset.theme=S.theme;
  document.documentElement.lang=S.lang;document.querySelectorAll('[data-i]').forEach(e=>e.textContent=T(e.dataset.i))}
 $('edside').onchange=()=>{G.s0=+$('edside').value;render()};
 document.onkeydown=e=>{if(/TEXTAREA|SELECT/.test(e.target.tagName))return;const k=e.key.toLowerCase();
