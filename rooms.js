@@ -40,7 +40,7 @@ function verifyInitData(initData) {
   }
 }
 
-function createRooms({ send, clients }) {
+function createRooms({ send, clients, onFinish }) {
   const rooms = new Map();
   const results = []; // tugagan o'yinlar natijasi (bot olib turadi)
 
@@ -129,6 +129,55 @@ function createRooms({ send, clients }) {
     });
     if (results.length > 500) results.shift();
     broadcast(room, { type: "roomFinished", roomId: room.id, winner, reason: room.reason, clock: room.clock });
+    if (typeof onFinish === "function") {
+      try { onFinish(room); } catch (e) { console.error("[onFinish]", e); }
+    }
+  }
+
+  function newRoom(roomId, tcKey) {
+    const t = TCS[tcKey] ? TCS[tcKey] : TCS[DEFAULT_TC];
+    const key = TCS[tcKey] ? tcKey : DEFAULT_TC;
+    return {
+      id: roomId,
+      white: null,
+      black: null,
+      members: new Set(),
+      moves: [],
+      turn: "white",
+      finished: false,
+      winner: null,
+      reason: null,
+      plies: 0,
+      tc: key,
+      timeMs: t[0] * 1000,
+      incMs: t[1] * 1000,
+      clock: { white: t[0] * 1000, black: t[0] * 1000 },
+      drawOffer: null,
+      offerPly: { white: -1, black: -1 },
+      chat: [],
+      names: new Map(),
+      turnStartedAt: 0,
+      lastActive: Date.now()
+    };
+  }
+
+  // Zal/turnir uchun: xonani oldindan ochib, o'yinchilarni uid bo'yicha o'rindiqqa qo'yadi
+  function create(roomId, opts) {
+    if (!ROOM_RE.test(String(roomId))) return null;
+    let room = rooms.get(roomId);
+    if (room) return room;
+    room = newRoom(roomId, opts && opts.tc);
+    if (opts && opts.white) room.white = { uid: String(opts.white.uid), name: opts.white.name, clientId: null };
+    if (opts && opts.black) room.black = { uid: String(opts.black.uid), name: opts.black.name, clientId: null };
+    rooms.set(roomId, room);
+    return room;
+  }
+
+  function forfeit(roomId, winner, reason) {
+    const room = rooms.get(roomId);
+    if (!room || room.finished) return false;
+    finish(room, winner, reason || "forfeit");
+    return true;
   }
 
   function err(c, message) {
@@ -164,28 +213,7 @@ function createRooms({ send, clients }) {
 
       let room = rooms.get(roomId);
       if (!room) {
-        room = {
-          id: roomId,
-          white: null,
-          black: null,
-          members: new Set(),
-          moves: [],
-          turn: "white",
-          finished: false,
-          winner: null,
-          reason: null,
-          plies: 0, // tugallangan navbatlar soni
-          tc: DEFAULT_TC,
-          timeMs: TCS[DEFAULT_TC][0] * 1000,
-          incMs: TCS[DEFAULT_TC][1] * 1000,
-          clock: { white: TCS[DEFAULT_TC][0] * 1000, black: TCS[DEFAULT_TC][0] * 1000 },
-          drawOffer: null,
-          offerPly: { white: -1, black: -1 },
-          chat: [],
-          names: new Map(),
-          turnStartedAt: 0,
-          lastActive: Date.now()
-        };
+        room = newRoom(roomId, DEFAULT_TC);
         rooms.set(roomId, room);
       }
 
@@ -349,7 +377,7 @@ function createRooms({ send, clients }) {
     }
   }, 10 * 60 * 1000).unref();
 
-  return { handle, onClose, rooms, results };
+  return { handle, onClose, rooms, results, create, forfeit, get: id => rooms.get(id) };
 }
 
 module.exports = { createRooms, verifyInitData };
