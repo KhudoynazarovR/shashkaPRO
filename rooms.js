@@ -91,6 +91,7 @@ function createRooms({ send, clients, onFinish }) {
       tc: room.tc,
       tcs: Object.keys(TCS),
       arena: !!room.arena,
+      opening: room.opening,
       berserk: room.berserk,
       drawOffer: room.drawOffer,
       chat: room.chat
@@ -156,6 +157,8 @@ function createRooms({ send, clients, onFinish }) {
       clock: { white: t[0] * 1000, black: t[0] * 1000 },
       arena: false,
       berserk: { white: false, black: false },
+      opening: null,
+      first: "white",
       drawOffer: null,
       offerPly: { white: -1, black: -1 },
       chat: [],
@@ -172,6 +175,11 @@ function createRooms({ send, clients, onFinish }) {
     if (room) return room;
     room = newRoom(roomId, opts && opts.tc);
     room.arena = !!(opts && opts.arena);
+    if (opts && opts.opening && opts.opening.board) {
+      room.opening = { id: String(opts.opening.id), board: String(opts.opening.board), side: opts.opening.side === "b" ? "b" : "w" };
+      room.turn = room.opening.side === "b" ? "black" : "white";
+      room.first = room.turn;
+    }
     if (opts && opts.white) room.white = { uid: String(opts.white.uid), name: opts.white.name, clientId: null };
     if (opts && opts.black) room.black = { uid: String(opts.black.uid), name: opts.black.name, clientId: null };
     rooms.set(roomId, room);
@@ -294,7 +302,7 @@ function createRooms({ send, clients, onFinish }) {
       if (!room.arena) return err(c, "Berserk faqat Arena o‘yinlarida"), true;
       if (room.finished || !room.white || !room.black) return true;
       if (room.berserk[col]) return true;
-      const before = col === "white" ? room.plies === 0 : room.plies <= 1;
+      const before = room.plies <= (col === room.first ? 0 : 1);
       if (!before) return err(c, "Berserk faqat birinchi yurishdan oldin mumkin"), true;
       room.berserk[col] = true;
       room.clock[col] = Math.floor(room.timeMs / 2);

@@ -2,6 +2,8 @@
 // lobby.js — onlayn zal: o'yinchilar ro'yxati, chaqiruv, tezkor o'yin, Shveytsar va Arena turnirlari.
 // O'yinning o'zi rooms.js dagi xonalarda o'tadi (soat, durang, chat shu yerda tayyor).
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 const { verifyInitData } = require('./rooms');
 
 const TCS = ['1+1', '2+2', '3+2', '5+3', '7+5'];
@@ -29,6 +31,22 @@ const ARENA_BERSERK_MIN_PLIES = Number(process.env.ARENA_BERSERK_MIN_PLIES || 14
 const hex = n => crypto.randomBytes(n).toString('hex');
 const cleanName = s => String(s || '').replace(/[\u0000-\u001f<>]/g, ' ').trim().slice(0, 20);
 const cleanTitle = s => String(s || '').replace(/[\u0000-\u001f<>]/g, ' ').trim().slice(0, 30);
+
+// ---- IDF 780 pozitsiyalari (idf780.js dan) ----
+let IDF_LIST = null;
+function idfList() {
+  if (IDF_LIST) return IDF_LIST;
+  try {
+    const src = fs.readFileSync(path.join(__dirname, 'idf780.js'), 'utf8');
+    try { IDF_LIST = new Function(src + '\n;return IDF780;')(); }
+    catch (e) { IDF_LIST = JSON.parse(src.slice(src.indexOf('['), src.lastIndexOf(']') + 1)); }
+  } catch (e) { console.error('[idf780]', e.message); IDF_LIST = []; }
+  return IDF_LIST;
+}
+function pickOpening() {
+  const L = idfList();
+  return L.length ? L[Math.floor(Math.random() * L.length)] : null;
+}
 
 function createLobby({ send, clients, roomsApi }) {
   const queue = new Map();       // uid -> { uid, tc }
@@ -77,7 +95,7 @@ function createLobby({ send, clients, roomsApi }) {
 
   function pubT(t) {
     return {
-      id: t.id, name: t.name, tc: t.tc, status: t.status,
+      id: t.id, name: t.name, tc: t.tc, status: t.status, pos: t.pos || 'std',
       type: t.type || 'swiss', durationMin: t.durationMin || 0, startAt: t.startAt || 0, endAt: t.endAt || 0, ending: !!t.ending,
       creatorUid: t.creatorUid, creatorName: t.creatorName,
       round: t.round, rounds: t.rounds, nextAt: t.nextAt || 0,
@@ -115,8 +133,8 @@ function createLobby({ send, clients, roomsApi }) {
   }
 
   // ---------- xona ochish ----------
-  function openRoom(roomId, tc, w, b, arena) {
-    roomsApi.create(roomId, { tc, arena: !!arena, white: { uid: w.uid, name: w.name }, black: { uid: b.uid, name: b.name } });
+  function openRoom(roomId, tc, w, b, arena, opening) {
+    roomsApi.create(roomId, { tc, arena: !!arena, opening: opening || null, white: { uid: w.uid, name: w.name }, black: { uid: b.uid, name: b.name } });
   }
 
   function makeMatch(a, b, tc, reason) {
@@ -204,7 +222,7 @@ function createLobby({ send, clients, roomsApi }) {
       const roomId = 'T' + t.id + 'R' + t.round + 'B' + (i + 1);
       w.opps.push(b.uid); b.opps.push(w.uid);
       w.colors.w++; b.colors.b++;
-      openRoom(roomId, t.tc, w, b);
+      openRoom(roomId, t.tc, w, b, false, t.pos === 'idf' ? pickOpening() : null);
       const board = { board: i + 1, roomId, white: w.uid, black: b.uid, done: false, winner: null };
       t.cur.push(board);
       roomToBoard.set(roomId, { t, b: board });
@@ -312,7 +330,7 @@ function createLobby({ send, clients, roomsApi }) {
     const roomId = 'A' + t.id + 'G' + (++t.gameNo);
     w.colors.w++; k.colors.b++;
     w.busy = true; k.busy = true;
-    openRoom(roomId, t.tc, w, k, true);
+    openRoom(roomId, t.tc, w, k, true, t.pos === 'idf' ? pickOpening() : null);
     const board = { board: t.gameNo, roomId, white: w.uid, black: k.uid, done: false, winner: null };
     t.cur.push(board);
     roomToBoard.set(roomId, { t, b: board });
@@ -492,7 +510,8 @@ function createLobby({ send, clients, roomsApi }) {
             tc: TCS.includes(m.tc) ? m.tc : DEFAULT_TC,
             creatorUid: me.uid, creatorName: me.name, status: 'reg', created: Date.now(),
             players: new Map(), round: 0, rounds: 0, cur: [], curBye: null, nextAt: 0,
-            durationMin: dur, startAt, endAt: startAt + dur * 60000, gameNo: 0, ending: false
+            durationMin: dur, startAt, endAt: startAt + dur * 60000, gameNo: 0, ending: false,
+            pos: m.pos === 'idf' ? 'idf' : 'std'
           };
           at.players.set(me.uid, newArenaPlayer(me));
           tournaments.set(at.id, at);
@@ -502,7 +521,8 @@ function createLobby({ send, clients, roomsApi }) {
         const t = {
           id: hex(3), name: cleanTitle(m.name) || ('Turnir ' + me.name), tc: TCS.includes(m.tc) ? m.tc : DEFAULT_TC,
           creatorUid: me.uid, creatorName: me.name, status: 'reg', created: Date.now(),
-          players: new Map(), round: 0, rounds: 0, cur: [], curBye: null, nextAt: 0
+          players: new Map(), round: 0, rounds: 0, cur: [], curBye: null, nextAt: 0,
+          pos: m.pos === 'idf' ? 'idf' : 'std'
         };
         t.players.set(me.uid, newPlayer(me));
         tournaments.set(t.id, t);

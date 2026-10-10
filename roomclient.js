@@ -58,7 +58,7 @@
 
   function start(roomId, tg) {
     var st = {
-      color: "spectator", turn: "white", board: initialBoard(), moves: [],
+      color: "spectator", turn: "white", board: startBoard(), moves: [],
       white: null, black: null, whiteOnline: false, blackOnline: false,
       spectators: 0, finished: false, winner: null, reason: null,
       clock: { white: 0, black: 0 }, clockRunning: false, clockAt: 0, timeMs: 0, incMs: 0, tc: "", tcs: [],
@@ -66,6 +66,19 @@
       selected: null, forced: null, pending: false, connected: false, joined: false
     };
     var ws = null, hb = null, gid = guestId();
+    function startBoard() {
+      var o = (typeof st !== "undefined" && st) ? st.opening : null;
+      var b = initialBoard();
+      if (!o || !o.board) return b;
+      var k = 0;
+      for (var r = 0; r < 8; r++) for (var c = 0; c < 8; c++) {
+        if ((r + c) % 2 !== 1) { b[r][c] = 0; continue; }
+        var ch = o.board.charAt(k++);
+        b[r][c] = ch === "w" ? 1 : ch === "b" ? 2 : ch === "W" ? 3 : ch === "B" ? 4 : 0;
+      }
+      return b;
+    }
+
 
     // ---------- UI ----------
     var root = document.createElement("div");
@@ -210,7 +223,7 @@
     }
 
     function rebuild() {
-      var b = initialBoard();
+      var b = startBoard();
       for (var i = 0; i < st.moves.length; i++) b = applyStep(b, st.moves[i]);
       st.board = b;
       st.forced = computeForced(st.moves[st.moves.length - 1]);
@@ -390,6 +403,7 @@
           ? (st.spectators || st.color === "spectator" ? "\n" : "") + "⏱ " + st.tc + " (daqiqa + soniya) · soat birinchi ikki yurishdan keyin ishga tushadi"
           : "");
       elInfo.style.whiteSpace = "pre-line";
+      if (st.opening) elInfo.textContent = "📖 IDF " + st.opening.id + (elInfo.textContent ? "\n" + elInfo.textContent : "");
     }
 
     // ---------- bosish ----------
@@ -441,7 +455,9 @@
         st.white = m.white; st.black = m.black;
         st.whiteOnline = m.whiteOnline; st.blackOnline = m.blackOnline;
         st.spectators = m.spectators || 0;
-        var same = st.moves.length === (m.moves || []).length && st.turn === m.turn;
+        var openNew = (m.opening ? m.opening.id : null) !== (st.opening ? st.opening.id : null);
+        st.opening = m.opening || null;
+        var same = !openNew && st.moves.length === (m.moves || []).length && st.turn === m.turn;
         st.moves = m.moves || [];
         st.turn = m.turn;
         st.finished = !!m.finished;
