@@ -79,7 +79,7 @@
       '<div id="rcTc" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:6px"></div>' +
       '<div id="rcTop" style="width:min(94vw,520px);padding:4px 2px;font-size:15px"></div>' +
       '<div id="rcBoard" style="width:min(94vw,520px);aspect-ratio:1;display:grid;grid-template-columns:repeat(8,1fr);' +
-      'grid-template-rows:repeat(8,1fr);border:6px solid #302217;border-radius:10px;overflow:hidden;' +
+      'grid-template-rows:repeat(8,1fr);border:3px solid #302217;border-radius:8px;overflow:hidden;' +
       'box-shadow:0 12px 35px #0009;touch-action:manipulation"></div>' +
       '<div id="rcBottom" style="width:min(94vw,520px);padding:4px 2px;font-size:15px"></div>' +
       '<div id="rcDraw" style="display:none;margin-top:10px;padding:8px 12px;border-radius:10px;background:#1c2733;text-align:center">' +
@@ -272,6 +272,41 @@
       st.clockAt = performance.now();
     }
 
+    // ---------- platforma doskasi uslubi (mavzu, dona, qirol) ----------
+    var themeCssDone = false;
+    function cloneThemeCss() {
+      if (themeCssDone) return;
+      themeCssDone = true;
+      var css = "";
+      try {
+        for (var i = 0; i < document.styleSheets.length; i++) {
+          var rules;
+          try { rules = document.styleSheets[i].cssRules; } catch (e) { continue; }
+          for (var j = 0; j < rules.length; j++) {
+            var t = rules[j].cssText || "";
+            if (t.indexOf("#board[") === 0) css += t.replace(/#board\[/g, "#rcBoard[") + "\n";
+          }
+        }
+      } catch (e) {}
+      if (css) {
+        var el = document.createElement("style");
+        el.textContent = css;
+        document.head.appendChild(el);
+      }
+    }
+
+    function applySkin() {
+      cloneThemeCss();
+      var th = "classic", ps = "glossy", km = "\u265B", pz = "80";
+      try {
+        if (typeof S === "object" && S) { th = S.th || th; ps = S.ps || ps; km = S.km || km; pz = S.pz || pz; }
+      } catch (e) {}
+      elBoard.dataset.th = th;
+      elBoard.dataset.ps = ps;
+      elBoard.style.setProperty("--km", "'" + km + "'");
+      elBoard.style.setProperty("--pz", pz + "%");
+    }
+
     function render() {
       var fl = flipped();
       var topColor = fl ? "white" : "black";
@@ -281,21 +316,25 @@
       updateClocks();
 
       var opts = options();
+      applySkin();
+      var lastMv = st.moves.length ? st.moves[st.moves.length - 1] : null;
       elBoard.innerHTML = "";
       for (var dr = 0; dr < 8; dr++) {
         for (var dc = 0; dc < 8; dc++) {
           var r = fl ? 7 - dr : dr, c = fl ? 7 - dc : dc;
           var cell = document.createElement("div");
-          cell.className = "cell " + (((r + c) % 2) ? "dark" : "light");
+          cell.className = "cell sq " + (((r + c) % 2) ? "d" : "l");
           cell.dataset.r = r; cell.dataset.c = c;
-          if (st.selected && st.selected.r === r && st.selected.c === c) cell.classList.add("selected");
+          if (lastMv && lastMv.from && lastMv.to &&
+              ((lastMv.from.r === r && lastMv.from.c === c) || (lastMv.to.r === r && lastMv.to.c === c))) cell.classList.add("lm");
+          if (st.selected && st.selected.r === r && st.selected.c === c) cell.classList.add("sel");
           for (var k = 0; k < opts.length; k++) {
-            if (opts[k].to.r === r && opts[k].to.c === c) cell.classList.add(opts[k].captures.length ? "capture" : "target");
+            if (opts[k].to.r === r && opts[k].to.c === c) cell.classList.add(opts[k].captures.length ? "cp" : "tg");
           }
           var p = st.board[r][c];
           if (p) {
-            var pc = document.createElement("div");
-            pc.className = "piece " + (isWhite(p) ? "white" : "black") + (isKing(p) ? " king" : "");
+            var pc = document.createElement("i");
+            pc.className = "piece pc " + (isWhite(p) ? "w" : "b") + (isKing(p) ? " k" : "");
             cell.appendChild(pc);
           }
           elBoard.appendChild(cell);
