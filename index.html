@@ -61,6 +61,7 @@ textarea{width:100%;height:120px;font:12px ui-monospace,monospace}
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#222;color:#fff;padding:8px 14px;border-radius:20px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:9}
 #toast.on{opacity:1}
 #board[data-th=std]{background:url(standard_board.jpg) center/100% 100%}#board[data-th=std] .sq.l,#board[data-th=std] .sq.d{background:transparent}
+#dt-fmjd,#dt-idf,button[onclick="saveDT()"],.cnt:has(+#dt-fmjd),.cnt:has(+#dt-idf){display:none}
 </style></head><body><div class="wrap">
 <header><h1>⛀ Shashka Pro</h1><select data-s="lang"><option value="uz">O'zbek</option><option value="ru">Русский</option><option value="en">English</option></select></header>
 <main>
@@ -96,7 +97,7 @@ textarea{width:100%;height:120px;font:12px ui-monospace,monospace}
 <div class="row"><span>Last move</span><input type="checkbox" data-s="hl"></div>
 <div class="row"><span>Forced capture glow</span><input type="checkbox" data-s="mc"></div>
 <div class="row"><span>Sound</span><input type="checkbox" data-s="snd"></div>
-<div class="row"><span>Debyut / Дебют</span><select data-s="open"><option value="std">Standart</option><option value="fmjd">FMJD Drawing Table 64</option><option value="idf">IDF Drawing Table 64</option><option value="idf780">IDF qura (780 pozitsiya)</option></select></div>
+<div class="row"><span>Debyut / Дебют</span><select data-s="open"><option value="std">Standart</option><option value="idf780">IDF qura (780 pozitsiya)</option></select></div>
 <div class="row"><span>Mini-match (rang almashadi)</span><input type="checkbox" data-s="mm"></div>
 <div class="cnt">FMJD (1-I: ab4 ba5 ...)</div><textarea id="dt-fmjd"></textarea>
 <div class="cnt">IDF</div><textarea id="dt-idf"></textarea><button class="p" onclick="saveDT()">💾 Saqlash</button>
@@ -133,6 +134,7 @@ if(TG){try{TG.ready();TG.expand();if(TG.disableVerticalSwipes)TG.disableVertical
 const hap=t=>{try{TG&&TG.HapticFeedback&&TG.HapticFeedback.impactOccurred(t)}catch(e){}};
 const sv=()=>{try{localStorage.setItem('sp_s',JSON.stringify(S))}catch(e){}};
 if(!S.v3){S.th='std';S.v3=1;sv()}
+if(S.open==='fmjd'||S.open==='idf'){S.open='std';sv()}
 if(!S.v2){S.ps='img';S.pz='90';S.v2=1;sv()}
 let ST={w:0,l:0,d:0};try{Object.assign(ST,JSON.parse(localStorage.getItem('sp_st')||'{}'))}catch(e){}
 const svs=()=>{try{localStorage.setItem('sp_st',JSON.stringify(ST))}catch(e){}};
