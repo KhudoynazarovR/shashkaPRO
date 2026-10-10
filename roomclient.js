@@ -62,7 +62,7 @@
       white: null, black: null, whiteOnline: false, blackOnline: false,
       spectators: 0, finished: false, winner: null, reason: null,
       clock: { white: 0, black: 0 }, clockRunning: false, clockAt: 0, timeMs: 0, incMs: 0, tc: "", tcs: [],
-      drawOffer: null, chat: [], unread: 0, chatOpen: false,
+      arena: false, berserk: { white: false, black: false }, drawOffer: null, chat: [], unread: 0, chatOpen: false,
       selected: null, forced: null, pending: false, connected: false, joined: false
     };
     var ws = null, hb = null, gid = guestId();
@@ -131,6 +131,16 @@
     };
     root.querySelector("#rcDrawYes").onclick = function () { send({ type: "roomDrawAccept", roomId: roomId }); };
     root.querySelector("#rcDrawNo").onclick = function () { send({ type: "roomDrawDecline", roomId: roomId }); };
+
+    var elBerserk = document.createElement("button");
+    elBerserk.textContent = "⚡ Berserk";
+    elBerserk.className = elResign.className;
+    elBerserk.style.display = "none";
+    elResign.parentNode.insertBefore(elBerserk, elResign);
+    elBerserk.onclick = function () {
+      if (st.finished || st.color === "spectator") return;
+      send({ type: "roomBerserk", roomId: roomId });
+    };
 
     elChatBtn.onclick = function () {
       st.chatOpen = !st.chatOpen;
@@ -236,7 +246,7 @@
       el.style.justifyContent = "space-between";
       el.style.alignItems = "center";
       var l = document.createElement("span");
-      l.textContent = nameLine(color);
+      l.textContent = nameLine(color) + (st.berserk && st.berserk[color] ? " ⚡" : "");
       var r = document.createElement("span");
       r.setAttribute("data-clock", color);
       r.style.cssText = "font-weight:bold;min-width:64px;text-align:center;padding:3px 8px;border-radius:6px;background:#1c2733";
@@ -361,6 +371,9 @@
       var playing = st.color !== "spectator" && !st.finished && bothIn();
       elResign.style.display = playing ? "" : "none";
       elDrawOffer.style.display = (playing && st.moves.length >= 2 && !st.drawOffer) ? "" : "none";
+      var canBz = playing && st.arena && st.berserk && !st.berserk[st.color] &&
+        (st.color === "white" ? st.moves.length === 0 : st.moves.length <= 1);
+      elBerserk.style.display = canBz ? "" : "none";
       if (!st.finished && st.drawOffer && st.color !== "spectator") {
         elDraw.style.display = "";
         var mine = st.drawOffer === st.color;
@@ -439,6 +452,8 @@
         st.tc = m.tc || "";
         st.tcs = m.tcs || [];
         st.drawOffer = m.drawOffer || null;
+        st.arena = !!m.arena;
+        st.berserk = m.berserk || { white: false, black: false };
         if (m.chat) { st.chat = m.chat; rebuildChat(); }
         setClock(m.clock, m.clockRunning);
         if (!same) rebuild();   // yurishlar o'zgarmagan bo'lsa, tanlov saqlanadi
@@ -463,6 +478,10 @@
         if (m.declined) elInfo.textContent = "❌ Durang taklifi rad etildi";
         render();
         if (m.declined) elInfo.textContent = "❌ Durang taklifi rad etildi";
+      } else if (m.type === "roomBerserk" && m.roomId === roomId) {
+        st.berserk[m.color] = true;
+        setClock(m.clock, st.clockRunning);
+        render();
       } else if (m.type === "roomChat" && m.roomId === roomId) {
         st.chat.push(m.msg);
         if (st.chat.length > 50) st.chat.shift();

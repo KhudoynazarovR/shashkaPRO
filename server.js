@@ -218,6 +218,7 @@ function serveFile(req, res) {
     if (!html.includes("lobbyclient.js")) {
       html = html.replace("</body>", '<script src="/lobbyclient.js"></script>\n</body>');
     }
+    html = html.replace(/(lobbyclient|roomclient)\.js(\?v=\d+)?/g, "$1.js?v=" + Date.now());
     res.writeHead(200, {
       "Content-Type": types[".html"],
       "Cache-Control": "no-cache"
@@ -226,7 +227,8 @@ function serveFile(req, res) {
   }
 
   res.writeHead(200, {
-    "Content-Type": types[ext]
+    "Content-Type": types[ext],
+    "Cache-Control": "no-cache"
   });
 
   fs.createReadStream(file).pipe(res);

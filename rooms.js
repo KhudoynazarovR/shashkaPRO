@@ -90,6 +90,8 @@ function createRooms({ send, clients, onFinish }) {
       incMs: room.incMs,
       tc: room.tc,
       tcs: Object.keys(TCS),
+      arena: !!room.arena,
+      berserk: room.berserk,
       drawOffer: room.drawOffer,
       chat: room.chat
     };
@@ -152,6 +154,8 @@ function createRooms({ send, clients, onFinish }) {
       timeMs: t[0] * 1000,
       incMs: t[1] * 1000,
       clock: { white: t[0] * 1000, black: t[0] * 1000 },
+      arena: false,
+      berserk: { white: false, black: false },
       drawOffer: null,
       offerPly: { white: -1, black: -1 },
       chat: [],
@@ -167,6 +171,7 @@ function createRooms({ send, clients, onFinish }) {
     let room = rooms.get(roomId);
     if (room) return room;
     room = newRoom(roomId, opts && opts.tc);
+    room.arena = !!(opts && opts.arena);
     if (opts && opts.white) room.white = { uid: String(opts.white.uid), name: opts.white.name, clientId: null };
     if (opts && opts.black) room.black = { uid: String(opts.black.uid), name: opts.black.name, clientId: null };
     rooms.set(roomId, room);
@@ -258,7 +263,7 @@ function createRooms({ send, clients, onFinish }) {
           return true;
         }
       }
-      if (wasRunning && !m.keepTurn) room.clock[col] += room.incMs; // inkrement
+      if (wasRunning && !m.keepTurn && !room.berserk[col]) room.clock[col] += room.incMs; // inkrement (berserkda yo'q)
       room.moves.push(m.move);
       if (room.drawOffer) {
         room.drawOffer = null; // yurish bilan taklif rad etiladi
@@ -284,7 +289,21 @@ function createRooms({ send, clients, onFinish }) {
       return true;
     }
 
+    if (m.type === "roomBerserk") {
+      if (!col) return err(c, "Siz tomoshabinsiz"), true;
+      if (!room.arena) return err(c, "Berserk faqat Arena o‘yinlarida"), true;
+      if (room.finished || !room.white || !room.black) return true;
+      if (room.berserk[col]) return true;
+      const before = col === "white" ? room.plies === 0 : room.plies <= 1;
+      if (!before) return err(c, "Berserk faqat birinchi yurishdan oldin mumkin"), true;
+      room.berserk[col] = true;
+      room.clock[col] = Math.floor(room.timeMs / 2);
+      broadcast(room, { type: "roomBerserk", roomId, color: col, clock: currentClock(room) });
+      return true;
+    }
+
     if (m.type === "roomSetTime") {
+      if (room.arena) return err(c, "Arena o‘yinida vaqtni o‘zgartirib bo‘lmaydi"), true;
       if (col !== "white") return err(c, "Vaqtni faqat xona egasi (oq) tanlaydi"), true;
       if (room.moves.length > 0 || room.finished) return err(c, "O‘yin boshlangan, vaqtni o‘zgartirib bo‘lmaydi"), true;
       const t = TCS[m.tc];

@@ -1,5 +1,5 @@
 'use strict';
-// lobby.js — onlayn zal: o'yinchilar ro'yxati, chaqiruv, tezkor o'yin va Shveytsar turnirlari.
+// lobby.js — onlayn zal: o'yinchilar ro'yxati, chaqiruv, tezkor o'yin, Shveytsar va Arena turnirlari.
 // O'yinning o'zi rooms.js dagi xonalarda o'tadi (soat, durang, chat shu yerda tayyor).
 const crypto = require('crypto');
 const { verifyInitData } = require('./rooms');
@@ -14,6 +14,17 @@ const MAX_T_PLAYERS = 64;
 const MAX_TOURNAMENTS = 20;
 const REG_TTL = 2 * 3600 * 1000;
 const KEEP_FINISHED = 6 * 3600 * 1000;
+
+// ---- Arena sozlamalari ----
+const ARENA_DURATIONS = [10, 20, 30, 45, 60, 90];   // daqiqa
+const ARENA_STARTS = [0, 2, 5, 10, 30];             // boshlanishgacha kutish (daqiqa)
+const ARENA_MAX_PLAYERS = 200;
+const ARENA_FIRE_AFTER = 2;                          // ketma-ket shuncha g'alabadan keyin olov yonadi
+const ARENA_PAIR_DELAY_MS = Number(process.env.ARENA_PAIR_DELAY_MS || 5000);       // o'yin tugagach juftlashgacha
+const ARENA_REMATCH_WAIT_MS = Number(process.env.ARENA_REMATCH_WAIT_MS || 15000);  // bir xil raqibga qaytishdan oldin kutish
+const ARENA_NOSHOW_MS = Number(process.env.ARENA_NOSHOW_MS || 30000);              // o'yinga kirmaganlar uchun kutish
+const ARENA_MIN_DRAW_PLIES = Number(process.env.ARENA_MIN_DRAW_PLIES || 0);        // shundan qisqa durangga ochko yo'q (0 = o'chirilgan)
+const ARENA_BERSERK_MIN_PLIES = Number(process.env.ARENA_BERSERK_MIN_PLIES || 14); // berserk bonusi uchun minimal yarim-yurishlar soni
 
 const hex = n => crypto.randomBytes(n).toString('hex');
 const cleanName = s => String(s || '').replace(/[\u0000-\u001f<>]/g, ' ').trim().slice(0, 20);
@@ -54,12 +65,23 @@ function createLobby({ send, clients, roomsApi }) {
     return arr;
   }
 
+  function arenaStandings(t) {
+    const arr = [...t.players.values()].map(p => ({
+      uid: p.uid, name: p.name, score: p.score, buch: 0, withdrawn: p.withdrawn,
+      games: p.games, wins: p.wins, fire: p.streak >= ARENA_FIRE_AFTER, busy: p.busy, at: p.lastScoreAt
+    }));
+    // ochko teng bo'lsa shu ochkoga birinchi yetgan yuqorida
+    arr.sort((a, b) => b.score - a.score || a.at - b.at || a.name.localeCompare(b.name));
+    return arr;
+  }
+
   function pubT(t) {
     return {
       id: t.id, name: t.name, tc: t.tc, status: t.status,
+      type: t.type || 'swiss', durationMin: t.durationMin || 0, startAt: t.startAt || 0, endAt: t.endAt || 0, ending: !!t.ending,
       creatorUid: t.creatorUid, creatorName: t.creatorName,
       round: t.round, rounds: t.rounds, nextAt: t.nextAt || 0,
-      players: standings(t),
+      players: t.type === 'arena' ? arenaStandings(t) : standings(t),
       boards: t.cur.map(b => ({
         board: b.board, roomId: b.roomId, white: b.white, black: b.black,
         whiteName: t.players.get(b.white).name, blackName: t.players.get(b.black).name,
@@ -93,8 +115,8 @@ function createLobby({ send, clients, roomsApi }) {
   }
 
   // ---------- xona ochish ----------
-  function openRoom(roomId, tc, w, b) {
-    roomsApi.create(roomId, { tc, white: { uid: w.uid, name: w.name }, black: { uid: b.uid, name: b.name } });
+  function openRoom(roomId, tc, w, b, arena) {
+    roomsApi.create(roomId, { tc, arena: !!arena, white: { uid: w.uid, name: w.name }, black: { uid: b.uid, name: b.name } });
   }
 
   function makeMatch(a, b, tc, reason) {
@@ -195,19 +217,21 @@ function createLobby({ send, clients, roomsApi }) {
     push();
   }
 
+  function forfeitIdle(b) {
+    if (b.done) return;
+    const room = roomsApi.get(b.roomId);
+    if (!room || room.finished || room.plies >= 2) return; // soat o'zi hal qiladi
+    const on = seat => !!(seat && seat.clientId && clients.has(seat.clientId));
+    const wOn = on(room.white), bOn = on(room.black);
+    if (!wOn && !bOn) { room.noshowBoth = true; roomsApi.forfeit(b.roomId, 'draw', 'noshow'); }
+    else if (wOn && !bOn) roomsApi.forfeit(b.roomId, 'white', 'noshow');
+    else if (!wOn && bOn) roomsApi.forfeit(b.roomId, 'black', 'noshow');
+    else roomsApi.forfeit(b.roomId, room.turn === 'white' ? 'black' : 'white', 'noshow'); // yurish navbatidagi jim o'tirdi
+  }
+
   function checkNoShows(t, roundNo) {
     if (t.status !== 'running' || t.round !== roundNo) return;
-    for (const b of t.cur.slice()) {
-      if (b.done) continue;
-      const room = roomsApi.get(b.roomId);
-      if (!room || room.finished || room.plies >= 2) continue; // soat o'zi hal qiladi
-      const on = seat => !!(seat && seat.clientId && clients.has(seat.clientId));
-      const wOn = on(room.white), bOn = on(room.black);
-      if (!wOn && !bOn) { room.noshowBoth = true; roomsApi.forfeit(b.roomId, 'draw', 'noshow'); }
-      else if (wOn && !bOn) roomsApi.forfeit(b.roomId, 'white', 'noshow');
-      else if (!wOn && bOn) roomsApi.forfeit(b.roomId, 'black', 'noshow');
-      else roomsApi.forfeit(b.roomId, room.turn === 'white' ? 'black' : 'white', 'noshow'); // yurish navbatidagi jim o'tirdi
-    }
+    for (const b of t.cur.slice()) forfeitIdle(b);
   }
 
   function onRoomFinished(room) {
@@ -215,6 +239,7 @@ function createLobby({ send, clients, roomsApi }) {
     if (!ref) return;
     const { t, b } = ref;
     if (b.done) return;
+    if (t.type === 'arena') return arenaGameDone(t, b, room);
     b.done = true;
     b.winner = room.winner;
     const pw = t.players.get(b.white), pb = t.players.get(b.black);
@@ -250,13 +275,132 @@ function createLobby({ send, clients, roomsApi }) {
     t.status = 'finished';
     t.finishedAt = Date.now();
     t.nextAt = 0;
-    const st = standings(t);
+    const st = t.type === 'arena' ? arenaStandings(t) : standings(t);
     const top = st[0] ? st[0].name : '-';
     for (const p of t.players.values()) {
       const rank = st.findIndex(x => x.uid === p.uid) + 1;
       toast(p.uid, '🏆 ' + t.name + ' tugadi. G‘olib: ' + top + '. Sizning o‘rningiz: ' + rank);
     }
     push();
+  }
+
+  // ---------- Arena ----------
+  function newArenaPlayer(me) {
+    const now = Date.now();
+    return {
+      uid: me.uid, name: me.name, score: 0, streak: 0, games: 0, wins: 0, draws: 0, losses: 0,
+      busy: false, withdrawn: false, lastOpp: null, colors: { w: 0, b: 0 },
+      waitingSince: now, lastScoreAt: now
+    };
+  }
+
+  function startArena(t) {
+    if (t.status !== 'reg') return;
+    t.status = 'running';
+    const now = Date.now();
+    for (const p of t.players.values()) {
+      p.waitingSince = now - ARENA_PAIR_DELAY_MS;
+      toast(p.uid, '⚔️ ' + t.name + ' boshlandi!');
+    }
+    push();
+  }
+
+  function startArenaGame(t, a, b) {
+    const da = a.colors.w - a.colors.b, db = b.colors.w - b.colors.b;
+    let w = a, k = b;
+    if (db < da || (da === db && Math.random() < 0.5)) { w = b; k = a; }
+    const roomId = 'A' + t.id + 'G' + (++t.gameNo);
+    w.colors.w++; k.colors.b++;
+    w.busy = true; k.busy = true;
+    openRoom(roomId, t.tc, w, k, true);
+    const board = { board: t.gameNo, roomId, white: w.uid, black: k.uid, done: false, winner: null };
+    t.cur.push(board);
+    roomToBoard.set(roomId, { t, b: board });
+    sendUid(w.uid, { type: 'lbGo', roomId, reason: 'arena', tname: t.name, round: 0, color: 'white', opponent: k.name, tc: t.tc });
+    sendUid(k.uid, { type: 'lbGo', roomId, reason: 'arena', tname: t.name, round: 0, color: 'black', opponent: w.name, tc: t.tc });
+    const timer = setTimeout(() => forfeitIdle(board), ARENA_NOSHOW_MS);
+    if (timer.unref) timer.unref();
+  }
+
+  function arenaPair(t) {
+    const now = Date.now();
+    const avail = shuffle([...t.players.values()].filter(p =>
+      !p.withdrawn && !p.busy && now - p.waitingSince >= ARENA_PAIR_DELAY_MS && connsOf(p.uid).length
+    )).sort((a, b) => b.score - a.score);
+    const used = new Set();
+    let made = false;
+    for (let i = 0; i < avail.length; i++) {
+      const a = avail[i];
+      if (used.has(a)) continue;
+      let pick = null;
+      for (let j = i + 1; j < avail.length; j++) {
+        const b = avail[j];
+        if (used.has(b)) continue;
+        const rematch = a.lastOpp === b.uid || b.lastOpp === a.uid;
+        if (rematch && !(now - a.waitingSince >= ARENA_REMATCH_WAIT_MS && now - b.waitingSince >= ARENA_REMATCH_WAIT_MS)) continue;
+        pick = b; break;
+      }
+      if (!pick) continue;
+      used.add(a); used.add(pick);
+      startArenaGame(t, a, pick);
+      made = true;
+    }
+    if (made) push();
+  }
+
+  // Ochko: g'alaba 2, durang 1. Olovda (ketma-ket 2 g'alabadan keyin) g'alaba 4, durang 2.
+  // Durang yoki mag'lubiyat olovni o'chiradi.
+  function arenaGameDone(t, b, room) {
+    b.done = true;
+    b.winner = room.winner;
+    t.cur = t.cur.filter(x => x !== b);
+    roomToBoard.delete(room.id);
+    const pw = t.players.get(b.white), pb = t.players.get(b.black);
+    const now = Date.now();
+    // Berserk: rooms.js room.berserk = { white: bool, black: bool } ni to'ldiradi.
+    // Berserk qilgan o'yinchi g'alaba qozonsa +1 ochko (kamida ARENA_BERSERK_MIN_PLIES yurishdan keyin).
+    const award = (p, kind, color) => {
+      const fire = p.streak >= ARENA_FIRE_AFTER;
+      let pts = 0;
+      if (kind === 'win') {
+        pts = fire ? 4 : 2; p.streak++; p.wins++;
+        const bz = room.berserk && room.berserk[color];
+        if (bz && room.plies >= ARENA_BERSERK_MIN_PLIES) pts += 1;
+      }
+      else if (kind === 'draw') {
+        pts = (room.plies < ARENA_MIN_DRAW_PLIES) ? 0 : (fire ? 2 : 1);
+        p.streak = 0; p.draws++;
+      } else { p.streak = 0; p.losses++; }
+      if (pts) { p.score += pts; p.lastScoreAt = now; }
+      p.games++;
+    };
+    if (room.noshowBoth) {
+      for (const p of [pw, pb]) { p.withdrawn = true; toast(p.uid, '⚠️ ' + t.name + ': o‘yinga kirmadingiz, pauzadasiz. Qaytish uchun „Qo‘shilish“ni bosing'); }
+    } else {
+      if (room.winner === 'white') { award(pw, 'win', 'white'); award(pb, 'loss', 'black'); }
+      else if (room.winner === 'black') { award(pb, 'win', 'black'); award(pw, 'loss', 'white'); }
+      else { award(pw, 'draw', 'white'); award(pb, 'draw', 'black'); }
+      if (room.reason === 'noshow') {
+        const lost = room.winner === 'white' ? pb : room.winner === 'black' ? pw : null;
+        if (lost) { lost.withdrawn = true; toast(lost.uid, '⚠️ ' + t.name + ': o‘yinga kirmadingiz, pauzadasiz. Qaytish uchun „Qo‘shilish“ni bosing'); }
+      }
+    }
+    pw.lastOpp = pb.uid; pb.lastOpp = pw.uid;
+    pw.busy = false; pb.busy = false;
+    pw.waitingSince = now; pb.waitingSince = now;
+    push();
+  }
+
+  function arenaTick() {
+    const now = Date.now();
+    for (const t of tournaments.values()) {
+      if (t.type !== 'arena') continue;
+      if (t.status === 'reg' && now >= t.startAt) startArena(t);
+      if (t.status !== 'running') continue;
+      if (!t.ending && now >= t.endAt) { t.ending = true; push(); }
+      if (t.ending) { if (!t.cur.length) finishT(t); continue; } // boshlangan o'yinlar oxirigacha o'ynaladi
+      arenaPair(t);
+    }
   }
 
   function startT(t) {
@@ -339,6 +483,22 @@ function createLobby({ send, clients, roomsApi }) {
       case 'lbTCreate': {
         if (tournaments.size >= MAX_TOURNAMENTS) return err(c, 'Turnirlar soni limitga yetdi'), true;
         if ([...tournaments.values()].some(t => t.creatorUid === me.uid && t.status === 'reg')) return err(c, 'Sizda allaqachon ochiq turnir bor'), true;
+        if (m.kind === 'arena') {
+          const dur = ARENA_DURATIONS.includes(Number(m.duration)) ? Number(m.duration) : 30;
+          const delay = ARENA_STARTS.includes(Number(m.startIn)) ? Number(m.startIn) : 5;
+          const startAt = Date.now() + delay * 60000;
+          const at = {
+            id: hex(3), type: 'arena', name: cleanTitle(m.name) || ('Arena ' + me.name),
+            tc: TCS.includes(m.tc) ? m.tc : DEFAULT_TC,
+            creatorUid: me.uid, creatorName: me.name, status: 'reg', created: Date.now(),
+            players: new Map(), round: 0, rounds: 0, cur: [], curBye: null, nextAt: 0,
+            durationMin: dur, startAt, endAt: startAt + dur * 60000, gameNo: 0, ending: false
+          };
+          at.players.set(me.uid, newArenaPlayer(me));
+          tournaments.set(at.id, at);
+          push();
+          break;
+        }
         const t = {
           id: hex(3), name: cleanTitle(m.name) || ('Turnir ' + me.name), tc: TCS.includes(m.tc) ? m.tc : DEFAULT_TC,
           creatorUid: me.uid, creatorName: me.name, status: 'reg', created: Date.now(),
@@ -351,6 +511,17 @@ function createLobby({ send, clients, roomsApi }) {
       }
       case 'lbTJoin': {
         const t = tournaments.get(String(m.tid));
+        if (t && t.type === 'arena') {
+          if (t.status === 'finished' || t.ending) return err(c, 'Arena tugagan'), true;
+          const ex = t.players.get(me.uid);
+          if (ex) { if (ex.withdrawn) { ex.withdrawn = false; ex.waitingSince = Date.now(); } }
+          else {
+            if (t.players.size >= ARENA_MAX_PLAYERS) return err(c, 'Arena to‘lgan'), true;
+            t.players.set(me.uid, newArenaPlayer(me));
+          }
+          push();
+          break;
+        }
         if (!t || t.status !== 'reg') return err(c, 'Turnir ro‘yxatdan o‘tishga yopiq'), true;
         if (t.players.size >= MAX_T_PLAYERS) return err(c, 'Turnir to‘lgan'), true;
         if (!t.players.has(me.uid)) t.players.set(me.uid, newPlayer(me));
@@ -359,6 +530,12 @@ function createLobby({ send, clients, roomsApi }) {
       }
       case 'lbTLeave': {
         const t = tournaments.get(String(m.tid));
+        if (t && t.type === 'arena' && t.status !== 'finished') {
+          const p = t.players.get(me.uid);
+          if (p) { if (t.status === 'reg' && t.creatorUid !== me.uid) t.players.delete(me.uid); else p.withdrawn = true; }
+          push();
+          break;
+        }
         if (!t || t.status !== 'reg' || t.creatorUid === me.uid) break;
         t.players.delete(me.uid);
         push();
@@ -368,6 +545,12 @@ function createLobby({ send, clients, roomsApi }) {
         const t = tournaments.get(String(m.tid));
         if (!t || t.status !== 'reg') break;
         if (t.creatorUid !== me.uid) return err(c, 'Turnirni faqat uni ochgan o‘yinchi boshlay oladi'), true;
+        if (t.type === 'arena') {
+          if (t.players.size < 2) return err(c, 'Boshlash uchun kamida 2 o‘yinchi kerak'), true;
+          t.startAt = Date.now(); t.endAt = t.startAt + t.durationMin * 60000;
+          startArena(t);
+          break;
+        }
         if (t.players.size < MIN_T_PLAYERS) return err(c, 'Boshlash uchun kamida ' + MIN_T_PLAYERS + ' o‘yinchi kerak'), true;
         startT(t);
         break;
@@ -412,7 +595,9 @@ function createLobby({ send, clients, roomsApi }) {
     if (changed) push();
   }, 10000).unref();
 
-  return { handle, onClose, onRoomFinished, tournaments };
+  setInterval(arenaTick, 2000).unref();
+
+  return { handle, onClose, onRoomFinished, tournaments, arenaTick };
 }
 
 module.exports = { createLobby };
