@@ -1,0 +1,11 @@
+data/
+.env
+*.backup
+*.before*
+*.old
+*.OLD-BACKUP
+*_backup.html
+*.russian-backup
+index.before-replay
+tozalash_zaxira/
+bot_safe.py

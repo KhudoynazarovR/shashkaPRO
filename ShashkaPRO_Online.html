@@ -354,17 +354,79 @@ function minimax(b,side,depth,alpha,beta){
   if(side===BLACK){let v=-Infinity;for(const m of moves){v=Math.max(v,minimax(applyMove(b,m),WHITE,depth-1,alpha,beta));alpha=Math.max(alpha,v);if(beta<=alpha)break}return v}
   let v=Infinity;for(const m of moves){v=Math.min(v,minimax(applyMove(b,m),BLACK,depth-1,alpha,beta));beta=Math.min(beta,v);if(beta<=alpha)break}return v
 }
-function aiMove(){
-  aiTimer=null;if(gameOver||turn!==BLACK)return;
-  const depth=Math.max(1,Math.min(3,Number($("aiLevel").value)||2)),moves=getAllMoves(boardState,BLACK);
-  if(!moves.length){finish("white");return}
-  let best=moves[0],bestScore=-Infinity;
-  for(const m of moves){const score=minimax(applyMove(boardState,m),WHITE,depth-1,-Infinity,Infinity);if(score>bestScore){bestScore=score;best=m}}
-  history.push(clone(boardState));
-  boardState=applyMove(boardState,best);
-  blackSeconds+=incrementSeconds;
-  moveHistory.push(formatMove(best,"Qora"));
-  turn=WHITE;drawGame();drawMoves();updateStatus();updateTimer();checkEnd()
+async function aiMove(){
+  aiTimer=null;
+  if(gameOver||turn!==BLACK)return;
+
+  try{
+    const response=await fetch("/api/ai",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({
+        color:2,
+        time:500,
+        board:boardState
+      })
+    });
+
+    const data=await response.json();
+
+    if(!data.ok||!data.move){
+      console.error("KestoG:",data.error||"AI yurishi topilmadi");
+      toast("⚠️ KestoG AI xatosi");
+      return;
+    }
+
+    const m=data.move;
+
+    const from={
+      r:m.from.y,
+      c:m.from.x
+    };
+
+    const to={
+      r:m.to.y,
+      c:m.to.x
+    };
+
+    const moves=getAllMoves(boardState,BLACK);
+
+    const best=moves.find(x=>
+      x.from.r===from.r &&
+      x.from.c===from.c &&
+      x.to.r===to.r &&
+      x.to.c===to.c
+    );
+
+    if(!best){
+      console.error("KestoG yurishi topilmadi:",m);
+      toast("⚠️ AI yurishini doskaga moslab bo‘lmadi");
+      return;
+    }
+
+    history.push(clone(boardState));
+
+    boardState=applyMove(boardState,best);
+
+    blackSeconds+=incrementSeconds;
+
+    moveHistory.push(formatMove(best,"Qora"));
+
+    turn=WHITE;
+
+    drawGame();
+    drawMoves();
+    updateStatus();
+    updateTimer();
+    checkEnd();
+
+  }catch(e){
+    console.error("KestoG API:",e);
+    toast("⚠️ KestoG bilan ulanish xatosi");
+  }
+}
 }
 function checkEnd(){
   let w=0,b=0;for(const row of boardState)for(const p of row){if(isWhite(p))w++;if(isBlack(p))b++}
