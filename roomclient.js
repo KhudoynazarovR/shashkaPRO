@@ -301,6 +301,7 @@
       try {
         if (typeof S === "object" && S) { th = S.th || th; ps = S.ps || ps; km = S.km || km; pz = S.pz || pz; }
       } catch (e) {}
+      if (!/^(classic|green|blue|gray|walnut|purple|sand|ocean|rose|olive|photo)$/.test(th)) th = "classic";
       elBoard.dataset.th = th;
       elBoard.dataset.ps = ps;
       elBoard.style.setProperty("--km", "'" + km + "'");

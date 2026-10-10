@@ -126,6 +126,7 @@ const T=k=>(L[S.lang]||L.en).split('|')[K.indexOf(k)];
 /* ---------- settings ---------- */
 let S={lang:'uz',lvl:'2',mode:'ai',col:'w',tc:'300+3',th:'classic',ps:'img',theme:'auto',co:true,dots:true,hl:true,mc:true,snd:true,open:'std',mm:false,km:'♛',bw:'100',pz:'80'};
 try{Object.assign(S,JSON.parse(localStorage.getItem('sp_s')||'{}'))}catch(e){}
+if(!/^(classic|green|blue|gray|walnut|purple|sand|ocean|rose|olive|photo)$/.test(S.th))S.th='classic';
 const TG=window.Telegram&&Telegram.WebApp;
 if(TG){try{TG.ready();TG.expand();if(TG.disableVerticalSwipes)TG.disableVerticalSwipes();
  TG.setHeaderColor&&TG.setHeaderColor('bg_color');TG.setBackgroundColor&&TG.setBackgroundColor('bg_color')}catch(e){}}
