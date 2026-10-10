@@ -1,99 +1,10 @@
+// require("./bot.js");
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
-const { spawn } = require("child_process");
 const { WebSocketServer } = require("ws");
-const online = require("./online"); /*ONL:require*/
-
-const KESTOG_PATH = path.resolve(__dirname, "../KestoG/bridge");
-
-let kesto = null;
-let kestoBusy = false;
-let kestoBuffer = "";
-let kestoQueue = [];
-
-function startKestoG() {
-  if (kesto) return;
-
-  kesto = spawn(KESTOG_PATH, [], {
-    stdio: ["pipe", "pipe", "pipe"]
-  });
-
-  kesto.stdout.on("data", data => {
-    kestoBuffer += data.toString();
-
-    const lines = kestoBuffer.split("\n");
-    kestoBuffer = lines.pop();
-
-    for (const line of lines) {
-      const text = line.trim();
-      if (!text) continue;
-
-      const p = text.split(/\s+/).map(Number);
-
-      if (p.length >= 5 && p.every(Number.isFinite)) {
-        const item = kestoQueue.shift();
-
-        if (item) {
-          kestoBusy = false;
-          item.resolve(p);
-          runNextKesto();
-        }
-      }
-    }
-  });
-
-  kesto.stderr.on("data", data => {
-    const lines = data.toString().split(/\\r?\\n/);
-
-    for (const line of lines) {
-      const text = line.trim();
-      if (text) {
-        console.log("[KestoG]", text);
-      }
-    }
-  });
-
-  kesto.on("close", () => {
-    kesto = null;
-    kestoBusy = false;
-    kestoBuffer = "";
-  });
-}
-
-function runNextKesto() {
-  if (kestoBusy || !kestoQueue.length || !kesto) return;
-
-  kestoBusy = true;
-  kesto.stdin.write(kestoQueue[0].input);
-}
-
-function askKestoG(color, time, board) {
-  return new Promise((resolve, reject) => {
-    const input =
-      color + " " + time + "\n" +
-      [
-        board[0][1], board[0][3], board[0][5], board[0][7],
-        board[1][0], board[1][2], board[1][4], board[1][6],
-        board[2][1], board[2][3], board[2][5], board[2][7],
-        board[3][0], board[3][2], board[3][4], board[3][6],
-        board[4][1], board[4][3], board[4][5], board[4][7],
-        board[5][0], board[5][2], board[5][4], board[5][6],
-        board[6][1], board[6][3], board[6][5], board[6][7],
-        board[7][0], board[7][2], board[7][4], board[7][6]
-      ].join(" ") + "\n";
-
-    kestoQueue.push({
-      input,
-      resolve,
-      reject
-    });
-
-    runNextKesto();
-  });
-}
-startKestoG();
+const { createRooms } = require("./rooms");
 
 const PORT = Number(process.env.PORT || 8080);
 const HOST = process.env.HOST || "0.0.0.0";
@@ -113,6 +24,9 @@ function send(ws, data) {
   }
 }
 
+// Guruh o'yinlari (Mini App xonalari)
+const roomsApi = createRooms({ send, clients });
+
 function broadcast(data, exceptId = null) {
   for (const c of clients.values()) {
     if (c.id !== exceptId) send(c.ws, data);
@@ -120,12 +34,14 @@ function broadcast(data, exceptId = null) {
 }
 
 function playerList() {
-  return [...clients.values()].map(c => ({
-    id: c.id,
-    name: c.name,
-    elo: c.elo,
-    busy: !!c.matchId
-  }));
+  return [...clients.values()]
+    .filter(c => !c.hidden)
+    .map(c => ({
+      id: c.id,
+      name: c.name,
+      elo: c.elo,
+      busy: !!c.matchId
+    }));
 }
 
 function notifyPlayers() {
@@ -150,7 +66,6 @@ function makeMatch(a, b) {
   waiting.delete(a.id);
   waiting.delete(b.id);
 
-  online.initMatch(match);
   matches.set(match.id, match);
 
   send(a.ws, {
@@ -174,7 +89,6 @@ function finishMatch(match, winner) {
   if (!match || match.finished) return;
 
   match.finished = true;
-  online.reward(match, winner, clients, send);
 
   const white = clients.get(match.whiteId);
   const black = clients.get(match.blackId);
@@ -248,10 +162,32 @@ function leaveClient(c) {
   notifyPlayers();
 }
 
+const BLOCKED = new Set([
+  "server.js", "rooms.js", "users.json", "package.json", "package-lock.json"
+]);
+
 function serveFile(req, res) {
   let requested = new URL(req.url, "http://localhost").pathname;
 
   if (requested === "/") requested = "/index.html";
+
+  const types = {
+    ".html": "text/html; charset=utf-8",
+    ".js": "application/javascript; charset=utf-8",
+    ".css": "text/css; charset=utf-8",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".svg": "image/svg+xml"
+  };
+
+  const ext = path.extname(requested);
+  const base = path.basename(requested);
+
+  // xavfsizlik: faqat ruxsat etilgan turdagi fayllar, server fayllari yopiq
+  if (!types[ext] || BLOCKED.has(base)) {
+    res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+    return res.end("Not found");
+  }
 
   const candidates = [
     path.join(__dirname, requested),
@@ -267,103 +203,28 @@ function serveFile(req, res) {
     return res.end("Not found");
   }
 
-  const ext = path.extname(file);
-
-  const types = {
-    ".html": "text/html; charset=utf-8",
-    ".js": "application/javascript; charset=utf-8",
-    ".css": "text/css; charset=utf-8",
-    ".json": "application/json; charset=utf-8",
-    ".png": "image/png",
-    ".jpg": "image/jpeg",
-    ".svg": "image/svg+xml"
-  };
+  // index.html ga guruh (xona) rejimi skriptini avtomatik ulaymiz
+  if (base === "index.html") {
+    let html = fs.readFileSync(file, "utf8");
+    if (!html.includes("roomclient.js")) {
+      html = html.replace("</body>", '<script src="/roomclient.js"></script>\n</body>');
+    }
+    res.writeHead(200, {
+      "Content-Type": types[".html"],
+      "Cache-Control": "no-cache"
+    });
+    return res.end(html);
+  }
 
   res.writeHead(200, {
-    "Content-Type": types[ext] || "application/octet-stream"
+    "Content-Type": types[ext]
   });
 
   fs.createReadStream(file).pipe(res);
 }
-function convertBoardForKestoG(board) {
-  return board.map(row =>
-    row.map(p => {
-      if (p === 0) return 0;
-      if (p === 1) return 5;
-      if (p === 2) return 6;
-      if (p === 3) return 9;
-      if (p === 4) return 10;
-      return 0;
-    })
-  );
-}
 
-async function handleAI(req, res) {
-  let body = "";
-
-  req.on("data", chunk => {
-    body += chunk;
-  });
-
-  req.on("end", async () => {
-    try {
-      const data = JSON.parse(body);
-
-      if (!Array.isArray(data.board) || data.board.length !== 8) {
-        throw new Error("Doska noto‘g‘ri");
-      }
-
-      const color = Number(data.color) || 2;
-      const time = Math.max(0.1, Number(data.time) || 1);
-
-      const board = convertBoardForKestoG(data.board);
-
-      const result = await askKestoG(
-        color,
-        time,
-        board
-      );
-
-      res.writeHead(200, {
-        "Content-Type": "application/json; charset=utf-8",
-        "Access-Control-Allow-Origin": "*"
-      });
-
-      res.end(JSON.stringify({
-        ok: true,
-        move: {
-          from: {
-            x: result[0],
-            y: result[1]
-          },
-          to: {
-            x: result[2],
-            y: result[3]
-          },
-          jumps: result[4]
-        }
-      }));
-
-    } catch (err) {
-      console.error("[AI ERROR]", err);
-
-      res.writeHead(500, {
-        "Content-Type": "application/json; charset=utf-8",
-        "Access-Control-Allow-Origin": "*"
-      });
-
-      res.end(JSON.stringify({
-        ok: false,
-        error: err.message
-      }));
-    }
-  });
-}
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, "http://localhost");
-if (url.pathname === "/api/ai" && req.method === "POST") {
-  return handleAI(req, res);
-}
 
   if (url.pathname === "/health") {
     res.writeHead(200, {
@@ -374,8 +235,21 @@ if (url.pathname === "/api/ai" && req.method === "POST") {
       ok: true,
       players: clients.size,
       matches: matches.size,
-      waiting: waiting.size
+      waiting: waiting.size,
+      rooms: roomsApi.rooms.size
     }));
+  }
+
+  // Bot uchun: tugagan guruh o'yinlari natijalari (RESULTS_SECRET kerak)
+  if (url.pathname === "/api/results") {
+    const secret = process.env.RESULTS_SECRET;
+    if (!secret || url.searchParams.get("secret") !== secret) {
+      res.writeHead(403, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ ok: false }));
+    }
+    const out = roomsApi.results.splice(0, roomsApi.results.length);
+    res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+    return res.end(JSON.stringify({ ok: true, results: out }));
   }
 
   serveFile(req, res);
@@ -396,7 +270,6 @@ wss.on("connection", ws => {
 
   send(ws, {
     type: "registered",
-        me: online.pub(c.user),
     id: c.id,
     players: playerList(),
     requests: []
@@ -416,8 +289,13 @@ wss.on("connection", ws => {
       });
     }
 
-    if (m.type === "register") { /*ONL:login*/
-      { const L = online.login(c, m); if (!L.ok) return send(ws, { type: "error", message: "Telegram orqali kiring" }); if (L.name) m.name = L.name; }
+    // Guruh xonalari (room...) xabarlari
+    if (roomsApi.handle(c, m)) {
+      notifyPlayers();
+      return;
+    }
+
+    if (m.type === "register") {
       c.name =
         String(m.name || "ShashkaPRO Player")
           .trim()
@@ -426,7 +304,6 @@ wss.on("connection", ws => {
 
       send(ws, {
         type: "registered",
-        me: online.pub(c.user),
         id: c.id,
         players: playerList(),
         requests: [...requests.values()]
@@ -567,8 +444,10 @@ wss.on("connection", ws => {
         });
       }
 
-      if (!online.checkMove(match, side, m.move)) return send(ws, { type: "error", message: "Noto‘g‘ri yurish" });
-      match.turn = match.turn === "white" ? "black" : "white";
+      match.turn =
+        match.turn === "white"
+          ? "black"
+          : "white";
 
       const white = clients.get(match.whiteId);
       const black = clients.get(match.blackId);
@@ -582,7 +461,6 @@ wss.on("connection", ws => {
 
       send(white?.ws, msg);
       send(black?.ws, msg);
-      { const w = online.winnerAfter(match); if (w) finishMatch(match, w); }
 
       return;
     }
@@ -597,8 +475,7 @@ wss.on("connection", ws => {
         match.blackId !== c.id
       ) return;
 
-      let winner = online.claimWinner(match, c.id, m.winner);
-      if (!winner) return;
+      let winner = m.winner;
 
       if (
         winner !== "white" &&
@@ -636,6 +513,7 @@ wss.on("connection", ws => {
 
   ws.on("close", () => {
     leaveClient(c);
+    roomsApi.onClose(c);
   });
 
   ws.on("error", () => {});
