@@ -60,7 +60,7 @@ main{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
 textarea{width:100%;height:120px;font:12px ui-monospace,monospace}
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#222;color:#fff;padding:8px 14px;border-radius:20px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:9}
 #toast.on{opacity:1}
-#board[data-th=std]{background:url(standard_board.jpg) center/100% 100%}#board[data-th=std] .sq.l,#board[data-th=std] .sq.d{background:transparent}
+#board[data-th=std]{--l:#f0d49e;--d:#8b4a26}
 </style></head><body><div class="wrap">
 <header><h1>⛀ Shashka Pro</h1><select data-s="lang"><option value="uz">O'zbek</option><option value="ru">Русский</option><option value="en">English</option></select></header>
 <main>
