@@ -1416,14 +1416,7 @@ $('fen').onchange=()=>loadFen($('fen').value);
 document.querySelectorAll('#tools button').forEach(b=>b.onclick=()=>{G.tool=b.dataset.tl;G.es=null;render()});
 $('dt-fmjd').value=DT.fmjd;$('dt-idf').value=DT.idf;skin();newGame();
 /*board-anchor*/(function(){const r0=render;render=function(){const b=document.getElementById('board'),t=b.getBoundingClientRect().top;const x=r0.apply(this,arguments);const d=b.getBoundingClientRect().top-t;if(d)window.scrollBy(0,d);return x}})();
-/*dbg-fix*/(function(){
-const st=document.createElement('style');st.textContent='html,body{overflow-anchor:none}#tn,#bn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.bar{min-height:40px}';document.head.appendChild(st);
-const d=document.createElement('div');d.style.cssText='position:fixed;left:0;right:0;top:0;z-index:99;background:#000c;color:#0f0;font:10px monospace;padding:2px;white-space:pre;pointer-events:none';document.body.appendChild(d);
-let L=[];const o=diagScroll;
-diagScroll=function(tag){const b=document.querySelector('#board').getBoundingClientRect(),v=window.visualViewport;
-L.push(tag.slice(0,6)+' y='+Math.round(scrollY)+' bt='+Math.round(b.top)+' bb='+Math.round(b.bottom)+' ih='+innerHeight+' vh='+Math.round(v?v.height:0)+' vt='+Math.round(v?v.offsetTop:0)+' dh='+document.documentElement.scrollHeight);
-L=L.slice(-4);d.textContent=L.join('\n');o(tag)};
-})();
+/*dbg-fix*/(function(){const st=document.createElement('style');st.textContent='html,body{overflow-anchor:none}#tn,#bn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.bar{min-height:40px}';document.head.appendChild(st)})();
 /*mlTop*/(function(){
 const st=document.createElement('style');
 st.textContent='html,body{overflow-anchor:none}#ml{position:relative;height:34px!important;white-space:nowrap;overflow-x:auto;overflow-y:hidden;margin:0 0 6px!important;padding:5px 6px}';
