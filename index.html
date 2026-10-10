@@ -4,9 +4,9 @@
 :root{--bg:#ece8dd;--pn:#faf8f2;--tx:#25221c;--mu:#7a7466;--bd:#d3ccba;--ac:#1f6f5c;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#15130f;--pn:#201d18;--tx:#e9e3d2;--mu:#968f7e;--bd:#38342b;--ac:#4fb59a}}
 :root[data-theme=dark]{--bg:#15130f;--pn:#201d18;--tx:#e9e3d2;--mu:#968f7e;--bd:#38342b;--ac:#4fb59a}
-html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+html{scroll-padding-top:env(safe-area-inset-top,0px);min-height:100%;-webkit-text-size-adjust:100%}
 *{box-sizing:border-box;margin:0}
-body{background:var(--bg);color:var(--tx);font:15px/1.4 Georgia,'Times New Roman',serif;min-height:100%}
+body{background:var(--bg);color:var(--tx);font:15px/1.4 Georgia,'Times New Roman',serif;min-height:100%;overflow-anchor:none}
 .wrap{max-width:1000px;margin:0 auto;padding:10px}
 header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 h1{font-size:22px;letter-spacing:.5px}
@@ -1309,7 +1309,24 @@ function newGame(){G.tok++;const[a,b]=String(S.tc).split('+').map(Number);
  if(e){if(e.bs?setIdf(e):playOpen(e))G.opn={...e,k:S.open};else{G.pos=[init()];G.mv=[];G.cur=0;G.s0=1;toast('✗ '+e.n)}}}
  G.flip=G.mode==='ai'&&G.me===-1;G.tc=a>0;G.t=[a*1000,a*1000];G.inc=(b||0)*1000;G.last=Date.now();G.sel=null;G.hint=null;TT.clear();$('an').textContent=G.opn?G.opn.n+': '+G.opn.mv.join(' '):'';tab('play');render();kick()}
 function kick(){if(!G.over&&!G.edit&&G.mode==='ai'&&sideAt(G.cur)!==G.me&&atEnd())aiMove()}
-function doMove(m){const side=sideAt(G.cur);tick();pushMove(m);hap(m.caps.length?'medium':'light');if(G.tc)G.t[side>0?0:1]+=G.inc;beep(m.caps.length?330:200,.1);checkEnd();render();kick()}
+function diagScroll(tag){
+ const b=document.querySelector('#board');
+ const w=document.querySelector('.wrap');
+ const r=b.getBoundingClientRect();
+ const wr=w.getBoundingClientRect();
+ console.log('[SCROLL-DIAG]',tag,{
+  scrollY:window.scrollY,
+  innerHeight:window.innerHeight,
+  visualHeight:window.visualViewport?.height,
+  visualTop:window.visualViewport?.offsetTop,
+  boardTop:Math.round(r.top),
+  boardBottom:Math.round(r.bottom),
+  wrapTop:Math.round(wr.top),
+  wrapBottom:Math.round(wr.bottom),
+  boardHeight:Math.round(r.height)
+ });
+}
+function doMove(m){diagScroll('BEFORE MOVE');const side=sideAt(G.cur);tick();pushMove(m);hap(m.caps.length?'medium':'light');if(G.tc)G.t[side>0?0:1]+=G.inc;beep(m.caps.length?330:200,.1);checkEnd();render();requestAnimationFrame(()=>diagScroll('AFTER MOVE'));kick()}
 function aiMove(){const tok=++G.tok,side=sideAt(G.cur);G.busy=true;render();
  setTimeout(()=>{if(tok!==G.tok||G.over){G.busy=false;return}const r=bestMove(G.pos[G.cur],side,+S.lvl);G.busy=false;if(!r)return;
   $('an').textContent=`d${r.d} · ${nodes} nodes · ${(r.v/100).toFixed(2)}`;doMove(r.m)},40)}
@@ -1368,8 +1385,7 @@ function render(){
  $('tn').textContent=nm(top);$('bn').textContent=nm(-top);$('tcn').textContent=(top>0?wc:bc);$('bcn').textContent=(top>0?bc:wc);clk();
  const e=ev(bd);$('evf').style.width=Math.max(4,Math.min(96,50+e/8))+'%';$('evt').textContent=(e/100).toFixed(1);
  $('st').textContent=G.edit?T('editor'):G.over?(G.res==='d'?T('drw'):G.res==='w'?T('winW'):T('winB')):G.busy?T('think'):side>0?T('turnW'):T('turnB');
- let ml='';G.mv.forEach((m,i)=>{if(i%2===0)ml+=(i/2+1)+'. ';ml+=`<span data-p="${i+1}" class="${G.cur===i+1?'cu':''}">${m.n}</span> `});$('ml').innerHTML=ml;
- const cu=$('ml').querySelector('.cu');if(cu)cu.scrollIntoView({block:'nearest'});
+ let ml='';G.mv.forEach((m,i)=>{if(i%2===0)ml+=(i/2+1)+'. ';ml+=`<span data-p="${i+1}" class="${G.cur===i+1?'cu':''}">${m.n}</span> `});$('ml').innerHTML=ml;{const box=$('ml'),cu=box.querySelector('.cu');if(cu){const a=cu.getBoundingClientRect(),b=box.getBoundingClientRect();if(a.bottom>b.bottom)box.scrollTop+=a.bottom-b.bottom;else if(a.top<b.top)box.scrollTop-=b.top-a.top}}
  $('stats').textContent=`✔ ${ST.w}  ✘ ${ST.l}  = ${ST.d}`;
  if(G.edit){$('fen').value=fenOf(bd,G.s0);document.querySelectorAll('#tools button').forEach(b=>b.classList.toggle('on',b.dataset.tl===String(G.tool)))}}
 $('ml').onclick=e=>{const p=e.target.dataset.p;if(p)go(+p)};
@@ -1399,4 +1415,26 @@ function cpFen(){const t=$('fen');t.select();try{navigator.clipboard.writeText(t
 $('fen').onchange=()=>loadFen($('fen').value);
 document.querySelectorAll('#tools button').forEach(b=>b.onclick=()=>{G.tool=b.dataset.tl;G.es=null;render()});
 $('dt-fmjd').value=DT.fmjd;$('dt-idf').value=DT.idf;skin();newGame();
+/*board-anchor*/(function(){const r0=render;render=function(){const b=document.getElementById('board'),t=b.getBoundingClientRect().top;const x=r0.apply(this,arguments);const d=b.getBoundingClientRect().top-t;if(d)window.scrollBy(0,d);return x}})();
+/*dbg-fix*/(function(){
+const st=document.createElement('style');st.textContent='html,body{overflow-anchor:none}#tn,#bn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.bar{min-height:40px}';document.head.appendChild(st);
+const d=document.createElement('div');d.style.cssText='position:fixed;left:0;right:0;top:0;z-index:99;background:#000c;color:#0f0;font:10px monospace;padding:2px;white-space:pre;pointer-events:none';document.body.appendChild(d);
+let L=[];const o=diagScroll;
+diagScroll=function(tag){const b=document.querySelector('#board').getBoundingClientRect(),v=window.visualViewport;
+L.push(tag.slice(0,6)+' y='+Math.round(scrollY)+' bt='+Math.round(b.top)+' bb='+Math.round(b.bottom)+' ih='+innerHeight+' vh='+Math.round(v?v.height:0)+' vt='+Math.round(v?v.offsetTop:0)+' dh='+document.documentElement.scrollHeight);
+L=L.slice(-4);d.textContent=L.join('\n');o(tag)};
+})();
+/*mlTop*/(function(){
+const st=document.createElement('style');
+st.textContent='html,body{overflow-anchor:none}#ml{position:relative;height:34px!important;white-space:nowrap;overflow-x:auto;overflow-y:hidden;margin:0 0 6px!important;padding:5px 6px}';
+document.head.appendChild(st);
+const ml=document.getElementById('ml');
+document.getElementById('evb').before(ml);
+const r0=render;
+render=function(){const y=window.scrollY;const x=r0.apply(this,arguments);
+ const cu=ml.querySelector('.cu');
+ ml.scrollLeft=cu?cu.offsetLeft-ml.clientWidth/2:0;
+ requestAnimationFrame(()=>{if(window.scrollY!==y)window.scrollTo(0,y)});
+ return x};
+})();
 </script></body></html>
