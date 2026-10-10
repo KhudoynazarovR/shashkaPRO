@@ -60,6 +60,7 @@ main{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
 textarea{width:100%;height:120px;font:12px ui-monospace,monospace}
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#222;color:#fff;padding:8px 14px;border-radius:20px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:9}
 #toast.on{opacity:1}
+#board[data-th=std]{background:url(standard_board.jpg) center/100% 100%}#board[data-th=std] .sq.l,#board[data-th=std] .sq.d{background:transparent}
 </style></head><body><div class="wrap">
 <header><h1>⛀ Shashka Pro</h1><select data-s="lang"><option value="uz">O'zbek</option><option value="ru">Русский</option><option value="en">English</option></select></header>
 <main>
@@ -84,7 +85,7 @@ textarea{width:100%;height:120px;font:12px ui-monospace,monospace}
 <div id="ml"></div><div class="cnt" id="stats" style="margin-top:6px"></div>
 </div>
 <div class="tab" id="t-set">
-<div class="row"><span>Board</span><select data-s="th"><option>classic</option><option>green</option><option>blue</option><option>gray</option><option>walnut</option><option>purple</option><option>sand</option><option>ocean</option><option>rose</option><option>olive</option><option value="photo">Photo (wood)</option></select></div>
+<div class="row"><span>Board</span><select data-s="th"><option value="std">Standard doska</option><option>classic</option><option>green</option><option>blue</option><option>gray</option><option>walnut</option><option>purple</option><option>sand</option><option>ocean</option><option>rose</option><option>olive</option><option value="photo">Photo (wood)</option></select></div>
 <div class="row"><span>Pieces</span><select data-s="ps"><option>flat</option><option>glossy</option><option>ring</option><option>stack</option><option>dot</option><option>outline</option><option value="img">3D (rasm)</option></select></div>
 <div class="row"><span>King</span><select data-s="km"><option>♛</option><option>♚</option><option>★</option><option>👑</option><option>K</option></select></div>
 <div class="row"><span>Dona o'lchami</span><input type="range" min="60" max="100" step="5" data-s="pz"></div>
@@ -124,13 +125,14 @@ ru:`Новая игра|Назад|Вперёд|Подсказка|Поверн�
 en:`New game|Undo|Redo|Hint|Flip|Resign|Draw|Analyze|Play|Settings|Editor|Copy|Import|Export|Clear|Reset|Play from here|AI thinking…|White to move|Black to move|White wins|Black wins|Draw|Tap again|Draw accepted|AI declined`};
 const T=k=>(L[S.lang]||L.en).split('|')[K.indexOf(k)];
 /* ---------- settings ---------- */
-let S={lang:'uz',lvl:'2',mode:'ai',col:'w',tc:'300+3',th:'classic',ps:'img',theme:'auto',co:true,dots:true,hl:true,mc:true,snd:true,open:'std',mm:false,km:'♛',bw:'100',pz:'80'};
+let S={lang:'uz',lvl:'2',mode:'ai',col:'w',tc:'300+3',th:'std',ps:'img',theme:'auto',co:true,dots:true,hl:true,mc:true,snd:true,open:'std',mm:false,km:'♛',bw:'100',pz:'80'};
 try{Object.assign(S,JSON.parse(localStorage.getItem('sp_s')||'{}'))}catch(e){}
 const TG=window.Telegram&&Telegram.WebApp;
 if(TG){try{TG.ready();TG.expand();if(TG.disableVerticalSwipes)TG.disableVerticalSwipes();
  TG.setHeaderColor&&TG.setHeaderColor('bg_color');TG.setBackgroundColor&&TG.setBackgroundColor('bg_color')}catch(e){}}
 const hap=t=>{try{TG&&TG.HapticFeedback&&TG.HapticFeedback.impactOccurred(t)}catch(e){}};
 const sv=()=>{try{localStorage.setItem('sp_s',JSON.stringify(S))}catch(e){}};
+if(!S.v3){S.th='std';S.v3=1;sv()}
 if(!S.v2){S.ps='img';S.pz='90';S.v2=1;sv()}
 let ST={w:0,l:0,d:0};try{Object.assign(ST,JSON.parse(localStorage.getItem('sp_st')||'{}'))}catch(e){}
 const svs=()=>{try{localStorage.setItem('sp_st',JSON.stringify(ST))}catch(e){}};
