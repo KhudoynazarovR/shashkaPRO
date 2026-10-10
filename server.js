@@ -209,6 +209,9 @@ function serveFile(req, res) {
   // index.html ga guruh (xona) rejimi skriptini avtomatik ulaymiz
   if (base === "index.html") {
     let html = fs.readFileSync(file, "utf8");
+    if (!html.includes("rules-bridge.js")) {
+      html = html.replace("</body>", '<script src="/rules-bridge.js"></script>\n</body>');
+    }
     if (!html.includes("roomclient.js")) {
       html = html.replace("</body>", '<script src="/roomclient.js"></script>\n</body>');
     }
