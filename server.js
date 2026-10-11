@@ -209,6 +209,9 @@ function serveFile(req, res) {
   // index.html ga guruh (xona) rejimi skriptini avtomatik ulaymiz
   if (base === "index.html") {
     let html = fs.readFileSync(file, "utf8");
+    if (!html.includes("sound.js")) {
+      html = html.replace("</body>", '<script src="/sound.js"></script>\n</body>');
+    }
     if (!html.includes("rules-bridge.js")) {
       html = html.replace("</body>", '<script src="/rules-bridge.js"></script>\n</body>');
     }
@@ -218,7 +221,7 @@ function serveFile(req, res) {
     if (!html.includes("lobbyclient.js")) {
       html = html.replace("</body>", '<script src="/lobbyclient.js"></script>\n</body>');
     }
-    html = html.replace(/(lobbyclient|roomclient)\.js(\?v=\d+)?/g, "$1.js?v=" + Date.now());
+    html = html.replace(/(lobbyclient|roomclient|sound)\.js(\?v=\d+)?/g, "$1.js?v=" + Date.now());
     res.writeHead(200, {
       "Content-Type": types[".html"],
       "Cache-Control": "no-cache"

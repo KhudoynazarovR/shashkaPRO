@@ -132,7 +132,7 @@ function createLobby({ send, clients, roomsApi }) {
   function stateFor(c) {
     const uid = c.lb.uid;
     return {
-      type: 'lbState',
+      type: 'lbState', now: Date.now(),
       me: { uid, name: c.lb.name },
       players: playersList(),
       inQueue: queue.has(uid),

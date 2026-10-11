@@ -73,7 +73,7 @@
 
     function onMsg(m) {
       if (m.type === "lbState") {
-        S = m; renderBadge(); if (panelOpen) renderAll(); renderIncoming();
+        S = m; if (m.now) window.__lbSkew = m.now - Date.now(); renderBadge(); if (panelOpen) renderAll(); renderIncoming();
       } else if (m.type === "lbGo") {
         onGo(m);
       } else if (m.type === "lbToast") {
@@ -206,7 +206,7 @@
         "<div class=\"row\"><input id=\"lbNm\" maxlength=\"20\" placeholder=\"Ismingiz\" style=\"flex:1\" value=\"" + esc(myName) + "\"><button id=\"lbNmSave\" class=\"sec\">Saqlash</button></div>";
       var tcOpts = TCS.map(function (t) { return "<option value=\"" + t + "\"" + (t === "5+3" ? " selected" : "") + ">" + t + "</option>"; }).join("");
       panel.innerHTML =
-        "<div class=\"row\" style=\"justify-content:space-between\"><h2>🏟 O‘yinchilar zali</h2><button id=\"lbClose\" class=\"sec\">✕</button></div>" +
+        "<div class=\"row\" style=\"justify-content:space-between\"><h2>🏟 O‘yinchilar zali</h2><span><button id=\"lbSnd\" class=\"sec\">🔊</button> <button id=\"lbClose\" class=\"sec\">✕</button></span></div>" +
         nameRow +
         "<div class=\"row\"><span class=\"muted\">Vaqt:</span><select id=\"lbTc\">" + tcOpts + "</select><button id=\"lbQuick\" style=\"flex:1\">⚡ Tezkor o‘yin</button></div>" +
         "<div class=\"row\"><span class=\"muted\">Pozitsiya:</span><select id=\"lbPos\"><option value=\"std\">Standart</option><option value=\"idf\">IDF 780</option></select>" +
@@ -228,6 +228,7 @@
       document.body.appendChild(panel);
 
       $("lbClose").onclick = closePanel;
+      $("lbSnd").onclick = function () { if (window.SPSound) window.SPSound.openSettings(); };
       $("lbTabPl").onclick = function () { curTab = "pl"; renderAll(); };
       $("lbTabT").onclick = function () { curTab = "t"; renderAll(); };
       $("lbQuick").onclick = function () {
@@ -344,6 +345,26 @@
 
     // keyingi tur sanog'i uchun sekin yangilash
     setInterval(function () { if (panelOpen && curTab === "t") renderTournaments(); }, 2000);
+
+    // Turnir boshlanishidan oldin 10 → 1 sanash (faqat qo'shilgan o'yinchilarga)
+    (function () {
+      var lastKey = "";
+      setInterval(function () {
+        var me = S && S.me ? S.me.uid : null;
+        if (!me || !window.SPSound) return;
+        var now = Date.now() + (window.__lbSkew || 0);
+        (S.tournaments || []).forEach(function (t) {
+          if (t.status !== "reg" || !t.startAt) return;
+          if (t.type !== "arena" && t.players.length < 3) return;
+          if (!t.players.some(function (p) { return p.uid === me; })) return;
+          var left = Math.ceil((t.startAt - now) / 1000);
+          if (left >= 1 && left <= 10) {
+            var key = t.id + ":" + left;
+            if (key !== lastKey) { lastKey = key; window.SPSound.count(left); }
+          }
+        });
+      }, 200);
+    })();
 
     connect();
   }

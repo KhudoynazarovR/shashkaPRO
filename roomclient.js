@@ -66,6 +66,30 @@
       selected: null, forced: null, pending: false, connected: false, joined: false
     };
     var ws = null, hb = null, gid = guestId();
+
+    // ---------- ovozlar ----------
+    function soundForMove(mv, piece) {
+      var S = window.SPSound;
+      if (!S || !mv || !mv.to) return;
+      var toLast = piece === 1 ? mv.to.r === 0 : piece === 2 ? mv.to.r === 7 : false;
+      if (toLast) S.play("king");
+      else if (mv.captures && mv.captures.length) S.play("capture");
+      else S.play("move");
+    }
+    var lowFlag = { white: false, black: false }, lastTickSec = 0;
+    function lowTimeCheck() {
+      var S = window.SPSound;
+      if (!S || st.finished || st.color === "spectator" || !st.clockRunning || st.turn !== st.color) return;
+      var ms = remaining(st.color);
+      if (ms <= 0) return;
+      if (ms <= 10000 && !lowFlag[st.color]) { lowFlag[st.color] = true; S.play("low"); }
+      if (ms > 12000) lowFlag[st.color] = false;       // inkrement bilan oshsa, qayta signal beriladi
+      if (ms <= 5000) {
+        var sec = Math.ceil(ms / 1000);
+        if (sec !== lastTickSec) { lastTickSec = sec; S.play("tick"); }
+      }
+    }
+    setInterval(lowTimeCheck, 300);
     function startBoard() {
       var o = (typeof st !== "undefined" && st) ? st.opening : null;
       var b = initialBoard();
@@ -476,7 +500,9 @@
         render();
       } else if (m.type === "roomMove" && m.roomId === roomId) {
         st.moves.push(m.move);
+        var _pp = st.board[m.move.from.r] && st.board[m.move.from.r][m.move.from.c];
         st.board = applyStep(st.board, m.move);
+        soundForMove(m.move, _pp);
         st.turn = m.turn;
         setClock(m.clock, m.clockRunning);
         st.pending = false;
