@@ -21,6 +21,7 @@
     var roomId = "";
     if (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) roomId = String(tg.initDataUnsafe.start_param);
     if (!roomId && q.get("room")) roomId = q.get("room");
+    if (/^lb[ts]_/.test(roomId)) return; // turnir/sians havolasi - xona emas
     if (!ROOM_RE.test(roomId)) return; // xona rejimi emas
     try { if (tg) { tg.ready(); tg.expand(); if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); } } catch (e) {}
     var missing = missingFns();
@@ -125,6 +126,7 @@
       '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;justify-content:center">' +
       '<button id="rcDrawOffer" style="display:none">🤝 Durang</button>' +
       '<button id="rcResign" style="display:none">🏳️ Taslim</button>' +
+      '<button id="rcLink">🔗 Havola</button>' +
       '<button id="rcChatBtn">💬 Chat</button>' +
       '<button id="rcClose">✖️ Yopish</button></div>' +
       '<div id="rcChat" style="display:none;width:min(94vw,520px);margin-top:10px">' +
@@ -156,6 +158,21 @@
 
     root.querySelector("#rcClose").onclick = function () {
       if (tg && tg.close) tg.close(); else root.style.display = "none";
+    };
+    root.querySelector("#rcLink").onclick = function () {
+      var base = window.TG_APP_LINK || "";
+      var url = base
+        ? base + "?startapp=" + encodeURIComponent(roomId)
+        : location.origin + location.pathname + "?room=" + encodeURIComponent(roomId);
+      var text = "♟️ ShashkaPRO — men bilan o‘ynang!";
+      if (base && tg && tg.openTelegramLink) {
+        tg.openTelegramLink("https://t.me/share/url?url=" + encodeURIComponent(url) + "&text=" + encodeURIComponent(text));
+        return;
+      }
+      if (navigator.share) { navigator.share({ title: "ShashkaPRO", text: text, url: url }).catch(function () {}); return; }
+      var done = function () { elInfo.textContent = "🔗 Havola nusxalandi"; };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, function () { prompt("Havola:", url); });
+      else prompt("Havola:", url);
     };
     elResign.onclick = function () {
       if (st.finished || st.color === "spectator") return;
