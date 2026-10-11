@@ -14,6 +14,10 @@ const CHALLENGE_TTL = 60000;
 const MIN_T_PLAYERS = 3;
 const MAX_T_PLAYERS = 64;
 const MAX_TOURNAMENTS = 20;
+const SIMUL_MAXES = [5, 10, 15, 20, 30];          // simulda eng ko'p o'yinchi
+const SIMUL_BONUS = [0, 1, 2, 3, 5];               // xo'jayinga har taxtada qo'shimcha daqiqa
+const SIMUL_NOSHOW_MS = Number(process.env.SIMUL_NOSHOW_MS || 120000);  // o'yinchi kelmasa, xo'jayin yutadi
+const MAX_SIMULS = 10;
 const GAMES_OPTS = [1, 2, 4];   // 1 o'yin, 1 match (2 o'yin), 2 match (4 o'yin)
 const SERIES_GAP_MS = Number(process.env.SERIES_GAP_MS || 5000);  // seriyada o'yinlar orasidagi tanaffus
 const SWISS_ROUNDS = [3, 4, 5, 6, 7, 8, 9, 10, 11];  // turlar soni
@@ -58,7 +62,9 @@ function createLobby({ send, clients, roomsApi }) {
   const challenges = new Map();  // id -> { id, fromUid, fromName, toUid, tc, at }
   const tournaments = new Map(); // tid -> t
   const roomToBoard = new Map(); // roomId -> { t, b }
-  const roomToSeries = new Map(); // roomId -> { s, w, k }  (o'yinchilar orasidagi seriya)
+  const roomToSeries = new Map();
+  const simuls = new Map();       // sid -> simul
+  const roomToSimul = new Map();  // roomId -> { sm, g } // roomId -> { s, w, k }  (o'yinchilar orasidagi seriya)
 
   let pushTimer = null;
 
@@ -140,7 +146,8 @@ function createLobby({ send, clients, roomsApi }) {
         .map(x => ({ id: x.id, fromName: x.fromName, tc: x.tc + describeOpts(x) })),
       outgoing: [...challenges.values()].filter(x => x.fromUid === uid)
         .map(x => ({ id: x.id, toUid: x.toUid, tc: x.tc })),
-      tournaments: [...tournaments.values()].map(pubT)
+      tournaments: [...tournaments.values()].map(pubT),
+      simuls: [...simuls.values()].map(pubSimul)
     };
   }
 
@@ -371,6 +378,8 @@ function createLobby({ send, clients, roomsApi }) {
   }
 
   function onRoomFinished(room) {
+    const sim = roomToSimul.get(room.id);
+    if (sim) { roomToSimul.delete(room.id); return simulGameDone(sim, room); }
     const sr = roomToSeries.get(room.id);
     if (sr) { roomToSeries.delete(room.id); return seriesGameDone(sr, room); }
     const ref = roomToBoard.get(room.id);
@@ -553,6 +562,93 @@ function createLobby({ send, clients, roomsApi }) {
     }
   }
 
+  // ---------- Simul: bitta xo'jayin ko'p o'yinchi bilan bir vaqtda ----------
+  function pubSimul(sm) {
+    const now = Date.now();
+    const games = sm.games.map(g => {
+      const room = roomsApi.get(g.roomId);
+      let hostTurn = false, hostMs = 0;
+      if (room && !room.finished && !g.done) {
+        hostTurn = room.turn === g.hc && !!(room.white && room.black);
+        hostMs = room.clock ? room.clock[g.hc] : 0;
+        if (room.plies >= 2 && room.turn === g.hc) hostMs -= now - room.turnStartedAt;
+      }
+      return {
+        roomId: g.roomId, uid: g.uid, name: g.name, hc: g.hc, white: g.white, black: g.black,
+        done: g.done, winner: g.winner, result: g.result, hostTurn, hostMs: Math.max(0, Math.round(hostMs)),
+        plies: room ? room.plies : 0
+      };
+    });
+    let w = 0, d = 0, l = 0;
+    for (const g of sm.games) {
+      if (!g.done || g.result === 'none') continue;
+      if (g.result === 'host') w++; else if (g.result === 'draw') d++; else l++;
+    }
+    return {
+      id: sm.id, name: sm.name, hostUid: sm.hostUid, hostName: sm.hostName, tc: sm.tc, bonus: sm.bonus,
+      color: sm.color, pos: sm.pos, max: sm.max, status: sm.status,
+      players: [...sm.players.values()].map(p => ({ uid: p.uid, name: p.name })),
+      games, score: { w, d, l }
+    };
+  }
+
+  function startSimul(sm) {
+    const list = [...sm.players.values()];
+    sm.status = 'running';
+    sm.startedAt = Date.now();
+    const host = { uid: sm.hostUid, name: sm.hostName };
+    let firstHostWhite = null;
+    list.forEach((p, i) => {
+      const hostWhite = sm.color === 'w' ? true : sm.color === 'b' ? false : i % 2 === 0;
+      const roomId = 'S' + sm.id + 'G' + (i + 1);
+      const w = hostWhite ? host : p, b = hostWhite ? p : host;
+      const opening = sm.pos === 'idf' ? pickOpening() : null;
+      roomsApi.create(roomId, {
+        tc: sm.tc, locked: true, opening,
+        bonus: sm.bonus ? { color: hostWhite ? 'white' : 'black', ms: sm.bonus * 60000 } : null,
+        white: { uid: w.uid, name: w.name }, black: { uid: b.uid, name: b.name }
+      });
+      const g = { roomId, uid: p.uid, name: p.name, hc: hostWhite ? 'white' : 'black', white: w.uid, black: b.uid, done: false, winner: null, result: null };
+      sm.games.push(g);
+      roomToSimul.set(roomId, { sm, g });
+      if (hostWhite && !firstHostWhite) firstHostWhite = roomId;
+      sendUid(p.uid, { type: 'lbGo', roomId, reason: 'simul', tname: sm.name, round: 0, color: hostWhite ? 'black' : 'white', opponent: sm.hostName, tc: sm.tc });
+      const timer = setTimeout(() => simulNoShow(g, sm), SIMUL_NOSHOW_MS);
+      if (timer.unref) timer.unref();
+    });
+    toast(sm.hostUid, '🎭 ' + sm.name + ': ' + list.length + ' ta taxta ochildi');
+    if (firstHostWhite) sendUid(sm.hostUid, { type: 'lbGo', roomId: firstHostWhite, reason: 'simul', tname: sm.name, round: 0, color: 'white', opponent: list[0].name, tc: sm.tc });
+    push();
+  }
+
+  // o'yinchi taxtaga umuman kirmagan bo'lsa, xo'jayin yutadi (xo'jayin hamma taxtada bir vaqtda bo'la olmaydi, shuning uchun faqat o'yinchi tekshiriladi)
+  function simulNoShow(g, sm) {
+    if (g.done) return;
+    const room = roomsApi.get(g.roomId);
+    if (!room || room.finished || room.plies >= 1) return;
+    const seat = room[g.hc === 'white' ? 'black' : 'white'];
+    const online = !!(seat && seat.clientId && clients.has(seat.clientId));
+    if (!online) roomsApi.forfeit(g.roomId, g.hc, 'noshow');
+  }
+
+  function simulGameDone(ref, room) {
+    const { sm, g } = ref;
+    g.done = true;
+    g.winner = room.winner;
+    if (room.noshowBoth) g.result = 'none';
+    else if (room.winner === 'draw') g.result = 'draw';
+    else g.result = room.winner === g.hc ? 'host' : 'player';
+    if (sm.status === 'running' && sm.games.every(x => x.done)) {
+      sm.status = 'finished';
+      sm.finishedAt = Date.now();
+      const sc = pubSimul(sm).score;
+      const txt = '🎭 ' + sm.name + ' tugadi: +' + sc.w + ' =' + sc.d + ' −' + sc.l + ' (xo‘jayin ' + sm.hostName + ' hisobida)';
+      toast(sm.hostUid, txt);
+      for (const p of sm.players.values()) toast(p.uid, txt);
+    }
+    push();
+  }
+
   function startT(t) {
     const n = t.players.size;
     const auto = Math.min(9, Math.max(3, Math.ceil(Math.log2(n))));
@@ -731,6 +827,62 @@ function createLobby({ send, clients, roomsApi }) {
         startT(t);
         break;
       }
+      case 'lbSCreate': {
+        if (simuls.size >= MAX_SIMULS) return err(c, 'Simullar soni limitga yetdi'), true;
+        if ([...simuls.values()].some(x => x.hostUid === me.uid && x.status !== 'finished')) return err(c, 'Sizda allaqachon faol simul bor'), true;
+        const sm = {
+          id: hex(3), name: cleanTitle(m.name) || ('Simul ' + me.name), hostUid: me.uid, hostName: me.name,
+          tc: TCS.includes(m.tc) ? m.tc : DEFAULT_TC,
+          bonus: SIMUL_BONUS.includes(Number(m.bonus)) ? Number(m.bonus) : 0,
+          color: ['w', 'b', 'alt'].includes(m.color) ? m.color : 'alt',
+          pos: m.pos === 'idf' ? 'idf' : 'std',
+          max: SIMUL_MAXES.includes(Number(m.max)) ? Number(m.max) : 10,
+          status: 'reg', created: Date.now(), players: new Map(), games: []
+        };
+        simuls.set(sm.id, sm);
+        push();
+        break;
+      }
+      case 'lbSJoin': {
+        const sm = simuls.get(String(m.sid));
+        if (!sm || sm.status !== 'reg') return err(c, 'Simulga qo‘shilib bo‘lmaydi'), true;
+        if (sm.hostUid === me.uid) return err(c, 'Xo‘jayin o‘z simuliga qo‘shila olmaydi'), true;
+        if (sm.players.size >= sm.max) return err(c, 'Simul to‘lgan'), true;
+        sm.players.set(me.uid, { uid: me.uid, name: me.name });
+        push();
+        break;
+      }
+      case 'lbSLeave': {
+        const sm = simuls.get(String(m.sid));
+        if (!sm || sm.status !== 'reg') break;
+        sm.players.delete(me.uid);
+        push();
+        break;
+      }
+      case 'lbSKick': {
+        const sm = simuls.get(String(m.sid));
+        if (!sm || sm.status !== 'reg' || sm.hostUid !== me.uid) break;
+        const uid = String(m.uid);
+        if (sm.players.delete(uid)) toast(uid, '🎭 ' + sm.name + ': xo‘jayin sizni ro‘yxatdan chiqardi');
+        push();
+        break;
+      }
+      case 'lbSStart': {
+        const sm = simuls.get(String(m.sid));
+        if (!sm || sm.status !== 'reg') break;
+        if (sm.hostUid !== me.uid) return err(c, 'Simulni faqat xo‘jayin boshlay oladi'), true;
+        if (sm.players.size < 1) return err(c, 'Boshlash uchun kamida 1 o‘yinchi kerak'), true;
+        startSimul(sm);
+        break;
+      }
+      case 'lbSCancel': {
+        const sm = simuls.get(String(m.sid));
+        if (!sm || sm.hostUid !== me.uid || sm.status !== 'reg') break;
+        simuls.delete(sm.id);
+        for (const p of sm.players.values()) toast(p.uid, '🎭 ' + sm.name + ' bekor qilindi');
+        push();
+        break;
+      }
       case 'lbTCancel': {
         const t = tournaments.get(String(m.tid));
         if (!t || t.creatorUid !== me.uid || t.status !== 'reg') break;
@@ -772,6 +924,17 @@ function createLobby({ send, clients, roomsApi }) {
   }, 10000).unref();
 
   setInterval(arenaTick, 2000).unref();
+
+  // xo'jayin navbati va soatlari xonalarda o'zgaradi, shuning uchun ishlayotgan simullarni tez-tez yangilaymiz
+  setInterval(() => { if ([...simuls.values()].some(x => x.status === 'running')) push(); }, 2000).unref();
+  setInterval(() => {
+    const now = Date.now();
+    let ch = false;
+    for (const [id, sm] of simuls) {
+      if ((sm.status === 'finished' && now - sm.finishedAt > KEEP_FINISHED) || (sm.status === 'reg' && now - sm.created > REG_TTL)) { simuls.delete(id); ch = true; }
+    }
+    if (ch) push();
+  }, 10000).unref();
 
   return { handle, onClose, onRoomFinished, tournaments, arenaTick };
 }

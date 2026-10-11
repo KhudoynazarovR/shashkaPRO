@@ -175,6 +175,11 @@ function createRooms({ send, clients, onFinish }) {
     if (room) return room;
     room = newRoom(roomId, opts && opts.tc);
     room.arena = !!(opts && opts.arena);
+    room.locked = !!(opts && opts.locked);
+    if (opts && opts.bonus && opts.bonus.ms > 0) {
+      const bc = opts.bonus.color === "black" ? "black" : "white";
+      room.clock[bc] += Number(opts.bonus.ms);
+    }
     if (opts && opts.opening && opts.opening.board) {
       room.opening = { id: String(opts.opening.id), board: String(opts.opening.board), side: opts.opening.side === "b" ? "b" : "w" };
       room.turn = room.opening.side === "b" ? "black" : "white";
@@ -311,7 +316,7 @@ function createRooms({ send, clients, onFinish }) {
     }
 
     if (m.type === "roomSetTime") {
-      if (room.arena) return err(c, "Arena o‘yinida vaqtni o‘zgartirib bo‘lmaydi"), true;
+      if (room.arena || room.locked) return err(c, "Bu o‘yinda vaqtni o‘zgartirib bo‘lmaydi"), true;
       if (col !== "white") return err(c, "Vaqtni faqat xona egasi (oq) tanlaydi"), true;
       if (room.moves.length > 0 || room.finished) return err(c, "O‘yin boshlangan, vaqtni o‘zgartirib bo‘lmaydi"), true;
       const t = TCS[m.tc];

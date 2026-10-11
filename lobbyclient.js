@@ -73,7 +73,7 @@
 
     function onMsg(m) {
       if (m.type === "lbState") {
-        S = m; if (m.now) window.__lbSkew = m.now - Date.now(); renderBadge(); if (panelOpen) renderAll(); renderIncoming();
+        S = m; if (m.now) window.__lbSkew = m.now - Date.now(); renderBadge(); if (panelOpen) renderAll(); renderIncoming(); updateSimulBtn();
       } else if (m.type === "lbGo") {
         onGo(m);
       } else if (m.type === "lbToast") {
@@ -211,8 +211,16 @@
         "<div class=\"row\"><span class=\"muted\">Vaqt:</span><select id=\"lbTc\">" + tcOpts + "</select><button id=\"lbQuick\" style=\"flex:1\">⚡ Tezkor o‘yin</button></div>" +
         "<div class=\"row\"><span class=\"muted\">Pozitsiya:</span><select id=\"lbPos\"><option value=\"std\">Standart</option><option value=\"idf\">IDF 780</option></select>" +
         "<select id=\"lbGm\" style=\"flex:1\"><option value=\"1\">1 o‘yin</option><option value=\"2\">1 match (2 o‘yin)</option><option value=\"4\">2 match (4 o‘yin)</option></select></div>" +
-        "<div class=\"tabs\"><button id=\"lbTabPl\">👥 O‘yinchilar</button><button id=\"lbTabT\">🏆 Turnirlar</button></div>" +
+        "<div class=\"tabs\"><button id=\"lbTabPl\">👥 O‘yinchilar</button><button id=\"lbTabT\">🏆 Turnirlar</button><button id=\"lbTabS\">🎭 Sians</button></div>" +
         "<div id=\"lbPl\"></div>" +
+        "<div id=\"lbS\" style=\"display:none\">" +
+        "<div class=\"card\"><div class=\"row\"><input id=\"lbSn\" maxlength=\"30\" placeholder=\"Sians nomi\" style=\"flex:1\"><button id=\"lbSCreate\">➕ Ochish</button></div>" +
+        "<div class=\"row\"><select id=\"lbSm\"><option value=\"5\">5 kishi</option><option value=\"10\" selected>10 kishi</option><option value=\"15\">15 kishi</option><option value=\"20\">20 kishi</option><option value=\"30\">30 kishi</option></select>" +
+        "<select id=\"lbSb\"><option value=\"0\">Qo‘shimcha vaqt yo‘q</option><option value=\"1\">Xo‘jayinga +1 daq</option><option value=\"2\">Xo‘jayinga +2 daq</option><option value=\"3\" selected>Xo‘jayinga +3 daq</option><option value=\"5\">Xo‘jayinga +5 daq</option></select></div>" +
+        "<div class=\"row\"><select id=\"lbSc\"><option value=\"alt\">Ranglar navbat bilan</option><option value=\"w\">Xo‘jayin oq</option><option value=\"b\">Xo‘jayin qora</option></select>" +
+        "<select id=\"lbSp\"><option value=\"std\">Standart</option><option value=\"idf\">IDF 780</option></select></div>" +
+        "<div class=\"muted\">Simul: siz bir vaqtning o‘zida ko‘p o‘yinchi bilan o‘ynaysiz. Vaqt rejimi yuqoridagi tanlovdan olinadi; xo‘jayinga har taxtada qo‘shimcha vaqt beriladi.</div></div>" +
+        "<div id=\"lbSs\"></div></div>" +
         "<div id=\"lbT\" style=\"display:none\">" +
         "<div class=\"card\"><div class=\"row\"><input id=\"lbTn\" maxlength=\"30\" placeholder=\"Turnir nomi\" style=\"flex:1\"><button id=\"lbTCreate\">➕ Ochish</button></div>" +
         "<div class=\"row\"><select id=\"lbTk\"><option value=\"arena\">⚔️ Arena</option><option value=\"swiss\">Shveytsar</option></select>" +
@@ -228,9 +236,14 @@
       document.body.appendChild(panel);
 
       $("lbClose").onclick = closePanel;
+      $("lbSCreate").onclick = function () {
+        sendMsg({ type: "lbSCreate", name: $("lbSn").value, tc: $("lbTc").value, max: Number($("lbSm").value), bonus: Number($("lbSb").value), color: $("lbSc").value, pos: $("lbSp").value });
+        $("lbSn").value = "";
+      };
       $("lbSnd").onclick = function () { if (window.SPSound) window.SPSound.openSettings(); };
       $("lbTabPl").onclick = function () { curTab = "pl"; renderAll(); };
       $("lbTabT").onclick = function () { curTab = "t"; renderAll(); };
+      $("lbTabS").onclick = function () { curTab = "s"; renderAll(); };
       $("lbQuick").onclick = function () {
         if (S.inQueue) sendMsg({ type: "lbQuickCancel" });
         else sendMsg({ type: "lbQuick", tc: $("lbTc").value, pos: $("lbPos").value, games: Number($("lbGm").value) });
@@ -265,6 +278,11 @@
         else if (act === "ts") sendMsg({ type: "lbTStart", tid: id });
         else if (act === "tc") sendMsg({ type: "lbTCancel", tid: id });
         else if (act === "go") go(id);
+        else if (act === "sj") sendMsg({ type: "lbSJoin", sid: id });
+        else if (act === "sl") sendMsg({ type: "lbSLeave", sid: id });
+        else if (act === "ss") sendMsg({ type: "lbSStart", sid: id });
+        else if (act === "sc") sendMsg({ type: "lbSCancel", sid: id });
+        else if (act === "sk") sendMsg({ type: "lbSKick", sid: id, uid: t.getAttribute("data-u") });
       });
     }
 
@@ -272,10 +290,12 @@
       if (!panel) return;
       $("lbTabPl").className = curTab === "pl" ? "on" : "";
       $("lbTabT").className = curTab === "t" ? "on" : "";
+      $("lbTabS").className = curTab === "s" ? "on" : "";
       $("lbPl").style.display = curTab === "pl" ? "block" : "none";
       $("lbT").style.display = curTab === "t" ? "block" : "none";
+      $("lbS").style.display = curTab === "s" ? "block" : "none";
       $("lbQuick").textContent = S.inQueue ? "⏳ Raqib kutilmoqda… (bekor qilish)" : "⚡ Tezkor o‘yin";
-      if (curTab === "pl") renderPlayers(); else renderTournaments();
+      if (curTab === "pl") renderPlayers(); else if (curTab === "s") renderSimuls(); else renderTournaments();
     }
 
     function renderPlayers() {
@@ -289,6 +309,96 @@
           (out[p.uid] ? "<span class=\"muted\">chaqirildi…</span>" : (p.busy ? "" : "<button data-a=\"ch\" data-id=\"" + esc(p.uid) + "\">Chaqirish</button>")) + "</div>";
       });
       $("lbPl").innerHTML = h;
+    }
+
+    // ---------- Simul (bitta xo'jayin ko'p o'yinchi bilan bir vaqtda) ----------
+    function fmtMs(ms) {
+      var s = Math.ceil(ms / 1000);
+      return Math.floor(s / 60) + ":" + (s % 60 < 10 ? "0" : "") + (s % 60);
+    }
+
+    function renderSimuls() {
+      var box = $("lbSs");
+      if (!box) return;
+      var me = S.me ? S.me.uid : "";
+      var ss = S.simuls || [];
+      if (!ss.length) { box.innerHTML = "<div class=\"card muted\">Hozircha simul yo‘q. Birinchi bo‘lib oching!</div>"; return; }
+      var order = { running: 0, reg: 1, finished: 2 };
+      ss = ss.slice().sort(function (a, b) { return order[a.status] - order[b.status]; });
+      var h = "";
+      ss.forEach(function (s) {
+        var host = s.hostUid === me;
+        var joined = s.players.some(function (p) { return p.uid === me; });
+        var stTxt = s.status === "reg" ? "Ro‘yxat ochiq" : (s.status === "running" ? "Davom etmoqda" : "Tugagan");
+        var colTxt = s.color === "w" ? "xo‘jayin oq" : (s.color === "b" ? "xo‘jayin qora" : "ranglar navbat bilan");
+        h += "<div class=\"card\"><div><b>🎭 " + esc(s.name) + "</b></div><div class=\"muted\">" + esc(s.tc) +
+          (s.bonus ? " · xo‘jayinga +" + s.bonus + " daq" : "") + (s.pos === "idf" ? " · IDF 780" : "") + " · " + colTxt + " · " + stTxt +
+          "<br>Xo‘jayin: " + esc(s.hostName) + " · " + s.players.length + "/" + s.max + " o‘yinchi</div><div class=\"row\">";
+        if (s.status === "reg") {
+          if (host) h += "<button class=\"grn\" data-a=\"ss\" data-id=\"" + s.id + "\">▶ Boshlash</button><button class=\"red\" data-a=\"sc\" data-id=\"" + s.id + "\">Bekor qilish</button>";
+          else if (joined) h += "<button class=\"sec\" data-a=\"sl\" data-id=\"" + s.id + "\">Chiqish</button>";
+          else h += "<button data-a=\"sj\" data-id=\"" + s.id + "\">Qo‘shilish</button>";
+        }
+        h += "</div>";
+        if (s.status === "reg") {
+          s.players.forEach(function (p) {
+            h += "<div class=\"pl\"><span>" + esc(p.name) + (p.uid === me ? " 👈" : "") + "</span>" +
+              (host ? "<button class=\"sec\" data-a=\"sk\" data-id=\"" + s.id + "\" data-u=\"" + esc(p.uid) + "\">✕</button>" : "") + "</div>";
+          });
+        } else {
+          var sc = s.score || { w: 0, d: 0, l: 0 };
+          h += "<div class=\"muted\">Xo‘jayin hisobi: +" + sc.w + " =" + sc.d + " −" + sc.l + "</div>";
+          var turnGames = s.games.filter(function (g) { return !g.done && g.hostTurn; })
+            .sort(function (a, b) { return a.hostMs - b.hostMs; });
+          if (host && s.status === "running" && turnGames.length) {
+            h += "<div class=\"row\"><button class=\"grn\" data-a=\"go\" data-id=\"" + esc(turnGames[0].roomId) + "\">▶ Keyingi taxta (" + turnGames.length + ")</button></div>";
+          }
+          var mine = s.games.filter(function (g) { return g.uid === me; })[0];
+          if (!host && mine && !mine.done) h += "<div class=\"row\"><button class=\"grn\" data-a=\"go\" data-id=\"" + esc(mine.roomId) + "\">▶ O‘yinga o‘tish</button></div>";
+          h += "<table><tr><th>#</th><th>O‘yinchi</th><th>Holat</th><th></th></tr>";
+          var rows = s.games.slice().sort(function (a, b) {
+            if (a.done !== b.done) return a.done ? 1 : -1;
+            if (a.hostTurn !== b.hostTurn) return a.hostTurn ? -1 : 1;
+            return a.hostMs - b.hostMs;
+          });
+          rows.forEach(function (g, i) {
+            var st;
+            if (g.done) st = g.result === "host" ? "✅ +" : (g.result === "draw" ? "🤝 =" : (g.result === "player" ? "❌ −" : "—"));
+            else st = (g.hostTurn ? "🟢 navbat sizda · " : "⏳ ") + fmtMs(g.hostMs);
+            h += "<tr><td>" + (i + 1) + "</td><td>" + esc(g.name) + (g.uid === me ? " 👈" : "") + "</td><td>" + st + "</td><td>" +
+              ((host || g.uid === me) && !g.done ? "<button data-a=\"go\" data-id=\"" + esc(g.roomId) + "\">▶</button>" : "") + "</td></tr>";
+          });
+          h += "</table>";
+        }
+        h += "</div>";
+      });
+      box.innerHTML = h;
+    }
+
+    // Xo'jayin uchun suzuvchi tugma: navbat o'zida bo'lgan keyingi taxtaga o'tadi (vaqti eng kam bo'lgani)
+    function updateSimulBtn() {
+      var me = S && S.me ? S.me.uid : "";
+      var cur = typeof curRoom !== "undefined" ? curRoom : null;
+      var best = null, n = 0;
+      (S.simuls || []).forEach(function (s) {
+        if (s.hostUid !== me || s.status !== "running") return;
+        s.games.forEach(function (g) {
+          if (g.done || !g.hostTurn || g.roomId === cur) return;
+          n++;
+          if (!best || g.hostMs < best.hostMs) best = g;
+        });
+      });
+      var b = document.getElementById("lbNext");
+      if (!best) { if (b) b.style.display = "none"; return; }
+      if (!b) {
+        b = document.createElement("button");
+        b.id = "lbNext";
+        b.style.cssText = "position:fixed;right:12px;bottom:112px;z-index:2147482000;padding:10px 14px;border-radius:20px;border:0;background:#2e9e4f;color:#fff;font:700 14px Arial;box-shadow:0 2px 10px rgba(0,0,0,.4);cursor:pointer";
+        document.body.appendChild(b);
+      }
+      b.style.display = "";
+      b.textContent = "🎭 Keyingi taxta · " + n;
+      b.onclick = function () { go(best.roomId); };
     }
 
     function renderTournaments() {
