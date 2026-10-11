@@ -14,6 +14,9 @@ const CHALLENGE_TTL = 60000;
 const MIN_T_PLAYERS = 3;
 const MAX_T_PLAYERS = 64;
 const MAX_TOURNAMENTS = 20;
+const SWISS_ROUNDS = [3, 4, 5, 6, 7, 8, 9, 10, 11];  // turlar soni
+const SWISS_INTERVALS = [10, 20, 60, 120, 300];       // turlar orasidagi tanaffus (soniya)
+const SWISS_STARTS = [2, 5, 10, 30];                  // rejalashtirilgan boshlanish (daqiqa); boshqasi = qo'lda
 const REG_TTL = 2 * 3600 * 1000;
 const KEEP_FINISHED = 6 * 3600 * 1000;
 
@@ -73,13 +76,26 @@ function createLobby({ send, clients, roomsApi }) {
     return [...seen.values()];
   }
 
+  // Buxgols = raqiblar ochkolari yig'indisi.
+  // Zonneborn-Berger (SB) = yutgan raqiblar ochkosi + durang raqiblar ochkosining yarmi.
+  function swissStats(t, p) {
+    let buch = 0, sb = 0;
+    for (const r of (p.res || [])) {
+      const o = t.players.get(r.opp);
+      if (!o) continue;
+      buch += o.score;
+      sb += r.pts * o.score;
+    }
+    return { buch: Math.round(buch * 100) / 100, sb: Math.round(sb * 100) / 100 };
+  }
+
   function standings(t) {
     const arr = [...t.players.values()].map(p => {
-      let buch = 0;
-      for (const u of p.opps) { const o = t.players.get(u); if (o) buch += o.score; }
-      return { uid: p.uid, name: p.name, score: p.score, buch, withdrawn: p.withdrawn };
+      const st = swissStats(t, p);
+      return { uid: p.uid, name: p.name, score: p.score, buch: st.buch, sb: st.sb, games: (p.res || []).length, withdrawn: p.withdrawn };
     });
-    arr.sort((a, b) => b.score - a.score || b.buch - a.buch || a.name.localeCompare(b.name));
+    // Lichess tartibi: ochko, keyin SB, keyin Buxgols
+    arr.sort((a, b) => b.score - a.score || b.sb - a.sb || b.buch - a.buch || a.name.localeCompare(b.name));
     return arr;
   }
 
@@ -96,6 +112,7 @@ function createLobby({ send, clients, roomsApi }) {
   function pubT(t) {
     return {
       id: t.id, name: t.name, tc: t.tc, status: t.status, pos: t.pos || 'std',
+      roundsWanted: t.roundsWanted || 0, interval: t.interval || 0,
       type: t.type || 'swiss', durationMin: t.durationMin || 0, startAt: t.startAt || 0, endAt: t.endAt || 0, ending: !!t.ending,
       creatorUid: t.creatorUid, creatorName: t.creatorName,
       round: t.round, rounds: t.rounds, nextAt: t.nextAt || 0,
@@ -147,21 +164,67 @@ function createLobby({ send, clients, roomsApi }) {
   }
 
   // ---------- Shveytsar ----------
-  function tryPair(list, allowRematch) {
-    const used = new Array(list.length).fill(false);
+  // Rang ehtiyoji: dir +1 = oq kerak, -1 = qora kerak; strict = majburiy (ketma-ket 2 bir xil rang yoki farq 2)
+  function colorNeed(p) {
+    const d = p.colors.w - p.colors.b;
+    const q = p.seq || [];
+    const l = q.length;
+    if (l >= 2 && q[l - 1] === q[l - 2]) return { dir: q[l - 1] === 'w' ? -1 : 1, strict: true };
+    if (d >= 2) return { dir: -1, strict: true };
+    if (d <= -2) return { dir: 1, strict: true };
+    if (d > 0) return { dir: -1, strict: false };
+    if (d < 0) return { dir: 1, strict: false };
+    if (l) return { dir: q[l - 1] === 'w' ? -1 : 1, strict: false };
+    return { dir: 0, strict: false };
+  }
+
+  function colorsOk(a, b) {
+    const na = colorNeed(a), nb = colorNeed(b);
+    return !(na.strict && nb.strict && na.dir !== 0 && na.dir === nb.dir);
+  }
+
+  function assignColors(a, b) {
+    const na = colorNeed(a), nb = colorNeed(b);
+    const str = n => (n.strict ? 2 : (n.dir ? 1 : 0));
+    let first = a, fn = na, second = b, sn = nb;
+    if (str(nb) > str(na) || (str(nb) === str(na) && Math.abs(b.colors.w - b.colors.b) > Math.abs(a.colors.w - a.colors.b))) {
+      first = b; fn = nb; second = a; sn = na;
+    }
+    let firstWhite;
+    if (fn.dir) firstWhite = fn.dir === 1;
+    else if (sn.dir) firstWhite = sn.dir === -1;
+    else firstWhite = Math.random() < 0.5;
+    return firstWhite ? [first, second] : [second, first];
+  }
+
+  // Dutch: bir xil ochkodagi guruhda yuqori yarmi quyi yarmi bilan juftlanadi (1-3, 2-4 ...)
+  function tryPair(list, allowRematch, enforceColor) {
+    const n = list.length;
+    const used = new Array(n).fill(false);
     const out = [];
     let steps = 0;
     function rec() {
       const i = used.indexOf(false);
       if (i < 0) return true;
-      if (++steps > 200000) return false;
+      if (++steps > 20000) return false;
       used[i] = true;
-      for (let j = i + 1; j < list.length; j++) {
+      const a = list[i];
+      const same = [];
+      for (let j = i + 1; j < n; j++) if (!used[j] && list[j].score === a.score) same.push(j);
+      const ideal = Math.floor((same.length + 1) / 2) - 1;
+      const cand = [];
+      for (let j = i + 1; j < n; j++) {
         if (used[j]) continue;
-        const a = list[i], b = list[j];
+        const b = list[j];
         if (!allowRematch && a.opps.includes(b.uid)) continue;
+        if (enforceColor && !colorsOk(a, b)) continue;
+        cand.push(j);
+      }
+      const rank = j => { const k = same.indexOf(j); return k >= 0 ? [0, Math.abs(k - ideal), k] : [1, j, 0]; };
+      cand.sort((x, y) => { const rx = rank(x), ry = rank(y); return rx[0] - ry[0] || rx[1] - ry[1] || rx[2] - ry[2]; });
+      for (const j of cand) {
         used[j] = true;
-        out.push([a, b]);
+        out.push([a, list[j]]);
         if (rec()) return true;
         out.pop();
         used[j] = false;
@@ -184,29 +247,24 @@ function createLobby({ send, clients, roomsApi }) {
     const sorted = shuffle(players.slice()).sort((a, b) => b.score - a.score);
     let bye = null;
     let pairs = null;
-    for (const allow of [false, true]) {
+    // avval qat'iy qoidalar, keyin birin-ketin yumshatamiz: takror raqib, rang
+    const levels = [[false, true], [false, false], [true, true], [true, false]];
+    for (const [allow, color] of levels) {
       if (sorted.length % 2 === 0) {
-        pairs = tryPair(sorted, allow);
+        pairs = tryPair(sorted, allow, color);
       } else {
-        // dam olish: eng quyi ochkodagi, hali dam olmagan o'yinchi
-        const cands = sorted.slice().reverse().sort((a, b) => a.hadBye - b.hadBye || a.score - b.score);
+        // dam olish: hali dam olmagan, eng kam ochkoli o'yinchi
+        const cands = sorted.slice().reverse().sort((a, b) => (a.hadBye ? 1 : 0) - (b.hadBye ? 1 : 0) || a.score - b.score);
         for (const cand of cands) {
           const rest = sorted.filter(p => p !== cand);
-          const r = tryPair(rest, allow);
+          const r = tryPair(rest, allow, color);
           if (r) { pairs = r; bye = cand; break; }
         }
       }
       if (pairs) break;
     }
     if (!pairs) pairs = [];
-    // ranglar: oq kam o'ynagan o'yinchiga
-    const out = pairs.map(([a, b]) => {
-      const da = a.colors.w - a.colors.b, db = b.colors.w - b.colors.b;
-      if (da < db) return [a, b];
-      if (db < da) return [b, a];
-      return Math.random() < 0.5 ? [a, b] : [b, a];
-    });
-    return { pairs: out, bye };
+    return { pairs: pairs.map(([a, b]) => assignColors(a, b)), bye };
   }
 
   function startRound(t) {
@@ -222,6 +280,7 @@ function createLobby({ send, clients, roomsApi }) {
       const roomId = 'T' + t.id + 'R' + t.round + 'B' + (i + 1);
       w.opps.push(b.uid); b.opps.push(w.uid);
       w.colors.w++; b.colors.b++;
+      w.seq.push('w'); b.seq.push('b');
       openRoom(roomId, t.tc, w, b, false, t.pos === 'idf' ? pickOpening() : null);
       const board = { board: i + 1, roomId, white: w.uid, black: b.uid, done: false, winner: null };
       t.cur.push(board);
@@ -267,6 +326,7 @@ function createLobby({ send, clients, roomsApi }) {
     else if (room.winner === 'black') sb = 1;
     else { sw = 0.5; sb = 0.5; }
     pw.score += sw; pb.score += sb;
+    pw.res.push({ opp: pb.uid, pts: sw }); pb.res.push({ opp: pw.uid, pts: sb });
     if (room.reason === 'noshow') {
       if (room.noshowBoth) { pw.noshows++; pb.noshows++; }
       else if (room.winner === 'white') { pb.noshows++; pw.noshows = 0; }
@@ -279,8 +339,9 @@ function createLobby({ send, clients, roomsApi }) {
       const left = [...t.players.values()].filter(p => !p.withdrawn).length;
       if (t.round >= t.rounds || left < 2) finishT(t);
       else {
-        t.nextAt = Date.now() + NEXT_ROUND_MS;
-        t.timer = setTimeout(() => { if (t.status === 'running') startRound(t); }, NEXT_ROUND_MS);
+        const gap = t.interval || NEXT_ROUND_MS;
+        t.nextAt = Date.now() + gap;
+        t.timer = setTimeout(() => { if (t.status === 'running') startRound(t); }, gap);
         if (t.timer.unref) t.timer.unref();
       }
     }
@@ -412,7 +473,17 @@ function createLobby({ send, clients, roomsApi }) {
   function arenaTick() {
     const now = Date.now();
     for (const t of tournaments.values()) {
-      if (t.type !== 'arena') continue;
+      if (t.type !== 'arena') {
+        if (t.status === 'reg' && t.startAt && now >= t.startAt) {
+          if (t.players.size >= MIN_T_PLAYERS) startT(t);
+          else {
+            t.startAt = now + 60000;
+            toast(t.creatorUid, '⏳ ' + t.name + ': kamida ' + MIN_T_PLAYERS + ' o‘yinchi kerak, boshlanish 1 daqiqaga kechiktirildi');
+          }
+          push();
+        }
+        continue;
+      }
       if (t.status === 'reg' && now >= t.startAt) startArena(t);
       if (t.status !== 'running') continue;
       if (!t.ending && now >= t.endAt) { t.ending = true; push(); }
@@ -423,7 +494,9 @@ function createLobby({ send, clients, roomsApi }) {
 
   function startT(t) {
     const n = t.players.size;
-    t.rounds = Math.min(n - 1, Math.min(9, Math.max(3, Math.ceil(Math.log2(n)))));
+    const auto = Math.min(9, Math.max(3, Math.ceil(Math.log2(n))));
+    t.rounds = Math.max(1, Math.min(n - 1, t.roundsWanted || auto));
+    t.startAt = 0;
     t.status = 'running';
     startRound(t);
   }
@@ -522,7 +595,10 @@ function createLobby({ send, clients, roomsApi }) {
           id: hex(3), name: cleanTitle(m.name) || ('Turnir ' + me.name), tc: TCS.includes(m.tc) ? m.tc : DEFAULT_TC,
           creatorUid: me.uid, creatorName: me.name, status: 'reg', created: Date.now(),
           players: new Map(), round: 0, rounds: 0, cur: [], curBye: null, nextAt: 0,
-          pos: m.pos === 'idf' ? 'idf' : 'std'
+          pos: m.pos === 'idf' ? 'idf' : 'std',
+          roundsWanted: SWISS_ROUNDS.includes(Number(m.rounds)) ? Number(m.rounds) : 0,
+          interval: SWISS_INTERVALS.includes(Number(m.interval)) ? Number(m.interval) * 1000 : 0,
+          startAt: SWISS_STARTS.includes(Number(m.startIn)) ? Date.now() + Number(m.startIn) * 60000 : 0
         };
         t.players.set(me.uid, newPlayer(me));
         tournaments.set(t.id, t);
@@ -542,7 +618,20 @@ function createLobby({ send, clients, roomsApi }) {
           push();
           break;
         }
-        if (!t || t.status !== 'reg') return err(c, 'Turnir ro‘yxatdan o‘tishga yopiq'), true;
+        if (!t) return err(c, 'Turnir topilmadi'), true;
+        if (t.status === 'running') {
+          // Lichess kabi: turnir davomida qo'shilish (rejadagi turlarning yarmigacha) va pauzadan qaytish
+          const ex = t.players.get(me.uid);
+          if (ex) { if (ex.withdrawn) { ex.withdrawn = false; ex.noshows = 0; } }
+          else {
+            if (t.round > Math.ceil(t.rounds / 2)) return err(c, 'Turnirga qo‘shilish muddati o‘tgan'), true;
+            if (t.players.size >= MAX_T_PLAYERS) return err(c, 'Turnir to‘lgan'), true;
+            t.players.set(me.uid, newPlayer(me));
+          }
+          push();
+          break;
+        }
+        if (t.status !== 'reg') return err(c, 'Turnir tugagan'), true;
         if (t.players.size >= MAX_T_PLAYERS) return err(c, 'Turnir to‘lgan'), true;
         if (!t.players.has(me.uid)) t.players.set(me.uid, newPlayer(me));
         push();
@@ -554,6 +643,11 @@ function createLobby({ send, clients, roomsApi }) {
           const p = t.players.get(me.uid);
           if (p) { if (t.status === 'reg' && t.creatorUid !== me.uid) t.players.delete(me.uid); else p.withdrawn = true; }
           push();
+          break;
+        }
+        if (t && t.status === 'running') {
+          const p = t.players.get(me.uid);
+          if (p) { p.withdrawn = true; push(); }   // pauza: keyingi turda juftlanmaysiz
           break;
         }
         if (!t || t.status !== 'reg' || t.creatorUid === me.uid) break;
@@ -589,7 +683,7 @@ function createLobby({ send, clients, roomsApi }) {
   }
 
   function newPlayer(me) {
-    return { uid: me.uid, name: me.name, score: 0, opps: [], colors: { w: 0, b: 0 }, hadBye: false, noshows: 0, withdrawn: false };
+    return { uid: me.uid, name: me.name, score: 0, opps: [], seq: [], res: [], colors: { w: 0, b: 0 }, hadBye: false, noshows: 0, withdrawn: false };
   }
 
   function onClose(c) {

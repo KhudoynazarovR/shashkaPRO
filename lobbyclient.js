@@ -206,6 +206,10 @@
         "<select id=\"lbTdur\"><option value=\"10\">10 daq</option><option value=\"20\">20 daq</option><option value=\"30\" selected>30 daq</option><option value=\"45\">45 daq</option><option value=\"60\">60 daq</option><option value=\"90\">90 daq</option></select>" +
         "<select id=\"lbTin\"><option value=\"0\">hozir</option><option value=\"2\">2 daq</option><option value=\"5\" selected>5 daq</option><option value=\"10\">10 daq</option><option value=\"30\">30 daq</option></select>" +
         "<select id=\"lbTp\"><option value=\"std\">Standart</option><option value=\"idf\">IDF 780</option></select></div>" +
+        "<div class=\"row\" id=\"lbSw\" style=\"display:none\"><span class=\"muted\">Turlar:</span><select id=\"lbTr\">" +
+        "<option value=\"3\">3</option><option value=\"4\">4</option><option value=\"5\" selected>5</option><option value=\"6\">6</option><option value=\"7\">7</option><option value=\"8\">8</option><option value=\"9\">9</option><option value=\"10\">10</option><option value=\"11\">11</option></select>" +
+        "<span class=\"muted\">Tanaffus:</span><select id=\"lbTiv\"><option value=\"10\">10 s</option><option value=\"20\" selected>20 s</option><option value=\"60\">1 daq</option><option value=\"120\">2 daq</option><option value=\"300\">5 daq</option></select>" +
+        "<select id=\"lbTsin\"><option value=\"0\">qo‘lda boshlash</option><option value=\"2\">2 daq</option><option value=\"5\">5 daq</option><option value=\"10\">10 daq</option><option value=\"30\">30 daq</option></select></div>" +
         "<div class=\"muted\">Arena: belgilangan vaqt to‘xtovsiz o‘ynaladi (g‘alaba 2, durang 1, ketma-ket 2 g‘alabadan so‘ng olov ×2, berserk +1). Shveytsar: kamida 3 o‘yinchi.</div></div>" +
         "<div id=\"lbTs\"></div></div>";
       document.body.appendChild(panel);
@@ -221,9 +225,10 @@
         var a = this.value === "arena";
         $("lbTdur").style.display = a ? "" : "none";
         $("lbTin").style.display = a ? "" : "none";
+        $("lbSw").style.display = a ? "none" : "";
       };
       $("lbTCreate").onclick = function () {
-        sendMsg({ type: "lbTCreate", kind: $("lbTk").value, pos: $("lbTp").value, duration: Number($("lbTdur").value), startIn: Number($("lbTin").value), name: $("lbTn").value, tc: $("lbTc").value });
+        sendMsg({ type: "lbTCreate", kind: $("lbTk").value, pos: $("lbTp").value, duration: Number($("lbTdur").value), startIn: Number($($("lbTk").value === "arena" ? "lbTin" : "lbTsin").value), rounds: Number($("lbTr").value), interval: Number($("lbTiv").value), name: $("lbTn").value, tc: $("lbTc").value });
         $("lbTn").value = "";
       };
       if (!initData) {
@@ -286,7 +291,7 @@
         var mins = function (ms) { return Math.max(0, Math.ceil(ms / 60000)) + " daq"; };
         var st = arena
           ? (t.status === "reg" ? "Boshlanishi: " + mins(t.startAt - Date.now()) : (t.status === "running" ? (t.ending ? "Tugayapti…" : "Qoldi: " + mins(t.endAt - Date.now())) : "Tugagan"))
-          : (t.status === "reg" ? "Ro‘yxat ochiq" : (t.status === "running" ? t.round + "/" + t.rounds + "-tur" : "Tugagan"));
+          : (t.status === "reg" ? "Ro‘yxat ochiq · " + (t.roundsWanted || "?") + " tur" + (t.startAt ? " · boshlanishi: " + mins(t.startAt - Date.now()) : "") : (t.status === "running" ? t.round + "/" + t.rounds + "-tur" : "Tugagan"));
         h += "<div class=\"card\"><div><b>" + (arena ? "⚔️" : "🏆") + " " + esc(t.name) + "</b></div><div class=\"muted\">" + esc(t.tc) + (t.pos === "idf" ? " · IDF 780" : "") + " · " + st + " · " + t.players.length + " o‘yinchi · ochdi: " + esc(t.creatorName) + "</div><div class=\"row\">";
         if (t.status === "reg") {
           if (!joined) h += "<button data-a=\"tj\" data-id=\"" + t.id + "\">Qo‘shilish</button>";
@@ -294,6 +299,11 @@
           if (t.creatorUid === me) {
             h += "<button class=\"grn\" data-a=\"ts\" data-id=\"" + t.id + "\">▶ Boshlash</button><button class=\"red\" data-a=\"tc\" data-id=\"" + t.id + "\">Bekor qilish</button>";
           }
+        }
+        if (!arena && t.status === "running") {
+          var meS = t.players.filter(function (p) { return p.uid === me; })[0];
+          if (meS && !meS.withdrawn) h += "<button class=\"sec\" data-a=\"tl\" data-id=\"" + t.id + "\">⏸ Pauza</button>";
+          else if (meS || t.round <= Math.ceil(t.rounds / 2)) h += "<button data-a=\"tj\" data-id=\"" + t.id + "\">" + (meS ? "Qaytish" : "Qo‘shilish") + "</button>";
         }
         if (arena && t.status === "running" && !t.ending) {
           var meP = t.players.filter(function (p) { return p.uid === me; })[0];
@@ -304,13 +314,13 @@
           var mine = t.boards.filter(function (b) { return !b.done && (b.white === me || b.black === me); })[0];
           if (mine) h += "<button class=\"grn\" data-a=\"go\" data-id=\"" + esc(mine.roomId) + "\">▶ O‘yinga o‘tish</button>";
           else if (t.bye === me) h += "<span class=\"muted\">Bu turda dam olasiz (+1)</span>";
-          else if (t.nextAt) h += "<span class=\"muted\">Keyingi tur tez orada…</span>";
+          else if (t.nextAt) h += "<span class=\"muted\">Keyingi tur: " + Math.max(0, Math.ceil((t.nextAt - Date.now()) / 1000)) + " s</span>";
           else if (joined) h += "<span class=\"muted\">" + (arena ? "Raqib qidirilmoqda…" : "Stolingiz tugadi, boshqalarni kuting") + "</span>";
         }
         h += "</div>";
-        h += "<table><tr><th>#</th><th>O‘yinchi</th><th>Ochko</th><th>" + (arena ? "O‘yin" : "Bux.") + "</th></tr>";
+        h += "<table><tr><th>#</th><th>O‘yinchi</th><th>Ochko</th><th>" + (arena ? "O‘yin" : "SB") + "</th>" + (arena ? "" : "<th>Bux.</th>") + "</tr>";
         t.players.slice(0, 12).forEach(function (p, i) {
-          h += "<tr><td>" + (i + 1) + "</td><td>" + esc(p.name) + (p.uid === me ? " 👈" : "") + (p.withdrawn ? " <span class=\"muted\">(chiqdi)</span>" : "") + "</td><td>" + p.score + (p.fire ? " 🔥" : "") + "</td><td>" + (arena ? p.games : p.buch) + "</td></tr>";
+          h += "<tr><td>" + (i + 1) + "</td><td>" + esc(p.name) + (p.uid === me ? " 👈" : "") + (p.withdrawn ? " <span class=\"muted\">(chiqdi)</span>" : "") + "</td><td>" + p.score + (p.fire ? " 🔥" : "") + "</td><td>" + (arena ? p.games : p.sb) + "</td>" + (arena ? "" : "<td>" + p.buch + "</td>") + "</tr>";
         });
         h += "</table>";
         if (t.players.length > 12) h += "<div class=\"muted\">… va yana " + (t.players.length - 12) + " o‘yinchi</div>";
@@ -320,7 +330,7 @@
     }
 
     // keyingi tur sanog'i uchun sekin yangilash
-    setInterval(function () { if (panelOpen && curTab === "t") renderTournaments(); }, 5000);
+    setInterval(function () { if (panelOpen && curTab === "t") renderTournaments(); }, 2000);
 
     connect();
   }
