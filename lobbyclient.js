@@ -85,6 +85,17 @@
 
     function onGo(m) {
       if (m.roomId === curRoom) return;
+      if (m.reason === "series" && m.series) {
+        var stx = "🔁 Seriya: " + m.series.game + "/" + m.series.total + "-o‘yin<br>" + esc(m.series.score) + "<br>Raqib: <b>" + esc(m.opponent) + "</b> (" + (m.color === "white" ? "oq" : "qora") + ")";
+        var sleft = 3, st2;
+        toast(stx + "<br><span id=\"lbCd\">" + sleft + "</span> soniyadan so‘ng o‘tasiz…", [["Hozir", function () { clearInterval(st2); go(m.roomId); }]], 4000);
+        st2 = setInterval(function () {
+          sleft--;
+          var el2 = $("lbCd"); if (el2) el2.textContent = sleft;
+          if (sleft <= 0) { clearInterval(st2); go(m.roomId); }
+        }, 1000);
+        return;
+      }
       if (m.reason === "tournament" || m.reason === "arena") {
         var txt = "🏆 <b>" + esc(m.tname) + "</b> — " + (m.reason === "arena" ? "yangi o‘yin" : m.round + "-tur boshlandi") + ".<br>Raqib: <b>" + esc(m.opponent) + "</b> (" + (m.color === "white" ? "oq" : "qora") + ")";
         if (!inRoom) {
@@ -198,6 +209,8 @@
         "<div class=\"row\" style=\"justify-content:space-between\"><h2>🏟 O‘yinchilar zali</h2><button id=\"lbClose\" class=\"sec\">✕</button></div>" +
         nameRow +
         "<div class=\"row\"><span class=\"muted\">Vaqt:</span><select id=\"lbTc\">" + tcOpts + "</select><button id=\"lbQuick\" style=\"flex:1\">⚡ Tezkor o‘yin</button></div>" +
+        "<div class=\"row\"><span class=\"muted\">Pozitsiya:</span><select id=\"lbPos\"><option value=\"std\">Standart</option><option value=\"idf\">IDF 780</option></select>" +
+        "<select id=\"lbGm\" style=\"flex:1\"><option value=\"1\">1 o‘yin</option><option value=\"2\">1 match (2 o‘yin)</option><option value=\"4\">2 match (4 o‘yin)</option></select></div>" +
         "<div class=\"tabs\"><button id=\"lbTabPl\">👥 O‘yinchilar</button><button id=\"lbTabT\">🏆 Turnirlar</button></div>" +
         "<div id=\"lbPl\"></div>" +
         "<div id=\"lbT\" style=\"display:none\">" +
@@ -219,7 +232,7 @@
       $("lbTabT").onclick = function () { curTab = "t"; renderAll(); };
       $("lbQuick").onclick = function () {
         if (S.inQueue) sendMsg({ type: "lbQuickCancel" });
-        else sendMsg({ type: "lbQuick", tc: $("lbTc").value });
+        else sendMsg({ type: "lbQuick", tc: $("lbTc").value, pos: $("lbPos").value, games: Number($("lbGm").value) });
       };
       $("lbTk").onchange = function () {
         var a = this.value === "arena";
@@ -245,7 +258,7 @@
         var t = e.target; if (!t || !t.getAttribute) return;
         var act = t.getAttribute("data-a"), id = t.getAttribute("data-id");
         if (!act) return;
-        if (act === "ch") sendMsg({ type: "lbChallenge", toUid: id, tc: $("lbTc").value });
+        if (act === "ch") sendMsg({ type: "lbChallenge", toUid: id, tc: $("lbTc").value, pos: $("lbPos").value, games: Number($("lbGm").value) });
         else if (act === "tj") sendMsg({ type: "lbTJoin", tid: id });
         else if (act === "tl") sendMsg({ type: "lbTLeave", tid: id });
         else if (act === "ts") sendMsg({ type: "lbTStart", tid: id });

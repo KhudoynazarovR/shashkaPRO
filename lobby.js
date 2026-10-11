@@ -14,6 +14,8 @@ const CHALLENGE_TTL = 60000;
 const MIN_T_PLAYERS = 3;
 const MAX_T_PLAYERS = 64;
 const MAX_TOURNAMENTS = 20;
+const GAMES_OPTS = [1, 2, 4];   // 1 o'yin, 1 match (2 o'yin), 2 match (4 o'yin)
+const SERIES_GAP_MS = Number(process.env.SERIES_GAP_MS || 5000);  // seriyada o'yinlar orasidagi tanaffus
 const SWISS_ROUNDS = [3, 4, 5, 6, 7, 8, 9, 10, 11];  // turlar soni
 const SWISS_INTERVALS = [10, 20, 60, 120, 300];       // turlar orasidagi tanaffus (soniya)
 const SWISS_STARTS = [2, 5, 10, 30];                  // rejalashtirilgan boshlanish (daqiqa); boshqasi = qo'lda
@@ -56,6 +58,7 @@ function createLobby({ send, clients, roomsApi }) {
   const challenges = new Map();  // id -> { id, fromUid, fromName, toUid, tc, at }
   const tournaments = new Map(); // tid -> t
   const roomToBoard = new Map(); // roomId -> { t, b }
+  const roomToSeries = new Map(); // roomId -> { s, w, k }  (o'yinchilar orasidagi seriya)
 
   let pushTimer = null;
 
@@ -134,7 +137,7 @@ function createLobby({ send, clients, roomsApi }) {
       players: playersList(),
       inQueue: queue.has(uid),
       incoming: [...challenges.values()].filter(x => x.toUid === uid)
-        .map(x => ({ id: x.id, fromName: x.fromName, tc: x.tc })),
+        .map(x => ({ id: x.id, fromName: x.fromName, tc: x.tc + describeOpts(x) })),
       outgoing: [...challenges.values()].filter(x => x.fromUid === uid)
         .map(x => ({ id: x.id, toUid: x.toUid, tc: x.tc })),
       tournaments: [...tournaments.values()].map(pubT)
@@ -154,13 +157,69 @@ function createLobby({ send, clients, roomsApi }) {
     roomsApi.create(roomId, { tc, arena: !!arena, opening: opening || null, white: { uid: w.uid, name: w.name }, black: { uid: b.uid, name: b.name } });
   }
 
-  function makeMatch(a, b, tc, reason) {
-    const [w, k] = Math.random() < 0.5 ? [a, b] : [b, a];
-    const roomId = 'L' + hex(5);
-    openRoom(roomId, tc, w, k);
-    sendUid(w.uid, { type: 'lbGo', roomId, reason, color: 'white', opponent: k.name, tc });
-    sendUid(k.uid, { type: 'lbGo', roomId, reason, color: 'black', opponent: w.name, tc });
+  function cleanOpts(m) {
+    return { pos: m && m.pos === 'idf' ? 'idf' : 'std', games: GAMES_OPTS.includes(Number(m && m.games)) ? Number(m.games) : 1 };
+  }
+  function describeOpts(o) {
+    return (o.pos === 'idf' ? ' · IDF 780' : '') + (o.games > 1 ? ' · ' + o.games + ' o‘yin' : '');
+  }
+  const fmtPts = x => String(x);
+  function seriesScore(s) {
+    const [A, B] = s.p;
+    return A.name + ' ' + fmtPts(s.pts[A.uid]) + ' – ' + fmtPts(s.pts[B.uid]) + ' ' + B.name;
+  }
+
+  // Seriya: 1 o'yin, yoki match = bir pozitsiya, ranglar almashgan 2 o'yin
+  function makeMatch(a, b, tc, reason, o) {
+    o = o || { pos: 'std', games: 1 };
+    const first = Math.random() < 0.5 ? a : b;
+    const s = { id: hex(4), p: [first, first === a ? b : a], tc, pos: o.pos, total: o.games, played: 0, pts: {}, opening: null, reason };
+    s.pts[a.uid] = 0; s.pts[b.uid] = 0;
+    startSeriesGame(s);
     push();
+  }
+
+  function startSeriesGame(s) {
+    const g = s.played;                                   // 0 dan boshlanadi
+    if (g % 2 === 0) s.opening = s.pos === 'idf' ? pickOpening() : null;   // har matchga yangi pozitsiya
+    const w = g % 2 === 0 ? s.p[0] : s.p[1];
+    const k = g % 2 === 0 ? s.p[1] : s.p[0];             // matchning 2-o'yinida ranglar almashadi
+    const roomId = 'L' + hex(5);
+    openRoom(roomId, s.tc, w, k, false, s.opening);
+    roomToSeries.set(roomId, { s, w: w.uid, k: k.uid });
+    const series = s.total > 1 ? { game: g + 1, total: s.total, score: seriesScore(s) } : null;
+    const reason = g === 0 ? s.reason : 'series';
+    sendUid(w.uid, { type: 'lbGo', roomId, reason, color: 'white', opponent: k.name, tc: s.tc, series });
+    sendUid(k.uid, { type: 'lbGo', roomId, reason, color: 'black', opponent: w.name, tc: s.tc, series });
+  }
+
+  function seriesGameDone(ref, room) {
+    const { s, w, k } = ref;
+    s.played++;
+    if (room.winner === 'white') s.pts[w] += 1;
+    else if (room.winner === 'black') s.pts[k] += 1;
+    else { s.pts[w] += 0.5; s.pts[k] += 0.5; }
+    const [A, B] = s.p;
+    if (s.total <= 1) return;
+    if (s.played >= s.total) {
+      const sa = s.pts[A.uid], sb = s.pts[B.uid];
+      const res = sa === sb ? 'Durang' : 'G‘olib: ' + (sa > sb ? A.name : B.name);
+      const txt = '🏁 Seriya tugadi: ' + seriesScore(s) + '. ' + res;
+      toast(A.uid, txt); toast(B.uid, txt);
+      return;
+    }
+    const txt = '🔁 Seriya ' + s.played + '/' + s.total + ': ' + seriesScore(s) + '. Keyingi o‘yin ' + Math.round(SERIES_GAP_MS / 1000) + ' soniyadan so‘ng';
+    toast(A.uid, txt); toast(B.uid, txt);
+    const timer = setTimeout(() => {
+      if (!connsOf(A.uid).length || !connsOf(B.uid).length) {
+        const left = connsOf(A.uid).length ? A : B;
+        toast(left.uid, 'Raqib chiqib ketdi, seriya tugatildi: ' + seriesScore(s));
+        return;
+      }
+      startSeriesGame(s);
+      push();
+    }, SERIES_GAP_MS);
+    if (timer.unref) timer.unref();
   }
 
   // ---------- Shveytsar ----------
@@ -312,6 +371,8 @@ function createLobby({ send, clients, roomsApi }) {
   }
 
   function onRoomFinished(room) {
+    const sr = roomToSeries.get(room.id);
+    if (sr) { roomToSeries.delete(room.id); return seriesGameDone(sr, room); }
     const ref = roomToBoard.get(room.id);
     if (!ref) return;
     const { t, b } = ref;
@@ -538,11 +599,12 @@ function createLobby({ send, clients, roomsApi }) {
       }
       case 'lbQuick': {
         const tc = TCS.includes(m.tc) ? m.tc : DEFAULT_TC;
-        const other = [...queue.values()].find(x => x.uid !== me.uid && x.tc === tc && connsOf(x.uid).length);
+        const o = cleanOpts(m);
+        const other = [...queue.values()].find(x => x.uid !== me.uid && x.tc === tc && x.pos === o.pos && x.games === o.games && connsOf(x.uid).length);
         if (other) {
           queue.delete(other.uid); queue.delete(me.uid);
-          makeMatch({ uid: other.uid, name: connsOf(other.uid)[0].lb.name }, { uid: me.uid, name: me.name }, tc, 'quick');
-        } else { queue.set(me.uid, { uid: me.uid, tc }); push(); }
+          makeMatch({ uid: other.uid, name: connsOf(other.uid)[0].lb.name }, { uid: me.uid, name: me.name }, tc, 'quick', o);
+        } else { queue.set(me.uid, { uid: me.uid, tc, pos: o.pos, games: o.games }); push(); }
         break;
       }
       case 'lbQuickCancel': queue.delete(me.uid); push(); break;
@@ -551,9 +613,9 @@ function createLobby({ send, clients, roomsApi }) {
         if (!to || to.lb.uid === me.uid) return err(c, 'O‘yinchi topilmadi'), true;
         if ([...challenges.values()].some(x => x.fromUid === me.uid && x.toUid === to.lb.uid)) return err(c, 'Chaqiruv allaqachon yuborilgan'), true;
         if (challenges.size > 500) return err(c, 'Hozir band, keyinroq urinib ko‘ring'), true;
-        const ch = { id: 'c' + hex(4), fromUid: me.uid, fromName: me.name, toUid: to.lb.uid, tc: TCS.includes(m.tc) ? m.tc : DEFAULT_TC, at: Date.now() };
+        const ch = { id: 'c' + hex(4), fromUid: me.uid, fromName: me.name, toUid: to.lb.uid, tc: TCS.includes(m.tc) ? m.tc : DEFAULT_TC, ...cleanOpts(m), at: Date.now() };
         challenges.set(ch.id, ch);
-        sendUid(ch.toUid, { type: 'lbChallengeIn', id: ch.id, fromName: ch.fromName, tc: ch.tc });
+        sendUid(ch.toUid, { type: 'lbChallengeIn', id: ch.id, fromName: ch.fromName, tc: ch.tc + describeOpts(ch) });
         push();
         break;
       }
@@ -565,7 +627,7 @@ function createLobby({ send, clients, roomsApi }) {
         challenges.delete(ch.id);
         if (mine && m.accept) {
           queue.delete(ch.fromUid); queue.delete(ch.toUid);
-          if (connsOf(ch.fromUid).length) makeMatch({ uid: ch.fromUid, name: ch.fromName }, { uid: me.uid, name: me.name }, ch.tc, 'challenge');
+          if (connsOf(ch.fromUid).length) makeMatch({ uid: ch.fromUid, name: ch.fromName }, { uid: me.uid, name: me.name }, ch.tc, 'challenge', ch);
           else toast(me.uid, 'Chaqiruvchi chiqib ketgan');
         } else if (mine) toast(ch.fromUid, me.name + ' chaqiruvni rad etdi');
         push();
