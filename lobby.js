@@ -642,7 +642,7 @@ function createLobby({ send, clients, roomsApi }) {
       sm.status = 'finished';
       sm.finishedAt = Date.now();
       const sc = pubSimul(sm).score;
-      const txt = '🎭 ' + sm.name + ' tugadi: +' + sc.w + ' =' + sc.d + ' −' + sc.l + ' (xo‘jayin ' + sm.hostName + ' hisobida)';
+      const txt = '🎭 ' + sm.name + ' tugadi: +' + sc.w + ' =' + sc.d + ' −' + sc.l + ' (mezbon ' + sm.hostName + ' hisobida)';
       toast(sm.hostUid, txt);
       for (const p of sm.players.values()) toast(p.uid, txt);
     }
@@ -846,7 +846,7 @@ function createLobby({ send, clients, roomsApi }) {
       case 'lbSJoin': {
         const sm = simuls.get(String(m.sid));
         if (!sm || sm.status !== 'reg') return err(c, 'Simulga qo‘shilib bo‘lmaydi'), true;
-        if (sm.hostUid === me.uid) return err(c, 'Xo‘jayin o‘z simuliga qo‘shila olmaydi'), true;
+        if (sm.hostUid === me.uid) return err(c, 'Mezbon o‘z simuliga qo‘shila olmaydi'), true;
         if (sm.players.size >= sm.max) return err(c, 'Simul to‘lgan'), true;
         sm.players.set(me.uid, { uid: me.uid, name: me.name });
         push();
@@ -863,14 +863,14 @@ function createLobby({ send, clients, roomsApi }) {
         const sm = simuls.get(String(m.sid));
         if (!sm || sm.status !== 'reg' || sm.hostUid !== me.uid) break;
         const uid = String(m.uid);
-        if (sm.players.delete(uid)) toast(uid, '🎭 ' + sm.name + ': xo‘jayin sizni ro‘yxatdan chiqardi');
+        if (sm.players.delete(uid)) toast(uid, '🎭 ' + sm.name + ': mezbon sizni ro‘yxatdan chiqardi');
         push();
         break;
       }
       case 'lbSStart': {
         const sm = simuls.get(String(m.sid));
         if (!sm || sm.status !== 'reg') break;
-        if (sm.hostUid !== me.uid) return err(c, 'Simulni faqat xo‘jayin boshlay oladi'), true;
+        if (sm.hostUid !== me.uid) return err(c, 'Simulni faqat mezbon boshlay oladi'), true;
         if (sm.players.size < 1) return err(c, 'Boshlash uchun kamida 1 o‘yinchi kerak'), true;
         startSimul(sm);
         break;

@@ -216,10 +216,10 @@
         "<div id=\"lbS\" style=\"display:none\">" +
         "<div class=\"card\"><div class=\"row\"><input id=\"lbSn\" maxlength=\"30\" placeholder=\"Sians nomi\" style=\"flex:1\"><button id=\"lbSCreate\">➕ Ochish</button></div>" +
         "<div class=\"row\"><select id=\"lbSm\"><option value=\"5\">5 kishi</option><option value=\"10\" selected>10 kishi</option><option value=\"15\">15 kishi</option><option value=\"20\">20 kishi</option><option value=\"30\">30 kishi</option></select>" +
-        "<select id=\"lbSb\"><option value=\"0\">Qo‘shimcha vaqt yo‘q</option><option value=\"1\">Xo‘jayinga +1 daq</option><option value=\"2\">Xo‘jayinga +2 daq</option><option value=\"3\" selected>Xo‘jayinga +3 daq</option><option value=\"5\">Xo‘jayinga +5 daq</option></select></div>" +
-        "<div class=\"row\"><select id=\"lbSc\"><option value=\"alt\">Ranglar navbat bilan</option><option value=\"w\">Xo‘jayin oq</option><option value=\"b\">Xo‘jayin qora</option></select>" +
+        "<select id=\"lbSb\"><option value=\"0\">Qo‘shimcha vaqt yo‘q</option><option value=\"1\">Mezbonga +1 daq</option><option value=\"2\">Mezbonga +2 daq</option><option value=\"3\" selected>Mezbonga +3 daq</option><option value=\"5\">Mezbonga +5 daq</option></select></div>" +
+        "<div class=\"row\"><select id=\"lbSc\"><option value=\"alt\">Ranglar navbat bilan</option><option value=\"w\">Mezbon oq</option><option value=\"b\">Mezbon qora</option></select>" +
         "<select id=\"lbSp\"><option value=\"std\">Standart</option><option value=\"idf\">IDF 780</option></select></div>" +
-        "<div class=\"muted\">Simul: siz bir vaqtning o‘zida ko‘p o‘yinchi bilan o‘ynaysiz. Vaqt rejimi yuqoridagi tanlovdan olinadi; xo‘jayinga har taxtada qo‘shimcha vaqt beriladi.</div></div>" +
+        "<div class=\"muted\">Simul: siz bir vaqtning o‘zida ko‘p o‘yinchi bilan o‘ynaysiz. Vaqt rejimi yuqoridagi tanlovdan olinadi; mezbonga har taxtada qo‘shimcha vaqt beriladi.</div></div>" +
         "<div id=\"lbSs\"></div></div>" +
         "<div id=\"lbT\" style=\"display:none\">" +
         "<div class=\"card\"><div class=\"row\"><input id=\"lbTn\" maxlength=\"30\" placeholder=\"Turnir nomi\" style=\"flex:1\"><button id=\"lbTCreate\">➕ Ochish</button></div>" +
@@ -330,10 +330,10 @@
         var host = s.hostUid === me;
         var joined = s.players.some(function (p) { return p.uid === me; });
         var stTxt = s.status === "reg" ? "Ro‘yxat ochiq" : (s.status === "running" ? "Davom etmoqda" : "Tugagan");
-        var colTxt = s.color === "w" ? "xo‘jayin oq" : (s.color === "b" ? "xo‘jayin qora" : "ranglar navbat bilan");
+        var colTxt = s.color === "w" ? "mezbon oq" : (s.color === "b" ? "mezbon qora" : "ranglar navbat bilan");
         h += "<div class=\"card\"><div><b>🎭 " + esc(s.name) + "</b></div><div class=\"muted\">" + esc(s.tc) +
-          (s.bonus ? " · xo‘jayinga +" + s.bonus + " daq" : "") + (s.pos === "idf" ? " · IDF 780" : "") + " · " + colTxt + " · " + stTxt +
-          "<br>Xo‘jayin: " + esc(s.hostName) + " · " + s.players.length + "/" + s.max + " o‘yinchi</div><div class=\"row\">";
+          (s.bonus ? " · mezbonga +" + s.bonus + " daq" : "") + (s.pos === "idf" ? " · IDF 780" : "") + " · " + colTxt + " · " + stTxt +
+          "<br>Mezbon: " + esc(s.hostName) + " · " + s.players.length + "/" + s.max + " o‘yinchi</div><div class=\"row\">";
         if (s.status === "reg") {
           if (host) h += "<button class=\"grn\" data-a=\"ss\" data-id=\"" + s.id + "\">▶ Boshlash</button><button class=\"red\" data-a=\"sc\" data-id=\"" + s.id + "\">Bekor qilish</button>";
           else if (joined) h += "<button class=\"sec\" data-a=\"sl\" data-id=\"" + s.id + "\">Chiqish</button>";
@@ -347,7 +347,7 @@
           });
         } else {
           var sc = s.score || { w: 0, d: 0, l: 0 };
-          h += "<div class=\"muted\">Xo‘jayin hisobi: +" + sc.w + " =" + sc.d + " −" + sc.l + "</div>";
+          h += "<div class=\"muted\">Mezbon hisobi: +" + sc.w + " =" + sc.d + " −" + sc.l + "</div>";
           var turnGames = s.games.filter(function (g) { return !g.done && g.hostTurn; })
             .sort(function (a, b) { return a.hostMs - b.hostMs; });
           if (host && s.status === "running" && turnGames.length) {
