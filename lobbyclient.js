@@ -21,6 +21,14 @@
     var curRoom = "";
     if (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) curRoom = String(tg.initDataUnsafe.start_param);
     if (!curRoom && q.get("room")) curRoom = q.get("room");
+    // havola orqali kirish: startapp=lbt_<turnir> / lbs_<sians> yoki ?t= / ?s=
+    var linkTid = "", linkSid = "";
+    if (/^lbt_/.test(curRoom)) { linkTid = curRoom.slice(4); curRoom = ""; }
+    else if (/^lbs_/.test(curRoom)) { linkSid = curRoom.slice(4); curRoom = ""; }
+    else {
+      if (/^[A-Za-z0-9_-]{1,64}$/.test(q.get("t") || "")) linkTid = q.get("t");
+      if (/^[A-Za-z0-9_-]{1,64}$/.test(q.get("s") || "")) linkSid = q.get("s");
+    }
     var inRoom = ROOM_RE.test(curRoom);
     var initData = (tg && tg.initData) || "";
 
@@ -74,6 +82,8 @@
     function onMsg(m) {
       if (m.type === "lbState") {
         S = m; if (m.now) window.__lbSkew = m.now - Date.now(); renderBadge(); if (panelOpen) renderAll(); renderIncoming(); updateSimulBtn();
+        if (linkTid && !inRoom) openLinked("t");
+        if (linkSid && !inRoom) openLinked("s");
       } else if (m.type === "lbGo") {
         onGo(m);
       } else if (m.type === "lbToast") {
@@ -183,6 +193,42 @@
       btn.onclick = openPanel;
       document.body.appendChild(btn);
     }
+    // ---------- 🔗 havolalar ----------
+    var hl = { id: "", until: 0 };
+    function applyHl() {
+      if (!hl.id || Date.now() > hl.until) return;
+      var e = $(hl.id);
+      if (e) e.style.outline = "2px solid #2b7cff";
+    }
+    function openLinked(kind) {
+      var id = kind === "t" ? linkTid : linkSid;
+      if (kind === "t") linkTid = ""; else linkSid = "";
+      curTab = kind;
+      openPanel();
+      var list = kind === "t" ? S.tournaments : S.simuls;
+      var found = (list || []).some(function (x) { return String(x.id) === id; });
+      if (!found) { toast("⚠️ Bu " + (kind === "t" ? "turnir" : "sians") + " topilmadi yoki yopilgan", null, 5000); return; }
+      hl.id = (kind === "t" ? "lbtc_" : "lbsc_") + id;
+      hl.until = Date.now() + 4000;
+      applyHl();
+      var el = $(hl.id);
+      if (el) { try { el.scrollIntoView({ block: "center" }); } catch (e) {} }
+    }
+    function shareLink(prefix, qp, id, text) {
+      var base = window.TG_APP_LINK || ""; // masalan: "https://t.me/BOT_USERNAME/APP_NAME"
+      var url = base
+        ? base + "?startapp=" + encodeURIComponent(prefix + id)
+        : location.origin + location.pathname + "?" + qp + "=" + encodeURIComponent(id);
+      if (base && tg && tg.openTelegramLink) {
+        tg.openTelegramLink("https://t.me/share/url?url=" + encodeURIComponent(url) + "&text=" + encodeURIComponent(text));
+        return;
+      }
+      if (navigator.share) { navigator.share({ title: "ShashkaPRO", text: text, url: url }).catch(function () {}); return; }
+      var done = function () { toast("🔗 Havola nusxalandi", null, 2500); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, function () { prompt("Havola:", url); });
+      else prompt("Havola:", url);
+    }
+
     function renderBadge() {
       var b = $("lbBadge"); if (!b) return;
       var n = (S.incoming || []).length;
@@ -213,14 +259,6 @@
         "<select id=\"lbGm\" style=\"flex:1\"><option value=\"1\">1 o‘yin</option><option value=\"2\">1 match (2 o‘yin)</option><option value=\"4\">2 match (4 o‘yin)</option></select></div>" +
         "<div class=\"tabs\"><button id=\"lbTabPl\">👥 O‘yinchilar</button><button id=\"lbTabT\">🏆 Turnirlar</button><button id=\"lbTabS\">🎭 Sians</button></div>" +
         "<div id=\"lbPl\"></div>" +
-        "<div id=\"lbS\" style=\"display:none\">" +
-        "<div class=\"card\"><div class=\"row\"><input id=\"lbSn\" maxlength=\"30\" placeholder=\"Sians nomi\" style=\"flex:1\"><button id=\"lbSCreate\">➕ Ochish</button></div>" +
-        "<div class=\"row\"><select id=\"lbSm\"><option value=\"5\">5 kishi</option><option value=\"10\" selected>10 kishi</option><option value=\"15\">15 kishi</option><option value=\"20\">20 kishi</option><option value=\"30\">30 kishi</option></select>" +
-        "<select id=\"lbSb\"><option value=\"0\">Qo‘shimcha vaqt yo‘q</option><option value=\"1\">Xo‘jayinga +1 daq</option><option value=\"2\">Xo‘jayinga +2 daq</option><option value=\"3\" selected>Xo‘jayinga +3 daq</option><option value=\"5\">Xo‘jayinga +5 daq</option></select></div>" +
-        "<div class=\"row\"><select id=\"lbSc\"><option value=\"alt\">Ranglar navbat bilan</option><option value=\"w\">Xo‘jayin oq</option><option value=\"b\">Xo‘jayin qora</option></select>" +
-        "<select id=\"lbSp\"><option value=\"std\">Standart</option><option value=\"idf\">IDF 780</option></select></div>" +
-        "<div class=\"muted\">Simul: siz bir vaqtning o‘zida ko‘p o‘yinchi bilan o‘ynaysiz. Vaqt rejimi yuqoridagi tanlovdan olinadi; xo‘jayinga har taxtada qo‘shimcha vaqt beriladi.</div></div>" +
-        "<div id=\"lbSs\"></div></div>" +
         "<div id=\"lbS\" style=\"display:none\">" +
         "<div class=\"card\"><div class=\"row\"><input id=\"lbSn\" maxlength=\"30\" placeholder=\"Sians nomi\" style=\"flex:1\"><button id=\"lbSCreate\">➕ Ochish</button></div>" +
         "<div class=\"row\"><select id=\"lbSm\"><option value=\"5\">5 kishi</option><option value=\"10\" selected>10 kishi</option><option value=\"15\">15 kishi</option><option value=\"20\">20 kishi</option><option value=\"30\">30 kishi</option></select>" +
@@ -286,6 +324,8 @@
         else if (act === "ts") sendMsg({ type: "lbTStart", tid: id });
         else if (act === "tc") sendMsg({ type: "lbTCancel", tid: id });
         else if (act === "go") go(id);
+        else if (act === "tlink") shareLink("lbt_", "t", id, "🏆 " + (t.getAttribute("data-n") || "Turnir") + " turniriga qo‘shiling — ShashkaPRO");
+        else if (act === "slink") shareLink("lbs_", "s", id, "🎭 " + (t.getAttribute("data-n") || "Sians") + " siansiga qo‘shiling — ShashkaPRO");
         else if (act === "sj") sendMsg({ type: "lbSJoin", sid: id });
         else if (act === "sl") sendMsg({ type: "lbSLeave", sid: id });
         else if (act === "ss") sendMsg({ type: "lbSStart", sid: id });
@@ -339,9 +379,10 @@
         var joined = s.players.some(function (p) { return p.uid === me; });
         var stTxt = s.status === "reg" ? "Ro‘yxat ochiq" : (s.status === "running" ? "Davom etmoqda" : "Tugagan");
         var colTxt = s.color === "w" ? "mezbon oq" : (s.color === "b" ? "mezbon qora" : "ranglar navbat bilan");
-        h += "<div class=\"card\"><div><b>🎭 " + esc(s.name) + "</b></div><div class=\"muted\">" + esc(s.tc) +
+        h += "<div class=\"card\" id=\"lbsc_" + esc(s.id) + "\"><div><b>🎭 " + esc(s.name) + "</b></div><div class=\"muted\">" + esc(s.tc) +
           (s.bonus ? " · mezbonga +" + s.bonus + " daq" : "") + (s.pos === "idf" ? " · IDF 780" : "") + " · " + colTxt + " · " + stTxt +
           "<br>Mezbon: " + esc(s.hostName) + " · " + s.players.length + "/" + s.max + " o‘yinchi</div><div class=\"row\">";
+        h += "<button class=\"sec\" data-a=\"slink\" data-id=\"" + esc(s.id) + "\" data-n=\"" + esc(s.name) + "\">🔗 Havola</button>";
         if (s.status === "reg") {
           if (host) h += "<button class=\"grn\" data-a=\"ss\" data-id=\"" + s.id + "\">▶ Boshlash</button><button class=\"red\" data-a=\"sc\" data-id=\"" + s.id + "\">Bekor qilish</button>";
           else if (joined) h += "<button class=\"sec\" data-a=\"sl\" data-id=\"" + s.id + "\">Chiqish</button>";
@@ -381,96 +422,7 @@
         h += "</div>";
       });
       box.innerHTML = h;
-    }
-
-    // Xo'jayin uchun suzuvchi tugma: navbat o'zida bo'lgan keyingi taxtaga o'tadi (vaqti eng kam bo'lgani)
-    function updateSimulBtn() {
-      var me = S && S.me ? S.me.uid : "";
-      var cur = typeof curRoom !== "undefined" ? curRoom : null;
-      var best = null, n = 0;
-      (S.simuls || []).forEach(function (s) {
-        if (s.hostUid !== me || s.status !== "running") return;
-        s.games.forEach(function (g) {
-          if (g.done || !g.hostTurn || g.roomId === cur) return;
-          n++;
-          if (!best || g.hostMs < best.hostMs) best = g;
-        });
-      });
-      var b = document.getElementById("lbNext");
-      if (!best) { if (b) b.style.display = "none"; return; }
-      if (!b) {
-        b = document.createElement("button");
-        b.id = "lbNext";
-        b.style.cssText = "position:fixed;right:12px;bottom:112px;z-index:2147482000;padding:10px 14px;border-radius:20px;border:0;background:#2e9e4f;color:#fff;font:700 14px Arial;box-shadow:0 2px 10px rgba(0,0,0,.4);cursor:pointer";
-        document.body.appendChild(b);
-      }
-      b.style.display = "";
-      b.textContent = "🎭 Keyingi taxta · " + n;
-      b.onclick = function () { go(best.roomId); };
-    }
-
-    // ---------- Simul (bitta xo'jayin ko'p o'yinchi bilan bir vaqtda) ----------
-    function fmtMs(ms) {
-      var s = Math.ceil(ms / 1000);
-      return Math.floor(s / 60) + ":" + (s % 60 < 10 ? "0" : "") + (s % 60);
-    }
-
-    function renderSimuls() {
-      var box = $("lbSs");
-      if (!box) return;
-      var me = S.me ? S.me.uid : "";
-      var ss = S.simuls || [];
-      if (!ss.length) { box.innerHTML = "<div class=\"card muted\">Hozircha simul yo‘q. Birinchi bo‘lib oching!</div>"; return; }
-      var order = { running: 0, reg: 1, finished: 2 };
-      ss = ss.slice().sort(function (a, b) { return order[a.status] - order[b.status]; });
-      var h = "";
-      ss.forEach(function (s) {
-        var host = s.hostUid === me;
-        var joined = s.players.some(function (p) { return p.uid === me; });
-        var stTxt = s.status === "reg" ? "Ro‘yxat ochiq" : (s.status === "running" ? "Davom etmoqda" : "Tugagan");
-        var colTxt = s.color === "w" ? "xo‘jayin oq" : (s.color === "b" ? "xo‘jayin qora" : "ranglar navbat bilan");
-        h += "<div class=\"card\"><div><b>🎭 " + esc(s.name) + "</b></div><div class=\"muted\">" + esc(s.tc) +
-          (s.bonus ? " · xo‘jayinga +" + s.bonus + " daq" : "") + (s.pos === "idf" ? " · IDF 780" : "") + " · " + colTxt + " · " + stTxt +
-          "<br>Xo‘jayin: " + esc(s.hostName) + " · " + s.players.length + "/" + s.max + " o‘yinchi</div><div class=\"row\">";
-        if (s.status === "reg") {
-          if (host) h += "<button class=\"grn\" data-a=\"ss\" data-id=\"" + s.id + "\">▶ Boshlash</button><button class=\"red\" data-a=\"sc\" data-id=\"" + s.id + "\">Bekor qilish</button>";
-          else if (joined) h += "<button class=\"sec\" data-a=\"sl\" data-id=\"" + s.id + "\">Chiqish</button>";
-          else h += "<button data-a=\"sj\" data-id=\"" + s.id + "\">Qo‘shilish</button>";
-        }
-        h += "</div>";
-        if (s.status === "reg") {
-          s.players.forEach(function (p) {
-            h += "<div class=\"pl\"><span>" + esc(p.name) + (p.uid === me ? " 👈" : "") + "</span>" +
-              (host ? "<button class=\"sec\" data-a=\"sk\" data-id=\"" + s.id + "\" data-u=\"" + esc(p.uid) + "\">✕</button>" : "") + "</div>";
-          });
-        } else {
-          var sc = s.score || { w: 0, d: 0, l: 0 };
-          h += "<div class=\"muted\">Xo‘jayin hisobi: +" + sc.w + " =" + sc.d + " −" + sc.l + "</div>";
-          var turnGames = s.games.filter(function (g) { return !g.done && g.hostTurn; })
-            .sort(function (a, b) { return a.hostMs - b.hostMs; });
-          if (host && s.status === "running" && turnGames.length) {
-            h += "<div class=\"row\"><button class=\"grn\" data-a=\"go\" data-id=\"" + esc(turnGames[0].roomId) + "\">▶ Keyingi taxta (" + turnGames.length + ")</button></div>";
-          }
-          var mine = s.games.filter(function (g) { return g.uid === me; })[0];
-          if (!host && mine && !mine.done) h += "<div class=\"row\"><button class=\"grn\" data-a=\"go\" data-id=\"" + esc(mine.roomId) + "\">▶ O‘yinga o‘tish</button></div>";
-          h += "<table><tr><th>#</th><th>O‘yinchi</th><th>Holat</th><th></th></tr>";
-          var rows = s.games.slice().sort(function (a, b) {
-            if (a.done !== b.done) return a.done ? 1 : -1;
-            if (a.hostTurn !== b.hostTurn) return a.hostTurn ? -1 : 1;
-            return a.hostMs - b.hostMs;
-          });
-          rows.forEach(function (g, i) {
-            var st;
-            if (g.done) st = g.result === "host" ? "✅ +" : (g.result === "draw" ? "🤝 =" : (g.result === "player" ? "❌ −" : "—"));
-            else st = (g.hostTurn ? "🟢 navbat sizda · " : "⏳ ") + fmtMs(g.hostMs);
-            h += "<tr><td>" + (i + 1) + "</td><td>" + esc(g.name) + (g.uid === me ? " 👈" : "") + "</td><td>" + st + "</td><td>" +
-              ((host || g.uid === me) && !g.done ? "<button data-a=\"go\" data-id=\"" + esc(g.roomId) + "\">▶</button>" : "") + "</td></tr>";
-          });
-          h += "</table>";
-        }
-        h += "</div>";
-      });
-      box.innerHTML = h;
+      applyHl();
     }
 
     // Xo'jayin uchun suzuvchi tugma: navbat o'zida bo'lgan keyingi taxtaga o'tadi (vaqti eng kam bo'lgani)
@@ -514,7 +466,8 @@
         var st = arena
           ? (t.status === "reg" ? "Boshlanishi: " + mins(t.startAt - Date.now()) : (t.status === "running" ? (t.ending ? "Tugayapti…" : "Qoldi: " + mins(t.endAt - Date.now())) : "Tugagan"))
           : (t.status === "reg" ? "Ro‘yxat ochiq · " + (t.roundsWanted || "?") + " tur" + (t.startAt ? " · boshlanishi: " + mins(t.startAt - Date.now()) : "") : (t.status === "running" ? t.round + "/" + t.rounds + "-tur" : "Tugagan"));
-        h += "<div class=\"card\"><div><b>" + (arena ? "⚔️" : "🏆") + " " + esc(t.name) + "</b></div><div class=\"muted\">" + esc(t.tc) + (t.pos === "idf" ? " · IDF 780" : "") + " · " + st + " · " + t.players.length + " o‘yinchi · ochdi: " + esc(t.creatorName) + "</div><div class=\"row\">";
+        h += "<div class=\"card\" id=\"lbtc_" + esc(t.id) + "\"><div><b>" + (arena ? "⚔️" : "🏆") + " " + esc(t.name) + "</b></div><div class=\"muted\">" + esc(t.tc) + (t.pos === "idf" ? " · IDF 780" : "") + " · " + st + " · " + t.players.length + " o‘yinchi · ochdi: " + esc(t.creatorName) + "</div><div class=\"row\">";
+        h += "<button class=\"sec\" data-a=\"tlink\" data-id=\"" + esc(t.id) + "\" data-n=\"" + esc(t.name) + "\">🔗 Havola</button>";
         if (t.status === "reg") {
           if (!joined) h += "<button data-a=\"tj\" data-id=\"" + t.id + "\">Qo‘shilish</button>";
           else if (t.creatorUid !== me) h += "<button class=\"sec\" data-a=\"tl\" data-id=\"" + t.id + "\">Chiqish</button>";
@@ -549,6 +502,7 @@
         h += "</div>";
       });
       $("lbTs").innerHTML = h;
+      applyHl();
     }
 
     // keyingi tur sanog'i uchun sekin yangilash
