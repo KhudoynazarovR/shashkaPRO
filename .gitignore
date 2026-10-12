@@ -8,3 +8,5 @@ server.log
 tozalash_zaxira
 zaxira_zal
 clubs-data.json
+*.bak
+*.bak*

@@ -79,6 +79,13 @@
     if (!b) return;
     var k = b.getAttribute('data-k');
     mark(k);
+    if (window.rkClose) window.rkClose();
+    if (k === 'rk') {
+      pg.style.display = 'none';
+      if (window.lbNav) window.lbNav.close();
+      if (window.rkOpen) window.rkOpen(); else { pg.style.display = 'block'; soon('Reyting', 'Yuklanmoqda…'); }
+      return;
+    }
     if (k === 'pl' || k === 't') {
       pg.style.display = 'none';
       if (window.lbNav) window.lbNav.open(k);
@@ -93,6 +100,6 @@
   setInterval(function () {
     var inRoom = !!$('lbBack');
     bar.style.display = inRoom ? 'none' : 'flex';
-    if (inRoom) pg.style.display = 'none';
+    if (inRoom) { pg.style.display = 'none'; if (window.rkClose) window.rkClose(); }
   }, 800);
 })();

@@ -135,6 +135,27 @@ function handle(req, res, url) {
     return true;
   }
 
+  if (p === '/api/leaderboard' && req.method === 'GET') {
+    const all = Object.entries(store.users()).map(([id, u]) => {
+      const g = u.games || 0, w = u.wins || 0;
+      return {
+        id, name: u.name || 'Oyinchi', elo: u.elo || 1000, diamonds: u.diamonds || 0,
+        games: g, wins: w, losses: u.losses || 0, draws: u.draws || 0,
+        best: u.bestStreak || 0, pct: g >= 20 ? Math.round(w * 100 / g) : 0,
+        av: (u.avatar && u.avatar.length < 500) ? u.avatar : '',
+        hasAv: !!u.avatar, premium: !!store.isPremium(u)
+      };
+    });
+    const top = (key, minGames) => all.filter(x => x.games >= (minGames || 0) && x[key] > 0)
+      .sort((a, b) => b[key] - a[key] || b.elo - a.elo).slice(0, 30);
+    send(res, 200, {
+      total: all.length,
+      elo: all.slice().sort((a, b) => b.elo - a.elo || b.games - a.games).slice(0, 30),
+      wins: top('wins'), games: top('games'), diamonds: top('diamonds'),
+      best: top('best'), pct: top('pct', 20)
+    });
+    return true;
+  }
   if (p === '/api/profile' && req.method === 'GET') {
     const tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!tg) { send(res, 401, { error: 'auth' }); return true; }
