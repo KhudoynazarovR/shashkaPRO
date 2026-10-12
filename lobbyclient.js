@@ -491,6 +491,58 @@
       b.onclick = function () { go(best.roomId); };
     }
 
+    var clubAll = false, clubView = null;
+    window.lbCA = function (act, id, u) {
+      if (act === "cv") { clubView = id; clubAll = false; }
+      else if (act === "cb") { clubView = null; }
+      else if (act === "ca") { clubAll = !clubAll; }
+      else if (act === "cj") sendMsg({ type: "lbClubJoin", cid: id });
+      else if (act === "cl") sendMsg({ type: "lbClubLeave", cid: id });
+      else if (act === "cd") { if (confirm("Klub yopilsinmi?")) { sendMsg({ type: "lbClubDisband", cid: id }); clubView = null; } }
+      else if (act === "ck") sendMsg({ type: "lbClubKick", cid: id, uid: u });
+      else if (act === "cn") { var n = $("lbCn"), d = $("lbCdsc"); if (n) { sendMsg({ type: "lbClubCreate", name: n.value, desc: d ? d.value : "" }); n.value = ""; if (d) d.value = ""; } }
+      renderClubs();
+    };
+    function renderClubs() {
+      var box = $("lbT"); if (!box) return;
+      if (!document.getElementById("lbCStyle")) {
+        var st = document.createElement("style"); st.id = "lbCStyle";
+        st.textContent = "#lbT.lbhide #lbTbar,#lbT.lbhide #lbTs,#lbT.lbhide #lbTform{display:none!important}.lbcl{border-radius:18px;background:#161a3a;border:1px solid rgba(255,255,255,.1);padding:14px;margin:8px 0}.lbcr{display:flex;align-items:center;gap:12px;padding:10px;margin-top:8px;border-radius:14px;background:#1e2348;cursor:pointer}.lbav2{width:44px;height:44px;border-radius:12px;background:#3a2fc9;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:18px}.lbcr .lbinf{flex:1}.lbcr .lbinf b{display:block}.lbcr .lbinf small{opacity:.7}.lbl{color:#8b7cff;cursor:pointer}.lbcm{display:flex;justify-content:space-between;align-items:center;padding:8px 2px;border-bottom:1px solid rgba(255,255,255,.07)}";
+        document.head.appendChild(st);
+      }
+      var el = $("lbClubs");
+      if (!el) { el = document.createElement("div"); el.id = "lbClubs"; box.insertBefore(el, box.firstChild); }
+      var ae = document.activeElement;
+      if (ae && ae.tagName === "INPUT" && el.contains(ae)) return;
+      var cs = S.clubs || [], me = S.me ? S.me.uid : "", h = "";
+      var cur = clubView ? cs.filter(function (x) { return x.id === clubView; })[0] : null;
+      if (clubView && !cur) clubView = null;
+      box.classList.toggle("lbhide", !!cur);
+      if (cur) {
+        var lead = cur.leaderUid === me;
+        h += "<div class=\"lbcl\"><div class=\"row\"><button class=\"sec\" onclick=\"lbCA('cb')\">←</button><b style=\"font-size:18px\">" + esc(cur.name) + "</b></div>" +
+          (cur.desc ? "<div class=\"muted\" style=\"margin:8px 0\">" + esc(cur.desc) + "</div>" : "") +
+          "<div class=\"muted\">👑 Rahbar: " + esc(cur.leaderName) + " · " + cur.count + " a‘zo</div><div class=\"row\" style=\"margin-top:10px\">" +
+          (cur.joined ? "<button class=\"sec\" onclick=\"lbCA('cl','" + cur.id + "')\">Chiqish</button>" : "<button onclick=\"lbCA('cj','" + cur.id + "')\">Qo‘shilish</button>") +
+          (lead ? "<button class=\"red\" onclick=\"lbCA('cd','" + cur.id + "')\">Klubni yopish</button>" : "") + "</div><div style=\"margin-top:10px\">";
+        cur.members.forEach(function (m) {
+          h += "<div class=\"lbcm\"><span>" + (m.uid === cur.leaderUid ? "👑 " : "") + esc(m.name) + (m.uid === me ? " 👈" : "") + "</span>" +
+            (lead && m.uid !== me ? "<button class=\"sec\" onclick=\"lbCA('ck','" + cur.id + "','" + esc(m.uid) + "')\">✕</button>" : "") + "</div>";
+        });
+        h += "</div></div>";
+      } else {
+        var shown = clubAll ? cs : cs.slice(0, 3);
+        h += "<div class=\"lbcl\"><div class=\"row\" style=\"justify-content:space-between\"><b>👥 Klublarga qo‘shiling</b><span class=\"lbl\" onclick=\"lbCA('ca')\">" + (clubAll ? "Yopish" : "Barcha klublar ›") + "</span></div>" +
+          "<div class=\"muted\" style=\"margin-top:6px\">Klub safida o‘ynang va turnirlarda birga qatnashing.</div>";
+        if (!shown.length) h += "<div class=\"muted\" style=\"margin-top:10px\">Hozircha klub yo‘q. Birinchi bo‘lib oching!</div>";
+        shown.forEach(function (c) {
+          h += "<div class=\"lbcr\" onclick=\"lbCA('cv','" + c.id + "')\"><div class=\"lbav2\">" + esc((c.name || "?").charAt(0).toUpperCase()) + "</div><div class=\"lbinf\"><b>" + esc(c.name) + "</b><small>" + c.count + " a‘zo" + (c.joined ? " · siz a‘zosiz" : "") + "</small></div><span>›</span></div>";
+        });
+        if (clubAll) h += "<div style=\"margin-top:12px\"><input id=\"lbCn\" maxlength=\"30\" placeholder=\"Klub nomi\" style=\"width:100%;margin-bottom:6px\"><input id=\"lbCdsc\" maxlength=\"200\" placeholder=\"Tavsif (ixtiyoriy)\" style=\"width:100%;margin-bottom:6px\"><button style=\"width:100%\" onclick=\"lbCA('cn')\">➕ Klub ochish</button></div>";
+        h += "</div>";
+      }
+      el.innerHTML = h;
+    }
     var tFil = "new";
     window.lbTF = function (f) { tFil = f === 2 ? "fin" : "new"; renderTournaments(); };
     window.lbTPlus = function () { var f = $("lbTform"); if (f) f.style.display = f.style.display === "none" ? "block" : "none"; };
@@ -506,6 +558,7 @@
         var _f = _bx.querySelector(".card"); if (_f) { _f.id = "lbTform"; _f.style.display = "none"; }
         var _d = document.createElement("div"); _d.id = "lbTbar"; _bx.insertBefore(_d, _bx.firstChild);
       }
+      renderClubs();
       if ($("lbTbar")) {
         var _n = (S.tournaments || []).filter(function (t) { return t.status !== "finished"; }).length;
         $("lbTbar").innerHTML = '<div class="tabs"><button class="' + (tFil === "new" ? "on" : "") + '" onclick="lbTF(1)">⚡ Yangi ' + _n + '</button><button class="' + (tFil === "fin" ? "on" : "") + '" onclick="lbTF(2)">🏁 Tugagan</button></div>' +

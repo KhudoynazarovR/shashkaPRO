@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const { verifyInitData } = require('./rooms');
 const economy = require('./economy');
+const clubsApi = require('./clubs');
 const MIN_REWARD_PLIES = Number(process.env.REWARD_MIN_PLIES || 8);
 function payWin(room, whiteUid, blackUid, tid) {
   if (!room.noshowBoth && room.reason !== 'noshow' && (room.plies || 0) >= MIN_REWARD_PLIES) require('./stats').record(whiteUid, blackUid, room.winner);
@@ -155,7 +156,8 @@ function createLobby({ send, clients, roomsApi }) {
       outgoing: [...challenges.values()].filter(x => x.fromUid === uid)
         .map(x => ({ id: x.id, toUid: x.toUid, tc: x.tc })),
       tournaments: [...tournaments.values()].map(pubT),
-      simuls: [...simuls.values()].map(pubSimul)
+      simuls: [...simuls.values()].map(pubSimul),
+      clubs: clubsApi.list(uid)
     };
   }
 
@@ -923,6 +925,12 @@ function createLobby({ send, clients, roomsApi }) {
         if (!sm || sm.hostUid !== me.uid || sm.status !== 'reg') break;
         simuls.delete(sm.id);
         for (const p of sm.players.values()) toast(p.uid, '🎭 ' + sm.name + ' bekor qilindi');
+        push();
+        break;
+      }
+      case 'lbClubCreate': case 'lbClubJoin': case 'lbClubLeave': case 'lbClubKick': case 'lbClubDisband': {
+        const r = clubsApi.act(me, m);
+        if (r && r.error) err(c, r.error);
         push();
         break;
       }
