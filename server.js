@@ -266,6 +266,17 @@ const server = http.createServer((req, res) => {
     return res.end(JSON.stringify({ ok: true, results: out }));
   }
 
+  if (url.pathname === "/preview.jpg") {
+    return fs.readFile(path.join(__dirname, "preview.jpg"), (err, data) => {
+      if (err) { res.writeHead(404); return res.end(); }
+      res.writeHead(200, {
+        "Content-Type": "image/jpeg",
+        "Cache-Control": "public, max-age=86400"
+      });
+      res.end(data);
+    });
+  }
+
   serveFile(req, res);
 });
 
