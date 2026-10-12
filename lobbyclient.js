@@ -370,6 +370,11 @@
       $("lbPl").style.display = curTab === "pl" ? "block" : "none";
       $("lbT").style.display = curTab === "t" ? "block" : "none";
       $("lbS").style.display = curTab === "s" ? "block" : "none";
+      var _t = curTab === "t";
+      var _c = panel.querySelector(".lbcards"); if (_c) _c.style.display = curTab === "pl" ? "flex" : "none";
+      var _st = document.getElementById("lbSet"); if (_st && curTab !== "pl") _st.style.display = "none";
+      var _tb = panel.querySelector(".tabs"); if (_tb) _tb.style.display = "none";
+      var _h = panel.querySelector("h2"); if (_h) _h.textContent = _t ? "🏆 Turnirlar" : (curTab === "s" ? "🎭 Sians" : "🏟 O‘yinchilar zali");
       $("lbQuick").textContent = S.inQueue ? "⏳ Raqib kutilmoqda… (bekor qilish)" : "⚡ Tezkor o‘yin";
       if (curTab === "pl") renderPlayers(); else if (curTab === "s") renderSimuls(); else renderTournaments();
     }
@@ -486,9 +491,28 @@
       b.onclick = function () { go(best.roomId); };
     }
 
+    var tFil = "new";
+    window.lbTF = function (f) { tFil = f === 2 ? "fin" : "new"; renderTournaments(); };
+    window.lbTPlus = function () { var f = $("lbTform"); if (f) f.style.display = f.style.display === "none" ? "block" : "none"; };
+    window.lbTRef = function () { renderTournaments(); };
     function renderTournaments() {
+      if (!document.getElementById("lbTStyle")) {
+        var stt = document.createElement("style"); stt.id = "lbTStyle";
+        stt.textContent = "#lbT{padding-top:4px}#lbTbar{display:flex;align-items:center;gap:8px;margin:6px 0 10px}#lbTbar .tabs{flex:1;display:flex;gap:6px;margin:0}#lbTbar .tabs button{flex:1;padding:11px 6px;border-radius:14px}#lbTbar .tabs button.on{background:#12a966;color:#fff}#lbTbar .ib{width:44px;height:44px;padding:0;font-size:20px;border-radius:14px}#lbTs .card,#lbTform{border-radius:18px;background:#161a3a;border:1px solid rgba(255,255,255,.1)}";
+        document.head.appendChild(stt);
+      }
+      var _bx = $("lbT");
+      if (_bx && !$("lbTbar")) {
+        var _f = _bx.querySelector(".card"); if (_f) { _f.id = "lbTform"; _f.style.display = "none"; }
+        var _d = document.createElement("div"); _d.id = "lbTbar"; _bx.insertBefore(_d, _bx.firstChild);
+      }
+      if ($("lbTbar")) {
+        var _n = (S.tournaments || []).filter(function (t) { return t.status !== "finished"; }).length;
+        $("lbTbar").innerHTML = '<div class="tabs"><button class="' + (tFil === "new" ? "on" : "") + '" onclick="lbTF(1)">⚡ Yangi ' + _n + '</button><button class="' + (tFil === "fin" ? "on" : "") + '" onclick="lbTF(2)">🏁 Tugagan</button></div>' +
+          '<button class="sec ib" onclick="lbTPlus()">➕</button><button class="sec ib" onclick="lbTRef()">🔄</button>';
+      }
       var me = S.me ? S.me.uid : "";
-      var ts = (S.tournaments || []).slice().sort(function (a, b) {
+      var ts = (S.tournaments || []).filter(function (t) { return tFil === "fin" ? t.status === "finished" : t.status !== "finished"; }).sort(function (a, b) {
         var o = { running: 0, reg: 1, finished: 2 };
         return o[a.status] - o[b.status];
       });
