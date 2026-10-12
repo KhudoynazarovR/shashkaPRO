@@ -436,6 +436,12 @@ function createLobby({ send, clients, roomsApi }) {
     t.nextAt = 0;
     const st = t.type === 'arena' ? arenaStandings(t) : standings(t);
     const top = st[0] ? st[0].name : '-';
+    try {
+      if (st[0] && st[0].score > 0 && t.players.size >= MIN_T_PLAYERS) {
+        const _st = require('./store'), _u = _st.users()[String(st[0].uid)];
+        if (_u) { _u.tournWins = (_u.tournWins || 0) + 1; _st.save(); }
+      }
+    } catch (e) {}
     for (const p of t.players.values()) {
       const rank = st.findIndex(x => x.uid === p.uid) + 1;
       toast(p.uid, '🏆 ' + t.name + ' tugadi. G‘olib: ' + top + '. Sizning o‘rningiz: ' + rank);

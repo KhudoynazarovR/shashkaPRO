@@ -1,7 +1,7 @@
 (function () {
   "use strict";
   var D = null, tab = "elo", q = "", panel = null, loading = false;
-  var TABS = [["elo", "ELO", "elo"], ["wins", "G‘alaba", "wins"], ["games", "O‘yin", "games"], ["diamonds", "Olmos", "diamonds"], ["best", "Seriya", "best"], ["pct", "G‘alaba %", "pct"]];
+  var TABS = [["elo", "ELO", "elo"], ["wins", "G‘alaba", "wins"], ["games", "O‘yin", "games"], ["diamonds", "Olmos", "diamonds"], ["best", "Seriya", "best"], ["pct", "G‘alaba %", "pct"], ["tourn", "Turnir", "tw"]];
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function fmt(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " "); }
   function css() {
@@ -41,7 +41,7 @@
     var h = "<div class=\"rkh\"><div class=\"rkt\"><span>🏆 Reyting jadvali</span><button class=\"rkb\" onclick=\"rkSearch()\">🔍</button></div>";
     if (D) {
       h += "<div class=\"rkc\">" + card("Boyvachcha", "💎", D.diamonds, "diamonds", " 💎") + card("Eng faol", "🎮", D.games, "games", " o‘yin") +
-        card("Eng ko‘p yutgan", "🏆", D.wins, "wins", " g‘alaba") + card("Eng uzun seriya", "🔥", D.best, "best", " ketma-ket") + "</div>";
+        card("Eng ko‘p yutgan", "🏆", D.wins, "wins", " g‘alaba") + card("Eng uzun seriya", "🔥", D.best, "best", " ketma-ket") + card("Turnir g‘olibi", "🥇", D.tourn, "tw", " turnir") + "</div>";
     }
     h += "</div><div class=\"rks\" id=\"rkS\"><input id=\"rkQ\" placeholder=\"Ism bo‘yicha qidirish\" value=\"" + esc(q) + "\" oninput=\"rkQ(this.value)\"></div>";
     h += "<div class=\"rkn\">" + TABS.map(function (t) { return "<button class=\"" + (t[0] === tab ? "on" : "") + "\" onclick=\"rkTab('" + t[0] + "')\">" + t[1] + "</button>"; }).join("") + "</div>";
@@ -57,7 +57,7 @@
     var arr = (D[tab] || []);
     var qq = q.trim().toLowerCase();
     if (qq) arr = arr.filter(function (p) { return (p.name || "").toLowerCase().indexOf(qq) >= 0; });
-    if (!arr.length) { el.innerHTML = "<div class=\"rke\">" + (tab === "pct" ? "Kamida 20 ta o‘yin o‘ynaganlar chiqadi." : "Hozircha bo‘sh.") + "</div>"; return; }
+    if (!arr.length) { el.innerHTML = "<div class=\"rke\">" + (tab === "pct" ? "Kamida 20 ta o‘yin o‘ynaganlar chiqadi." : (tab === "tourn" ? "Hali turnir g‘olibi yo‘q." : "Hozircha bo‘sh.")) + "</div>"; return; }
     var suf = tab === "pct" ? "%" : "";
     el.innerHTML = arr.map(function (p, i) {
       var sub = p.games ? p.games + " o‘yin · " + p.wins + " g‘alaba" : "";

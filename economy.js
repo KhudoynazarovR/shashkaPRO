@@ -141,7 +141,7 @@ function handle(req, res, url) {
       return {
         id, name: u.name || 'Oyinchi', elo: u.elo || 1000, diamonds: u.diamonds || 0,
         games: g, wins: w, losses: u.losses || 0, draws: u.draws || 0,
-        best: u.bestStreak || 0, pct: g >= 20 ? Math.round(w * 100 / g) : 0,
+        best: u.bestStreak || 0, tw: u.tournWins || 0, pct: g >= 20 ? Math.round(w * 100 / g) : 0,
         av: (u.avatar && u.avatar.length < 500) ? u.avatar : '',
         hasAv: !!u.avatar, premium: !!store.isPremium(u)
       };
@@ -152,7 +152,7 @@ function handle(req, res, url) {
       total: all.length,
       elo: all.slice().sort((a, b) => b.elo - a.elo || b.games - a.games).slice(0, 30),
       wins: top('wins'), games: top('games'), diamonds: top('diamonds'),
-      best: top('best'), pct: top('pct', 20)
+      best: top('best'), tourn: all.filter(x => x.tw > 0).sort((a, b) => b.tw - a.tw || b.elo - a.elo).slice(0, 30), pct: top('pct', 20)
     });
     return true;
   }
