@@ -100,6 +100,12 @@ function finishTournament(creatorId, participantIds) {
   return { participants: set.size, bonus };
 }
 
+function readBody(req, max, cb) {
+  let d = '', big = false;
+  req.on('data', c => { d += c; if (d.length > max) { big = true; req.destroy(); } });
+  req.on('end', () => { if (!big) cb(d); });
+}
+
 function send(res, code, obj) {
   res.writeHead(code, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
   res.end(JSON.stringify(obj));
@@ -109,6 +115,26 @@ function send(res, code, obj) {
 function handle(req, res, url) {
   const p = url.pathname;
   if (p === '/api/economy' && req.method === 'GET') { send(res, 200, CFG); return true; }
+  if ((p === '/api/avatar' || p === '/api/bio') && req.method === 'POST') {
+    const tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
+    if (!tg) { send(res, 401, { error: 'auth' }); return true; }
+    const u = store.getOrCreate(tg);
+    readBody(req, 200000, body => {
+      let j = {};
+      try { j = JSON.parse(body); } catch (e) {}
+      if (p === '/api/avatar') {
+        const a = String(j.img || '');
+        if (!/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(a) || a.length > 150000) return send(res, 400, { error: 'bad_image' });
+        u.avatar = a;
+      } else {
+        u.bio = String(j.bio || '').replace(/[\u0000-\u001f<>]/g, ' ').trim().slice(0, 120);
+      }
+      store.save();
+      send(res, 200, { ok: true });
+    });
+    return true;
+  }
+
   if (p === '/api/profile' && req.method === 'GET') {
     const tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!tg) { send(res, 401, { error: 'auth' }); return true; }
@@ -117,7 +143,7 @@ function handle(req, res, url) {
       name: u.name, elo: u.elo || 1000, diamonds: u.diamonds || 0,
       wins: u.wins || 0, losses: u.losses || 0, draws: u.draws || 0, games: u.games || 0,
       streak: u.streak || 0, bestStreak: u.bestStreak || 0, hist: u.hist || [],
-      created: u.created || 0, log: (u.log || []).slice(-10).reverse(), premium: store.isPremium(u)
+      created: u.created || 0, avatar: u.avatar || '', bio: u.bio || '', log: (u.log || []).slice(-10).reverse(), premium: store.isPremium(u)
     });
     return true;
   }
