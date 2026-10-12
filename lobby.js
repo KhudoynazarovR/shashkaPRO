@@ -139,6 +139,11 @@ function createLobby({ send, clients, roomsApi }) {
     }).sort((a, b) => b.score - a.score);
   }
 
+  function promoInfo() {
+    const st = require('./store');
+    if (!st.db.promoEnd) { st.db.promoEnd = Date.now() + 10 * 86400000; st.save(); }
+    return { end: st.db.promoEnd, on: Date.now() < st.db.promoEnd };
+  }
   function pubT(t) {
     return {
       id: t.id, name: t.name, tc: t.tc, status: t.status, pos: t.pos || 'std',
@@ -167,7 +172,7 @@ function createLobby({ send, clients, roomsApi }) {
         .map(x => ({ id: x.id, fromName: x.fromName, tc: x.tc + describeOpts(x) })),
       outgoing: [...challenges.values()].filter(x => x.fromUid === uid)
         .map(x => ({ id: x.id, toUid: x.toUid, tc: x.tc })),
-      tournaments: [...tournaments.values()].map(pubT),
+      tournaments: [...tournaments.values()].map(pubT), promo: promoInfo(),
       simuls: [...simuls.values()].map(pubSimul),
       clubs: clubsApi.list(uid),
       appLink: process.env.TG_APP_LINK || process.env.APP_LINK || ''
@@ -955,6 +960,20 @@ function createLobby({ send, clients, roomsApi }) {
       case 'lbClubCreate': case 'lbClubJoin': case 'lbClubLeave': case 'lbClubKick': case 'lbClubDisband': case 'lbClubAccept': case 'lbClubReject': case 'lbClubAdmin': case 'lbClubSet': case 'lbClubImg': {
         const r = clubsApi.act(me, m);
         if (r && r.error) err(c, r.error);
+        push();
+        break;
+      }
+      case 'lbRef': {
+        if (!c.lb || !c.lb.tg) break;
+        const st = require('./store'), us = st.users();
+        const rid = String(m.ref || '').replace(/^ref_/, '').replace(/[^0-9]/g, '');
+        const u = us[String(me.uid)], inv = us[rid];
+        if (!u || !inv || rid === String(me.uid) || u.refBy || !promoInfo().on) break;
+        if (Date.now() - (u.created || 0) > 3600000) break;
+        if ((inv.refCount || 0) >= 50) break;
+        u.refBy = rid; inv.refCount = (inv.refCount || 0) + 1; st.save();
+        economy.add(rid, 200, 'referral');
+        toast(rid, '🎉 Do‘stingiz ' + u.name + ' qo‘shildi: +200 💎');
         push();
         break;
       }

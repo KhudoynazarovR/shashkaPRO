@@ -19,7 +19,7 @@
   loadTg(function () {
     var tg = window.Telegram && window.Telegram.WebApp;
     var roomId = "";
-    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) roomId = String(tg.initDataUnsafe.start_param);
+    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param && !/^ref_/.test(tg.initDataUnsafe.start_param)) roomId = String(tg.initDataUnsafe.start_param);
     if (!roomId && q.get("room")) roomId = q.get("room");
     if (/^lb[ts]_/.test(roomId)) return; // turnir/sians havolasi - xona emas
     if (!ROOM_RE.test(roomId)) return; // xona rejimi emas

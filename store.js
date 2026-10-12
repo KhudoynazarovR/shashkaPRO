@@ -23,7 +23,7 @@ function getOrCreate(tg) {
   let u = db.users[id];
   if (!u) {
     u = db.users[id] = {
-      id, name, elo: 1000, diamonds: 100, premiumUntil: 0,
+      id, name, elo: 1000, diamonds: 500, premiumUntil: 0,
       wins: 0, losses: 0, games: 0, lastDaily: '', created: Date.now()
     };
   } else {
@@ -35,4 +35,4 @@ function getOrCreate(tg) {
 
 function isPremium(u) { return u.premiumUntil > Date.now(); }
 
-module.exports = { getOrCreate, save, isPremium, users: () => db.users };
+module.exports = { db, getOrCreate, save, isPremium, users: () => db.users };
