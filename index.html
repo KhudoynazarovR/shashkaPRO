@@ -521,7 +521,7 @@ const dtList=k=>(DT[k]||'').split('\n').map(l=>l.match(/^\s*([^:]+?)\s*:\s*(.+)$
 function playOpen(e){for(let t of e.mv){t=t.replace(/[^a-h1-8]/g,'');const f='abcdefgh'.indexOf(t[0]),d=(8-t.slice(-1))*8+'abcdefgh'.indexOf(t.slice(-2)[0]);
  const ms=legal(G.pos[G.cur],sideAt(G.cur)).filter(m=>(m.path[0]&7)===f&&m.path[m.path.length-1]===d);if(!ms.length)return false;pushMove(ms[0])}return true}
 function saveDT(){DT.fmjd=$('dt-fmjd').value;DT.idf=$('dt-idf').value;try{localStorage.setItem('sp_dt',JSON.stringify(DT))}catch(e){}toast(T('ok')+' · '+dtList('fmjd').length+' / '+dtList('idf').length)}
-let G={tool:'1',es:null,pos:[init()],mv:[],cur:0,s0:1,over:false,res:null,mode:'ai',me:1,flip:false,sel:null,hint:null,t:[0,0],inc:0,tc:false,last:Date.now(),edit:false,tok:0,busy:false,tapR:0,tapD:0};
+let G={tool:'1',es:null,pos:[init()],mv:[],cur:0,s0:1,over:false,res:null,mode:'local',me:1,flip:false,sel:null,hint:null,t:[0,0],inc:0,tc:false,last:Date.now(),edit:false,tok:0,busy:false,tapR:0,tapD:0};
 const sideAt=i=>G.s0*(i%2?-1:1),myTurn=()=>G.mode==='local'||sideAt(G.cur)===G.me,atEnd=()=>G.cur===G.pos.length-1;
 function beep(f,d,t){if(!S.snd)return;try{G.ac=G.ac||new(window.AudioContext||window.webkitAudioContext)();const o=G.ac.createOscillator(),g=G.ac.createGain();o.type=t||'triangle';o.frequency.value=f;g.gain.setValueAtTime(.3,G.ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,G.ac.currentTime+d);o.connect(g);g.connect(G.ac.destination);o.start();o.stop(G.ac.currentTime+d)}catch(e){}}
 function toast(t){const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>e.classList.remove('on'),1800)}
