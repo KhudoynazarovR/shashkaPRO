@@ -84,6 +84,13 @@
         S = m; if (m.now) window.__lbSkew = m.now - Date.now(); renderBadge(); if (panelOpen) renderAll(); renderIncoming(); updateSimulBtn();
         if (linkTid && !inRoom) openLinked("t");
         if (linkSid && !inRoom) openLinked("s");
+      } else if (m.type === "lbShareReady" || m.type === "lbShareFail") {
+        var ps = pendingShare; pendingShare = null;
+        if (ps) {
+          clearTimeout(ps.timer);
+          if (m.type === "lbShareReady") { try { tg.shareMessage(m.msgId); } catch (e) { ps.fb(); } }
+          else ps.fb();
+        }
       } else if (m.type === "lbGo") {
         onGo(m);
       } else if (m.type === "lbToast") {
@@ -214,7 +221,20 @@
       var el = $(hl.id);
       if (el) { try { el.scrollIntoView({ block: "center" }); } catch (e) {} }
     }
+    var pendingShare = null;
     function shareLink(prefix, qp, id, text) {
+      if (tg && tg.shareMessage && initData) {
+        if (pendingShare) clearTimeout(pendingShare.timer);
+        pendingShare = {
+          fb: function () { shareLinkPlain(prefix, qp, id, text); },
+          timer: setTimeout(function () { var p = pendingShare; pendingShare = null; if (p) p.fb(); }, 6000)
+        };
+        sendMsg({ type: "lbShare", kind: prefix === "lbt_" ? "t" : "s", id: id });
+        return;
+      }
+      shareLinkPlain(prefix, qp, id, text);
+    }
+    function shareLinkPlain(prefix, qp, id, text) {
       var base = window.TG_APP_LINK || ""; // masalan: "https://t.me/BOT_USERNAME/APP_NAME"
       var url = base
         ? base + "?startapp=" + encodeURIComponent(prefix + id)
