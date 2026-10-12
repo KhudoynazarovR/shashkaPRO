@@ -22,12 +22,14 @@
     if (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) curRoom = String(tg.initDataUnsafe.start_param);
     if (!curRoom && q.get("room")) curRoom = q.get("room");
     // havola orqali kirish: startapp=lbt_<turnir> / lbs_<sians> yoki ?t= / ?s=
-    var linkTid = "", linkSid = "";
+    var linkTid = "", linkSid = "", linkFid = "";
     if (/^lbt_/.test(curRoom)) { linkTid = curRoom.slice(4); curRoom = ""; }
     else if (/^lbs_/.test(curRoom)) { linkSid = curRoom.slice(4); curRoom = ""; }
+    else if (/^lbf_/.test(curRoom)) { linkFid = curRoom.slice(4); curRoom = ""; }
     else {
       if (/^[A-Za-z0-9_-]{1,64}$/.test(q.get("t") || "")) linkTid = q.get("t");
       if (/^[A-Za-z0-9_-]{1,64}$/.test(q.get("s") || "")) linkSid = q.get("s");
+      if (/^[A-Za-z0-9_-]{1,64}$/.test(q.get("f") || "")) linkFid = q.get("f");
     }
     var inRoom = ROOM_RE.test(curRoom);
     var initData = (tg && tg.initData) || "";
@@ -84,6 +86,8 @@
         S = m; if (m.now) window.__lbSkew = m.now - Date.now(); renderBadge(); if (panelOpen) renderAll(); renderIncoming(); updateSimulBtn();
         if (linkTid && !inRoom) openLinked("t");
         if (linkSid && !inRoom) openLinked("s");
+        if (m.appLink && !window.TG_APP_LINK) window.TG_APP_LINK = m.appLink;
+        if (linkFid && !inRoom) { var _fid = linkFid; linkFid = ""; sendMsg({ type: "lbFriendJoin", id: _fid }); }
       } else if (m.type === "lbShareReady" || m.type === "lbShareFail") {
         var ps = pendingShare; pendingShare = null;
         if (ps) {
@@ -91,6 +95,8 @@
           if (m.type === "lbShareReady") { try { tg.shareMessage(m.msgId); } catch (e) { ps.fb(); } }
           else ps.fb();
         }
+      } else if (m.type === "lbFriendLink") {
+        shareLinkPlain("lbf_", "f", m.id, "♟ Keling, shashka o‘ynaymiz! — ShashkaPRO");
       } else if (m.type === "lbGo") {
         onGo(m);
       } else if (m.type === "lbToast") {
@@ -178,6 +184,7 @@
       (S.incoming || []).forEach(function (c) {
         if (shownIncoming[c.id]) return;
         shownIncoming[c.id] = 1;
+        if (panelOpen && curTab === "pl") return;
         toast("⚔️ <b>" + esc(c.fromName) + "</b> sizni o‘yinga chaqirdi (" + esc(c.tc) + ")", [
           ["Qabul", function () { sendMsg({ type: "lbRespond", id: c.id, accept: true }); }],
           ["Rad etish", function () { sendMsg({ type: "lbRespond", id: c.id, accept: false }); }, "no"]
@@ -276,7 +283,7 @@
         "<div class=\"row\" style=\"justify-content:space-between\"><h2>🏟 O‘yinchilar zali</h2><span><button id=\"lbSnd\" class=\"sec\">🔊</button> <button id=\"lbClose\" class=\"sec\">✕</button></span></div>" +
         nameRow +
         "<div class=\"lbcards\">" +
-        "<div class=\"lbc lbc1\" onclick=\"document.getElementById('lbQuick').click()\"><b>Do‘st bilan o‘ynash</b><small>Havola yuboring — do‘stingiz bossa, o‘yin boshlanadi</small></div>" +
+        "<div class=\"lbc lbc1\" onclick=\"lbFriend()\"><b>Do‘st bilan o‘ynash</b><small>Havola yuboring — do‘stingiz bossa, o‘yin boshlanadi</small></div>" +
         "<div class=\"lbc lbc3\"><div class=\"lbmain\" onclick=\"document.getElementById('lbQuick').click()\"><b>🔀 Tasodifiy o‘yin</b><small>Tasodifiy o‘yinchi bilan o‘ynash</small></div>" +
         "<div class=\"lbplay\" onclick=\"document.getElementById('lbQuick').click()\">▶</div>" +
         "<div class=\"lbgear\" onclick=\"var e=document.getElementById('lbSet');e.style.display=e.style.display==='none'?'block':'none'\">⚙️</div></div></div>" +
@@ -352,6 +359,8 @@
         else if (act === "ts") sendMsg({ type: "lbTStart", tid: id });
         else if (act === "tc") sendMsg({ type: "lbTCancel", tid: id });
         else if (act === "go") go(id);
+        else if (act === "acc") sendMsg({ type: "lbRespond", id: id, accept: true });
+        else if (act === "rej") sendMsg({ type: "lbRespond", id: id, accept: false });
         else if (act === "tlink") shareLink("lbt_", "t", id, "🏆 " + (t.getAttribute("data-n") || "Turnir") + " turniriga qo‘shiling — ShashkaPRO");
         else if (act === "slink") shareLink("lbs_", "s", id, "🎭 " + (t.getAttribute("data-n") || "Sians") + " siansiga qo‘shiling — ShashkaPRO");
         else if (act === "sj") sendMsg({ type: "lbSJoin", sid: id });
@@ -380,6 +389,20 @@
     }
 
     function renderPlayers() {
+      if (!document.getElementById("lbFx")) {
+        var fx = document.createElement("style"); fx.id = "lbFx";
+        fx.textContent = "#lbPanel{background:linear-gradient(160deg,#1b1450,#3a1a7a 45%,#0f1c4d)!important}" +
+          "#lbPanel>*{position:relative;z-index:1}" +
+          "#lbPanel::before{content:'';position:fixed;left:0;right:0;top:0;bottom:64px;pointer-events:none;z-index:0;opacity:.7;background-size:340px 220px;animation:lbTw 4s ease-in-out infinite alternate;background-image:radial-gradient(2px 2px at 20px 30px,#fff,transparent),radial-gradient(2px 2px at 90px 120px,#ffd86b,transparent),radial-gradient(1.5px 1.5px at 160px 60px,#fff,transparent),radial-gradient(2px 2px at 230px 180px,#9ad1ff,transparent),radial-gradient(1.5px 1.5px at 300px 90px,#fff,transparent)}" +
+          "@keyframes lbTw{from{opacity:.25}to{opacity:.9}}" +
+          ".lbc{position:relative;overflow:hidden;box-shadow:0 6px 20px rgba(0,0,0,.35)}" +
+          ".lbc::after{content:'';position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.35),transparent);transform:skewX(-20deg);animation:lbSh 3.5s infinite}" +
+          "@keyframes lbSh{0%{left:-60%}60%,100%{left:140%}}" +
+          ".lbin{background:rgba(107,92,240,.28);border-left:3px solid #8b7cff;border-radius:12px;animation:lbPu 1.6s ease-in-out infinite}" +
+          "@keyframes lbPu{50%{box-shadow:0 0 14px rgba(139,124,255,.7)}}" +
+          ".lbacc{background:#1fb86a;color:#fff;border:0;border-radius:12px;padding:8px 11px}.lbrej{background:#ef5a5a;color:#fff;border:0;border-radius:12px;padding:8px 11px;margin-left:6px}";
+        document.head.appendChild(fx);
+      }
       if (!document.getElementById("lbStyle")) {
         var st = document.createElement("style"); st.id = "lbStyle";
         st.textContent = ".lbcards{display:flex;flex-direction:column;gap:10px;margin:8px 0}.lbc{border-radius:16px;padding:14px;color:#fff;cursor:pointer}.lbc b{display:block;font-size:17px}.lbc small{opacity:.85}.lbc1{background:linear-gradient(135deg,#f5873b,#e84a9b)}.lbc3{background:linear-gradient(135deg,#2fd27f,#2ee86a);display:flex;align-items:center;gap:10px}.lbmain{flex:1}.lbplay{font-size:22px;padding:0 10px}.lbgear{font-size:22px;padding:0 6px;border-left:1px solid rgba(255,255,255,.3)}.lbp{display:flex;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px solid rgba(255,255,255,.08)}.lbav{width:46px;height:46px;border-radius:50%;background:#2a1fc9;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:18px}.lbinf{flex:1}.lbinf b{display:block}.lbinf small{opacity:.7}.lbinv{background:#6b5cf0;color:#fff;border:0;border-radius:14px;padding:7px 12px}";
@@ -390,6 +413,10 @@
       var all = (S.players || []);
       var list = all.filter(function (p) { return p.uid !== me; });
       var h = "<div class=\"tabs\"><button class=\"on\">🌐 Barcha onlinelar " + all.length + "</button></div>";
+      (S.incoming || []).forEach(function (c) {
+        h += "<div class=\"lbp lbin\"><div class=\"lbav\">" + esc((c.fromName || "?").charAt(0).toUpperCase()) + "</div><div class=\"lbinf\"><b>" + esc(c.fromName) + "</b><small>sizni o‘yinga taklif qildi · " + esc(c.tc) + "</small></div>" +
+          "<button class=\"lbacc\" data-a=\"acc\" data-id=\"" + esc(c.id) + "\">Qabul</button><button class=\"lbrej\" data-a=\"rej\" data-id=\"" + esc(c.id) + "\">Rad</button></div>";
+      });
       if (!list.length) h += "<div class=\"card muted\">Hozircha boshqa o‘yinchi yo‘q. “Tasodifiy o‘yin” ▶ ni bosib raqib kutishingiz mumkin.</div>";
       list.forEach(function (p) {
         h += "<div class=\"lbp\"><div class=\"lbav\">" + esc((p.name || "?").charAt(0).toUpperCase()) + "</div>" +
@@ -543,6 +570,7 @@
       }
       el.innerHTML = h;
     }
+    window.lbFriend = function () { sendMsg({ type: "lbFriendNew", tc: $("lbTc").value, pos: $("lbPos").value, games: Number($("lbGm").value) }); toast("🔗 Havola tayyorlanmoqda…", null, 2000); };
     var tFil = "new";
     window.lbTF = function (f) { tFil = f === 2 ? "fin" : "new"; renderTournaments(); };
     window.lbTPlus = function () { var f = $("lbTform"); if (f) f.style.display = f.style.display === "none" ? "block" : "none"; };

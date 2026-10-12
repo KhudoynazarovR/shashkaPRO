@@ -7,6 +7,7 @@ const path = require('path');
 const { verifyInitData } = require('./rooms');
 const economy = require('./economy');
 const clubsApi = require('./clubs');
+const friends = new Map();
 const MIN_REWARD_PLIES = Number(process.env.REWARD_MIN_PLIES || 8);
 function payWin(room, whiteUid, blackUid, tid) {
   if (!room.noshowBoth && room.reason !== 'noshow' && (room.plies || 0) >= MIN_REWARD_PLIES) require('./stats').record(whiteUid, blackUid, room.winner);
@@ -157,7 +158,8 @@ function createLobby({ send, clients, roomsApi }) {
         .map(x => ({ id: x.id, toUid: x.toUid, tc: x.tc })),
       tournaments: [...tournaments.values()].map(pubT),
       simuls: [...simuls.values()].map(pubSimul),
-      clubs: clubsApi.list(uid)
+      clubs: clubsApi.list(uid),
+      appLink: process.env.TG_APP_LINK || process.env.APP_LINK || ''
     };
   }
 
@@ -939,6 +941,23 @@ function createLobby({ send, clients, roomsApi }) {
         if (r && r.error) err(c, r.error);
         push();
         break;
+      }
+      case 'lbFriendNew': {
+        for (const [k, f] of friends) if (f.fromUid === me.uid || Date.now() - f.at > 1800000) friends.delete(k);
+        const fr = { id: 'f' + hex(4), fromUid: me.uid, fromName: me.name, tc: TCS.includes(m.tc) ? m.tc : DEFAULT_TC, opts: cleanOpts(m), at: Date.now() };
+        friends.set(fr.id, fr);
+        send(c.ws, { type: 'lbFriendLink', id: fr.id });
+        break;
+      }
+      case 'lbFriendJoin': {
+        const fr = friends.get(String(m.id || ''));
+        if (!fr || Date.now() - fr.at > 1800000) return err(c, 'Havola eskirgan. Do‘stingizdan yangisini so‘rang'), true;
+        if (fr.fromUid === me.uid) return err(c, 'Bu sizning havolangiz'), true;
+        if (!connsOf(fr.fromUid)[0]) return err(c, 'Do‘stingiz hozir onlayn emas'), true;
+        friends.delete(fr.id);
+        const ch = { id: 'c' + hex(4), fromUid: fr.fromUid, fromName: fr.fromName, toUid: me.uid, tc: fr.tc, ...fr.opts, at: Date.now() };
+        challenges.set(ch.id, ch);
+        return handleInner(c, { type: 'lbRespond', id: ch.id, accept: true });
       }
       case 'lbShare': { handleShare(c, m); break; }
       case 'lbTCancel': {
