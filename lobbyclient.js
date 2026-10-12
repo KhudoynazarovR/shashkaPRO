@@ -264,6 +264,7 @@
       renderAll();
     }
     function closePanel() { panel.style.display = "none"; panelOpen = false; }
+    window.lbNav = { open: function (tab) { curTab = tab; openPanel(); }, close: function () { if (panel) closePanel(); } };
 
     function buildPanel() {
       panel = document.createElement("div");
