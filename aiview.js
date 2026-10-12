@@ -19,7 +19,7 @@
   if (keep) return;
   wrap.style.display = "none";
   var n = 0, t = setInterval(function () {
-    var b = document.querySelector('#nvBar [data-k="mn"]');
+    var b = document.querySelector('#nvBar [data-k="pl"]');
     if (b && window.lbNav) { clearInterval(t); b.click(); } else if (++n > 50) clearInterval(t);
   }, 100);
   function vis(id) { var e = document.getElementById(id); return !!e && getComputedStyle(e).display !== "none"; }
