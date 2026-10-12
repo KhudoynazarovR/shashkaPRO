@@ -218,6 +218,9 @@ function serveFile(req, res) {
     if (!html.includes("roomclient.js")) {
       html = html.replace("</body>", '<script src="/roomclient.js"></script>\n</body>');
     }
+    if (!html.includes("profile.js")) {
+      html = html.replace("</body>", '<script src="/profile.js?v=' + Date.now() + '"></script>\n</body>');
+    }
     if (!html.includes("navbar.js")) {
       html = html.replace("</body>", '<script src="/navbar.js"></script>\n</body>');
     }

@@ -86,7 +86,7 @@
     }
     if (window.lbNav) window.lbNav.close();
     pg.style.display = 'block';
-    if (k === 'pf') profile();
+    if (k === 'pf') { if (window.nvProfile) window.nvProfile(pg); else soon('Profil', 'Yuklanmoqda…'); }
     else if (k === 'rk') soon('Reyting', 'Eng ko‘p g‘alaba qozonganlar jadvali tez orada.');
     else soon('Menyu', 'Qoidalar va sozlamalar tez orada.');
   };
