@@ -278,7 +278,7 @@
         "<div class=\"row\"><span class=\"muted\">Vaqt:</span><select id=\"lbTc\">" + tcOpts + "</select><button id=\"lbQuick\" style=\"flex:1\">⚡ Tezkor o‘yin</button></div>" +
         "<div class=\"row\"><span class=\"muted\">Pozitsiya:</span><select id=\"lbPos\"><option value=\"std\">Standart</option><option value=\"idf\">IDF 780</option></select>" +
         "<select id=\"lbGm\" style=\"flex:1\"><option value=\"1\">1 o‘yin</option><option value=\"2\">1 match (2 o‘yin)</option><option value=\"4\">2 match (4 o‘yin)</option></select></div>" +
-        "<div class=\"tabs\"><button id=\"lbTabPl\">👥 O‘yinchilar</button><button id=\"lbTabT\">🏆 Turnirlar</button><button id=\"lbTabS\">🎭 Sians</button></div>" +
+        "<div class=\"tabs\"><button id=\"lbTabPl\">🌐 Barcha onlinelar</button><button id=\"lbTabT\" style=\"display:none\">🏆 Turnirlar</button><button id=\"lbTabS\" style=\"display:none\">🎭 Sians</button></div>" +
         "<div id=\"lbPl\"></div>" +
         "<div id=\"lbS\" style=\"display:none\">" +
         "<div class=\"card\"><div class=\"row\"><input id=\"lbSn\" maxlength=\"30\" placeholder=\"Sians nomi\" style=\"flex:1\"><button id=\"lbSCreate\">➕ Ochish</button></div>" +
@@ -375,7 +375,7 @@
       if (!list.length) h += "<div class=\"card muted\">Hozircha boshqa o‘yinchi yo‘q. “Tezkor o‘yin” ni bosib raqib kutishingiz mumkin.</div>";
       list.forEach(function (p) {
         h += "<div class=\"pl\"><span>" + (p.busy ? "🟡" : "🟢") + " " + esc(p.name) + (p.busy ? " <span class=\"muted\">o‘ynayapti</span>" : "") + "</span>" +
-          (out[p.uid] ? "<span class=\"muted\">chaqirildi…</span>" : (p.busy ? "" : "<button data-a=\"ch\" data-id=\"" + esc(p.uid) + "\">Chaqirish</button>")) + "</div>";
+          (out[p.uid] ? "<span class=\"muted\">chaqirildi…</span>" : (p.busy ? "" : "<button data-a=\"ch\" data-id=\"" + esc(p.uid) + "\">O‘yinga taklif</button>")) + "</div>";
       });
       $("lbPl").innerHTML = h;
     }

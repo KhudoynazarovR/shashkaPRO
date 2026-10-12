@@ -1,0 +1,5 @@
+function readBody(req, max, cb) {
+  let d = '', big = false;
+  req.on('data', c => { d += c; if (d.length > max) { big = true; req.destroy(); } });
+  req.on('end', () => { if (!big) cb(d); });
+}

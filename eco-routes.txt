@@ -1,0 +1,19 @@
+if ((p === '/api/avatar' || p === '/api/bio') && req.method === 'POST') {
+    const tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
+    if (!tg) { send(res, 401, { error: 'auth' }); return true; }
+    const u = store.getOrCreate(tg);
+    readBody(req, 200000, body => {
+      let j = {};
+      try { j = JSON.parse(body); } catch (e) {}
+      if (p === '/api/avatar') {
+        const a = String(j.img || '');
+        if (!/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(a) || a.length > 150000) return send(res, 400, { error: 'bad_image' });
+        u.avatar = a;
+      } else {
+        u.bio = String(j.bio || '').replace(/[\u0000-\u001f<>]/g, ' ').trim().slice(0, 120);
+      }
+      store.save();
+      send(res, 200, { ok: true });
+    });
+    return true;
+  }
