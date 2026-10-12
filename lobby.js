@@ -713,6 +713,7 @@ function createLobby({ send, clients, roomsApi }) {
     const t0 = tournaments.get(String(m.tid || ''));
     const FEE = economy.CFG;
     if (m.type === 'lbTCreate') {
+    { const cl0 = clubsApi.check(uid, m.clubIds); if (cl0.error) { err(c, cl0.error); return true; } }
       const before = tournaments.size;
       if (!economy.chargeCreate(uid).ok) { err(c, 'Turnir yaratish uchun ' + FEE.CREATE_COST + ' 💎 kerak'); return true; }
       const ret = handleInner(c, m);
@@ -720,6 +721,7 @@ function createLobby({ send, clients, roomsApi }) {
       return ret;
     }
     if (m.type === 'lbTJoin' && t0 && !t0.players.has(uid)) {
+    if (t0.clubIds && t0.clubIds.length && !clubsApi.inAny(uid, t0.clubIds)) { err(c, 'Bu turnir faqat klub a‘zolari uchun'); return true; }
       t0.paid = t0.paid || new Set();
       if (!economy.chargeJoin(uid).ok) { err(c, 'Qatnashish uchun ' + FEE.JOIN_FEE + ' 💎 kerak'); return true; }
       const ret = handleInner(c, m);

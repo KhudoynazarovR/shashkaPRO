@@ -337,7 +337,7 @@
         $("lbSw").style.display = a ? "none" : "";
       };
       $("lbTCreate").onclick = function () {
-        sendMsg({ type: "lbTCreate", kind: $("lbTk").value, pos: $("lbTp").value, duration: Number($("lbTdur").value), startIn: Number($($("lbTk").value === "arena" ? "lbTin" : "lbTsin").value), rounds: Number($("lbTr").value), interval: Number($("lbTiv").value), name: $("lbTn").value, tc: $("lbTc").value });
+        sendMsg({ type: "lbTCreate", clubIds: lbClubIds(), kind: $("lbTk").value, pos: $("lbTp").value, duration: Number($("lbTdur").value), startIn: Number($($("lbTk").value === "arena" ? "lbTin" : "lbTsin").value), rounds: Number($("lbTr").value), interval: Number($("lbTiv").value), name: $("lbTn").value, tc: $("lbTc").value });
         $("lbTn").value = "";
       };
       if (!initData) {
@@ -648,7 +648,41 @@
       }
       el.innerHTML = h;
     }
-    window.lbFriend = function () { sendMsg({ type: "lbFriendNew", tc: $("lbTc").value, pos: $("lbPos").value, games: Number($("lbGm").value) }); toast("🔗 Havola tayyorlanmoqda…", null, 2000); };
+    window.lbClubIds = function () {
+      var r = [];
+      ["lbTcl", "lbTcl2"].forEach(function (id) { var s = $(id); if (s && s.value && r.indexOf(s.value) < 0) r.push(s.value); });
+      return r;
+    };
+    window.lbClubTbl = function (t) {
+      if (!t.clubIds || !t.clubIds.length) return "";
+      var cs = t.clubs || [];
+      var h = "<div style=\"margin-top:10px\"><b>🛡 " + (cs.length > 1 ? "Klublar hisobi" : "Klub turniri") + "</b>";
+      cs.forEach(function (c, i) {
+        h += "<div class=\"lbcm\"><span>" + (i + 1) + ". " + esc(c.name) + " <small class=\"muted\">(" + c.players + " o‘yinchi)</small></span><b>" + c.score + "</b></div>";
+      });
+      return h + "</div>";
+    };
+    var clSig = "";
+    setInterval(function () {
+      var f = $("lbTform"); if (!f) return;
+      var cs = S.clubs || [];
+      var sig = cs.map(function (c) { return c.id + (c.isAdmin ? "a" : "m"); }).join();
+      var row = $("lbTclRow");
+      if (row && sig === clSig) return;
+      var v1 = $("lbTcl") ? $("lbTcl").value : "", v2 = $("lbTcl2") ? $("lbTcl2").value : "";
+      if (!row) { row = document.createElement("div"); row.id = "lbTclRow"; row.className = "row"; f.insertBefore(row, f.children[1] || null); }
+      clSig = sig;
+      var adm = cs.filter(function (c) { return c.isAdmin; });
+      row.style.display = adm.length ? "" : "none";
+      row.innerHTML = "<select id=\"lbTcl\"><option value=\"\">Klub turniri: yo‘q</option>" +
+        adm.map(function (c) { return "<option value=\"" + esc(c.id) + "\">" + esc(c.name) + "</option>"; }).join("") + "</select>" +
+        "<select id=\"lbTcl2\"><option value=\"\">Raqib klub: yo‘q</option>" +
+        cs.map(function (c) { return "<option value=\"" + esc(c.id) + "\">" + esc(c.name) + "</option>"; }).join("") + "</select>";
+      if ($("lbTcl")) $("lbTcl").value = v1;
+      if ($("lbTcl2")) $("lbTcl2").value = v2;
+    }, 1000);
+    
+window.lbFriend = function () { sendMsg({ type: "lbFriendNew", tc: $("lbTc").value, pos: $("lbPos").value, games: Number($("lbGm").value) }); toast("🔗 Havola tayyorlanmoqda…", null, 2000); };
     var tFil = "new";
     window.lbTF = function (f) { tFil = f === 2 ? "fin" : "new"; renderTournaments(); };
     window.lbTPlus = function () { var f = $("lbTform"); if (f) f.style.display = f.style.display === "none" ? "block" : "none"; };
@@ -716,7 +750,7 @@
           h += "<tr><td>" + (i + 1) + "</td><td>" + esc(p.name) + (p.uid === me ? " 👈" : "") + (p.withdrawn ? " <span class=\"muted\">(chiqdi)</span>" : "") + "</td><td>" + p.score + (p.fire ? " 🔥" : "") + "</td><td>" + (arena ? p.games : p.sb) + "</td>" + (arena ? "" : "<td>" + p.buch + "</td>") + "</tr>";
         });
         h += "</table>";
-        if (t.players.length > 12) h += "<div class=\"muted\">… va yana " + (t.players.length - 12) + " o‘yinchi</div>";
+        h += lbClubTbl(t); if (t.players.length > 12) h += "<div class=\"muted\">… va yana " + (t.players.length - 12) + " o‘yinchi</div>";
         h += "</div>";
       });
       $("lbTs").innerHTML = h;
