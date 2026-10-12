@@ -33,15 +33,11 @@
   }
   var SEC = [
     ["O‘YINLAR", [
-      ["🤖", "AI bilan o‘ynash", "Kompyuterga qarshi o‘ynang", "btnAI", "#8e6ff0,#c58bf2"],
-      ["🎯", "Bot raqiblar", "Turli darajadagi botlar", "players", "#f5873b,#f7c02d"],
-      ["✏️", "Doska muharriri", "Pozitsiya tuzing va o‘ynang", "editor", "#17b2f7,#17e3ff"],
-      ["🧠", "Tahlil", "Pozitsiyani baholash", "analysis", "#2fd27f,#1ea36a"]]],
-    ["STATISTIKA", [
-      ["🏅", "Yutuqlar", "Mukofotlaringiz", "achievements", "#f5b82e,#f58a2e"],
-      ["📜", "Tarix", "O‘tgan o‘yinlar", "history", "#2fd27f,#2ee8a6"]]],
+      ["🤖", "AI bilan o‘ynash", "Kompyuterga qarshi o‘ynang", "@ai:play", "#8e6ff0,#c58bf2"],
+      ["✏️", "Muharrir", "Pozitsiya tuzing va o‘ynang", "@ai:ed", "#17b2f7,#17e3ff"],
+      ["📋", "PDN", "Partiyani import va eksport", "@ai:pdn", "#2fd27f,#1ea36a"]]],
     ["ILOVA", [
-      ["⚙️", "Sozlamalar", "Til, tema va boshqalar", "settings", "#6b7bff,#8fa0ff"],
+      ["⚙️", "Sozlamalar", "Tema, ovoz va boshqalar", "@ai:set", "#6b7bff,#8fa0ff"],
       ["📴", "Eski qurilma rejimi", "Animatsiyasiz — zaif telefonlar uchun", "@lite", "#9aa0c8,#c3c8ea"],
       ["❓", "Yordam", "Bo‘limlar haqida", "@help", "#17b2f7,#17e3ff"],
       ["💬", "Taklif va shikoyatlar", "Fikringizni yozib qoldiring", "@fb", "#f5873b,#f7c02d"]]]
@@ -51,7 +47,7 @@
     if (a === "@lite") right = "<span class=\"mnsw" + (isLite() ? " on" : "") + "\"><i></i></span>";
     var h = "<div class=\"mnr\" onclick=\"mnA('" + a + "')\"><div class=\"mni\" style=\"background:linear-gradient(135deg," + r[4] + ")\">" + r[0] + "</div>" +
       "<div class=\"mnt\"><b>" + r[1] + "</b><small>" + r[2] + "</small></div><span class=\"mng\">" + right + "</span></div>";
-    if (a === "@help" && open === "help") h += "<div class=\"mnx\">📱 <b>Pastki menyu:</b><br>👤 Profil: ma‘lumotlaringiz va balans<br>🎮 O‘yin: onlayn raqiblar va tezkor o‘yin<br>🏆 Turnir: turnirlar va klublar<br>📊 Reyting: eng kuchli o‘yinchilar<br>☰ Menyu: bot, doska, tahlil va sozlamalar</div>";
+    if (a === "@help" && open === "help") h += "<div class=\"mnx\">📱 <b>Pastki menyu:</b><br>👤 Profil: ma‘lumotlaringiz va balans<br>🎮 O‘yin: onlayn raqiblar va tezkor o‘yin<br>🏆 Turnir: turnirlar va klublar<br>📊 Reyting: eng kuchli o‘yinchilar<br>☰ Menyu: AI o‘yin, muharrir va sozlamalar</div>";
     if (a === "@fb" && open === "fb") h += "<div class=\"mnx\"><textarea id=\"mnFbT\" maxlength=\"1000\" placeholder=\"Taklif yoki shikoyatingizni yozing…\"></textarea><button id=\"mnFbB\" onclick=\"mnSend()\">Yuborish</button><div id=\"mnFbM\" class=\"mnm\" style=\"margin:8px 0 0\"></div></div>";
     return h;
   }
@@ -82,6 +78,7 @@
   }
   function close() { if (panel) panel.style.display = "none"; }
   window.mnA = function (a) {
+    if (a.indexOf("@ai:") === 0) { close(); if (window.aiShow) window.aiShow(a.slice(4)); return; }
     if (a === "@daily") { daily(); return; }
     if (a === "@lite") { var on = !isLite(); try { localStorage.setItem("mnLite", on ? "1" : "0"); } catch (e) {} lite(on); render(); return; }
     if (a === "@help") { open = open === "help" ? null : "help"; render(); return; }

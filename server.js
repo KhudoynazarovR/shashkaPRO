@@ -209,6 +209,9 @@ function serveFile(req, res) {
   // index.html ga guruh (xona) rejimi skriptini avtomatik ulaymiz
   if (base === "index.html") {
     let html = fs.readFileSync(file, "utf8");
+    if (!html.includes("aiview.js")) {
+      html = html.replace("</body>", '<script src="/aiview.js?v=' + Date.now() + '"></script>\n</body>');
+    }
     if (!html.includes("sound.js")) {
       html = html.replace("</body>", '<script src="/sound.js"></script>\n</body>');
     }

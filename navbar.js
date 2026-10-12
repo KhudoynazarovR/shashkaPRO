@@ -79,6 +79,7 @@
     if (!b) return;
     var k = b.getAttribute('data-k');
     mark(k);
+    if (window.aiHide) window.aiHide();
     if (window.rkClose) window.rkClose();
     if (window.mnClose) window.mnClose();
     if (k === 'mn') {
