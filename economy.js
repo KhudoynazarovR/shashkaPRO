@@ -135,6 +135,32 @@ function handle(req, res, url) {
     return true;
   }
 
+  if (p === '/api/feedback' && req.method === 'POST') {
+    const tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
+    let raw = '';
+    req.on('data', d => { raw += d; if (raw.length > 4000) req.destroy(); });
+    req.on('end', () => {
+      let text = '';
+      try { text = String((JSON.parse(raw) || {}).text || '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 1000); } catch (e) {}
+      if (text.length < 5) return send(res, 400, { error: 'Xabar juda qisqa' });
+      const who = tg ? ((tg.first_name || tg.name || '') + ' #' + tg.id) : 'mehmon';
+      global.__fbAt = global.__fbAt || {};
+      const k = tg ? String(tg.id) : (req.socket.remoteAddress || 'x');
+      const now = Date.now(), arr = (global.__fbAt[k] || []).filter(t => now - t < 3600000);
+      if (arr.length >= 5) return send(res, 429, { error: 'Juda ko‘p xabar. Keyinroq urinib ko‘ring' });
+      arr.push(now); global.__fbAt[k] = arr;
+      try { require('fs').appendFileSync(require('path').join(__dirname, 'feedback.txt'), new Date().toISOString() + ' | ' + who + ' | ' + text + '\n'); } catch (e) {}
+      try {
+        if (process.env.ADMIN_ID && process.env.BOT_TOKEN) {
+          const body = JSON.stringify({ chat_id: process.env.ADMIN_ID, text: '💬 Taklif/shikoyat\n' + who + '\n\n' + text });
+          const r = require('https').request({ hostname: 'api.telegram.org', path: '/bot' + process.env.BOT_TOKEN + '/sendMessage', method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } });
+          r.on('error', () => {}); r.end(body);
+        }
+      } catch (e) {}
+      send(res, 200, { ok: true });
+    });
+    return true;
+  }
   if (p === '/api/leaderboard' && req.method === 'GET') {
     const all = Object.entries(store.users()).map(([id, u]) => {
       const g = u.games || 0, w = u.wins || 0;

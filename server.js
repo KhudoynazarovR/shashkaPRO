@@ -227,6 +227,9 @@ function serveFile(req, res) {
     if (!html.includes("ratings.js")) {
       html = html.replace("</body>", '<script src="/ratings.js?v=' + Date.now() + '"></script>\n</body>');
     }
+    if (!html.includes("/menu.js")) {
+      html = html.replace("</body>", '<script src="/menu.js?v=' + Date.now() + '"></script>\n</body>');
+    }
     if (!html.includes("lobbyclient.js")) {
       html = html.replace("</body>", '<script src="/lobbyclient.js"></script>\n</body>');
     }
