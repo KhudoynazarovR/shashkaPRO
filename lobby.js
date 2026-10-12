@@ -128,12 +128,23 @@ function createLobby({ send, clients, roomsApi }) {
     return arr;
   }
 
+  function clubStandings(t) {
+    if (!t.clubIds || !t.clubIds.length) return [];
+    const st = t.type === 'arena' ? arenaStandings(t) : standings(t);
+    const by = new Map(t.clubIds.map(id => [id, []]));
+    for (const p of st) { const cid = clubsApi.clubOfIn(p.uid, t.clubIds); if (cid) by.get(cid).push(+p.score || 0); }
+    return [...by].map(([id, a]) => {
+      a.sort((x, y) => y - x);
+      return { id, name: clubsApi.nameOf(id), players: a.length, score: Math.round(a.slice(0, 5).reduce((s, x) => s + x, 0) * 10) / 10 };
+    }).sort((a, b) => b.score - a.score);
+  }
+
   function pubT(t) {
     return {
       id: t.id, name: t.name, tc: t.tc, status: t.status, pos: t.pos || 'std',
       roundsWanted: t.roundsWanted || 0, interval: t.interval || 0,
       type: t.type || 'swiss', durationMin: t.durationMin || 0, startAt: t.startAt || 0, endAt: t.endAt || 0, ending: !!t.ending,
-      creatorUid: t.creatorUid, creatorName: t.creatorName,
+      creatorUid: t.creatorUid, creatorName: t.creatorName, clubIds: t.clubIds || [], clubs: clubStandings(t),
       round: t.round, rounds: t.rounds, nextAt: t.nextAt || 0,
       players: t.type === 'arena' ? arenaStandings(t) : standings(t),
       boards: t.cur.map(b => ({
@@ -438,6 +449,7 @@ function createLobby({ send, clients, roomsApi }) {
     t.nextAt = 0;
     const st = t.type === 'arena' ? arenaStandings(t) : standings(t);
     const top = st[0] ? st[0].name : '-';
+    if (t.clubIds && t.clubIds.length) { const cs = clubStandings(t); if (cs.length > 1) { clubsApi.award(cs); if (cs[0]) for (const p of t.players.values()) toast(p.uid, '🏅 Klublar hisobida g‘olib: ' + cs[0].name + ' (' + cs[0].score + ')'); } }
     try {
       if (st[0] && st[0].score > 0 && t.players.size >= MIN_T_PLAYERS) {
         const _st = require('./store'), _u = _st.users()[String(st[0].uid)];
@@ -783,6 +795,7 @@ function createLobby({ send, clients, roomsApi }) {
         break;
       }
       case 'lbTCreate': {
+        const cl = clubsApi.check(me.uid, m.clubIds); if (cl.error) return err(c, cl.error), true;
         if (tournaments.size >= MAX_TOURNAMENTS) return err(c, 'Turnirlar soni limitga yetdi'), true;
         if ([...tournaments.values()].some(t => t.creatorUid === me.uid && t.status === 'reg')) return err(c, 'Sizda allaqachon ochiq turnir bor'), true;
         if (m.kind === 'arena') {
@@ -798,7 +811,7 @@ function createLobby({ send, clients, roomsApi }) {
             pos: m.pos === 'idf' ? 'idf' : 'std'
           };
           at.players.set(me.uid, newArenaPlayer(me));
-          tournaments.set(at.id, at);
+          at.clubIds = cl.ids; tournaments.set(at.id, at);
           push();
           break;
         }
@@ -812,11 +825,12 @@ function createLobby({ send, clients, roomsApi }) {
           startAt: SWISS_STARTS.includes(Number(m.startIn)) ? Date.now() + Number(m.startIn) * 60000 : 0
         };
         t.players.set(me.uid, newPlayer(me));
-        tournaments.set(t.id, t);
+        t.clubIds = cl.ids; tournaments.set(t.id, t);
         push();
         break;
       }
       case 'lbTJoin': {
+        { const tt = tournaments.get(String(m.tid)); if (tt && tt.clubIds && tt.clubIds.length && !clubsApi.inAny(me.uid, tt.clubIds)) return err(c, 'Bu turnir faqat klub a‘zolari uchun'), true; }
         const t = tournaments.get(String(m.tid));
         if (t && t.type === 'arena') {
           if (t.status === 'finished' || t.ending) return err(c, 'Arena tugagan'), true;

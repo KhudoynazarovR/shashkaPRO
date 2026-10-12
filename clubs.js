@@ -10,7 +10,7 @@ const clubs = new Map();
 try {
   for (const c of JSON.parse(fs.readFileSync(FILE, 'utf8')))
     clubs.set(c.id, { id: c.id, name: c.name, desc: c.desc || '', leaderUid: c.leaderUid, leaderName: c.leaderName, created: c.created,
-      open: c.open !== false, img: c.img || '', members: new Map(c.members), pending: new Map(c.pending || []), admins: new Set(c.admins || [c.leaderUid]) });
+      open: c.open !== false, img: c.img || '', pts: c.pts || 0, tw: c.tw || 0, members: new Map(c.members), pending: new Map(c.pending || []), admins: new Set(c.admins || [c.leaderUid]) });
 } catch (e) {}
 let timer = null;
 function save() {
@@ -30,7 +30,7 @@ function list(uid) {
     return {
       id: c.id, name: c.name, desc: c.desc, leaderUid: c.leaderUid, leaderName: c.leaderName,
       count: c.members.size, joined: c.members.has(uid), open: c.open, img: c.img,
-      isAdmin: adm, requested: c.pending.has(uid),
+      isAdmin: adm, requested: c.pending.has(uid), pts: c.pts || 0, tw: c.tw || 0,
       pend: adm ? [...c.pending].slice(0, 50).map(([u, n]) => ({ uid: u, name: n })) : [],
       members: [...c.members].slice(0, 30).map(([u, n]) => ({ uid: u, name: n, admin: c.admins.has(u) }))
     };
@@ -115,4 +115,19 @@ function act(me, m) {
   }
   return { ok: 1 };
 }
-module.exports = { list, act };
+
+function check(uid, raw) {
+  if (!Array.isArray(raw) || !raw.length) return { ids: [] };
+  const ids = [...new Set(raw.map(String))].slice(0, 6);
+  for (const id of ids) if (!clubs.has(id)) return { error: 'Klub topilmadi' };
+  if (!ids.some(id => clubs.get(id).admins.has(uid))) return { error: 'Klub turnirini faqat klub admini ocha oladi' };
+  return { ids };
+}
+function inAny(uid, ids) { return ids.some(id => { const c = clubs.get(id); return !!c && c.members.has(uid); }); }
+function clubOfIn(uid, ids) { for (const id of ids) { const c = clubs.get(id); if (c && c.members.has(uid)) return id; } return null; }
+function nameOf(id) { const c = clubs.get(id); return c ? c.name : '?'; }
+function award(cs) {
+  cs.forEach((x, i) => { const c = clubs.get(x.id); if (!c) return; c.pts = (c.pts || 0) + x.score; if (i === 0 && x.score > 0) c.tw = (c.tw || 0) + 1; });
+  save();
+}
+module.exports = { list, act, check, inAny, clubOfIn, nameOf, award };
