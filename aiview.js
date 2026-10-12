@@ -9,6 +9,7 @@
     if (n.nodeType === 1 && n.tagName !== "SCRIPT" && n.tagName !== "STYLE" && n.tagName !== "LINK") wrap.appendChild(n);
   });
   document.body.insertBefore(wrap, document.body.firstChild);
+  (function(){var s=document.getElementById("aiPre");if(s)s.remove();})();
   window.aiHide = function () { wrap.style.display = "none"; };
   window.aiShow = function (tab) {
     wrap.style.display = "";
