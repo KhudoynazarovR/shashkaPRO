@@ -393,7 +393,7 @@
       if (!list.length) h += "<div class=\"card muted\">Hozircha boshqa o‘yinchi yo‘q. “Tasodifiy o‘yin” ▶ ni bosib raqib kutishingiz mumkin.</div>";
       list.forEach(function (p) {
         h += "<div class=\"lbp\"><div class=\"lbav\">" + esc((p.name || "?").charAt(0).toUpperCase()) + "</div>" +
-          "<div class=\"lbinf\"><b>" + esc(p.name) + (p.busy ? " 🟡" : "") + "</b><small>ELO " + (p.elo || 1000) + (p.busy ? " · o‘ynayapti" : "") + "</small></div>" +
+          "<div class=\"lbinf\"><b>" + esc(p.name) + (p.busy ? " 🟡" : "") + "</b><small>ELO " + (p.elo || 1000) + " · 💎 " + (p.gems || 0) + (p.busy ? " · o‘ynayapti" : "") + "</small></div>" +
           (out[p.uid] ? "<span class=\"muted\">chaqirildi…</span>" : (p.busy ? "" : "<button class=\"lbinv\" data-a=\"ch\" data-id=\"" + esc(p.uid) + "\">O‘yinga taklif</button>")) + "</div>";
       });
       $("lbPl").innerHTML = h;
