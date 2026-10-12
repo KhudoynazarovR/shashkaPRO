@@ -5,6 +5,13 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const { verifyInitData } = require('./rooms');
+const economy = require('./economy');
+const MIN_REWARD_PLIES = Number(process.env.REWARD_MIN_PLIES || 8);
+function payWin(room, whiteUid, blackUid, tid) {
+  if (room.noshowBoth || room.reason === 'noshow' || (room.plies || 0) < MIN_REWARD_PLIES) return;
+  if (room.winner === 'white') economy.rewardWin(whiteUid, blackUid, tid);
+  else if (room.winner === 'black') economy.rewardWin(blackUid, whiteUid, tid);
+}
 
 const TCS = ['1+1', '2+2', '3+2', '5+3', '7+5'];
 const DEFAULT_TC = '5+3';
@@ -207,7 +214,7 @@ function createLobby({ send, clients, roomsApi }) {
     else if (room.winner === 'black') s.pts[k] += 1;
     else { s.pts[w] += 0.5; s.pts[k] += 0.5; }
     const [A, B] = s.p;
-    if (s.total <= 1) return;
+    payWin(room, w, k, null); if (s.total <= 1) return;
     if (s.played >= s.total) {
       const sa = s.pts[A.uid], sb = s.pts[B.uid];
       const res = sa === sb ? 'Durang' : 'G‘olib: ' + (sa > sb ? A.name : B.name);
@@ -395,7 +402,7 @@ function createLobby({ send, clients, roomsApi }) {
     else if (room.winner === 'white') sw = 1;
     else if (room.winner === 'black') sb = 1;
     else { sw = 0.5; sb = 0.5; }
-    pw.score += sw; pb.score += sb;
+    pw.score += sw; pb.score += sb; payWin(room, b.white, b.black, t.id);
     pw.res.push({ opp: pb.uid, pts: sw }); pb.res.push({ opp: pw.uid, pts: sb });
     if (room.reason === 'noshow') {
       if (room.noshowBoth) { pw.noshows++; pb.noshows++; }
@@ -422,7 +429,7 @@ function createLobby({ send, clients, roomsApi }) {
     if (t.status === 'finished') return;
     if (t.timer) clearTimeout(t.timer);
     t.status = 'finished';
-    t.finishedAt = Date.now();
+    t.finishedAt = Date.now(); if (!t.paidOut) { t.paidOut = true; const r = economy.finishTournament(t.creatorUid, [...(t.paid || [])]); if (r.bonus) toast(t.creatorUid, '💎 Yaratuvchi bonusi: +' + r.bonus); }
     t.nextAt = 0;
     const st = t.type === 'arena' ? arenaStandings(t) : standings(t);
     const top = st[0] ? st[0].name : '-';
@@ -534,7 +541,7 @@ function createLobby({ send, clients, roomsApi }) {
         if (lost) { lost.withdrawn = true; toast(lost.uid, '⚠️ ' + t.name + ': o‘yinga kirmadingiz, pauzadasiz. Qaytish uchun „Qo‘shilish“ni bosing'); }
       }
     }
-    pw.lastOpp = pb.uid; pb.lastOpp = pw.uid;
+    payWin(room, b.white, b.black, t.id); pw.lastOpp = pb.uid; pb.lastOpp = pw.uid;
     pw.busy = false; pb.busy = false;
     pw.waitingSince = now; pb.waitingSince = now;
     push();
@@ -677,6 +684,40 @@ function createLobby({ send, clients, roomsApi }) {
   }
 
   function handle(c, m) {
+    if (!m || typeof m.type !== 'string' || !c.lb) return handleInner(c, m);
+    const uid = c.lb.uid;
+    const t0 = tournaments.get(String(m.tid || ''));
+    const FEE = economy.CFG;
+    if (m.type === 'lbTCreate') {
+      const before = tournaments.size;
+      if (!economy.chargeCreate(uid).ok) { err(c, 'Turnir yaratish uchun ' + FEE.CREATE_COST + ' 💎 kerak'); return true; }
+      const ret = handleInner(c, m);
+      if (tournaments.size === before) economy.refund(uid, FEE.CREATE_COST, 'refund_create');
+      return ret;
+    }
+    if (m.type === 'lbTJoin' && t0 && !t0.players.has(uid)) {
+      t0.paid = t0.paid || new Set();
+      if (!economy.chargeJoin(uid).ok) { err(c, 'Qatnashish uchun ' + FEE.JOIN_FEE + ' 💎 kerak'); return true; }
+      const ret = handleInner(c, m);
+      if (t0.players.has(uid)) t0.paid.add(uid); else economy.refund(uid, FEE.JOIN_FEE, 'refund_join');
+      return ret;
+    }
+    if (m.type === 'lbTLeave' && t0 && t0.status === 'reg' && t0.paid && t0.paid.has(uid)) {
+      const ret = handleInner(c, m);
+      if (!t0.players.has(uid)) { t0.paid.delete(uid); economy.refund(uid, FEE.JOIN_FEE, 'refund_leave'); }
+      return ret;
+    }
+    if (m.type === 'lbTCancel' && t0 && t0.status === 'reg' && t0.creatorUid === uid) {
+      const ret = handleInner(c, m);
+      if (!tournaments.has(t0.id)) {
+        economy.refund(uid, FEE.CREATE_COST, 'refund_create');
+        for (const p of (t0.paid || [])) economy.refund(p, FEE.JOIN_FEE, 'refund_join');
+      }
+      return ret;
+    }
+    return handleInner(c, m);
+  }
+  function handleInner(c, m) {
     if (!m || typeof m.type !== 'string' || !m.type.startsWith('lb')) return false;
     if (m.type === 'lbHello') { hello(c, m); return true; }
     if (!c.lb) { err(c, 'Avval kirish kerak'); return true; }

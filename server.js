@@ -242,6 +242,8 @@ const server = http.createServer((req, res) => {
 
   if (require("./payments.js").handle(req, res, url)) return;
 
+  if (require("./economy.js").handle(req, res, url)) return;
+
   if (url.pathname === "/health") {
     res.writeHead(200, {
       "Content-Type": "application/json; charset=utf-8"
