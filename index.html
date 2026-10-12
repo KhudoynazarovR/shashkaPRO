@@ -625,5 +625,5 @@ function loadFen(t){const m=t.trim().match(/^([WB]):W([^:]*):B(.*)$/i);if(!m)ret
 function cpFen(){const t=$('fen');t.select();try{navigator.clipboard.writeText(t.value)}catch(e){try{document.execCommand('copy')}catch(e2){}}toast(T('ok'))}
 $('fen').onchange=()=>loadFen($('fen').value);
 document.querySelectorAll('#tools button').forEach(b=>b.onclick=()=>{G.tool=b.dataset.tl;G.es=null;render()});
-$('dt-fmjd').value=DT.fmjd;$('dt-idf').value=DT.idf;skin();newGame();
+$('dt-fmjd').value=DT.fmjd;$('dt-idf').value=DT.idf;S.mode='local';skin();newGame();
 </script></body></html>
