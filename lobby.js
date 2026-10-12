@@ -936,7 +936,7 @@ function createLobby({ send, clients, roomsApi }) {
         push();
         break;
       }
-      case 'lbClubCreate': case 'lbClubJoin': case 'lbClubLeave': case 'lbClubKick': case 'lbClubDisband': {
+      case 'lbClubCreate': case 'lbClubJoin': case 'lbClubLeave': case 'lbClubKick': case 'lbClubDisband': case 'lbClubAccept': case 'lbClubReject': case 'lbClubAdmin': case 'lbClubSet': case 'lbClubImg': {
         const r = clubsApi.act(me, m);
         if (r && r.error) err(c, r.error);
         push();
