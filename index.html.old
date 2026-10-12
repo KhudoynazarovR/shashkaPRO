@@ -1,0 +1,2087 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ShashkaPRO</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+ margin:0;
+ background:#0b0f14;
+ color:#fff;
+ font-family:Arial,sans-serif;
+}
+
+button,select{
+ font:inherit;
+}
+
+.app{
+ max-width:760px;
+ margin:auto;
+ padding:14px;
+}
+
+.header{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ margin-bottom:14px;
+}
+
+.header h1{
+ margin:0;
+ font-size:25px;
+}
+
+.back{
+ border:0;
+ background:#252c35;
+ color:#fff;
+ width:58px;
+ height:58px;
+ border-radius:18px;
+ font-size:25px;
+}
+
+.info{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ background:#171c23;
+ border:1px solid #303640;
+ border-radius:20px;
+ padding:15px 18px;
+ margin-bottom:14px;
+}
+
+.status{
+ font-size:18px;
+}
+
+.timer{
+ font-size:25px;
+ font-weight:bold;
+ white-space:nowrap;
+}
+
+.boardWrap{
+ width:min(94vw,620px);
+ margin:14px auto;
+}
+
+.board{
+ width:100%;
+ aspect-ratio:1;
+ display:grid;
+ grid-template-columns:repeat(8,1fr);
+ grid-template-rows:repeat(8,1fr);
+ border:7px solid #533a17;
+ border-radius:17px;
+ overflow:hidden;
+ box-shadow:0 15px 40px #0009;
+}
+
+.cell{
+ position:relative;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ touch-action:manipulation;
+ user-select:none;
+}
+
+.light{
+ background:#f6dda0;
+}
+
+.dark{
+ background:#805b20;
+}
+
+.cell.selected{
+ box-shadow:inset 0 0 0 5px #00e5ff;
+}
+
+.cell.target{
+ box-shadow:inset 0 0 0 5px #4cff91;
+}
+
+.cell.captureTarget{
+ box-shadow:inset 0 0 0 5px #ff4545;
+}
+
+.piece{
+ width:76%;
+ height:76%;
+ border-radius:50%;
+ position:relative;
+ z-index:3;
+ border:3px solid #555;
+ box-shadow:0 6px 10px #0009;
+}
+
+.white{
+ background:radial-gradient(circle at 32% 25%,#fff,#eee 40%,#aaa);
+ border-color:#777;
+}
+
+.black{
+ background:radial-gradient(circle at 32% 25%,#777,#333 42%,#050505);
+ border-color:#000;
+}
+
+.king:after{
+ content:"♛";
+ position:absolute;
+ inset:0;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ color:#d4af37;
+ font-size:35%;
+ font-weight:bold;
+ text-shadow:0 2px 3px #000;
+}
+
+.coords{
+ position:absolute;
+ font-size:9px;
+ font-weight:bold;
+ opacity:.7;
+ pointer-events:none;
+}
+
+.coordFile{
+ right:3px;
+ bottom:2px;
+}
+
+.coordRank{
+ left:3px;
+ top:2px;
+}
+
+.actions{
+ display:grid;
+ grid-template-columns:repeat(2,1fr);
+ gap:10px;
+ margin-top:12px;
+}
+
+.actions button{
+ border:0;
+ background:#252c35;
+ color:#fff;
+ border-radius:17px;
+ padding:16px 10px;
+ font-weight:bold;
+ font-size:17px;
+}
+
+.actions .danger{
+ background:#8e343a;
+}
+
+.card{
+ background:#151a21;
+ border:1px solid #303640;
+ border-radius:20px;
+ padding:18px;
+ margin-top:14px;
+}
+
+.card h3{
+ margin:0 0 13px;
+}
+
+.moves{
+ color:#cbd2da;
+ line-height:1.8;
+ max-height:150px;
+ overflow:auto;
+}
+
+.settings{
+ display:grid;
+ gap:10px;
+}
+
+.settings label{
+ color:#cbd2da;
+ font-weight:bold;
+}
+
+.settings select{
+ width:100%;
+ background:#252c35;
+ color:white;
+ border:1px solid #444;
+ border-radius:12px;
+ padding:13px;
+}
+
+.themeGrid{
+ display:grid;
+ grid-template-columns:repeat(3,1fr);
+ gap:8px;
+}
+
+.themeGrid button{
+ border:1px solid #444;
+ background:#252c35;
+ color:#fff;
+ border-radius:12px;
+ padding:12px 5px;
+}
+
+.themeGrid button.active{
+ border:2px solid #00e5ff;
+}
+
+.homeButtons{
+ display:grid;
+ grid-template-columns:repeat(2,1fr);
+ gap:10px;
+}
+
+.homeButtons button{
+ border:0;
+ background:#252c35;
+ color:#fff;
+ padding:17px 8px;
+ border-radius:17px;
+ font-weight:bold;
+}
+
+.hidden{
+ display:none!important;
+}
+
+.toast{
+ position:fixed;
+ left:50%;
+ bottom:25px;
+ transform:translateX(-50%);
+ background:#20262e;
+ border:1px solid #555;
+ padding:13px 18px;
+ border-radius:14px;
+ opacity:0;
+ pointer-events:none;
+ transition:.2s;
+ z-index:99;
+}
+
+.toast.show{
+ opacity:1;
+}
+
+@media(max-width:430px){
+ .app{padding:10px}
+ .timer{font-size:21px}
+ .status{font-size:16px}
+ .board{border-width:5px}
+ .actions button{font-size:15px;padding:14px 6px}
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<!-- HOME -->
+<section id="home">
+
+<div class="header">
+ <h1>♟️ ShashkaPRO</h1>
+</div>
+
+<div class="card">
+ <h3>🎮 O‘yin</h3>
+
+ <div class="homeButtons">
+  <button onclick="startGame()">🤖 AI bilan o‘ynash</button>
+  <button onclick="showGame()">♟️ O‘yinni ochish</button>
+  <button onclick="showSettings()">🎨 Dizayn</button>
+  <button onclick="resetAll()">🗑️ Statistika</button>
+ </div>
+</div>
+
+<div class="card">
+ <h3>📊 Statistika</h3>
+ <div>🏆 ELO: <b id="elo">1000</b></div>
+ <div>🎯 G‘alabalar: <b id="wins">0</b></div>
+ <div>♟️ O‘yinlar: <b id="games">0</b></div>
+</div>
+
+</section>
+
+
+<!-- GAME -->
+<section id="game" class="hidden">
+
+<div class="header">
+ <h1 id="gameTitle">🤖 AI bilan o‘yin</h1>
+ <button class="back" onclick="goHome()">←</button>
+</div>
+
+<div class="info">
+ <div class="status" id="status">⚪ Sizning navbatingiz</div>
+ <div class="timer">
+  <span id="whiteTimer">05:00</span>
+  |
+  <span id="blackTimer">05:00</span>
+ </div>
+</div>
+
+<div class="boardWrap">
+ <div id="board" class="board"></div>
+</div>
+
+<div class="actions">
+ <button onclick="undoMove()">↩️ Orqaga</button>
+ <button onclick="restartGame()">🔄 Qayta</button>
+ <button onclick="showSettings()">🎨 Dizayn</button>
+ <button class="danger" onclick="giveUp()">🏳️ Taslim</button>
+</div>
+
+<div class="card">
+ <h3>📜 Yurishlar</h3>
+ <div id="moves" class="moves">Hali yurish yo‘q</div>
+</div>
+
+</section>
+
+
+<!-- SETTINGS -->
+<section id="settings" class="hidden">
+
+<div class="header">
+ <h1>🎨 Sozlamalar</h1>
+ <button class="back" onclick="showGame()">←</button>
+</div>
+
+<div class="card">
+ <h3>⏱️ Vaqt</h3>
+
+ <div class="settings">
+ <label>Vaqt nazorati</label>
+
+ <select id="timeSelect" onchange="changeTime()">
+  <option value="60">1+0</option>
+  <option value="120">2+0</option>
+  <option value="180">3+0</option>
+  <option value="300" selected>5+0</option>
+  <option value="600">10+0</option>
+ </select>
+ </div>
+</div>
+
+<div class="card">
+ <h3>🎨 Doska dizayni</h3>
+
+ <div class="themeGrid">
+
+ <button data-theme="classic" onclick="setTheme('classic')">
+ 🟫 Klassik
+ </button>
+
+ <button data-theme="blue" onclick="setTheme('blue')">
+ 🟦 Blue
+ </button>
+
+ <button data-theme="green" onclick="setTheme('green')">
+ 🟩 Green
+ </button>
+
+ <button data-theme="purple" onclick="setTheme('purple')">
+ 🟪 Purple
+ </button>
+
+ <button data-theme="neon" onclick="setTheme('neon')">
+ 💜 Neon
+ </button>
+
+ <button data-theme="gold" onclick="setTheme('gold')">
+ 🏆 Gold
+ </button>
+
+ </div>
+</div>
+
+<div class="card">
+ <h3>⚪ Dona dizayni</h3>
+
+ <div class="themeGrid">
+
+ <button data-piece="classic" onclick="setPiece('classic')">
+ ⚪ Klassik
+ </button>
+
+ <button data-piece="flat" onclick="setPiece('flat')">
+ ⚪ Flat
+ </button>
+
+ <button data-piece="neon" onclick="setPiece('neon')">
+ 💜 Neon
+ </button>
+
+ <button data-piece="gold" onclick="setPiece('gold')">
+ 🏆 Gold
+ </button>
+
+ <button data-piece="silver" onclick="setPiece('silver')">
+ 🥈 Silver
+ </button>
+
+ </div>
+</div>
+
+</section>
+
+</div>
+
+<div id="toast" class="toast"></div>
+
+
+<script>
+"use strict";
+
+/* =========================
+   CONSTANTS
+========================= */
+
+const EMPTY=0;
+const WHITE=1;
+const BLACK=2;
+const WHITE_KING=3;
+const BLACK_KING=4;
+
+const DIRS=[
+ [1,1],
+ [1,-1],
+ [-1,1],
+ [-1,-1]
+];
+
+/* =========================
+   GAME STATE
+========================= */
+
+let board=[];
+let turn=WHITE;
+let selected=null;
+let forcedPiece=null;
+
+let gameOver=false;
+let history=[];
+let moveHistory=[];
+
+let timerId=null;
+let whiteTime=300;
+let blackTime=300;
+let initialTime=300;
+
+let aiTimer=null;
+
+let boardTheme=localStorage.getItem("shashkaPRO_boardTheme")||"classic";
+let pieceStyle=localStorage.getItem("shashkaPRO_pieceStyle")||"classic";
+
+let stats;
+
+try{
+ stats=JSON.parse(localStorage.getItem("shashkaPRO_stats")||"null")
+ ||{elo:1000,wins:0,games:0};
+}catch(e){
+ stats={elo:1000,wins:0,games:0};
+}
+
+
+/* =========================
+   HELPERS
+========================= */
+
+function $(id){
+ return document.getElementById(id);
+}
+
+function toast(msg){
+ const t=$("toast");
+ t.textContent=msg;
+ t.classList.add("show");
+
+ clearTimeout(toast.timer);
+
+ toast.timer=setTimeout(()=>{
+  t.classList.remove("show");
+ },1800);
+}
+
+function cloneBoard(b){
+ return b.map(row=>row.slice());
+}
+
+function inside(r,c){
+ return r>=0&&r<8&&c>=0&&c<8;
+}
+
+function isWhite(p){
+ return p===WHITE||p===WHITE_KING;
+}
+
+function isBlack(p){
+ return p===BLACK||p===BLACK_KING;
+}
+
+function isKing(p){
+ return p===WHITE_KING||p===BLACK_KING;
+}
+
+function sameSide(a,b){
+ return (isWhite(a)&&isWhite(b)) ||
+        (isBlack(a)&&isBlack(b));
+}
+
+function opponent(side){
+ return side===WHITE?BLACK:WHITE;
+}
+
+
+/* =========================
+   START POSITION
+========================= */
+
+function startPosition(){
+
+ const b=Array.from(
+  {length:8},
+  ()=>Array(8).fill(EMPTY)
+ );
+
+ for(let r=0;r<3;r++){
+
+  for(let c=0;c<8;c++){
+
+   if((r+c)%2===1){
+    b[r][c]=BLACK;
+   }
+
+  }
+
+ }
+
+ for(let r=5;r<8;r++){
+
+  for(let c=0;c<8;c++){
+
+   if((r+c)%2===1){
+    b[r][c]=WHITE;
+   }
+
+  }
+
+ }
+
+ return b;
+}
+
+
+/* =========================
+   CAPTURE GENERATION
+========================= */
+
+function captureSteps(b,r,c){
+
+ const p=b[r][c];
+
+ if(!p)return [];
+
+ const result=[];
+
+ /*
+  MAN
+ */
+ if(!isKing(p)){
+
+  for(const [dr,dc] of DIRS){
+
+   const mr=r+dr;
+   const mc=c+dc;
+
+   const tr=r+dr*2;
+   const tc=c+dc*2;
+
+   if(!inside(tr,tc)||!inside(mr,mc))continue;
+
+   const middle=b[mr][mc];
+
+   if(
+    middle!==EMPTY &&
+    !sameSide(p,middle) &&
+    b[tr][tc]===EMPTY
+   ){
+
+    result.push({
+     from:{r,c},
+     to:{r:tr,c:tc},
+     captures:[{r:mr,c:mc}]
+    });
+
+   }
+
+  }
+
+  return result;
+ }
+
+
+ /*
+  KING
+ */
+ for(const [dr,dc] of DIRS){
+
+  let nr=r+dr;
+  let nc=c+dc;
+  let enemy=null;
+
+  while(inside(nr,nc)){
+
+   const q=b[nr][nc];
+
+   if(q===EMPTY){
+
+    if(enemy){
+
+     result.push({
+      from:{r,c},
+      to:{r:nr,c:nc},
+      captures:[enemy]
+     });
+
+    }
+
+    nr+=dr;
+    nc+=dc;
+    continue;
+   }
+
+   if(sameSide(p,q))break;
+
+   if(enemy)break;
+
+   enemy={r:nr,c:nc};
+
+   nr+=dr;
+   nc+=dc;
+  }
+
+ }
+
+ return result;
+}
+
+
+/* =========================
+   NORMAL MOVES
+========================= */
+
+function normalSteps(b,r,c){
+
+ const p=b[r][c];
+
+ if(!p)return [];
+
+ if(isKing(p)){
+
+  const result=[];
+
+  for(const [dr,dc] of DIRS){
+
+   let nr=r+dr;
+   let nc=c+dc;
+
+   while(inside(nr,nc)&&b[nr][nc]===EMPTY){
+
+    result.push({
+     from:{r,c},
+     to:{r:nr,c:nc},
+     captures:[]
+    });
+
+    nr+=dr;
+    nc+=dc;
+   }
+
+  }
+
+  return result;
+ }
+
+ const result=[];
+
+ const dr=isWhite(p)?-1:1;
+
+ for(const dc of [-1,1]){
+
+  const nr=r+dr;
+  const nc=c+dc;
+
+  if(inside(nr,nc)&&b[nr][nc]===EMPTY){
+
+   result.push({
+    from:{r,c},
+    to:{r:nr,c:nc},
+    captures:[]
+   });
+
+  }
+
+ }
+
+ return result;
+}
+
+
+/* =========================
+   ALL CAPTURES
+========================= */
+
+function allCaptures(b,side){
+
+ const result=[];
+
+ for(let r=0;r<8;r++){
+
+  for(let c=0;c<8;c++){
+
+   const p=b[r][c];
+
+   if(
+    p &&
+    (
+     side===WHITE?isWhite(p):isBlack(p)
+    )
+   ){
+
+    result.push(...captureSteps(b,r,c));
+
+   }
+
+  }
+
+ }
+
+ return result;
+}
+
+
+/* =========================
+   ALL MOVES
+========================= */
+
+function allMoves(b,side){
+
+ const caps=allCaptures(b,side);
+
+ if(caps.length)return caps;
+
+ const result=[];
+
+ for(let r=0;r<8;r++){
+
+  for(let c=0;c<8;c++){
+
+   const p=b[r][c];
+
+   if(
+    p &&
+    (
+     side===WHITE?isWhite(p):isBlack(p)
+    )
+   ){
+
+    result.push(...normalSteps(b,r,c));
+
+   }
+
+  }
+
+ }
+
+ return result;
+}
+
+
+/* =========================
+   APPLY STEP
+========================= */
+
+function applyStep(b,m){
+
+ const n=cloneBoard(b);
+
+ let p=n[m.from.r][m.from.c];
+
+ n[m.from.r][m.from.c]=EMPTY;
+
+ for(const cap of m.captures){
+  n[cap.r][cap.c]=EMPTY;
+ }
+
+ n[m.to.r][m.to.c]=p;
+
+ /*
+  IMPORTANT:
+  Russian draughts:
+  if man reaches last row during capture,
+  it becomes king immediately.
+ */
+ if(p===WHITE && m.to.r===0){
+  n[m.to.r][m.to.c]=WHITE_KING;
+ }
+
+ if(p===BLACK && m.to.r===7){
+  n[m.to.r][m.to.c]=BLACK_KING;
+ }
+
+ return n;
+}
+
+
+/* =========================
+   CHECK MULTI CAPTURE
+========================= */
+
+function continueCapture(){
+
+ if(!selected)return false;
+
+ const p=board[selected.r][selected.c];
+
+ if(!p)return false;
+
+ const caps=captureSteps(
+  board,
+  selected.r,
+  selected.c
+ );
+
+ if(caps.length){
+
+  forcedPiece={
+   r:selected.r,
+   c:selected.c
+  };
+
+  return true;
+ }
+
+ forcedPiece=null;
+
+ return false;
+}
+
+
+/* =========================
+   COMPLETE MOVE
+========================= */
+
+function playMove(m){
+
+ history.push(cloneBoard(board));
+
+ board=applyStep(board,m);
+
+ /*
+  Capture davom etishi kerakmi?
+ */
+ if(m.captures.length){
+
+  selected={
+   r:m.to.r,
+   c:m.to.c
+  };
+
+  if(continueCapture()){
+
+   drawBoard();
+
+   updateStatus();
+
+   toast("⚔️ Yana urish majburiy!");
+
+   return true;
+  }
+
+ }
+
+ selected=null;
+ forcedPiece=null;
+
+ turn=opponent(turn);
+
+ moveHistory.push(formatMove(m));
+
+ drawBoard();
+ updateMoves();
+ updateStatus();
+
+ checkEnd();
+
+ return true;
+}
+
+
+/* =========================
+   FORMAT MOVE
+========================= */
+
+function formatMove(m){
+
+ const a=
+  String.fromCharCode(65+m.from.c)+
+  (8-m.from.r);
+
+ const z=
+  String.fromCharCode(65+m.to.c)+
+  (8-m.to.r);
+
+ return (turn===WHITE?"Oq":"Qora")+
+  ": "+
+  a+
+  (m.captures.length?" × ":" - ")+
+  z;
+}
+
+
+/* =========================
+   BOARD DRAW
+========================= */
+
+function drawBoard(){
+
+ const root=$("board");
+
+ root.innerHTML="";
+
+ root.className=
+  "board theme-"+boardTheme+
+  " piece-"+pieceStyle;
+
+ const colors=getThemeColors();
+
+ for(let r=0;r<8;r++){
+
+  for(let c=0;c<8;c++){
+
+   const cell=document.createElement("div");
+
+   cell.className=
+    "cell "+
+    (((r+c)%2)?"dark":"light");
+
+   cell.style.background=
+    (r+c)%2?
+    colors.dark:
+    colors.light;
+
+   cell.dataset.r=r;
+   cell.dataset.c=c;
+
+   cell.onclick=()=>cellClick(r,c);
+
+   if(
+    selected &&
+    selected.r===r &&
+    selected.c===c
+   ){
+
+    cell.classList.add("selected");
+
+   }
+
+   if(selected){
+
+    const possible=
+     forcedPiece?
+     captureSteps(
+      board,
+      selected.r,
+      selected.c
+     ):
+     allMoves(board,turn)
+      .filter(
+       x=>
+       x.from.r===selected.r &&
+       x.from.c===selected.c
+      );
+
+    for(const m of possible){
+
+     if(
+      m.to.r===r &&
+      m.to.c===c
+     ){
+
+      cell.classList.add(
+       m.captures.length?
+       "captureTarget":
+       "target"
+      );
+
+     }
+
+    }
+
+   }
+
+   /*
+    Coordinates
+   */
+   const file=document.createElement("span");
+   file.className="coords coordFile";
+   file.textContent=
+    String.fromCharCode(65+c);
+
+   const rank=document.createElement("span");
+   rank.className="coords coordRank";
+   rank.textContent=
+    String(8-r);
+
+   cell.appendChild(file);
+   cell.appendChild(rank);
+
+
+   const p=board[r][c];
+
+   if(p){
+
+    const piece=document.createElement("div");
+
+    piece.className=
+     "piece "+
+     (isWhite(p)?"white":"black")+
+     (isKing(p)?" king":"");
+
+    applyPieceStyle(piece,p);
+
+    cell.appendChild(piece);
+
+   }
+
+   root.appendChild(cell);
+
+  }
+
+ }
+
+}
+
+
+/* =========================
+   BOARD THEMES
+========================= */
+
+function getThemeColors(){
+
+ if(boardTheme==="blue"){
+
+  return{
+   light:"#d8e8f8",
+   dark:"#315c83"
+  };
+
+ }
+
+ if(boardTheme==="green"){
+
+  return{
+   light:"#e6e0c5",
+   dark:"#557653"
+  };
+
+ }
+
+ if(boardTheme==="purple"){
+
+  return{
+   light:"#eadcf7",
+   dark:"#684487"
+  };
+
+ }
+
+ if(boardTheme==="neon"){
+
+  return{
+   light:"#bfeee8",
+   dark:"#173d43"
+  };
+
+ }
+
+ if(boardTheme==="gold"){
+
+  return{
+   light:"#f5e3a7",
+   dark:"#79551d"
+  };
+
+ }
+
+ return{
+  light:"#f6dda0",
+  dark:"#805b20"
+ };
+}
+
+
+/* =========================
+   PIECE STYLES
+========================= */
+
+function applyPieceStyle(piece,p){
+
+ if(pieceStyle==="flat"){
+
+  piece.style.background=
+   isWhite(p)?"#f4f4f4":"#202020";
+
+ }
+
+ if(pieceStyle==="neon"){
+
+  piece.style.background=
+   isWhite(p)?"#ffffff":"#171717";
+
+  piece.style.boxShadow=
+   isWhite(p)?
+   "0 0 10px #00e5ff,0 0 25px #00e5ff":
+   "0 0 10px #ff1744,0 0 25px #8e24aa";
+
+  piece.style.borderColor=
+   isWhite(p)?"#00e5ff":"#ff1744";
+
+ }
+
+ if(pieceStyle==="gold"){
+
+  piece.style.background=
+   isWhite(p)?
+   "linear-gradient(145deg,#fff4a8,#d4af37,#fff0a0)":
+   "linear-gradient(145deg,#555,#171717,#000)";
+
+ }
+
+ if(pieceStyle==="silver"){
+
+  piece.style.background=
+   isWhite(p)?
+   "linear-gradient(145deg,#fff,#cfd3d8,#777)":
+   "linear-gradient(145deg,#777,#333,#111)";
+
+ }
+
+}
+
+
+/* =========================
+   CELL CLICK
+========================= */
+
+function cellClick(r,c){
+
+ if(gameOver)return;
+
+ /*
+  Faqat odam oq bilan o‘ynaydi.
+ */
+ if(turn!==WHITE)return;
+
+ const p=board[r][c];
+
+ /*
+  Multi-capture davomida
+  faqat shu dona yuradi.
+ */
+ if(forcedPiece){
+
+  if(
+   r===forcedPiece.r &&
+   c===forcedPiece.c
+  ){
+
+   selected={
+    r,
+    c
+   };
+
+   drawBoard();
+
+   return;
+  }
+
+  if(selected){
+
+   const steps=
+    captureSteps(
+     board,
+     selected.r,
+     selected.c
+    );
+
+   const m=steps.find(
+    x=>
+    x.to.r===r &&
+    x.to.c===c
+   );
+
+   if(m){
+
+    playMove(m);
+
+   }
+
+  }
+
+  return;
+ }
+
+
+ /*
+  Agar tanlangan dona mavjud bo‘lsa
+ */
+ if(selected){
+
+  const captures=
+   allCaptures(
+    board,
+    turn
+   );
+
+  if(captures.length){
+
+   const steps=
+    captureSteps(
+     board,
+     selected.r,
+     selected.c
+    );
+
+   const m=steps.find(
+    x=>
+    x.to.r===r &&
+    x.to.c===c
+   );
+
+   if(m){
+
+    playMove(m);
+    return;
+
+   }
+
+   /*
+    Boshqa uradigan donani tanlash
+   */
+   if(
+    p &&
+    isWhite(p) &&
+    captureSteps(
+     board,
+     r,
+     c
+    ).length
+   ){
+
+    selected={
+     r,
+     c
+    };
+
+    drawBoard();
+
+   }
+
+   return;
+  }
+
+
+  /*
+   Oddiy yurish
+  */
+  const steps=
+   normalSteps(
+    board,
+    selected.r,
+    selected.c
+   );
+
+  const m=steps.find(
+   x=>
+   x.to.r===r &&
+   x.to.c===c
+  );
+
+  if(m){
+
+   playMove(m);
+   return;
+
+  }
+
+
+  /*
+   Boshqa oq donani tanlash
+  */
+  if(p&&isWhite(p)){
+
+   selected={
+    r,
+    c
+   };
+
+   drawBoard();
+
+   return;
+  }
+
+  selected=null;
+  drawBoard();
+
+  return;
+ }
+
+
+ /*
+  Hech narsa tanlanmagan
+ */
+ if(p&&isWhite(p)){
+
+  const caps=
+   allCaptures(
+    board,
+    WHITE
+   );
+
+  if(caps.length){
+
+   if(
+    captureSteps(
+     board,
+     r,
+     c
+    ).length
+   ){
+
+    selected={
+     r,
+     c
+    };
+
+    drawBoard();
+
+   }else{
+
+    toast("⚠️ Bu dona bilan urish mumkin emas");
+
+   }
+
+   return;
+  }
+
+
+  if(
+   normalSteps(
+    board,
+    r,
+    c
+   ).length
+  ){
+
+   selected={
+    r,
+    c
+   };
+
+   drawBoard();
+
+  }
+
+ }
+
+}
+
+
+/* =========================
+   AI
+========================= */
+
+function aiMove(){
+
+ if(
+  gameOver||
+  turn!==BLACK
+ )return;
+
+ const moves=
+  allMoves(
+   board,
+   BLACK
+  );
+
+ if(!moves.length){
+
+  finish(WHITE);
+
+  return;
+ }
+
+ let best=moves[0];
+ let bestScore=-Infinity;
+
+ for(const m of moves){
+
+  const next=
+   applyStep(
+    board,
+    m
+   );
+
+  let score=
+   evaluate(next);
+
+  /*
+   Capture afzalligi
+  */
+  score+=
+   m.captures.length*100;
+
+  if(
+   score>bestScore
+  ){
+
+   bestScore=score;
+   best=m;
+
+  }
+
+ }
+
+ history.push(cloneBoard(board));
+
+ board=
+  applyStep(
+   board,
+   best
+  );
+
+ moveHistory.push(formatMove(best));
+
+ /*
+  AI ham ketma-ket uradi
+ */
+ if(best.captures.length){
+
+  let current={
+   r:best.to.r,
+   c:best.to.c
+  };
+
+  while(true){
+
+   const caps=
+    captureSteps(
+     board,
+     current.r,
+     current.c
+    );
+
+   if(!caps.length)break;
+
+   let next=caps[0];
+   let score=-Infinity;
+
+   for(const m of caps){
+
+    const s=
+     evaluate(
+      applyStep(board,m)
+     );
+
+    if(s>score){
+
+     score=s;
+     next=m;
+
+    }
+
+   }
+
+   board=
+    applyStep(
+     board,
+     next
+    );
+
+   moveHistory.push(
+    formatMove(next)
+   );
+
+   current={
+    r:next.to.r,
+    c:next.to.c
+   };
+
+  }
+
+ }
+
+ turn=WHITE;
+
+ drawBoard();
+ updateMoves();
+ updateStatus();
+
+ checkEnd();
+
+}
+
+
+/* =========================
+   AI EVALUATION
+========================= */
+
+function evaluate(b){
+
+ let score=0;
+
+ for(const row of b){
+
+  for(const p of row){
+
+   if(p===BLACK)score+=100;
+   if(p===WHITE)score-=100;
+
+   if(p===BLACK_KING)score+=180;
+   if(p===WHITE_KING)score-=180;
+
+  }
+
+ }
+
+ return score;
+}
+
+
+/* =========================
+   CHECK END
+========================= */
+
+function checkEnd(){
+
+ const moves=
+  allMoves(
+   board,
+   turn
+  );
+
+ if(!moves.length){
+
+  finish(
+   opponent(turn)
+  );
+
+ }
+
+}
+
+
+/* =========================
+   FINISH
+========================= */
+
+function finish(winner){
+
+ if(gameOver)return;
+
+ gameOver=true;
+
+ stopTimer();
+
+ stats.games++;
+
+ if(winner===WHITE){
+
+  stats.wins++;
+  stats.elo+=25;
+
+  toast("🎉 G‘alaba!");
+
+ }else{
+
+  stats.elo=
+   Math.max(
+    100,
+    stats.elo-20
+   );
+
+  toast("😔 Mag‘lubiyat");
+
+ }
+
+ saveStats();
+
+ setTimeout(()=>{
+
+  alert(
+   winner===WHITE?
+   "🎉 Siz g‘alaba qozondingiz!":
+   "😔 Qora tomon g‘alaba qozondi."
+  );
+
+ },100);
+
+}
+
+
+/* =========================
+   UNDO
+========================= */
+
+function undoMove(){
+
+ if(
+  !history.length||
+  gameOver
+ )return;
+
+ clearTimeout(aiTimer);
+
+ board=
+  history.pop();
+
+ turn=WHITE;
+
+ selected=null;
+ forcedPiece=null;
+
+ if(moveHistory.length){
+
+  moveHistory.pop();
+
+ }
+
+ drawBoard();
+ updateMoves();
+ updateStatus();
+
+}
+
+
+/* =========================
+   RESTART
+========================= */
+
+function restartGame(){
+
+ startGame();
+
+}
+
+
+/* =========================
+   GIVE UP
+========================= */
+
+function giveUp(){
+
+ if(gameOver)return;
+
+ if(
+  confirm("Taslim bo‘lasizmi?")
+ ){
+
+  finish(BLACK);
+
+ }
+
+}
+
+
+/* =========================
+   START GAME
+========================= */
+
+function startGame(){
+
+ stopTimer();
+
+ clearTimeout(aiTimer);
+
+ board=startPosition();
+
+ turn=WHITE;
+ selected=null;
+ forcedPiece=null;
+
+ gameOver=false;
+
+ history=[];
+ moveHistory=[];
+
+ whiteTime=initialTime;
+ blackTime=initialTime;
+
+ showGame();
+
+ drawBoard();
+ updateMoves();
+ updateStatus();
+ updateTimer();
+
+ startTimer();
+
+}
+
+
+/* =========================
+   TIMER
+========================= */
+
+function startTimer(){
+
+ stopTimer();
+
+ timerId=setInterval(()=>{
+
+  if(gameOver)return;
+
+  if(turn===WHITE){
+
+   whiteTime--;
+
+  }else{
+
+   blackTime--;
+
+  }
+
+  updateTimer();
+
+  if(whiteTime<=0){
+
+   finish(BLACK);
+
+  }
+
+  if(blackTime<=0){
+
+   finish(WHITE);
+
+  }
+
+ },1000);
+
+}
+
+function stopTimer(){
+
+ if(timerId){
+
+  clearInterval(timerId);
+  timerId=null;
+
+ }
+
+}
+
+function formatTime(seconds){
+
+ seconds=Math.max(0,seconds);
+
+ const m=
+  Math.floor(seconds/60)
+  .toString()
+  .padStart(2,"0");
+
+ const s=
+  (seconds%60)
+  .toString()
+  .padStart(2,"0");
+
+ return m+":"+s;
+}
+
+function updateTimer(){
+
+ $("whiteTimer").textContent=
+  formatTime(whiteTime);
+
+ $("blackTimer").textContent=
+  formatTime(blackTime);
+
+}
+
+
+/* =========================
+   STATUS
+========================= */
+
+function updateStatus(){
+
+ if(gameOver){
+
+  $("status").textContent=
+   "🏁 O‘yin tugadi";
+
+  return;
+ }
+
+ if(forcedPiece){
+
+  $("status").textContent=
+   "⚔️ Yana urish majburiy!";
+
+  return;
+ }
+
+ $("status").textContent=
+  turn===WHITE?
+  "⚪ Sizning navbatingiz":
+  "⚫ AI yurmoqda...";
+
+}
+
+
+/* =========================
+   MOVES LIST
+========================= */
+
+function updateMoves(){
+
+ const el=$("moves");
+
+ if(!moveHistory.length){
+
+  el.textContent=
+   "Hali yurish yo‘q";
+
+  return;
+ }
+
+ el.innerHTML=
+  moveHistory
+  .map(
+   (x,i)=>
+   "<div>"+(i+1)+". "+x+"</div>"
+  )
+  .join("");
+
+ el.scrollTop=
+  el.scrollHeight;
+
+}
+
+
+/* =========================
+   STATS
+========================= */
+
+function saveStats(){
+
+ localStorage.setItem(
+  "shashkaPRO_stats",
+  JSON.stringify(stats)
+ );
+
+ updateStats();
+
+}
+
+function updateStats(){
+
+ $("elo").textContent=
+  stats.elo;
+
+ $("wins").textContent=
+  stats.wins;
+
+ $("games").textContent=
+  stats.games;
+
+}
+
+function resetAll(){
+
+ if(
+  confirm(
+   "Statistikani tozalaysizmi?"
+  )
+ ){
+
+  stats={
+   elo:1000,
+   wins:0,
+   games:0
+  };
+
+  saveStats();
+
+  toast("✅ Statistikalar tozalandi");
+
+ }
+
+}
+
+
+/* =========================
+   SETTINGS
+========================= */
+
+function setTheme(theme){
+
+ boardTheme=theme;
+
+ localStorage.setItem(
+  "shashkaPRO_boardTheme",
+  theme
+ );
+
+ updateThemeButtons();
+
+ if(!$("game").classList.contains("hidden")){
+
+  drawBoard();
+
+ }
+
+ toast("🎨 Doska o‘zgartirildi");
+
+}
+
+function setPiece(style){
+
+ pieceStyle=style;
+
+ localStorage.setItem(
+  "shashkaPRO_pieceStyle",
+  style
+ );
+
+ updateThemeButtons();
+
+ if(!$("game").classList.contains("hidden")){
+
+  drawBoard();
+
+ }
+
+ toast("⚪ Donalar o‘zgartirildi");
+
+}
+
+function updateThemeButtons(){
+
+ document
+  .querySelectorAll("[data-theme]")
+  .forEach(b=>{
+
+   b.classList.toggle(
+    "active",
+    b.dataset.theme===boardTheme
+   );
+
+  });
+
+ document
+  .querySelectorAll("[data-piece]")
+  .forEach(b=>{
+
+   b.classList.toggle(
+    "active",
+    b.dataset.piece===pieceStyle
+   );
+
+  });
+
+}
+
+function changeTime(){
+
+ initialTime=
+  Number(
+   $("timeSelect").value
+  );
+
+ toast(
+  "⏱️ Yangi vaqt saqlandi"
+ );
+
+}
+
+
+/* =========================
+   SCREENS
+========================= */
+
+function hideAll(){
+
+ $("home").classList.add("hidden");
+ $("game").classList.add("hidden");
+ $("settings").classList.add("hidden");
+
+}
+
+function showGame(){
+
+ hideAll();
+
+ $("game").classList.remove("hidden");
+
+ if(!board.length){
+
+  startGame();
+
+ }
+
+}
+
+function showSettings(){
+
+ hideAll();
+
+ $("settings").classList.remove("hidden");
+
+ updateThemeButtons();
+
+}
+
+function goHome(){
+
+ stopTimer();
+
+ hideAll();
+
+ $("home").classList.remove("hidden");
+
+}
+
+
+/* =========================
+   INIT
+========================= */
+
+updateStats();
+
+updateThemeButtons();
+
+</script>
+
+</body>
+</html>

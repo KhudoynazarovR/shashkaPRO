@@ -1,0 +1,1150 @@
+"use strict";
+
+const $=id=>document.getElementById(id);
+
+const WHITE="w";
+const BLACK="b";
+
+let board=[];
+let turn=WHITE;
+let selected=null;
+let forcedPiece=null;
+let gameOver=false;
+let history=[];
+let movesHistory=[];
+let timer=null;
+let whiteSeconds=300;
+let blackSeconds=300;
+let increment=3;
+let aiTimer=null;
+let replayStates=[];
+let replayIndex=0;
+let boardTheme=localStorage.getItem("boardTheme")||"classic";
+let pieceStyle=localStorage.getItem("pieceStyle")||"classic";
+
+let stats=JSON.parse(localStorage.getItem("shashkaStats")||'{"elo":1000,"wins":0,"games":0}');
+
+function show(id){
+ document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));
+ $(id).classList.add("active");
+}
+
+function initialBoard(){
+ const b=Array.from({length:8},()=>Array(8).fill(null));
+
+ for(let r=0;r<3;r++){
+  for(let c=0;c<8;c++){
+   if((r+c)%2===1)b[r][c]=BLACK;
+  }
+ }
+
+ for(let r=5;r<8;r++){
+  for(let c=0;c<8;c++){
+   if((r+c)%2===1)b[r][c]=WHITE;
+  }
+ }
+
+ return b;
+}
+
+function clone(b){
+ return b.map(row=>row.slice());
+}
+
+function inside(r,c){
+ return r>=0&&r<8&&c>=0&&c<8;
+}
+
+function isWhite(p){
+ return p===WHITE||p==="W";
+}
+
+function isBlack(p){
+ return p===BLACK||p==="B";
+}
+
+function isKing(p){
+ return p==="W"||p==="B";
+}
+
+function sameSide(p,s){
+ return s===WHITE?isWhite(p):isBlack(p);
+}
+
+function enemy(p,s){
+ return p&&s===WHITE?isBlack(p):isWhite(p);
+}
+
+function kingPiece(s){
+ return s===WHITE?"W":"B";
+}
+
+/* ===== ODDIY YURISH ===== */
+
+function simpleSteps(b,r,c){
+ const p=b[r][c];
+ if(!p)return [];
+
+ const side=isWhite(p)?WHITE:BLACK;
+ const result=[];
+
+ if(isKing(p)){
+  const dirs=[[1,1],[1,-1],[-1,1],[-1,-1]];
+
+  for(const [dr,dc] of dirs){
+   let nr=r+dr,nc=c+dc;
+
+   while(inside(nr,nc)&&!b[nr][nc]){
+    result.push({
+     from:{r,c},
+     to:{r:nr,c:nc},
+     captures:[]
+    });
+    nr+=dr;
+    nc+=dc;
+   }
+  }
+ }else{
+  const dr=side===WHITE?-1:1;
+
+  for(const dc of [-1,1]){
+   const nr=r+dr,nc=c+dc;
+
+   if(inside(nr,nc)&&!b[nr][nc]){
+    result.push({
+     from:{r,c},
+     to:{r:nr,c:nc},
+     captures:[]
+    });
+   }
+  }
+ }
+
+ return result;
+}
+
+/* ===== URISH ===== */
+
+function captureSteps(b,r,c){
+ const p=b[r][c];
+ if(!p)return [];
+
+ const side=isWhite(p)?WHITE:BLACK;
+ const result=[];
+ const dirs=[[1,1],[1,-1],[-1,1],[-1,-1]];
+
+ if(isKing(p)){
+  for(const [dr,dc] of dirs){
+   let nr=r+dr,nc=c+dc;
+   let enemyFound=null;
+
+   while(inside(nr,nc)){
+    const q=b[nr][nc];
+
+    if(!q){
+     if(enemyFound){
+      result.push({
+       from:{r,c},
+       to:{r:nr,c:nc},
+       captures:[enemyFound]
+      });
+     }
+     nr+=dr;
+     nc+=dc;
+     continue;
+    }
+
+    if(enemy(q,side)&&!enemyFound){
+     enemyFound={r:nr,c:nc};
+     nr+=dr;
+     nc+=dc;
+     continue;
+    }
+
+    break;
+   }
+  }
+
+ }else{
+
+  for(const [dr,dc] of dirs){
+   const er=r+dr,ec=c+dc;
+   const lr=r+2*dr,lc=c+2*dc;
+
+   if(
+    inside(er,ec)&&
+    inside(lr,lc)&&
+    b[er][ec]&&
+    enemy(b[er][ec],side)&&
+    !b[lr][lc]
+   ){
+    result.push({
+     from:{r,c},
+     to:{r:lr,c:lc},
+     captures:[{r:er,c:ec}]
+    });
+   }
+  }
+
+ }
+
+ return result;
+}
+
+function allCaptures(b,side){
+ const result=[];
+
+ for(let r=0;r<8;r++){
+  for(let c=0;c<8;c++){
+   if(sameSide(b[r][c],side)){
+    result.push(...captureSteps(b,r,c));
+   }
+  }
+ }
+
+ return result;
+}
+
+function allMoves(b,side){
+ const caps=allCaptures(b,side);
+
+ if(caps.length)return caps;
+
+ const result=[];
+
+ for(let r=0;r<8;r++){
+  for(let c=0;c<8;c++){
+   if(sameSide(b[r][c],side)){
+    result.push(...simpleSteps(b,r,c));
+   }
+  }
+ }
+
+ return result;
+}
+
+/* ===== BIR QADAMNI BAJARISH ===== */
+
+function applyStep(b,m){
+ const n=clone(b);
+ let p=n[m.from.r][m.from.c];
+
+ n[m.from.r][m.from.c]=null;
+
+ for(const x of m.captures){
+  n[x.r][x.c]=null;
+ }
+
+ let nr=m.to.r;
+
+ /* Rus shashkasida urish davomida ham darhol damka */
+ if(!isKing(p)){
+  if((isWhite(p)&&nr===0)||(isBlack(p)&&nr===7)){
+   p=kingPiece(isWhite(p)?WHITE:BLACK);
+  }
+ }
+
+ n[m.to.r][m.to.c]=p;
+
+ return n;
+}
+
+function applyFullMove(b,m){
+ let n=applyStep(b,m);
+ let current=m;
+
+ while(current.captures.length){
+  const p=n[current.to.r][current.to.c];
+  const next=captureSteps(n,current.to.r,current.to.c);
+
+  if(!next.length)break;
+
+  current=next[0];
+  n=applyStep(n,current);
+ }
+
+ return n;
+}
+
+/* ===== O‘YIN ===== */
+
+function startGame(){
+ clearTimeout(aiTimer);
+ replayStates=[clone(initialBoard())];
+ replayIndex=0;
+ stopTimer();
+
+ board=initialBoard();
+ turn=WHITE;
+ selected=null;
+ forcedPiece=null;
+ gameOver=false;
+ history=[];
+ movesHistory=[];
+
+ const tc=$("timeControl").value.split("+");
+ whiteSeconds=Number(tc[0])*60;
+ blackSeconds=whiteSeconds;
+ increment=Number(tc[1]);
+
+ drawBoard();
+ drawMoves();
+ updateStatus();
+ updateTimers();
+ startTimer();
+
+ show("game");
+}
+
+function gameClick(r,c){
+
+ if(gameOver)return;
+
+ /* AI faqat qora */
+ if(turn===BLACK)return;
+
+ const p=board[r][c];
+
+ /* Ketma-ket urish */
+ if(forcedPiece){
+
+  if(selected){
+   const opts=captureSteps(board,selected.r,selected.c);
+   const move=opts.find(x=>x.to.r===r&&x.to.c===c);
+
+   if(move){
+    makeHumanStep(move);
+   }
+  }
+
+  return;
+ }
+
+ /* Donani tanlash */
+ if(!selected){
+
+  if(!sameSide(p,turn))return;
+
+  const captures=allCaptures(board,turn);
+
+  if(captures.length){
+   if(captureSteps(board,r,c).length){
+    selected={r,c};
+    drawBoard();
+   }
+   return;
+  }
+
+  if(simpleSteps(board,r,c).length){
+   selected={r,c};
+   drawBoard();
+  }
+
+  return;
+ }
+
+ /* Boshqa o‘z donasini tanlash */
+ if(sameSide(p,turn)){
+  const caps=allCaptures(board,turn);
+
+  if(caps.length){
+   if(captureSteps(board,r,c).length){
+    selected={r,c};
+    drawBoard();
+   }
+  }else if(simpleSteps(board,r,c).length){
+   selected={r,c};
+   drawBoard();
+  }
+
+  return;
+ }
+
+ /* Tanlangan donaning yurishi */
+ const captures=allCaptures(board,turn);
+ const opts=captures.length
+  ?captureSteps(board,selected.r,selected.c)
+  :simpleSteps(board,selected.r,selected.c);
+
+ const move=opts.find(x=>x.to.r===r&&x.to.c===c);
+
+ if(move){
+  makeHumanStep(move);
+ }
+}
+
+function makeHumanStep(move){
+
+ history.push(clone(board));
+
+ board=applyStep(board,move);
+
+ replayStates.push(clone(board));
+ replayIndex=replayStates.length-1;
+
+ movesHistory.push(formatMove(move,"Oq"));
+
+ selected={r:move.to.r,c:move.to.c};
+
+ const next=captureSteps(board,move.to.r,move.to.c);
+
+ if(move.captures.length&&next.length){
+  forcedPiece={r:move.to.r,c:move.to.c};
+  drawBoard();
+  drawMoves();
+  updateStatus();
+  return;
+ }
+
+ forcedPiece=null;
+ selected=null;
+ turn=BLACK;
+
+ whiteSeconds+=increment;
+
+ drawBoard();
+ drawMoves();
+ updateStatus();
+ updateTimers();
+
+ if(checkEnd())return;
+
+ aiTimer=setTimeout(aiMove,400);
+}
+
+function aiMove(){
+
+ if(gameOver||turn!==BLACK)return;
+
+ const level=Number($("aiLevel").value)||2;
+ const moves=allMoves(board,BLACK);
+
+ if(!moves.length){
+  finishGame("white");
+  return;
+ }
+
+ history.push(clone(board));
+
+ let best=moves[0];
+ let bestScore=-Infinity;
+
+ for(const m of moves){
+
+  const next=applyFullMove(board,m);
+  const score=evaluate(next,level);
+
+  if(score>bestScore){
+   bestScore=score;
+   best=m;
+  }
+ }
+
+ let current=best;
+
+ while(true){
+
+  board=applyStep(board,current);
+
+  replayStates.push(clone(board));
+  replayIndex=replayStates.length-1;
+
+  movesHistory.push(formatMove(current,"Qora"));
+
+  const next=captureSteps(
+   board,
+   current.to.r,
+   current.to.c
+  );
+
+  if(!current.captures.length||!next.length)break;
+
+  current=next[0];
+ }
+
+ blackSeconds+=increment;
+
+ selected=null;
+ forcedPiece=null;
+ turn=WHITE;
+
+ drawBoard();
+ drawMoves();
+ updateStatus();
+ updateTimers();
+
+ checkEnd();
+}
+
+/* ===== AI ===== */
+
+function evaluate(b,level){
+
+ let score=0;
+
+ for(let r=0;r<8;r++){
+  for(let c=0;c<8;c++){
+
+   const p=b[r][c];
+
+   if(!p)continue;
+
+   let v=isKing(p)?9:3;
+
+   if(!isKing(p)){
+    if(isBlack(p))v+=r*.08;
+    else v+=(7-r)*.08;
+   }
+
+   if(isBlack(p))score+=v;
+   else score-=v;
+  }
+ }
+
+ if(level>=2){
+  score+=allCaptures(b,BLACK).length*.25;
+  score-=allCaptures(b,WHITE).length*.25;
+ }
+
+ return score;
+}
+
+/* ===== FORMAT ===== */
+
+function square(r,c){
+ return "abcdefgh"[c]+(8-r);
+}
+
+function formatMove(m,name){
+
+ const from=square(m.from.r,m.from.c);
+ const to=square(m.to.r,m.to.c);
+
+ return name+": "+from+(m.captures.length?"x":"-")+to;
+}
+
+/* ===== DOSKA ===== */
+
+function drawBoard(){
+
+ const root=$("gameBoard");
+
+ root.innerHTML="";
+
+ root.className="theme-"+boardTheme;
+
+ for(let r=0;r<8;r++){
+  for(let c=0;c<8;c++){
+
+   const cell=document.createElement("div");
+
+   cell.className="cell "+(((r+c)%2)?"dark":"light");
+
+   cell.dataset.r=r;
+   cell.dataset.c=c;
+
+   if(selected&&selected.r===r&&selected.c===c){
+    cell.classList.add("selected");
+   }
+
+   if(selected){
+
+    const caps=allCaptures(board,turn);
+    const opts=caps.length
+     ?captureSteps(board,selected.r,selected.c)
+     :simpleSteps(board,selected.r,selected.c);
+
+    const hit=opts.find(
+     m=>m.to.r===r&&m.to.c===c
+    );
+
+    if(hit){
+     cell.classList.add(
+      hit.captures.length?"capture":"target"
+     );
+    }
+   }
+
+   const file=document.createElement("span");
+   file.className="coord file";
+   file.textContent="abcdefgh"[c];
+
+   const rank=document.createElement("span");
+   rank.className="coord rank";
+   rank.textContent=8-r;
+
+   cell.appendChild(file);
+   cell.appendChild(rank);
+
+   const p=board[r][c];
+
+   if(p){
+
+    const piece=document.createElement("div");
+
+    piece.className=
+     "piece "+
+     (isWhite(p)?"white":"black")+
+     " "+(isKing(p)?"king ":"")+
+     "style-"+pieceStyle;
+
+    cell.appendChild(piece);
+   }
+
+   root.appendChild(cell);
+  }
+ }
+}
+
+/* ===== MUHIM: DOSKA BOSILISHI ===== */
+
+$("gameBoard").addEventListener("click",function(e){
+
+ const cell=e.target.closest(".cell");
+
+ if(!cell)return;
+
+ const r=Number(cell.dataset.r);
+ const c=Number(cell.dataset.c);
+
+ gameClick(r,c);
+});
+
+/* ===== YAKUN ===== */
+
+function checkEnd(){
+
+ const moves=allMoves(board,turn);
+
+ if(!moves.length){
+  finishGame(turn===WHITE?"black":"white");
+  return true;
+ }
+
+ return false;
+}
+
+function finishGame(winner){
+
+ if(gameOver)return;
+
+ gameOver=true;
+ stopTimer();
+ clearTimeout(aiTimer);
+
+ stats.games++;
+
+ if(
+  (winner==="white"&&turn===WHITE)||
+  winner==="white"
+ ){
+  stats.wins++;
+  stats.elo+=15;
+ }
+
+ localStorage.setItem("shashkaStats",JSON.stringify(stats));
+ updateStats();
+
+ setTimeout(()=>{
+  alert(winner==="white"?"🏆 Oq g‘alaba qildi!":"🏆 Qora g‘alaba qildi!");
+ },50);
+}
+
+function giveUp(){
+
+ if(gameOver)return;
+
+ if(confirm("Taslim bo‘lasizmi?")){
+  finishGame("black");
+ }
+}
+
+/* ===== UNDO ===== */
+
+function undoMove(){
+
+ if(!history.length||gameOver)return;
+
+ clearTimeout(aiTimer);
+
+ board=history.pop();
+
+ turn=WHITE;
+ selected=null;
+ forcedPiece=null;
+
+ if(movesHistory.length){
+  movesHistory.pop();
+ }
+
+ drawBoard();
+ drawMoves();
+ updateStatus();
+}
+
+/* ===== TIMER ===== */
+
+function startTimer(){
+
+ stopTimer();
+
+ timer=setInterval(()=>{
+
+  if(gameOver)return;
+
+  if(turn===WHITE){
+   whiteSeconds=Math.max(0,whiteSeconds-1);
+
+   if(whiteSeconds<=0){
+    finishGame("black");
+   }
+
+  }else{
+
+   blackSeconds=Math.max(0,blackSeconds-1);
+
+   if(blackSeconds<=0){
+    finishGame("white");
+   }
+  }
+
+  updateTimers();
+
+ },1000);
+}
+
+function stopTimer(){
+
+ if(timer){
+  clearInterval(timer);
+  timer=null;
+ }
+}
+
+function timeText(s){
+
+ const m=Math.floor(s/60);
+ const sec=s%60;
+
+ return String(m).padStart(2,"0")+":"+String(sec).padStart(2,"0");
+}
+
+function updateTimers(){
+
+ $("whiteTime").textContent=timeText(whiteSeconds);
+ $("blackTime").textContent=timeText(blackSeconds);
+}
+
+function updateStatus(){
+
+ if(gameOver)return;
+
+ if(turn===WHITE){
+
+  if(forcedPiece){
+   $("status").textContent="🔴 Yana urish majburiy!";
+  }else{
+   $("status").textContent="⚪ Sizning navbatingiz";
+  }
+
+ }else{
+  $("status").textContent="⚫ AI o‘ylayapti...";
+ }
+}
+
+function drawMoves(){
+
+ $("moveList").innerHTML=
+  movesHistory.length
+  ?movesHistory.map((x,i)=>
+   (i+1)+". "+x
+  ).join("<br>")
+  :"Hali yurish yo‘q";
+}
+
+/* ===== TAHLIL ===== */
+
+function updateAnalysis(){
+
+ let w=0,b=0,wk=0,bk=0;
+
+ for(const row of board){
+  for(const p of row){
+
+   if(isWhite(p)){
+    w++;
+    if(isKing(p))wk++;
+   }
+
+   if(isBlack(p)){
+    b++;
+    if(isKing(p))bk++;
+   }
+  }
+ }
+
+ $("aw").textContent=w;
+ $("ab").textContent=b;
+ $("awk").textContent=wk;
+ $("abk").textContent=bk;
+ $("score").textContent=evaluate(board,2).toFixed(1);
+}
+
+/* ===== STAT ===== */
+
+function updateStats(){
+
+ $("elo").textContent=stats.elo;
+ $("wins").textContent=stats.wins;
+ $("games").textContent=stats.games;
+}
+
+updateStats();
+
+/* ===== NAVIGATION ===== */
+
+$("aiBtn").onclick=startGame;
+
+$("profileBtn").onclick=()=>{
+ alert(
+  "♟️ ShashkaPRO Player\n\n"+
+  "ELO: "+stats.elo+
+  "\nG‘alaba: "+stats.wins+
+  "\nO‘yin: "+stats.games
+ );
+};
+
+$("onlineBtn").onclick=()=>show("online");
+$("tournamentBtn").onclick=()=>show("tournaments");
+$("topBtn").onclick=()=>show("top");
+$("analysisBtn").onclick=()=>{
+ updateAnalysis();
+ show("analysis");
+};
+$("editorBtn").onclick=()=>show("editor");
+$("historyBtn").onclick=()=>show("history");
+$("settingsBtn").onclick=()=>show("settings");
+
+$("gameBack").onclick=()=>{
+ stopTimer();
+ clearTimeout(aiTimer);
+ show("home");
+};
+
+document.querySelectorAll("[data-back]").forEach(btn=>{
+ btn.onclick=()=>show("home");
+});
+
+$("restartBtn").onclick=startGame;
+$("giveUpBtn").onclick=giveUp;
+$("undoBtn").onclick=undoMove;
+
+$("analysisGameBtn").onclick=()=>{
+ updateAnalysis();
+ show("analysis");
+};
+
+let replayTimer=null;
+
+function drawReplay(){
+
+ const root=$("replayBoard");
+ if(!root)return;
+
+ root.innerHTML="";
+
+ const b=replayStates[replayIndex]||initialBoard();
+
+ for(let r=0;r<8;r++){
+  for(let c=0;c<8;c++){
+
+   const cell=document.createElement("div");
+   cell.className="cell "+(((r+c)%2)?"dark":"light");
+
+   const file=document.createElement("span");
+   file.className="coord file";
+   file.textContent="abcdefgh"[c];
+
+   const rank=document.createElement("span");
+   rank.className="coord rank";
+   rank.textContent=8-r;
+
+   cell.appendChild(file);
+   cell.appendChild(rank);
+
+   const p=b[r][c];
+
+   if(p){
+    const piece=document.createElement("div");
+    piece.className=
+      "piece "+
+      (isWhite(p)?"white":"black")+
+      (isKing(p)?" king":"");
+    cell.appendChild(piece);
+   }
+
+   root.appendChild(cell);
+  }
+ }
+
+ $("replayInfo").textContent=
+   "Yurish: "+replayIndex+" / "+Math.max(0,replayStates.length-1);
+}
+
+function openReplay(){
+
+ if(replayStates.length<2){
+  alert("Avval kamida bitta yurish qiling.");
+  return;
+ }
+
+ clearInterval(replayTimer);
+ replayIndex=0;
+ drawReplay();
+ show("replay");
+}
+
+$("replayBtn").onclick=openReplay;
+
+$("replayBack").onclick=()=>{
+ clearInterval(replayTimer);
+ show("game");
+};
+
+$("replayPrev").onclick=()=>{
+ clearInterval(replayTimer);
+ if(replayIndex>0){
+  replayIndex--;
+  drawReplay();
+ }
+};
+
+$("replayNext").onclick=()=>{
+ if(replayIndex<replayStates.length-1){
+  replayIndex++;
+  drawReplay();
+ }
+};
+
+$("replayPlay").onclick=()=>{
+ clearInterval(replayTimer);
+
+ replayTimer=setInterval(()=>{
+  if(replayIndex>=replayStates.length-1){
+   clearInterval(replayTimer);
+   return;
+  }
+
+  replayIndex++;
+  drawReplay();
+
+ },700);
+};
+
+$("replayStop").onclick=()=>{
+ clearInterval(replayTimer);
+};
+
+
+
+/* ===== SETTINGS ===== */
+
+document.querySelectorAll(".designBtn").forEach(btn=>{
+ btn.onclick=()=>{
+
+  boardTheme=btn.dataset.theme;
+
+  localStorage.setItem(
+   "boardTheme",
+   boardTheme
+  );
+
+  document.querySelectorAll(".designBtn")
+   .forEach(x=>x.classList.remove("active"));
+
+  btn.classList.add("active");
+
+  if(board.length)drawBoard();
+ };
+});
+
+document.querySelectorAll(".pieceBtn").forEach(btn=>{
+ btn.onclick=()=>{
+
+  pieceStyle=btn.dataset.piece;
+
+  localStorage.setItem(
+   "pieceStyle",
+   pieceStyle
+  );
+
+  document.querySelectorAll(".pieceBtn")
+   .forEach(x=>x.classList.remove("active"));
+
+  btn.classList.add("active");
+
+  if(board.length)drawBoard();
+ };
+});
+
+/* ===== TOP ===== */
+
+const topPlayers=[
+ ["1","ShashkaPRO Master","2450"],
+ ["2","Grandmaster","2380"],
+ ["3","Champion","2310"],
+ ["4","Strategist","2240"],
+ ["5","Draughts King","2190"],
+ ["6","Player Pro","2140"],
+ ["7","Master","2080"],
+ ["8","Shashka Player","2020"]
+];
+
+$("topList").innerHTML=topPlayers.map(x=>
+ "<p>🥇 "+x[0]+". <b>"+x[1]+"</b> — "+x[2]+" ELO</p>"
+).join("");
+
+/* ===== ONLINE ===== */
+
+let socket=null;
+
+$("connectBtn").onclick=()=>{
+
+ try{
+
+  const protocol=
+   location.protocol==="https:"?"wss://":"ws://";
+
+  socket=new WebSocket(
+   protocol+location.host
+  );
+
+  socket.onopen=()=>{
+   $("onlineStatus").textContent="🟢 Serverga ulandi";
+  };
+
+  socket.onclose=()=>{
+   $("onlineStatus").textContent="🔴 Ulanish yopildi";
+  };
+
+  socket.onerror=()=>{
+   $("onlineStatus").textContent="❌ Server xatosi";
+  };
+
+ }catch(e){
+
+  $("onlineStatus").textContent=
+   "❌ Ulanish xatosi";
+ }
+};
+
+$("findBtn").onclick=()=>{
+ if(!socket||socket.readyState!==1){
+  alert("Avval serverga ulaning.");
+  return;
+ }
+
+ socket.send(JSON.stringify({
+  type:"findOpponent",
+  name:"ShashkaPRO Player"
+ }));
+};
+
+/* ===== EDITOR ===== */
+
+let editorBoard=initialBoard();
+
+function drawEditor(){
+
+ const root=$("editorBoard");
+
+ root.innerHTML="";
+
+ for(let r=0;r<8;r++){
+  for(let c=0;c<8;c++){
+
+   const cell=document.createElement("div");
+
+   cell.className=
+    "cell "+(((r+c)%2)?"dark":"light");
+
+   cell.dataset.r=r;
+   cell.dataset.c=c;
+
+   const p=editorBoard[r][c];
+
+   if(p){
+
+    const piece=document.createElement("div");
+
+    piece.className=
+     "piece "+
+     (isWhite(p)?"white":"black")+
+     (isKing(p)?" king":"")+
+     " style-"+pieceStyle;
+
+    cell.appendChild(piece);
+   }
+
+   root.appendChild(cell);
+  }
+ }
+}
+
+$("editorBoard").addEventListener("click",e=>{
+
+ const cell=e.target.closest(".cell");
+
+ if(!cell)return;
+
+ const r=Number(cell.dataset.r);
+ const c=Number(cell.dataset.c);
+
+ const p=editorBoard[r][c];
+
+ if(!p){
+  editorBoard[r][c]=WHITE;
+ }else if(isWhite(p)){
+  editorBoard[r][c]=BLACK;
+ }else if(isBlack(p)){
+  editorBoard[r][c]="W";
+ }else{
+  editorBoard[r][c]=null;
+ }
+
+ drawEditor();
+});
+
+$("clearEditor").onclick=()=>{
+ editorBoard=Array.from(
+  {length:8},
+  ()=>Array(8).fill(null)
+ );
+ drawEditor();
+};
+
+$("resetEditor").onclick=()=>{
+ editorBoard=initialBoard();
+ drawEditor();
+};
+
+$("playEditor").onclick=()=>{
+ board=clone(editorBoard);
+ turn=WHITE;
+ selected=null;
+ forcedPiece=null;
+ gameOver=false;
+ history=[];
+ movesHistory=[];
+ whiteSeconds=300;
+ blackSeconds=300;
+ show("game");
+ drawBoard();
+ drawMoves();
+ updateStatus();
+ updateTimers();
+ startTimer();
+};
+
+drawEditor();
+

@@ -9,6 +9,7 @@
 // Ulash: server.js ning eng tepasiga  require("./bot.js");  qo'shing.
 
 const crypto = require("crypto");
+const pay = require("./payments.js");
 
 const TOKEN = process.env.BOT_TOKEN;
 const BOT = process.env.BOT_USERNAME || "DraughtsPRObot";
@@ -105,13 +106,15 @@ async function start() {
       const r = await api("getUpdates", {
         offset: offset,
         timeout: 30,
-        allowed_updates: ["message", "inline_query"]
+        allowed_updates: ["message", "inline_query", "pre_checkout_query"]
       });
       if (!r.ok) throw new Error(r.description || "getUpdates xato");
       for (const u of r.result) {
         offset = u.update_id + 1;
         try {
-          if (u.message) await onMessage(u.message);
+          if (u.pre_checkout_query) await pay.onPreCheckout(u.pre_checkout_query);
+          else if (u.message && u.message.successful_payment) await pay.onPayment(u.message);
+          else if (u.message) await onMessage(u.message);
           else if (u.inline_query) await onInline(u.inline_query);
         } catch (e) {
           console.log("[bot] xato:", e.message);

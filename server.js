@@ -240,6 +240,8 @@ function serveFile(req, res) {
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, "http://localhost");
 
+  if (require("./payments.js").handle(req, res, url)) return;
+
   if (url.pathname === "/health") {
     res.writeHead(200, {
       "Content-Type": "application/json; charset=utf-8"
