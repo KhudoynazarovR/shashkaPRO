@@ -9,6 +9,15 @@
     if (n.nodeType === 1 && n.tagName !== "SCRIPT" && n.tagName !== "STYLE" && n.tagName !== "LINK") wrap.appendChild(n);
   });
   document.body.insertBefore(wrap, document.body.firstChild);
+  var dbg = document.createElement("div");
+  dbg.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:2147483647;background:#c00;color:#fff;font:11px monospace;padding:2px 4px;pointer-events:none;word-break:break-all";
+  document.body.appendChild(dbg);
+  var lastErr = "";
+  window.addEventListener("error", function (e) { lastErr = (e.message || "") + " @" + String(e.filename || "").split("/").pop() + ":" + e.lineno; });
+  function upd() {
+    dbg.textContent = "DBG keep=" + keep + " sp=[" + sp + "] wrap=" + (wrap.style.display || "show") + " nv=" + !!document.getElementById("nvBar") + " lb=" + !!window.lbNav + " err=" + (lastErr || "yo'q");
+  }
+  setInterval(upd, 500); upd();
   window.aiHide = function () { wrap.style.display = "none"; };
   window.aiShow = function (tab) {
     wrap.style.display = "";
