@@ -87,7 +87,7 @@ function createLobby({ send, clients, roomsApi }) {
     const seen = new Map();
     for (const c of lbClients()) {
       const p = seen.get(c.lb.uid);
-      if (!p) seen.set(c.lb.uid, { uid: c.lb.uid, name: c.lb.name, busy: !!c.lb.inRoom });
+      if (!p) seen.set(c.lb.uid, { uid: c.lb.uid, name: c.lb.name, busy: !!c.lb.inRoom, elo: c.elo || 1000 });
       else p.busy = p.busy && !!c.lb.inRoom;
     }
     return [...seen.values()];

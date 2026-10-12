@@ -275,9 +275,16 @@
       panel.innerHTML =
         "<div class=\"row\" style=\"justify-content:space-between\"><h2>🏟 O‘yinchilar zali</h2><span><button id=\"lbSnd\" class=\"sec\">🔊</button> <button id=\"lbClose\" class=\"sec\">✕</button></span></div>" +
         nameRow +
+        "<div class=\"lbcards\">" +
+        "<div class=\"lbc lbc1\" onclick=\"document.getElementById('lbQuick').click()\"><b>Do‘st bilan o‘ynash</b><small>Havola yuboring — do‘stingiz bossa, o‘yin boshlanadi</small></div>" +
+        "<div class=\"lbc lbc3\"><div class=\"lbmain\" onclick=\"document.getElementById('lbQuick').click()\"><b>🔀 Tasodifiy o‘yin</b><small>Tasodifiy o‘yinchi bilan o‘ynash</small></div>" +
+        "<div class=\"lbplay\" onclick=\"document.getElementById('lbQuick').click()\">▶</div>" +
+        "<div class=\"lbgear\" onclick=\"var e=document.getElementById('lbSet');e.style.display=e.style.display==='none'?'block':'none'\">⚙️</div></div></div>" +
+        "<div id=\"lbSet\" style=\"display:none\">" +
         "<div class=\"row\"><span class=\"muted\">Vaqt:</span><select id=\"lbTc\">" + tcOpts + "</select><button id=\"lbQuick\" style=\"flex:1\">⚡ Tezkor o‘yin</button></div>" +
         "<div class=\"row\"><span class=\"muted\">Pozitsiya:</span><select id=\"lbPos\"><option value=\"std\">Standart</option><option value=\"idf\">IDF 780</option></select>" +
         "<select id=\"lbGm\" style=\"flex:1\"><option value=\"1\">1 o‘yin</option><option value=\"2\">1 match (2 o‘yin)</option><option value=\"4\">2 match (4 o‘yin)</option></select></div>" +
+        "</div>" +
         "<div class=\"tabs\"><button id=\"lbTabPl\">🌐 Barcha onlinelar</button><button id=\"lbTabT\" style=\"display:none\">🏆 Turnirlar</button><button id=\"lbTabS\" style=\"display:none\">🎭 Sians</button></div>" +
         "<div id=\"lbPl\"></div>" +
         "<div id=\"lbS\" style=\"display:none\">" +
@@ -368,14 +375,21 @@
     }
 
     function renderPlayers() {
+      if (!document.getElementById("lbStyle")) {
+        var st = document.createElement("style"); st.id = "lbStyle";
+        st.textContent = ".lbcards{display:flex;flex-direction:column;gap:10px;margin:8px 0}.lbc{border-radius:16px;padding:14px;color:#fff;cursor:pointer}.lbc b{display:block;font-size:17px}.lbc small{opacity:.85}.lbc1{background:linear-gradient(135deg,#f5873b,#e84a9b)}.lbc3{background:linear-gradient(135deg,#2fd27f,#2ee86a);display:flex;align-items:center;gap:10px}.lbmain{flex:1}.lbplay{font-size:22px;padding:0 10px}.lbgear{font-size:22px;padding:0 6px;border-left:1px solid rgba(255,255,255,.3)}.lbp{display:flex;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px solid rgba(255,255,255,.08)}.lbav{width:46px;height:46px;border-radius:50%;background:#2a1fc9;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:18px}.lbinf{flex:1}.lbinf b{display:block}.lbinf small{opacity:.7}.lbinv{background:#6b5cf0;color:#fff;border:0;border-radius:14px;padding:7px 12px}";
+        document.head.appendChild(st);
+      }
       var me = S.me ? S.me.uid : "";
       var out = (S.outgoing || []).reduce(function (a, o) { a[o.toUid] = 1; return a; }, {});
-      var list = (S.players || []).filter(function (p) { return p.uid !== me; });
-      var h = "<div class=\"muted\">Onlayn: " + (S.players || []).length + "</div>";
-      if (!list.length) h += "<div class=\"card muted\">Hozircha boshqa o‘yinchi yo‘q. “Tezkor o‘yin” ni bosib raqib kutishingiz mumkin.</div>";
+      var all = (S.players || []);
+      var list = all.filter(function (p) { return p.uid !== me; });
+      var h = "<div class=\"tabs\"><button class=\"on\">🌐 Barcha onlinelar " + all.length + "</button></div>";
+      if (!list.length) h += "<div class=\"card muted\">Hozircha boshqa o‘yinchi yo‘q. “Tasodifiy o‘yin” ▶ ni bosib raqib kutishingiz mumkin.</div>";
       list.forEach(function (p) {
-        h += "<div class=\"pl\"><span>" + (p.busy ? "🟡" : "🟢") + " " + esc(p.name) + (p.busy ? " <span class=\"muted\">o‘ynayapti</span>" : "") + "</span>" +
-          (out[p.uid] ? "<span class=\"muted\">chaqirildi…</span>" : (p.busy ? "" : "<button data-a=\"ch\" data-id=\"" + esc(p.uid) + "\">O‘yinga taklif</button>")) + "</div>";
+        h += "<div class=\"lbp\"><div class=\"lbav\">" + esc((p.name || "?").charAt(0).toUpperCase()) + "</div>" +
+          "<div class=\"lbinf\"><b>" + esc(p.name) + (p.busy ? " 🟡" : "") + "</b><small>ELO " + (p.elo || 1000) + (p.busy ? " · o‘ynayapti" : "") + "</small></div>" +
+          (out[p.uid] ? "<span class=\"muted\">chaqirildi…</span>" : (p.busy ? "" : "<button class=\"lbinv\" data-a=\"ch\" data-id=\"" + esc(p.uid) + "\">O‘yinga taklif</button>")) + "</div>";
       });
       $("lbPl").innerHTML = h;
     }
