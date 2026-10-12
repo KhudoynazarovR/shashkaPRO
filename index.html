@@ -69,7 +69,7 @@ main{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
 textarea{width:100%;height:120px;font:12px ui-monospace,monospace}
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#222;color:#fff;padding:8px 14px;border-radius:20px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:9}
 #toast.on{opacity:1}
-</style></head><body><div class="wrap">
+</style><style>.bar{height:30px;min-height:30px;overflow:hidden;white-space:nowrap}.bar .cnt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#evb{min-height:14px}#board{touch-action:none}</style></head><body><div class="wrap">
 <header><h1>⛀ Shashka Pro</h1><select data-s="lang"><option value="uz">O'zbek</option><option value="ru">Русский</option><option value="en">English</option></select></header>
 <main>
 <section>
@@ -596,7 +596,7 @@ function render(){
  const e=ev(bd);$('evf').style.width=Math.max(4,Math.min(96,50+e/8))+'%';$('evt').textContent=(e/100).toFixed(1);
  $('st').textContent=G.edit?T('editor'):G.over?(G.res==='d'?T('drw'):G.res==='w'?T('winW'):T('winB')):G.busy?T('think'):side>0?T('turnW'):T('turnB');
  let ml='';G.mv.forEach((m,i)=>{if(i%2===0)ml+=(i/2+1)+'. ';ml+=`<span data-p="${i+1}" class="${G.cur===i+1?'cu':''}">${m.n}</span> `});$('ml').innerHTML=ml;
- const cu=$('ml').querySelector('.cu');if(cu)cu.scrollIntoView({block:'nearest'});
+ const cu=$('ml').querySelector('.cu');if(cu){const p=$('ml'),a=cu.getBoundingClientRect(),b=p.getBoundingClientRect();p.scrollTop+=a.top-b.top-p.clientHeight/2;}
  $('stats').textContent=`✔ ${ST.w}  ✘ ${ST.l}  = ${ST.d}`;
  if(G.edit){$('fen').value=fenOf(bd,G.s0);document.querySelectorAll('#tools button').forEach(b=>b.classList.toggle('on',b.dataset.tl===String(G.tool)))}}
 $('ml').onclick=e=>{const p=e.target.dataset.p;if(p)go(+p)};
