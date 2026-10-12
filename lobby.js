@@ -680,6 +680,7 @@ function createLobby({ send, clients, roomsApi }) {
       name = cleanName(m.name) || 'Mehmon-' + String(m.guestId).slice(0, 3).toUpperCase();
     }
     c.lb = { uid, name, tg, inRoom: !!m.inRoom };
+    if (tg) { try { require('./store').getOrCreate({ id: uid, first_name: name }); } catch (e) {} }
     for (const t of tournaments.values()) { const p = t.players.get(uid); if (p) p.name = name; }
     push();
   }

@@ -109,6 +109,18 @@ function send(res, code, obj) {
 function handle(req, res, url) {
   const p = url.pathname;
   if (p === '/api/economy' && req.method === 'GET') { send(res, 200, CFG); return true; }
+  if (p === '/api/profile' && req.method === 'GET') {
+    const tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
+    if (!tg) { send(res, 401, { error: 'auth' }); return true; }
+    const u = store.getOrCreate(tg);
+    send(res, 200, {
+      name: u.name, elo: u.elo || 1000, diamonds: u.diamonds || 0,
+      wins: u.wins || 0, losses: u.losses || 0, draws: u.draws || 0, games: u.games || 0,
+      streak: u.streak || 0, bestStreak: u.bestStreak || 0, hist: u.hist || [],
+      created: u.created || 0, log: (u.log || []).slice(-10).reverse(), premium: store.isPremium(u)
+    });
+    return true;
+  }
   if ((p === '/api/balance' && req.method === 'GET') || (p === '/api/daily' && req.method === 'POST')) {
     const tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!tg) { send(res, 401, { error: 'auth' }); return true; }
