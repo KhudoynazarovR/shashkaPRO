@@ -89,7 +89,7 @@ function createLobby({ send, clients, roomsApi }) {
     const seen = new Map();
     for (const c of lbClients()) {
       const p = seen.get(c.lb.uid);
-      if (!p) { let su = null; try { su = require('./store').users()[String(c.lb.uid)]; } catch (e) {} seen.set(c.lb.uid, { uid: c.lb.uid, name: c.lb.name, busy: !!c.lb.inRoom, elo: (su && su.elo) || 1000, gems: (su && su.diamonds) || 0, wins: (su && su.wins) || 0 }); }
+      if (!p) { let su = null; try { su = require('./store').users()[String(c.lb.uid)]; } catch (e) {} seen.set(c.lb.uid, { uid: c.lb.uid, name: c.lb.name, busy: !!c.lb.inRoom, elo: (su && su.elo) || 1000, gems: (su && su.diamonds) || 0, wins: (su && su.wins) || 0, prem: !!(su && require('./store').isPremium(su)) }); }
       else p.busy = p.busy && !!c.lb.inRoom;
     }
     return [...seen.values()];

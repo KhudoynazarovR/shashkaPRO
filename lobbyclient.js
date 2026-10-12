@@ -184,6 +184,7 @@
       (S.incoming || []).forEach(function (c) {
         if (shownIncoming[c.id]) return;
         shownIncoming[c.id] = 1;
+        try { if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred("success"); else if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch (e) {}
         if (panelOpen && curTab === "pl") return;
         toast("⚔️ <b>" + esc(c.fromName) + "</b> sizni o‘yinga chaqirdi (" + esc(c.tc) + ")", [
           ["Qabul", function () { sendMsg({ type: "lbRespond", id: c.id, accept: true }); }],
@@ -405,11 +406,33 @@
       }
       if (!document.getElementById("lbStyle")) {
         var st = document.createElement("style"); st.id = "lbStyle";
-        st.textContent = ".lbcards{display:flex;flex-direction:column;gap:10px;margin:8px 0}.lbc{border-radius:16px;padding:14px;color:#fff;cursor:pointer}.lbc b{display:block;font-size:17px}.lbc small{opacity:.85}.lbc1{background:linear-gradient(135deg,#f5873b,#e84a9b)}.lbc3{background:linear-gradient(135deg,#2fd27f,#2ee86a);display:flex;align-items:center;gap:10px}.lbmain{flex:1}.lbplay{font-size:22px;padding:0 10px}.lbgear{font-size:22px;padding:0 6px;border-left:1px solid rgba(255,255,255,.3)}.lbp{display:flex;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px solid rgba(255,255,255,.08)}.lbav{width:46px;height:46px;border-radius:50%;background:#2a1fc9;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:18px}.lbinf{flex:1}.lbinf b{display:block}.lbinf small{opacity:.7}.lbinv{background:#6b5cf0;color:#fff;border:0;border-radius:14px;padding:7px 12px}";
+        st.textContent = ".lbcards{display:flex;flex-direction:column;gap:10px;margin:8px 0}.lbc{border-radius:16px;padding:14px;color:#fff;cursor:pointer}.lbc b{display:block;font-size:17px}.lbc small{opacity:.85}.lbc1{background:linear-gradient(135deg,#f5873b,#e84a9b)}.lbc3{background:linear-gradient(135deg,#2fd27f,#2ee86a);display:flex;align-items:center;gap:10px}.lbmain{flex:1}.lbplay{font-size:22px;padding:0 10px}.lbgear{font-size:22px;padding:0 6px;border-left:1px solid rgba(255,255,255,.3)}.lbp{display:flex;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px solid rgba(255,255,255,.08)}.lbav{width:46px;height:46px;border-radius:50%;background:#2a1fc9;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:18px}.lbinf{flex:1}.lbinf b{display:block}.lbinf small{opacity:.7}.lbpr{box-shadow:0 0 0 3px #f5b82e,0 0 12px rgba(245,184,46,.7)}.lbinv{background:#6b5cf0;color:#fff;border:0;border-radius:14px;padding:7px 12px}";
         document.head.appendChild(st);
       }
       var me = S.me ? S.me.uid : "";
       var out = (S.outgoing || []).reduce(function (a, o) { a[o.toUid] = 1; return a; }, {});
+
+      if (!document.getElementById("lbTickCss")) {
+        var tk = document.createElement("style"); tk.id = "lbTickCss";
+        tk.textContent = "#lbTick{overflow:hidden;white-space:nowrap;margin:6px -2px;padding:7px 0;border-radius:12px;background:rgba(255,255,255,.08);font-size:13px}#lbTick span{display:inline-block;padding-left:100%;animation:lbMq 28s linear infinite}@keyframes lbMq{to{transform:translateX(-100%)}}";
+        document.head.appendChild(tk);
+      }
+      if (!window.__lbTk || Date.now() - window.__lbTk.t > 60000) {
+        window.__lbTk = { t: Date.now(), txt: window.__lbTk ? window.__lbTk.txt : "" };
+        fetch("/api/leaderboard").then(function (r) { return r.json(); }).then(function (d) {
+          var f = function (a, ic, lab, key, suf) { return a && a[0] ? ic + " " + lab + ": " + a[0].name + " — " + a[0][key] + suf : ""; };
+          window.__lbTk.txt = [f(d.wins, "🏆", "Eng ko‘p g‘alaba", "wins", ""), f(d.games, "🎮", "Eng ko‘p o‘yin", "games", ""), f(d.diamonds, "💎", "Boyvachcha", "diamonds", "")].filter(Boolean).join("   •   ");
+          var te = document.getElementById("lbTick"); if (te) te.firstChild.textContent = window.__lbTk.txt;
+          if (te) te.style.display = window.__lbTk.txt ? "block" : "none";
+        }).catch(function () {});
+      }
+      if (!document.getElementById("lbTick") && panel) {
+        var td = document.createElement("div"); td.id = "lbTick"; td.innerHTML = "<span></span>";
+        td.firstChild.textContent = window.__lbTk.txt || "";
+        td.style.display = window.__lbTk.txt ? "block" : "none";
+        var hd = panel.querySelector("h2"); var row = hd && hd.parentNode;
+        if (row && row.nextSibling) row.parentNode.insertBefore(td, row.nextSibling); else panel.insertBefore(td, panel.firstChild);
+      }
       var all = (S.players || []);
       var list = all.filter(function (p) { return p.uid !== me; });
       var h = "<div class=\"tabs\"><button class=\"on\">🌐 Barcha onlinelar " + all.length + "</button></div>";
@@ -419,8 +442,8 @@
       });
       if (!list.length) h += "<div class=\"card muted\">Hozircha boshqa o‘yinchi yo‘q. “Tasodifiy o‘yin” ▶ ni bosib raqib kutishingiz mumkin.</div>";
       list.forEach(function (p) {
-        h += "<div class=\"lbp\"><div class=\"lbav\">" + esc((p.name || "?").charAt(0).toUpperCase()) + "</div>" +
-          "<div class=\"lbinf\"><b>" + esc(p.name) + (p.busy ? " 🟡" : "") + "</b><small>ELO " + (p.elo || 1000) + " · 💎 " + (p.gems || 0) + (p.busy ? " · o‘ynayapti" : "") + "</small></div>" +
+        h += "<div class=\"lbp\"><div class=\"lbav" + (p.prem ? " lbpr" : "") + "\">" + esc((p.name || "?").charAt(0).toUpperCase()) + "</div>" +
+          "<div class=\"lbinf\"><b>" + esc(p.name) + (p.prem ? " <span style=\"color:#f5b82e\">👑</span>" : "") + (p.busy ? " 🟡" : "") + "</b><small>ELO " + (p.elo || 1000) + " · 💎 " + (p.gems || 0) + (p.busy ? " · o‘ynayapti" : "") + "</small></div>" +
           (out[p.uid] ? "<span class=\"muted\">chaqirildi…</span>" : (p.busy ? "" : "<button class=\"lbinv\" data-a=\"ch\" data-id=\"" + esc(p.uid) + "\">O‘yinga taklif</button>")) + "</div>";
       });
       $("lbPl").innerHTML = h;
