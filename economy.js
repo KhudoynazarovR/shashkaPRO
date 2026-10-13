@@ -214,7 +214,6 @@ function handle(req, res, url) {
   if (p === '/api/puzzles' && req.method === 'GET') {
     const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
-    console.log('ADMIN_IDS=', JSON.stringify(process.env.ADMIN_IDS), 'myId=', _tg.id);
     store.db.puzzles = store.db.puzzles || [];
     const _u = store.users()[String(_tg.id)] || {};
     const _adm = (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(_tg.id));
