@@ -239,7 +239,7 @@
   var LV = ['', '🟢 Oson', '🟡 O‘rta', '🔴 Qiyin'];
   var BS = 'border:0;border-radius:12px;padding:10px 14px;background:#6b5cf0;color:#fff;font-size:15px;margin:4px';
   var BG = 'border:0;border-radius:12px;padding:10px 14px;background:#262b66;color:#fff;font-size:15px;margin:4px';
-  var ov = null, S = { list: [], solved: [] };
+  var ov = null, pending = null, S = { list: [], solved: [] };
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function ins(r, c) { return r >= 0 && r < 8 && c >= 0 && c < 8; }
@@ -348,7 +348,7 @@
     on('#pzBack', close);
     api('/api/puzzles').then(function (d) {
       if (d.error) { ov.innerHTML = head('🧩 Masalalar') + '<div style="padding:30px">Telegram orqali kiring</div>'; on('#pzBack', close); return; }
-      S = d; list();
+      S = d; var _pid = pending; pending = null; var _pz = _pid && S.list.filter(function (x) { return x.id === _pid; })[0]; if (_pz) play(_pz); else list();
     }).catch(function () { ov.innerHTML = head('🧩 Masalalar') + '<div style="padding:30px">Server bilan aloqa yo‘q</div>'; on('#pzBack', close); });
   }
   function list() {
@@ -399,10 +399,23 @@
       h += boardHtml(g.b, { sel: sel, hl: tg2 });
       h += '<div style="min-height:28px;margin:10px 0;font-size:16px">' + msg + '</div>';
       h += '<button id="pzR" style="' + BG + '">🔄 Qayta</button><button id="pzH" style="' + BS + '">💡 Ko‘rsatma</button>';
-      if (S.admin) h += '<button id="pzD" style="' + BG + '">🗑 O‘chirish</button>';
+      if (S.link) h += '<button id="pzS" style="' + BS + '">📤 Yuborish</button>'; if (S.admin) h += '<button id="pzN" style="' + BG + '">✏️ Nomi</button>'; if (S.admin) h += '<button id="pzD" style="' + BG + '">🗑 O‘chirish</button>';
       ov.innerHTML = h;
       on('#pzBack', list);
       on('#pzR', function () { play(p); });
+      on('#pzS', function () {
+        var u = S.link + '?startapp=pz_' + p.id, t = '🧩 Shashka masalasi: ' + p.title;
+        var sh = 'https://t.me/share/url?url=' + encodeURIComponent(u) + '&text=' + encodeURIComponent(t);
+        if (tg && tg.openTelegramLink) tg.openTelegramLink(sh); else window.open(sh, '_blank');
+      });
+      on('#pzN', function () {
+        var n = prompt('Yangi nom:', p.title); if (n === null) return; n = n.trim(); if (!n) return;
+        api('/api/puzzle/rename', { id: p.id, title: n }).then(function (d) {
+          if (d && d.ok) { p.title = d.title; S.list.forEach(function (x) { if (x.id === p.id) x.title = d.title; }); msg = '✅ Nom o‘zgardi'; }
+          else msg = '⚠️ Nom o‘zgarmadi';
+          draw();
+        });
+      });
       on('#pzH', function () { if (!done && !busy && g.side === p.side && p.sol[idx]) { sel = [p.sol[idx][0], p.sol[idx][1]]; draw(); } });
       on('#pzD', function () {
         if (!confirm('Masala o‘chirilsinmi?')) return;
@@ -534,5 +547,7 @@
   }
 
   window.spPuzzles = open;
+  var _sp = tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param;
+  if (_sp && _sp.indexOf('pz_') === 0) { pending = _sp.slice(3); setTimeout(open, 700); }
 })();
 

@@ -217,10 +217,10 @@ function handle(req, res, url) {
     store.db.puzzles = store.db.puzzles || [];
     const _u = store.users()[String(_tg.id)] || {};
     const _adm = (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(_tg.id));
-    send(res, 200, { admin: _adm, myId: String(_tg.id), solved: _u.solved || [], list: store.db.puzzles });
+    send(res, 200, { admin: _adm, link: process.env.TG_APP_LINK || '', myId: String(_tg.id), solved: _u.solved || [], list: store.db.puzzles });
     return true;
   }
-  if ((p === '/api/puzzle' || p === '/api/puzzle/del' || p === '/api/puzzle/solved') && req.method === 'POST') {
+  if ((p === '/api/puzzle' || p === '/api/puzzle/del' || p === '/api/puzzle/solved' || p === '/api/puzzle/rename') && req.method === 'POST') {
     const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
     readBody(req, 100000, body => {
@@ -238,6 +238,13 @@ function handle(req, res, url) {
       }
       const adm = (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(_tg.id));
       if (!adm) return send(res, 403, { error: 'admin emassiz' });
+      if (p === '/api/puzzle/rename') {
+        const pz2 = arr.find(x => x.id === j.id);
+        const nt = String(j.title || '').replace(/[<>]/g, '').trim().slice(0, 40);
+        if (!pz2 || !nt) return send(res, 400, { error: 'invalid' });
+        pz2.title = nt; store.save();
+        return send(res, 200, { ok: true, title: nt });
+      }
       if (p === '/api/puzzle/del') {
         const i = arr.findIndex(x => x.id === j.id);
         if (i >= 0) { arr.splice(i, 1); store.save(); }
