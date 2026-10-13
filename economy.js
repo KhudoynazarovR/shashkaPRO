@@ -243,12 +243,12 @@ function handle(req, res, url) {
         if (i >= 0) { arr.splice(i, 1); store.save(); }
         return send(res, 200, { ok: true });
       }
-      const b = j.board, sol = j.sol;
+      const b = j.board; const _sols = Array.isArray(j.sols) ? j.sols.slice(0, 10) : [j.sol]; const sol = _sols[0];
       const okB = Array.isArray(b) && b.length === 8 && b.every(r => Array.isArray(r) && r.length === 8 && r.every(v => Number.isInteger(v) && v >= 0 && v <= 4));
-      const okS = Array.isArray(sol) && sol.length >= 1 && sol.length <= 60 && sol.every(s => Array.isArray(s) && s.length === 4 && s.every(v => Number.isInteger(v) && v >= 0 && v < 8));
+      const okS = _sols.length >= 1 && _sols.every(sl => Array.isArray(sl) && sl.length >= 1 && sl.length <= 60 && sl.every(s => Array.isArray(s) && s.length === 4 && s.every(v => Number.isInteger(v) && v >= 0 && v < 8)));
       if (!okB || !okS || (j.side !== 'w' && j.side !== 'b')) return send(res, 400, { error: 'noto‘g‘ri ma‘lumot' });
       const id = 'p' + Date.now().toString(36);
-      arr.push({ id, title: String(j.title || 'Masala').replace(/[<>]/g, '').trim().slice(0, 40) || 'Masala', level: [1, 2, 3].includes(j.level) ? j.level : 1, side: j.side, board: b, sol, at: Date.now() });
+      arr.push({ id, title: String(j.title || 'Masala').replace(/[<>]/g, '').trim().slice(0, 40) || 'Masala', level: [1, 2, 3].includes(j.level) ? j.level : 1, side: j.side, board: b, sol, sols: _sols, at: Date.now() });
       store.save();
       send(res, 200, { ok: true, id });
     });

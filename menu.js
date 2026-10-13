@@ -368,7 +368,29 @@
 
   // ---- yechish
   function play(p) {
+    p = Object.assign({}, p);
+    var lines = (p.sols && p.sols.length) ? p.sols : [p.sol], alive = lines.map(function (_, i) { return i; });
+    p.sol = lines[0];
     var g = { b: copy(p.board), side: p.side, forced: null }, idx = 0, sel = null, msg = '', done = false, busy = false;
+    function same(x, y) { return x && y && x[0] === y[0] && x[1] === y[1] && x[2] === y[2] && x[3] === y[3]; }
+    function pick(st) {
+      var m = null, keep = [], want = [st.f[0], st.f[1], st.t[0], st.t[1]];
+      alive.forEach(function (i) { var x = lines[i][idx]; if (same(x, want)) { keep.push(i); m = x; } });
+      if (keep.length) {
+        alive = keep;
+        var fin = keep.filter(function (i) { return lines[i].length === idx + 1; });
+        p.sol = lines[fin.length ? fin[0] : keep[0]];
+      }
+      return m;
+    }
+    function oppPick() {
+      var c = alive.filter(function (i) { return lines[i][idx]; });
+      if (!c.length) return p.sol[idx];
+      var x = lines[c[Math.floor(Math.random() * c.length)]][idx];
+      alive = c.filter(function (j) { return same(lines[j][idx], x); });
+      p.sol = lines[alive[0]];
+      return x;
+    }
     function draw() {
       var tg2 = [];
       if (sel) tg2 = legal(g.b, g.side, g.forced).filter(function (s) { return s.f[0] === sel[0] && s.f[1] === sel[1]; }).map(function (s) { return s.t; });
@@ -400,7 +422,7 @@
       if (g.side === p.side || idx >= p.sol.length) return;
       busy = true;
       setTimeout(function () {
-        var w = p.sol[idx], st = findStep(legal(g.b, g.side, g.forced), [w[0], w[1]], [w[2], w[3]]);
+        var w = oppPick(), st = findStep(legal(g.b, g.side, g.forced), [w[0], w[1]], [w[2], w[3]]);
         if (!st) { busy = false; msg = '⚠️ Masalada xato'; draw(); return; }
         g = adv(g, st); idx++; busy = false;
         if (idx >= p.sol.length) return solved();
@@ -413,7 +435,7 @@
       if (sel) {
         var st = findStep(lg, sel, [r, c]);
         if (st) {
-          var w = p.sol[idx];
+          var w = pick(st);
           if (w && w[0] === st.f[0] && w[1] === st.f[1] && w[2] === st.t[0] && w[3] === st.t[1]) {
             g = adv(g, st); idx++; sel = null; msg = '✅ To‘g‘ri';
             if (idx >= p.sol.length) return solved();
@@ -430,7 +452,7 @@
 
   // ---- masala kiritish (faqat admin)
   function editor() {
-    var b = blank(), tool = 1, side = 'w', title = '', level = 1, mode = 'edit', g = null, hist = [], rec = [], recSides = [], sel = null, b0 = null, msg = '';
+    var b = blank(), tool = 1, side = 'w', title = '', level = 1, mode = 'edit', g = null, hist = [], rec = [], recSides = [], sel = null, b0 = null, msg = '', extra = [];
     function sync() {
       var t = ov.querySelector('#pzT'); if (t) title = t.value;
       var l = ov.querySelector('#pzL'); if (l) level = Number(l.value);
@@ -455,7 +477,7 @@
         h += '<div style="margin-bottom:8px">Navbat: ' + (g.side === 'w' ? '⚪ Oq' : '⚫ Qora') + ' · yurishlar: ' + rec.length + '</div>';
         h += boardHtml(g.b, { sel: sel, hl: tg2 });
         h += '<div style="min-height:24px;margin:8px 0;color:#ffb3b3">' + msg + '</div>';
-        h += '<button id="pzUn" style="' + BG + '">↩ Bekor</button><button id="pzEd" style="' + BG + '">✏️ Doska</button><button id="pzSv" style="' + BS + '">💾 Saqlash</button>';
+        h += '<button id="pzUn" style="' + BG + '">↩ Bekor</button><button id="pzEd" style="' + BG + '">✏️ Doska</button><button id="pzVar" style="' + BG + '">➕ Variant</button><button id="pzSv" style="' + BS + '">💾 Saqlash</button>';
       }
       ov.innerHTML = h; ov.scrollTop = sc;
       on('#pzBack', function () { if (mode === 'rec') { mode = 'edit'; msg = ''; draw(); } else list(); });
@@ -471,14 +493,22 @@
           for (r = 0; r < 8; r++) for (c = 0; c < 8; c++) { if (sideOf(b[r][c]) === 'w') w++; if (sideOf(b[r][c]) === 'b') k++; }
           if (!w || !k) { msg = 'Ikkala tomonda ham dona bo‘lsin'; return draw(); }
           if (!legal(b, side, null).length) { msg = 'Bu tomonda yurish yo‘q'; return draw(); }
-          b0 = copy(b); g = { b: copy(b), side: side, forced: null }; hist = [g]; rec = []; recSides = []; sel = null; msg = ''; mode = 'rec'; draw();
+          b0 = copy(b); g = { b: copy(b), side: side, forced: null }; hist = [g]; rec = []; recSides = []; sel = null; msg = ''; extra = []; mode = 'rec'; draw();
         });
       } else {
         bindBoard(recTap);
         on('#pzUn', function () { if (rec.length) { rec.pop(); recSides.pop(); hist.pop(); g = hist[hist.length - 1]; sel = null; msg = ''; draw(); } });
         on('#pzEd', function () { mode = 'edit'; msg = ''; draw(); });
-        on('#pzSv', save);
+        on('#pzVar', addVar); on('#pzSv', save);
       }
+    }
+    function addVar() {
+      if (!rec.length) { msg = 'Avval yurishlarni kiriting'; return draw(); }
+      if (recSides[recSides.length - 1] !== side || g.forced) { msg = '⚠️ Variant yechuvchi yurishi bilan tugashi kerak'; return draw(); }
+      extra.push(rec.slice());
+      g = { b: copy(b0), side: side, forced: null }; hist = [g]; rec = []; recSides = []; sel = null;
+      msg = '✅ ' + extra.length + '-variant saqlandi. Endi ' + (extra.length + 1) + '-variantni kiriting';
+      draw();
     }
     function recTap(r, c) {
       var lg = legal(g.b, g.side, g.forced), p0 = g.b[r][c];
@@ -493,10 +523,10 @@
       draw();
     }
     function save() {
-      if (!rec.length) { msg = 'Avval yechim yurishlarini kiriting'; return draw(); }
-      if (recSides[recSides.length - 1] !== side || g.forced) { msg = '⚠️ Oxirgi yurish yechuvchiniki bo‘lishi va zarba tugallanishi kerak'; return draw(); }
+      if (!rec.length && !extra.length) { msg = 'Avval yechim yurishlarini kiriting'; return draw(); }
+      if (rec.length && (recSides[recSides.length - 1] !== side || g.forced)) { msg = '⚠️ Oxirgi yurish yechuvchiniki bo‘lishi va zarba tugallanishi kerak'; return draw(); }
       msg = 'Saqlanmoqda…'; draw();
-      api('/api/puzzle', { title: title || 'Masala', level: level, side: side, board: b0, sol: rec }).then(function (d) {
+      api('/api/puzzle', { title: title || 'Masala', level: level, side: side, board: b0, sol: (extra.length ? extra[0] : rec), sols: (rec.length ? extra.concat([rec]) : extra) }).then(function (d) {
         if (d && d.ok) load(); else { msg = '⚠️ Saqlanmadi: ' + ((d && d.error) || ''); draw(); }
       }).catch(function () { msg = '⚠️ Server bilan aloqa yo‘q'; draw(); });
     }
