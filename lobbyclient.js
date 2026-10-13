@@ -434,7 +434,7 @@
         if (row && row.nextSibling) row.parentNode.insertBefore(td, row.nextSibling); else panel.insertBefore(td, panel.firstChild);
       }
       var all = (S.players || []);
-    function avh(uid, has, name, pr) { return '<div class="lbav' + (pr ? ' lbpr' : '') + '" style="overflow:hidden">' + (has ? '<img src="/api/av/' + encodeURIComponent(uid) + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover">' : '👤') + '</div>'; }
+    function avh(uid, has, name, pr) { return '<div class="lbav' + (pr ? ' lbpr' : '') + '" style="overflow:hidden;cursor:pointer" onclick="window.spUser&&spUser(\'' + String(uid).replace(/[^0-9A-Za-z_-]/g, '') + '\')">' + (has ? '<img src="/api/av/' + encodeURIComponent(uid) + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover">' : '👤') + '</div>'; }
       var list = all.slice().sort(function (a, b) { return (b.uid === me ? 1 : 0) - (a.uid === me ? 1 : 0); });
     var fl = S.friends || [], fin = S.freqIn || [], fset = {}, showF = !!window.__lbF;
     fl.forEach(function (f) { fset[f.uid] = 1; });
