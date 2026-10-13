@@ -75,8 +75,8 @@
   window.nvProfile = function (pg) {
     var u = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) || {};
     var name = ((u.first_name || '') + ' ' + (u.last_name || '')).trim() || 'Mehmon';
-    var av = u.photo_url
-      ? '<img class="pf-av" src="' + esc(u.photo_url) + '">'
+    var av = u.id
+      ? '<img class="pf-av" src="/api/av/' + u.id + '?t=' + Date.now() + '" onerror="this.outerHTML=&quot;<div class=pf-av>👤</div>&quot;">'
       : '<div class="pf-av">👤</div>';
     pg.innerHTML = '<div class="pf-hero"><div class="pf-ring">' + av + sparks() + '</div>' +
       '<div class="pf-nm">' + esc(name) + '</div>' +
@@ -94,7 +94,7 @@
         var im = document.createElement('img'); im.className = 'pf-av'; im.src = src;
         old.parentNode.replaceChild(im, old);
       }
-      if (d.avatar) setAv(d.avatar);
+      
       var bt = document.createElement('button');
       bt.id = 'pfUp'; bt.textContent = '📷 Rasm qo‘yish';
       bt.style.cssText = 'display:block;margin:10px auto 0;border:0;border-radius:14px;padding:8px 16px;background:#ffffff33;color:#fff;font-size:13px';
