@@ -133,7 +133,7 @@ ru:`Новая игра|Назад|Вперёд|Подсказка|Поверн�
 en:`New game|Undo|Redo|Hint|Flip|Resign|Draw|Analyze|Play|Settings|Editor|Copy|Import|Export|Clear|Reset|Play from here|AI thinking…|White to move|Black to move|White wins|Black wins|Draw|Tap again|Draw accepted|AI declined`};
 const T=k=>(L[S.lang]||L.en).split('|')[K.indexOf(k)];
 /* ---------- settings ---------- */
-let S={lang:'uz',lvl:'2',mode:'ai',col:'w',tc:'300+3',th:'classic',ps:'img',theme:'auto',co:true,dots:true,hl:true,mc:true,snd:true,open:'std',mm:false,km:'♛',bw:'100',pz:'80'};
+let S={lang:'uz',lvl:'2',mode:'ai',col:'w',tc:'300+3',th:'edeon',ps:'img',theme:'auto',co:true,dots:true,hl:true,mc:true,snd:true,open:'std',mm:false,km:'♛',bw:'100',pz:'80'};
 try{Object.assign(S,JSON.parse(localStorage.getItem('sp_s2')||'{}'))}catch(e){}
 if(!/^(classic|green|blue|gray|walnut|purple|sand|ocean|rose|olive|photo|edeon)$/.test(S.th))S.th='edeon';
 const TG=window.Telegram&&Telegram.WebApp;
