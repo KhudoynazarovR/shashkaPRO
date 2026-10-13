@@ -30,6 +30,23 @@
     '@keyframes pfSpin{to{transform:rotate(360deg)}}' +
     '@keyframes pfGlow{from{opacity:.45}to{opacity:1}}';
   document.head.appendChild(rc);
+  var cols = ['#fff', '#fcd34d', '#ff9de2', '#8be9ff', '#b9ffd9'];
+  function sparks() {
+    var h = '';
+    for (var i = 0; i < 12; i++) {
+      var ang = i * 30, d = 72 + (i % 3) * 14, sz = 4 + (i % 3) * 2, dur = 2.4 + (i % 4) * 0.6, del = (i * 0.37).toFixed(2);
+      h += '<i class="pf-sp" style="--a:' + ang + 'deg;--d:' + d + 'px;width:' + sz + 'px;height:' + sz + 'px;background:' + cols[i % 5] + ';box-shadow:0 0 8px 2px ' + cols[i % 5] + ';animation-duration:' + dur + 's;animation-delay:-' + del + 's"></i>';
+    }
+    return h;
+  }
+  var sc = document.createElement('style');
+  sc.textContent =
+    '.pf-sp{position:absolute;left:50%;top:50%;margin:-3px 0 0 -3px;border-radius:50%;z-index:2;pointer-events:none;' +
+    'transform:rotate(var(--a)) translateX(var(--d));animation-name:pfTw;animation-iteration-count:infinite;animation-timing-function:ease-in-out}' +
+    '@keyframes pfTw{0%{opacity:0;transform:rotate(var(--a)) translateX(calc(var(--d) - 10px)) scale(.3)}' +
+    '50%{opacity:1;transform:rotate(calc(var(--a) + 40deg)) translateX(var(--d)) scale(1)}' +
+    '100%{opacity:0;transform:rotate(calc(var(--a) + 80deg)) translateX(calc(var(--d) + 12px)) scale(.3)}}';
+  document.head.appendChild(sc);
   var $ = function (id) { return document.getElementById(id); };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
   function api(path, method) {
@@ -61,7 +78,7 @@
     var av = u.photo_url
       ? '<img class="pf-av" src="' + esc(u.photo_url) + '">'
       : '<div class="pf-av">👤</div>';
-    pg.innerHTML = '<div class="pf-hero"><div class="pf-ring">' + av + '</div>' +
+    pg.innerHTML = '<div class="pf-hero"><div class="pf-ring">' + av + sparks() + '</div>' +
       '<div class="pf-nm">' + esc(name) + '</div>' +
       '<div class="pf-bd" id="pfRank">…</div></div><div id="pfBody"></div>';
     if (!initData) {
