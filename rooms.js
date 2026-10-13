@@ -204,6 +204,20 @@ function createRooms({ send, clients, onFinish }) {
 
   function handle(c, m) {
     if (!m || typeof m.type !== "string" || !m.type.startsWith("room")) return false;
+    if (m.type === "roomLive") {
+      const list = [];
+      for (const r of rooms.values()) {
+        if (!r.white || !r.black || r.finished) continue;
+        list.push({
+          id: r.id, white: r.white.name, black: r.black.name, tc: r.tc,
+          moves: (r.moves || []).length,
+          spectators: [...r.members].filter(id => !colorOf(r, clients.get(id) || {})).length
+        });
+      }
+      list.sort((a, b) => b.spectators - a.spectators || b.moves - a.moves);
+      send(c.ws, { type: "roomLive", list: list.slice(0, 30) });
+      return true;
+    }
 
     const roomId = String(m.roomId || "");
     if (!ROOM_RE.test(roomId)) {
