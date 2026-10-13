@@ -86,7 +86,7 @@ textarea{width:100%;height:120px;font:12px ui-monospace,monospace}
 <div class="g"><button class="p" onclick="newGame()" data-i="new"></button><button onclick="undo()" data-i="undo"></button><button onclick="redo()" data-i="redo"></button>
 <button onclick="hint()" data-i="hint"></button><button onclick="G.flip=!G.flip;render()" data-i="flip"></button><button onclick="analyze()" data-i="analyze"></button>
 <button onclick="offerDraw()" data-i="draw"></button><button onclick="resign()" data-i="resign"></button><button onclick="clearStats()">Σ 0</button></div>
-<div class="row"><span>AI</span><select data-s="lvl"><option value="0">1 · Boshlang'ich</option><option value="1">2</option><option value="2">3</option><option value="3">4</option><option value="4">5 · Usta</option></select></div>
+<div class="row"><span>AI</span><select data-s="lvl"><option value="0">1 · Boshlang'ich</option><option value="1">2</option><option value="2">3</option><option value="3">4</option><option value="4">5 · Usta</option><option value="5">6 · Usta</option></select></div>
 <div class="row"><span>Mode</span><select data-s="mode"><option value="ai">vs AI</option><option value="local">2 players</option></select></div>
 <div class="row"><span>Color</span><select data-s="col"><option value="w">⚪</option><option value="b">⚫</option><option value="r">🎲</option></select></div>
 <div class="row"><span>⏱</span><select data-s="tc"><option value="0">∞</option><option value="60+0">1+0</option><option value="180+2">3+2</option><option value="300+3">5+3</option><option value="600+5">10+5</option><option value="900+10">15+10</option></select></div>
@@ -192,8 +192,38 @@ function ab(b,side,d,al,be,ply){
  const a0=al;let best=-1e9;
  for(const m of ms){const v=-ab(apply(b,m),-side,d-1,-be,-al,ply+1);if(v>best)best=v;if(v>al)al=v;if(al>=be)break}
  TT.set(key,{d,v:best,f:best<=a0?2:best>=be?1:0});return best}
+/* ---------- L6 engine ---------- */
+const TT6=new Map();const hist6=new Int32Array(4096);let nodes6=0,dl6=0;
+function ev6(b){let s=0;for(let i=0;i<64;i++){const p=b[i];if(!p)continue;const r=i>>3,c=i&7,w=p>0;let v;
+ if(Math.abs(p)===2){v=320+((c>1&&c<6&&r>1&&r<6)?8:0)}
+ else{const adv=w?7-r:r;v=100+adv*7+((c>1&&c<6)?5:0)+(adv>=5?adv*2:0)+(((w&&r===7)||(!w&&r===0))?10:0)-((c===0||c===7)?3:0)}
+ s+=w?v:-v}return s}
+function ab6(b,side,d,al,be,ply){
+ if((++nodes6&1023)===0&&Date.now()>dl6)throw 0;
+ const ms=legal(b,side);if(!ms.length)return-9000+ply;
+ if(ply>70||(d<=0&&!ms[0].caps.length))return side*ev6(b);
+ const key=side+b.join(''),e=TT6.get(key);let tm=-1;
+ if(e){tm=e.m;if(e.d>=d){if(e.f===0||(e.f===1&&e.v>=be)||(e.f===2&&e.v<=al))return e.v}}
+ const sc=ms.map(m=>{const k=m.path[0]*64+m.path[m.path.length-1];return[(k===tm?1e6:0)+hist6[k]+m.caps.length*100,m,k]});
+ sc.sort((x,y)=>y[0]-x[0]);
+ const a0=al;let best=-1e9,bk=-1;
+ for(const x of sc){const v=-ab6(apply(b,x[1]),-side,d-1,-be,-al,ply+1);
+  if(v>best){best=v;bk=x[2]}if(v>al)al=v;
+  if(al>=be){if(!x[1].caps.length)hist6[x[2]]+=d*d;break}}
+ TT6.set(key,{d,v:best,f:best<=a0?2:best>=be?1:0,m:bk});return best}
+function bestMove6(b,side,ms_){
+ nodes6=0;dl6=Date.now()+(ms_||4000);let ms=legal(b,side);if(!ms.length)return null;
+ if(TT6.size>6e5)TT6.clear();hist6.fill(0);
+ let best=ms[0],bv=side*ev6(apply(b,ms[0])),bd=0;
+ if(ms.length===1){return{m:best,v:bv*side,d:0}}
+ try{for(let d=1;d<=40;d++){let cb=null,cv=-1e9;const sc=[];
+  for(const m of ms){const v=-ab6(apply(b,m),-side,d-1,-1e9,-cv,1);sc.push([v,m]);if(v>cv){cv=v;cb=m}}
+  best=cb;bv=cv;bd=d;ms=sc.sort((a,c)=>c[0]-a[0]).map(x=>x[1]);
+  if(cv>8000||cv<-8000)break}}catch(e){}
+ nodes=nodes6;return{m:best,v:bv*side,d:bd}}
+
 const LV=[[1,40],[3,150],[5,500],[8,1500],[14,3500]];
-function bestMove(b,side,lvl,ms_){
+function bestMove(b,side,lvl,ms_){if(lvl>=5)return bestMove6(b,side,ms_);
  const[md,tm]=LV[lvl];nodes=0;deadline=Date.now()+(ms_||tm);let ms=legal(b,side);if(TT.size>3e5)TT.clear();
  if(!ms.length)return null;let best=ms[0],bv=side*ev(apply(b,ms[0])),bd=0;if(ms.length===1)return{m:best,v:bv*side,d:0};
  try{for(let d=1;d<=md;d++){let cb=null,cv=-1e9;const sc=[];
