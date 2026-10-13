@@ -36,7 +36,7 @@
       ["🤖", "AI bilan o‘ynash", "Kompyuterga qarshi o‘ynang", "@ai:play", "#8e6ff0,#c58bf2"],
       ["✏️", "Muharrir", "Pozitsiya tuzing va o‘ynang", "@ai:ed", "#17b2f7,#17e3ff"],
       ["📋", "PDN", "Partiyani import va eksport", "@ai:pdn", "#2fd27f,#1ea36a"],
-      ["👁", "Jonli efir", "Hozirgi o‘yinlarni kuzating", "@live", "#ff4d6d,#ff8fa3"]]],
+      ["📺", "Jonli efir", "Hozirgi o‘yinlarni kuzating", "@live", "#ff4d6d,#ff8fa3"]]],
     ["ILOVA", [
       ["⚙️", "Sozlamalar", "Tema, ovoz va boshqalar", "@ai:set", "#6b7bff,#8fa0ff"],
       ["📴", "Eski qurilma rejimi", "Animatsiyasiz — zaif telefonlar uchun", "@lite", "#9aa0c8,#c3c8ea"],
@@ -112,10 +112,10 @@
     var ws, timer;
     function stop() { clearInterval(timer); try { ws.close(); } catch (e) {} ov.remove(); }
     function draw(list) {
-      var h = "<div style=\"display:flex;justify-content:space-between;align-items:center;font-size:20px;font-weight:700;margin-bottom:12px\"><span>👁 Jonli efir</span><button id=\"mnLvX\" style=\"border:0;border-radius:12px;padding:8px 14px;background:#262b66;color:#fff\">⬅️</button></div>";
+      var h = "<div style=\"display:flex;justify-content:space-between;align-items:center;font-size:20px;font-weight:700;margin-bottom:12px\"><span>📺 Jonli efir</span><button id=\"mnLvX\" style=\"border:0;border-radius:12px;padding:8px 14px;background:#262b66;color:#fff\">⬅️</button></div>";
       if (!list.length) h += "<div style=\"padding:30px;text-align:center;opacity:.7\">Hozir o‘ynalayotgan o‘yin yo‘q</div>";
       list.forEach(function (r) {
-        h += "<div style=\"background:#161a3a;border:1px solid #262b5a;border-radius:16px;padding:12px;margin-bottom:10px;display:flex;align-items:center;gap:10px\"><div style=\"flex:1;min-width:0\"><b>⚪ " + esc(r.white) + "</b> — <b>⚫ " + esc(r.black) + "</b><div style=\"font-size:12px;opacity:.65;margin-top:4px\">" + esc(r.tc || "") + " · " + (r.moves || 0) + " yurish · 👁 " + (r.spectators || 0) + "</div></div><button data-r=\"" + esc(r.id) + "\" style=\"border:0;border-radius:12px;padding:10px 14px;background:#6b5cf0;color:#fff\">👁 Kuzatish</button></div>";
+        h += "<div style=\"background:#161a3a;border:1px solid #262b5a;border-radius:16px;padding:12px;margin-bottom:10px;display:flex;align-items:center;gap:10px\"><div style=\"flex:1;min-width:0\"><b>⚪ " + esc(r.white) + "</b> — <b>⚫ " + esc(r.black) + "</b><div style=\"font-size:12px;opacity:.65;margin-top:4px\">" + esc(r.tc || "") + " · " + (r.moves || 0) + " yurish · 📺 " + (r.spectators || 0) + "</div></div><button data-r=\"" + esc(r.id) + "\" style=\"border:0;border-radius:12px;padding:10px 14px;background:#6b5cf0;color:#fff\">📺 Kuzatish</button></div>";
       });
       ov.innerHTML = h;
       ov.querySelector("#mnLvX").onclick = stop;
