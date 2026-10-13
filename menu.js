@@ -34,14 +34,11 @@
   var SEC = [
     ["O‘YINLAR", [
       ["🤖", "AI bilan o‘ynash", "Kompyuterga qarshi o‘ynang", "@ai:play", "#8e6ff0,#c58bf2"],
-      ["✏️", "Muharrir", "Pozitsiya tuzing va o‘ynang", "@ai:ed", "#17b2f7,#17e3ff"],
-      ["📋", "PDN", "Partiyani import va eksport", "@ai:pdn", "#2fd27f,#1ea36a"],
       ["📺", "Jonli efir", "Hozirgi o‘yinlarni kuzating", "@live", "#ff4d6d,#ff8fa3"],
       ["📁", "Arxiv", "O‘tgan o‘yinlar tarixi", "@arch", "#2fd27f,#1ea36a"],
       ["🧩", "Masalalar", "Shashka masalalarini yeching", "@puz", "#f5873b,#f7c02d"]]],
     ["ILOVA", [
       ["⚙️", "Sozlamalar", "Tema, ovoz va boshqalar", "@ai:set", "#6b7bff,#8fa0ff"],
-      ["📴", "Eski qurilma rejimi", "Animatsiyasiz — zaif telefonlar uchun", "@lite", "#9aa0c8,#c3c8ea"],
       ["❓", "Yordam", "Bo‘limlar haqida", "@help", "#17b2f7,#17e3ff"],
       ["💬", "Taklif va shikoyatlar", "Fikringizni yozib qoldiring", "@fb", "#f5873b,#f7c02d"]]]
   ];
