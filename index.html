@@ -135,13 +135,13 @@ const T=k=>(L[S.lang]||L.en).split('|')[K.indexOf(k)];
 /* ---------- settings ---------- */
 let S={lang:'uz',lvl:'2',mode:'ai',col:'w',tc:'300+3',th:'classic',ps:'img',theme:'auto',co:true,dots:true,hl:true,mc:true,snd:true,open:'std',mm:false,km:'♛',bw:'100',pz:'80'};
 try{Object.assign(S,JSON.parse(localStorage.getItem('sp_s2')||'{}'))}catch(e){}
-if(!/^(classic|green|blue|gray|walnut|purple|sand|ocean|rose|olive|photo|edeon)$/.test(S.th))S.th='classic';
+if(!/^(classic|green|blue|gray|walnut|purple|sand|ocean|rose|olive|photo|edeon)$/.test(S.th))S.th='edeon';
 const TG=window.Telegram&&Telegram.WebApp;
 if(TG){try{TG.ready();TG.expand();if(TG.disableVerticalSwipes)TG.disableVerticalSwipes();
  TG.setHeaderColor&&TG.setHeaderColor('bg_color');TG.setBackgroundColor&&TG.setBackgroundColor('bg_color')}catch(e){}}
 const hap=t=>{try{TG&&TG.HapticFeedback&&TG.HapticFeedback.impactOccurred(t)}catch(e){}};
 const sv=()=>{try{localStorage.setItem('sp_s2',JSON.stringify(S))}catch(e){}};
-if(!S.v2){S.ps='img';S.pz='90';S.v2=1;sv()}
+if(!S.v2){S.ps='img';S.pz='90';S.v2=1;sv()}if(!S.v3){S.th='edeon';S.v3=1;sv()}
 let ST={w:0,l:0,d:0};try{Object.assign(ST,JSON.parse(localStorage.getItem('sp_st')||'{}'))}catch(e){}
 const svs=()=>{try{localStorage.setItem('sp_st',JSON.stringify(ST))}catch(e){}};
 /* ---------- rules: Russian draughts ---------- */
