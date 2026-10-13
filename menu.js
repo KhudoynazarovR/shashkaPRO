@@ -56,7 +56,7 @@
     if (!panel) return;
     var u = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) || {};
     var name = ((u.first_name || "") + " " + (u.last_name || "")).trim() || "Mehmon";
-    var av = u.photo_url ? "<img src=\"" + esc(u.photo_url) + "\">" : "👤";
+    var av = u.id ? "<img src=\"/api/av/" + encodeURIComponent(u.id) + "?t=" + Date.now() + "\" onerror=\"this.outerHTML='👤'\">" : "👤";
     var h = "<div class=\"mnh\"><div class=\"mnav\">" + av + "</div><div class=\"mnu\"><b>" + esc(name) + "</b><span class=\"mnb\">💎 " + (bal == null ? "—" : bal) + "</span></div>" +
       "<button class=\"mnd\" onclick=\"mnA('@daily')\"" + (canDaily ? "" : " disabled") + ">" + (canDaily ? "🎁 Bonus" : "✅ Olingan") + "</button></div><div class=\"mnm\" id=\"mnMsg\"></div>";
     SEC.forEach(function (s) {
