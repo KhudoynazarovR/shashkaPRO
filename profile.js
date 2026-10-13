@@ -21,6 +21,15 @@
     '.pf-bt{width:100%;border:0;border-radius:16px;padding:14px;font-size:16px;font-weight:600;color:#fff;background:linear-gradient(90deg,#8e3bf0,#e03a8c)}' +
     '.pf-bt:disabled{opacity:.5}';
   document.head.appendChild(css);
+  var rc = document.createElement('style');
+  rc.textContent =
+    '.pf-ring{position:relative;width:118px;height:118px;margin:0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center}' +
+    '.pf-ring::before,.pf-ring::after{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(#f5b72b,#ff4fd8,#22c1ff,#34f5c5,#f5b72b);animation:pfSpin 3s linear infinite}' +
+    '.pf-ring::after{inset:-6px;filter:blur(12px);opacity:.8;animation:pfSpin 3s linear infinite,pfGlow 1.8s ease-in-out infinite alternate}' +
+    '.pf-ring .pf-av{position:relative;z-index:1;box-sizing:border-box;width:104px;height:104px;margin:0;border:4px solid #1a0b3d;box-shadow:none}' +
+    '@keyframes pfSpin{to{transform:rotate(360deg)}}' +
+    '@keyframes pfGlow{from{opacity:.45}to{opacity:1}}';
+  document.head.appendChild(rc);
   var $ = function (id) { return document.getElementById(id); };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
   function api(path, method) {
@@ -52,7 +61,7 @@
     var av = u.photo_url
       ? '<img class="pf-av" src="' + esc(u.photo_url) + '">'
       : '<div class="pf-av">👤</div>';
-    pg.innerHTML = '<div class="pf-hero">' + av +
+    pg.innerHTML = '<div class="pf-hero"><div class="pf-ring">' + av + '</div>' +
       '<div class="pf-nm">' + esc(name) + '</div>' +
       '<div class="pf-bd" id="pfRank">…</div></div><div id="pfBody"></div>';
     if (!initData) {
