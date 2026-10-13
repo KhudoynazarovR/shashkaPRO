@@ -257,6 +257,17 @@ function handle(req, res, url) {
       const id = 'p' + Date.now().toString(36);
       arr.push({ id, title: String(j.title || 'Masala').replace(/[<>]/g, '').trim().slice(0, 40) || 'Masala', level: [1, 2, 3].includes(j.level) ? j.level : 1, side: j.side, board: b, sol, sols: _sols, at: Date.now() });
       store.save();
+      try {
+        const _gc = process.env.GROUP_CHAT_ID, _lk = process.env.TG_APP_LINK;
+        if (_gc && _lk && process.env.BOT_TOKEN) {
+          const _lv = ['', '🟢 Oson', '🟡 O‘rta', '🔴 Qiyin'][[1, 2, 3].includes(j.level) ? j.level : 1];
+          const _pb = { chat_id: _gc, text: '🧩 Yangi shashka masalasi!\n' + String(j.title || 'Masala').replace(/[<>]/g, '').trim().slice(0, 40) + '\n' + _lv + ' · ' + (j.side === 'w' ? '⚪ Oq yuradi' : '⚫ Qora yuradi'),
+            reply_markup: { inline_keyboard: [[{ text: '🧩 Yechish', url: _lk + '?startapp=pz_' + id }]] } };
+          if (process.env.GROUP_TOPIC_ID) _pb.message_thread_id = Number(process.env.GROUP_TOPIC_ID);
+          fetch('https://api.telegram.org/bot' + process.env.BOT_TOKEN + '/sendMessage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(_pb) })
+            .then(r => r.json()).then(d => { if (!d.ok) console.log('Guruhga yuborilmadi:', d.description); }).catch(e => console.log('Guruh xatosi:', e.message));
+        }
+      } catch (e) {}
       send(res, 200, { ok: true, id });
     });
     return true;
