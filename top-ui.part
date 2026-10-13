@@ -1,0 +1,35 @@
+(function () {
+      var tg = window.Telegram && Telegram.WebApp;
+      if (!document.getElementById("topCss")) {
+        var st = document.createElement("style"); st.id = "topCss";
+        st.textContent = "#promoBar{display:none!important}#lbTop{display:flex;gap:10px;align-items:stretch;margin:6px 0 10px}" +
+          "#lbTop .lbc{flex:1 1 0;min-width:0;margin:0!important;padding:12px!important}#lbTop .lbc b{font-size:15px}#lbTop .lbc small{font-size:11px;display:block;margin-top:4px}" +
+          "#lbPromoC{flex:1 1 0;min-width:0;border-radius:18px;padding:12px;color:#2a1600;font-weight:700;font-size:13px;line-height:1.25;cursor:pointer;" +
+          "background:linear-gradient(110deg,#ffb300 20%,#fff4b0 40%,#ffb300 60%,#ff7a00 80%);background-size:300% 100%;animation:pmS 3s linear infinite,pmG 1.6s ease-in-out infinite}" +
+          "#lbPromoC small{display:block;font-weight:600;opacity:.85;margin-top:4px;font-size:11px}" +
+          "@keyframes pmS{0%{background-position:200% 0}100%{background-position:-200% 0}}@keyframes pmG{0%,100%{box-shadow:0 0 8px #ffb300}50%{box-shadow:0 0 22px #ff5e00}}";
+        document.head.appendChild(st);
+      }
+      setInterval(function () {
+        var sb = document.getElementById("lbSnd");
+        if (sb && sb.parentElement && sb.parentElement.parentElement) sb.parentElement.parentElement.style.display = "none";
+        var f = document.querySelector(".lbc1"); if (!f) return;
+        var top = document.getElementById("lbTop");
+        if (!top) { top = document.createElement("div"); top.id = "lbTop"; f.parentNode.insertBefore(top, f); top.appendChild(f); }
+        var sm = f.querySelector("small"); if (sm && sm.textContent !== "Havola yuboring") sm.textContent = "Havola yuboring";
+        var p = S.promo, el = document.getElementById("lbPromoC");
+        if (!p || !p.on || !S.me) { if (el) el.remove(); return; }
+        var left = Math.max(0, p.end - Date.now()), d = Math.floor(left / 86400000), h = Math.floor(left % 86400000 / 3600000), m = Math.floor(left % 3600000 / 60000);
+        var html = "🔥 Shoshiling!<br>Do‘stingni taklif qil: +200 💎<small>" + d + " kun " + h + " soat " + m + " daq qoldi</small>";
+        if (!el) {
+          el = document.createElement("div"); el.id = "lbPromoC"; top.appendChild(el);
+          el.onclick = function () {
+            var link = (window.TG_APP_LINK || "https://t.me/DraughtsPRObot/play") + "?startapp=ref_" + S.me.uid;
+            var u = "https://t.me/share/url?url=" + encodeURIComponent(link) + "&text=" + encodeURIComponent("Shashka PRO — kel, 500 💎 sovg‘a!");
+            if (tg && tg.openTelegramLink) tg.openTelegramLink(u); else window.open(u, "_blank");
+          };
+        }
+        if (el.dataset.t !== html) { el.dataset.t = html; el.innerHTML = html; }
+      }, 1000);
+    })();
+    

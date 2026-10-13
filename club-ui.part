@@ -1,0 +1,107 @@
+var clubAll = false, clubView = null, clubOpen = true, clubImgData = "", clubN = "", clubD = "";
+    window.lbCImg = function (inp, cid) {
+      var f = inp.files && inp.files[0]; if (!f) return;
+      var r = new FileReader();
+      r.onload = function () {
+        var im = new Image();
+        im.onload = function () {
+          var c = document.createElement("canvas"); c.width = c.height = 96;
+          var s = Math.min(im.width, im.height);
+          c.getContext("2d").drawImage(im, (im.width - s) / 2, (im.height - s) / 2, s, s, 0, 0, 96, 96);
+          var d = c.toDataURL("image/jpeg", 0.7);
+          if (cid) sendMsg({ type: "lbClubImg", cid: cid, img: d }); else { clubImgData = d; renderClubs(); }
+        };
+        im.src = r.result;
+      };
+      r.readAsDataURL(f); inp.value = "";
+    };
+    window.lbCA = function (act, id, u) {
+      var n0 = $("lbCn"), d0 = $("lbCdsc"); if (n0) clubN = n0.value; if (d0) clubD = d0.value;
+      if (act === "cv") { clubView = id; clubAll = false; }
+      else if (act === "cb") { clubView = null; }
+      else if (act === "ca") { clubAll = !clubAll; }
+      else if (act === "cj") sendMsg({ type: "lbClubJoin", cid: id });
+      else if (act === "cl") sendMsg({ type: "lbClubLeave", cid: id });
+      else if (act === "cd") { if (confirm("Klub yopilsinmi?")) { sendMsg({ type: "lbClubDisband", cid: id }); clubView = null; } }
+      else if (act === "ck") sendMsg({ type: "lbClubKick", cid: id, uid: u });
+      else if (act === "cy") sendMsg({ type: "lbClubAccept", cid: id, uid: u });
+      else if (act === "cx") sendMsg({ type: "lbClubReject", cid: id, uid: u });
+      else if (act === "cm") sendMsg({ type: "lbClubAdmin", cid: id, uid: u });
+      else if (act === "ct") sendMsg({ type: "lbClubSet", cid: id, open: u === "1" });
+      else if (act === "co") { clubOpen = !clubOpen; }
+      else if (act === "cp") { var f = $(id ? "lbCfileA" : "lbCfile"); if (f) f.click(); return; }
+      else if (act === "cn") { sendMsg({ type: "lbClubCreate", name: clubN, desc: clubD, open: clubOpen, img: clubImgData }); clubN = ""; clubD = ""; clubImgData = ""; clubOpen = true; }
+      renderClubs();
+    };
+    function cav(c, big) {
+      var sz = big ? 64 : 44, st = "width:" + sz + "px;height:" + sz + "px;flex:none";
+      if (c.img) return "<div class=\"lbav2\" style=\"" + st + ";background:url(" + esc(c.img) + ") center/cover\"></div>";
+      return "<div class=\"lbav2\" style=\"" + st + "\">" + esc((c.name || "?").charAt(0).toUpperCase()) + "</div>";
+    }
+    function renderClubs() {
+      var box = $("lbT"); if (!box) return;
+      if (!document.getElementById("lbCStyle")) {
+        var st = document.createElement("style"); st.id = "lbCStyle";
+        st.textContent = __CSS__ + ".lbcl b,.lbcl .muted{word-break:break-word;overflow-wrap:anywhere}.lbcl textarea{width:100%;box-sizing:border-box;margin-bottom:6px;min-height:64px;resize:vertical}.lbbd{font-size:12px;padding:2px 8px;border-radius:10px;background:#2a3166;margin-left:6px}";
+        document.head.appendChild(st);
+      }
+      var el = $("lbClubs");
+      if (!el) { el = document.createElement("div"); el.id = "lbClubs"; box.insertBefore(el, box.firstChild); }
+      var ae = document.activeElement;
+      if (ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA") && el.contains(ae)) return;
+      var cs = S.clubs || [], me = S.me ? S.me.uid : "", h = "";
+      var cur = clubView ? cs.filter(function (x) { return x.id === clubView; })[0] : null;
+      if (clubView && !cur) clubView = null;
+      box.classList.toggle("lbhide", !!cur);
+      if (cur) {
+        var lead = cur.leaderUid === me, adm = !!cur.isAdmin;
+        h += "<div class=\"lbcl\"><div class=\"row\"><button class=\"sec\" onclick=\"lbCA('cb')\">←</button>" + cav(cur, true) +
+          "<b style=\"font-size:18px;flex:1\">" + esc(cur.name) + "</b></div>" +
+          "<div class=\"muted\" style=\"margin-top:8px\">" + (cur.open ? "🔓 Ochiq klub" : "🔒 Yopiq klub") + "</div>" +
+          (cur.desc ? "<div class=\"muted\" style=\"margin:8px 0\">" + esc(cur.desc) + "</div>" : "") +
+          "<div class=\"muted\">👑 Rahbar: " + esc(cur.leaderName) + " · " + cur.count + " a‘zo</div><div class=\"row\" style=\"margin-top:10px;flex-wrap:wrap\">";
+        if (cur.joined) h += "<button class=\"sec\" onclick=\"lbCA('cl','" + cur.id + "')\">Chiqish</button>";
+        else if (cur.requested) h += "<button class=\"sec\" disabled>So‘rov yuborildi ⏳</button>";
+        else h += "<button onclick=\"lbCA('cj','" + cur.id + "')\">" + (cur.open ? "Qo‘shilish" : "So‘rov yuborish") + "</button>";
+        if (adm) h += "<button class=\"sec\" onclick=\"lbCA('cp','" + cur.id + "')\">🖼 Rasm</button>" +
+          "<button class=\"sec\" onclick=\"lbCA('ct','" + cur.id + "','" + (cur.open ? "0" : "1") + "')\">" + (cur.open ? "🔒 Yopiq qilish" : "🔓 Ochiq qilish") + "</button>" +
+          "<input id=\"lbCfileA\" type=\"file\" accept=\"image/*\" style=\"display:none\" onchange=\"lbCImg(this,'" + cur.id + "')\">";
+        if (lead) h += "<button class=\"red\" onclick=\"lbCA('cd','" + cur.id + "')\">Klubni yopish</button>";
+        h += "</div>";
+        if (adm && cur.pend && cur.pend.length) {
+          h += "<div style=\"margin-top:12px\"><b>📩 Qo‘shilish so‘rovlari (" + cur.pend.length + ")</b>";
+          cur.pend.forEach(function (p) {
+            h += "<div class=\"lbcm\"><span>" + esc(p.name) + "</span><span><button onclick=\"lbCA('cy','" + cur.id + "','" + esc(p.uid) + "')\">✓</button> <button class=\"sec\" onclick=\"lbCA('cx','" + cur.id + "','" + esc(p.uid) + "')\">✕</button></span></div>";
+          });
+          h += "</div>";
+        }
+        h += "<div style=\"margin-top:10px\">";
+        cur.members.forEach(function (m) {
+          var isL = m.uid === cur.leaderUid;
+          h += "<div class=\"lbcm\"><span>" + (isL ? "👑 " : (m.admin ? "⭐ " : "")) + esc(m.name) + (m.uid === me ? " 👈" : "") + "</span><span>" +
+            (lead && !isL ? "<button class=\"sec\" onclick=\"lbCA('cm','" + cur.id + "','" + esc(m.uid) + "')\">" + (m.admin ? "⭐✕" : "⭐") + "</button> " : "") +
+            (adm && m.uid !== me && !isL && (lead || !m.admin) ? "<button class=\"sec\" onclick=\"lbCA('ck','" + cur.id + "','" + esc(m.uid) + "')\">✕</button>" : "") + "</span></div>";
+        });
+        h += "</div></div>";
+      } else {
+        var shown = clubAll ? cs : cs.slice(0, 3);
+        h += "<div class=\"lbcl\"><div class=\"row\" style=\"justify-content:space-between\"><b>👥 Klublarga qo‘shiling</b><span class=\"lbl\" onclick=\"lbCA('ca')\">" + (clubAll ? "Yopish" : "Barcha klublar ›") + "</span></div>" +
+          "<div class=\"muted\" style=\"margin-top:6px\">Klub safida o‘ynang va turnirlarda birga qatnashing.</div>";
+        if (!shown.length) h += "<div class=\"muted\" style=\"margin-top:10px\">Hozircha klub yo‘q. Birinchi bo‘lib oching!</div>";
+        shown.forEach(function (c) {
+          h += "<div class=\"lbcr\" onclick=\"lbCA('cv','" + c.id + "')\">" + cav(c, false) + "<div class=\"lbinf\"><b>" + esc(c.name) + "</b><small>" + (c.open ? "🔓" : "🔒") + " " + c.count + " a‘zo" + (c.joined ? " · siz a‘zosiz" : (c.requested ? " · so‘rov yuborilgan" : "")) + "</small></div><span>›</span></div>";
+        });
+        if (clubAll) {
+          h += "<div style=\"margin-top:12px\"><div class=\"row\" style=\"margin-bottom:6px\">" + (clubImgData ? cav({ img: clubImgData }, true) : "") +
+            "<button class=\"sec\" onclick=\"lbCA('cp','')\">🖼 Klub rasmi</button>" +
+            "<button class=\"sec\" onclick=\"lbCA('co')\">" + (clubOpen ? "🔓 Ochiq klub" : "🔒 Yopiq klub") + "</button></div>" +
+            "<input id=\"lbCfile\" type=\"file\" accept=\"image/*\" style=\"display:none\" onchange=\"lbCImg(this,'')\">" +
+            "<input id=\"lbCn\" maxlength=\"40\" placeholder=\"Klub nomi\" value=\"" + esc(clubN) + "\" style=\"width:100%;margin-bottom:6px\">" +
+            "<textarea id=\"lbCdsc\" maxlength=\"300\" placeholder=\"Tavsif (ixtiyoriy)\">" + esc(clubD) + "</textarea>" +
+            "<div class=\"muted\" style=\"margin-bottom:6px\">" + (clubOpen ? "Ochiq klubga hamma darhol qo‘shiladi." : "Yopiq klubga faqat admin ruxsati bilan qo‘shiladi.") + "</div>" +
+            "<button style=\"width:100%\" onclick=\"lbCA('cn')\">➕ Klub ochish</button></div>";
+        }
+        h += "</div>";
+      }
+      el.innerHTML = h;
+    }

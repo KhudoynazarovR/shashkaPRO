@@ -11,3 +11,7 @@ clubs-data.json
 *.bak
 *.bak*
 feedback.txt
+users.json
+.env
+data/
+*.log

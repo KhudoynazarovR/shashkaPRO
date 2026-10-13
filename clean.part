@@ -1,0 +1,18 @@
+(function(){
+var st=document.createElement('style');st.id='cleanCss';
+st.textContent="html:root:not([data-theme=zz]){--bg:#1b1450;--pn:#211b57;--tx:#f0ecff;--mu:#a9a3d6;--bd:#3a3280;--ac:#4fb59a}"+
+"html,body{background:#1b1450!important}body{background:linear-gradient(160deg,#1b1450,#3a1a7a 45%,#0f1c4d) fixed!important;min-height:100vh;color:#f0ecff}"+
+"header{display:none!important}.tabs button[data-t=ed],.tabs button[data-t=pdn]{display:none!important}";
+document.head.appendChild(st);
+['dt-fmjd','dt-idf'].forEach(function(id){var t=document.getElementById(id);if(t){var p=t.previousElementSibling;if(p)p.style.display='none';t.style.display='none'}});
+var sb=document.querySelector('button[onclick="saveDT()"]');if(sb)sb.style.display='none';
+S.open='std';
+var cs=document.querySelector('select[data-s=col]');var rw=cs&&cs.parentElement;
+if(rw&&typeof IDF780!=='undefined'){
+var sel=document.createElement('select');sel.id='i780';
+sel.innerHTML='<option value="">Standart</option><option value="*">IDF 780 · tasodifiy</option>'+IDF780.map(function(x){return '<option value="'+x.id+'">'+x.id+'</option>'}).join('');
+var r=document.createElement('div');r.className='row';r.innerHTML='<span>IDF 780</span>';r.appendChild(sel);
+rw.parentNode.insertBefore(r,rw.nextSibling);
+sel.onchange=function(){var v=sel.value;if(!v){S.open='std'}else{var L=IDF780.filter(function(x){return v==='*'||x.id===v});DT.idf=L.map(function(x){return x.id+': '+x.moves}).join('\n');S.open='idf'}sv();newGame()};
+}
+})();

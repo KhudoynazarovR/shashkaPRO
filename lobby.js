@@ -89,7 +89,7 @@ function createLobby({ send, clients, roomsApi }) {
     const seen = new Map();
     for (const c of lbClients()) {
       const p = seen.get(c.lb.uid);
-      if (!p) { let su = null; try { su = require('./store').users()[String(c.lb.uid)]; } catch (e) {} seen.set(c.lb.uid, { uid: c.lb.uid, name: c.lb.name, busy: !!c.lb.inRoom, elo: (su && su.elo) || 1000, gems: (su && su.diamonds) || 0, wins: (su && su.wins) || 0, prem: !!(su && require('./store').isPremium(su)) }); }
+      if (!p) { let su = null; try { su = require('./store').users()[String(c.lb.uid)]; } catch (e) {} seen.set(c.lb.uid, { uid: c.lb.uid, name: c.lb.name, busy: !!c.lb.inRoom, elo: (su && su.elo) || 1000, gems: (su && su.diamonds) || 0, wins: (su && su.wins) || 0, hasAv: !!(su && su.avatar), prem: !!(su && require('./store').isPremium(su)) }); }
       else p.busy = p.busy && !!c.lb.inRoom;
     }
     return [...seen.values()];
@@ -161,11 +161,22 @@ function createLobby({ send, clients, roomsApi }) {
     };
   }
 
+  function friendState(uid) {
+    let st, us;
+    try { st = require('./store'); us = st.users(); } catch (e) { return { friends: [], freqIn: [] }; }
+    const u = us[String(uid)] || {};
+    const on = new Set(lbClients().map(x => String(x.lb.uid)));
+    return {
+      friends: (u.friends || []).map(id => { const f = us[id] || {}; return { uid: id, name: f.name || '?', elo: f.elo || 1000, gems: f.diamonds || 0, hasAv: !!f.avatar, online: on.has(id) }; }),
+      freqIn: (u.fReq || []).map(id => { const f = us[id] || {}; return { uid: id, name: f.name || '?', hasAv: !!f.avatar }; })
+    };
+  }
+
   function stateFor(c) {
     const uid = c.lb.uid;
     return {
       type: 'lbState', now: Date.now(),
-      me: { uid, name: c.lb.name },
+      me: { uid, name: c.lb.name }, ...friendState(uid),
       players: playersList(),
       inQueue: queue.has(uid),
       incoming: [...challenges.values()].filter(x => x.toUid === uid)
@@ -755,6 +766,38 @@ function createLobby({ send, clients, roomsApi }) {
     const me = c.lb;
 
     switch (m.type) {
+      case 'lbFriendReq': {
+        const st = require('./store'), us = st.users();
+        const to = String(m.uid), mine = String(me.uid);
+        const ut = us[to], uu = us[mine];
+        if (!ut || !uu || to === mine) break;
+        uu.friends = uu.friends || []; ut.friends = ut.friends || [];
+        ut.fReq = ut.fReq || []; uu.fReq = uu.fReq || [];
+        if (uu.friends.includes(to)) break;
+        if (uu.fReq.includes(to)) {
+          uu.fReq = uu.fReq.filter(x => x !== to);
+          uu.friends.push(to);
+          if (!ut.friends.includes(mine)) ut.friends.push(mine);
+        } else if (!ut.fReq.includes(mine)) {
+          ut.fReq.push(mine);
+          toast(to, '👥 ' + me.name + ' do‘stlikka taklif qildi');
+        }
+        st.save(); push(); break;
+      }
+      case 'lbFriendResp': {
+        const st = require('./store'), us = st.users();
+        const from = String(m.uid), mine = String(me.uid);
+        const uu = us[mine], uf = us[from];
+        if (!uu) break;
+        uu.fReq = (uu.fReq || []).filter(x => x !== from);
+        if (m.accept && uf) {
+          uu.friends = uu.friends || []; uf.friends = uf.friends || [];
+          if (!uu.friends.includes(from)) uu.friends.push(from);
+          if (!uf.friends.includes(mine)) uf.friends.push(mine);
+          toast(from, '✅ ' + me.name + ' do‘stlik taklifini qabul qildi');
+        }
+        st.save(); push(); break;
+      }
       case 'lbName': {
         if (me.tg) break;
         const nm = cleanName(m.name);

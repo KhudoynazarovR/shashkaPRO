@@ -1,0 +1,35 @@
+(function () {
+      var tg = window.Telegram && Telegram.WebApp;
+      var sp = (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || "";
+      var sent = false, hid = false;
+      if (!document.getElementById("promoCss")) {
+        var st = document.createElement("style"); st.id = "promoCss";
+        st.textContent = "@keyframes pmS{0%{background-position:200% 0}100%{background-position:-200% 0}}@keyframes pmG{0%,100%{box-shadow:0 0 8px #ffb300}50%{box-shadow:0 0 22px #ff5e00}}" +
+          "#promoBar{position:fixed;left:8px;right:8px;bottom:74px;z-index:9998;padding:10px 38px 10px 12px;border-radius:14px;color:#2a1600;font-weight:700;font-size:14px;line-height:1.25;cursor:pointer;" +
+          "background:linear-gradient(110deg,#ffb300 20%,#fff4b0 40%,#ffb300 60%,#ff7a00 80%);background-size:300% 100%;animation:pmS 3s linear infinite,pmG 1.6s ease-in-out infinite}" +
+          "#promoBar small{display:block;font-weight:600;opacity:.8}#promoX{position:absolute;right:10px;top:8px;font-size:16px}";
+        document.head.appendChild(st);
+      }
+      setInterval(function () {
+        try {
+          if (!sent && /^ref_/.test(sp) && S.me && !localStorage.getItem("refSent")) {
+            sent = true; localStorage.setItem("refSent", "1"); sendMsg({ type: "lbRef", ref: sp });
+          }
+        } catch (e) {}
+        var p = S.promo, el = document.getElementById("promoBar");
+        if (!p || !p.on || hid || !S.me) { if (el) el.remove(); return; }
+        var left = Math.max(0, p.end - Date.now()), d = Math.floor(left / 86400000), h = Math.floor(left % 86400000 / 3600000), m = Math.floor(left % 3600000 / 60000);
+        var html = "🔥 Shoshiling! Do‘stingni taklif qil — +200 💎<small>Aksiya tugashiga: " + d + " kun " + h + " soat " + m + " daq · bosib ulashing</small><span id=\"promoX\">✕</span>";
+        if (!el) {
+          el = document.createElement("div"); el.id = "promoBar"; document.body.appendChild(el);
+          el.onclick = function (e) {
+            if (e.target.id === "promoX") { hid = true; el.remove(); return; }
+            var link = (window.TG_APP_LINK || "https://t.me/DraughtsPRObot/play") + "?startapp=ref_" + S.me.uid;
+            var u = "https://t.me/share/url?url=" + encodeURIComponent(link) + "&text=" + encodeURIComponent("Shashka PRO — kel, 500 💎 sovg‘a!");
+            if (tg && tg.openTelegramLink) tg.openTelegramLink(u); else window.open(u, "_blank");
+          };
+        }
+        if (el.dataset.t !== html) { el.dataset.t = html; el.innerHTML = html; }
+      }, 1000);
+    })();
+    

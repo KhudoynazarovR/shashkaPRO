@@ -434,19 +434,34 @@
         if (row && row.nextSibling) row.parentNode.insertBefore(td, row.nextSibling); else panel.insertBefore(td, panel.firstChild);
       }
       var all = (S.players || []);
-      var list = all.filter(function (p) { return p.uid !== me; });
-      var h = "<div class=\"tabs\"><button class=\"on\">🌐 Barcha onlinelar " + all.length + "</button></div>";
+    function avh(uid, has, name, pr) { return '<div class="lbav' + (pr ? ' lbpr' : '') + '" style="overflow:hidden">' + (has ? '<img src="/api/av/' + encodeURIComponent(uid) + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover">' : '👤') + '</div>'; }
+      var list = all.slice().sort(function (a, b) { return (b.uid === me ? 1 : 0) - (a.uid === me ? 1 : 0); });
+    var fl = S.friends || [], fin = S.freqIn || [], fset = {}, showF = !!window.__lbF;
+    fl.forEach(function (f) { fset[f.uid] = 1; });
+    if (showF) list = fl.map(function (f) { return { uid: f.uid, name: f.name, elo: f.elo, gems: f.gems, hasAv: f.hasAv, busy: false, offline: !f.online }; });
+      var h = "<div class=\"tabs\"><button class=\"lbtb" + (showF ? "" : " on") + "\" data-t=\"pl\">🌐 Barcha onlinelar " + all.length + "</button><button class=\"lbtb" + (showF ? " on" : "") + "\" data-t=\"f\">👥 Do‘stlar " + fl.length + (fin.length ? " 🔴" : "") + "</button></div>";
+    fin.forEach(function (r) { h += '<div class="lbp lbin">' + avh(r.uid, r.hasAv, r.name, false) + '<div class="lbinf"><b>' + esc(r.name) + '</b><small>do‘st bo‘lishni taklif qildi</small></div><button class="lbacc" data-f="acc" data-id="' + esc(r.uid) + '">Qabul</button><button class="lbrej" data-f="rej" data-id="' + esc(r.uid) + '">Rad</button></div>'; });
       (S.incoming || []).forEach(function (c) {
         h += "<div class=\"lbp lbin\"><div class=\"lbav\">" + esc((c.fromName || "?").charAt(0).toUpperCase()) + "</div><div class=\"lbinf\"><b>" + esc(c.fromName) + "</b><small>sizni o‘yinga taklif qildi · " + esc(c.tc) + "</small></div>" +
           "<button class=\"lbacc\" data-a=\"acc\" data-id=\"" + esc(c.id) + "\">Qabul</button><button class=\"lbrej\" data-a=\"rej\" data-id=\"" + esc(c.id) + "\">Rad</button></div>";
       });
       if (!list.length) h += "<div class=\"card muted\">Hozircha boshqa o‘yinchi yo‘q. “Tasodifiy o‘yin” ▶ ni bosib raqib kutishingiz mumkin.</div>";
       list.forEach(function (p) {
-        h += "<div class=\"lbp\"><div class=\"lbav" + (p.prem ? " lbpr" : "") + "\">" + esc((p.name || "?").charAt(0).toUpperCase()) + "</div>" +
+        h += "<div class=\"lbp\">" + avh(p.uid, p.hasAv, p.name, p.prem) +
           "<div class=\"lbinf\"><b>" + esc(p.name) + (p.prem ? " <span style=\"color:#f5b82e\">👑</span>" : "") + (p.busy ? " 🟡" : "") + "</b><small>ELO " + (p.elo || 1000) + " · 💎 " + (p.gems || 0) + (p.busy ? " · o‘ynayapti" : "") + "</small></div>" +
-          (out[p.uid] ? "<span class=\"muted\">chaqirildi…</span>" : (p.busy ? "" : "<button class=\"lbinv\" data-a=\"ch\" data-id=\"" + esc(p.uid) + "\">O‘yinga taklif</button>")) + "</div>";
+          (p.uid === me ? "<i class='muted'>Bu siz</i>" : p.offline ? "<span class='muted'>oflayn</span>" : fset[p.uid] ? "" : "<button class='lbinv' style='background:#2e7d32' data-f='add' data-id='" + esc(p.uid) + "'>➕ Do‘st</button>") + (p.uid === me || p.offline ? "" : out[p.uid] ? "<span class=\"muted\">chaqirildi…</span>" : (p.busy ? "" : "<button class=\"lbinv\" data-a=\"ch\" data-id=\"" + esc(p.uid) + "\">O‘yinga taklif</button>")) + "</div>";
       });
       $("lbPl").innerHTML = h;
+    Array.prototype.forEach.call($("lbPl").querySelectorAll('[data-t]'), function (b) {
+      b.onclick = function () { window.__lbF = b.getAttribute('data-t') === 'f'; renderAll(); };
+    });
+    Array.prototype.forEach.call($("lbPl").querySelectorAll('[data-f]'), function (b) {
+      b.onclick = function () {
+        var a = b.getAttribute('data-f'), id = b.getAttribute('data-id');
+        if (a === 'add') { sendMsg({ type: 'lbFriendReq', uid: id }); b.textContent = '✓ Yuborildi'; b.disabled = true; }
+        else sendMsg({ type: 'lbFriendResp', uid: id, accept: a === 'acc' });
+      };
+    });
     }
 
     // ---------- Simul (bitta xo'jayin ko'p o'yinchi bilan bir vaqtda) ----------

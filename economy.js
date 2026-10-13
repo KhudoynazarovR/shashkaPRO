@@ -115,6 +115,14 @@ function send(res, code, obj) {
 function handle(req, res, url) {
   const p = url.pathname;
   if (p === '/api/economy' && req.method === 'GET') { send(res, 200, CFG); return true; }
+  if (p.startsWith('/api/av/') && req.method === 'GET') {
+    const _u = store.users()[decodeURIComponent(p.slice(8))];
+    const _m = /^data:image\/jpeg;base64,(.+)$/.exec((_u && _u.avatar) || '');
+    if (!_m) { res.writeHead(404); res.end(); return true; }
+    res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=300' });
+    res.end(Buffer.from(_m[1], 'base64'));
+    return true;
+  }
   if ((p === '/api/avatar' || p === '/api/bio') && req.method === 'POST') {
     const tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!tg) { send(res, 401, { error: 'auth' }); return true; }
