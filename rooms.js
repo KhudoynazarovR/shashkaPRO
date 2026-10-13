@@ -131,6 +131,22 @@ function createRooms({ send, clients, onFinish }) {
       at: Date.now()
     });
     if (results.length > 500) results.shift();
+    try {
+      const st = require('./store'), us = st.users();
+      if (room.moves.length) {
+        const g = {
+          id: room.id, at: Date.now(), w: room.white && room.white.name, b: room.black && room.black.name,
+          win: winner || null, why: room.reason || '', tc: room.tc,
+          m: room.moves.map(m => [m.from.r, m.from.c, m.to.r, m.to.c, (m.captures || []).map(x => [x.r, x.c])])
+        };
+        const ids = new Set([room.white && room.white.uid, room.black && room.black.uid].filter(Boolean).map(String));
+        for (const uid of ids) {
+          const u = us[uid]; if (!u) continue;
+          u.arch = u.arch || []; u.arch.unshift(g); if (u.arch.length > 30) u.arch.length = 30;
+        }
+        st.save();
+      }
+    } catch (e) { console.log('Arxiv xatosi:', e.message); }
     broadcast(room, { type: "roomFinished", roomId: room.id, winner, reason: room.reason, clock: room.clock });
     if (typeof onFinish === "function") {
       try { onFinish(room); } catch (e) { console.error("[onFinish]", e); }

@@ -36,7 +36,8 @@
       ["🤖", "AI bilan o‘ynash", "Kompyuterga qarshi o‘ynang", "@ai:play", "#8e6ff0,#c58bf2"],
       ["✏️", "Muharrir", "Pozitsiya tuzing va o‘ynang", "@ai:ed", "#17b2f7,#17e3ff"],
       ["📋", "PDN", "Partiyani import va eksport", "@ai:pdn", "#2fd27f,#1ea36a"],
-      ["📺", "Jonli efir", "Hozirgi o‘yinlarni kuzating", "@live", "#ff4d6d,#ff8fa3"]]],
+      ["📺", "Jonli efir", "Hozirgi o‘yinlarni kuzating", "@live", "#ff4d6d,#ff8fa3"],
+      ["📁", "Arxiv", "O‘tgan o‘yinlar tarixi", "@arch", "#2fd27f,#1ea36a"]]],
     ["ILOVA", [
       ["⚙️", "Sozlamalar", "Tema, ovoz va boshqalar", "@ai:set", "#6b7bff,#8fa0ff"],
       ["📴", "Eski qurilma rejimi", "Animatsiyasiz — zaif telefonlar uchun", "@lite", "#9aa0c8,#c3c8ea"],
@@ -81,6 +82,7 @@
   window.mnA = function (a) {
     if (a.indexOf("@ai:") === 0) { close(); if (window.aiShow) window.aiShow(a.slice(4)); return; }
     if (a === "@live") { close(); liveOpen(); return; }
+    if (a === "@arch") { close(); archOpen(); return; }
     if (a === "@daily") { daily(); return; }
     if (a === "@lite") { var on = !isLite(); try { localStorage.setItem("mnLite", on ? "1" : "0"); } catch (e) {} lite(on); render(); return; }
     if (a === "@help") { open = open === "help" ? null : "help"; render(); return; }
@@ -133,5 +135,96 @@
       if (m && m.type === "roomLive") draw(m.list || []);
     };
   }
+  function archOpen() {
+    var old = document.getElementById('mnArch'); if (old) old.remove();
+    var ov = document.createElement('div'); ov.id = 'mnArch';
+    ov.style.cssText = 'position:fixed;left:0;right:0;top:0;bottom:64px;z-index:9500;background:#0b0e1a;color:#fff;overflow-y:auto;padding:14px;box-sizing:border-box;font-family:inherit';
+    document.body.appendChild(ov);
+    var head = '<div style="display:flex;justify-content:space-between;align-items:center;font-size:20px;font-weight:700;margin-bottom:12px"><span>📁 Arxiv</span><button id="mnArX" style="border:0;border-radius:12px;padding:8px 14px;background:#262b66;color:#fff">⬅️</button></div>';
+    function shell(body) { ov.innerHTML = head + body; ov.querySelector('#mnArX').onclick = function () { ov.remove(); }; }
+    shell('<div style="padding:30px;text-align:center;opacity:.7">Yuklanmoqda…</div>');
+    fetch('/api/archive', { headers: { 'x-init-data': initData } })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var list = d.list || [];
+        if (!list.length) { shell('<div style="padding:30px;text-align:center;opacity:.7">Hozircha tugagan o‘yin yo‘q</div>'); return; }
+        var h = '';
+        list.forEach(function (g, i) {
+          var res = g.win === 'white' ? '🏆 ⚪' : g.win === 'black' ? '🏆 ⚫' : '🤝';
+          var dt = new Date(g.at).toLocaleDateString();
+          h += '<div data-i="' + i + '" style="background:#161a3a;border:1px solid #262b5a;border-radius:16px;padding:12px;margin-bottom:10px;cursor:pointer"><b>⚪ ' + esc(g.w) + ' — ⚫ ' + esc(g.b) + '</b><div style="font-size:12px;opacity:.65;margin-top:4px">' + res + ' · ' + esc(g.tc || '') + ' · ' + g.m.length + ' yurish · ' + dt + '</div></div>';
+        });
+        shell(h);
+        Array.prototype.forEach.call(ov.querySelectorAll('[data-i]'), function (el) {
+          el.onclick = function () {
+            var g = list[Number(el.getAttribute('data-i'))];
+            window.spAnalyze({
+              white: g.w, black: g.b, winner: g.win,
+              moves: g.m.map(function (x) { return { from: { r: x[0], c: x[1] }, to: { r: x[2], c: x[3] }, captures: x[4].map(function (y) { return { r: y[0], c: y[1] }; }) }; })
+            });
+          };
+        });
+      })
+      .catch(function () { shell('<div style="padding:30px;text-align:center">Server bilan aloqa yo‘q</div>'); });
+  }
   window.mnClose = close;
 })();
+
+;(function () {
+  if (window.spAnalyze) return;
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function start() {
+    var b = [], r, c;
+    for (r = 0; r < 8; r++) { b.push([]); for (c = 0; c < 8; c++) b[r].push(r < 3 && (r + c) % 2 ? 2 : (r > 4 && (r + c) % 2 ? 1 : 0)); }
+    return b;
+  }
+  function apply(b, m) {
+    var n = b.map(function (x) { return x.slice(); }), p = n[m.from.r][m.from.c];
+    n[m.from.r][m.from.c] = 0;
+    (m.captures || []).forEach(function (x) { n[x.r][x.c] = 0; });
+    if (p === 1 && m.to.r === 0) p = 3;
+    if (p === 2 && m.to.r === 7) p = 4;
+    n[m.to.r][m.to.c] = p;
+    return n;
+  }
+  window.spAnalyze = function (g) {
+    var mv = g.moves || [], bs = [start()], i;
+    for (i = 0; i < mv.length; i++) bs.push(apply(bs[i], mv[i]));
+    var cur = mv.length;
+    var old = document.getElementById('spAn'); if (old) old.remove();
+    var ov = document.createElement('div'); ov.id = 'spAn';
+    ov.style.cssText = 'position:fixed;left:0;right:0;top:0;bottom:0;z-index:100001;background:radial-gradient(circle at 30% 10%,#3a1a7a 0,#241058 50%,#140a33 100%);color:#fff;overflow-y:auto;padding:12px;box-sizing:border-box;font-family:Arial,sans-serif;text-align:center';
+    document.body.appendChild(ov);
+    var res = g.winner === 'white' ? '🏆 ⚪ ' + esc(g.white) : g.winner === 'black' ? '🏆 ⚫ ' + esc(g.black) : '🤝 Durang';
+    function draw() {
+      var b = bs[cur], m = cur > 0 ? mv[cur - 1] : null, h = '', r, c, p, bg, hl;
+      h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b>🔍 Tahlil</b><button id="anX" style="border:0;border-radius:12px;padding:8px 14px;background:#262b66;color:#fff;font-size:16px">⬅️</button></div>';
+      h += '<div style="font-size:14px;margin-bottom:8px">⚪ ' + esc(g.white) + ' — ⚫ ' + esc(g.black) + '<br><span style="opacity:.8">' + res + '</span></div>';
+      h += '<div style="width:min(94vw,480px);aspect-ratio:1;margin:0 auto;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border:4px solid #8a4a1c;border-radius:6px;overflow:hidden">';
+      for (r = 0; r < 8; r++) for (c = 0; c < 8; c++) {
+        bg = (r + c) % 2 ? '#7b2f13' : '#f3bb86';
+        hl = m && ((m.from.r === r && m.from.c === c) || (m.to.r === r && m.to.c === c)) ? 'box-shadow:inset 0 0 0 3px #f5d92b;' : '';
+        p = b[r][c];
+        h += '<div style="background:' + bg + ';' + hl + 'display:flex;align-items:center;justify-content:center">';
+        if (p) {
+          var white = p === 1 || p === 3;
+          h += '<div style="width:80%;height:80%;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;color:#f5b72b;border:2px solid ' + (white ? '#9a9a9a' : '#000') + ';background:' + (white ? 'radial-gradient(circle at 35% 28%,#fff,#bbb)' : 'radial-gradient(circle at 35% 28%,#888,#111)') + '">' + (p > 2 ? '♛' : '') + '</div>';
+        }
+        h += '</div>';
+      }
+      h += '</div>';
+      h += '<div style="margin:10px 0;font-size:15px">Yurish: ' + cur + ' / ' + mv.length + '</div>';
+      h += '<div style="display:flex;gap:8px;justify-content:center">';
+      var bst = 'border:0;border-radius:14px;padding:12px 18px;background:#6b5cf0;color:#fff;font-size:20px';
+      h += '<button id="an0" style="' + bst + '">⏮</button><button id="an1" style="' + bst + '">◀</button><button id="an2" style="' + bst + '">▶</button><button id="an3" style="' + bst + '">⏭</button></div>';
+      ov.innerHTML = h;
+      ov.querySelector('#anX').onclick = function () { ov.remove(); };
+      ov.querySelector('#an0').onclick = function () { cur = 0; draw(); };
+      ov.querySelector('#an1').onclick = function () { if (cur > 0) cur--; draw(); };
+      ov.querySelector('#an2').onclick = function () { if (cur < mv.length) cur++; draw(); };
+      ov.querySelector('#an3').onclick = function () { cur = mv.length; draw(); };
+    }
+    draw();
+  };
+})();
+

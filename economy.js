@@ -204,6 +204,13 @@ function handle(req, res, url) {
     });
     return true;
   }
+  if (p === '/api/archive' && req.method === 'GET') {
+    const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
+    if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
+    const _u = store.users()[String(_tg.id)] || {};
+    send(res, 200, { list: _u.arch || [] });
+    return true;
+  }
   if (p === '/api/profile' && req.method === 'GET') {
     const tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!tg) { send(res, 401, { error: 'auth' }); return true; }
