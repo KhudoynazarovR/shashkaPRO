@@ -12,12 +12,43 @@ try {
     clubs.set(c.id, { id: c.id, name: c.name, desc: c.desc || '', leaderUid: c.leaderUid, leaderName: c.leaderName, created: c.created,
       open: c.open !== false, img: c.img || '', pts: c.pts || 0, tw: c.tw || 0, members: new Map(c.members), pending: new Map(c.pending || []), admins: new Set(c.admins || [c.leaderUid]) });
 } catch (e) {}
+const toRow = c => ({ ...c, members: [...c.members], pending: [...c.pending], admins: [...c.admins] });
+const fromRow = c => ({ id: c.id, name: c.name, desc: c.desc || '', leaderUid: c.leaderUid, leaderName: c.leaderName, created: c.created,
+  open: c.open !== false, img: c.img || '', pts: c.pts || 0, tw: c.tw || 0, members: new Map(c.members), pending: new Map(c.pending || []), admins: new Set(c.admins || [c.leaderUid]) });
+let pool = null, ready = false;
+async function writeDb() {
+  if (!pool || !ready) return;
+  try {
+    await pool.query("insert into kv(k, v) values('clubs', $1) on conflict (k) do update set v = excluded.v", [JSON.stringify([...clubs.values()].map(toRow))]);
+  } catch (e) { console.log('Klub DB yozish xatosi:', e.message); }
+}
+if (process.env.DATABASE_URL) {
+  const { Pool } = require('pg');
+  const U = process.env.DATABASE_URL;
+  pool = new Pool({ connectionString: U, ssl: /@[^/]*\./.test(U) ? { rejectUnauthorized: false } : false, max: 2 });
+  pool.on('error', e => console.log('Klub DB xato:', e.message));
+  (async () => {
+    try {
+      await pool.query('create table if not exists kv (k text primary key, v jsonb not null)');
+      const r = await pool.query("select v from kv where k = 'clubs'");
+      if (r.rows.length && Array.isArray(r.rows[0].v)) {
+        for (const c of r.rows[0].v) clubs.set(c.id, fromRow(c));
+        console.log('Klublar DB dan yuklandi:', clubs.size);
+      } else console.log('Klublar DB bo‘sh, ko‘chirilmoqda:', clubs.size);
+      ready = true;
+      await writeDb();
+    } catch (e) { console.log('Klub DB ulanish xatosi:', e.message); }
+  })();
+  const bye = async () => { await writeDb(); };
+  process.on('SIGTERM', bye);
+}
 let timer = null;
 function save() {
   if (timer) return;
   timer = setTimeout(() => {
     timer = null;
     try { fs.writeFileSync(FILE, JSON.stringify([...clubs.values()].map(c => ({ ...c, members: [...c.members], pending: [...c.pending], admins: [...c.admins] })))); } catch (e) {}
+    writeDb();
   }, 500);
 }
 const clean = (s, n) => String(s || '').replace(/[<>\u0000-\u001f]/g, '').trim().slice(0, n);
