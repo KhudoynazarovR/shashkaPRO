@@ -221,7 +221,7 @@
     function showCat(i) {
       box.innerHTML = "";
       lab.textContent = CATS[i][1];
-      for (var k = 0; k < tabs.children.length - 1; k++) tabs.children[k].style.background = k === i ? "#6b5cf0" : "";
+      for (var k = 0; k < tabs.children.length; k++) tabs.children[k].style.background = k === i ? "#6b5cf0" : "";
       CATS[i][2].forEach(function (p) {
         var bt = document.createElement("button");
         bt.textContent = p; bt.style.cssText = "padding:7px 10px;border-radius:12px;font-size:14px";
@@ -236,10 +236,10 @@
       tabs.appendChild(t);
     });
     var xb = document.createElement("button");
-    xb.textContent = "✕"; xb.style.cssText = "flex:none;padding:6px 12px;border-radius:12px;font-size:16px";
+    xb.textContent = "⬅️"; xb.style.cssText = "flex:none;padding:6px 12px;border-radius:12px;font-size:16px";
     xb.onclick = function () { elChatBtn.click(); };
-    tabs.appendChild(xb);
-    elQ.appendChild(tabs); elQ.appendChild(lab); elQ.appendChild(box);
+    var hd = document.createElement("div"); hd.style.cssText = "display:flex;gap:6px;align-items:center"; tabs.style.flex = "1"; tabs.style.minWidth = "0"; hd.appendChild(xb); hd.appendChild(tabs);
+    elQ.appendChild(hd); elQ.appendChild(lab); elQ.appendChild(box);
     showCat(0);
     elInput.addEventListener("keydown", function (e) { if (e.key === "Enter") sendChat(); });
 
@@ -372,7 +372,6 @@
     var themeCssDone = false;
     function cloneThemeCss() {
       if (themeCssDone) return;
-      themeCssDone = true;
       var css = "";
       try {
         for (var i = 0; i < document.styleSheets.length; i++) {
@@ -384,20 +383,22 @@
           }
         }
       } catch (e) {}
-      if (css) {
-        var el = document.createElement("style");
-        el.textContent = css;
+      if (/edeon/.test(css)) themeCssDone = true;
+    if (css) {
+      var old = document.getElementById("rcThemeCss"); if (old) old.remove();
+      var el = document.createElement("style"); el.id = "rcThemeCss";
+      el.textContent = css;
         document.head.appendChild(el);
       }
     }
 
     function applySkin() {
       cloneThemeCss();
-      var th = "classic", ps = "glossy", km = "\u265B", pz = "80";
+      var th = "edeon", ps = "glossy", km = "\u265B", pz = "80";
       try {
         if (typeof S === "object" && S) { th = S.th || th; ps = S.ps || ps; km = S.km || km; pz = S.pz || pz; }
       } catch (e) {}
-      if (!/^(classic|green|blue|gray|walnut|purple|sand|ocean|rose|olive|photo)$/.test(th)) th = "classic";
+      if (!/^(classic|green|blue|gray|walnut|purple|sand|ocean|rose|olive|photo|edeon)$/.test(th)) th = "edeon";
       elBoard.dataset.th = th;
       elBoard.dataset.ps = ps;
       elBoard.style.setProperty("--km", "'" + km + "'");
