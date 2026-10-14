@@ -211,6 +211,15 @@ function handle(req, res, url) {
     send(res, 200, { list: _u.arch || [] });
     return true;
   }
+  if (p === '/api/puzzles/top' && req.method === 'GET') {
+    const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
+    if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
+    const _ids = new Set((store.db.puzzles || []).map(x => x.id));
+    const _rows = Object.entries(store.users()).map(([k, v]) => ({ k, name: v.name || 'Foydalanuvchi', n: (v.solved || []).filter(i => _ids.has(i)).length })).filter(x => x.n > 0).sort((a, b) => b.n - a.n || String(a.name).localeCompare(String(b.name)));
+    const _i = _rows.findIndex(x => x.k === String(_tg.id));
+    send(res, 200, { top: _rows.slice(0, 20).map(x => ({ name: x.name, n: x.n, me: x.k === String(_tg.id) })), rank: _i < 0 ? 0 : _i + 1, n: _i < 0 ? 0 : _rows[_i].n });
+    return true;
+  }
   if (p === '/api/puzzles' && req.method === 'GET') {
     const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
@@ -218,7 +227,7 @@ function handle(req, res, url) {
     { let _mx = 0, _ch = false; const _a = store.db.puzzles; _a.forEach(x => { if (x.no) _mx = Math.max(_mx, x.no); }); _a.forEach(x => { if (!x.no) { x.no = ++_mx; _ch = true; } if (x.title === 'Masala') { x.title = 'Masala ' + x.no; _ch = true; } }); if (_ch) store.save(); }
     const _u = store.users()[String(_tg.id)] || {};
     const _adm = (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(_tg.id));
-    send(res, 200, { admin: _adm, link: process.env.TG_APP_LINK || '', myId: String(_tg.id), solved: _u.solved || [], list: store.db.puzzles });
+    send(res, 200, { admin: _adm, link: process.env.TG_APP_LINK || '', myId: String(_tg.id), solved: _u.solved || [], list: (() => { const _c = {}; Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { _c[i] = (_c[i] || 0) + 1; })); return store.db.puzzles.map(x => Object.assign({}, x, { cnt: _c[x.id] || 0 })); })() });
     return true;
   }
   if ((p === '/api/puzzle' || p === '/api/puzzle/del' || p === '/api/puzzle/solved' || p === '/api/puzzle/rename') && req.method === 'POST') {
@@ -234,7 +243,7 @@ function handle(req, res, url) {
         const u = store.getOrCreate(_tg);
         u.solved = u.solved || [];
         let gain = 0;
-        if (!u.solved.includes(pz.id)) { u.solved.push(pz.id); gain = 5; u.diamonds = (u.diamonds || 0) + gain; store.save(); }
+        if (!u.solved.includes(pz.id)) { if (Date.now() - (u.lastSolve || 0) < 6000) return send(res, 429, { error: 'slow' }); u.lastSolve = Date.now(); u.solved.push(pz.id); gain = 5; u.diamonds = (u.diamonds || 0) + gain; pz.sv = (pz.sv || []).concat([u.name || 'Foydalanuvchi']).slice(-200); store.save(); try { require('./grpupd.js')(pz, () => Object.values(store.users()).filter(v => (v.solved || []).includes(pz.id)).length); } catch (e) {} }
         return send(res, 200, { ok: true, gain });
       }
       const adm = (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(_tg.id));
@@ -268,7 +277,7 @@ function handle(req, res, url) {
             reply_markup: { inline_keyboard: [[{ text: '🧩 Yechish', url: _lk + '?startapp=pz_' + id }]] } };
           if (process.env.GROUP_TOPIC_ID) _pb.message_thread_id = Number(process.env.GROUP_TOPIC_ID);
           require('./puzimg.js')(_pb, b, j.side)
-            .then(r => r.json()).then(d => { if (!d.ok) console.log('Guruhga yuborilmadi:', d.description); }).catch(e => console.log('Guruh xatosi:', e.message));
+            .then(d => { if (!d || !d.ok) return console.log('Guruhga yuborilmadi:', d && d.description); const _pz = arr.find(x => x.id === id); if (_pz && d.result) { _pz.g = { m: d.result.message_id, c: (d.result.chat && d.result.chat.id) || _gc, ph: !!d.result.photo, cap: d.result.photo ? String(_pb.text).split('\n\n')[0].slice(0, 1000) : _pb.text }; store.save(); } }).catch(e => console.log('Guruh xatosi:', e.message));
         }
       } catch (e) {}
       send(res, 200, { ok: true, id });

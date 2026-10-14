@@ -351,21 +351,34 @@
     }).catch(function () { ov.innerHTML = head('🧩 Masalalar') + '<div style="padding:30px">Server bilan aloqa yo‘q</div>'; on('#pzBack', close); });
   }
   function list() {
-    var h = head('🧩 Masalalar', S.admin ? '<button id="pzNew" style="' + BS + '">➕ Yangi</button>' : '');
+    var h = head('🧩 Masalalar', '<button id="pzTop" style="' + BG + '">🏆 TOP</button>' + (S.admin ? '<button id="pzNew" style="' + BS + '">➕ Yangi</button>' : ''));
     if (!S.list.length) h += '<div style="padding:30px;opacity:.7">Hozircha masala yo‘q</div>';
     S.list.forEach(function (p, i) {
       var ok = (S.solved || []).indexOf(p.id) >= 0;
-      h += '<div data-i="' + i + '" style="text-align:left;background:#161a3a;border:1px solid #262b5a;border-radius:16px;padding:12px;margin-bottom:10px;cursor:pointer"><b>' + (ok ? '✅ ' : '') + esc(p.title) + '</b><div style="font-size:12px;opacity:.65;margin-top:4px">' + LV[p.level] + ' · ' + (p.side === 'w' ? '⚪ Oq yuradi' : '⚫ Qora yuradi') + '</div></div>';
+      h += '<div data-i="' + i + '" style="text-align:left;background:#161a3a;border:1px solid #262b5a;border-radius:16px;padding:12px;margin-bottom:10px;cursor:pointer"><b>' + (ok ? '✅ ' : '') + esc(p.title) + '</b><div style="font-size:12px;opacity:.65;margin-top:4px">' + LV[p.level] + ' · 👥 ' + (p.cnt || 0) + ' · ' + (p.side === 'w' ? '⚪ Oq yuradi' : '⚫ Qora yuradi') + '</div></div>';
     });
     if (!S.admin) h += '<div style="font-size:11px;opacity:.4;margin-top:16px">ID: ' + esc(S.myId) + '</div>';
     ov.innerHTML = h;
-    on('#pzBack', close); on('#pzNew', editor);
+    on('#pzBack', close); on('#pzNew', editor); on('#pzTop', pzTop);
     Array.prototype.forEach.call(ov.querySelectorAll('[data-i]'), function (e) {
       e.onclick = function () { play(S.list[Number(e.getAttribute('data-i'))]); };
     });
   }
 
   // ---- yechish
+  function pzTop() {
+    ov.innerHTML = head('🏆 Masalalar TOP') + '<div style="padding:30px;opacity:.7">Yuklanmoqda…</div>';
+    on('#pzBack', list);
+    api('/api/puzzles/top').then(function (d) {
+      var h = head('🏆 Masalalar TOP'), t = d.top || [];
+      if (!t.length) h += '<div style="padding:30px;opacity:.7">Hozircha hech kim yechmagan</div>';
+      t.forEach(function (x, i) {
+        h += '<div style="text-align:left;background:' + (x.me ? '#262b66' : '#161a3a') + ';border:1px solid #262b5a;border-radius:14px;padding:10px 12px;margin-bottom:8px;display:flex;justify-content:space-between"><span>' + (['🥇', '🥈', '🥉'][i] || (i + 1) + '.') + ' ' + esc(x.name) + '</span><b>✅ ' + x.n + '</b></div>';
+      });
+      if (d.rank > 20) h += '<div style="margin-top:10px;opacity:.85">Sizning o‘rningiz: ' + d.rank + ' · ✅ ' + d.n + '</div>';
+      ov.innerHTML = h; on('#pzBack', list);
+    }).catch(function () { ov.innerHTML = head('🏆 TOP') + '<div style="padding:30px">Server bilan aloqa yo‘q</div>'; on('#pzBack', list); });
+  }
   function play(p) {
     p = Object.assign({}, p);
     var lines = (p.sols && p.sols.length) ? p.sols : [p.sol], alive = lines.map(function (_, i) { return i; });
