@@ -276,8 +276,8 @@ function handle(req, res, url) {
           const _pb = { chat_id: _gc, text: '🧩 Yangi shashka masalasi!\n' + String(j.title || 'Masala').replace(/[<>]/g, '').trim().slice(0, 40) + '\n' + _lv + ' · ' + (j.side === 'w' ? '⚪ Oq yuradi' : '⚫ Qora yuradi'),
             reply_markup: { inline_keyboard: [[{ text: '🧩 Yechish', url: _lk + '?startapp=pz_' + id }, { text: '🏆 TOP', callback_data: 'top10' }]] } };
           if (process.env.GROUP_TOPIC_ID) _pb.message_thread_id = Number(process.env.GROUP_TOPIC_ID);
-          require('./puzimg.js')(_pb, b, j.side)
-            .then(d => { if (!d || !d.ok) return console.log('Guruhga yuborilmadi:', d && d.description); const _pz = arr.find(x => x.id === id); if (_pz && d.result) { _pz.g = { m: d.result.message_id, c: (d.result.chat && d.result.chat.id) || _gc, ph: !!d.result.photo, cap: d.result.photo ? String(_pb.text).split('\n\n')[0].slice(0, 1000) : _pb.text }; store.save(); } }).catch(e => console.log('Guruh xatosi:', e.message));
+          Array.from(new Set([String(_gc)].concat((store.db.groups || []).map(String), String(process.env.EXTRA_GROUP_IDS || '').split(',').map(x => x.trim()).filter(Boolean)))).forEach((_cid, _ix) => { const _pb2 = Object.assign({}, _pb, { chat_id: _cid }); if (_ix > 0) delete _pb2.message_thread_id; setTimeout(() => { require('./puzimg.js')(_pb2, b, j.side)
+            .then(d => { if (!d || !d.ok) return console.log('Guruhga yuborilmadi:', d && d.description); const _pz = arr.find(x => x.id === id); if (_pz && d.result) { _pz.gs = _pz.gs || []; _pz.gs.push({ m: d.result.message_id, c: (d.result.chat && d.result.chat.id) || _cid, ph: !!d.result.photo, cap: d.result.photo ? String(_pb.text).split('\n\n')[0].slice(0, 1000) : _pb.text }); if (!_pz.g) _pz.g = _pz.gs[0]; store.save(); } }).catch(e => console.log('Guruh xatosi:', _cid, e.message)); }, _ix * 400); });
         }
       } catch (e) {}
       send(res, 200, { ok: true, id });

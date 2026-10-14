@@ -6,6 +6,7 @@ const FILE = process.env.DB_FILE || path.join(__dirname, 'data', 'players.json')
 let db = { users: {} };
 try { db = JSON.parse(fs.readFileSync(FILE, 'utf8')); } catch {}
 if (!db.users) db.users = {};
+if (!Array.isArray(db.groups)) db.groups = [];
 
 const URL_ = process.env.DATABASE_URL;
 let pool = null, ready = false, timer = null;
@@ -41,6 +42,7 @@ if (URL_) {
         const remote = (r.rows[0].v && r.rows[0].v.users) || {};
         if (r.rows[0].v && Array.isArray(r.rows[0].v.puzzles)) db.puzzles = r.rows[0].v.puzzles;
         if (r.rows[0].v && Array.isArray(r.rows[0].v.shop)) db.shop = r.rows[0].v.shop;
+        if (r.rows[0].v && Array.isArray(r.rows[0].v.groups)) db.groups = r.rows[0].v.groups;
         for (const id of Object.keys(db.users)) if (!remote[id]) remote[id] = db.users[id];
         for (const id of Object.keys(db.users)) delete db.users[id];
         Object.assign(db.users, remote);

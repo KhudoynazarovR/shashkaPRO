@@ -100,6 +100,19 @@ async function start() {
   } catch (e) {}
   console.log("[bot] ishga tushdi: @" + BOT);
 
+  function onMyChat(m) {
+    try {
+      const ch = m.chat || {};
+      if (ch.type !== 'group' && ch.type !== 'supergroup') return;
+      const st = (m.new_chat_member || {}).status;
+      const adm = st === 'administrator' || st === 'creator';
+      const s = require('./store');
+      s.db.groups = s.db.groups || [];
+      const id = String(ch.id), i = s.db.groups.findIndex(x => String(x) === id);
+      if (adm && i < 0) { s.db.groups.push(ch.id); console.log('[bot] guruh qo‘shildi:', ch.title, id); s.save(); }
+      else if (!adm && i >= 0) { s.db.groups.splice(i, 1); console.log('[bot] guruh o‘chirildi:', ch.title, id); s.save(); }
+    } catch (e) { console.log('[bot] my_chat_member xato:', e.message); }
+  }
   async function onCallback(q) {
     if (q.data !== 'top10') return;
     let txt = '🏆 TOP 10';
@@ -122,7 +135,7 @@ async function start() {
       const r = await api("getUpdates", {
         offset: offset,
         timeout: 30,
-        allowed_updates: ["message", "inline_query", "pre_checkout_query", "callback_query"]
+        allowed_updates: ["message", "inline_query", "pre_checkout_query", "callback_query", "my_chat_member"]
       });
       if (!r.ok) throw new Error(r.description || "getUpdates xato");
       for (const u of r.result) {
@@ -133,6 +146,7 @@ async function start() {
           else if (u.message) await onMessage(u.message);
           else if (u.inline_query) await onInline(u.inline_query);
           else if (u.callback_query) await onCallback(u.callback_query);
+          else if (u.my_chat_member) onMyChat(u.my_chat_member);
         } catch (e) {
           console.log("[bot] xato:", e.message);
         }
