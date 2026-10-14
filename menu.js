@@ -504,10 +504,16 @@
       h += '<div style="margin-bottom:8px">' + (p.side === 'w' ? '⚪ Oq yuradi' : '⚫ Qora yuradi') + ' · ' + LV[p.level] + '</div>';
       h += boardHtml(g.b, { sel: sel, hl: tg2 });
       h += '<div style="min-height:28px;margin:10px 0;font-size:16px">' + msg + '</div>';
+      var _a = sibs(), _i = _a.findIndex(function (x) { return x.id === p.id; });
+      h += '<div style="margin:4px 0 8px;opacity:.75">' + (_i + 1) + ' / ' + _a.length + '</div>';
+      if (_i > 0) h += '<button id="pzPrev" style="' + BG + '">⬅️ Oldingi</button>';
+      if (_a.length > 1) h += '<button id="pzNext" style="' + (done ? BS : BG) + '">➡️ Keyingi</button>';
       h += '<button id="pzR" style="' + BG + '">🔄 Qayta</button><button id="pzH" style="' + BS + '">💡 Ko‘rsatma</button>';
       if (S.link) h += '<button id="pzS" style="' + BS + '">📤 Yuborish</button>'; if (S.admin) h += '<button id="pzN" style="' + BG + '">✏️ Nomi</button>'; if (S.admin) h += '<button id="pzD" style="' + BG + '">🗑 O‘chirish</button>';
       ov.innerHTML = h;
       on('#pzBack', list);
+      on('#pzPrev', function () { var a = sibs(), i = a.findIndex(function (x) { return x.id === p.id; }); if (i > 0) play(a[i - 1]); });
+      on('#pzNext', goNext);
       on('#pzR', function () { play(p); });
       on('#pzS', function () {
         var u = S.link + '?startapp=pz_' + p.id, t = '🧩 Shashka masalasi: ' + p.title;
@@ -528,6 +534,13 @@
         api('/api/puzzle/del', { id: p.id }).then(function () { load(); });
       });
       bindBoard(tap);
+    }
+    function sibs() { var f = foOf(p); return S.list.filter(function (x) { return foOf(x) === f; }).sort(function (x, y) { return (x.no || 0) - (y.no || 0); }); }
+    function goNext() {
+      var a = sibs(), i = a.findIndex(function (x) { return x.id === p.id; }), sv = S.solved || [], n = a.length, j, k;
+      for (k = 1; k < n; k++) { j = (i + k) % n; if (sv.indexOf(a[j].id) < 0) return play(a[j]); }
+      if (i < n - 1) return play(a[i + 1]);
+      msg = '🎉 Papkadagi hamma masala yechilgan'; draw();
     }
     function solved() {
       done = true; msg = '🎉 Masala yechildi!'; draw();
