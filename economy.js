@@ -215,6 +215,7 @@ function handle(req, res, url) {
     const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
     store.db.puzzles = store.db.puzzles || [];
+    { let _mx = 0, _ch = false; const _a = store.db.puzzles; _a.forEach(x => { if (x.no) _mx = Math.max(_mx, x.no); }); _a.forEach(x => { if (!x.no) { x.no = ++_mx; _ch = true; } if (x.title === 'Masala') { x.title = 'Masala ' + x.no; _ch = true; } }); if (_ch) store.save(); }
     const _u = store.users()[String(_tg.id)] || {};
     const _adm = (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(_tg.id));
     send(res, 200, { admin: _adm, link: process.env.TG_APP_LINK || '', myId: String(_tg.id), solved: _u.solved || [], list: store.db.puzzles });
@@ -255,7 +256,9 @@ function handle(req, res, url) {
       const okS = _sols.length >= 1 && _sols.every(sl => Array.isArray(sl) && sl.length >= 1 && sl.length <= 60 && sl.every(s => Array.isArray(s) && s.length === 4 && s.every(v => Number.isInteger(v) && v >= 0 && v < 8)));
       if (!okB || !okS || (j.side !== 'w' && j.side !== 'b')) return send(res, 400, { error: 'noto‘g‘ri ma‘lumot' });
       const id = 'p' + Date.now().toString(36);
-      arr.push({ id, title: String(j.title || 'Masala').replace(/[<>]/g, '').trim().slice(0, 40) || 'Masala', level: [1, 2, 3].includes(j.level) ? j.level : 1, side: j.side, board: b, sol, sols: _sols, at: Date.now() });
+      let _mx = 0; arr.forEach(x => { if (x.no) _mx = Math.max(_mx, x.no); }); arr.forEach(x => { if (!x.no) x.no = ++_mx; });
+      const _no = ++_mx, _t0 = String(j.title || '').replace(/[<>]/g, '').trim().slice(0, 40), _title = (!_t0 || _t0 === 'Masala') ? 'Masala ' + _no : _t0; j.title = _title;
+      arr.push({ id, no: _no, title: _title, level: [1, 2, 3].includes(j.level) ? j.level : 1, side: j.side, board: b, sol, sols: _sols, at: Date.now() });
       store.save();
       try {
         const _gc = process.env.GROUP_CHAT_ID, _lk = process.env.TG_APP_LINK;
