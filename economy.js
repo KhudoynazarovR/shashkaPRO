@@ -292,11 +292,11 @@ function handle(req, res, url) {
     const _u = store.users()[String(_tg.id)] || {};
     const _adm = (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(_tg.id));
     const _all = Object.values(store.users());
-    send(res, 200, { admin: _adm, link: process.env.TG_APP_LINK || '', diamonds: _u.diamonds || 0, owned: _u.owned || [], equipped: _u.equipped || '',
-      list: store.db.shop.map(x => ({ id: x.id, name: x.name, price: x.price, by: x.by || '', sold: _all.filter(v => (v.owned || []).includes(x.id)).length })) });
+    send(res, 200, { admin: _adm, link: process.env.TG_APP_LINK || '', diamonds: _u.diamonds || 0, owned: _u.owned || [], equipped: _u.equipped || '', def: (store.db.shop.find(x => x.def) || {}).id || '',
+      list: store.db.shop.map(x => ({ id: x.id, name: x.name, price: x.price, by: x.by || '', def: !!x.def, sold: _all.filter(v => (v.owned || []).includes(x.id)).length })) });
     return true;
   }
-  if (['/api/shop/buy', '/api/shop/equip', '/api/shop/add', '/api/shop/del'].includes(p) && req.method === 'POST') {
+  if (['/api/shop/buy', '/api/shop/equip', '/api/shop/add', '/api/shop/del', '/api/shop/default'].includes(p) && req.method === 'POST') {
     const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
     readBody(req, 800000, body => {
@@ -318,14 +318,21 @@ function handle(req, res, url) {
       }
       if (p === '/api/shop/equip') {
         if (j.id) {
-          if (!arr.find(x => x.id === j.id)) return send(res, 404, { error: 'Dona topilmadi' });
-          if (!u.owned.includes(j.id) && !adm) return send(res, 403, { error: 'Avval sotib oling' });
+          if (j.id !== '-' && !arr.find(x => x.id === j.id)) return send(res, 404, { error: 'Dona topilmadi' });
+          if (j.id !== '-' && !u.owned.includes(j.id) && !adm && !arr.some(x => x.id === j.id && x.def)) return send(res, 403, { error: 'Avval sotib oling' });
         }
         u.equipped = j.id ? String(j.id) : '';
         store.save();
         return send(res, 200, { ok: true, equipped: u.equipped });
       }
       if (!adm) return send(res, 403, { error: 'admin emassiz' });
+      if (p === '/api/shop/default') {
+        arr.forEach(x => { delete x.def; });
+        const t = arr.find(x => x.id === j.id);
+        if (t) t.def = true;
+        store.save();
+        return send(res, 200, { ok: true });
+      }
       if (p === '/api/shop/del') {
         const i = arr.findIndex(x => x.id === j.id);
         if (i >= 0) { arr.splice(i, 1); store.save(); }

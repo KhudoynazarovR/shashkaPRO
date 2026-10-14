@@ -568,8 +568,8 @@
   function imgUrl(id, k) { return '/api/shop/img?id=' + encodeURIComponent(id) + '&k=' + k; }
   function applyEq() {
     var o = document.getElementById('spShopCss'); if (o) o.remove();
-    if (!S.equipped || !S.list.some(function (x) { return x.id === S.equipped; })) return;
-    var id = S.equipped, B = 'html body #board[data-th][data-ps] .sq .pc';
+    var eqId = S.equipped === '-' ? '' : (S.equipped || S.def || ''); if (!eqId || !S.list.some(function (x) { return x.id === eqId; })) return;
+    var id = eqId, B = 'html body #board[data-th][data-ps] .sq .pc';
     var css = B + '::before,' + B + '::after{display:none!important}'
       + B + '{background-color:transparent!important;background-size:contain!important;background-position:center!important;background-repeat:no-repeat!important;border:0!important;box-shadow:none!important;filter:drop-shadow(0 3px 2px #0007)}'
       + B + '.w{background-image:url("' + imgUrl(id, 'w') + '")!important}'
@@ -597,7 +597,7 @@
     return '<div style="display:flex;justify-content:space-between;align-items:center;font-size:20px;font-weight:700;margin-bottom:12px"><span>💎 Tosh do‘koni</span><span style="font-size:15px">💎 ' + (S.diamonds || 0) + ' <button id="shBack" style="' + BG + '">⬅️</button></span></div>';
   }
   function card(it) {
-    var own = S.owned.indexOf(it.id) >= 0, eq = S.equipped === it.id;
+    var own = S.owned.indexOf(it.id) >= 0 || !!it.def, eq = (S.equipped === '-' ? '' : (S.equipped || S.def)) === it.id;
     var h = '<div style="background:#161a3a;border:1px solid #262b5a;border-radius:16px;padding:10px"><b style="font-size:13px">' + esc(it.name) + '</b>';
     h += '<div style="display:grid;grid-template-columns:1fr 1fr;aspect-ratio:1;margin:8px 0;border-radius:10px;overflow:hidden">';
     KS.forEach(function (k, i) {
@@ -608,7 +608,7 @@
     if (own) h += '<button data-a="eq" data-id="' + it.id + '" style="' + (eq ? BS : BG) + ';width:92%">' + (eq ? '✅ Tanlangan' : 'Tanlash') + '</button>';
     else h += '<button data-a="buy" data-id="' + it.id + '" style="' + BO + ';width:92%">🛒 Sotib olish</button>';
     if (S.link) h += '<button data-a="sh" data-id="' + it.id + '" style="' + BG + ';width:92%">🔗 Ulashish</button>';
-    if (S.admin) h += '<button data-a="del" data-id="' + it.id + '" style="' + BG + ';width:92%">🗑 O‘chirish</button>';
+    if (S.admin) h += '<button data-a="def" data-id="' + it.id + '" style="' + BG + ';width:92%">' + (it.def ? '⭐ Asosiy (bekor qilish)' : '⭐ Hamma uchun asosiy') + '</button>'; if (S.admin) h += '<button data-a="del" data-id="' + it.id + '" style="' + BG + ';width:92%">🗑 O‘chirish</button>';
     return h + '</div>';
   }
   function draw() {
@@ -636,13 +636,15 @@
         msg = '⚠️ ' + ((d && d.error) || 'Xato');
       }).then(draw).catch(function () { msg = '⚠️ Server bilan aloqa yo‘q'; draw(); });
     } else if (a === 'eq') {
-      api('/api/shop/equip', { id: S.equipped === id ? '' : id }).then(function (d) {
-        if (d && d.ok) { S.equipped = d.equipped; applyEq(); msg = d.equipped ? '✅ Dona doskada qo‘llandi' : 'Standart dona qaytdi'; } else msg = '⚠️ ' + ((d && d.error) || 'Xato');
+      api('/api/shop/equip', { id: ((S.equipped === '-' ? '' : (S.equipped || S.def)) === id) ? '-' : id }).then(function (d) {
+        if (d && d.ok) { S.equipped = d.equipped; applyEq(); msg = (d.equipped && d.equipped !== '-') ? '✅ Dona doskada qo‘llandi' : 'Standart dona qaytdi'; } else msg = '⚠️ ' + ((d && d.error) || 'Xato');
         draw();
       });
     } else if (a === 'sh') {
       var u = S.link + '?startapp=shop_' + id, sh = 'https://t.me/share/url?url=' + encodeURIComponent(u) + '&text=' + encodeURIComponent('💎 Shashka donasi: ' + it.name);
       if (tg && tg.openTelegramLink) tg.openTelegramLink(sh); else window.open(sh, '_blank');
+    } else if (a === 'def') {
+      api('/api/shop/default', { id: it.def ? '' : id }).then(reload).then(function () { msg = '✅ Saqlandi'; draw(); });
     } else if (a === 'del') {
       if (!confirm('Dona o‘chirilsinmi?')) return;
       api('/api/shop/del', { id: id }).then(reload).then(draw);
