@@ -277,21 +277,22 @@
   function ins(r, c) { return r >= 0 && r < 8 && c >= 0 && c < 8; }
   function sideOf(p) { return p === 1 || p === 3 ? 'w' : (p === 2 || p === 4 ? 'b' : null); }
   function blank() { var b = [], r; for (r = 0; r < 8; r++) b.push([0, 0, 0, 0, 0, 0, 0, 0]); return b; }
-  function copy(b) { return b.map(function (x) { return x.slice(); }); }
+  function copy(b) { var n = b.map(function (x) { return x.slice(); }); if (b.dead) n.dead = b.dead.slice(); return n; }
   function std() { var b = blank(), r, c; for (r = 0; r < 8; r++) for (c = 0; c < 8; c++) if ((r + c) % 2) b[r][c] = r < 3 ? 2 : (r > 4 ? 1 : 0); return b; }
 
   // ---- qoidalar (rus shashkasi): majburiy urish, dama uzoqqa yuradi
   function caps(b, r, c) {
-    var p = b[r][c], out = [], me = sideOf(p);
+    var p = b[r][c], out = [], me = sideOf(p), dead = b.dead || [];
+    function isD(a, e) { for (var i = 0; i < dead.length; i++) if (dead[i][0] === a && dead[i][1] === e) return true; return false; }
     DIRS.forEach(function (d) {
       var nr, nc;
       if (p < 3) {
         var mr = r + d[0], mc = c + d[1], lr = r + 2 * d[0], lc = c + 2 * d[1];
-        if (ins(lr, lc) && b[mr][mc] && sideOf(b[mr][mc]) !== me && !b[lr][lc]) out.push({ f: [r, c], t: [lr, lc], x: [mr, mc] });
+        if (ins(lr, lc) && b[mr][mc] && sideOf(b[mr][mc]) !== me && !isD(mr, mc) && !b[lr][lc]) out.push({ f: [r, c], t: [lr, lc], x: [mr, mc] });
       } else {
         nr = r + d[0]; nc = c + d[1];
         while (ins(nr, nc) && !b[nr][nc]) { nr += d[0]; nc += d[1]; }
-        if (ins(nr, nc) && sideOf(b[nr][nc]) !== me) {
+        if (ins(nr, nc) && sideOf(b[nr][nc]) !== me && !isD(nr, nc)) {
           var er = nr, ec = nc; nr += d[0]; nc += d[1];
           while (ins(nr, nc) && !b[nr][nc]) { out.push({ f: [r, c], t: [nr, nc], x: [er, ec] }); nr += d[0]; nc += d[1]; }
         }
@@ -323,13 +324,15 @@
     return cs.length ? cs : ss;
   }
   function adv(g, s) {
-    var n = copy(g.b), p = n[s.f[0]][s.f[1]];
+    var n = copy(g.b), p = n[s.f[0]][s.f[1]], dead = (g.b.dead || []).slice();
     n[s.f[0]][s.f[1]] = 0;
-    if (s.x) n[s.x[0]][s.x[1]] = 0;
     if (p === 1 && s.t[0] === 0) p = 3;
     if (p === 2 && s.t[0] === 7) p = 4;
     n[s.t[0]][s.t[1]] = p;
-    var more = s.x && caps(n, s.t[0], s.t[1]).length > 0;
+    if (s.x) dead.push([s.x[0], s.x[1]]);
+    n.dead = dead;
+    var more = !!s.x && caps(n, s.t[0], s.t[1]).length > 0;
+    if (!more) { dead.forEach(function (x) { n[x[0]][x[1]] = 0; }); n.dead = []; }
     return { b: n, side: more ? g.side : (g.side === 'w' ? 'b' : 'w'), forced: more ? [s.t[0], s.t[1]] : null };
   }
   function findStep(lg, f, t) {

@@ -14,20 +14,48 @@ function simpleMoves(b,r,c){
   else{const dr=isWhite(p)?-1:1;for(const d of DIRS)if(d[0]===dr){const nr=r+d[0],nc=c+d[1];if(inside(nr,nc)&&!b[nr][nc])out.push({from:{r,c},to:{r:nr,c:nc},captures:[]})}}
   return out
 }
-function captureSteps(b,r,c){
+const DEADS=new WeakMap(),ENDED=new WeakMap();
+function deadOf(b){return DEADS.get(b)||[]}
+function isDeadSq(d,r,c){for(let i=0;i<d.length;i++)if(d[i].r===r&&d[i].c===c)return true;return false}
+function rawCaptures(b,r,c,dead){
   const p=b[r][c],out=[];if(!p)return out;
-  if(isKing(p)){for(const d of DIRS){let nr=r+d[0],nc=c+d[1],enemy=null;while(inside(nr,nc)){const x=b[nr][nc];if(!x){if(enemy)out.push({from:{r,c},to:{r:nr,c:nc},captures:[enemy]})}else{if(sameSide(p,x)||enemy)break;enemy={r:nr,c:nc}}nr+=d[0];nc+=d[1]}}}
-  else{for(const d of DIRS){const mr=r+d[0],mc=c+d[1],lr=r+2*d[0],lc=c+2*d[1];if(inside(mr,mc)&&inside(lr,lc)&&b[mr][mc]&&!sameSide(p,b[mr][mc])&&!b[lr][lc])out.push({from:{r,c},to:{r:lr,c:lc},captures:[{r:mr,c:mc}]})}}
+  if(isKing(p)){for(const d of DIRS){let nr=r+d[0],nc=c+d[1],enemy=null;while(inside(nr,nc)){const x=b[nr][nc];if(!x){if(enemy)out.push({from:{r,c},to:{r:nr,c:nc},captures:[enemy]})}else{if(sameSide(p,x)||enemy||isDeadSq(dead,nr,nc))break;enemy={r:nr,c:nc}}nr+=d[0];nc+=d[1]}}}
+  else{for(const d of DIRS){const mr=r+d[0],mc=c+d[1],lr=r+2*d[0],lc=c+2*d[1];if(inside(lr,lc)&&b[mr][mc]&&!sameSide(p,b[mr][mc])&&!isDeadSq(dead,mr,mc)&&!b[lr][lc])out.push({from:{r,c},to:{r:lr,c:lc},captures:[{r:mr,c:mc}]})}}
   return out
 }
-function applyStep(b,m){const n=clone(b),p=n[m.from.r][m.from.c];n[m.from.r][m.from.c]=EMPTY;m.captures.forEach(x=>n[x.r][x.c]=EMPTY);n[m.to.r][m.to.c]=(p===WHITE&&m.to.r===0)?WHITE_KING:(p===BLACK&&m.to.r===7)?BLACK_KING:p;return n}
+function keepStep(b,m){
+  const n=clone(b),p=n[m.from.r][m.from.c];n[m.from.r][m.from.c]=EMPTY;
+  n[m.to.r][m.to.c]=(p===WHITE&&m.to.r===0)?WHITE_KING:(p===BLACK&&m.to.r===7)?BLACK_KING:p;
+  if(m.captures.length)DEADS.set(n,deadOf(b).concat(m.captures));
+  return n
+}
+function captureSteps(b,r,c){
+  const e=ENDED.get(b);if(e&&e.r===r&&e.c===c)return [];
+  const dead=deadOf(b),raw=rawCaptures(b,r,c,dead);
+  if(raw.length<2||!isKing(b[r][c]))return raw;
+  const groups=new Map();
+  for(const s of raw){const k=s.captures[0].r*8+s.captures[0].c;if(!groups.has(k))groups.set(k,[]);groups.get(k).push(s)}
+  const out=[];
+  for(const g of groups.values()){
+    const cont=g.filter(s=>{const n=keepStep(b,s);return rawCaptures(n,s.to.r,s.to.c,deadOf(n)).length>0});
+    out.push(...(cont.length?cont:g))
+  }
+  return out
+}
+function applyStep(b,m){
+  const n=keepStep(b,m);
+  if(m.captures.length&&!rawCaptures(n,m.to.r,m.to.c,deadOf(n)).length){
+    deadOf(n).forEach(x=>{n[x.r][x.c]=EMPTY});DEADS.delete(n);ENDED.set(n,{r:m.to.r,c:m.to.c})
+  }
+  return n
+}
 function continueCapture(b,r,c,origin,caps,path,out){
   const steps=captureSteps(b,r,c);
   if(!steps.length){out.push({from:origin,to:{r,c},captures:caps.slice(),path:path.slice()});return}
-  for(const s of steps)continueCapture(applyStep(b,s),s.to.r,s.to.c,origin,caps.concat(s.captures),path.concat([s.to]),out)
+  for(const s of steps)continueCapture(keepStep(b,s),s.to.r,s.to.c,origin,caps.concat(s.captures),path.concat([s.to]),out)
 }
 function allCaptures(b,side){
-  const out=[];for(let r=0;r<8;r++)for(let c=0;c<8;c++){const p=b[r][c];if(!p||(side===WHITE&&!isWhite(p))||(side===BLACK&&!isBlack(p)))continue;for(const s of captureSteps(b,r,c))continueCapture(applyStep(b,s),s.to.r,s.to.c,{r,c},s.captures,[s.to],out)}return out
+  const out=[];for(let r=0;r<8;r++)for(let c=0;c<8;c++){const p=b[r][c];if(!p||(side===WHITE&&!isWhite(p))||(side===BLACK&&!isBlack(p)))continue;for(const s of captureSteps(b,r,c))continueCapture(keepStep(b,s),s.to.r,s.to.c,{r,c},s.captures,[s.to],out)}return out
 }
 function getAllMoves(b,side){
   const caps=allCaptures(b,side);if(caps.length)return caps;const out=[];
