@@ -543,7 +543,14 @@
       if (i < n - 1) return play(a[i + 1]);
       msg = '🎉 Papkadagi hamma masala yechilgan'; draw();
     }
-    function solved() {
+    window.pzFan = window.pzFan || (function () {
+      var A = null;
+      function c() { if (!A) A = new (window.AudioContext || window.webkitAudioContext)(); if (A.state === 'suspended') A.resume(); return A; }
+      document.addEventListener('pointerdown', function () { try { c(); } catch (e) {} }, true);
+      function n(f, t, d, g) { var a = c(), o = a.createOscillator(), v = a.createGain(), t0 = a.currentTime + t; o.type = 'triangle'; o.frequency.setValueAtTime(f, t0); v.gain.setValueAtTime(0.0001, t0); v.gain.exponentialRampToValueAtTime(g, t0 + 0.012); v.gain.exponentialRampToValueAtTime(0.0001, t0 + d); o.connect(v); v.connect(a.destination); o.start(t0); o.stop(t0 + d + 0.05); }
+      return function () { [523.25, 659.25, 783.99, 1046.5].forEach(function (x, i) { n(x, i * 0.1, 0.35, 0.3); }); n(1318.5, 0.42, 0.5, 0.22); };
+    })();
+    function solved() { try { window.pzFan(); } catch (e) {}
       done = true; msg = '🎉 Masala yechildi!'; draw();
       api('/api/puzzle/solved', { id: p.id }).then(function (d) {
         if (d && d.gain) msg += ' +' + d.gain + ' 💎';
