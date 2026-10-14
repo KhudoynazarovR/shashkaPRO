@@ -500,6 +500,7 @@
     function draw() {
       var tg2 = [];
       if (sel) tg2 = legal(g.b, g.side, g.forced).filter(function (s) { return s.f[0] === sel[0] && s.f[1] === sel[1]; }).map(function (s) { return s.t; });
+      if (!document.getElementById('pzCss')) { var _st = document.createElement('style'); _st.id = 'pzCss'; _st.textContent = '.pzWrap{position:relative;display:inline-block;margin:18px 0 10px}.pzBig{position:relative;font-size:21px!important;padding:18px 38px!important;border-radius:18px!important;font-weight:700;animation:pzGlow 1.5s ease-in-out infinite}.pzO{position:absolute;left:0;right:0;top:0;bottom:0;pointer-events:none;transform:scaleY(.5)}.pzO i{position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:#ffd86b;box-shadow:0 0 8px #ffd86b;animation:pzOrb 3s linear infinite}@keyframes pzOrb{from{transform:rotate(0deg) translateX(125px)}to{transform:rotate(360deg) translateX(125px)}}@keyframes pzGlow{0%,100%{box-shadow:0 0 14px #6b5cf0}50%{box-shadow:0 0 34px #a99bff}}'; document.head.appendChild(_st); }
       var h = head('🧩 ' + esc(p.title));
       h += '<div style="margin-bottom:8px">' + (p.side === 'w' ? '⚪ Oq yuradi' : '⚫ Qora yuradi') + ' · ' + LV[p.level] + '</div>';
       h += boardHtml(g.b, { sel: sel, hl: tg2 });
@@ -507,7 +508,7 @@
       var _a = sibs(), _i = _a.findIndex(function (x) { return x.id === p.id; });
       h += '<div style="margin:4px 0 8px;opacity:.75">' + (_i + 1) + ' / ' + _a.length + '</div>';
       if (_i > 0) h += '<button id="pzPrev" style="' + BG + '">⬅️ Oldingi</button>';
-      if (_a.length > 1) h += '<button id="pzNext" style="' + (done ? BS : BG) + '">➡️ Keyingi</button>';
+      if (_a.length > 1) h += done ? ('<div style="text-align:center"><span class="pzWrap"><span class="pzO">' + [0,1,2,3,4,5,6,7].map(function (k) { return '<i style="animation-delay:-' + (k * 0.375) + 's"></i>'; }).join('') + '</span><button id="pzNext" class="pzBig" style="' + BS + '">➡️ Keyingi masala</button></span></div>') : '<button id="pzNext" style="' + BG + '">➡️ Keyingi</button>';
       h += '<button id="pzR" style="' + BG + '">🔄 Qayta</button><button id="pzH" style="' + BS + '">💡 Ko‘rsatma</button>';
       if (S.link) h += '<button id="pzS" style="' + BS + '">📤 Yuborish</button>'; if (S.admin) h += '<button id="pzN" style="' + BG + '">✏️ Nomi</button>'; if (S.admin) h += '<button id="pzD" style="' + BG + '">🗑 O‘chirish</button>';
       ov.innerHTML = h;
