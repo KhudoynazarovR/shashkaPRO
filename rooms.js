@@ -528,6 +528,12 @@ function createRooms({ send, clients, onFinish }) {
   setInterval(() => {
     const now = Date.now();
     for (const room of rooms.values()) {
+      // Seriyaning 2+ o'yinida birinchi yurish uchun 30 soniya
+      if (room.white && room.black && !room.finished && room.plies < 2 && room.gamesTotal > 1 && (room.played || 0) > 0 && !room.arena) {
+        const k = room.played + ":" + room.plies + ":" + room.turn;
+        if (room._fmKey !== k) { room._fmKey = k; room._fmSince = now; }
+        else if (now - room._fmSince >= 30000) { finish(room, other(room.turn), "timeout"); continue; }
+      }
       if (!clockRunning(room)) continue;
       if (room.clock[room.turn] - (now - room.turnStartedAt) <= 0) {
         finish(room, other(room.turn), "timeout");
