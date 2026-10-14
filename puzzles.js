@@ -112,7 +112,7 @@
     document.body.appendChild(ov);
     load();
   }
-  function close() { if (ov) ov.remove(); }
+  function close() { curLv = 0; if (ov) ov.remove(); }
   function load() {
     ov.innerHTML = head('🧩 Masalalar') + '<div style="padding:30px;opacity:.7">Yuklanmoqda…</div>';
     on('#pzBack', close);
@@ -121,16 +121,34 @@
       S = d; var _pid = pending; pending = null; var _pz = _pid && S.list.filter(function (x) { return x.id === _pid; })[0]; if (_pz) play(_pz); else list();
     }).catch(function () { ov.innerHTML = head('🧩 Masalalar') + '<div style="padding:30px">Server bilan aloqa yo‘q</div>'; on('#pzBack', close); });
   }
-  function list() {
+  var curLv = 0;
+  function lvOf(p) { return [1, 2, 3].indexOf(p.level) >= 0 ? p.level : 1; }
+  function folders() {
     var h = head('🧩 Masalalar', '<button id="pzTop" style="' + BG + '">🏆 TOP</button>' + (S.admin ? '<button id="pzNew" style="' + BS + '">➕ Yangi</button>' : ''));
     if (!S.list.length) h += '<div style="padding:30px;opacity:.7">Hozircha masala yo‘q</div>';
-    S.list.forEach(function (p, i) {
+    [1, 2, 3].forEach(function (lv) {
+      var arr = S.list.filter(function (p) { return lvOf(p) === lv; });
+      var done = arr.filter(function (p) { return (S.solved || []).indexOf(p.id) >= 0; }).length;
+      h += '<div data-lv="' + lv + '" style="text-align:left;background:#161a3a;border:1px solid #262b5a;border-radius:16px;padding:16px;margin-bottom:10px;cursor:pointer"><b style="font-size:17px">📁 ' + LV[lv] + '</b><div style="font-size:12px;opacity:.65;margin-top:4px">' + arr.length + ' ta masala · ✅ ' + done + '/' + arr.length + '</div></div>';
+    });
+    if (!S.admin) h += '<div style="font-size:11px;opacity:.4;margin-top:16px">ID: ' + esc(S.myId) + '</div>';
+    ov.innerHTML = h;
+    on('#pzBack', close); on('#pzNew', editor); on('#pzTop', pzTop);
+    Array.prototype.forEach.call(ov.querySelectorAll('[data-lv]'), function (e) {
+      e.onclick = function () { curLv = Number(e.getAttribute('data-lv')); list(); };
+    });
+  }
+  function list() {
+    if (!curLv) return folders();
+    var h = head('🧩 Masalalar', '<button id="pzTop" style="' + BG + '">🏆 TOP</button>' + (S.admin ? '<button id="pzNew" style="' + BS + '">➕ Yangi</button>' : ''));
+    h += '<div style="margin:6px 0 12px;font-weight:bold">' + LV[curLv] + '</div>'; if (!S.list.length) h += '<div style="padding:30px;opacity:.7">Hozircha masala yo‘q</div>';
+    S.list.forEach(function (p, i) { if (lvOf(p) !== curLv) return;
       var ok = (S.solved || []).indexOf(p.id) >= 0;
       h += '<div data-i="' + i + '" style="text-align:left;background:#161a3a;border:1px solid #262b5a;border-radius:16px;padding:12px;margin-bottom:10px;cursor:pointer"><b>' + (ok ? '✅ ' : '') + esc(p.title) + '</b><div style="font-size:12px;opacity:.65;margin-top:4px">' + LV[p.level] + ' · 👥 ' + (p.cnt || 0) + ' · ' + (p.side === 'w' ? '⚪ Oq yuradi' : '⚫ Qora yuradi') + '</div></div>';
     });
     if (!S.admin) h += '<div style="font-size:11px;opacity:.4;margin-top:16px">ID: ' + esc(S.myId) + '</div>';
     ov.innerHTML = h;
-    on('#pzBack', close); on('#pzNew', editor); on('#pzTop', pzTop);
+    on('#pzBack', function () { curLv = 0; list(); }); on('#pzNew', editor); on('#pzTop', pzTop);
     Array.prototype.forEach.call(ov.querySelectorAll('[data-i]'), function (e) {
       e.onclick = function () { play(S.list[Number(e.getAttribute('data-i'))]); };
     });
