@@ -100,13 +100,29 @@ async function start() {
   } catch (e) {}
   console.log("[bot] ishga tushdi: @" + BOT);
 
+  async function onCallback(q) {
+    if (q.data !== 'top10') return;
+    let txt = '🏆 TOP 10';
+    try {
+      const st = require('./store');
+      const ids = new Set((st.db.puzzles || []).map(x => x.id));
+      const rows = Object.values(st.users()).map(v => ({ name: Array.from(String(v.name || 'Foydalanuvchi')).slice(0, 12).join(''), n: (v.solved || []).filter(i => ids.has(i)).length })).filter(x => x.n > 0).sort((a, b) => b.n - a.n || a.name.localeCompare(b.name)).slice(0, 10);
+      if (!rows.length) txt += '\nHozircha hech kim yechmagan';
+      for (let i = 0; i < rows.length; i++) {
+        const line = '\n' + (i + 1) + '. ' + rows[i].name + ' — ' + rows[i].n;
+        if (Array.from(txt + line).length > 200) break;
+        txt += line;
+      }
+    } catch (e) { txt = 'TOP hozircha mavjud emas'; }
+    try { await api("answerCallbackQuery", { callback_query_id: q.id, text: txt, show_alert: true }); } catch (e) {}
+  }
   let offset = 0;
   for (;;) {
     try {
       const r = await api("getUpdates", {
         offset: offset,
         timeout: 30,
-        allowed_updates: ["message", "inline_query", "pre_checkout_query"]
+        allowed_updates: ["message", "inline_query", "pre_checkout_query", "callback_query"]
       });
       if (!r.ok) throw new Error(r.description || "getUpdates xato");
       for (const u of r.result) {
@@ -116,6 +132,7 @@ async function start() {
           else if (u.message && u.message.successful_payment) await pay.onPayment(u.message);
           else if (u.message) await onMessage(u.message);
           else if (u.inline_query) await onInline(u.inline_query);
+          else if (u.callback_query) await onCallback(u.callback_query);
         } catch (e) {
           console.log("[bot] xato:", e.message);
         }

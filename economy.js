@@ -274,7 +274,7 @@ function handle(req, res, url) {
         if (_gc && _lk && process.env.BOT_TOKEN) {
           const _lv = ['', '🟢 Oson', '🟡 O‘rta', '🔴 Qiyin'][[1, 2, 3].includes(j.level) ? j.level : 1];
           const _pb = { chat_id: _gc, text: '🧩 Yangi shashka masalasi!\n' + String(j.title || 'Masala').replace(/[<>]/g, '').trim().slice(0, 40) + '\n' + _lv + ' · ' + (j.side === 'w' ? '⚪ Oq yuradi' : '⚫ Qora yuradi'),
-            reply_markup: { inline_keyboard: [[{ text: '🧩 Yechish', url: _lk + '?startapp=pz_' + id }]] } };
+            reply_markup: { inline_keyboard: [[{ text: '🧩 Yechish', url: _lk + '?startapp=pz_' + id }, { text: '🏆 TOP', callback_data: 'top10' }]] } };
           if (process.env.GROUP_TOPIC_ID) _pb.message_thread_id = Number(process.env.GROUP_TOPIC_ID);
           require('./puzimg.js')(_pb, b, j.side)
             .then(d => { if (!d || !d.ok) return console.log('Guruhga yuborilmadi:', d && d.description); const _pz = arr.find(x => x.id === id); if (_pz && d.result) { _pz.g = { m: d.result.message_id, c: (d.result.chat && d.result.chat.id) || _gc, ph: !!d.result.photo, cap: d.result.photo ? String(_pb.text).split('\n\n')[0].slice(0, 1000) : _pb.text }; store.save(); } }).catch(e => console.log('Guruh xatosi:', e.message));
