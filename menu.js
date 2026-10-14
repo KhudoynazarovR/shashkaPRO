@@ -577,7 +577,7 @@
         if (st) {
           var w = pick(st);
           if (w && w[0] === st.f[0] && w[1] === st.f[1] && w[2] === st.t[0] && w[3] === st.t[1]) {
-            g = adv(g, st); idx++; sel = null; msg = '✅ To‘g‘ri';
+            g = adv(g, st); idx++; sel = (g.forced && g.side === p.side) ? [g.forced[0], g.forced[1]] : null; msg = '✅ To‘g‘ri';
             if (idx >= p.sol.length) return solved();
             draw(); next();
           } else { sel = null; msg = '❌ Noto‘g‘ri, boshqa yurishni sinang'; draw(); }
