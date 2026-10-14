@@ -43,6 +43,8 @@ if (URL_) {
         if (r.rows[0].v && Array.isArray(r.rows[0].v.puzzles)) db.puzzles = r.rows[0].v.puzzles;
         if (r.rows[0].v && Array.isArray(r.rows[0].v.shop)) db.shop = r.rows[0].v.shop;
         if (r.rows[0].v && Array.isArray(r.rows[0].v.groups)) db.groups = r.rows[0].v.groups;
+        Object.keys(r.rows[0].v || {}).forEach(k => { if (k !== 'users') db[k] = r.rows[0].v[k]; });
+        { const _fs = new Set(Array.isArray(db.pzFolders) ? db.pzFolders : []); (db.puzzles || []).forEach(x => { if (x.folder) _fs.add(x.folder); }); if (_fs.size) db.pzFolders = [..._fs]; }
         for (const id of Object.keys(db.users)) if (!remote[id]) remote[id] = db.users[id];
         for (const id of Object.keys(db.users)) delete db.users[id];
         Object.assign(db.users, remote);
