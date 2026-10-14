@@ -273,7 +273,19 @@
         var b = document.createElement("button");
         b.textContent = tc;
         b.style.cssText = tc === st.tc ? "background:#2b4a1f;color:#fff;font-weight:bold" : "";
-        b.onclick = function () { send({ type: "roomSetTime", roomId: roomId, tc: tc }); };
+        b.onclick = function () { send({ type: "roomSetTime", roomId: roomId, tc: tc });
+      elTc.style.flexWrap = "wrap";
+      var sep = document.createElement("span");
+      sep.style.cssText = "flex-basis:100%;height:0";
+      elTc.appendChild(sep);
+      [["std", "📋 Standart"], ["idf", "🎲 IDF 780"]].forEach(function (pp) {
+        var pb = document.createElement("button");
+        pb.textContent = pp[1];
+        var on = (pp[0] === "idf") === !!st.opening;
+        pb.style.cssText = on ? "background:#2b4a1f;color:#fff;font-weight:bold" : "";
+        pb.onclick = function () { send({ type: "roomSetPos", roomId: roomId, pos: pp[0] }); };
+        elTc.appendChild(pb);
+      }); };
         elTc.appendChild(b);
       });
     }
