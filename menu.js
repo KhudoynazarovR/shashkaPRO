@@ -580,10 +580,11 @@
             g = adv(g, st); idx++; sel = (g.forced && g.side === p.side) ? [g.forced[0], g.forced[1]] : null; msg = '✅ To‘g‘ri';
             if (idx >= p.sol.length) return solved();
             draw(); next();
-          } else { sel = null; msg = '❌ Noto‘g‘ri, boshqa yurishni sinang'; draw(); }
+          } else { sel = null; msg = '❌ Noto‘g‘ri. kutilgan: ' + JSON.stringify(p.sol[idx]) + ' siz: ' + JSON.stringify([st.f[0], st.f[1], st.t[0], st.t[1]]); draw(); }
           return;
         }
       }
+      if (sel) msg = 'ℹ️ yurish yo‘q: ' + JSON.stringify(sel) + '→' + r + ',' + c + ' mumkin: ' + JSON.stringify(lg.map(function (q) { return [q.f, q.t]; }));
       sel = (p0 && sideOf(p0) === g.side && lg.some(function (s) { return s.f[0] === r && s.f[1] === c; })) ? [r, c] : null;
       draw();
     }
