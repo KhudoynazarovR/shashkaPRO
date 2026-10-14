@@ -15,7 +15,7 @@
   function imgUrl(id, k) { return '/api/shop/img?id=' + encodeURIComponent(id) + '&k=' + k; }
   function applyEq() {
     var o = document.getElementById('spShopCss'); if (o) o.remove();
-    var eqId = S.equipped === '-' ? '' : (S.equipped || S.def || ''); if (!eqId || !S.list.some(function (x) { return x.id === eqId; })) return;
+    var eqId = S.equipped === '-' ? '' : (S.equipped || S.def || ''); window.spEqId = eqId; if (!eqId || !S.list.some(function (x) { return x.id === eqId; })) return;
     var id = eqId, B = 'html body #board[data-th][data-ps] .sq .pc';
     var css = B + '::before,' + B + '::after{display:none!important}'
       + B + '{background-color:transparent!important;background-size:contain!important;background-position:center!important;background-repeat:no-repeat!important;border:0!important;box-shadow:none!important;filter:drop-shadow(0 3px 2px #0007)}'

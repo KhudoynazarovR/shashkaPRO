@@ -188,6 +188,19 @@
     n[m.to.r][m.to.c] = p;
     return n;
   }
+  (function () {
+    if (window.spPcImg) return;
+    var ok = {};
+    function chk(id) { if (ok[id] !== undefined) return; ok[id] = false; var im = new Image(); im.onload = function () { ok[id] = true; }; im.src = '/api/shop/img?id=' + encodeURIComponent(id) + '&k=w'; }
+    window.spPcImg = function (p) {
+      var id = window.spEqId !== undefined ? window.spEqId : 'def';
+      if (!id) return '';
+      chk(id);
+      if (!ok[id]) return '';
+      return '/api/shop/img?id=' + encodeURIComponent(id) + '&k=' + (p === 1 ? 'w' : p === 2 ? 'b' : p === 3 ? 'wk' : 'bk');
+    };
+    window.spPcImg(1);
+  })();
   window.spAnalyze = function (g) {
     var mv = g.moves || [], bs = [start()], i;
     for (i = 0; i < mv.length; i++) bs.push(apply(bs[i], mv[i]));
@@ -219,7 +232,9 @@
         h += '<div style="background:' + bg + ';' + hl + 'display:flex;align-items:center;justify-content:center">';
         if (p) {
           var white = p === 1 || p === 3;
-          h += '<div style="width:80%;height:80%;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;color:#f5b72b;border:2px solid ' + (white ? '#9a9a9a' : '#000') + ';background:' + (white ? 'radial-gradient(circle at 35% 28%,#fff,#bbb)' : 'radial-gradient(circle at 35% 28%,#888,#111)') + '">' + (p > 2 ? '♛' : '') + '</div>';
+          var _im = window.spPcImg ? window.spPcImg(p) : '';
+          if (_im) h += '<div style="width:88%;height:88%;background:url(' + _im + ') center/contain no-repeat;filter:drop-shadow(0 3px 2px #0007)"></div>';
+          else h += '<div style="width:80%;height:80%;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;color:#f5b72b;border:2px solid ' + (white ? '#9a9a9a' : '#000') + ';background:' + (white ? 'radial-gradient(circle at 35% 28%,#fff,#bbb)' : 'radial-gradient(circle at 35% 28%,#888,#111)') + '">' + (p > 2 ? '♛' : '') + '</div>';
         }
         h += '</div>';
       }
@@ -599,7 +614,7 @@
   function imgUrl(id, k) { return '/api/shop/img?id=' + encodeURIComponent(id) + '&k=' + k; }
   function applyEq() {
     var o = document.getElementById('spShopCss'); if (o) o.remove();
-    var eqId = S.equipped === '-' ? '' : (S.equipped || S.def || ''); if (!eqId || !S.list.some(function (x) { return x.id === eqId; })) return;
+    var eqId = S.equipped === '-' ? '' : (S.equipped || S.def || ''); window.spEqId = eqId; if (!eqId || !S.list.some(function (x) { return x.id === eqId; })) return;
     var id = eqId, B = 'html body #board[data-th][data-ps] .sq .pc';
     var css = B + '::before,' + B + '::after{display:none!important}'
       + B + '{background-color:transparent!important;background-size:contain!important;background-position:center!important;background-repeat:no-repeat!important;border:0!important;box-shadow:none!important;filter:drop-shadow(0 3px 2px #0007)}'

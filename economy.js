@@ -286,7 +286,7 @@ function handle(req, res, url) {
   }
     if (p.split('?')[0] === '/api/shop/img' && req.method === 'GET') {
     const _q = new URL(req.url, 'http://x').searchParams;
-    const _it = (store.db.shop || []).find(x => x.id === _q.get('id'));
+    const _it = (store.db.shop || []).find(x => _q.get('id') === 'def' ? !!x.def : x.id === _q.get('id'));
     const _d = _it && _it.imgs && ['w', 'b', 'wk', 'bk'].includes(_q.get('k')) ? _it.imgs[_q.get('k')] : '';
     const _m = /^data:(image\/(?:png|webp|jpeg));base64,(.+)$/.exec(_d || '');
     if (!_m) { res.writeHead(404); res.end(); return true; }
