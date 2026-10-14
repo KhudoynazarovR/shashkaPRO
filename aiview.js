@@ -2,7 +2,7 @@
   "use strict";
   var tg = window.Telegram && window.Telegram.WebApp;
   var sp = (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || "";
-  var keep = /[?&]room=/.test(location.search || "") || (!!sp && !/^(lb[tsf]|ref|pz)_/.test(sp));
+  var keep = /[?&]room=/.test(location.search || "") || (!!sp && !/^(lb[tsf]|ref|pz|shop)_/.test(sp));
   var wrap = document.createElement("div");
   wrap.id = "aiWrap";
   [].slice.call(document.body.childNodes).forEach(function (n) {

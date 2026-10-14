@@ -275,6 +275,78 @@ function handle(req, res, url) {
     });
     return true;
   }
+    if (p.split('?')[0] === '/api/shop/img' && req.method === 'GET') {
+    const _q = new URL(req.url, 'http://x').searchParams;
+    const _it = (store.db.shop || []).find(x => x.id === _q.get('id'));
+    const _d = _it && _it.imgs && ['w', 'b', 'wk', 'bk'].includes(_q.get('k')) ? _it.imgs[_q.get('k')] : '';
+    const _m = /^data:(image\/(?:png|webp|jpeg));base64,(.+)$/.exec(_d || '');
+    if (!_m) { res.writeHead(404); res.end(); return true; }
+    res.writeHead(200, { 'Content-Type': _m[1], 'Cache-Control': 'public, max-age=86400' });
+    res.end(Buffer.from(_m[2], 'base64'));
+    return true;
+  }
+  if (p === '/api/shop' && req.method === 'GET') {
+    const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
+    if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
+    store.db.shop = store.db.shop || [];
+    const _u = store.users()[String(_tg.id)] || {};
+    const _adm = (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(_tg.id));
+    const _all = Object.values(store.users());
+    send(res, 200, { admin: _adm, link: process.env.TG_APP_LINK || '', diamonds: _u.diamonds || 0, owned: _u.owned || [], equipped: _u.equipped || '',
+      list: store.db.shop.map(x => ({ id: x.id, name: x.name, price: x.price, by: x.by || '', sold: _all.filter(v => (v.owned || []).includes(x.id)).length })) });
+    return true;
+  }
+  if (['/api/shop/buy', '/api/shop/equip', '/api/shop/add', '/api/shop/del'].includes(p) && req.method === 'POST') {
+    const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
+    if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
+    readBody(req, 800000, body => {
+      let j = {};
+      try { j = JSON.parse(body); } catch (e) {}
+      const arr = store.db.shop = store.db.shop || [];
+      const u = store.getOrCreate(_tg);
+      u.owned = u.owned || [];
+      const adm = (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(_tg.id));
+      if (p === '/api/shop/buy') {
+        const it = arr.find(x => x.id === j.id);
+        if (!it) return send(res, 404, { error: 'Dona topilmadi' });
+        if (u.owned.includes(it.id)) return send(res, 400, { error: 'Allaqachon sotib olingan' });
+        if ((u.diamonds || 0) < it.price) return send(res, 400, { error: 'Olmos yetarli emas' });
+        u.diamonds = (u.diamonds || 0) - it.price;
+        u.owned.push(it.id);
+        store.save();
+        return send(res, 200, { ok: true, diamonds: u.diamonds });
+      }
+      if (p === '/api/shop/equip') {
+        if (j.id) {
+          if (!arr.find(x => x.id === j.id)) return send(res, 404, { error: 'Dona topilmadi' });
+          if (!u.owned.includes(j.id) && !adm) return send(res, 403, { error: 'Avval sotib oling' });
+        }
+        u.equipped = j.id ? String(j.id) : '';
+        store.save();
+        return send(res, 200, { ok: true, equipped: u.equipped });
+      }
+      if (!adm) return send(res, 403, { error: 'admin emassiz' });
+      if (p === '/api/shop/del') {
+        const i = arr.findIndex(x => x.id === j.id);
+        if (i >= 0) { arr.splice(i, 1); store.save(); }
+        return send(res, 200, { ok: true });
+      }
+      const nm = String(j.name || '').replace(/[<>]/g, '').trim().slice(0, 30);
+      const imgs = {};
+      let ok = !!nm && Number.isInteger(j.price) && j.price >= 0 && j.price <= 100000 && j.imgs && typeof j.imgs === 'object';
+      ['w', 'b', 'wk', 'bk'].forEach(k => {
+        const v = ok ? j.imgs[k] : '';
+        if (typeof v === 'string' && /^data:image\/(png|webp|jpeg);base64,[A-Za-z0-9+\/=]+$/.test(v) && v.length <= 150000) imgs[k] = v; else ok = false;
+      });
+      if (!ok) return send(res, 400, { error: 'Ma‘lumot noto‘g‘ri' });
+      if (arr.length >= 200) return send(res, 400, { error: 'Do‘kon to‘ldi' });
+      const id = 's' + Date.now().toString(36);
+      arr.push({ id, name: nm, price: j.price, imgs, by: '', at: Date.now() });
+      store.save();
+      send(res, 200, { ok: true, id });
+    });
+    return true;
+  }
   if (p === '/api/profile' && req.method === 'GET') {
     const tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!tg) { send(res, 401, { error: 'auth' }); return true; }

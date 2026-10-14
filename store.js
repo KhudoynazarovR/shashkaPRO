@@ -40,6 +40,7 @@ if (URL_) {
       if (r.rows.length) {
         const remote = (r.rows[0].v && r.rows[0].v.users) || {};
         if (r.rows[0].v && Array.isArray(r.rows[0].v.puzzles)) db.puzzles = r.rows[0].v.puzzles;
+        if (r.rows[0].v && Array.isArray(r.rows[0].v.shop)) db.shop = r.rows[0].v.shop;
         for (const id of Object.keys(db.users)) if (!remote[id]) remote[id] = db.users[id];
         for (const id of Object.keys(db.users)) delete db.users[id];
         Object.assign(db.users, remote);
