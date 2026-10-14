@@ -16,7 +16,7 @@
   function applyEq() {
     var o = document.getElementById('spShopCss'); if (o) o.remove();
     if (!S.equipped || !S.list.some(function (x) { return x.id === S.equipped; })) return;
-    var id = S.equipped, B = 'html body #board .sq .pc';
+    var id = S.equipped, B = 'html body #board[data-th][data-ps] .sq .pc';
     var css = B + '::before,' + B + '::after{display:none!important}'
       + B + '{background-color:transparent!important;background-size:contain!important;background-position:center!important;background-repeat:no-repeat!important;border:0!important;box-shadow:none!important;filter:drop-shadow(0 3px 2px #0007)}'
       + B + '.w{background-image:url("' + imgUrl(id, 'w') + '")!important}'
