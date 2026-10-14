@@ -227,10 +227,10 @@ function handle(req, res, url) {
     { let _mx = 0, _ch = false; const _a = store.db.puzzles; _a.forEach(x => { if (x.no) _mx = Math.max(_mx, x.no); }); _a.forEach(x => { if (!x.no) { x.no = ++_mx; _ch = true; } if (x.title === 'Masala') { x.title = 'Masala ' + x.no; _ch = true; } }); if (_ch) store.save(); } if (!store.db.pzNoV2) { const _c = {}; store.db.puzzles.slice().sort((p, q) => (p.at || 0) - (q.at || 0)).forEach(x => { const k = x.folder || ''; _c[k] = (_c[k] || 0) + 1; if (/^Masala \d+$/.test(x.title)) x.title = 'Masala ' + _c[k]; x.no = _c[k]; }); store.db.pzNoV2 = 1; store.save(); }
     const _u = store.users()[String(_tg.id)] || {};
     const _adm = (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(_tg.id));
-    send(res, 200, { folders: store.db.pzFolders || [], admin: _adm, link: process.env.TG_APP_LINK || '', myId: String(_tg.id), solved: _u.solved || [], list: (() => { const _c = {}; Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { _c[i] = (_c[i] || 0) + 1; })); return store.db.puzzles.map(x => Object.assign({}, x, { cnt: _c[x.id] || 0 })); })() });
+    send(res, 200, { folders: store.db.pzFolders || [], settings: store.db.pzSettings || {}, best: _u.pzBest || {}, admin: _adm, link: process.env.TG_APP_LINK || '', myId: String(_tg.id), solved: _u.solved || [], list: (() => { const _c = {}; Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { _c[i] = (_c[i] || 0) + 1; })); return store.db.puzzles.slice().sort((x, y) => (x.no || 0) - (y.no || 0)).map(x => Object.assign({}, x, { cnt: _c[x.id] || 0 })); })() });
     return true;
   }
-  if ((p === '/api/puzzle' || p === '/api/puzzle/del' || p === '/api/puzzle/solved' || p === '/api/puzzle/rename' || p === '/api/puzzle/folder' || p === '/api/puzzle/move') && req.method === 'POST') {
+  if ((p === '/api/puzzle' || p === '/api/puzzle/del' || p === '/api/puzzle/solved' || p === '/api/puzzle/rename' || p === '/api/puzzle/folder' || p === '/api/puzzle/move' || p === '/api/puzzle/settings' || p === '/api/puzzle/order') && req.method === 'POST') {
     const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
     readBody(req, 100000, body => {
@@ -244,10 +244,31 @@ function handle(req, res, url) {
         u.solved = u.solved || [];
         let gain = 0;
         if (!u.solved.includes(pz.id)) { if (Date.now() - (u.lastSolve || 0) < 6000) return send(res, 429, { error: 'slow' }); u.lastSolve = Date.now(); u.solved.push(pz.id); gain = 5; u.diamonds = (u.diamonds || 0) + gain; pz.sv = (pz.sv || []).concat([u.name || 'Foydalanuvchi']).slice(-200); store.save(); try { require('./grpupd.js')(pz, () => Object.values(store.users()).filter(v => (v.solved || []).includes(pz.id)).length); } catch (e) {} }
-        return send(res, 200, { ok: true, gain });
+        const _tm = Math.round(Number(j.time)); if (_tm > 0 && _tm < 36000) { u.pzBest = u.pzBest || {}; if (!u.pzBest[pz.id] || _tm < u.pzBest[pz.id]) { u.pzBest[pz.id] = _tm; store.save(); } } return send(res, 200, { ok: true, gain, best: (u.pzBest || {})[pz.id] || 0 });
       }
       const adm = (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(_tg.id));
       if (!adm) return send(res, 403, { error: 'admin emassiz' });
+      if (p === '/api/puzzle/settings') {
+        const _fl0 = store.db.pzFolders || [], _nm0 = String(j.folder || '');
+        if (!_fl0.includes(_nm0)) return send(res, 400, { error: 'papka yo‘q' });
+        const _st0 = store.db.pzSettings = store.db.pzSettings || {};
+        const _c0 = _st0[_nm0] = _st0[_nm0] || {};
+        if (j.time !== undefined) { const _t0 = Math.round(Number(j.time)); _c0.time = (_t0 > 0 && _t0 <= 600) ? _t0 : 0; }
+        if (j.lock !== undefined) _c0.lock = !!j.lock;
+        store.save();
+        return send(res, 200, { ok: true, settings: _st0 });
+      }
+      if (p === '/api/puzzle/order') {
+        const _a0 = arr.find(x => x.id === j.id);
+        if (!_a0) return send(res, 404, { error: 'none' });
+        const _sib = arr.filter(x => x.folder === _a0.folder && (_a0.folder || x.level === _a0.level)).sort((x, y) => (x.no || 0) - (y.no || 0));
+        const _i0 = _sib.indexOf(_a0), _k0 = _i0 + (j.dir === 'up' ? -1 : 1);
+        if (_k0 < 0 || _k0 >= _sib.length) return send(res, 200, { ok: true });
+        const _b0 = _sib[_k0], _tn = _a0.no; _a0.no = _b0.no; _b0.no = _tn;
+        [_a0, _b0].forEach(x => { if (/^Masala \d+$/.test(x.title)) x.title = 'Masala ' + x.no; });
+        store.save();
+        return send(res, 200, { ok: true });
+      }
       if (p === '/api/puzzle/rename') {
         const pz2 = arr.find(x => x.id === j.id);
         const nt = String(j.title || '').replace(/[<>]/g, '').trim().slice(0, 40);

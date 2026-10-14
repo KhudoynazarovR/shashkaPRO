@@ -445,6 +445,52 @@
     ov.innerHTML = h;
     on('#pzBack', function () { curLv = 0; curFo = ''; list(); });
     on('#pzTop', pzTop);
+    (function () {
+      var cs = (S.settings || {})[curFo] || {}, inF = !curLv && curFo, lockOn = inF && cs.lock && !S.admin, blocked = false;
+      function setDlg() {
+        var cur = (S.settings || {})[curFo] || {}, T = [[0, 'Oʻchiq'], [20, '20 s'], [30, '30 s'], [60, '1 daq'], [120, '2 daq'], [180, '3 daq'], [240, '4 daq'], [300, '5 daq']];
+        var h = head('⚙️ ' + esc(curFo));
+        h += '<div style="margin:6px 0 8px">⏱ Vaqt chegarasi (har masalaga)</div><div>';
+        T.forEach(function (x) { h += '<button data-t="' + x[0] + '" style="' + ((cur.time || 0) === x[0] ? BS : BG) + ';margin:0 6px 8px 0">' + x[1] + '</button>'; });
+        h += '</div><div style="margin:14px 0 8px">🔒 Ketma-ket ochilish (oldingisini yechmasa keyingisi yopiq)</div><button id="pzLk" style="' + (cur.lock ? BS : BG) + '">' + (cur.lock ? 'Yoqiq' : 'Oʻchiq') + '</button>';
+        ov.innerHTML = h;
+        on('#pzBack', items);
+        Array.prototype.forEach.call(ov.querySelectorAll('[data-t]'), function (e) {
+          e.onclick = function () { api('/api/puzzle/settings', { folder: curFo, time: Number(e.getAttribute('data-t')) }).then(function (d) { if (d && d.settings) S.settings = d.settings; setDlg(); }); };
+        });
+        on('#pzLk', function () { api('/api/puzzle/settings', { folder: curFo, lock: !cur.lock }).then(function (d) { if (d && d.settings) S.settings = d.settings; setDlg(); }); });
+      }
+      var df = ov.querySelector('#pzDF');
+      if (S.admin && df) {
+        var sb = document.createElement('button'); sb.id = 'pzSet'; sb.setAttribute('style', df.getAttribute('style')); sb.textContent = '⚙️ Sozlamalar'; df.parentNode.appendChild(sb); sb.onclick = setDlg;
+      }
+      var cards = ov.querySelectorAll('[data-i]');
+      if (inF && cards.length) {
+        var info = document.createElement('div');
+        info.style.cssText = 'font-size:13px;opacity:.75;margin:-2px 0 10px';
+        info.textContent = (cs.time ? '⏱ ' + (cs.time >= 60 ? (cs.time / 60) + ' daqiqa' : cs.time + ' soniya') : '⏱ vaqt chegarasiz') + (cs.lock ? ' · 🔒 ketma-ket' : '');
+        cards[0].parentNode.insertBefore(info, cards[0]);
+      }
+      Array.prototype.forEach.call(cards, function (e) {
+        var q = S.list[Number(e.getAttribute('data-i'))], ok = (S.solved || []).indexOf(q.id) >= 0, bt = (S.best || {})[q.id], meta = e.querySelector('div'), b0 = e.querySelector('b');
+        if (bt && meta) meta.textContent += ' · 🏅 ' + bt + ' s';
+        if (lockOn && blocked) {
+          e.style.opacity = '.45';
+          if (b0) b0.textContent = '🔒 ' + b0.textContent;
+          e.addEventListener('click', function (ev) { ev.stopImmediatePropagation(); var m = '🔒 Avval oldingi masalani yeching'; if (tg && tg.showAlert) tg.showAlert(m); else alert(m); }, true);
+        }
+        if (!ok) blocked = true;
+        if (S.admin) {
+          [['dn', '⬇️'], ['up', '⬆️']].forEach(function (x) {
+            var bb = document.createElement('button');
+            bb.textContent = x[1];
+            bb.setAttribute('style', 'float:right;background:#262b5a;color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px;margin-left:6px');
+            bb.onclick = function (ev) { ev.stopPropagation(); api('/api/puzzle/order', { id: q.id, dir: x[0] }).then(function () { load(); }); };
+            e.insertBefore(bb, e.firstChild);
+          });
+        }
+      });
+    })();
     on('#pzAdd', function () { newPz(curLv, curLv ? '' : curFo); });
     on('#pzDF', function () {
       var f = curFo;
@@ -478,6 +524,16 @@
     var lines = (p.sols && p.sols.length) ? p.sols : [p.sol], alive = lines.map(function (_, i) { return i; });
     p.sol = lines[0];
     var g = { b: copy(p.board), side: p.side, forced: null }, idx = 0, sel = null, msg = '', done = false, busy = false;
+    var _fs = (S.settings || {})[foOf(p)] || {}, tLim = _fs.time || 0, t0 = Date.now(), errs = 0, tOut = false, fin = -1, myT = window.__pzTok = (window.__pzTok || 0) + 1;
+    function pzEl() { return Math.floor((Date.now() - t0) / 1000); }
+    function pzFmt(s) { return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
+    function tmText() { var s = fin >= 0 ? fin : pzEl(); return (tLim && fin < 0) ? '⏱ ' + pzFmt(Math.max(0, tLim - s)) + (tOut ? ' · vaqt tugadi' : '') : '⏱ ' + pzFmt(s); }
+    var _iv = setInterval(function () {
+      var el = document.getElementById('pzTm');
+      if (window.__pzTok !== myT || !el || done) { clearInterval(_iv); return; }
+      if (tLim && pzEl() >= tLim) { tOut = true; done = true; msg = '⏰ Vaqt tugadi! «Qayta» tugmasini bosing'; clearInterval(_iv); draw(); return; }
+      el.textContent = tmText();
+    }, 500);
     function same(x, y) { return x && y && x[0] === y[0] && x[1] === y[1] && x[2] === y[2] && x[3] === y[3]; }
     function pick(st) {
       var m = null, keep = [], want = [st.f[0], st.f[1], st.t[0], st.t[1]];
@@ -502,7 +558,7 @@
       if (sel) tg2 = legal(g.b, g.side, g.forced).filter(function (s) { return s.f[0] === sel[0] && s.f[1] === sel[1]; }).map(function (s) { return s.t; });
       if (!document.getElementById('pzCss')) { var _st = document.createElement('style'); _st.id = 'pzCss'; _st.textContent = '.pzWrap{position:relative;display:inline-block;margin:18px 0 10px}.pzBig{position:relative;font-size:21px!important;padding:18px 38px!important;border-radius:18px!important;font-weight:700;animation:pzGlow 1.5s ease-in-out infinite}.pzO{position:absolute;left:0;right:0;top:0;bottom:0;pointer-events:none;transform:scaleY(.5)}.pzO i{position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:#ffd86b;box-shadow:0 0 8px #ffd86b;animation:pzOrb 3s linear infinite}@keyframes pzOrb{from{transform:rotate(0deg) translateX(125px)}to{transform:rotate(360deg) translateX(125px)}}@keyframes pzGlow{0%,100%{box-shadow:0 0 14px #6b5cf0}50%{box-shadow:0 0 34px #a99bff}}'; document.head.appendChild(_st); }
       var h = head('🧩 ' + esc(p.title));
-      h += '<div style="margin-bottom:8px">' + (p.side === 'w' ? '⚪ Oq yuradi' : '⚫ Qora yuradi') + ' · ' + LV[p.level] + '</div>';
+      h += '<div style="margin-bottom:8px">' + (p.side === 'w' ? '⚪ Oq yuradi' : '⚫ Qora yuradi') + ' · ' + LV[p.level] + '</div>' + '<div id="pzTm" style="font-size:20px;font-weight:bold;margin-bottom:6px">' + tmText() + '</div>';
       h += boardHtml(g.b, { sel: sel, hl: tg2 });
       h += '<div style="min-height:28px;margin:10px 0;font-size:16px">' + msg + '</div>';
       var _a = sibs(), _i = _a.findIndex(function (x) { return x.id === p.id; });
@@ -537,7 +593,7 @@
       bindBoard(tap);
     }
     function sibs() { var f = foOf(p); return S.list.filter(function (x) { return foOf(x) === f; }).sort(function (x, y) { return (x.no || 0) - (y.no || 0); }); }
-    function goNext() {
+    function goNext() { if (_fs.lock && !done && !S.admin && (S.solved || []).indexOf(p.id) < 0) { msg = '🔒 Avval shu masalani yeching'; draw(); return; }
       var a = sibs(), i = a.findIndex(function (x) { return x.id === p.id; }), sv = S.solved || [], n = a.length, j, k;
       
       if (i < n - 1) return play(a[i + 1]);
@@ -550,10 +606,12 @@
       function n(f, t, d, g) { var a = c(), o = a.createOscillator(), v = a.createGain(), t0 = a.currentTime + t; o.type = 'triangle'; o.frequency.setValueAtTime(f, t0); v.gain.setValueAtTime(0.0001, t0); v.gain.exponentialRampToValueAtTime(g, t0 + 0.012); v.gain.exponentialRampToValueAtTime(0.0001, t0 + d); o.connect(v); v.connect(a.destination); o.start(t0); o.stop(t0 + d + 0.05); }
       return function () { [523.25, 659.25, 783.99, 1046.5].forEach(function (x, i) { n(x, i * 0.1, 0.35, 0.3); }); n(1318.5, 0.42, 0.5, 0.22); };
     })();
-    function solved() { try { window.pzFan(); } catch (e) {}
+    function solved() { if (tOut) return; try { window.pzFan(); } catch (e) {} var _el = pzEl(), _er = errs; fin = _el;
       done = true; msg = '🎉 Masala yechildi!'; draw();
-      api('/api/puzzle/solved', { id: p.id }).then(function (d) {
+      api('/api/puzzle/solved', { id: p.id, time: _el, errs: _er }).then(function (d) {
         if (d && d.gain) msg += ' +' + d.gain + ' 💎';
+        msg += ' · ⏱ ' + _el + ' s · xato: ' + _er;
+        if (d && d.best) { S.best = S.best || {}; S.best[p.id] = d.best; msg += ' · 🏅 eng yaxshi: ' + d.best + ' s'; }
         if ((S.solved || []).indexOf(p.id) < 0) S.solved.push(p.id);
         draw();
       });
@@ -580,7 +638,7 @@
             g = adv(g, st); idx++; sel = (g.forced && g.side === p.side) ? [g.forced[0], g.forced[1]] : null; msg = '✅ To‘g‘ri';
             if (idx >= p.sol.length) return solved();
             draw(); next();
-          } else { sel = null; msg = '❌ Noto‘g‘ri. kutilgan: ' + JSON.stringify(p.sol[idx]) + ' siz: ' + JSON.stringify([st.f[0], st.f[1], st.t[0], st.t[1]]); draw(); }
+          } else { sel = null; errs++; msg = '❌ Noto‘g‘ri (xato: ' + errs + '). kutilgan: ' + JSON.stringify(p.sol[idx]) + ' siz: ' + JSON.stringify([st.f[0], st.f[1], st.t[0], st.t[1]]); draw(); }
           return;
         }
       }
