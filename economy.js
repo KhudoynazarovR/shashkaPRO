@@ -264,7 +264,7 @@ function handle(req, res, url) {
           const _pb = { chat_id: _gc, text: '🧩 Yangi shashka masalasi!\n' + String(j.title || 'Masala').replace(/[<>]/g, '').trim().slice(0, 40) + '\n' + _lv + ' · ' + (j.side === 'w' ? '⚪ Oq yuradi' : '⚫ Qora yuradi'),
             reply_markup: { inline_keyboard: [[{ text: '🧩 Yechish', url: _lk + '?startapp=pz_' + id }]] } };
           if (process.env.GROUP_TOPIC_ID) _pb.message_thread_id = Number(process.env.GROUP_TOPIC_ID);
-          fetch('https://api.telegram.org/bot' + process.env.BOT_TOKEN + '/sendMessage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(_pb) })
+          require('./puzimg.js')(_pb, b, j.side)
             .then(r => r.json()).then(d => { if (!d.ok) console.log('Guruhga yuborilmadi:', d.description); }).catch(e => console.log('Guruh xatosi:', e.message));
         }
       } catch (e) {}
