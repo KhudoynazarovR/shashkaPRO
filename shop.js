@@ -97,13 +97,20 @@
   }
 
   function drawForm() {
+    form.src = form.src || {}; form.t = form.t || {};
+    var SB = 'border:0;border-radius:10px;padding:7px 11px;background:#262b66;color:#fff;font-size:15px;margin:2px';
     var h = head() + '<div style="font-size:17px;font-weight:700;margin-bottom:8px">➕ Yangi dona</div>';
     h += '<input id="fN" maxlength="30" placeholder="Nomi" value="' + esc(form.name) + '" style="width:92%;box-sizing:border-box;margin:6px 0;padding:10px;border-radius:12px;border:1px solid #333a80;background:#161a3a;color:#fff;font-size:16px">';
     h += '<input id="fP" type="number" min="0" placeholder="Narxi (💎)" value="' + esc(form.price) + '" style="width:92%;box-sizing:border-box;margin:6px 0;padding:10px;border-radius:12px;border:1px solid #333a80;background:#161a3a;color:#fff;font-size:16px">';
     h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0">';
     KS.forEach(function (k) {
-      var pv = form.pics[k] ? '<img src="' + form.pics[k] + '" style="width:64px;height:64px;border-radius:50%">' : '<div style="width:64px;height:64px;border-radius:50%;border:2px dashed #555;margin:0 auto"></div>';
-      h += '<label style="background:#161a3a;border:1px solid #262b5a;border-radius:14px;padding:8px;font-size:13px">' + KN[k] + '<br>' + pv + '<input type="file" accept="image/*" data-k="' + k + '" style="display:none"></label>';
+      var has = !!form.src[k], dis = has ? '' : ';opacity:.35';
+      h += '<div style="background:#161a3a;border:1px solid #262b5a;border-radius:14px;padding:8px;font-size:13px">' + KN[k];
+      if (has) h += '<canvas data-c="' + k + '" width="120" height="120" style="display:block;margin:6px auto;width:120px;height:120px;border-radius:50%;background:#222;touch-action:none"></canvas>';
+      else h += '<label style="display:flex;width:120px;height:120px;border-radius:50%;border:2px dashed #555;margin:6px auto;align-items:center;justify-content:center;cursor:pointer;font-size:12px;box-sizing:border-box">📷 Rasm tanlang<input type="file" accept="image/*" data-k="' + k + '" style="display:none"></label>';
+      h += '<div>' + [['in', '＋'], ['out', '－'], ['rs', '↺'], ['cl', '🧽']].map(function (z) {
+        return '<button data-z="' + z[0] + '" data-k="' + k + '" style="' + SB + dis + '">' + z[1] + '</button>';
+      }).join('') + '</div></div>';
     });
     h += '</div>';
     if (msg) h += '<div style="margin:8px 0;color:#ffb3b3">' + esc(msg) + '</div>';
@@ -115,6 +122,41 @@
     Array.prototype.forEach.call(ov.querySelectorAll('input[type=file]'), function (inp) {
       inp.onchange = function () { sync(); pick(inp.getAttribute('data-k'), inp.files && inp.files[0]); };
     });
+    Array.prototype.forEach.call(ov.querySelectorAll('canvas[data-c]'), function (cv) {
+      var k = cv.getAttribute('data-c'), px = 0, py = 0, dn = false;
+      paint(k, cv, 120);
+      cv.onpointerdown = function (e) { dn = true; px = e.clientX; py = e.clientY; try { cv.setPointerCapture(e.pointerId); } catch (x) {} };
+      cv.onpointermove = function (e) { if (!dn) return; var t = form.t[k]; t.x += (e.clientX - px) / 120; t.y += (e.clientY - py) / 120; px = e.clientX; py = e.clientY; paint(k, cv, 120); };
+      cv.onpointerup = cv.onpointercancel = function () { dn = false; };
+    });
+    Array.prototype.forEach.call(ov.querySelectorAll('[data-z]'), function (b) {
+      b.onclick = function () {
+        sync();
+        var k = b.getAttribute('data-k'), z = b.getAttribute('data-z'), t = form.t[k];
+        if (!form.src[k]) return;
+        if (z === 'in') t.s = Math.min(4, t.s * 1.15);
+        else if (z === 'out') t.s = Math.max(0.3, t.s / 1.15);
+        else if (z === 'rs') { t.s = 1; t.x = 0; t.y = 0; }
+        else { delete form.src[k]; delete form.t[k]; draw(); return; }
+        var cv = ov.querySelector('canvas[data-c="' + k + '"]'); if (cv) paint(k, cv, 120);
+      };
+    });
+  }
+  function paint(k, cv, sz) {
+    var im = form.src[k], t = form.t[k], cx = cv.getContext('2d');
+    cx.clearRect(0, 0, sz, sz); cx.save(); cx.beginPath(); cx.arc(sz / 2, sz / 2, sz / 2, 0, 6.2832); cx.clip();
+    var m = Math.min(im.width, im.height), sc = sz / m * t.s, dw = im.width * sc, dh = im.height * sc;
+    cx.drawImage(im, sz / 2 - dw / 2 + t.x * sz, sz / 2 - dh / 2 + t.y * sz, dw, dh); cx.restore();
+  }
+  function exportK(k) {
+    var out = '', sz = 200;
+    while (sz >= 100) {
+      var cv = document.createElement('canvas'); cv.width = cv.height = sz; paint(k, cv, sz);
+      out = cv.toDataURL('image/webp', 0.85);
+      if (out.length <= 140000) break;
+      sz -= 30;
+    }
+    return out;
   }
   function sync() { var n = ov.querySelector('#fN'), p = ov.querySelector('#fP'); if (n) form.name = n.value; if (p) form.price = p.value; }
   function pick(k, f) {
@@ -122,20 +164,7 @@
     var rd = new FileReader();
     rd.onload = function () {
       var im = new Image();
-      im.onload = function () {
-        var out = '', sz = 200;
-        while (sz >= 100) {
-          var cv = document.createElement('canvas'); cv.width = cv.height = sz;
-          var cx = cv.getContext('2d'); cx.beginPath(); cx.arc(sz / 2, sz / 2, sz / 2, 0, 6.2832); cx.clip();
-          var m = Math.min(im.width, im.height), sx = (im.width - m) / 2, sy = (im.height - m) / 2;
-          cx.drawImage(im, sx, sy, m, m, 0, 0, sz, sz);
-          out = cv.toDataURL('image/webp', 0.85);
-          if (out.length <= 140000) break;
-          sz -= 30;
-        }
-        if (out.length > 150000) { msg = '⚠️ Rasm juda og‘ir'; return draw(); }
-        form.pics[k] = out; msg = ''; draw();
-      };
+      im.onload = function () { form.src[k] = im; form.t[k] = { s: 1, x: 0, y: 0 }; msg = ''; draw(); };
       im.src = rd.result;
     };
     rd.readAsDataURL(f);
@@ -145,15 +174,19 @@
     var nm = form.name.trim(), pr = Number(form.price);
     if (!nm) { msg = 'Nom yozing'; return draw(); }
     if (!Number.isInteger(pr) || pr < 0) { msg = 'Narx butun son bo‘lsin'; return draw(); }
-    if (KS.some(function (k) { return !form.pics[k]; })) { msg = '4 ta rasmni ham tanlang'; return draw(); }
+    if (KS.some(function (k) { return !form.src[k]; })) { msg = '4 ta rasmni ham tanlang'; return draw(); }
+    var pics = {}, bad = false;
+    KS.forEach(function (k) { pics[k] = exportK(k); if (pics[k].length > 150000) bad = true; });
+    if (bad) { msg = '⚠️ Rasm juda og‘ir'; return draw(); }
     msg = 'Saqlanmoqda…'; draw();
-    api('/api/shop/add', { name: nm, price: pr, imgs: form.pics }).then(function (d) {
+    api('/api/shop/add', { name: nm, price: pr, imgs: pics }).then(function (d) {
       if (d && d.ok) { form = null; msg = '✅ Dona qo‘shildi'; return reload().then(draw); }
       msg = '⚠️ ' + ((d && d.error) || 'Saqlanmadi'); draw();
     }).catch(function () { msg = '⚠️ Server bilan aloqa yo‘q'; draw(); });
   }
 
-  window.spShop = open;
+  
+window.spShop = open;
   var sp = tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param;
   if (sp && sp.indexOf('shop_') === 0) setTimeout(open, 700);
   else if (initData) setTimeout(function () { api('/api/shop').then(function (d) { if (d && !d.error) merge(d); }).catch(function () {}); }, 900);
