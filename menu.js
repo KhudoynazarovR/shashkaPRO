@@ -539,9 +539,9 @@
     function sibs() { var f = foOf(p); return S.list.filter(function (x) { return foOf(x) === f; }).sort(function (x, y) { return (x.no || 0) - (y.no || 0); }); }
     function goNext() {
       var a = sibs(), i = a.findIndex(function (x) { return x.id === p.id; }), sv = S.solved || [], n = a.length, j, k;
-      for (k = 1; k < n; k++) { j = (i + k) % n; if (sv.indexOf(a[j].id) < 0) return play(a[j]); }
+      
       if (i < n - 1) return play(a[i + 1]);
-      msg = '🎉 Papkadagi hamma masala yechilgan'; draw();
+      msg = '🏁 Bu papkadagi oxirgi masala'; draw();
     }
     window.pzFan = window.pzFan || (function () {
       var A = null;
