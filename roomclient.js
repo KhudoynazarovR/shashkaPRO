@@ -490,8 +490,8 @@
       renderTc();
       renderChat();
       elInfo.textContent = (st.color === "spectator"
-        ? "Siz tomoshabinsiz" + (st.spectators ? " · " + st.spectators + " ta tomoshabin" : "")
-        : (st.spectators ? "👁 Tomoshabinlar: " + st.spectators : "")) +
+        ? "Siz tomoshabinsiz" + (st.spectators ? " · " + st.spectators + " ta tomoshabin" + ((st.specNames || []).length ? " (" + st.specNames.join(", ") + ")" : "") : "")
+        : (st.spectators ? "👁 Tomoshabinlar: " + st.spectators + ((st.specNames || []).length ? " (" + st.specNames.join(", ") + ")" : "") : "")) +
         (bothIn() && !st.finished && !st.clockRunning && st.timeMs
           ? (st.spectators || st.color === "spectator" ? "\n" : "") + "⏱ " + st.tc + " (daqiqa + soniya) · soat birinchi ikki yurishdan keyin ishga tushadi"
           : "");
@@ -548,6 +548,7 @@
         st.white = m.white; st.black = m.black;
         st.whiteOnline = m.whiteOnline; st.blackOnline = m.blackOnline;
         st.spectators = m.spectators || 0;
+        st.specNames = m.spectatorNames || [];
         var openNew = (m.opening ? m.opening.id : null) !== (st.opening ? st.opening.id : null);
         st.opening = m.opening || null;
         var same = !openNew && st.moves.length === (m.moves || []).length && st.turn === m.turn;

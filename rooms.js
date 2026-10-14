@@ -79,6 +79,7 @@ function createRooms({ send, clients, onFinish }) {
       whiteOnline: isOnline(room.white),
       blackOnline: isOnline(room.black),
       spectators: [...room.members].filter(id => !colorOf(room, clients.get(id) || {})).length,
+      spectatorNames: [...room.members].filter(id => !colorOf(room, clients.get(id) || {})).map(id => room.names.get(id) || "Mehmon").slice(0, 8),
       moves: room.moves,
       turn: room.turn,
       finished: room.finished,
