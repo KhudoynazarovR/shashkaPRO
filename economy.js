@@ -224,7 +224,7 @@ function handle(req, res, url) {
     const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
     store.db.puzzles = store.db.puzzles || [];
-    { let _mx = 0, _ch = false; const _a = store.db.puzzles; _a.forEach(x => { if (x.no) _mx = Math.max(_mx, x.no); }); _a.forEach(x => { if (!x.no) { x.no = ++_mx; _ch = true; } if (x.title === 'Masala') { x.title = 'Masala ' + x.no; _ch = true; } }); if (_ch) store.save(); }
+    { let _mx = 0, _ch = false; const _a = store.db.puzzles; _a.forEach(x => { if (x.no) _mx = Math.max(_mx, x.no); }); _a.forEach(x => { if (!x.no) { x.no = ++_mx; _ch = true; } if (x.title === 'Masala') { x.title = 'Masala ' + x.no; _ch = true; } }); if (_ch) store.save(); } if (!store.db.pzNoV2) { const _c = {}; store.db.puzzles.slice().sort((p, q) => (p.at || 0) - (q.at || 0)).forEach(x => { const k = x.folder || ''; _c[k] = (_c[k] || 0) + 1; if (/^Masala \d+$/.test(x.title)) x.title = 'Masala ' + _c[k]; x.no = _c[k]; }); store.db.pzNoV2 = 1; store.save(); }
     const _u = store.users()[String(_tg.id)] || {};
     const _adm = (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(_tg.id));
     send(res, 200, { folders: store.db.pzFolders || [], admin: _adm, link: process.env.TG_APP_LINK || '', myId: String(_tg.id), solved: _u.solved || [], list: (() => { const _c = {}; Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { _c[i] = (_c[i] || 0) + 1; })); return store.db.puzzles.map(x => Object.assign({}, x, { cnt: _c[x.id] || 0 })); })() });
@@ -289,7 +289,7 @@ function handle(req, res, url) {
       const okS = _sols.length >= 1 && _sols.every(sl => Array.isArray(sl) && sl.length >= 1 && sl.length <= 60 && sl.every(s => Array.isArray(s) && s.length === 4 && s.every(v => Number.isInteger(v) && v >= 0 && v < 8)));
       if (!okB || !okS || (j.side !== 'w' && j.side !== 'b')) return send(res, 400, { error: 'noto‘g‘ri ma‘lumot' });
       const id = 'p' + Date.now().toString(36); const _fn = String(j.folder || '').replace(/[<>]/g, '').trim().slice(0, 30), _fo = (store.db.pzFolders || []).includes(_fn) ? _fn : undefined;
-      let _mx = 0; arr.forEach(x => { if (x.no) _mx = Math.max(_mx, x.no); }); arr.forEach(x => { if (!x.no) x.no = ++_mx; });
+      let _mx = 0; arr.forEach(x => { if (x.folder === _fo && x.no) _mx = Math.max(_mx, x.no); });
       const _no = ++_mx, _t0 = String(j.title || '').replace(/[<>]/g, '').trim().slice(0, 40), _title = (!_t0 || _t0 === 'Masala') ? 'Masala ' + _no : _t0; j.title = _title;
       arr.push({ id, no: _no, title: _title, level: [1, 2, 3].includes(j.level) ? j.level : 1, side: j.side, board: b, sol, sols: _sols, at: Date.now(), folder: _fo });
       store.save();
