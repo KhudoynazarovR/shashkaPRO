@@ -661,7 +661,7 @@
       h += '<div style="background:#161a3a;border:1px solid #262b5a;border-radius:14px;padding:8px;font-size:13px">' + KN[k];
       if (has) h += '<canvas data-c="' + k + '" width="120" height="120" style="display:block;margin:6px auto;width:120px;height:120px;border-radius:50%;background:#222;touch-action:none"></canvas>';
       else h += '<label style="display:flex;width:120px;height:120px;border-radius:50%;border:2px dashed #555;margin:6px auto;align-items:center;justify-content:center;cursor:pointer;font-size:12px;box-sizing:border-box">📷 Rasm tanlang<input type="file" accept="image/*" data-k="' + k + '" style="display:none"></label>';
-      h += '<div>' + [['in', '＋'], ['out', '－'], ['rs', '↺'], ['cl', '🧽']].map(function (z) {
+      h += '<div>' + [['in', '＋'], ['out', '－'], ['rs', '↺'], ['ct', '🎯'], ['cl', '🧽']].map(function (z) {
         return '<button data-z="' + z[0] + '" data-k="' + k + '" style="' + SB + dis + '">' + z[1] + '</button>';
       }).join('') + '</div></div>';
     });
@@ -690,6 +690,7 @@
         if (z === 'in') t.s = Math.min(4, t.s * 1.15);
         else if (z === 'out') t.s = Math.max(0.3, t.s / 1.15);
         else if (z === 'rs') { t.s = 1; t.x = 0; t.y = 0; }
+        else if (z === 'ct') { autoCenter(k); }
         else { delete form.src[k]; delete form.t[k]; draw(); return; }
         var cv = ov.querySelector('canvas[data-c="' + k + '"]'); if (cv) paint(k, cv, 120);
       };
@@ -700,6 +701,32 @@
     cx.clearRect(0, 0, sz, sz); cx.save(); cx.beginPath(); cx.arc(sz / 2, sz / 2, sz / 2, 0, 6.2832); cx.clip();
     var m = Math.min(im.width, im.height), sc = sz / m * t.s, dw = im.width * sc, dh = im.height * sc;
     cx.drawImage(im, sz / 2 - dw / 2 + t.x * sz, sz / 2 - dh / 2 + t.y * sz, dw, dh); cx.restore();
+    if (cv.getAttribute('data-c')) { cx.save(); cx.strokeStyle = 'rgba(255,255,255,.35)'; cx.lineWidth = 1; cx.beginPath(); cx.moveTo(sz / 2, 0); cx.lineTo(sz / 2, sz); cx.moveTo(0, sz / 2); cx.lineTo(sz, sz / 2); cx.stroke(); cx.beginPath(); cx.arc(sz / 2, sz / 2, sz / 2 - 3, 0, 6.2832); cx.strokeStyle = 'rgba(80,220,160,.7)'; cx.stroke(); cx.restore(); }
+  }
+  function autoCenter(k) {
+    var im = form.src[k], N = 200, c = document.createElement('canvas'); c.width = c.height = N;
+    var x = c.getContext('2d', { willReadFrequently: true }), m = Math.min(im.width, im.height), sc = N / m;
+    x.drawImage(im, N / 2 - im.width * sc / 2, N / 2 - im.height * sc / 2, im.width * sc, im.height * sc);
+    var d = x.getImageData(0, 0, N, N).data, bg = [d[0], d[1], d[2], d[3]], x0 = N, y0 = N, x1 = -1, y1 = -1, i, j;
+    for (j = 0; j < N; j++) for (i = 0; i < N; i++) {
+      var p = (j * N + i) * 4, a = d[p + 3];
+      var solid = bg[3] < 40 ? a > 40 : (a > 40 && (Math.abs(d[p] - bg[0]) + Math.abs(d[p + 1] - bg[1]) + Math.abs(d[p + 2] - bg[2])) > 60);
+      if (solid) { if (i < x0) x0 = i; if (i > x1) x1 = i; if (j < y0) y0 = j; if (j > y1) y1 = j; }
+    }
+    if (x1 < 0) { msg = 'Donani aniqlab bo‘lmadi, qo‘lda sozlang'; return draw(); }
+    var w = x1 - x0 + 1, h = y1 - y0 + 1, mid = [(x0 + x1) / 2, (y0 + y1) / 2], t = form.t[k];
+    t.s = Math.max(0.3, Math.min(4, N * 0.92 / Math.max(w, h)));
+    t.x = -(mid[0] - N / 2) / N * t.s; t.y = -(mid[1] - N / 2) / N * t.s;
+    msg = ''; draw();
+  }
+  function edgeCut(k) {
+    var N = 120, c = document.createElement('canvas'); c.width = c.height = N; paint(k, c, N);
+    var d = c.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, N, N).data, cnt = 0, tot = 0, a, i;
+    for (a = 0; a < 360; a += 4) {
+      var px = Math.round(N / 2 + (N / 2 - 3) * Math.cos(a * Math.PI / 180)), py = Math.round(N / 2 + (N / 2 - 3) * Math.sin(a * Math.PI / 180));
+      i = (py * N + px) * 4; tot++; if (d[i + 3] > 200) cnt++;
+    }
+    return cnt / tot > 0.25;
   }
   function exportK(k) {
     var out = '', sz = 200;
@@ -728,6 +755,8 @@
     if (!nm) { msg = 'Nom yozing'; return draw(); }
     if (!Number.isInteger(pr) || pr < 0) { msg = 'Narx butun son bo‘lsin'; return draw(); }
     if (KS.some(function (k) { return !form.src[k]; })) { msg = '4 ta rasmni ham tanlang'; return draw(); }
+    var cut = KS.filter(function (k) { return edgeCut(k); });
+    if (cut.length && !form.warned) { form.warned = true; msg = '⚠️ Qirrasi kesilgan: ' + cut.map(function (k) { return KN[k]; }).join(', ') + '. 🎯 yoki － bilan sozlang. Baribir saqlash uchun yana 💾 bosing.'; return draw(); }
     var pics = {}, bad = false;
     KS.forEach(function (k) { pics[k] = exportK(k); if (pics[k].length > 150000) bad = true; });
     if (bad) { msg = '⚠️ Rasm juda og‘ir'; return draw(); }
