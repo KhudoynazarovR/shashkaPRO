@@ -1,19 +1,6 @@
-function pcImgs() {
-  try {
-    const it = (require('./store').db.shop || []).find(x => x.def);
-    if (!it || !it.imgs) return null;
-    const o = {};
-    for (const k of ['w', 'b', 'wk', 'bk']) {
-      if (!/^data:image\/(png|webp|jpeg);base64,/.test(it.imgs[k] || '')) return null;
-      o[k] = it.imgs[k];
-    }
-    return o;
-  } catch (e) { return null; }
-}
 function svgBoard(board, side) {
-  const IM = pcImgs();
   const S = 80, M = 28, W = S * 8 + M * 2, flip = side === 'b';
-  let s = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + W + '" height="' + W + '" viewBox="0 0 ' + W + ' ' + W + '">';
+  let s = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + W + '" viewBox="0 0 ' + W + ' ' + W + '">';
   s += '<defs>'
     + '<linearGradient id="fr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#eeb272"/><stop offset="1" stop-color="#e9a868"/></linearGradient>'
     + '<linearGradient id="dk" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7b2f13"/><stop offset=".5" stop-color="#702a10"/><stop offset="1" stop-color="#7d3114"/></linearGradient>'
@@ -28,7 +15,6 @@ function svgBoard(board, side) {
     const v = board[r][c];
     if (v) {
       const w = v === 1 || v === 3, cx = x + S / 2, cy = y + S / 2;
-      if (IM) { s += '<image xlink:href="' + IM[v === 1 ? 'w' : v === 2 ? 'b' : v === 3 ? 'wk' : 'bk'] + '" x="' + (cx - 34) + '" y="' + (cy - 34) + '" width="68" height="68"/>'; continue; }
       s += '<circle cx="' + (cx + 2) + '" cy="' + (cy + 4) + '" r="30" fill="#000" opacity=".35"/>';
       s += '<circle cx="' + cx + '" cy="' + cy + '" r="31" fill="url(#' + (w ? 'wp' : 'bp') + ')" stroke="' + (w ? '#9a9a9a' : '#000') + '" stroke-width="2.5"/>';
       s += '<circle cx="' + cx + '" cy="' + cy + '" r="21" fill="none" stroke="' + (w ? '#d0d0d0' : '#3a3a3a') + '" stroke-width="1.5"/>';
