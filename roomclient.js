@@ -128,6 +128,7 @@
       '<button id="rcResign" style="display:none">🏳️ Taslim</button>' +
       '<button id="rcLink">🔗 Havola</button>' +
       '<button id="rcChatBtn">💬 Chat</button>' +
+      '<button id="rcZal">🏟 O‘yin zali</button>' +
       '<button id="rcClose" style="display:none">✖️ Yopish</button></div>' +
       '<div id="rcChat" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:10000;background:#120b30;border-top:1px solid #3a2f7a;padding:8px 10px calc(env(safe-area-inset-bottom,0px) + 8px);box-sizing:border-box">' +
       '<div id="rcMsgs" style="height:90px;overflow:auto;background:#101a24;border-radius:8px;padding:6px 8px;font-size:14px"></div>' +
@@ -149,6 +150,12 @@
     var elDrawOffer = root.querySelector("#rcDrawOffer");
     var elChat = root.querySelector("#rcChat");
     var elChatBtn = root.querySelector("#rcChatBtn");
+    var elZal = root.querySelector("#rcZal");
+    elZal.onclick = function () {
+      var live = st.color !== "spectator" && !st.finished && bothIn() && st.moves.length > 0;
+      if (live && !confirm("O‘yin davom etyapti, zalga chiqsangiz vaqtingiz ketadi. Chiqasizmi?")) return;
+      location.href = location.pathname;
+    };
     var elMsgs = root.querySelector("#rcMsgs");
     var elInput = root.querySelector("#rcInput");
 
@@ -264,7 +271,40 @@
     }
 
     // vaqt rejimi tugmalari (faqat o'yin boshlanmaguncha, faqat oq tanlaydi)
-    function renderTc() {
+    function renderExtra() {
+      var ex = root.querySelector("#rcEx");
+      if (!ex) {
+        ex = document.createElement("div"); ex.id = "rcEx";
+        ex.style.cssText = "display:none;margin:4px 0 8px;padding:8px 12px;border-radius:10px;background:#1c2733;text-align:center;max-width:min(94vw,520px)";
+        var s0 = root.querySelector("#rcStatus"); s0.parentNode.insertBefore(ex, s0.nextSibling);
+      }
+      ex.innerHTML = "";
+      var spec = st.color === "spectator", ser = (st.gamesTotal || 1) > 1;
+      function line(t) { var d = document.createElement("div"); d.style.margin = "4px 0"; d.textContent = t; ex.appendChild(d); }
+      function btn(t, fn) { var b = document.createElement("button"); b.textContent = t; b.style.margin = "3px"; b.onclick = fn; ex.appendChild(b); }
+      if (ser) {
+        var sc = st.seriesScore || { white: 0, black: 0 };
+        var no = Math.min((st.played || 0) + (st.finished ? 0 : 1), st.gamesTotal);
+        line("🏁 Seriya " + (st.seriesDone ? "tugadi" : no + "/" + st.gamesTotal) + " · ⚪ " + sc.white + " – " + sc.black + " ⚫");
+        if (st.finished && !st.seriesDone && st.nextIn) line("Keyingi o‘yin 5 soniyadan so‘ng, ranglar almashadi");
+      }
+      if (!spec && st.casual && st.finished && st.white && st.black && (!ser || st.seriesDone)) {
+        if (st.rematch === st.color) {
+          line("⏳ Raqib javobi kutilmoqda…");
+          btn("Bekor qilish", function () { send({ type: "roomRematchNo", roomId: roomId }); });
+        } else if (st.rematch) {
+          line("🔁 Raqib qayta o‘ynashni taklif qildi");
+          btn("✅ Qabul", function () { send({ type: "roomRematch", roomId: roomId }); });
+          btn("❌ Rad", function () { send({ type: "roomRematchNo", roomId: roomId }); });
+        } else {
+          btn("🔁 Qayta o‘ynash", function () { send({ type: "roomRematch", roomId: roomId }); });
+        }
+      }
+      if (spec) { line("👁 Siz tomoshabinsiz"); btn("🏟 O‘yin zaliga o‘tish", function () { elZal.onclick(); }); }
+      ex.style.display = ex.childNodes.length ? "block" : "none";
+    }
+
+    function renderTc() { try { renderExtra(); } catch (e) { console.error(e); }
       elTc.innerHTML = "";
       var canPick = st.color === "white" && st.moves.length === 0 && !st.finished;
       if (!canPick) { elTc.style.display = "none"; return; }
@@ -288,6 +328,18 @@
         pb.onclick = function () { send({ type: "roomSetPos", roomId: roomId, pos: pp[0] }); };
         elTc.appendChild(pb);
       });
+      if (st.casual && (st.played || 0) === 0) {
+        var sep2 = document.createElement("span");
+        sep2.style.cssText = "flex-basis:100%;height:0";
+        elTc.appendChild(sep2);
+        [[1, "1 o‘yin"], [2, "2 o‘yin ⇄"], [4, "4 o‘yin ⇄"]].forEach(function (g) {
+          var gb = document.createElement("button");
+          gb.textContent = g[1];
+          gb.style.cssText = (st.gamesTotal || 1) === g[0] ? "background:#2b4a1f;color:#fff;font-weight:bold" : "";
+          gb.onclick = function () { send({ type: "roomSetGames", roomId: roomId, games: g[0] }); };
+          elTc.appendChild(gb);
+        });
+      }
     }
 
     // ---------- yordamchilar ----------
@@ -549,6 +601,8 @@
         st.whiteOnline = m.whiteOnline; st.blackOnline = m.blackOnline;
         st.spectators = m.spectators || 0;
         st.specNames = m.spectatorNames || [];
+        st.gamesTotal = m.gamesTotal || 1; st.played = m.played || 0; st.seriesScore = m.seriesScore || null;
+        st.seriesDone = !!m.seriesDone; st.nextIn = !!m.nextIn; st.rematch = m.rematch || null; st.casual = !!m.casual;
         var openNew = (m.opening ? m.opening.id : null) !== (st.opening ? st.opening.id : null);
         st.opening = m.opening || null;
         var same = !openNew && st.moves.length === (m.moves || []).length && st.turn === m.turn;
