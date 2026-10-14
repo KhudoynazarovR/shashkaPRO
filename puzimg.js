@@ -17,7 +17,7 @@ function svgBoard(board, side) {
       const w = v === 1 || v === 3, cx = x + S / 2, cy = y + S / 2;
       s += '<circle cx="' + (cx + 2) + '" cy="' + (cy + 4) + '" r="30" fill="#000" opacity=".35"/>';
       s += '<circle cx="' + cx + '" cy="' + cy + '" r="31" fill="url(#' + (w ? 'wp' : 'bp') + ')" stroke="' + (w ? '#9a9a9a' : '#000') + '" stroke-width="2.5"/>';
-      s += '<circle cx="' + cx + '" cy="' + cy + '" r="23" fill="none" stroke="' + (w ? '#c4c4c4' : '#9a9a9a') + '" stroke-width="3"/>'; s += '<circle cx="' + cx + '" cy="' + cy + '" r="13" fill="none" stroke="' + (w ? '#b4b4b4' : '#8a8a8a') + '" stroke-width="2.5"/>';
+      s += '<circle cx="' + cx + '" cy="' + cy + '" r="21" fill="none" stroke="' + (w ? '#d0d0d0' : '#3a3a3a') + '" stroke-width="1.5"/>';
       if (v > 2) s += '<text x="' + cx + '" y="' + (cy + 10) + '" font-size="30" text-anchor="middle" fill="#f5b72b" font-family="DejaVu Sans, sans-serif">&#9819;</text>';
     }
   }
