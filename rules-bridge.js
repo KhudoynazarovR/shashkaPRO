@@ -20,7 +20,7 @@ function captureSteps(b,r,c){
   else{for(const d of DIRS){const mr=r+d[0],mc=c+d[1],lr=r+2*d[0],lc=c+2*d[1];if(inside(mr,mc)&&inside(lr,lc)&&b[mr][mc]&&!sameSide(p,b[mr][mc])&&!b[lr][lc])out.push({from:{r,c},to:{r:lr,c:lc},captures:[{r:mr,c:mc}]})}}
   return out
 }
-function applyStep(b,m){const n=clone(b),p=n[m.from.r][m.from.c];n[m.from.r][m.from.c]=EMPTY;m.captures.forEach(x=>n[x.r][x.c]=EMPTY);n[m.to.r][m.to.c]=p;return n}
+function applyStep(b,m){const n=clone(b),p=n[m.from.r][m.from.c];n[m.from.r][m.from.c]=EMPTY;m.captures.forEach(x=>n[x.r][x.c]=EMPTY);n[m.to.r][m.to.c]=(p===WHITE&&m.to.r===0)?WHITE_KING:(p===BLACK&&m.to.r===7)?BLACK_KING:p;return n}
 function continueCapture(b,r,c,origin,caps,path,out){
   const steps=captureSteps(b,r,c);
   if(!steps.length){out.push({from:origin,to:{r,c},captures:caps.slice(),path:path.slice()});return}
