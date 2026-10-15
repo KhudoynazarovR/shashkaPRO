@@ -432,12 +432,12 @@
       e.onclick = function () { curFo = (S.folders || [])[Number(e.getAttribute('data-fo'))] || ''; curLv = 0; list(); };
     });
   }
-  function items() { if (!document.getElementById('pzCss2')) { var _s2 = document.createElement('style'); _s2.id = 'pzCss2'; _s2.textContent = '.pzSpW{position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;transform:scaleY(.55)}.pzSpW i{position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;background:#ffe9a0;border-radius:50%;box-shadow:0 0 6px 2px #ffd86b;opacity:0;animation:pzSp 2.4s ease-in-out 2 both}@keyframes pzSp{0%{transform:rotate(var(--a)) translateX(var(--r)) scale(.3);opacity:0}20%{opacity:1}80%{opacity:1}100%{transform:rotate(calc(var(--a) + 360deg)) translateX(var(--r)) scale(.3);opacity:0}}@media (prefers-reduced-motion:reduce){.pzSpW{display:none}}'; document.head.appendChild(_s2); }
+  function items() { window.pzLeft = window.pzLeft || function (ms) { var d = Math.floor(ms / 864e5), hh = Math.floor(ms % 864e5 / 36e5); return d > 0 ? d + ' kun ' + hh + ' soat' : Math.max(1, hh) + ' soat'; }; if (!document.getElementById('pzCss2')) { var _s2 = document.createElement('style'); _s2.id = 'pzCss2'; _s2.textContent = '.pzSpW{position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;transform:scaleY(.55)}.pzSpW i{position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;background:#ffe9a0;border-radius:50%;box-shadow:0 0 6px 2px #ffd86b;opacity:0;animation:pzSp 2.4s ease-in-out 2 both}@keyframes pzSp{0%{transform:rotate(var(--a)) translateX(var(--r)) scale(.3);opacity:0}20%{opacity:1}80%{opacity:1}100%{transform:rotate(calc(var(--a) + 360deg)) translateX(var(--r)) scale(.3);opacity:0}}@media (prefers-reduced-motion:reduce){.pzSpW{display:none}}'; document.head.appendChild(_s2); }
     var h = head('🧩 Masalalar', '<button id="pzTop" style="' + BG + '">🏆 TOP</button>'), shown = 0;
     var _sp2 = ''; if (curFo && !curLv) { for (var _k = 0; _k < 12; _k++) _sp2 += '<i style="--a:' + (_k * 30) + 'deg;--r:' + (60 + (_k % 3) * 28) + 'px;animation-delay:' + (_k * 0.12) + 's"></i>'; _sp2 = '<span class="pzSpW">' + _sp2 + '</span>'; }
     h += '<div style="margin:6px 0 12px;font-weight:bold;position:relative;display:inline-block;padding:4px 14px">' + (curLv ? LV[curLv] : '📁 ' + esc(curFo)) + _sp2 + '</div>';
-    if (curFo && !curLv) h += '<div style="margin-bottom:12px">' + (S.link ? '<button id="pzShF" style="' + BS + '">🔗 Guruhga yuborish</button>' : '') + '<button id="pzHall" style="' + BG + '">🎮 O‘yin zaliga</button></div>';
-    if (curFo && !curLv && S.promo && Date.now() < S.promo) h += '<div style="font-size:13px;margin:-4px 0 12px;padding:8px 10px;border-radius:10px;background:#2a2560">🎁 Aksiya (' + Math.max(1, Math.ceil((S.promo - Date.now()) / 864e5)) + ' kun qoldi): havolangiz orqali kirgan har bir yangi o‘yinchi masala yechsa, sizga +100 💎' + (S.inv ? '<br>👥 Taklif qilinganlar: ' + S.inv.total : '') + '</div>';
+    if (curFo && !curLv) h += '<div style="margin-bottom:12px">' + (S.link ? '<button id="pzShF" style="' + BS + '">🔗 Guruhga yuborish</button>' : '') + '<button id="pzHall" style="' + BG + '">🎮 O‘yin zaliga</button><button id="pzRk" style="' + BG + '">🏅 Unvonlar</button></div>';
+    if (curFo && !curLv && S.promo && Date.now() < S.promo) h += '<div style="font-size:13px;margin:-4px 0 12px;padding:8px 10px;border-radius:10px;background:#2a2560">🎁 Aksiya (' + window.pzLeft(S.promo - Date.now()) + ' qoldi): havolangiz orqali kirgan har bir yangi o‘yinchi masala yechsa, sizga +100 💎' + (S.inv ? '<br>👥 Taklif qilinganlar: ' + S.inv.total : '') + '</div>';
     if (S.admin) h += '<div style="margin-bottom:12px"><button id="pzAdd" style="' + BS + '">➕ Masala</button>' + (curFo ? '<button id="pzDF" style="' + BG + '">🗑 Papkani o‘chirish</button>' : '') + '</div>';
     S.list.forEach(function (p, i) {
       if (curLv ? (lvOf(p) !== curLv || foOf(p)) : foOf(p) !== curFo) return;
@@ -496,6 +496,32 @@
       });
     })();
     on('#pzAdd', function () { newPz(curLv, curLv ? '' : curFo); });
+    function rankDlg() {
+      var t = (S.inv && S.inv.total) || 0, RK = S.ranks || [], cur = null, nxt = null;
+      RK.forEach(function (r) { if (t >= r.n) cur = r; else if (!nxt) nxt = r; });
+      var h = head('🏅 Unvonlar');
+      h += '<div style="' + CARD + '"><div style="font-size:12px;opacity:.65">JORIY UNVON</div><b style="font-size:20px">' + (cur ? esc(cur.name) : 'Hali unvon yo‘q') + '</b><div style="font-size:13px;margin-top:6px">' + (nxt ? '⬆️ ' + esc(nxt.name) + ' bo‘lish uchun yana ' + (nxt.n - t) + ' ta do‘st kerak' : '🎉 Eng yuqori unvon!') + '</div>' + (nxt ? '<div style="height:8px;border-radius:4px;background:#2c3070;margin-top:8px"><div style="height:8px;border-radius:4px;background:#ffd86b;width:' + Math.min(100, Math.round(t / nxt.n * 100)) + '%"></div></div><div style="text-align:right;font-size:12px;margin-top:4px">' + t + ' / ' + nxt.n + '</div>' : '') + '</div>';
+      if (S.promo && Date.now() < S.promo) h += '<div style="font-size:14px;margin:0 0 12px;padding:10px;border-radius:10px;background:#2a2560">⏰ Aksiya tugashiga: <b>' + window.pzLeft(S.promo - Date.now()) + '</b><br>Har bir yangi o‘yinchi uchun +100 💎</div>';
+      else h += '<div style="font-size:13px;opacity:.7;margin-bottom:12px">Aksiya tugagan</div>';
+      h += '<div style="font-size:12px;opacity:.65;margin:8px 0">BARCHA UNVONLAR</div>';
+      RK.slice().reverse().forEach(function (r) {
+        h += '<div style="' + CARD + ';display:flex;justify-content:space-between;align-items:center;opacity:' + (t >= r.n ? 1 : 0.65) + '"><div><b>' + (t >= r.n ? '✅ ' : '') + esc(r.name) + '</b><div style="font-size:12px;opacity:.65">' + r.n + '+ taklif</div></div><b style="color:#ffb84d">' + r.gem + ' 💎</b></div>';
+      });
+      h += '<div style="font-size:12px;opacity:.65;margin:14px 0 8px">🏆 ENG KO‘P TAKLIF QILGANLAR</div>';
+      var tp = S.topInv || [];
+      if (!tp.length) h += '<div style="opacity:.7;padding:8px 0">Hali hech kim taklif qilmagan</div>';
+      tp.forEach(function (x, i) { h += '<div style="display:flex;justify-content:space-between;padding:6px 2px"><span>' + (i + 1) + '. ' + esc(x.name) + '</span><b>' + x.total + ' ta</b></div>'; });
+      if (S.link) h += '<div style="margin-top:14px"><button id="pzInv" style="' + BS + '">🔗 Do‘stga taklif qilish</button></div>';
+      ov.innerHTML = h;
+      on('#pzBack', items);
+      on('#pzInv', function () {
+        var nm = curFo, e64 = btoa(unescape(encodeURIComponent(nm))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        var u = S.link + '?startapp=pf_' + S.myId + '_' + e64, tx = '🧩 Shashka masalalari: ' + nm;
+        var sh = 'https://t.me/share/url?url=' + encodeURIComponent(u) + '&text=' + encodeURIComponent(tx);
+        if (tg && tg.openTelegramLink) tg.openTelegramLink(sh); else window.open(sh, '_blank');
+      });
+    }
+    on('#pzRk', rankDlg);
     on('#pzShF', function () {
       var nm = curFo, e64 = btoa(unescape(encodeURIComponent(nm))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
       var u = S.link + '?startapp=pf_' + S.myId + '_' + e64, t = '🧩 Shashka masalalari: ' + nm;
