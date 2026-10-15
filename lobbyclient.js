@@ -1039,6 +1039,56 @@ document.head.appendChild(_as); }
 ".lbhb h3,.lbhb p,.lbhb .tm,.lbhb b{background:none!important;border:0!important;margin-left:0}" +
 ".lbhb .tg{background:#ff8a1f!important;color:#fff!important}" +
 ".lbhb button{background:linear-gradient(180deg,#ffd45a,#f5a623)!important;color:#2a1d00!important;border:0!important;width:auto!important}"; document.head.appendChild(_s2); }
+      if (!document.getElementById("lbRayCss")) { var _s3 = document.createElement("style"); _s3.id = "lbRayCss"; _s3.textContent = "" +
+"@keyframes lbSw{0%{left:-50%}55%,100%{left:135%}}" +
+"@keyframes lbGlG{0%,100%{box-shadow:0 0 14px rgba(245,183,43,.35)}50%{box-shadow:0 0 30px rgba(245,183,43,.8)}}" +
+"@keyframes lbGlB{0%,100%{box-shadow:0 0 14px rgba(47,200,255,.35)}50%{box-shadow:0 0 30px rgba(47,200,255,.8)}}" +
+".lbray{position:absolute;top:-30%;bottom:-30%;left:-50%;width:30%;pointer-events:none;z-index:2;transform:skewX(-22deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.38),transparent);animation:lbSw 3.2s ease-in-out infinite}" +
+".lbray.b{width:12%;background:linear-gradient(90deg,transparent,rgba(255,214,102,.6),transparent);animation-delay:.45s}" +
+".lbhb{animation:lbGlG 2.6s ease-in-out infinite}" +
+".lbhb.lbcb{animation-name:lbGlB;background:radial-gradient(circle at 85% 20%,rgba(47,200,255,.28),transparent 55%),linear-gradient(135deg,#10285a,#14123a 60%,#0b3a4a);border-color:#2fc8ff}" +
+".lbhb.lbcb .tg{background:#1f8fff!important}" +
+".lbhb.lbcb button{background:linear-gradient(180deg,#5ad0ff,#2f7bff)!important;color:#fff!important}"; document.head.appendChild(_s3); }
+      window.lbRays = function () {
+        [].forEach.call(document.querySelectorAll(".lbhb,#lbHero div[onclick]"), function (e) {
+          if (e.getAttribute("data-ray")) return;
+          e.setAttribute("data-ray", "1");
+          if (getComputedStyle(e).position === "static") e.style.position = "relative";
+          e.style.overflow = "hidden";
+          e.insertAdjacentHTML("beforeend", "<i class='lbray'></i><i class='lbray b'></i>");
+        });
+      };
+      window.lbClubFix = function () {
+        var card = null, all = document.querySelectorAll(".lbcl");
+        for (var i = 0; i < all.length; i++) if (all[i].textContent.indexOf("Klublarga") >= 0) { card = all[i]; break; }
+        var bn = document.getElementById("lbClubBn");
+        if (!card) { if (bn) bn.remove(); return; }
+        card.style.display = window.__lbCO ? "" : "none";
+        if (bn && bn.nextSibling !== card) { bn.remove(); bn = null; }
+        if (!bn) {
+          bn = document.createElement("div"); bn.id = "lbClubBn"; bn.className = "lbhb lbcb";
+          bn.style.cssText = "cursor:pointer;margin:0 0 12px";
+          bn.onclick = function () { window.__lbCO = !window.__lbCO; window.lbClubFix(); };
+          card.parentNode.insertBefore(bn, card);
+        }
+        var st = window.__lbCO ? "1" : "0";
+        if (bn.getAttribute("data-st") !== st) {
+          bn.setAttribute("data-st", st); bn.removeAttribute("data-ray");
+          bn.innerHTML = "<span class='tg'>KLUBLAR</span><h3>👥 Klublar</h3><p>Klub safida o‘ynang va turnirlarda birga qatnashing.</p><button type='button'>" + (window.__lbCO ? "Yopish ‹" : "Klublarni ko‘rish ›") + "</button>";
+        }
+        var par = card.parentNode;
+        if (window.__lbOE !== par) {
+          if (window.__lbOb) window.__lbOb.disconnect();
+          window.__lbOE = par;
+          window.__lbOb = new MutationObserver(function () {
+            if (window.__lbBz) return; window.__lbBz = 1;
+            try { window.lbClubFix(); } finally { setTimeout(function () { window.__lbBz = 0; }, 0); }
+          });
+          window.__lbOb.observe(par, { childList: true });
+        }
+        window.lbRays();
+      };
+      
       var _hb = $("lbHero");
       if (!_hb && $("lbTbar")) { _hb = document.createElement("div"); _hb.id = "lbHero"; $("lbTbar").parentNode.insertBefore(_hb, $("lbTbar")); }
       if (_hb) {
@@ -1058,6 +1108,7 @@ document.head.appendChild(_as); }
             "<button onclick=\"var e=document.getElementById('lbtc_" + esc(_a.id) + "');if(e)e.scrollIntoView({behavior:'smooth',block:'center'})\">" + (_jn ? "Ko‘rish ›" : "Qo‘shilish ›") + "</button></div>";
         }
       }
+      window.lbClubFix(); window.lbRays();
       var _tsb = $("lbTs");
       if (_tsb) {
         var _dr = $("lbDream");
