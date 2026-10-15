@@ -225,7 +225,7 @@ function handle(req, res, url) {
     const _ids = new Set((store.db.puzzles || []).map(x => x.id));
     const _rows = Object.entries(store.users()).map(([k, v]) => ({ k, name: v.name || 'Foydalanuvchi', n: (v.solved || []).filter(i => _ids.has(i)).length })).filter(x => x.n > 0).sort((a, b) => b.n - a.n || String(a.name).localeCompare(String(b.name)));
     const _i = _rows.findIndex(x => x.k === String(_tg.id));
-    send(res, 200, { top: _rows.slice(0, 100).map(x => ({ name: x.name, n: x.n, me: x.k === String(_tg.id) })), rank: _i < 0 ? 0 : _i + 1, n: _i < 0 ? 0 : _rows[_i].n });
+    send(res, 200, { top: _rows.slice(0, 100).map(x => ({ id: x.k, name: x.name, n: x.n, me: x.k === String(_tg.id) })), rank: _i < 0 ? 0 : _i + 1, n: _i < 0 ? 0 : _rows[_i].n });
     return true;
   }
   if (p === '/api/puzzles' && req.method === 'GET') {

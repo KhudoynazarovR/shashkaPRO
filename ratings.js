@@ -1,7 +1,7 @@
 (function () {
   "use strict";
   var D = null, tab = "elo", q = "", panel = null, loading = false;
-  var TABS = [["elo", "ELO", "elo"], ["wins", "G‘alaba", "wins"], ["games", "O‘yin", "games"], ["diamonds", "Olmos", "diamonds"], ["best", "Seriya", "best"], ["pct", "G‘alaba %", "pct"], ["tourn", "Turnir", "tw"]];
+  var TABS = [["elo", "ELO", "elo"], ["puz", "Masala", "n"], ["diamonds", "Olmos", "diamonds"], ["wins", "G‘alaba", "wins"], ["games", "O‘yin", "games"], ["best", "Seriya", "best"], ["pct", "G‘alaba %", "pct"], ["tourn", "Turnir", "tw"]];
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function fmt(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " "); }
   function css() {
@@ -36,7 +36,7 @@
     if (a && (a.indexOf("http") === 0 || a.indexOf("/") === 0 || a.indexOf("data:image") === 0)) return "<div class=\"rka\"><img src=\"" + esc(a) + "\"></div>";
     return "<div class=\"rka\">" + esc((p.name || "?").charAt(0).toUpperCase()) + "</div>";
   }
-  var ICO = { elo: "📊", wins: "🏆", games: "🎮", diamonds: "💎", best: "🔥", pct: "📈", tourn: "🥇" };
+  var ICO = { puz: "🧩", elo: "📊", wins: "🏆", games: "🎮", diamonds: "💎", best: "🔥", pct: "📈", tourn: "🥇" };
   function myId() { var tg = window.Telegram && window.Telegram.WebApp; var u = tg && tg.initDataUnsafe && tg.initDataUnsafe.user; return u ? String(u.id) : ""; }
   function dl(p) {
     var v = p.delta != null ? p.delta : (p.d != null ? p.d : (p.change != null ? p.change : null));
@@ -48,9 +48,9 @@
   }
   function pcard(p, rank, key, suf, lab) {
     if (!p) return "<div class='rkp' style='visibility:hidden'></div>";
-    var sub = "🏆 " + (p.wins || 0) + " g‘alaba · " + (p.games || 0) + " o‘yin";
+    var sub = p.puz ? "✅ " + p.n + " masala yechgan" : "🏆 " + (p.wins || 0) + " g‘alaba · " + (p.games || 0) + " o‘yin";
     return "<div class='rkp rkp" + rank + "' onclick=\"spUser('" + esc(p.id) + "')\"><div class='rkpb'>" + (rank === 1 ? "👑" : rank) + "</div>" + avatar(p) +
-      "<div class='rkpn'>" + esc(p.name) + "</div><div class='rkps'>" + sub + "</div><div class='rkpv'>💎 " + fmt(p[key]) + suf + "<small>" + lab + "</small></div></div>";
+      "<div class='rkpn'>" + esc(p.name) + "</div><div class='rkps'>" + sub + "</div><div class='rkpv'>" + ico() + " " + fmt(p[key]) + suf + "<small>" + lab + "</small></div></div>";
   }
   function render() {
     if (!panel) return;
@@ -78,9 +78,9 @@
       var rest = top ? arr.slice(3) : arr;
       el.style.display = rest.length ? "block" : "none";
       el.innerHTML = rest.map(function (p) {
-        var sub = p.games ? "🏆 " + p.wins + " g‘alaba · 🎮 " + p.games + " o‘yin" : "";
+        var sub = p.puz ? "✅ " + p.n + " masala yechgan" : p.games ? "🏆 " + p.wins + " g‘alaba · 🎮 " + p.games + " o‘yin" : "";
         return "<div class='rkr' style='cursor:pointer' onclick=\"spUser('" + esc(p.id) + "')\"><div class='rkm'>" + (full.indexOf(p) + 1) + "</div>" + avatar(p) +
-          "<div class='rkw'>" + esc(p.name) + (p.premium ? " ⭐" : "") + (sub ? "<small>" + sub + "</small>" : "") + "</div><div class='rkv'>💎 " + fmt(p[key]) + suf + "</div>" + dl(p) + "</div>";
+          "<div class='rkw'>" + esc(p.name) + (p.premium ? " ⭐" : "") + (sub ? "<small>" + sub + "</small>" : "") + "</div><div class='rkv'>" + ico() + " " + fmt(p[key]) + suf + "</div>" + dl(p) + "</div>";
       }).join("");
     }
     var id = myId(), mi = -1;
@@ -90,7 +90,7 @@
       else {
         var m = full[mi]; me.style.display = "flex";
         me.innerHTML = "<div class='rka'>" + (m.hasAv ? "<img src='/api/av/" + encodeURIComponent(m.id) + "'>" : "👤") + "</div><div><small>Sizning o‘rningiz:</small><b>#" + (mi + 1) + "</b></div>" +
-          "<div class='rkv'>💎 " + fmt(m[key]) + suf + "</div><div class='tx'>Barqaror o‘yin<br>bilan oldinga!</div>";
+          "<div class='rkv'>" + ico() + " " + fmt(m[key]) + suf + "</div><div class='tx'>Barqaror o‘yin<br>bilan oldinga!</div>";
       }
     }
   }
@@ -101,12 +101,25 @@
     var on = s.style.display !== "block"; s.style.display = on ? "block" : "none";
     if (on) { var i = document.getElementById("rkQ"); if (i) i.focus(); } else { q = ""; list(); }
   };
+  function ico() { return tab === "puz" ? "🧩" : "💎"; }
+  function loadPuz() {
+    var tg = window.Telegram && window.Telegram.WebApp;
+    fetch("/api/puzzles/top", { headers: { "x-init-data": (tg && tg.initData) || "" } })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!D || !d || !d.top) return;
+        var m = {};
+        ["elo", "wins", "games", "diamonds", "best", "pct"].forEach(function (k) { (D[k] || []).forEach(function (p) { if (p.id != null) m[String(p.id)] = p; }); });
+        D.puz = d.top.map(function (x) { var o = m[String(x.id)] || {}; return { id: x.id, name: x.name, n: x.n, hasAv: o.hasAv, av: o.av, premium: o.premium, puz: 1 }; });
+        render();
+      }).catch(function () {});
+  }
   function load() {
     loading = true;
     var tg = window.Telegram && window.Telegram.WebApp;
     fetch("/api/leaderboard", { headers: { "x-init-data": (tg && tg.initData) || "" } })
       .then(function (r) { return r.json(); })
-      .then(function (j) { D = j; loading = false; render(); })
+      .then(function (j) { D = j; D.puz = []; loading = false; render(); loadPuz(); })
       .catch(function () { loading = false; render(); });
   }
   window.rkOpen = function () {
