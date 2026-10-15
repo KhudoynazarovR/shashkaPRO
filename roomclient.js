@@ -589,12 +589,17 @@
       var keep = mv.captures.length > 0 && captureSteps(nb, mv.to.r, mv.to.c).length > 0;
       st.pending = true;
       send({ type: "roomMove", roomId: roomId, move: mv, keepTurn: keep });
+      st.optim = true; st.board = nb; st.selected = null;
+      if (keep) { st.forced = { r: mv.to.r, c: mv.to.c }; st.pending = false; } else { st.forced = null; }
+      try { render(); } catch (e) {}
       try { if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred("light"); } catch (e) {}
     }
 
     // ---------- server ----------
     function onMessage(m) {
+      if (m.type === "error" && st.optim) { st.optim = false; st.pending = false; st.forced = null; send({ type: "roomSync", roomId: roomId }); }
       if (m.type === "roomState" && m.roomId === roomId) {
+        st.optim = false;
         st.joined = true;
         st.color = m.color;
         st.white = m.white; st.black = m.black;
