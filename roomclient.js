@@ -396,7 +396,25 @@
       el.style.justifyContent = "space-between";
       el.style.alignItems = "center";
       var l = document.createElement("span");
-      l.textContent = nameLine(color) + (st.berserk && st.berserk[color] ? " ⚡" : "");
+      var _inf = color === "white" ? st.wInfo : st.bInfo, _nm = (color === "white" ? st.white : st.black) || "?";
+      l.style.cssText = "display:flex;align-items:center;gap:7px;min-width:0";
+      function _letter() {
+        var d = document.createElement("span"); d.textContent = String(_nm).charAt(0).toUpperCase();
+        d.style.cssText = "width:30px;height:30px;border-radius:50%;background:#3b3f8f;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:bold;flex:none";
+        return d;
+      }
+      if (_inf && _inf.uid) {
+        if (_inf.av) {
+          var _im = document.createElement("img"); _im.src = "/api/av/" + encodeURIComponent(_inf.uid);
+          _im.style.cssText = "width:30px;height:30px;border-radius:50%;object-fit:cover;flex:none;background:#2a2f55";
+          _im.onerror = function () { if (_im.parentNode) _im.parentNode.replaceChild(_letter(), _im); };
+          l.appendChild(_im);
+        } else l.appendChild(_letter());
+      }
+      var _tx = document.createElement("span"); _tx.style.cssText = "overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0";
+      _tx.textContent = nameLine(color) + (st.berserk && st.berserk[color] ? " ⚡" : "");
+      l.appendChild(_tx);
+      if (_inf && _inf.elo) { var _eb = document.createElement("span"); _eb.textContent = "⭐" + _inf.elo; _eb.style.cssText = "color:#ffd86b;font-size:13px;font-weight:bold;flex:none"; l.appendChild(_eb); }
       var r = document.createElement("span");
       r.setAttribute("data-clock", color);
       r.style.cssText = "font-weight:bold;min-width:64px;text-align:center;padding:3px 8px;border-radius:6px;background:#1c2733";
@@ -602,7 +620,7 @@
         st.optim = false;
         st.joined = true;
         st.color = m.color;
-        st.white = m.white; st.black = m.black;
+        st.white = m.white; st.black = m.black; st.wInfo = m.wInfo || null; st.bInfo = m.bInfo || null;
         st.whiteOnline = m.whiteOnline; st.blackOnline = m.blackOnline;
         st.spectators = m.spectators || 0;
         st.specNames = m.spectatorNames || [];

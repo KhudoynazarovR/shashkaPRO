@@ -69,12 +69,20 @@ function createRooms({ send, clients, onFinish }) {
     return c;
   }
 
+  function _pi(seat) {
+    try {
+      if (!seat || !seat.uid) return null;
+      var u = require("./store.js").users()[String(seat.uid)] || {};
+      return { uid: String(seat.uid), elo: u.elo || 1000, av: !!u.avatar };
+    } catch (e) { return null; }
+  }
   function snapshot(room, color) {
     return {
       type: "roomState",
       roomId: room.id,
       color: color || "spectator",
       white: room.white ? room.white.name : null,
+      wInfo: _pi(room.white), bInfo: _pi(room.black),
       black: room.black ? room.black.name : null,
       whiteOnline: isOnline(room.white),
       blackOnline: isOnline(room.black),
