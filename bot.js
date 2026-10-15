@@ -53,9 +53,9 @@ function kbFor(msg) {
   const L = "https://t.me/" + BOT + "/" + APP + "?startapp=go_";
   return {
     inline_keyboard: [
-      [{ text: "🎮 Shashka Mini App", url: L + "main" }],
-      [{ text: "🧩 Masala yechish", url: L + "puz" }],
-      [{ text: "🤖 AI bilan o‘ynash", url: L + "ai" }]
+      [{ text: "🎮 Shashka Mini App", url: L + "main", style: "primary" }],
+      [{ text: "🧩 Masala yechish", url: L + "puz", style: "success" }],
+      [{ text: "🤖 AI bilan o‘ynash", url: L + "ai", style: "primary" }]
     ]
   };
 }
