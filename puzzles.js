@@ -1,4 +1,4 @@
-(function () {
+;(function () {
   if (window.spPuzzles) return;
   var tg = window.Telegram && window.Telegram.WebApp;
   var initData = (tg && tg.initData) || '';

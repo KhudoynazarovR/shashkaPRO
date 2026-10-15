@@ -1,0 +1,30 @@
+/* ---------- L6 analysis ---------- */
+function multi6(b,side,ms_){
+ nodes6=0;dl6=Date.now()+ms_;let ms=legal(b,side);if(!ms.length)return null;
+ if(TT6.size>6e5)TT6.clear();hist6.fill(0);
+ let res=ms.map(m=>({m,v:0})),bd=0;
+ try{for(let d=1;d<=40;d++){const cur=[];
+  for(const m of ms){cur.push({m,v:-ab6(apply(b,m),-side,d-1,-1e9,1e9,1)})}
+  cur.sort((a,c)=>c.v-a.v);res=cur;ms=cur.map(x=>x.m);bd=d;
+  if(cur[0].v>8000||cur[0].v<-8000)break}}catch(e){}
+ nodes=nodes6;return{res,d:bd}}
+function pv6(b,side,m){
+ const out=[fmt(m)];let bb=apply(b,m),s=-side;
+ for(let i=0;i<7;i++){const e=TT6.get(s+bb.join(''));if(!e||e.m<0)break;
+  const x=legal(bb,s).find(q=>q.path[0]*64+q.path[q.path.length-1]===e.m);if(!x)break;
+  out.push(fmt(x));bb=apply(bb,x);s=-s}
+ return out.join(' ')}
+function sc6(v,side){
+ const w=v*side;
+ if(Math.abs(v)>8000){return(w>0?'+':'-')+'M'+Math.ceil((9000-Math.abs(v))/2)}
+ return(w>=0?'+':'')+(w/100).toFixed(1)}
+function analyze6(){
+ const b=G.pos[G.cur],s=sideAt(G.cur);$('an').textContent='…';
+ setTimeout(()=>{const r=multi6(b,s,3500);if(!r){$('an').textContent='—';return}
+  const top=r.res.slice(0,3),e0=top[0].v*s;
+  const pct=Math.abs(top[0].v)>8000?(e0>0?100:0):50+50*Math.tanh(e0/400);
+  let h='<div style="height:10px;border-radius:5px;overflow:hidden;background:#222;margin:4px 0"><div style="height:100%;width:'+pct.toFixed(0)+'%;background:#eee"></div></div>';
+  h+='<div style="font-size:12px;opacity:.7">d'+r.d+' · '+nodes+' nodes</div>';
+  top.forEach(x=>{h+='<div style="font-size:13px;margin-top:3px"><b>'+sc6(x.v,s)+'</b> '+pv6(b,s,x.m)+'</div>'});
+  $('an').innerHTML=h;
+  const bm=top[0].m;G.hint=[bm.path[0],bm.path[bm.path.length-1]];render()},30)}
