@@ -432,10 +432,12 @@
       e.onclick = function () { curFo = (S.folders || [])[Number(e.getAttribute('data-fo'))] || ''; curLv = 0; list(); };
     });
   }
-  function items() {
+  function items() { if (!document.getElementById('pzCss2')) { var _s2 = document.createElement('style'); _s2.id = 'pzCss2'; _s2.textContent = '.pzSpW{position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;transform:scaleY(.55)}.pzSpW i{position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;background:#ffe9a0;border-radius:50%;box-shadow:0 0 6px 2px #ffd86b;opacity:0;animation:pzSp 2.4s ease-in-out 2 both}@keyframes pzSp{0%{transform:rotate(var(--a)) translateX(var(--r)) scale(.3);opacity:0}20%{opacity:1}80%{opacity:1}100%{transform:rotate(calc(var(--a) + 360deg)) translateX(var(--r)) scale(.3);opacity:0}}@media (prefers-reduced-motion:reduce){.pzSpW{display:none}}'; document.head.appendChild(_s2); }
     var h = head('🧩 Masalalar', '<button id="pzTop" style="' + BG + '">🏆 TOP</button>'), shown = 0;
-    h += '<div style="margin:6px 0 12px;font-weight:bold">' + (curLv ? LV[curLv] : '📁 ' + esc(curFo)) + '</div>';
+    var _sp2 = ''; if (curFo && !curLv) { for (var _k = 0; _k < 12; _k++) _sp2 += '<i style="--a:' + (_k * 30) + 'deg;--r:' + (60 + (_k % 3) * 28) + 'px;animation-delay:' + (_k * 0.12) + 's"></i>'; _sp2 = '<span class="pzSpW">' + _sp2 + '</span>'; }
+    h += '<div style="margin:6px 0 12px;font-weight:bold;position:relative;display:inline-block;padding:4px 14px">' + (curLv ? LV[curLv] : '📁 ' + esc(curFo)) + _sp2 + '</div>';
     if (curFo && !curLv) h += '<div style="margin-bottom:12px">' + (S.link ? '<button id="pzShF" style="' + BS + '">🔗 Guruhga yuborish</button>' : '') + '<button id="pzHall" style="' + BG + '">🎮 O‘yin zaliga</button></div>';
+    if (curFo && !curLv && S.promo && Date.now() < S.promo) h += '<div style="font-size:13px;margin:-4px 0 12px;padding:8px 10px;border-radius:10px;background:#2a2560">🎁 Aksiya (' + Math.max(1, Math.ceil((S.promo - Date.now()) / 864e5)) + ' kun qoldi): havolangiz orqali kirgan har bir yangi o‘yinchi masala yechsa, sizga +100 💎' + (S.inv ? '<br>👥 Taklif qilinganlar: ' + S.inv.total : '') + '</div>';
     if (S.admin) h += '<div style="margin-bottom:12px"><button id="pzAdd" style="' + BS + '">➕ Masala</button>' + (curFo ? '<button id="pzDF" style="' + BG + '">🗑 Papkani o‘chirish</button>' : '') + '</div>';
     S.list.forEach(function (p, i) {
       if (curLv ? (lvOf(p) !== curLv || foOf(p)) : foOf(p) !== curFo) return;
@@ -496,7 +498,7 @@
     on('#pzAdd', function () { newPz(curLv, curLv ? '' : curFo); });
     on('#pzShF', function () {
       var nm = curFo, e64 = btoa(unescape(encodeURIComponent(nm))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-      var u = S.link + '?startapp=pf_' + e64, t = '🧩 Shashka masalalari: ' + nm;
+      var u = S.link + '?startapp=pf_' + S.myId + '_' + e64, t = '🧩 Shashka masalalari: ' + nm;
       var sh = 'https://t.me/share/url?url=' + encodeURIComponent(u) + '&text=' + encodeURIComponent(t);
       if (tg && tg.openTelegramLink) tg.openTelegramLink(sh); else window.open(sh, '_blank');
     });
@@ -623,7 +625,7 @@
     })();
     function solved() { if (tOut) return; try { window.pzFan(); } catch (e) {} var _el = pzEl(), _er = errs; fin = _el;
       done = true; msg = '🎉 Masala yechildi!'; draw();
-      api('/api/puzzle/solved', { id: p.id, time: _el, errs: _er }).then(function (d) {
+      api('/api/puzzle/solved', { id: p.id, time: _el, errs: _er, ref: window.__pzRef || '' }).then(function (d) {
         if (d && d.gain) msg += ' +' + d.gain + ' 💎';
         msg += ' · ⏱ ' + _el + ' s · xato: ' + _er;
         if (d && d.best) { S.best = S.best || {}; S.best[p.id] = d.best; msg += ' · 🏅 eng yaxshi: ' + d.best + ' s'; }
@@ -750,7 +752,7 @@
   window.spPuzzles = open;
   var _sp = tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param;
   if (_sp && _sp.indexOf('pz_') === 0) { pending = _sp.slice(3); setTimeout(open, 700); }
-  if (_sp && _sp.indexOf('pf_') === 0) { try { var _b = _sp.slice(3).replace(/-/g, '+').replace(/_/g, '/'); while (_b.length % 4) _b += '='; window.__pzPF = decodeURIComponent(escape(atob(_b))); } catch (e) {} setTimeout(open, 700); }
+  if (_sp && _sp.indexOf('pf_') === 0) { try { var _r = _sp.slice(3), _m = /^(\d{3,15})_(.+)$/.exec(_r); if (_m) { window.__pzRef = _m[1]; _r = _m[2]; } var _b = _r.replace(/-/g, '+').replace(/_/g, '/'); while (_b.length % 4) _b += '='; window.__pzPF = decodeURIComponent(escape(atob(_b))); } catch (e) {} setTimeout(open, 700); }
 })();
 
 
