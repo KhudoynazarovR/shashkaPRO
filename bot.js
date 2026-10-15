@@ -54,7 +54,8 @@ function kbFor(msg) {
   return {
     inline_keyboard: [
       [{ text: "🎮 Shashka Mini App", url: L + "main" }],
-      [{ text: "🧩 Masala yechish", url: L + "puz" }, { text: "🤖 AI bilan o‘ynash", url: L + "ai" }]
+      [{ text: "🧩 Masala yechish", url: L + "puz" }],
+      [{ text: "🤖 AI bilan o‘ynash", url: L + "ai" }]
     ]
   };
 }
@@ -65,7 +66,7 @@ async function onMessage(msg) {
   if (_go) {
     try { await api("deleteMessage", { chat_id: msg.chat.id, message_id: msg.message_id }); } catch (e) {}
     try { const rm2 = await api("sendMessage", { chat_id: msg.chat.id, text: "⏳", reply_markup: { remove_keyboard: true } }); if (rm2 && rm2.result) await api("deleteMessage", { chat_id: msg.chat.id, message_id: rm2.result.message_id }); } catch (e) {}
-    await api("sendMessage", { chat_id: msg.chat.id, text: "👇 Tanlang", reply_markup: kbFor(msg) });
+    await api("sendMessage", { chat_id: msg.chat.id, text: "Shashka o‘ynash uchun 👇", reply_markup: kbFor(msg) });
     return;
   }
   if (!text.startsWith("/")) return;
@@ -90,8 +91,7 @@ async function onMessage(msg) {
     }
     await api("sendMessage", {
       chat_id: msg.chat.id,
-      text: "Shashka o‘ynash uchun /new yozing — yangi xona havolasi yuboriladi.\n" +
-        "Guruhda ham ishlaydi. Yoki istalgan chatda @" + BOT + " deb yozing.", reply_markup: kbFor(msg)
+      text: msg.chat.type === "private" ? "Shashka o‘ynash uchun 👇" : "Shashka o‘ynash uchun /new yozing — yangi xona havolasi yuboriladi.\nGuruhda ham ishlaydi. Yoki istalgan chatda @" + BOT + " deb yozing.", reply_markup: kbFor(msg)
     });
   }
 }
