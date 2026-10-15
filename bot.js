@@ -89,10 +89,12 @@ async function onMessage(msg) {
         if (rm && rm.result) await api("deleteMessage", { chat_id: msg.chat.id, message_id: rm.result.message_id });
       } catch (e) {}
     }
-    await api("sendMessage", {
-      chat_id: msg.chat.id,
-      text: msg.chat.type === "private" ? "Shashka o‘ynash uchun 👇" : "Shashka o‘ynash uchun /new yozing — yangi xona havolasi yuboriladi.\nGuruhda ham ishlaydi. Yoki istalgan chatda @" + BOT + " deb yozing.", reply_markup: kbFor(msg)
-    });
+    {
+      const _sm = { chat_id: msg.chat.id, text: msg.chat.type === "private" ? "Shashka o‘ynash uchun 👇" : "Shashka o‘ynash uchun /new yozing — yangi xona havolasi yuboriladi.\nGuruhda ham ishlaydi. Yoki istalgan chatda @" + BOT + " deb yozing.", reply_markup: kbFor(msg) };
+      let _rs = null;
+      if (msg.chat.type === "private") { try { _rs = await api("sendMessage", Object.assign({ message_effect_id: "5046509860389126442" }, _sm)); } catch (e) {} }
+      if (!_rs || _rs.ok === false) await api("sendMessage", _sm);
+    }
   }
 }
 
