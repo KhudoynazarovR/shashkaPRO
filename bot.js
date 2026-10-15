@@ -81,6 +81,7 @@ async function saveBanner(msg) {
 async function onMessage(msg) {
   if (msg.chat && msg.chat.type === "private" && msg.from) {
     const _adm = (process.env.ADMIN_IDS || "").split(",").map(x => x.trim()).filter(Boolean).includes(String(msg.from.id));
+    if (!_adm && /^\/banner/i.test(msg.caption || "")) { await api("sendMessage", { chat_id: msg.chat.id, text: "⛔ Admin emassiz. Sizning ID: " + msg.from.id + "\nADMIN_IDS: " + (process.env.ADMIN_IDS || "(bo‘sh)") }); return; }
     if (_adm && (msg.animation || msg.video || msg.document) && /^\/banner/i.test(msg.caption || "")) {
       let fid = null;
       try { fid = await saveBanner(msg); } catch (e) { console.log("banner xato:", e.message); }
