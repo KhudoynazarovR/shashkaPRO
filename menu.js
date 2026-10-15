@@ -403,6 +403,7 @@
     if (t && fl.indexOf(t) < 0) api('/api/puzzle/folder', { name: t }).then(go); else go();
   }
   function list() {
+    if (window.__pzPF) { var _pf = window.__pzPF; window.__pzPF = ''; if ((S.folders || []).indexOf(_pf) >= 0) { curFo = _pf; curLv = 0; } }
     if (curFo && (S.folders || []).indexOf(curFo) < 0) curFo = '';
     if (curLv || curFo) return items();
     var fl = S.folders || [], h = head('🧩 Masalalar', topBtns());
@@ -434,6 +435,7 @@
   function items() {
     var h = head('🧩 Masalalar', '<button id="pzTop" style="' + BG + '">🏆 TOP</button>'), shown = 0;
     h += '<div style="margin:6px 0 12px;font-weight:bold">' + (curLv ? LV[curLv] : '📁 ' + esc(curFo)) + '</div>';
+    if (curFo && !curLv) h += '<div style="margin-bottom:12px">' + (S.link ? '<button id="pzShF" style="' + BS + '">🔗 Guruhga yuborish</button>' : '') + '<button id="pzHall" style="' + BG + '">🎮 O‘yin zaliga</button></div>';
     if (S.admin) h += '<div style="margin-bottom:12px"><button id="pzAdd" style="' + BS + '">➕ Masala</button>' + (curFo ? '<button id="pzDF" style="' + BG + '">🗑 Papkani o‘chirish</button>' : '') + '</div>';
     S.list.forEach(function (p, i) {
       if (curLv ? (lvOf(p) !== curLv || foOf(p)) : foOf(p) !== curFo) return;
@@ -492,6 +494,19 @@
       });
     })();
     on('#pzAdd', function () { newPz(curLv, curLv ? '' : curFo); });
+    on('#pzShF', function () {
+      var nm = curFo, e64 = btoa(unescape(encodeURIComponent(nm))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      var u = S.link + '?startapp=pf_' + e64, t = '🧩 Shashka masalalari: ' + nm;
+      var sh = 'https://t.me/share/url?url=' + encodeURIComponent(u) + '&text=' + encodeURIComponent(t);
+      if (tg && tg.openTelegramLink) tg.openTelegramLink(sh); else window.open(sh, '_blank');
+    });
+    on('#pzHall', function () {
+      close();
+      setTimeout(function () {
+        var t = Array.prototype.slice.call(document.querySelectorAll('*')).filter(function (e) { return /^\s*(🎮\s*)?O[‘'ʻ’]yin\s*$/.test(e.textContent || ''); });
+        if (t.length) t[t.length - 1].click();
+      }, 150);
+    });
     on('#pzDF', function () {
       var f = curFo;
       if (!confirm('"' + f + '" papkasi o‘chirilsinmi? Masalalar saqlanadi.')) return;
@@ -735,6 +750,7 @@
   window.spPuzzles = open;
   var _sp = tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param;
   if (_sp && _sp.indexOf('pz_') === 0) { pending = _sp.slice(3); setTimeout(open, 700); }
+  if (_sp && _sp.indexOf('pf_') === 0) { try { var _b = _sp.slice(3).replace(/-/g, '+').replace(/_/g, '/'); while (_b.length % 4) _b += '='; window.__pzPF = decodeURIComponent(escape(atob(_b))); } catch (e) {} setTimeout(open, 700); }
 })();
 
 
