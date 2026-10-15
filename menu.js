@@ -783,7 +783,7 @@
   var _sp = tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param;
   if (_sp && _sp.indexOf('pz_') === 0) { pending = _sp.slice(3); setTimeout(open, 700); }
   if (_sp && _sp.indexOf('pf_') === 0) { try { var _r = _sp.slice(3), _m = /^(\d{3,15})_(.+)$/.exec(_r); if (_m) { window.__pzRef = _m[1]; _r = _m[2]; } var _b = _r.replace(/-/g, '+').replace(/_/g, '/'); while (_b.length % 4) _b += '='; window.__pzPF = decodeURIComponent(escape(atob(_b))); } catch (e) {} setTimeout(open, 700); }
-  if (/[?&]go=puz/.test(location.search || '')) setTimeout(open, 700);
+  if (/[?&]go=puz/.test(location.search || '') || _sp === 'go_puz') setTimeout(open, 700);
 })();
 
 

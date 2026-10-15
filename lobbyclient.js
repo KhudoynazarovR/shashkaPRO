@@ -19,7 +19,7 @@
   function boot() {
     var tg = window.Telegram && window.Telegram.WebApp;
     var curRoom = "";
-    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param && !/^(ref_|pz_|pf_|shop_)/.test(tg.initDataUnsafe.start_param)) curRoom = String(tg.initDataUnsafe.start_param);
+    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param && !/^(ref_|pz_|pf_|go_|shop_)/.test(tg.initDataUnsafe.start_param)) curRoom = String(tg.initDataUnsafe.start_param);
     if (!curRoom && q.get("room")) curRoom = q.get("room");
     // havola orqali kirish: startapp=lbt_<turnir> / lbs_<sians> yoki ?t= / ?s=
     var linkTid = "", linkSid = "", linkFid = "";

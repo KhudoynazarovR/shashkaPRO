@@ -53,8 +53,8 @@ function kbFor(msg) {
   const u = (process.env.WEBAPP_URL || "https://shashkapro.onrender.com").replace(/\/$/, "");
   return {
     keyboard: [
-      [{ text: "🎮 Shashka Mini App", web_app: { url: u + "/" } }],
-      [{ text: "🧩 Masala yechish", web_app: { url: u + "/?go=puz" } }, { text: "🤖 AI bilan o‘ynash", web_app: { url: u + "/?go=ai" } }]
+      [{ text: "🎮 Shashka Mini App" }],
+      [{ text: "🧩 Masala yechish" }, { text: "🤖 AI bilan o‘ynash" }]
     ],
     resize_keyboard: true,
     is_persistent: true
@@ -63,6 +63,11 @@ function kbFor(msg) {
 
 async function onMessage(msg) {
   const text = (msg.text || "").trim();
+  const _go = { "🎮 Shashka Mini App": ["Shashka Mini App", "main"], "🧩 Masala yechish": ["Masalalar", "puz"], "🤖 AI bilan o‘ynash": ["AI bilan o‘yin", "ai"] }[text];
+  if (_go) {
+    await api("sendMessage", { chat_id: msg.chat.id, text: "👇 " + _go[0] + " ochish uchun bosing", reply_markup: { inline_keyboard: [[{ text: "Ochish", url: "https://t.me/" + BOT + "/" + APP + "?startapp=go_" + _go[1] }]] } });
+    return;
+  }
   if (!text.startsWith("/")) return;
   // /new yoki /new@DraughtsPRObot
   const cmd = text.split(/\s+/)[0].split("@");
