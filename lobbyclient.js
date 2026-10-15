@@ -1033,6 +1033,12 @@ document.head.appendChild(_as); }
         var o = { running: 0, reg: 1, finished: 2 };
         return o[a.status] - o[b.status];
       });
+      if (!document.getElementById("lbArena2")) { var _s2 = document.createElement("style"); _s2.id = "lbArena2"; _s2.textContent = "" +
+".lbhb::before,.lbhb::after,.lbhb *::before,.lbhb *::after{content:none!important;display:none!important}" +
+".lbhb *{box-shadow:none!important;filter:none!important;text-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;outline:0!important}" +
+".lbhb h3,.lbhb p,.lbhb .tm,.lbhb b{background:none!important;border:0!important;margin-left:0}" +
+".lbhb .tg{background:#ff8a1f!important;color:#fff!important}" +
+".lbhb button{background:linear-gradient(180deg,#ffd45a,#f5a623)!important;color:#2a1d00!important;border:0!important;width:auto!important}"; document.head.appendChild(_s2); }
       var _hb = $("lbHero");
       if (!_hb && $("lbTbar")) { _hb = document.createElement("div"); _hb.id = "lbHero"; $("lbTbar").parentNode.insertBefore(_hb, $("lbTbar")); }
       if (_hb) {
