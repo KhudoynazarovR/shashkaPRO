@@ -1037,7 +1037,13 @@ document.head.appendChild(_as); }
       if (!_hb && $("lbTbar")) { _hb = document.createElement("div"); _hb.id = "lbHero"; $("lbTbar").parentNode.insertBefore(_hb, $("lbTbar")); }
       if (_hb) {
         var _a = (S.tournaments || []).filter(function (t) { return t.status === "running"; })[0] || (S.tournaments || []).filter(function (t) { return t.status === "reg"; })[0];
-        if (!_a || tFil === "fin") _hb.innerHTML = "";
+        if (tFil === "fin") _hb.innerHTML = "";
+        else if (!_a) {
+          var _qc = function (bg, bd, ic, t1, t2) { return "<div onclick=\"lbTPlus()\" style=\"flex:1;cursor:pointer;border-radius:18px;padding:14px 12px;background:" + bg + ";border:1px solid " + bd + ";box-shadow:0 0 14px " + bd + "66\"><div style=\"font-size:26px\">" + ic + "</div><b style=\"display:block;margin-top:6px\">" + t1 + "</b><div class=\"muted\" style=\"font-size:12px;margin-top:2px\">" + t2 + "</div></div>"; };
+          _hb.innerHTML = "<div class='lbhb'><span class='tg'>TURNIRLAR</span><h3>🏆 Birinchi turnirni oching!</h3><p>Do‘stlaringizni yig‘ing va eng kuchli o‘yinchi bo‘ling.</p><button onclick=\"lbTPlus()\">Turnir ochish ›</button></div>" +
+            "<div style='display:flex;gap:10px;margin-top:12px'>" + _qc("linear-gradient(180deg,#0f3a2c,#0c1a22)", "#2fd37a", "⚔️", "Arena turnir", "Vaqt bo‘yicha, ochko yig‘ing") + _qc("linear-gradient(180deg,#2a1f6e,#14123a)", "#7a5cf0", "🏆", "Shveytsar turnir", "Turlar bo‘yicha o‘ynaladi") + "</div>";
+        }
+        
         else {
           var _ms = _a.status === "reg" ? (_a.startAt ? _a.startAt - Date.now() : 0) : (_a.endAt ? _a.endAt - Date.now() : 0), _lt = "";
           if (_ms > 0) { var _m = Math.floor(_ms / 60000), _d = Math.floor(_m / 1440), _h = Math.floor(_m % 1440 / 60); _m = _m % 60; _lt = "<div class='tm'>🕒 " + (_a.status === "reg" ? "Boshlanishiga" : "Qolgan vaqt") + ": <b>" + (_d ? _d + " kun " : "") + (_h || _d ? _h + " soat " : "") + _m + " daqiqa</b></div>"; }
@@ -1060,7 +1066,7 @@ document.head.appendChild(_as); }
         }
         _dr.innerHTML = _mh + "<div class='lbdr'><span style='font-size:28px'>🎯</span><div><b>Orzular sari! 💪</b><div class='muted'>Turnirda g‘alaba qozon va eng kuchli o‘yinchi bo‘l!</div></div></div>";
       }
-      if (!ts.length) { $("lbTs").innerHTML = "<div class=\"card muted\">Hozircha turnir yo‘q. Birinchi bo‘lib oching!</div>"; return; }
+      if (!ts.length) { $("lbTs").innerHTML = tFil === "fin" ? "<div class=\"card muted\">Tugagan turnirlar hali yo‘q.</div>" : ""; return; }
       var h = "";
       ts.forEach(function (t) {
         var joined = t.players.some(function (p) { return p.uid === me; });
