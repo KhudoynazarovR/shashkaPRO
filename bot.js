@@ -60,7 +60,39 @@ function kbFor(msg) {
   };
 }
 
+async function saveBanner(msg) {
+  const f = msg.animation || msg.video || msg.document;
+  const tok = process.env.BOT_TOKEN;
+  const info = await api("getFile", { file_id: f.file_id });
+  const fp = info && info.result && info.result.file_path;
+  if (!fp) return null;
+  const buf = Buffer.from(await (await fetch("https://api.telegram.org/file/bot" + tok + "/" + fp)).arrayBuffer());
+  const fd = new FormData();
+  fd.append("chat_id", String(msg.chat.id));
+  fd.append("animation", new Blob([buf]), /\.gif$/i.test(fp) ? "banner.gif" : "banner.mp4");
+  const r = await (await fetch("https://api.telegram.org/bot" + tok + "/sendAnimation", { method: "POST", body: fd })).json();
+  const a = r && r.result && (r.result.animation || r.result.video || r.result.document);
+  if (!a) return null;
+  const st = require("./store.js");
+  st.db.banner = a.file_id; st.save();
+  return a.file_id;
+}
+
 async function onMessage(msg) {
+  if (msg.chat && msg.chat.type === "private" && msg.from) {
+    const _adm = (process.env.ADMIN_IDS || "").split(",").map(x => x.trim()).filter(Boolean).includes(String(msg.from.id));
+    if (_adm && (msg.animation || msg.video || msg.document) && /^\/banner/i.test(msg.caption || "")) {
+      let fid = null;
+      try { fid = await saveBanner(msg); } catch (e) { console.log("banner xato:", e.message); }
+      await api("sendMessage", { chat_id: msg.chat.id, text: fid ? "✅ Banner saqlandi. /start yozib ko‘ring.\n\nDoimiy bo‘lishi uchun Render → Environment ga BANNER_FILE_ID qiymatini qo‘ying:\n" + fid : "⚠️ Banner saqlanmadi. Fayl MP4 yoki GIF bo‘lsin (20 MB gacha)." });
+      return;
+    }
+    if (_adm && /^\/bannerdel/i.test(msg.text || "")) {
+      const st = require("./store.js"); delete st.db.banner; st.save();
+      await api("sendMessage", { chat_id: msg.chat.id, text: "🗑 Banner o‘chirildi (BANNER_FILE_ID bo‘lsa, uni ham Renderdan o‘chiring)." });
+      return;
+    }
+  }
   const text = (msg.text || "").trim();
   const _go = { "🎮 Shashka Mini App": ["Shashka Mini App", "main"], "🧩 Masala yechish": ["Masalalar", "puz"], "🤖 AI bilan o‘ynash": ["AI bilan o‘yin", "ai"] }[text];
   if (_go) {
@@ -83,6 +115,19 @@ async function onMessage(msg) {
       reply_markup: playMarkup(id)
     });
   } else if (name === "/start" || name === "/help") {
+    if (msg.chat.type === "private") {
+      const _bn = process.env.BANNER_FILE_ID || require("./store.js").db.banner;
+      if (_bn) {
+        try {
+          const _rm = await api("sendMessage", { chat_id: msg.chat.id, text: "⏳", reply_markup: { remove_keyboard: true } });
+          if (_rm && _rm.result) await api("deleteMessage", { chat_id: msg.chat.id, message_id: _rm.result.message_id });
+        } catch (e) {}
+        try {
+          const _ra = await api("sendAnimation", { chat_id: msg.chat.id, animation: _bn, caption: "Shashka o‘ynash uchun 👇", reply_markup: kbFor(msg) });
+          if (_ra && _ra.ok !== false) return;
+        } catch (e) {}
+      }
+    }
     if (msg.chat.type === "private") {
       try {
         const rm = await api("sendMessage", { chat_id: msg.chat.id, text: "⏳", reply_markup: { remove_keyboard: true } });
