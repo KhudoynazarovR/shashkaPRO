@@ -50,14 +50,12 @@ const TEXT = "♟️ Shashka — yangi xona tayyor!\nBirinchi kirgan oq, ikkinch
 
 function kbFor(msg) {
   if (!msg.chat || msg.chat.type !== "private") return undefined;
-  const u = (process.env.WEBAPP_URL || "https://shashkapro.onrender.com").replace(/\/$/, "");
+  const L = "https://t.me/" + BOT + "/" + APP + "?startapp=go_";
   return {
-    keyboard: [
-      [{ text: "🎮 Shashka Mini App" }],
-      [{ text: "🧩 Masala yechish" }, { text: "🤖 AI bilan o‘ynash" }]
-    ],
-    resize_keyboard: true,
-    is_persistent: true
+    inline_keyboard: [
+      [{ text: "🎮 Shashka Mini App", url: L + "main" }],
+      [{ text: "🧩 Masala yechish", url: L + "puz" }, { text: "🤖 AI bilan o‘ynash", url: L + "ai" }]
+    ]
   };
 }
 
@@ -82,6 +80,12 @@ async function onMessage(msg) {
       reply_markup: playMarkup(id)
     });
   } else if (name === "/start" || name === "/help") {
+    if (msg.chat.type === "private") {
+      try {
+        const rm = await api("sendMessage", { chat_id: msg.chat.id, text: "⏳", reply_markup: { remove_keyboard: true } });
+        if (rm && rm.result) await api("deleteMessage", { chat_id: msg.chat.id, message_id: rm.result.message_id });
+      } catch (e) {}
+    }
     await api("sendMessage", {
       chat_id: msg.chat.id,
       text: "Shashka o‘ynash uchun /new yozing — yangi xona havolasi yuboriladi.\n" +
