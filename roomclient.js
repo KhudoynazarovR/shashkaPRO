@@ -589,7 +589,7 @@
       var keep = mv.captures.length > 0 && captureSteps(nb, mv.to.r, mv.to.c).length > 0;
       st.pending = true;
       send({ type: "roomMove", roomId: roomId, move: mv, keepTurn: keep });
-      st.optim = true; st.board = nb; st.selected = null;
+      st.optim = true; st.optN = (st.optN || 0) + 1; try { soundForMove(mv, st.board[mv.from.r] && st.board[mv.from.r][mv.from.c]); } catch (e) {} st.board = nb; st.selected = null;
       if (keep) { st.forced = { r: mv.to.r, c: mv.to.c }; st.pending = false; } else { st.forced = null; }
       try { render(); } catch (e) {}
       try { if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred("light"); } catch (e) {}
@@ -597,7 +597,7 @@
 
     // ---------- server ----------
     function onMessage(m) {
-      if (m.type === "error" && st.optim) { st.optim = false; st.pending = false; st.forced = null; send({ type: "roomSync", roomId: roomId }); }
+      if (m.type === "error" && st.optim) { st.optim = false; st.optN = 0; st.pending = false; st.forced = null; send({ type: "roomSync", roomId: roomId }); }
       if (m.type === "roomState" && m.roomId === roomId) {
         st.optim = false;
         st.joined = true;
@@ -629,14 +629,15 @@
         render();
       } else if (m.type === "roomMove" && m.roomId === roomId) {
         st.moves.push(m.move);
+        var _own = m.color === st.color && st.optN > 0; if (_own) st.optN--;
         var _pp = st.board[m.move.from.r] && st.board[m.move.from.r][m.move.from.c];
-        st.board = applyStep(st.board, m.move);
-        soundForMove(m.move, _pp);
+        if (!_own) st.board = applyStep(st.board, m.move);
+        if (!_own) soundForMove(m.move, _pp);
         st.turn = m.turn;
         setClock(m.clock, m.clockRunning);
         st.pending = false;
         st.selected = null;
-        st.forced = computeForced(m.move);
+        if (!_own) st.forced = computeForced(m.move);
         render();
         // navbat o'tgan bo'lsa va yurish qolmagan bo'lsa — o'yin tugaydi
         if (m.turn !== m.color && st.color !== "spectator" && !st.finished) {
