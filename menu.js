@@ -410,12 +410,12 @@
     if (S.admin) h += '<div style="margin-bottom:10px"><button id="pzNF" style="' + BG + '">📁 Yangi papka</button></div>';
     if (!S.list.length && !fl.length) h += '<div style="padding:30px;opacity:.7">Hozircha masala yo‘q</div>';
     [1, 2, 3].forEach(function (lv) {
-      var arr = S.list.filter(function (p) { return lvOf(p) === lv && !foOf(p); });
-      h += '<div data-lv="' + lv + '" style="' + CARD + '"><b style="font-size:17px">📁 ' + LV[lv] + '</b><div style="font-size:12px;opacity:.65;margin-top:4px">' + arr.length + ' ta masala · ✅ ' + nDone(arr) + '/' + arr.length + '</div></div>';
+      var arr = S.list.filter(function (p) { return lvOf(p) === lv && !foOf(p); }); if (!arr.length && (S.hideLv || []).indexOf(lv) >= 0) return;
+      h += '<div data-lv="' + lv + '" style="' + CARD + '">' + (S.admin && !arr.length ? '<button data-hl="' + lv + '" style="float:right;background:#262b5a;color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">🗑</button>' : '') + '<b style="font-size:17px">📁 ' + LV[lv] + '</b><div style="font-size:12px;opacity:.65;margin-top:4px">' + arr.length + ' ta masala · ✅ ' + nDone(arr) + '/' + arr.length + '</div></div>';
     });
     fl.forEach(function (f, i) {
       var arr = S.list.filter(function (p) { return foOf(p) === f; });
-      h += '<div data-fo="' + i + '" style="' + CARD + '"><b style="font-size:17px">📁 ' + esc(f) + '</b><div style="font-size:12px;opacity:.65;margin-top:4px">' + arr.length + ' ta masala · ✅ ' + nDone(arr) + '/' + arr.length + '</div></div>';
+      h += '<div data-fo="' + i + '" style="' + CARD + '">' + (S.admin ? '<span style="float:right"><button data-rf="' + i + '" style="background:#262b5a;color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">✏️</button> <button data-df="' + i + '" style="background:#262b5a;color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">🗑</button></span>' : '') + '<b style="font-size:17px">📁 ' + esc(f) + '</b><div style="font-size:12px;opacity:.65;margin-top:4px">' + arr.length + ' ta masala · ✅ ' + nDone(arr) + '/' + arr.length + '</div></div>';
     });
     if (!S.admin) h += '<div style="font-size:11px;opacity:.4;margin-top:16px">ID: ' + esc(S.myId) + '</div>';
     ov.innerHTML = h;
@@ -428,6 +428,15 @@
     Array.prototype.forEach.call(ov.querySelectorAll('[data-lv]'), function (e) {
       e.onclick = function () { curLv = Number(e.getAttribute('data-lv')); curFo = ''; list(); };
     });
+    Array.prototype.forEach.call(ov.querySelectorAll('[data-hl]'), function (e) {
+      e.onclick = function (ev) { ev.stopPropagation(); var lv = Number(e.getAttribute('data-hl')); if (!confirm('"' + LV[lv] + '" papkasi yashirilsinmi? (Unga masala qo‘shsangiz qayta chiqadi)')) return; api('/api/puzzle/folder', { name: 'x', hideLv: lv }).then(function () { load(); }); };
+    });
+    Array.prototype.forEach.call(ov.querySelectorAll('[data-rf]'), function (e) {
+      e.onclick = function (ev) { ev.stopPropagation(); var f = (S.folders || [])[Number(e.getAttribute('data-rf'))]; var n = cleanName(prompt('Papkaning yangi nomi:', f)); if (!n || n === f) return; api('/api/puzzle/folder', { name: f, ren: n }).then(function () { load(); }); };
+    });
+    Array.prototype.forEach.call(ov.querySelectorAll('[data-df]'), function (e) {
+      e.onclick = function (ev) { ev.stopPropagation(); var f = (S.folders || [])[Number(e.getAttribute('data-df'))]; if (!confirm('"' + f + '" papkasi o‘chirilsinmi? Masalalar saqlanadi.')) return; api('/api/puzzle/folder', { name: f, del: true }).then(function () { load(); }); };
+    });
     Array.prototype.forEach.call(ov.querySelectorAll('[data-fo]'), function (e) {
       e.onclick = function () { curFo = (S.folders || [])[Number(e.getAttribute('data-fo'))] || ''; curLv = 0; list(); };
     });
@@ -438,7 +447,7 @@
     h += '<div style="margin:6px 0 12px;font-weight:bold;position:relative;display:inline-block;padding:4px 14px">' + (curLv ? LV[curLv] : '📁 ' + esc(curFo)) + _sp2 + '</div>';
     if (curFo && !curLv) h += '<div style="margin-bottom:12px">' + (S.link ? '<button id="pzShF" style="' + BS + '">🔗 Guruhga yuborish</button>' : '') + '<button id="pzHall" style="' + BG + '">🎮 O‘yin zaliga</button><button id="pzRk" style="' + BG + '">🏅 Unvonlar</button></div>';
     if (curFo && !curLv && S.promo && Date.now() < S.promo) h += '<div style="font-size:13px;margin:-4px 0 12px;padding:8px 10px;border-radius:10px;background:#2a2560">🎁 Aksiya (' + window.pzLeft(S.promo - Date.now()) + ' qoldi): havolangiz orqali kirgan har bir yangi o‘yinchi masala yechsa, sizga +100 💎' + (S.inv ? '<br>👥 Taklif qilinganlar: ' + S.inv.total : '') + '</div>';
-    if (S.admin) h += '<div style="margin-bottom:12px"><button id="pzAdd" style="' + BS + '">➕ Masala</button>' + (curFo ? '<button id="pzDF" style="' + BG + '">🗑 Papkani o‘chirish</button>' : '') + '</div>';
+    if (S.admin) h += '<div style="margin-bottom:12px"><button id="pzAdd" style="' + BS + '">➕ Masala</button>' + (curFo ? '<button id="pzRF" style="' + BG + '">✏️ Nomi</button><button id="pzDF" style="' + BG + '">🗑 Papkani o‘chirish</button>' : '') + '</div>';
     S.list.forEach(function (p, i) {
       if (curLv ? (lvOf(p) !== curLv || foOf(p)) : foOf(p) !== curFo) return;
       shown++;
@@ -538,6 +547,10 @@
         var t = Array.prototype.slice.call(document.querySelectorAll('*')).filter(function (e) { return /^\s*(🎮\s*)?O[‘'ʻ’]yin\s*$/.test(e.textContent || ''); });
         if (t.length) t[t.length - 1].click();
       }, 150);
+    });
+    on('#pzRF', function () {
+      var f = curFo, n = cleanName(prompt('Papkaning yangi nomi:', f)); if (!n || n === f) return;
+      api('/api/puzzle/folder', { name: f, ren: n }).then(function () { curFo = n; load(); });
     });
     on('#pzDF', function () {
       var f = curFo;
