@@ -562,7 +562,7 @@
       t.forEach(function (x, i) {
         h += '<div style="text-align:left;background:' + (x.me ? '#262b66' : '#161a3a') + ';border:1px solid #262b5a;border-radius:14px;padding:10px 12px;margin-bottom:8px;display:flex;justify-content:space-between"><span>' + (['🥇', '🥈', '🥉'][i] || (i + 1) + '.') + ' ' + esc(x.name) + '</span><b>✅ ' + x.n + '</b></div>';
       });
-      if (d.rank > 20) h += '<div style="margin-top:10px;opacity:.85">Sizning o‘rningiz: ' + d.rank + ' · ✅ ' + d.n + '</div>';
+      if (d.rank > 100) h += '<div style="margin-top:10px;opacity:.85">Sizning o‘rningiz: ' + d.rank + ' · ✅ ' + d.n + '</div>';
       ov.innerHTML = h; on('#pzBack', list);
     }).catch(function () { ov.innerHTML = head('🏆 TOP') + '<div style="padding:30px">Server bilan aloqa yo‘q</div>'; on('#pzBack', list); });
   }
