@@ -999,6 +999,24 @@
         stt.textContent = "#lbT{padding-top:4px}#lbTbar{display:flex;align-items:center;gap:8px;margin:6px 0 10px}#lbTbar .tabs{flex:1;display:flex;gap:6px;margin:0}#lbTbar .tabs button{flex:1;padding:11px 6px;border-radius:14px}#lbTbar .tabs button.on{background:#12a966;color:#fff}#lbTbar .ib{width:44px;height:44px;padding:0;font-size:20px;border-radius:14px}#lbTs .card,#lbTform{border-radius:18px;background:#161a3a;border:1px solid rgba(255,255,255,.1)}";
         document.head.appendChild(stt);
       }
+      if (!document.getElementById("lbArena")) { var _as = document.createElement("style"); _as.id = "lbArena"; _as.textContent = "" +
+"#lbHero{margin:0 0 12px}" +
+".lbhb{position:relative;overflow:hidden;border-radius:20px;padding:16px;background:radial-gradient(circle at 85% 20%,rgba(245,183,43,.28),transparent 55%),linear-gradient(135deg,#2a1d52,#1a1440 60%,#3a2a08);border:1px solid #f5b72b;box-shadow:0 0 22px rgba(245,183,43,.35)}" +
+".lbhb .tg{display:inline-block;font-size:11px;font-weight:800;padding:3px 9px;border-radius:9px;background:#ff8a1f;color:#fff}" +
+".lbhb h3{margin:8px 0 2px;font-size:22px;font-weight:900;color:#fff}" +
+".lbhb p{margin:0 0 8px;font-size:13px;opacity:.8}" +
+".lbhb .tm{font-size:13px;opacity:.9;margin-bottom:10px}.lbhb .tm b{font-size:16px}" +
+".lbhb button{border:0;border-radius:14px;padding:11px 18px;font-weight:800;font-size:15px;color:#2a1d00;background:linear-gradient(180deg,#ffd45a,#f5a623)}" +
+"#lbTbar .tabs button{border:1px solid #2a3470;border-radius:14px;background:#10143a}" +
+"#lbTbar .tabs button.on{border-color:#2fc8ff;box-shadow:0 0 10px rgba(47,200,255,.5)}" +
+"#lbTs .card{border-radius:18px;border:1px solid #3d5bd9;background:linear-gradient(180deg,#1b2350,#10143a);box-shadow:0 0 14px rgba(61,91,217,.35)}" +
+"#lbTs .card.lbta{border-color:#2fd37a;background:linear-gradient(180deg,#0f3a2c,#0c1a22);box-shadow:0 0 14px rgba(47,211,122,.35)}" +
+"#lbTs .card.lbts{border-color:#7a5cf0;background:linear-gradient(180deg,#2a1f6e,#14123a);box-shadow:0 0 14px rgba(122,92,240,.4)}" +
+".lbcl{border-radius:20px!important;border:1px solid #2a3470!important;background:linear-gradient(180deg,#141a44,#0e1233)!important;box-shadow:0 0 14px rgba(61,91,217,.25)}" +
+".lbcr{border-radius:16px!important;border:1px solid #2a3470!important}" +
+".lbmy{margin:10px 0}.lbmy .r{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 2px;border-top:1px solid rgba(255,255,255,.08);cursor:pointer}.lbmy .r:first-of-type{border-top:0}" +
+".lbdr{display:flex;align-items:center;gap:10px;margin:10px 0;padding:12px;border-radius:18px;background:#10143a;border:1px solid #3d5bd9;box-shadow:0 0 14px rgba(61,91,217,.3)}";
+document.head.appendChild(_as); }
       var _bx = $("lbT");
       if (_bx && !$("lbTbar")) {
         var _f = _bx.querySelector(".card"); if (_f) { _f.id = "lbTform"; _f.style.display = "none"; }
@@ -1015,6 +1033,33 @@
         var o = { running: 0, reg: 1, finished: 2 };
         return o[a.status] - o[b.status];
       });
+      var _hb = $("lbHero");
+      if (!_hb && $("lbTbar")) { _hb = document.createElement("div"); _hb.id = "lbHero"; $("lbTbar").parentNode.insertBefore(_hb, $("lbTbar")); }
+      if (_hb) {
+        var _a = (S.tournaments || []).filter(function (t) { return t.status === "running"; })[0] || (S.tournaments || []).filter(function (t) { return t.status === "reg"; })[0];
+        if (!_a || tFil === "fin") _hb.innerHTML = "";
+        else {
+          var _ms = _a.status === "reg" ? (_a.startAt ? _a.startAt - Date.now() : 0) : (_a.endAt ? _a.endAt - Date.now() : 0), _lt = "";
+          if (_ms > 0) { var _m = Math.floor(_ms / 60000), _d = Math.floor(_m / 1440), _h = Math.floor(_m % 1440 / 60); _m = _m % 60; _lt = "<div class='tm'>🕒 " + (_a.status === "reg" ? "Boshlanishiga" : "Qolgan vaqt") + ": <b>" + (_d ? _d + " kun " : "") + (_h || _d ? _h + " soat " : "") + _m + " daqiqa</b></div>"; }
+          var _jn = _a.players.some(function (p) { return p.uid === me; });
+          _hb.innerHTML = "<div class='lbhb'><span class='tg'>" + (_a.status === "running" ? "AKTIV TURNIR 🔥" : "RO‘YXAT OCHIQ") + "</span><h3>" + esc(_a.name) + "</h3><p>" + esc(_a.tc) + (_a.pos === "idf" ? " · IDF 780" : "") + " · " + _a.players.length + " o‘yinchi</p>" + _lt +
+            "<button onclick=\"var e=document.getElementById('lbtc_" + esc(_a.id) + "');if(e)e.scrollIntoView({behavior:'smooth',block:'center'})\">" + (_jn ? "Ko‘rish ›" : "Qo‘shilish ›") + "</button></div>";
+        }
+      }
+      var _tsb = $("lbTs");
+      if (_tsb) {
+        var _dr = $("lbDream");
+        if (!_dr) { _dr = document.createElement("div"); _dr.id = "lbDream"; _tsb.parentNode.insertBefore(_dr, _tsb.nextSibling); }
+        var _my = (S.tournaments || []).filter(function (t) { return t.players.some(function (p) { return p.uid === me; }); }).slice(0, 4), _mh = "";
+        if (_my.length) {
+          _mh = "<div class='lbcl lbmy'><b>👤 Mening turnirlarim</b>" + _my.map(function (t) {
+            var k = 0; t.players.forEach(function (p, i) { if (p.uid === me) k = i + 1; });
+            var tx = t.status === "finished" ? "Tugatildi" : (t.status === "running" ? "Davom etmoqda" : "Ro‘yxat ochiq");
+            return "<div class='r' onclick=\"var e=document.getElementById('lbtc_" + esc(t.id) + "');if(e)e.scrollIntoView({behavior:'smooth',block:'center'})\"><span>" + (t.type === "arena" ? "⚔️" : "🏆") + " " + esc(t.name) + " <small class='muted'>" + tx + "</small></span><b>" + k + "-o‘rin</b></div>";
+          }).join("") + "</div>";
+        }
+        _dr.innerHTML = _mh + "<div class='lbdr'><span style='font-size:28px'>🎯</span><div><b>Orzular sari! 💪</b><div class='muted'>Turnirda g‘alaba qozon va eng kuchli o‘yinchi bo‘l!</div></div></div>";
+      }
       if (!ts.length) { $("lbTs").innerHTML = "<div class=\"card muted\">Hozircha turnir yo‘q. Birinchi bo‘lib oching!</div>"; return; }
       var h = "";
       ts.forEach(function (t) {
@@ -1024,7 +1069,7 @@
         var st = arena
           ? (t.status === "reg" ? "Boshlanishi: " + mins(t.startAt - Date.now()) : (t.status === "running" ? (t.ending ? "Tugayapti…" : "Qoldi: " + mins(t.endAt - Date.now())) : "Tugagan"))
           : (t.status === "reg" ? "Ro‘yxat ochiq · " + (t.roundsWanted || "?") + " tur" + (t.startAt ? " · boshlanishi: " + mins(t.startAt - Date.now()) : "") : (t.status === "running" ? t.round + "/" + t.rounds + "-tur" : "Tugagan"));
-        h += "<div class=\"card\" id=\"lbtc_" + esc(t.id) + "\"><div><b>" + (arena ? "⚔️" : "🏆") + " " + esc(t.name) + "</b></div><div class=\"muted\">" + esc(t.tc) + (t.pos === "idf" ? " · IDF 780" : "") + " · " + st + " · " + t.players.length + " o‘yinchi · ochdi: " + esc(t.creatorName) + "</div><div class=\"row\">";
+        h += "<div class=\"card lbtk " + (arena ? "lbta" : "lbts") + "\" id=\"lbtc_" + esc(t.id) + "\"><div><b>" + (arena ? "⚔️" : "🏆") + " " + esc(t.name) + "</b></div><div class=\"muted\">" + esc(t.tc) + (t.pos === "idf" ? " · IDF 780" : "") + " · " + st + " · " + t.players.length + " o‘yinchi · ochdi: " + esc(t.creatorName) + "</div><div class=\"row\">";
         h += "<button class=\"sec\" data-a=\"tlink\" data-id=\"" + esc(t.id) + "\" data-n=\"" + esc(t.name) + "\">🔗 Havola</button>";
         if (t.status === "reg") {
           if (!joined) h += "<button data-a=\"tj\" data-id=\"" + t.id + "\">Qo‘shilish</button>";
