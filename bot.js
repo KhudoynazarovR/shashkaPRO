@@ -48,6 +48,19 @@ function playMarkup(id) {
 
 const TEXT = "♟️ Shashka — yangi xona tayyor!\nBirinchi kirgan oq, ikkinchisi qora, qolganlar tomoshabin.";
 
+function kbFor(msg) {
+  if (!msg.chat || msg.chat.type !== "private") return undefined;
+  const u = (process.env.WEBAPP_URL || "https://shashkapro.onrender.com").replace(/\/$/, "");
+  return {
+    keyboard: [
+      [{ text: "🎮 Shashka Mini App", web_app: { url: u + "/" } }],
+      [{ text: "🧩 Masala yechish", web_app: { url: u + "/?go=puz" } }, { text: "🤖 AI bilan o‘ynash", web_app: { url: u + "/?go=ai" } }]
+    ],
+    resize_keyboard: true,
+    is_persistent: true
+  };
+}
+
 async function onMessage(msg) {
   const text = (msg.text || "").trim();
   if (!text.startsWith("/")) return;
@@ -67,7 +80,7 @@ async function onMessage(msg) {
     await api("sendMessage", {
       chat_id: msg.chat.id,
       text: "Shashka o‘ynash uchun /new yozing — yangi xona havolasi yuboriladi.\n" +
-        "Guruhda ham ishlaydi. Yoki istalgan chatda @" + BOT + " deb yozing."
+        "Guruhda ham ishlaydi. Yoki istalgan chatda @" + BOT + " deb yozing.", reply_markup: kbFor(msg)
     });
   }
 }
