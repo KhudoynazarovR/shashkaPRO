@@ -2,8 +2,8 @@
 // window.SPSound.play("move"|"capture"|"king"|"low"|"tick"), SPSound.count(n), SPSound.openSettings()
 (function () {
   "use strict";
-  var KEY = "sp_snd2";
-  var DEF = { on: true, vol: 0.8, move: true, capture: true, king: true, low: true, count: true, speech: true };
+  var KEY = "sp_snd3";
+  var DEF = { on: true, vol: 0.6, move: true, capture: true, king: true, low: true, count: true, speech: true };
 
   function load() {
     var cfg = {}, k, x = null;
@@ -59,21 +59,23 @@
 
   // yog'och "tak": filtrlangan shovqin + past zarba
   function knock(a, t, pitch, gain) {
-    var src = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+    var src = a.createBufferSource(), f = a.createBiquadFilter(), lp = a.createBiquadFilter(), g = a.createGain();
     src.buffer = noise(a);
-    f.type = "bandpass"; f.frequency.value = pitch; f.Q.value = 1.4;
-    g.gain.setValueAtTime(gain, t);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
-    src.connect(f); f.connect(g); g.connect(master);
-    src.start(t); src.stop(t + 0.1);
-    tone(a, t, pitch / 6, 0.07, "sine", gain * 0.9, pitch / 12);
+    f.type = "bandpass"; f.frequency.value = pitch; f.Q.value = 0.8;
+    lp.type = "lowpass"; lp.frequency.value = 1600;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(gain, t + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+    src.connect(f); f.connect(lp); lp.connect(g); g.connect(master);
+    src.start(t); src.stop(t + 0.12);
+    tone(a, t, 170, 0.11, "sine", gain * 1.1, 70);
   }
 
   var SOUNDS = {
-    move: function (a, t) { knock(a, t, 1100, 0.55); },
-    capture: function (a, t) { knock(a, t, 1500, 0.8); knock(a, t + 0.055, 900, 0.7); },
+    move: function (a, t) { knock(a, t, 520, 0.3); },
+    capture: function (a, t) { knock(a, t, 620, 0.42); knock(a, t + 0.05, 430, 0.32); },
     king: function (a, t) {
-      knock(a, t, 1100, 0.45);
+      knock(a, t, 520, 0.28);
       tone(a, t + 0.07, 660, 0.14, "triangle", 0.35);
       tone(a, t + 0.17, 880, 0.14, "triangle", 0.35);
       tone(a, t + 0.27, 1320, 0.28, "triangle", 0.32);
