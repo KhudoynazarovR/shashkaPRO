@@ -63,7 +63,9 @@ async function onMessage(msg) {
   const text = (msg.text || "").trim();
   const _go = { "🎮 Shashka Mini App": ["Shashka Mini App", "main"], "🧩 Masala yechish": ["Masalalar", "puz"], "🤖 AI bilan o‘ynash": ["AI bilan o‘yin", "ai"] }[text];
   if (_go) {
-    await api("sendMessage", { chat_id: msg.chat.id, text: "👇 " + _go[0] + " ochish uchun bosing", reply_markup: { inline_keyboard: [[{ text: "Ochish", url: "https://t.me/" + BOT + "/" + APP + "?startapp=go_" + _go[1] }]] } });
+    try { await api("deleteMessage", { chat_id: msg.chat.id, message_id: msg.message_id }); } catch (e) {}
+    try { const rm2 = await api("sendMessage", { chat_id: msg.chat.id, text: "⏳", reply_markup: { remove_keyboard: true } }); if (rm2 && rm2.result) await api("deleteMessage", { chat_id: msg.chat.id, message_id: rm2.result.message_id }); } catch (e) {}
+    await api("sendMessage", { chat_id: msg.chat.id, text: "👇 Tanlang", reply_markup: kbFor(msg) });
     return;
   }
   if (!text.startsWith("/")) return;
