@@ -83,7 +83,7 @@ textarea{width:100%;height:120px;font:12px ui-monospace,monospace}
 <div class="tabs"><button data-t="play" class="on" data-i="play"></button><button data-t="set" data-i="settings"></button><button data-t="ed" data-i="editor"></button><button data-t="pdn">PDN</button></div>
 <div class="tab on" id="t-play">
 <div id="st"></div><div id="an"></div>
-<div class="g"><button class="p" onclick="newGame()" data-i="new"></button><button onclick="undo()" data-i="undo"></button><button onclick="redo()" data-i="redo"></button>
+<div class="g"><button class="p" onclick="kOpen()" data-i="new"></button><button onclick="undo()" data-i="undo"></button><button onclick="redo()" data-i="redo"></button>
 <button onclick="hint()" data-i="hint"></button><button onclick="G.flip=!G.flip;render()" data-i="flip"></button><button onclick="analyze()" data-i="analyze"></button>
 <button onclick="offerDraw()" data-i="draw"></button><button onclick="resign()" data-i="resign"></button><button onclick="clearStats()">Σ 0</button></div>
 <button class="p" style="width:100%;margin:6px 0;padding:12px" onclick="kOpen()">&#9823; KestoG bilan o'ynash</button><div class="row"><span>AI</span><select data-s="lvl"><option value="2">KestoG</option></select></div>
