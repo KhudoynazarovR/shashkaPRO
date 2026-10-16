@@ -29,7 +29,7 @@
       ".mnx{padding:12px 14px;background:#10142e;border-top:1px solid rgba(255,255,255,.07);font-size:14px;line-height:1.5}" +
       ".mnx textarea{width:100%;box-sizing:border-box;min-height:90px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:#161a3a;color:#fff;padding:10px}" +
       ".mnx button{margin-top:8px;border:0;border-radius:12px;padding:10px 16px;background:#6b5cf0;color:#fff}.mnp{height:24px}";
-    document.head.appendChild(st);
+    st.textContent += "#mnPanel{background:radial-gradient(circle at 50% 0,#1a1450 0,#0b0e1a 55%)}.mqT{display:flex;align-items:center;justify-content:space-between;padding:14px 14px 6px}.mqL b{font-size:26px;font-weight:900;color:#fff}.mqL b i{font-style:normal;color:#f5b82e}.mqL small{display:block;font-size:12px;color:#a9b0ff}.mqR{display:flex;align-items:center;gap:8px}.mqC{padding:6px 12px;border-radius:14px;background:rgba(255,255,255,.1);border:1px solid #3d5bd9;font-weight:700}.mqP{margin:8px 14px;border-radius:22px;padding:14px;background:linear-gradient(135deg,#2b2a78,#4a1f8a 60%,#2a1050);border:1px solid #7a5cf0;box-shadow:0 0 18px rgba(122,92,240,.45)}.mqPh{display:flex;align-items:center;gap:12px}.mqav{width:64px;height:64px;border-radius:50%;border:3px solid #f5b82e;box-shadow:0 0 14px rgba(245,184,46,.6);background:#2a1fc9;display:flex;align-items:center;justify-content:center;font-size:28px;overflow:hidden;flex:none}.mqav img{width:100%;height:100%;object-fit:cover}.mqN{flex:1;min-width:0}.mqN b{display:block;font-size:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mqN small{opacity:.7}.mqG{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.mqG.two{grid-template-columns:repeat(2,1fr);margin-top:8px}.mqG div{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:8px 4px;text-align:center}.mqG b{display:block;font-size:18px}.mqG small{font-size:11px;opacity:.7}.mqS{display:flex;align-items:center;gap:8px;margin:16px 16px 8px;font-size:17px;font-weight:800;letter-spacing:.5px}.mqS span{font-size:20px}.mqGr{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 14px}.mqK{position:relative;border-radius:16px;padding:10px 8px;min-height:96px;box-sizing:border-box;cursor:pointer;overflow:hidden}.mqK .ic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:6px}.mqK b{display:block;font-size:13px;line-height:1.2}.mqK small{display:block;font-size:10px;opacity:.7;margin-top:2px;line-height:1.2}.mqK em{position:absolute;right:8px;top:10px;font-style:normal;opacity:.6}.mqX{margin:8px 14px 0;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.1)}.mqB{margin:16px 14px 0;display:flex;align-items:center;gap:12px;padding:12px;border-radius:18px;background:linear-gradient(135deg,#3a1d12,#1a1440);border:1px solid #f5873b;box-shadow:0 0 14px rgba(245,135,59,.4)}.mqB>span{font-size:30px}.mqB b{display:block;font-size:14px}.mqB small{opacity:.75;font-size:11px}"; document.head.appendChild(st);
   }
   var SEC = [
     ["O‘YINLAR", [
@@ -52,18 +52,40 @@
     if (a === "@fb" && open === "fb") h += "<div class=\"mnx\"><textarea id=\"mnFbT\" maxlength=\"1000\" placeholder=\"Taklif yoki shikoyatingizni yozing…\"></textarea><button id=\"mnFbB\" onclick=\"mnSend()\">Yuborish</button><div id=\"mnFbM\" class=\"mnm\" style=\"margin:8px 0 0\"></div></div>";
     return h;
   }
+  var pst = null;
+  function cardHtml(r) {
+    var cs = r[4].split(","), c1 = cs[0], c2 = cs[1] || cs[0];
+    return "<div class='mqK' data-a='" + r[3] + "' onclick='mnA(this.dataset.a)' style='background:linear-gradient(135deg," + c1 + "33," + c2 + "14);border:1px solid " + c1 + "99;box-shadow:0 0 12px " + c1 + "40'><em>›</em><div class='ic' style='background:linear-gradient(135deg," + r[4] + ")'>" + r[0] + "</div><b>" + r[1] + "</b><small>" + r[2] + "</small></div>";
+  }
   function render() {
     if (!panel) return;
     var u = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) || {};
     var name = ((u.first_name || "") + " " + (u.last_name || "")).trim() || "Mehmon";
-    var av = u.id ? "<img src=\"/api/av/" + encodeURIComponent(u.id) + "?t=" + Date.now() + "\" onerror=\"this.outerHTML='👤'\">" : "👤";
-    var h = "<div class=\"mnh\"><div class=\"mnav\">" + av + "</div><div class=\"mnu\"><b>" + esc(name) + "</b><span class=\"mnb\">💎 " + (bal == null ? "—" : bal) + "</span></div>" +
-      "<button class=\"mnd\" onclick=\"mnA('@daily')\"" + (canDaily ? "" : " disabled") + ">" + (canDaily ? "🎁 Bonus" : "✅ Olingan") + "</button></div><div class=\"mnm\" id=\"mnMsg\"></div>";
-    SEC.forEach(function (s) {
-      h += "<div class=\"mns\">" + s[0] + "</div><div class=\"mnl\">" + s[1].map(rowHtml).join("") + "</div>";
+    var av = u.id ? "<img src='/api/av/" + encodeURIComponent(u.id) + "?t=" + Date.now() + "' onerror=\"this.outerHTML='👤'\">" : "👤";
+    function v(x) { return x == null ? "—" : x; }
+    var P = pst || {};
+    var h = "<div class='mqT'><div class='mqL'><b>Shashka<i>PRO</i> 👑</b><small>Yaxshiroq o‘yinchilar uchun!</small></div><div class='mqR'><span class='mqC'>💎 " + (bal == null ? "—" : bal) + "</span><button class='mnd' onclick=\"mnA('@daily')\"" + (canDaily ? "" : " disabled") + ">" + (canDaily ? "🎁 Bonus" : "✅ Olingan") + "</button></div></div>";
+    h += "<div class='mqP'><div class='mqPh'><div class='mqav'>" + av + "</div><div class='mqN'><b>" + esc(name) + " 👑</b><small>" + (u.id ? "ID: " + esc(u.id) : "Telegram orqali kiring") + "</small></div></div>" +
+      "<div class='mqG'><div><b>🏆 " + v(P.wins) + "</b><small>G‘alaba</small></div><div><b>✖️ " + v(P.losses) + "</b><small>Mag‘lub</small></div><div><b>🤝 " + v(P.draws) + "</b><small>Durang</small></div></div>" +
+      "<div class='mqG two'><div><b>🔥 " + v(P.bestStreak) + "</b><small>G‘alaba seriyasi</small></div><div><b>👑 " + v(P.elo) + "</b><small>ELO</small></div></div></div>";
+    h += "<div class='mnm' id='mnMsg'></div>";
+    SEC.forEach(function (s, i) {
+      h += "<div class='mqS'><span>" + (i === 0 ? "🎮" : "⚙️") + "</span>" + s[0] + "</div><div class='mqGr'>" + s[1].map(cardHtml).join("") + "</div>";
+      if (i === 1 && open === "help") h += "<div class='mnx mqX'>📱 <b>Pastki menyu:</b><br>👤 Profil: ma‘lumotlaringiz va balans<br>🎮 O‘yin: onlayn raqiblar va tezkor o‘yin<br>🏆 Turnir: turnirlar va klublar<br>📊 Reyting: eng kuchli o‘yinchilar<br>☰ Menyu: AI o‘yin, muharrir va sozlamalar</div>";
+      if (i === 1 && open === "fb") h += "<div class='mnx mqX'><textarea id='mnFbT' maxlength='1000' placeholder='Taklif yoki shikoyatingizni yozing…'></textarea><button id='mnFbB' onclick='mnSend()'>Yuborish</button><div id='mnFbM' class='mnm' style='margin:8px 0 0'></div></div>";
     });
-    panel.innerHTML = h + "<div class=\"mnp\"></div>";
+    h += "<div class='mqB'><span>🏆</span><div><b>ShashkaPRO — Doim siz bilan!</b><small>O‘yin, do‘stlar, turnirlar va yanada ko‘p imkoniyatlar!</small></div></div>";
+    panel.innerHTML = h + "<div class='mnp'></div>";
   }
+  function loadStats() {
+    var u = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) || {};
+    if (!initData || !u.id) return;
+    fetch("/api/user/" + encodeURIComponent(u.id), { headers: { "x-init-data": initData } })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { if (d && !d.error) { pst = d; render(); } })
+      .catch(function () {});
+  }
+  var _ld0 = load; load = function () { _ld0(); loadStats(); };
   function msgSet(t) { var m = document.getElementById("mnMsg"); if (m) m.textContent = t; }
   function load() {
     if (!initData) { msgSet("Balans va bonus uchun Telegram orqali kiring."); return; }
