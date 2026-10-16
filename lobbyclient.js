@@ -1378,3 +1378,47 @@ document.head.appendChild(_as); }
     });
   }, 500);
 })();
+
+;(function () {
+  if (document.getElementById("hzOrdCss")) return;
+  var st = document.createElement("style"); st.id = "hzOrdCss";
+  st.textContent =
+    "#hzHero{display:flex!important;flex-direction:column}#hzHero>*{order:9}" +
+    "#hzPromo{order:2!important;margin:0 0 10px!important;padding:8px 12px!important;border-radius:18px!important}" +
+    "#hzPromo .pgI{font-size:36px!important}#hzPromo .pgT{font-size:16px!important}#hzPromo .pgP{font-size:13px!important;padding:2px 8px!important}#hzPromo .pgS{font-size:12px!important;margin-top:2px!important}#hzPromo .pgA{font-size:26px!important}" +
+    "#hzRow2{order:3!important;display:flex;gap:10px;margin:0 0 10px}" +
+    "#hzRow2>*{flex:1 1 0;min-width:0;margin:0!important;box-sizing:border-box}" +
+    "#hzRow2 #hzDaily{padding:10px!important}#hzRow2 #hzDaily .hzN{display:none!important}#hzRow2 #hzDaily::after{display:none!important}" +
+    "#hzTrn{display:flex;align-items:center;gap:10px;padding:10px;border-radius:18px;cursor:pointer;color:#fff;font-weight:800;font-size:17px;background:linear-gradient(100deg,#2b7cff,#6a3df0);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35)}" +
+    "#hzTrn span{font-size:30px;flex:none}#hzTrn small{display:block;font-weight:400;font-size:12px;opacity:.85}" +
+    "#hzMkR{order:4!important}#hzLive{order:6!important}#hzRec{order:7!important}";
+  document.head.appendChild(st);
+})();
+
+;(function () {
+  function navTo(label) {
+    var hero = document.getElementById("hzHero"), all = document.querySelectorAll("button,div,a,span,li");
+    for (var i = 0; i < all.length; i++) {
+      var e = all[i];
+      if (hero && hero.contains(e)) continue;
+      var tx = (e.textContent || "").replace(/\s+/g, " ").trim();
+      if (tx === label || (tx.split(" ").pop() === label && e.children.length <= 2 && tx.length < label.length + 4)) { try { e.click(); } catch (x) {} return; }
+    }
+  }
+  setInterval(function () {
+    var hero = document.getElementById("hzHero"); if (!hero) return;
+    var seek = document.getElementById("hzSeek");
+    if (seek) seek.style.order = "1";
+    var daily = document.getElementById("hzDaily"); if (!daily) return;
+    var row = document.getElementById("hzRow2");
+    if (!row) {
+      row = document.createElement("div"); row.id = "hzRow2";
+      hero.insertBefore(row, daily);
+      row.appendChild(daily);
+      var t = document.createElement("div"); t.id = "hzTrn";
+      t.innerHTML = "<span>🏆</span><div>Turnirlar<small>Yangi va tugagan</small></div>";
+      t.onclick = function () { navTo("Turnir"); };
+      row.appendChild(t);
+    }
+  }, 500);
+})();
