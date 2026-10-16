@@ -1355,3 +1355,26 @@ document.head.appendChild(_as); }
     bar.innerHTML = "<img src=\"/api/av/" + encodeURIComponent(user.id) + "\" onerror=\"this.outerHTML='<span class=meA>👤</span>'\"><div class=\"meB\"><b>" + esc(info.name) + "</b><small><i class=\"dot\"></i>ELO " + (info.elo == null ? "—" : esc(info.elo)) + " &nbsp; 💎 " + (info.gems == null ? "—" : esc(info.gems)) + "</small></div><div class=\"meG\">›</div>";
   }, 700);
 })();
+
+;(function () {
+  if (!document.getElementById("hzFixCss")) {
+    var st = document.createElement("style"); st.id = "hzFixCss";
+    st.textContent =
+      "#hzHero::after{content:'👑'!important;display:block!important;position:fixed!important;left:50%;top:48%;transform:translate(-50%,-50%);margin:0!important;font-size:170px!important;opacity:.07!important;filter:none!important;pointer-events:none;z-index:0}" +
+      ".hzGone{display:none!important}" +
+      "#hzSeek{background:linear-gradient(180deg,#22c955,#0f8f3a)!important;border-color:#4dff7c!important}" +
+      "#lbPanel{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 170px)!important}";
+    document.head.appendChild(st);
+  }
+  setInterval(function () {
+    var p = document.getElementById("lbPanel"); if (!p) return;
+    ["lbTc", "lbPos", "lbGm", "lbQuick"].forEach(function (id) {
+      var e = document.getElementById(id); if (!e) return;
+      var r = e.closest(".row"); if (!r || r === p) r = e;
+      r.classList.add("hzGone");
+    });
+    Array.prototype.forEach.call(p.querySelectorAll("button"), function (b) {
+      if (/Havola yaratish/.test(b.textContent || "")) b.classList.add("hzGone");
+    });
+  }, 500);
+})();
