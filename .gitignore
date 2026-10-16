@@ -7,3 +7,6 @@ users.json
 server.log
 ngrok
 .env
+engine/*.bin
+engine/*.bin.*
+kesto/bridge
