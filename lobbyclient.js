@@ -1271,3 +1271,10 @@ document.head.appendChild(_as); }
     b.className = q ? "on" : "";
   }, 500);
 })();
+
+;(function () {
+  if (document.getElementById("hzHideCss")) return;
+  var st = document.createElement("style"); st.id = "hzHideCss";
+  st.textContent = ".hzHead{display:none!important}#hzAi{display:none!important}";
+  document.head.appendChild(st);
+})();
