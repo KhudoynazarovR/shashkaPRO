@@ -221,6 +221,7 @@ function handle(req, res, url) {
     return true;
   }
   if (p === '/api/ai/move' && req.method === 'POST') {
+    console.log('[KestoG] http, initData uzunligi:', (req.headers['x-init-data'] || '').length);
     const _tk = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!_tk) { send(res, 401, { error: 'auth' }); return true; }
     readBody(req, 4000, body => {
