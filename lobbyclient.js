@@ -144,7 +144,7 @@
       "#lbBtn{position:fixed;right:12px;bottom:12px;z-index:9000;width:48px;height:48px;border-radius:50%;border:0;background:#2b7cff;color:#fff;font-size:22px;box-shadow:0 2px 10px rgba(0,0,0,.4);cursor:pointer}" +
       "#lbBadge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:#e53935;color:#fff;font:700 11px/18px Arial;text-align:center;display:none}" +
       "#lbBack{position:fixed;left:10px;bottom:10px;z-index:9000;padding:8px 12px;border-radius:18px;background:#2b7cff;color:#fff;font:600 13px Arial;text-decoration:none;box-shadow:0 2px 10px rgba(0,0,0,.4)}" +
-      "#lbPanel{position:fixed;inset:0;z-index:9500;background:#0b1017;color:#e9eef5;font:14px/1.4 Arial,sans-serif;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(env(safe-area-inset-top,0px) + 10px) 12px calc(env(safe-area-inset-bottom,0px) + 20px);display:none}" +
+      "#lbPanel{position:fixed;left:0;right:0;top:0;bottom:64px;z-index:9500;background:#0b1017;color:#e9eef5;font:14px/1.4 Arial,sans-serif;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(env(safe-area-inset-top,0px) + 10px) 12px calc(env(safe-area-inset-bottom,0px) + 40px);display:none}" +
       "#lbPanel h2{margin:0;font-size:18px}#lbPanel .row{display:flex;gap:8px;align-items:center;margin:8px 0;flex-wrap:wrap}" +
       "#lbPanel input,#lbPanel select{background:#151d29;color:#fff;border:1px solid #2a3647;border-radius:8px;padding:9px 10px;font-size:14px;min-width:0}" +
       "#lbPanel button{background:#2b7cff;color:#fff;border:0;border-radius:8px;padding:9px 12px;font-size:14px;cursor:pointer}" +
