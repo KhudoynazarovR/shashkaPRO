@@ -107,7 +107,7 @@
       h += '<div style="display:flex;gap:8px;justify-content:center">';
       var bst = 'border:0;border-radius:14px;padding:12px 18px;background:#6b5cf0;color:#fff;font-size:20px';
       h += '<button id="an0" style="' + bst + '">⏮</button><button id="an1" style="' + bst + '">◀</button><button id="an2" style="' + bst + '">▶</button><button id="an3" style="' + bst + '">⏭</button></div>';
-      h += '<div style="display:flex;gap:8px;justify-content:center;margin-top:10px"><button id="anP" style="' + bst + '">' + (auto ? '⏸ To‘xta' : '▶️ Avto') + '</button><button id="anS" style="' + bst + '">' + spd + '×</button><button id="anF" style="' + bst + '">🔄</button></div>';
+      h += '<div style="display:flex;gap:8px;justify-content:center;margin-top:10px"><button id="anP" style="' + bst + '">' + (auto ? '⏸ To‘xta' : '▶️ Avto') + '</button><button id="anS" style="' + bst + '">' + spd + '×</button><button id="anF" style="' + bst + '">🔄</button><button id="anB" style="' + bst + '">🔬</button></div>';
       h += '<input id="anR" type="range" min="0" max="' + mv.length + '" value="' + cur + '" style="width:min(86vw,420px);margin-top:14px">';
       ov.innerHTML = h;
       ov.querySelector('#anX').onclick = function () { stopAuto(); ov.remove(); };
@@ -118,6 +118,13 @@
       ov.querySelector('#anP').onclick = function () { if (auto) stopAuto(); else startAuto(); draw(); };
       ov.querySelector('#anS').onclick = function () { spd = spd % 3 + 1; if (auto) startAuto(); draw(); };
       ov.querySelector('#anF').onclick = function () { flip = !flip; draw(); };
+      var bb = ov.querySelector('#anB');
+      if (bb) bb.onclick = function () {
+        stopAuto();
+        var go = function () { window.spBoard(g); };
+        if (window.spBoard) go();
+        else { var sc = document.createElement('script'); sc.src = '/board.js?v=' + Date.now(); sc.onload = go; document.head.appendChild(sc); }
+      };
       var bv = ov.querySelector('#anV'); if (bv) bv.onclick = function () { EV = []; runEval(); draw(); };
       var rg = ov.querySelector('#anR');
       rg.oninput = function () { var l = ov.querySelector('#anL'); if (l) l.textContent = 'Yurish: ' + rg.value + ' / ' + mv.length; };
