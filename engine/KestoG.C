@@ -3116,7 +3116,6 @@ int compute( int b[46],int color, int time, char output[256])
         newvalue = negamax(b, 1, alpha, beta,color,0);
         value = newvalue;
         for(depth=3;depth<MAXDEPTH && !search_timeout;depth++) {
-                fprintf(stderr, "[DEBUG] DEPTH %d START\n", depth); fflush(stderr);
                                     lastbest = bestrootmove;
                                     aspiration_phase = 0;
                                     repeat_search:
