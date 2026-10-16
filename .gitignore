@@ -17,3 +17,4 @@ data/
 *.log
 engine/bridge.bin
 engine/bridge.bin
+engine/*.bin

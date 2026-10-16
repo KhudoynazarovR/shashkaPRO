@@ -19,7 +19,7 @@
 #define KING 8
 #define FREE 16      // the light squares, always _free
 #define CHANGECOLOR 3
-#define MAXDEPTH 16
+#define MAXDEPTH 48
 #define MAXMOVES 50
 #define MAXHIST 65535
 #define UPPER 0
@@ -133,7 +133,7 @@ int make_prime(int n);
 
 int *play;
 U64 ZobristNumbers[47][17];
-unsigned int HASHTABLESIZE = 199999;   // 199999 is prime number, this is default size
+unsigned int HASHTABLESIZE = 4000037;   // 199999 is prime number, this is default size
 struct TEntry *TTable;
 int realdepth;
 int nodes;
@@ -368,7 +368,7 @@ getmove (int board[8][8],int color,double maxtime,char str[1024],int *playnow,in
    int value;
    int b[46];
    int time = (int)(maxtime * 1000.0);
-   Create_HashFunction();
+   { static int hf_done = 0; if (!hf_done) { Create_HashFunction(); hf_done = 1; } }
    /* initialize board */
    for(i=0;i<46;i++)
      b[i]=OCCUPIED;
@@ -3068,10 +3068,10 @@ void ClearTTable(void)
    if (TTable) free(TTable);
    TTable = (struct TEntry *)calloc(HASHTABLESIZE, sizeof(struct TEntry));
    // calloc clears memory
-   memset(killersf, 0, 32* MAXDEPTH + 2);
-   memset(killerst, 0, 32 * MAXDEPTH + 2);
-   memset(killersf2, 0, 32 * MAXDEPTH + 2);
-   memset(killerst2,0, 32 * MAXDEPTH + 2);
+   memset(killersf, 0, sizeof(killersf));
+   memset(killerst, 0, sizeof(killerst));
+   memset(killersf2, 0, sizeof(killersf2));
+   memset(killerst2, 0, sizeof(killerst2));
 }
 
 
@@ -3097,7 +3097,7 @@ int compute( int b[46],int color, int time, char output[256])
                   nodes = 0;
 	realdepth = 0;
                   ClearHistory();
-                  ClearTTable();
+                  if(!TTable) ClearTTable();
 	t=clock();
         search_timeout = 0;
         search_deadline = t + ((clock_t)time * CLOCKS_PER_SEC / 1000);
@@ -3186,10 +3186,6 @@ int compute( int b[46],int color, int time, char output[256])
                                     // interrupt by user
                                     if (*play) break;
 
-                               memset(killersf, 0, 32* MAXDEPTH + 2);
-                               memset(killerst, 0, 32 * MAXDEPTH + 2);
-                               memset(killersf2, 0, 32 * MAXDEPTH + 2);
-                               memset(killerst2,0, 32 * MAXDEPTH + 2);
 
                     } // for
 

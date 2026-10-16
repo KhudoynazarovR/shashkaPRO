@@ -12,6 +12,7 @@ int main(void) {
     int playnow;
 
     while (scanf("%d %lf", &color, &maxtime) == 2) {
+        if (color == 9) { ClearTTable(); printf("ok\n"); fflush(stdout); continue; }
         memset(board, 0, sizeof(board));
         memset(&move, 0, sizeof(move));
         memset(status, 0, sizeof(status));
