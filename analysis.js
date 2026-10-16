@@ -46,6 +46,43 @@
     ov.style.cssText = 'position:fixed;left:0;right:0;top:0;bottom:0;z-index:100001;background:radial-gradient(circle at 30% 10%,#3a1a7a 0,#241058 50%,#140a33 100%);color:#fff;overflow-y:auto;padding:12px;box-sizing:border-box;font-family:Arial,sans-serif;text-align:center';
     document.body.appendChild(ov);
     var res = g.winner === 'white' ? '🏆 ⚪ ' + esc(g.white) : g.winner === 'black' ? '🏆 ⚫ ' + esc(g.black) : '🤝 Durang';
+    var EV = [], evRun = false, evMsg = '';
+    function toEng(b) { var a = [], r, c, p; for (r = 0; r < 8; r++) for (c = 0; c < 8; c++) { p = b[r][c]; a.push(p === 1 ? 1 : p === 2 ? -1 : p === 3 ? 2 : p === 4 ? -2 : 0); } return a; }
+    function evFmt(x) { if (x == null) return '–'; x = Math.max(-9.9, Math.min(9.9, x)); return (x > 0 ? '+' : '') + x.toFixed(1); }
+    function getEv(k, cb) {
+      var side = (k % 2 === 0) ? 1 : -1;
+      var hd = { 'Content-Type': 'application/json', 'x-init-data': (window.Telegram && Telegram.WebApp && Telegram.WebApp.initData) || '' };
+      fetch('/api/ai/move', { method: 'POST', headers: hd, body: JSON.stringify({ board: toEng(bs[k]), side: side, time: 0.25 }) })
+        .then(function (r) { return r.json(); })
+        .then(function (j) { cb(j && typeof j.ev === 'number' ? side * j.ev / 200 : null); })
+        .catch(function () { cb(null); });
+    }
+    function runEval() {
+      if (evRun) return; evRun = true; var k = 0;
+      (function next() {
+        if (!document.body.contains(ov)) { evRun = false; return; }
+        if (k > mv.length) { evRun = false; draw(); return; }
+        getEv(k, function (v) {
+          EV[k] = v; k++;
+          evMsg = 'Baholanmoqda ' + Math.min(k, mv.length + 1) + '/' + (mv.length + 1);
+          var l = ov.querySelector('#anE'); if (l) l.textContent = evMsg;
+          next();
+        });
+      })();
+    }
+    function mark(i) {
+      if (EV[i] == null || EV[i + 1] == null) return '';
+      var sg = (i % 2 === 0) ? 1 : -1, loss = sg * (EV[i] - EV[i + 1]);
+      return loss >= 1.5 ? '??' : loss >= 0.8 ? '?' : '';
+    }
+    function evBlock() {
+      if (evRun) return evMsg || 'Baholanmoqda...';
+      var any = EV.some(function (x) { return x != null; });
+      if (!any) return '<button id="anV" style="border:0;border-radius:14px;padding:10px 16px;background:#2e9d6b;color:#fff;font-size:16px">📊 Baho</button>' + (EV.length ? '<div style="margin-top:6px;font-size:13px;opacity:.8">Baho olinmadi, qayta urinib ko‘ring</div>' : '');
+      var x = EV[cur], pc = 50 + Math.max(-5, Math.min(5, x == null ? 0 : x)) * 10, mk = cur > 0 ? mark(cur - 1) : '';
+      return 'Baho: <b>' + evFmt(x) + '</b>' + (mk ? ' · yurish <b style="color:#ff6b6b">' + mk + '</b>' : '') +
+        '<div style="width:min(86vw,420px);height:10px;margin:6px auto;background:#222;border-radius:5px;overflow:hidden"><div style="width:' + pc + '%;height:100%;background:#eee"></div></div>';
+    }
     function draw() {
       var b = bs[cur], m = cur > 0 ? mv[cur - 1] : null, h = '', r, c, p, bg, hl;
       if (flip) { b = b.slice().reverse().map(function (x) { return x.slice().reverse(); }); if (m) m = { from: { r: 7 - m.from.r, c: 7 - m.from.c }, to: { r: 7 - m.to.r, c: 7 - m.to.c } }; }
@@ -81,6 +118,7 @@
       ov.querySelector('#anP').onclick = function () { if (auto) stopAuto(); else startAuto(); draw(); };
       ov.querySelector('#anS').onclick = function () { spd = spd % 3 + 1; if (auto) startAuto(); draw(); };
       ov.querySelector('#anF').onclick = function () { flip = !flip; draw(); };
+      var bv = ov.querySelector('#anV'); if (bv) bv.onclick = function () { EV = []; runEval(); draw(); };
       var rg = ov.querySelector('#anR');
       rg.oninput = function () { var l = ov.querySelector('#anL'); if (l) l.textContent = 'Yurish: ' + rg.value + ' / ' + mv.length; };
       rg.onchange = function () { cur = Number(rg.value); draw(); };
