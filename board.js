@@ -166,6 +166,9 @@
     return s;
   }
   var TT = new Map(), hist = new Int32Array(4096), nodes = 0, deadline = 0;
+  var TTMAX = 1000000;
+  var PVT = [], PVL = new Int32Array(128), zi;
+  for (zi = 0; zi < 128; zi++) PVT.push([]);
   var ZA = new Int32Array(320), ZB = new Int32Array(320);
   (function () {
     var s = 123456789, i;
@@ -177,15 +180,23 @@
     for (i = 0; i < 64; i++) { p = b[i]; if (p) { z = i * 5 + p + 2; h1 ^= ZA[z]; h2 ^= ZB[z]; } }
     return (h2 & 0x1fffff) * 4294967296 + (h1 >>> 0);
   }
+  function setPV(ply, m) {
+    var L = PVL[ply + 1], j, a = PVT[ply], c = PVT[ply + 1];
+    a[0] = m;
+    for (j = 0; j < L; j++) a[j + 1] = c[j];
+    PVL[ply] = L + 1;
+  }
   function ab(b, side, d, al, be, ply) {
     if ((++nodes & 1023) === 0 && Date.now() > deadline) throw 0;
+    PVL[ply] = 0;
     var ms = legal(b, side);
     if (!ms.length) return -9000 + ply;
     if (ply > 70 || (d <= 0 && !ms[0].caps.length)) return side * ev(b);
+    var isPV = be - al > 1;
     var key = hk(b, side), e = TT.get(key), tm = -1;
     if (e) {
       tm = e.m;
-      if (e.d >= d) { if (e.f === 0 || (e.f === 1 && e.v >= be) || (e.f === 2 && e.v <= al)) return e.v; }
+      if (!isPV && e.d >= d) { if (e.f === 0 || (e.f === 1 && e.v >= be) || (e.f === 2 && e.v <= al)) return e.v; }
     }
     var sc = ms.map(function (m) {
       var k = m.path[0] * 64 + m.path[m.path.length - 1];
@@ -194,25 +205,21 @@
     sc.sort(function (x, y) { return y[0] - x[0]; });
     var a0 = al, best = -1e9, bk = -1, i;
     for (i = 0; i < sc.length; i++) {
-      var x = sc[i], v = -ab(apply(b, x[1]), -side, d - 1, -be, -al, ply + 1);
+      var x = sc[i], ch = apply(b, x[1]), v;
+      if (i === 0) v = -ab(ch, -side, d - 1, -be, -al, ply + 1);
+      else {
+        v = -ab(ch, -side, d - 1, -al - 1, -al, ply + 1);
+        if (v > al && v < be) v = -ab(ch, -side, d - 1, -be, -al, ply + 1);
+      }
       if (v > best) { best = v; bk = x[2]; }
-      if (v > al) al = v;
+      if (v > al) { al = v; setPV(ply, x[1]); }
       if (al >= be) { if (!x[1].caps.length) hist[x[2]] += d * d; break; }
     }
-    TT.set(key, { d: d, v: best, f: best <= a0 ? 2 : best >= be ? 1 : 0, m: best <= a0 ? -1 : bk });
-    return best;
-  }
-  function pvWalk(b, side, m0, maxLen) {
-    var out = [m0], bb = apply(b, m0), s = -side, seen = {}, i;
-    for (i = 1; i < maxLen; i++) {
-      var key = hk(bb, s);
-      if (seen[key]) break; seen[key] = 1;
-      var e = TT.get(key); if (!e || e.m < 0) break;
-      var x = legal(bb, s).filter(function (q) { return q.path[0] * 64 + q.path[q.path.length - 1] === e.m; })[0];
-      if (!x) break;
-      out.push(x); bb = apply(bb, x); s = -s;
+    if (!e || e.d <= d) {
+      if (TT.size > TTMAX) TT.clear();
+      TT.set(key, { d: d, v: best, f: best <= a0 ? 2 : best >= be ? 1 : 0, m: best <= a0 ? -1 : bk });
     }
-    return out;
+    return best;
   }
   function score(v, side) {
     var w = v * side;
@@ -220,7 +227,7 @@
     return (w >= 0 ? '+' : '') + (w / 100).toFixed(1);
   }
   function run(b, side, ms_, maxd) {
-    nodes = 0; deadline = Date.now() + ms_; TT.clear(); hist.fill(0);
+    nodes = 0; deadline = Date.now() + ms_; TT.clear(); hist.fill(0); PVL.fill(0);
     var ms = legal(b, side);
     if (!ms.length) { self.postMessage({ d: 0, maxd: maxd, sc: '–', pv: [], nodes: 0, done: true, side: side }); return; }
     var d, lastMsg = null;
@@ -228,13 +235,18 @@
       for (d = 1; d <= maxd; d++) {
         var cb = null, cv = -1e9, sc = [], i;
         for (i = 0; i < ms.length; i++) {
-          var v = -ab(apply(b, ms[i]), -side, d - 1, -1e9, -cv, 1);
+          var ch = apply(b, ms[i]), v;
+          if (i === 0) v = -ab(ch, -side, d - 1, -1e9, 1e9, 1);
+          else {
+            v = -ab(ch, -side, d - 1, -cv - 1, -cv, 1);
+            if (v > cv) v = -ab(ch, -side, d - 1, -1e9, -cv, 1);
+          }
           sc.push([v, ms[i]]);
-          if (v > cv) { cv = v; cb = ms[i]; }
+          if (v > cv) { cv = v; cb = ms[i]; setPV(0, ms[i]); }
         }
         ms = sc.sort(function (a, c) { return c[0] - a[0]; }).map(function (x) { return x[1]; });
         TT.set(hk(b, side), { d: d, v: cv, f: 0, m: cb.path[0] * 64 + cb.path[cb.path.length - 1] });
-        var pv = pvWalk(b, side, cb, maxd).map(function (m) { return { path: m.path, caps: m.caps.length }; });
+        var pv = PVT[0].slice(0, PVL[0]).map(function (m) { return { path: m.path, caps: m.caps.length }; });
         var fin = (d >= maxd) || Math.abs(cv) > 8000;
         lastMsg = { d: d, maxd: maxd, sc: score(cv, side), pv: pv, nodes: nodes, done: fin, side: side };
         self.postMessage(lastMsg);
