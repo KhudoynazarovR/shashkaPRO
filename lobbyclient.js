@@ -912,7 +912,7 @@
       }
       function renderRecent() {
         var box = document.getElementById("hzRec"); if (!box) return;
-        if (!recent || !recent.length) { box.style.display = "none"; return; }
+        box.style.display = "none"; return;
         var nm = (S.me && S.me.name) || (typeof myName === "string" ? myName : "");
         var sig = recent.map(function (g) { return g.at; }).join(",") + "|" + nm + "|" + Math.floor(Date.now() / 60000);
         box.style.display = "block";
