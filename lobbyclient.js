@@ -1432,3 +1432,13 @@ document.head.appendChild(_as); }
     if (h && s && s.parentNode && s.parentNode !== h) s.parentNode.style.order = "1";
   }, 500);
 })();
+
+;(function () {
+  var st = document.createElement("style"); st.id = "hzSwapCss";
+  st.textContent = "#hzTrn{display:none!important}#hzRow2 #hzMkR{padding:10px!important;gap:8px!important;min-height:0!important;border-radius:18px!important}#hzRow2 #hzMkR small,#hzRow2 #hzMkR .hzBtn{display:none!important}#hzRow2 #hzMkR b{font-size:17px!important}#hzRow2 #hzMkR .hzIc{font-size:30px!important}";
+  document.head.appendChild(st);
+  setInterval(function () {
+    var row = document.getElementById("hzRow2"), mk = document.getElementById("hzMkR");
+    if (row && mk && mk.parentNode !== row) row.appendChild(mk);
+  }, 500);
+})();
