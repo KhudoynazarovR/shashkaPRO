@@ -462,7 +462,6 @@
       s += '</div>';
       var _p=PVC[kf(h)]; if (e && e.best && _p && _p.pv && _p.pv.length && _p.d>=8) { var _q=_p.pv[0].path; e.best={from:_q[0],to:_q[_q.length-1]}; }
       var _p=PVC[kf(h)]; if (e && e.best && _p && _p.pv && _p.pv.length && _p.d>=8) { var _q=_p.pv[0].path; e.best={from:_q[0],to:_q[_q.length-1]}; }
-      var _p=PVC[kf(h)]; if (e && e.best && _p && _p.pv && _p.pv.length && _p.d>=8) { var _q=_p.pv[0].path; e.best={from:_q[0],to:_q[_q.length-1]}; }
       if (en && S.arrow && e && e.best && !over) {
         var f = e.best.from, t2 = e.best.to;
         var x1 = (flip ? 7 - f[1] : f[1]) + .5, y1 = (flip ? 7 - f[0] : f[0]) + .5, x2 = (flip ? 7 - t2[1] : t2[1]) + .5, y2 = (flip ? 7 - t2[0] : t2[0]) + .5;
