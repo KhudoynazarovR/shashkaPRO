@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "KestoG.C"
 
 int main(void) {
@@ -48,13 +49,17 @@ int main(void) {
             move.jumps
         );
 
+        int ev = 0;
+        char *ep = strstr(status, "[eval ");
+        if (ep) ev = atoi(ep + 6);
         printf(
-            "%d %d %d %d %d\n",
+            "%d %d %d %d %d %d\n",
             move.from.x,
             move.from.y,
             move.to.x,
             move.to.y,
-            move.jumps
+            move.jumps,
+            ev
         );
 
         fflush(stdout);

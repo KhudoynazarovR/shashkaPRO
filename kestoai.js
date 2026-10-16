@@ -19,7 +19,7 @@ function run(input, secs, cb) {
   ch.on("close", () => {
     const L = out.split("\n").map(s => s.trim()).filter(Boolean);
     for (let i = L.length - 1; i >= 0; i--) {
-      if (/^-?\d+ -?\d+ -?\d+ -?\d+ -?\d+$/.test(L[i])) return fin(null, L[i].split(" ").map(Number));
+      if (/^-?\d+ -?\d+ -?\d+ -?\d+ -?\d+( -?\d+)?$/.test(L[i])) return fin(null, L[i].split(" ").map(Number));
     }
     fin("noout");
   });
@@ -53,7 +53,7 @@ function move(j, cb) {
     if (err) { console.log('[KestoG] xato:', err, '| kirish:', JSON.stringify(encode(b, side, secs))); return cb({ error: err, code: 500 }); }
     const from = v[1] * 8 + (7 - v[0]), to = v[3] * 8 + (7 - v[2]);
     if (!(from >= 0 && from < 64 && to >= 0 && to < 64) || from === to) return cb({ error: "nomove", code: 500 });
-    console.log('[KestoG] vaqt', secs, 'sek soralgan,', Date.now() - t0, 'ms'); cb({ from: from, to: to, jumps: v[4], ms: Date.now() - t0 });
+    console.log('[KestoG] vaqt', secs, 'sek soralgan,', Date.now() - t0, 'ms'); cb({ from: from, to: to, jumps: v[4], ev: (v.length > 5 ? v[5] : null), ms: Date.now() - t0 });
   });
 }
 
