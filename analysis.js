@@ -52,7 +52,7 @@
     function getEv(k, cb) {
       var side = (k % 2 === 0) ? 1 : -1;
       var hd = { 'Content-Type': 'application/json', 'x-init-data': (window.Telegram && Telegram.WebApp && Telegram.WebApp.initData) || '' };
-      fetch('/api/ai/move', { method: 'POST', headers: hd, body: JSON.stringify({ board: toEng(bs[k]), side: side, time: 0.25 }) })
+      fetch('/api/ai/move', { method: 'POST', headers: hd, body: JSON.stringify({ board: toEng(bs[k]), side: side, time: 1 }) })
         .then(function (r) { return r.json(); })
         .then(function (j) { cb(j && typeof j.ev === 'number' ? side * j.ev / 200 : null); })
         .catch(function () { cb(null); });

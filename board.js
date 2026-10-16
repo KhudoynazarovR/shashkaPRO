@@ -67,8 +67,8 @@
   function evFmt(x) { if (x == null) return '–'; x = Math.max(-9.9, Math.min(9.9, x)); return (x > 0 ? '+' : '') + x.toFixed(1); }
   function note(m) { return m.path.map(function (x) { return sq(x[0], x[1]); }).join(m.caps.length ? ':' : '-'); }
   function hd() { return { 'Content-Type': 'application/json', 'x-init-data': (window.Telegram && Telegram.WebApp && Telegram.WebApp.initData) || '' }; }
-  var S = { t: 0.3, arrow: true, bar: true, engine: true };
-  try { var _s = JSON.parse(localStorage.getItem('spBdS') || '{}'); for (var _k in _s) S[_k] = _s[_k]; } catch (e) {}
+  var S = { t: 2, arrow: true, bar: true, engine: true };
+  try { var _s = JSON.parse(localStorage.getItem('spBdS') || '{}'); for (var _k in _s) if (_k !== "t") S[_k] = _s[_k]; } catch (e) {}
   function sv() { try { localStorage.setItem('spBdS', JSON.stringify(S)); } catch (e) {} }
   function ask(h, cb, tries) {
     tries = tries || 0;
@@ -301,7 +301,7 @@
           if (d.done) { try { w.terminate(); } catch (e) {} if (PVW === w) PVW = null; }
         };
         w.onerror = function () { PVC[k] = { err: 1, done: true }; };
-        w.postMessage({ b: toEng(h.b), side: h.t, ms: S.pvMs || 12000, maxd: 16 });
+        w.postMessage({ b: toEng(h.b), side: h.t, ms: S.pvMs || 20000, maxd: 24 });
       } catch (e) { PVC[k] = { err: 1, done: true }; }
     }, 350);
   }
@@ -460,6 +460,7 @@
         s += '</div>';
       }
       s += '</div>';
+      var _p=PVC[kf(h)]; if (e && e.best && _p && _p.pv && _p.pv.length && _p.d>=8) { var _q=_p.pv[0].path; e.best={from:_q[0],to:_q[_q.length-1]}; }
       if (en && S.arrow && e && e.best && !over) {
         var f = e.best.from, t2 = e.best.to;
         var x1 = (flip ? 7 - f[1] : f[1]) + .5, y1 = (flip ? 7 - f[0] : f[0]) + .5, x2 = (flip ? 7 - t2[1] : t2[1]) + .5, y2 = (flip ? 7 - t2[0] : t2[0]) + .5;
