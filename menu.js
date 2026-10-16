@@ -36,6 +36,7 @@
       ["🤖", "AI bilan o‘ynash", "Kompyuterga qarshi o‘ynang", "@ai:play", "#8e6ff0,#c58bf2"],
       ["📺", "Jonli efir", "Hozirgi o‘yinlarni kuzating", "@live", "#ff4d6d,#ff8fa3"],
       ["📁", "Arxiv", "O‘tgan o‘yinlar tarixi", "@arch", "#2fd27f,#1ea36a"],
+      ["🔬", "Tahlil taxtasi", "KestoG bilan pozitsiya tahlili", "@board", "#3b82f6,#06b6d4"],
       ["🧩", "Masalalar", "Shashka masalalarini yeching", "@puz", "#f5873b,#f7c02d"],
       ["💎", "Tosh do‘koni", "Donalar va o‘z donangiz", "@shop", "#7b3ff2,#d62f8f"]]],
     ["ILOVA", [
@@ -104,6 +105,13 @@
     if (a.indexOf("@ai:") === 0) { close(); if (window.aiShow) window.aiShow(a.slice(4)); return; }
     if (a === "@live") { close(); liveOpen(); return; }
     if (a === "@arch") { close(); archOpen(); return; }
+    if (a === "@board") {
+      close();
+      var _go = function () { window.spBoard(); };
+      if (window.spBoard) _go();
+      else { var _s = document.createElement("script"); _s.src = "/board.js?v=" + Date.now(); _s.onload = _go; document.head.appendChild(_s); }
+      return;
+    }
     if (a === "@puz") { close(); if (window.spPuzzles) window.spPuzzles(); return; }
     if (a === "@shop") { close(); if (window.spShop) window.spShop(); return; }
     if (a === "@daily") { daily(); return; }
