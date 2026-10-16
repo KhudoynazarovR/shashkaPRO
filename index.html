@@ -731,24 +731,24 @@ $('dt-fmjd').value=DT.fmjd;$('dt-idf').value=DT.idf;(function(){var st=document.
 <div class="kt">Pozitsiya</div><div class="kg" id="kd-o"></div>
 <button class="ks" onclick="kStart()">KestoG bilan o'ynash</button></div></div>
 <script>
-var K={d:+(window.S&&S.kd)||6,c:(window.S&&S.col)||'r',t:(window.S&&S.tc)||'180+2',o:(window.S&&S.open)==='i780'?'i780':'std',n:''};
+var KD={d:+(window.S&&S.kd)||6,c:(window.S&&S.col)||'r',t:(window.S&&S.tc)||'180+2',o:(window.S&&S.open)==='i780'?'i780':'std',n:''};
 var KO={
  d:[1,2,3,4,5,6,7,8].map(function(x){return[x,String(x)]}),
  c:[['w','Oqlar'],['r','Tasodifiy'],['b','Qoralar']],
  t:[['60+0','1+0'],['180+2','3+2'],['300+3','5+3'],['600+5','10+5'],['900+10','15+10'],['0','\u221E']],
  o:[['std','Standart'],['i780','IDF 780']]};
 function kDraw(){['d','c','t','o'].forEach(function(g){var el=document.getElementById('kd-'+g);el.innerHTML='';
- KO[g].forEach(function(p){var b=document.createElement('button');b.textContent=p[1];if(String(K[g])===String(p[0]))b.className='on';
- b.onclick=function(){K[g]=g==='d'?+p[0]:p[0];kDraw()};el.appendChild(b)})});
- if(K.o==='i780'){var el=document.getElementById('kd-o');
-  var r=document.createElement('button');r.textContent='\uD83C\uDFB2 Tasodifiy';if(!K.n)r.className='on';
-  r.onclick=function(){K.n='';kDraw()};el.appendChild(r);
-  var inp=document.createElement('input');inp.type='number';inp.min=1;inp.max=(window.IDF780||[]).length||780;inp.placeholder='\u2116 (1-'+inp.max+')';inp.value=K.n||'';
+ KO[g].forEach(function(p){var b=document.createElement('button');b.textContent=p[1];if(String(KD[g])===String(p[0]))b.className='on';
+ b.onclick=function(){KD[g]=g==='d'?+p[0]:p[0];kDraw()};el.appendChild(b)})});
+ if(KD.o==='i780'){var el=document.getElementById('kd-o');
+  var r=document.createElement('button');r.textContent='\uD83C\uDFB2 Tasodifiy';if(!KD.n)r.className='on';
+  r.onclick=function(){KD.n='';kDraw()};el.appendChild(r);
+  var inp=document.createElement('input');inp.type='number';inp.min=1;inp.max=(window.IDF780||[]).length||780;inp.placeholder='\u2116 (1-'+inp.max+')';inp.value=KD.n||'';
   inp.style.cssText='width:110px;padding:10px 8px;border:0;border-radius:8px;background:#3a3835;color:#fff;font-size:15px';
-  inp.oninput=function(){K.n=this.value};el.appendChild(inp)}}
-function kOpen(){K.d=+S.kd||K.d;K.c=S.col||K.c;K.t=S.tc!=null?S.tc:K.t;K.o=S.open==='i780'?'i780':'std';K.n=S['in']||'';kDraw();document.getElementById('kdlg').style.display='flex'}
+  inp.oninput=function(){KD.n=this.value};el.appendChild(inp)}}
+function kOpen(){KD.d=+S.kd||KD.d;KD.c=S.col||KD.c;KD.t=S.tc!=null?S.tc:KD.t;KD.o=S.open==='i780'?'i780':'std';KD.n=S['in']||'';kDraw();document.getElementById('kdlg').style.display='flex'}
 function kClose(){document.getElementById('kdlg').style.display='none'}
-function kStart(){S.kd=K.d;S.col=K.c;S.tc=K.t;S.open=K.o;S['in']=(K.o==='i780')?(K.n||''):'';S.mode='ai';S.lvl='2';try{sv()}catch(e){}
+function kStart(){S.kd=KD.d;S.col=KD.c;S.tc=KD.t;S.open=KD.o;S['in']=(KD.o==='i780')?(KD.n||''):'';S.mode='ai';S.lvl='2';try{sv()}catch(e){}
  document.querySelectorAll('[data-s]').forEach(function(el){var v=S[el.getAttribute('data-s')];if(el.type!=='checkbox'&&el.type!=='range'&&v!=null)el.value=v});
  kClose();newGame()}
 function pickI780(){var L=window.IDF780;if(!L||!L.length)return null;
