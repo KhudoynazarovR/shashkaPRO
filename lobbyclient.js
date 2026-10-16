@@ -1278,3 +1278,80 @@ document.head.appendChild(_as); }
   st.textContent = ".hzHead{display:none!important}#hzAi{display:none!important}";
   document.head.appendChild(st);
 })();
+
+;(function () {
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c]; }); }
+  if (!document.getElementById("hzLayoutCss")) {
+    var st = document.createElement("style"); st.id = "hzLayoutCss";
+    st.textContent =
+      ".hzTitle,#lbTick,.hzCnt{display:none!important}" +
+      "#hzSeek{position:relative;padding:24px 60px;border-radius:30px;font-size:30px;border:2px solid #4dff7c;background:linear-gradient(180deg,#22c955,#0f8f3a);box-shadow:0 0 22px rgba(60,255,110,.55),inset 0 0 0 2px rgba(255,255,255,.18)}" +
+      "#hzSeek::after{content:'➜';position:absolute;right:26px;top:50%;transform:translateY(-50%);font-size:30px}" +
+      "#hzSeek.on{background:linear-gradient(180deg,#f59e0b,#ea6a00);border-color:#ffd27a;box-shadow:0 0 22px rgba(255,170,40,.55),inset 0 0 0 2px rgba(255,255,255,.18)}" +
+      "#hzPromo[style*='block']{display:flex!important;align-items:center;gap:12px;padding:12px 14px}" +
+      ".pgI{font-size:52px;flex:none;line-height:1}.pgB{flex:1;min-width:0}.pgT{font-weight:800;font-size:19px;line-height:1.25}" +
+      ".pgP{display:inline-block;background:#e8590c;color:#fff;border-radius:14px;padding:3px 10px;font-size:16px;margin-left:6px;white-space:nowrap}" +
+      ".pgS{font-size:14px;margin-top:4px;opacity:.85}.pgA{font-size:34px;flex:none;color:#fff}" +
+      "#hzDaily::after{content:'›';font-size:30px;margin-left:8px;opacity:.9}" +
+      "#hzHero::after{content:'👑';display:block;text-align:center;font-size:150px;opacity:.12;margin-top:60px;filter:blur(1px)}";
+    document.head.appendChild(st);
+  }
+  setInterval(function () {
+    var pe = document.getElementById("hzPromo");
+    if (pe && pe.style.display !== "none") {
+      var sm = pe.querySelector("small");
+      if (sm && !pe.querySelector(".pgT")) {
+        pe.innerHTML = "<div class=\"pgI\">🎁</div><div class=\"pgB\"><div class=\"pgT\">Do‘stingizni taklif qiling! <span class=\"pgP\">+200 💎</span></div><div class=\"pgS\">" + esc(sm.textContent) + "</div></div><div class=\"pgA\">›</div>";
+      }
+    }
+    var lv = document.getElementById("hzLive");
+    if (lv) lv.style.display = lv.querySelector(".hzLvC") ? "" : "none";
+  }, 500);
+})();
+
+;(function () {
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c]; }); }
+  var tg = null, user = null, init = "";
+  try { tg = window.Telegram && Telegram.WebApp; user = tg && tg.initDataUnsafe && tg.initDataUnsafe.user; init = (tg && tg.initData) || ""; } catch (e) {}
+  if (!user || !user.id) return;
+  var info = { name: [user.first_name, user.last_name].filter(Boolean).join(" ") || user.username || "O‘yinchi", elo: null, gems: null }, bar = null, last = 0, sig = "";
+  if (!document.getElementById("hzMeCss")) {
+    var st = document.createElement("style"); st.id = "hzMeCss";
+    st.textContent = "#hzHero{padding-bottom:90px}#hzMe{position:fixed;left:10px;right:10px;bottom:calc(64px + 8px);z-index:9600;display:none;align-items:center;gap:12px;padding:8px 12px;border-radius:20px;background:rgba(20,16,70,.96);box-shadow:inset 0 0 0 1.5px rgba(110,120,255,.6),0 6px 18px rgba(0,0,0,.45);color:#fff;cursor:pointer}#hzMe img,#hzMe .meA{width:54px;height:54px;border-radius:50%;object-fit:cover;flex:none;background:#2a1fc9;display:flex;align-items:center;justify-content:center;font-size:26px}#hzMe .meB{flex:1;min-width:0}#hzMe b{display:block;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#hzMe small{display:flex;align-items:center;gap:8px;font-size:14px;opacity:.9;margin-top:3px}#hzMe .dot{width:10px;height:10px;border-radius:50%;background:#2dff72;box-shadow:0 0 8px #2dff72}#hzMe .meG{font-size:26px;opacity:.8;flex:none;margin-right:56px}";
+    document.head.appendChild(st);
+  }
+  function load() {
+    var H = { headers: { "x-init-data": init } };
+    fetch("/api/user/" + encodeURIComponent(user.id), H).then(function (r) { return r.json(); }).then(function (d) {
+      var p = (d && (d.profile || d.stats)) || d || {};
+      info.elo = p.elo != null ? p.elo : (d && d.elo != null ? d.elo : info.elo);
+      if (d && d.name) info.name = d.name;
+    }).catch(function () {});
+    fetch("/api/balance", H).then(function (r) { return r.json(); }).then(function (d) { if (d && d.diamonds != null) info.gems = d.diamonds; }).catch(function () {});
+  }
+  function goProfile() {
+    var all = document.querySelectorAll("button,div,a,span");
+    for (var i = 0; i < all.length; i++) {
+      var e = all[i];
+      if (e.children.length === 0 || e.children.length === 1) {
+        if ((e.textContent || "").replace(/\s+/g, " ").trim().replace(/^\S+\s/, "") === "Profil" || (e.textContent || "").trim() === "Profil") {
+          var t = e; while (t && t !== document.body && getComputedStyle(t).position !== "fixed" && !t.onclick && t.tagName !== "BUTTON") t = t.parentNode;
+          try { (t && t !== document.body ? t : e).click(); } catch (x) {}
+          return;
+        }
+      }
+    }
+  }
+  setInterval(function () {
+    var hero = document.getElementById("hzHero");
+    var show = !!(hero && hero.offsetParent !== null);
+    if (!bar) {
+      bar = document.createElement("div"); bar.id = "hzMe"; document.body.appendChild(bar); bar.onclick = goProfile;
+    }
+    bar.style.display = show ? "flex" : "none";
+    if (!show) return;
+    if (Date.now() - last > 30000) { last = Date.now(); load(); }
+    var s = info.name + "|" + info.elo + "|" + info.gems; if (s === sig) return; sig = s;
+    bar.innerHTML = "<img src=\"/api/av/" + encodeURIComponent(user.id) + "\" onerror=\"this.outerHTML='<span class=meA>👤</span>'\"><div class=\"meB\"><b>" + esc(info.name) + "</b><small><i class=\"dot\"></i>ELO " + (info.elo == null ? "—" : esc(info.elo)) + " &nbsp; 💎 " + (info.gems == null ? "—" : esc(info.gems)) + "</small></div><div class=\"meG\">›</div>";
+  }, 700);
+})();
