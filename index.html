@@ -607,7 +607,7 @@ async function kestoMove(b,side){window.__kOk=false;
   const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),(secs+6)*1000);
   try{
     const r=await fetch('/api/ai/move',{method:'POST',headers:{'Content-Type':'application/json','x-init-data':(tg&&tg.initData)||''},body:JSON.stringify({board:b,side:side,time:secs}),signal:ctl.signal});
-    if(!r.ok){window.__kWhy='http '+r.status;return null}
+    if(!r.ok){let _e='';try{_e=(await r.clone().json()).error}catch(x){}window.__kWhy='http '+r.status+' '+_e;return null}
     const j=await r.json();
     const ms=legal(b,side).filter(m=>m.path[0]===j.from&&m.path[m.path.length-1]===j.to);
     if(!ms.length){window.__kWhy='illegal '+JSON.stringify(j);return null}
