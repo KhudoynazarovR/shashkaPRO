@@ -598,7 +598,7 @@ function newGame(){G.tok++;const[a,b]=String(S.tc).split('+').map(Number);
  G.flip=G.mode==='ai'&&G.me===-1;G.tc=a>0;G.t=[a*1000,a*1000];G.inc=(b||0)*1000;G.last=Date.now();G.sel=null;G.hint=null;TT.clear();$('an').textContent=G.opn?G.opn.n+': '+G.opn.mv.join(' '):'';tab('play');render();kick()}
 function kick(){if(!G.over&&!G.edit&&G.mode==='ai'&&sideAt(G.cur)!==G.me&&atEnd())aiMove()}
 function doMove(m){const side=sideAt(G.cur);tick();pushMove(m);hap(m.caps.length?'medium':'light');if(G.tc)G.t[side>0?0:1]+=G.inc;beep(m.caps.length?330:200,.1);checkEnd();render();kick()}
-async function kestoMove(b,side){
+async function kestoMove(b,side){window.__kOk=false;
   const lv=+S.lvl||0;
   if(lv<2){window.__kWhy='lvl '+lv;return null}
   if(false){window.__kWhy='off '+Math.round((window.__kOff-Date.now())/1000)+'s';return null}
@@ -611,7 +611,7 @@ async function kestoMove(b,side){
     const j=await r.json();
     const ms=legal(b,side).filter(m=>m.path[0]===j.from&&m.path[m.path.length-1]===j.to);
     if(!ms.length){window.__kWhy='illegal '+JSON.stringify(j);return null}
-    return ms.find(m=>m.caps.length===j.jumps)||ms[0];
+    window.__kOk=true;return ms.find(m=>m.caps.length===j.jumps)||ms[0];
   }catch(e){window.__kWhy='err '+e;return null}finally{clearTimeout(to)}
 }
 function aiMove(){const tok=++G.tok,side=sideAt(G.cur);G.busy=true;render();const b0=G.pos[G.cur].slice();
@@ -676,7 +676,7 @@ function render(){
   h+=`<div class="${cl}" data-i="${i}">${S.co&&vc===0?`<b class="rk">${8-r}</b>`:''}${S.co&&vr===7?`<b class="fl">${'abcdefgh'[c]}</b>`:''}${p?`<i class="pc ${p>0?'w':'b'}${Math.abs(p)===2?' k':''}"></i>`:''}</div>`}
  B.innerHTML=h;drawArrow(B);
  let wc=0,bc=0;bd.forEach(p=>{if(p>0)wc++;else if(p<0)bc++});const top=G.flip?1:-1;
- const nm=s=>(s>0?'⚪ ':'⚫ ')+(G.mode==='ai'?(s===G.me?'You':'AI · L'+(+S.lvl+1)):(s>0?'White':'Black'));
+ const nm=s=>(s>0?'⚪ ':'⚫ ')+(G.mode==='ai'?(s===G.me?'You':(window.__kOk?'KestoG':'AI')+' · L'+(+S.lvl+1)):(s>0?'White':'Black'));
  $('tn').textContent=nm(top);$('bn').textContent=nm(-top);$('tcn').textContent=(top>0?wc:bc);$('bcn').textContent=(top>0?bc:wc);clk();
  const e=ev(bd);$('evf').style.width=Math.max(4,Math.min(96,50+e/8))+'%';$('evt').textContent=(e/100).toFixed(1);
  $('st').textContent=G.edit?T('editor'):G.over?(G.res==='d'?T('drw'):G.res==='w'?T('winW'):T('winB')):G.busy?T('think'):side>0?T('turnW'):T('turnB');

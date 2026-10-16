@@ -50,7 +50,7 @@ function move(j, cb) {
   busy++;
   run(encode(b, side, secs), secs, (err, v) => {
     busy--;
-    if (err) return cb({ error: err, code: 500 });
+    if (err) { console.log('[KestoG] xato:', err, '| kirish:', JSON.stringify(encode(b, side, secs))); return cb({ error: err, code: 500 }); }
     const from = v[1] * 8 + (7 - v[0]), to = v[3] * 8 + (7 - v[2]);
     if (!(from >= 0 && from < 64 && to >= 0 && to < 64) || from === to) return cb({ error: "nomove", code: 500 });
     cb({ from: from, to: to, jumps: v[4] });
