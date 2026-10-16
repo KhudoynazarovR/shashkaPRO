@@ -84,6 +84,222 @@
     var w = W(p);
     return '<div style="width:' + sz + ';height:' + sz + ';border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;color:#f5b72b;border:2px solid ' + (w ? '#9a9a9a' : '#000') + ';background:' + (w ? 'radial-gradient(circle at 35% 28%,#fff,#bbb)' : 'radial-gradient(circle at 35% 28%,#888,#111)') + ';box-sizing:border-box">' + (p > 2 ? '♛' : '') + '</div>';
   }
+  function pvWorkerBody() {
+  var DIRS = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+  function ins(r, c) { return r >= 0 && r < 8 && c >= 0 && c < 8; }
+  function capsFrom(b, from) {
+    var p = b[from], s = p > 0 ? 1 : -1, out = [];
+    b[from] = 0;
+    function dfs(pos, k, caps, path, o) {
+      var r = pos >> 3, c = pos & 7, found = false, di;
+      for (di = 0; di < 4; di++) {
+        var dr = DIRS[di][0], dc = DIRS[di][1];
+        if (!k) {
+          var lr = r + 2 * dr, lc = c + 2 * dc;
+          if (!ins(lr, lc)) continue;
+          var m = (r + dr) * 8 + c + dc, l = lr * 8 + lc;
+          if (b[m] * s < 0 && caps.indexOf(m) < 0 && b[l] === 0) {
+            found = true;
+            dfs(l, (s > 0 && lr === 0) || (s < 0 && lr === 7), caps.concat([m]), path.concat([l]), o);
+          }
+        } else {
+          var nr = r + dr, nc = c + dc;
+          while (ins(nr, nc) && b[nr * 8 + nc] === 0) { nr += dr; nc += dc; }
+          if (!ins(nr, nc)) continue;
+          var m2 = nr * 8 + nc;
+          if (b[m2] * s >= 0 || caps.indexOf(m2) >= 0) continue;
+          var lands = [], lr2 = nr + dr, lc2 = nc + dc;
+          while (ins(lr2, lc2) && b[lr2 * 8 + lc2] === 0) { lands.push(lr2 * 8 + lc2); lr2 += dr; lc2 += dc; }
+          if (!lands.length) continue;
+          found = true;
+          var rs = lands.map(function (l2) { var oo = []; var e = dfs(l2, true, caps.concat([m2]), path.concat([l2]), oo); return { oo: oo, e: e }; });
+          var any = rs.some(function (x) { return x.e; });
+          rs.forEach(function (x) { if (!any || x.e) x.oo.forEach(function (y) { o.push(y); }); });
+        }
+      }
+      if (!found && caps.length) o.push({ path: path, caps: caps, pk: k });
+      return found;
+    }
+    dfs(from, Math.abs(p) === 2, [], [from], out);
+    b[from] = p;
+    return out;
+  }
+  function simple(b, from) {
+    var p = b[from], s = p > 0 ? 1 : -1, r = from >> 3, c = from & 7, o = [], di, nr, nc;
+    if (Math.abs(p) === 2) {
+      for (di = 0; di < 4; di++) {
+        nr = r + DIRS[di][0]; nc = c + DIRS[di][1];
+        while (ins(nr, nc) && !b[nr * 8 + nc]) { o.push({ path: [from, nr * 8 + nc], caps: [] }); nr += DIRS[di][0]; nc += DIRS[di][1]; }
+      }
+    } else {
+      [-1, 1].forEach(function (dc) { var rr = r - s, cc = c + dc; if (ins(rr, cc) && !b[rr * 8 + cc]) o.push({ path: [from, rr * 8 + cc], caps: [] }); });
+    }
+    return o;
+  }
+  function legal(b, side) {
+    var cs = [], i, ms = [];
+    for (i = 0; i < 64; i++) if (b[i] * side > 0) capsFrom(b, i).forEach(function (m) { cs.push(m); });
+    if (cs.length) return cs;
+    for (i = 0; i < 64; i++) if (b[i] * side > 0) simple(b, i).forEach(function (m) { ms.push(m); });
+    return ms;
+  }
+  function apply(b, m) {
+    var n = b.slice(), f = m.path[0], t = m.path[m.path.length - 1], p = n[f], i;
+    n[f] = 0;
+    for (i = 0; i < m.caps.length; i++) n[m.caps[i]] = 0;
+    if (Math.abs(p) === 1 && (m.pk || (p > 0 && (t >> 3) === 0) || (p < 0 && (t >> 3) === 7))) p *= 2;
+    n[t] = p;
+    return n;
+  }
+  function ev(b) {
+    var s = 0, i;
+    for (i = 0; i < 64; i++) {
+      var p = b[i]; if (!p) continue;
+      var r = i >> 3, c = i & 7, w = p > 0, v;
+      if (Math.abs(p) === 2) v = 320 + ((c > 1 && c < 6 && r > 1 && r < 6) ? 8 : 0);
+      else {
+        var adv = w ? 7 - r : r;
+        v = 100 + adv * 7 + ((c > 1 && c < 6) ? 5 : 0) + (adv >= 5 ? adv * 2 : 0) + (((w && r === 7) || (!w && r === 0)) ? 10 : 0) - ((c === 0 || c === 7) ? 3 : 0);
+      }
+      s += w ? v : -v;
+    }
+    return s;
+  }
+  var TT = new Map(), hist = new Int32Array(4096), nodes = 0, deadline = 0;
+  var ZA = new Int32Array(320), ZB = new Int32Array(320);
+  (function () {
+    var s = 123456789, i;
+    function rnd() { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return s | 0; }
+    for (i = 0; i < 320; i++) { ZA[i] = rnd(); ZB[i] = rnd(); }
+  })();
+  function hk(b, side) {
+    var h1 = side > 0 ? 19088743 : 1985229328, h2 = side > 0 ? 591751049 : 2271560481 | 0, i, p, z;
+    for (i = 0; i < 64; i++) { p = b[i]; if (p) { z = i * 5 + p + 2; h1 ^= ZA[z]; h2 ^= ZB[z]; } }
+    return (h2 & 0x1fffff) * 4294967296 + (h1 >>> 0);
+  }
+  function ab(b, side, d, al, be, ply) {
+    if ((++nodes & 1023) === 0 && Date.now() > deadline) throw 0;
+    var ms = legal(b, side);
+    if (!ms.length) return -9000 + ply;
+    if (ply > 70 || (d <= 0 && !ms[0].caps.length)) return side * ev(b);
+    var key = hk(b, side), e = TT.get(key), tm = -1;
+    if (e) {
+      tm = e.m;
+      if (e.d >= d) { if (e.f === 0 || (e.f === 1 && e.v >= be) || (e.f === 2 && e.v <= al)) return e.v; }
+    }
+    var sc = ms.map(function (m) {
+      var k = m.path[0] * 64 + m.path[m.path.length - 1];
+      return [(k === tm ? 1e6 : 0) + hist[k] + m.caps.length * 100, m, k];
+    });
+    sc.sort(function (x, y) { return y[0] - x[0]; });
+    var a0 = al, best = -1e9, bk = -1, i;
+    for (i = 0; i < sc.length; i++) {
+      var x = sc[i], v = -ab(apply(b, x[1]), -side, d - 1, -be, -al, ply + 1);
+      if (v > best) { best = v; bk = x[2]; }
+      if (v > al) al = v;
+      if (al >= be) { if (!x[1].caps.length) hist[x[2]] += d * d; break; }
+    }
+    TT.set(key, { d: d, v: best, f: best <= a0 ? 2 : best >= be ? 1 : 0, m: best <= a0 ? -1 : bk });
+    return best;
+  }
+  function pvWalk(b, side, m0, maxLen) {
+    var out = [m0], bb = apply(b, m0), s = -side, seen = {}, i;
+    for (i = 1; i < maxLen; i++) {
+      var key = hk(bb, s);
+      if (seen[key]) break; seen[key] = 1;
+      var e = TT.get(key); if (!e || e.m < 0) break;
+      var x = legal(bb, s).filter(function (q) { return q.path[0] * 64 + q.path[q.path.length - 1] === e.m; })[0];
+      if (!x) break;
+      out.push(x); bb = apply(bb, x); s = -s;
+    }
+    return out;
+  }
+  function score(v, side) {
+    var w = v * side;
+    if (Math.abs(v) > 8000) return (w > 0 ? '+' : '-') + 'M' + Math.ceil((9000 - Math.abs(v)) / 2);
+    return (w >= 0 ? '+' : '') + (w / 100).toFixed(1);
+  }
+  function run(b, side, ms_, maxd) {
+    nodes = 0; deadline = Date.now() + ms_; TT.clear(); hist.fill(0);
+    var ms = legal(b, side);
+    if (!ms.length) { self.postMessage({ d: 0, maxd: maxd, sc: '–', pv: [], nodes: 0, done: true, side: side }); return; }
+    var d, lastMsg = null;
+    try {
+      for (d = 1; d <= maxd; d++) {
+        var cb = null, cv = -1e9, sc = [], i;
+        for (i = 0; i < ms.length; i++) {
+          var v = -ab(apply(b, ms[i]), -side, d - 1, -1e9, -cv, 1);
+          sc.push([v, ms[i]]);
+          if (v > cv) { cv = v; cb = ms[i]; }
+        }
+        ms = sc.sort(function (a, c) { return c[0] - a[0]; }).map(function (x) { return x[1]; });
+        TT.set(hk(b, side), { d: d, v: cv, f: 0, m: cb.path[0] * 64 + cb.path[cb.path.length - 1] });
+        var pv = pvWalk(b, side, cb, maxd).map(function (m) { return { path: m.path, caps: m.caps.length }; });
+        var fin = (d >= maxd) || Math.abs(cv) > 8000;
+        lastMsg = { d: d, maxd: maxd, sc: score(cv, side), pv: pv, nodes: nodes, done: fin, side: side };
+        self.postMessage(lastMsg);
+        if (fin) return;
+      }
+    } catch (e) {
+      if (lastMsg) { lastMsg.done = true; lastMsg.nodes = nodes; self.postMessage(lastMsg); }
+      else self.postMessage({ d: 0, maxd: maxd, sc: '–', pv: [], nodes: nodes, done: true, side: side });
+    }
+  }
+  self.onmessage = function (ev_) { var d = ev_.data; run(d.b, d.side, d.ms, d.maxd); };
+}
+
+  /* ---- Chuqur tahlil: 16 yarim yurish (8 oq + 8 qora), Web Worker ---- */
+  var PVC = {}, PVW = null, PVK = '', PVT = 0;
+  function pvLine(pv, side) {
+    var s = '', t = side, n = 1, i, m, str;
+    for (i = 0; i < pv.length; i++) {
+      m = pv[i];
+      str = m.path.map(function (x) { return sq(x >> 3, x & 7); }).join(m.caps ? ':' : '-');
+      if (t > 0) s += n + '. ';
+      else if (i === 0) s += n + '... ';
+      s += str + ' ';
+      if (t < 0) n++;
+      t = -t;
+    }
+    return s;
+  }
+  function pvBox(k) {
+    var r = PVC[k];
+    if (!r || r.err) return '';
+    if (!r.pv || !r.d) return '<div style="font-size:12px;opacity:.7;margin-top:6px">⏳ Chuqur tahlil...</div>';
+    return '<div style="margin-top:8px;text-align:left;background:#1d1f3a;border-radius:12px;padding:8px 10px">' +
+      '<div style="font-size:12px;opacity:.75">Chuqurlik: ' + r.d + '/' + r.maxd + ' yarim yurish · baho ' + r.sc + (r.done ? '' : ' · ⏳') + ' · ' + Math.round(r.nodes / 1000) + 'k</div>' +
+      '<div style="font-size:14px;line-height:1.6;margin-top:4px">' + pvLine(r.pv, r.side) + '</div></div>';
+  }
+  function pvStart(h, k) {
+    if (PVW) { try { PVW.terminate(); } catch (e) {} PVW = null; }
+    PVK = k; PVC[k] = { d: 0, done: false };
+    var tok = ++PVT;
+    setTimeout(function () {
+      if (tok !== PVT) return;
+      try {
+        var url = URL.createObjectURL(new Blob(['(' + pvWorkerBody.toString() + ')()'], { type: 'text/javascript' }));
+        var w = PVW = new Worker(url);
+        w.onmessage = function (ev) {
+          var d = ev.data;
+          if (tok !== PVT || !document.getElementById('spBd')) { try { w.terminate(); } catch (e) {} return; }
+          PVC[k] = d;
+          var el = document.getElementById('spPV');
+          if (el && el.getAttribute('data-k') === k) el.innerHTML = pvBox(k);
+          if (d.done) { try { w.terminate(); } catch (e) {} if (PVW === w) PVW = null; }
+        };
+        w.onerror = function () { PVC[k] = { err: 1, done: true }; };
+        w.postMessage({ b: toEng(h.b), side: h.t, ms: S.pvMs || 12000, maxd: 16 });
+      } catch (e) { PVC[k] = { err: 1, done: true }; }
+    }, 350);
+  }
+  function pvHtml(h) {
+    if (!h || !h.b) return '';
+    var k = kf(h);
+    if (!PVC[k] || (!PVC[k].done && PVK !== k)) pvStart(h, k);
+    return '<div id="spPV" data-k="' + k + '">' + pvBox(k) + '</div>';
+  }
+
   window.spBoard = function (g) {
     var hist = [{ b: start(), t: 1, m: null }], cur = 0, flip = false, sel = null, EV = {}, busyK = {}, FAIL = {}, allRun = false, prog = '';
     var panel = null, E = null, PL = null, GI = null;
@@ -246,7 +462,7 @@
         if (over) info = '🏁 O‘yin tugadi: ' + (h.t > 0 ? '⚫ Qora' : '⚪ Oq') + ' yutdi';
         else if (PL) info += PL.err ? 'Dvigatel javob bermadi <button data-a="retry" style="border:0;border-radius:10px;padding:6px 10px;background:#2e9d6b;color:#fff">Qayta</button>' : PL.th ? '⏳ KestoG o‘ylayapti...' : (h.t === PL.me ? 'Sizning yurishingiz' : '');
         else if (!S.engine) info += 'Dvigatel o‘chiq';
-        else if (e && e.best) info += 'Eng yaxshi: <b>' + sq(e.best.from[0], e.best.from[1]) + (ms[0] && ms[0].caps.length ? ':' : '-') + sq(e.best.to[0], e.best.to[1]) + '</b>';
+        else if (e && e.best) info += 'Eng yaxshi: <b>' + sq(e.best.from[0], e.best.from[1]) + (ms[0] && ms[0].caps.length ? ':' : '-') + sq(e.best.to[0], e.best.to[1]) + '</b>' + pvHtml(h);
         else if (busyK[k]) info += '⏳ Dvigatel o‘ylayapti...';
         else if (FAIL[k]) info += 'Baho olinmadi <button data-a="eng" style="display:none"></button><button id="bdRt" style="border:0;border-radius:10px;padding:6px 10px;background:#2e9d6b;color:#fff">Qayta</button>';
       }
