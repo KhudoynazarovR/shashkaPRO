@@ -261,7 +261,13 @@
 }
 
   /* ---- Chuqur tahlil: 16 yarim yurish (8 oq + 8 qora), Web Worker ---- */
-  var PVC = {}, PVW = null, PVK = '', PVT = 0;
+  var PVC = {}, PVW = null, PVK = '', PVT = 0, PVREDRAW = null;
+  function pvFirst(r) {
+    if (!r || r.err || !r.pv || !r.pv.length || !(r.done || r.d >= 8)) return null;
+    var p = r.pv[0], a = p.path[0], z = p.path[p.path.length - 1];
+    return { from: [a >> 3, a & 7], to: [z >> 3, z & 7], cap: p.caps > 0 };
+  }
+  function pvKey(r) { var f = pvFirst(r); return f ? f.from + '>' + f.to : ''; }
   function pvLine(pv, side) {
     var s = '', t = side, n = 1, i, m, str;
     for (i = 0; i < pv.length; i++) {
@@ -295,9 +301,9 @@
         w.onmessage = function (ev) {
           var d = ev.data;
           if (tok !== PVT || !document.getElementById('spBd')) { try { w.terminate(); } catch (e) {} return; }
-          PVC[k] = d;
+          var _ka = pvKey(PVC[k]); PVC[k] = d; var _kb = pvKey(d);
           var el = document.getElementById('spPV');
-          if (el && el.getAttribute('data-k') === k) el.innerHTML = pvBox(k);
+          if (el && el.getAttribute('data-k') === k) el.innerHTML = pvBox(k); if (_ka !== _kb && PVREDRAW) PVREDRAW();
           if (d.done) { try { w.terminate(); } catch (e) {} if (PVW === w) PVW = null; }
         };
         w.onerror = function () { PVC[k] = { err: 1, done: true }; };
@@ -438,6 +444,7 @@
     }
     function draw() {
       var st = ov.scrollTop, h = hist[cur], k = kf(h), e = EV[k], ed = panel === 'edit';
+      var _pf = pvFirst(PVC[k]); if (_pf && e && e.best) e = Object.assign({}, e, { best: _pf }); PVREDRAW = draw;
       var B = ed ? E.b : h.b, ms = ed ? [] : legal(h.b, h.t), over = !ed && !ms.length;
       var en = S.engine && !PL && !ed;
       var x = en ? evOf(cur) : null, pc = 50 + Math.max(-5, Math.min(5, x == null ? 0 : x)) * 10, s = '';
@@ -474,7 +481,7 @@
         if (over) info = '🏁 O‘yin tugadi: ' + (h.t > 0 ? '⚫ Qora' : '⚪ Oq') + ' yutdi';
         else if (PL) info += PL.err ? 'Dvigatel javob bermadi <button data-a="retry" style="border:0;border-radius:10px;padding:6px 10px;background:#2e9d6b;color:#fff">Qayta</button>' : PL.th ? '⏳ KestoG o‘ylayapti...' : (h.t === PL.me ? 'Sizning yurishingiz' : '');
         else if (!S.engine) info += 'Dvigatel o‘chiq';
-        else if (e && e.best) info += 'Eng yaxshi: <b>' + sq(e.best.from[0], e.best.from[1]) + (ms[0] && ms[0].caps.length ? ':' : '-') + sq(e.best.to[0], e.best.to[1]) + '</b>' + pvHtml(h);
+        else if (e && e.best) info += 'Eng yaxshi: <b>' + sq(e.best.from[0], e.best.from[1]) + ((e.best.cap !== undefined ? e.best.cap : (ms[0] && ms[0].caps.length)) ? ':' : '-') + sq(e.best.to[0], e.best.to[1]) + '</b>' + pvHtml(h);
         else if (busyK[k]) info += '⏳ Dvigatel o‘ylayapti...';
         else if (FAIL[k]) info += 'Baho olinmadi <button data-a="eng" style="display:none"></button><button id="bdRt" style="border:0;border-radius:10px;padding:6px 10px;background:#2e9d6b;color:#fff">Qayta</button>';
       }
