@@ -600,23 +600,23 @@ function kick(){if(!G.over&&!G.edit&&G.mode==='ai'&&sideAt(G.cur)!==G.me&&atEnd(
 function doMove(m){const side=sideAt(G.cur);tick();pushMove(m);hap(m.caps.length?'medium':'light');if(G.tc)G.t[side>0?0:1]+=G.inc;beep(m.caps.length?330:200,.1);checkEnd();render();kick()}
 async function kestoMove(b,side){
   const lv=+S.lvl||0;
-  if(lv<2)return null;
-  if(window.__kOff&&Date.now()<window.__kOff)return null;
+  if(lv<2){window.__kWhy='lvl '+lv;return null}
+  if(window.__kOff&&Date.now()<window.__kOff){window.__kWhy='off '+Math.round((window.__kOff-Date.now())/1000)+'s';return null}
   const secs={2:0.6,3:1.5,4:3}[lv]||1;
   const tg=window.Telegram&&window.Telegram.WebApp;
   const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),(secs+6)*1000);
   try{
     const r=await fetch('/api/ai/move',{method:'POST',headers:{'Content-Type':'application/json','x-init-data':(tg&&tg.initData)||''},body:JSON.stringify({board:b,side:side,time:secs}),signal:ctl.signal});
-    if(!r.ok){window.__kOff=Date.now()+(r.status===429?5000:60000);return null}
+    if(!r.ok){window.__kWhy='http '+r.status;window.__kOff=Date.now()+(r.status===429?5000:60000);return null}
     const j=await r.json();
     const ms=legal(b,side).filter(m=>m.path[0]===j.from&&m.path[m.path.length-1]===j.to);
-    if(!ms.length){window.__kOff=Date.now()+30000;return null}
+    if(!ms.length){window.__kWhy='illegal '+JSON.stringify(j);window.__kOff=Date.now()+30000;return null}
     return ms.find(m=>m.caps.length===j.jumps)||ms[0];
-  }catch(e){return null}finally{clearTimeout(to)}
+  }catch(e){window.__kWhy='err '+e;return null}finally{clearTimeout(to)}
 }
 function aiMove(){const tok=++G.tok,side=sideAt(G.cur);G.busy=true;render();const b0=G.pos[G.cur].slice();
 const local=()=>setTimeout(()=>{if(tok!==G.tok||G.over){G.busy=false;return}const r=bestMove(G.pos[G.cur],side,+S.lvl);G.busy=false;if(!r)return;$('an').textContent=`d${r.d} · ${nodes} nodes · ${(r.v/100).toFixed(2)}`;doMove(r.m)},40);
-kestoMove(b0,side).then(m=>{if(tok!==G.tok||G.over){G.busy=false;return}if(m){G.busy=false;$('an').textContent='KestoG';doMove(m)}else local()}).catch(local)}
+kestoMove(b0,side).then(m=>{if(tok!==G.tok||G.over){G.busy=false;return}if(m){G.busy=false;$('an').textContent='KestoG';doMove(m)}else{$('an').textContent='local: '+(window.__kWhy||'?');local()}}).catch(local)}
 function checkEnd(){if(!atEnd())return;const b=G.pos[G.cur],side=sideAt(G.cur);
  if(!legal(b,side).length)return end(side>0?'b':'w');
  let n=0;for(let i=G.mv.length-1;i>=0;i--){if(G.mv[i].caps.length||G.mv[i].man)break;n++}
