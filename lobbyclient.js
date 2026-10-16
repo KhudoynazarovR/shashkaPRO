@@ -293,7 +293,7 @@
         "<div class=\"row\"><span class=\"muted\">Pozitsiya:</span><select id=\"lbPos\"><option value=\"std\">Standart</option><option value=\"idf\">IDF 780</option></select>" +
         "<select id=\"lbGm\" style=\"flex:1\"><option value=\"1\">1 o‘yin</option><option value=\"2\">1 match (2 o‘yin)</option><option value=\"4\">2 match (4 o‘yin)</option></select></div>" +
         "</div>" +
-        "<div class=\"tabs\"><button id=\"lbTabPl\">🌐 Barcha onlinelar</button><button id=\"lbTabT\" style=\"display:none\">🏆 Turnirlar</button><button id=\"lbTabS\" style=\"display:none\">🎭 Sians</button></div>" +
+        "<div class=\"tabs\"><button id=\"lbTabPl\">🌐 Online o‘yinchilar</button><button id=\"lbTabT\" style=\"display:none\">🏆 Turnirlar</button><button id=\"lbTabS\" style=\"display:none\">🎭 Sians</button></div>" +
         "<div id=\"lbPl\"></div>" +
         "<div id=\"lbS\" style=\"display:none\">" +
         "<div class=\"card\"><div class=\"row\"><input id=\"lbSn\" maxlength=\"30\" placeholder=\"Sians nomi\" style=\"flex:1\"><button id=\"lbSCreate\">➕ Ochish</button></div>" +
@@ -439,7 +439,7 @@
     var fl = S.friends || [], fin = S.freqIn || [], fset = {}, showF = !!window.__lbF;
     fl.forEach(function (f) { fset[f.uid] = 1; });
     if (showF) list = fl.map(function (f) { return { uid: f.uid, name: f.name, elo: f.elo, gems: f.gems, hasAv: f.hasAv, busy: false, offline: !f.online }; });
-      var h = "<div class=\"tabs\"><button class=\"lbtb" + (showF ? "" : " on") + "\" data-t=\"pl\">🌐 Barcha onlinelar " + all.length + "</button><button class=\"lbtb" + (showF ? " on" : "") + "\" data-t=\"f\">👥 Do‘stlar " + fl.length + (fin.length ? " 🔴" : "") + "</button></div>";
+      var h = "<div class=\"tabs\"><button class=\"lbtb" + (showF ? "" : " on") + "\" data-t=\"pl\">🌐 Online o‘yinchilar " + all.length + "</button><button class=\"lbtb" + (showF ? " on" : "") + "\" data-t=\"f\">👥 Do‘stlar " + fl.length + (fin.length ? " 🔴" : "") + "</button></div>";
     fin.forEach(function (r) { h += '<div class="lbp lbin">' + avh(r.uid, r.hasAv, r.name, false) + '<div class="lbinf"><b>' + esc(r.name) + '</b><small>do‘st bo‘lishni taklif qildi</small></div><button class="lbacc" data-f="acc" data-id="' + esc(r.uid) + '">Qabul</button><button class="lbrej" data-f="rej" data-id="' + esc(r.uid) + '">Rad</button></div>'; });
       (S.incoming || []).forEach(function (c) {
         h += "<div class=\"lbp lbin\"><div class=\"lbav\">" + esc((c.fromName || "?").charAt(0).toUpperCase()) + "</div><div class=\"lbinf\"><b>" + esc(c.fromName) + "</b><small>sizni o‘yinga taklif qildi · " + esc(c.tc) + "</small></div>" +
@@ -1420,5 +1420,15 @@ document.head.appendChild(_as); }
       t.onclick = function () { navTo("Turnir"); };
       row.appendChild(t);
     }
+  }, 500);
+})();
+
+;(function () {
+  var st = document.createElement("style"); st.id = "hzFix2Css";
+  st.textContent = "#hzMe{display:none!important}#hzHero{padding-bottom:0!important}#lbPanel{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 90px)!important}";
+  document.head.appendChild(st);
+  setInterval(function () {
+    var h = document.getElementById("hzHero"), s = document.getElementById("hzSeek");
+    if (h && s && s.parentNode && s.parentNode !== h) s.parentNode.style.order = "1";
   }, 500);
 })();
