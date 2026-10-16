@@ -45,7 +45,7 @@ function move(j, cb) {
   if (!ready) return cb({ error: "notready", code: 503 });
   const b = j && j.board, side = (j && j.side > 0) ? 1 : -1;
   if (!Array.isArray(b) || b.length !== 64 || !b.every(v => Number.isInteger(v) && v >= -2 && v <= 2)) return cb({ error: "bad", code: 400 });
-  const secs = Math.min(6, Math.max(0.2, Number(j.time) || 1));
+  const secs = Math.min(6, Math.max(0.05, Number(j.time) || 1));
   if (busy >= 2) return cb({ error: "busy", code: 429 });
   busy++; const t0 = Date.now();
   run(encode(b, side, secs), secs, (err, v) => {
