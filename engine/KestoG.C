@@ -140,6 +140,11 @@ int nodes;
 struct move2 bestrootmove;
 
 /* KestoG search timeout */
+#include <time.h>
+#define clock() wall_clock()
+static clock_t wall_clock(void){ struct timespec ts; clock_gettime(CLOCK_MONOTONIC,&ts); return (clock_t)((long long)ts.tv_sec*1000000LL + ts.tv_nsec/1000); }
+#undef CLOCKS_PER_SEC
+#define CLOCKS_PER_SEC 1000000
 clock_t search_deadline;
 volatile int search_timeout = 0;
 unsigned long int History[46][46];
