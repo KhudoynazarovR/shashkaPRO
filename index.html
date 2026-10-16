@@ -615,7 +615,7 @@ async function kestoMove(b,side){
   }catch(e){window.__kWhy='err '+e;return null}finally{clearTimeout(to)}
 }
 function aiMove(){const tok=++G.tok,side=sideAt(G.cur);G.busy=true;render();const b0=G.pos[G.cur].slice();
-const local=()=>setTimeout(()=>{if(tok!==G.tok||G.over){G.busy=false;return}const r=bestMove(G.pos[G.cur],side,+S.lvl);G.busy=false;if(!r)return;$('an').textContent=`d${r.d} · ${nodes} nodes · ${(r.v/100).toFixed(2)}`;doMove(r.m)},40);
+const local=()=>setTimeout(()=>{if(tok!==G.tok||G.over){G.busy=false;return}const r=bestMove(G.pos[G.cur],side,+S.lvl);G.busy=false;if(!r)return;$('an').textContent=`[${window.__kWhy||'?'}] d${r.d} · ${nodes} nodes · ${(r.v/100).toFixed(2)}`;doMove(r.m)},40);
 kestoMove(b0,side).then(m=>{if(tok!==G.tok||G.over){G.busy=false;return}if(m){G.busy=false;$('an').textContent='KestoG';doMove(m)}else{$('an').textContent='local: '+(window.__kWhy||'?');local()}}).catch(local)}
 function checkEnd(){if(!atEnd())return;const b=G.pos[G.cur],side=sideAt(G.cur);
  if(!legal(b,side).length)return end(side>0?'b':'w');
