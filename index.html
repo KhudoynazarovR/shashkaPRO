@@ -601,16 +601,16 @@ function doMove(m){const side=sideAt(G.cur);tick();pushMove(m);hap(m.caps.length
 async function kestoMove(b,side){
   const lv=+S.lvl||0;
   if(lv<2){window.__kWhy='lvl '+lv;return null}
-  if(window.__kOff&&Date.now()<window.__kOff){window.__kWhy='off '+Math.round((window.__kOff-Date.now())/1000)+'s';return null}
+  if(false){window.__kWhy='off '+Math.round((window.__kOff-Date.now())/1000)+'s';return null}
   const secs={2:0.6,3:1.5,4:3}[lv]||1;
   const tg=window.Telegram&&window.Telegram.WebApp;
   const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),(secs+6)*1000);
   try{
     const r=await fetch('/api/ai/move',{method:'POST',headers:{'Content-Type':'application/json','x-init-data':(tg&&tg.initData)||''},body:JSON.stringify({board:b,side:side,time:secs}),signal:ctl.signal});
-    if(!r.ok){window.__kWhy='http '+r.status;window.__kOff=Date.now()+(r.status===429?5000:60000);return null}
+    if(!r.ok){window.__kWhy='http '+r.status;return null}
     const j=await r.json();
     const ms=legal(b,side).filter(m=>m.path[0]===j.from&&m.path[m.path.length-1]===j.to);
-    if(!ms.length){window.__kWhy='illegal '+JSON.stringify(j);window.__kOff=Date.now()+30000;return null}
+    if(!ms.length){window.__kWhy='illegal '+JSON.stringify(j);return null}
     return ms.find(m=>m.caps.length===j.jumps)||ms[0];
   }catch(e){window.__kWhy='err '+e;return null}finally{clearTimeout(to)}
 }
