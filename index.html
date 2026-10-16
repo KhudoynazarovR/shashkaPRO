@@ -86,7 +86,7 @@ textarea{width:100%;height:120px;font:12px ui-monospace,monospace}
 <div class="g"><button class="p" onclick="newGame()" data-i="new"></button><button onclick="undo()" data-i="undo"></button><button onclick="redo()" data-i="redo"></button>
 <button onclick="hint()" data-i="hint"></button><button onclick="G.flip=!G.flip;render()" data-i="flip"></button><button onclick="analyze()" data-i="analyze"></button>
 <button onclick="offerDraw()" data-i="draw"></button><button onclick="resign()" data-i="resign"></button><button onclick="clearStats()">Σ 0</button></div>
-<div class="row"><span>AI</span><select data-s="lvl"><option value="0">1 · Boshlang'ich</option><option value="1">2</option><option value="2">3</option><option value="3">4</option><option value="4">5 · Usta</option><option value="5">6 · Usta</option></select></div>
+<div class="row"><span>AI</span><select data-s="lvl"><option value="2">KestoG</option></select></div>
 <div class="row"><span>Mode</span><select data-s="mode"><option value="ai">vs AI</option><option value="local">2 players</option></select></div>
 <div class="row"><span>Color</span><select data-s="col"><option value="w">⚪</option><option value="b">⚫</option><option value="r">🎲</option></select></div>
 <div class="row"><span>⏱</span><select data-s="tc"><option value="0">∞</option><option value="60+0">1+0</option><option value="180+2">3+2</option><option value="300+3">5+3</option><option value="600+5">10+5</option><option value="900+10">15+10</option></select></div>
@@ -599,10 +599,10 @@ function newGame(){G.tok++;const[a,b]=String(S.tc).split('+').map(Number);
 function kick(){if(!G.over&&!G.edit&&G.mode==='ai'&&sideAt(G.cur)!==G.me&&atEnd())aiMove()}
 function doMove(m){const side=sideAt(G.cur);tick();pushMove(m);hap(m.caps.length?'medium':'light');if(G.tc)G.t[side>0?0:1]+=G.inc;beep(m.caps.length?330:200,.1);checkEnd();render();kick()}
 async function kestoMove(b,side){window.__kOk=false;
-  const lv=+S.lvl||0;
+  const lv=2;S.lvl='2';
   if(lv<2){window.__kWhy='lvl '+lv;return null}
   if(false){window.__kWhy='off '+Math.round((window.__kOff-Date.now())/1000)+'s';return null}
-  const secs={2:0.3,3:0.6,4:1.2}[lv]||0.5;
+  const secs={2:1.2}[lv]||1.2;
   const tg=window.Telegram&&window.Telegram.WebApp;
   const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),(secs+12)*1000);
   try{
@@ -676,7 +676,7 @@ function render(){
   h+=`<div class="${cl}" data-i="${i}">${S.co&&vc===0?`<b class="rk">${8-r}</b>`:''}${S.co&&vr===7?`<b class="fl">${'abcdefgh'[c]}</b>`:''}${p?`<i class="pc ${p>0?'w':'b'}${Math.abs(p)===2?' k':''}"></i>`:''}</div>`}
  B.innerHTML=h;drawArrow(B);
  let wc=0,bc=0;bd.forEach(p=>{if(p>0)wc++;else if(p<0)bc++});const top=G.flip?1:-1;
- const nm=s=>(s>0?'⚪ ':'⚫ ')+(G.mode==='ai'?(s===G.me?'You':(window.__kOk?'KestoG':'AI')+' · L'+(+S.lvl+1)):(s>0?'White':'Black'));
+ const nm=s=>(s>0?'⚪ ':'⚫ ')+(G.mode==='ai'?(s===G.me?'You':'KestoG'):(s>0?'White':'Black'));
  $('tn').textContent=nm(top);$('bn').textContent=nm(-top);$('tcn').textContent=(top>0?wc:bc);$('bcn').textContent=(top>0?bc:wc);clk();
  const e=ev(bd);$('evf').style.width=Math.max(4,Math.min(96,50+e/8))+'%';$('evt').textContent=(e/100).toFixed(1);
  $('st').textContent=G.edit?T('editor'):G.over?(G.res==='d'?T('drw'):G.res==='w'?T('winW'):T('winB')):G.busy?T('think'):side>0?T('turnW'):T('turnB');
