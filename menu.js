@@ -66,9 +66,6 @@
     function v(x) { return x == null ? "—" : x; }
     var P = pst || {};
     var h = "<div class='mqT'><div class='mqL'><b>Shashka<i>PRO</i> 👑</b><small>Yaxshiroq o‘yinchilar uchun!</small></div><div class='mqR'><span class='mqC'>💎 " + (bal == null ? "—" : bal) + "</span><button class='mnd' onclick=\"mnA('@daily')\"" + (canDaily ? "" : " disabled") + ">" + (canDaily ? "🎁 Bonus" : "✅ Olingan") + "</button></div></div>";
-    h += "<div class='mqP'><div class='mqPh'><div class='mqav'>" + av + "</div><div class='mqN'><b>" + esc(name) + " 👑</b><small>" + (u.id ? "ID: " + esc(u.id) : "Telegram orqali kiring") + "</small></div></div>" +
-      "<div class='mqG'><div><b>🏆 " + v(P.wins) + "</b><small>G‘alaba</small></div><div><b>✖️ " + v(P.losses) + "</b><small>Mag‘lub</small></div><div><b>🤝 " + v(P.draws) + "</b><small>Durang</small></div></div>" +
-      "<div class='mqG two'><div><b>🔥 " + v(P.bestStreak) + "</b><small>G‘alaba seriyasi</small></div><div><b>👑 " + v(P.elo) + "</b><small>ELO</small></div></div></div>";
     h += "<div class='mnm' id='mnMsg'></div>";
     SEC.forEach(function (s, i) {
       h += "<div class='mqS'><span>" + (i === 0 ? "🎮" : "⚙️") + "</span>" + s[0] + "</div><div class='mqGr'>" + s[1].map(cardHtml).join("") + "</div>";
