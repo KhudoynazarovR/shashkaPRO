@@ -600,9 +600,9 @@ function kick(){if(!G.over&&!G.edit&&G.mode==='ai'&&sideAt(G.cur)!==G.me&&atEnd(
 function doMove(m){const side=sideAt(G.cur);tick();pushMove(m);hap(m.caps.length?'medium':'light');if(G.tc)G.t[side>0?0:1]+=G.inc;beep(m.caps.length?330:200,.1);checkEnd();render();kick()}
 async function kestoMove(b,side){
   const lv=+S.lvl||0;
-  if(lv<3)return null;
+  if(lv<2)return null;
   if(window.__kOff&&Date.now()<window.__kOff)return null;
-  const secs={3:0.6,4:1.2,5:2.5}[lv]||4;
+  const secs={2:0.6,3:1.5,4:3}[lv]||1;
   const tg=window.Telegram&&window.Telegram.WebApp;
   const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),(secs+6)*1000);
   try{

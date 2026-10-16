@@ -1,3 +1,4 @@
+require('./kestoai.js');
 'use strict';
 const store = require('./store');
 const { verifyInitData } = require('./auth');
