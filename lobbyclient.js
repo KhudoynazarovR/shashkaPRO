@@ -1248,3 +1248,26 @@ document.head.appendChild(_as); }
     connect(); n++; if (n % 5 === 0) ask();
   }, 1000);
 })();
+
+;(function () {
+  if (!document.getElementById("hzSeekCss")) {
+    var st = document.createElement("style"); st.id = "hzSeekCss";
+    st.textContent = "#hzFr,#hzRnd,#hzQk{display:none!important}#hzAi{grid-column:1/-1;flex:1 1 100%;width:100%;box-sizing:border-box;min-height:120px!important}#hzSeek{grid-column:1/-1;flex:1 1 100%;width:100%;box-sizing:border-box;display:block;margin:4px 0 12px;padding:16px 12px;border:0;border-radius:18px;font:700 20px/1.2 inherit;color:#fff;text-align:center;cursor:pointer;background:linear-gradient(100deg,#13b955,#0e9f6e);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35),0 6px 18px rgba(16,185,129,.45)}#hzSeek.on{background:linear-gradient(100deg,#f59e0b,#ef6c00);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35),0 6px 18px rgba(245,158,11,.45)}";
+    document.head.appendChild(st);
+  }
+  setInterval(function () {
+    var hero = document.getElementById("hzHero"); if (!hero) return;
+    var b = document.getElementById("hzSeek");
+    if (!b) {
+      var first = hero.querySelector(".hzC"); if (!first) return;
+      b = document.createElement("button"); b.id = "hzSeek"; b.type = "button";
+      first.parentNode.insertBefore(b, first);
+      b.onclick = function () { var r = document.getElementById("hzRnd"); if (r) r.click(); };
+    }
+    var rb = document.getElementById("hzRndB");
+    var q = !!(rb && /Bekor/.test(rb.textContent));
+    var tx = q ? "⏳ Qidirilmoqda… (bekor qilish)" : "🔍 Raqib qidirish";
+    if (b.textContent !== tx) b.textContent = tx;
+    b.className = q ? "on" : "";
+  }, 500);
+})();
