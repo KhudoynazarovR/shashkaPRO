@@ -15,3 +15,4 @@ users.json
 .env
 data/
 *.log
+engine/bridge.bin

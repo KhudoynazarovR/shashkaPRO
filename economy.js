@@ -219,6 +219,16 @@ function handle(req, res, url) {
     send(res, 200, { day: _dk, top: _rows.slice(0, 3), me: _pd && _pd.d === _dk ? (_pd.c[String(_tg.id)] || 0) : 0 });
     return true;
   }
+  if (p === '/api/ai/move' && req.method === 'POST') {
+    const _tk = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
+    if (!_tk) { send(res, 401, { error: 'auth' }); return true; }
+    readBody(req, 4000, body => {
+      let j = {};
+      try { j = JSON.parse(body); } catch (e) {}
+      require('./kestoai.js').move(j, r => send(res, r.code || 200, r));
+    });
+    return true;
+  }
   if (p === '/api/puzzles/top' && req.method === 'GET') {
     const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
