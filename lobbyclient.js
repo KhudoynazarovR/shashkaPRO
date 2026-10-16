@@ -1197,3 +1197,54 @@ document.head.appendChild(_as); }
     connect();
   }
 })();
+
+;(function () {
+  var ws = null, list = [], sig = "", box = null, n = 0;
+  var COL = { "1+1": "#c0605f", "2+2": "#6aaed4", "3+2": "#6aaed4", "5+3": "#88aa3c", "7+5": "#88aa3c" };
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c]; }); }
+  if (!document.getElementById("hzLvCss")) {
+    var st = document.createElement("style"); st.id = "hzLvCss";
+    st.textContent = ".hzLv{margin-top:12px;border-radius:20px;padding:12px;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1.5px rgba(245,197,66,.55)}.hzLvH{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:16px;margin-bottom:10px}.hzLvH small{opacity:.7;font-weight:400}.hzLvG{display:grid;grid-template-columns:1fr 1fr;gap:10px}.hzLvC{border-radius:10px;overflow:hidden;background:#dcdcdc;color:#333;text-align:center;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.3)}.hzLvC b{display:block;padding:6px 4px;color:#fff;font-size:14px}.hzLvC div{padding:5px 4px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hzLvC i{display:block;font-style:normal;font-size:11px;color:#777}.hzLvC u{display:block;text-decoration:none;font-size:11px;color:#555;padding:3px 0 7px}.hzLvE{text-align:center;opacity:.7;padding:10px;font-size:13px}";
+    document.head.appendChild(st);
+  }
+  function render() {
+    if (!box) return;
+    var s = JSON.stringify(list); if (s === sig) return; sig = s;
+    var h = "<div class=\"hzLvH\"><span>🎯 Jonli stollar</span><small>" + list.length + " ta o‘yin</small></div>";
+    if (!list.length) h += "<div class=\"hzLvE\">Hozir o‘ynalayotgan o‘yin yo‘q</div>";
+    else {
+      h += "<div class=\"hzLvG\">";
+      list.slice(0, 10).forEach(function (r) {
+        var c = COL[r.tc] || "#6aaed4";
+        h += "<div class=\"hzLvC\" data-r=\"" + esc(r.id) + "\"><b style=\"background:" + c + "\">Shashka " + esc(r.tc) + "</b><div>⚪ " + esc(r.white) + " (" + (r.wElo || 1000) + ")</div><i>vs</i><div>⚫ " + esc(r.black) + " (" + (r.bElo || 1000) + ")</div><u>👁 " + (r.spectators || 0) + " · " + Math.ceil((r.moves || 0) / 2) + " yurish</u></div>";
+      });
+      h += "</div>";
+    }
+    box.innerHTML = h;
+  }
+  function ask() { try { if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: "roomLive" })); } catch (e) {} }
+  function connect() {
+    if (ws) return;
+    try { ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host); } catch (e) { ws = null; return; }
+    ws.onopen = ask;
+    ws.onmessage = function (ev) { var m; try { m = JSON.parse(ev.data); } catch (e) { return; } if (m && m.type === "roomLive") { list = m.list || []; render(); } };
+    ws.onclose = function () { ws = null; };
+  }
+  function drop() { try { if (ws) ws.close(); } catch (e) {} ws = null; }
+  setInterval(function () {
+    var hero = document.getElementById("hzHero");
+    if (!hero || hero.offsetParent === null) { drop(); return; }
+    if (!box || !box.parentNode) {
+      var rec = document.getElementById("hzRec"); if (!rec) return;
+      box = document.createElement("div"); box.className = "hzLv"; box.id = "hzLive";
+      rec.parentNode.insertBefore(box, rec);
+      box.onclick = function (e) {
+        var t = e.target; while (t && t !== box && !(t.getAttribute && t.getAttribute("data-r"))) t = t.parentNode;
+        var id = t && t.getAttribute ? t.getAttribute("data-r") : "";
+        if (id) location.href = location.pathname + "?room=" + encodeURIComponent(id);
+      };
+      sig = ""; render();
+    }
+    connect(); n++; if (n % 5 === 0) ask();
+  }, 1000);
+})();

@@ -290,7 +290,7 @@ function createRooms({ send, clients, onFinish }) {
       for (const r of rooms.values()) {
         if (!r.white || !r.black || r.finished) continue;
         list.push({
-          id: r.id, white: r.white.name, black: r.black.name, tc: r.tc,
+          id: r.id, white: r.white.name, black: r.black.name, tc: r.tc, wElo: (_pi(r.white) || {}).elo || 1000, bElo: (_pi(r.black) || {}).elo || 1000,
           moves: (r.moves || []).length,
           spectators: [...r.members].filter(id => !colorOf(r, clients.get(id) || {})).length
         });
