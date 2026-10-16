@@ -608,7 +608,7 @@ async function kestoMove(b,side){window.__kOk=false;
   try{
     const r=await fetch('/api/ai/move',{method:'POST',headers:{'Content-Type':'application/json','x-init-data':(tg&&tg.initData)||''},body:JSON.stringify({board:b,side:side,time:secs}),signal:ctl.signal});
     if(!r.ok){let _e='';try{_e=(await r.clone().json()).error}catch(x){}window.__kWhy='http '+r.status+' '+_e;return null}
-    const j=await r.json();
+    const j=await r.json();window.__kMs=j.ms;
     const ms=legal(b,side).filter(m=>m.path[0]===j.from&&m.path[m.path.length-1]===j.to);
     if(!ms.length){window.__kWhy='illegal '+JSON.stringify(j);return null}
     window.__kOk=true;return ms.find(m=>m.caps.length===j.jumps)||ms[0];
@@ -616,7 +616,7 @@ async function kestoMove(b,side){window.__kOk=false;
 }
 function aiMove(){const tok=++G.tok,side=sideAt(G.cur);G.busy=true;render();const b0=G.pos[G.cur].slice();
 const local=()=>setTimeout(()=>{if(tok!==G.tok||G.over){G.busy=false;return}const r=bestMove(G.pos[G.cur],side,+S.lvl);G.busy=false;if(!r)return;$('an').textContent=`[${window.__kWhy||'?'}] d${r.d} · ${nodes} nodes · ${(r.v/100).toFixed(2)}`;doMove(r.m)},40);
-kestoMove(b0,side).then(m=>{if(tok!==G.tok||G.over){G.busy=false;return}if(m){G.busy=false;$('an').textContent='KestoG';doMove(m)}else{$('an').textContent='local: '+(window.__kWhy||'?');local()}}).catch(local)}
+kestoMove(b0,side).then(m=>{if(tok!==G.tok||G.over){G.busy=false;return}if(m){G.busy=false;$('an').textContent='KestoG '+(window.__kMs||'?')+'ms';doMove(m)}else{$('an').textContent='local: '+(window.__kWhy||'?');local()}}).catch(local)}
 function checkEnd(){if(!atEnd())return;const b=G.pos[G.cur],side=sideAt(G.cur);
  if(!legal(b,side).length)return end(side>0?'b':'w');
  let n=0;for(let i=G.mv.length-1;i>=0;i--){if(G.mv[i].caps.length||G.mv[i].man)break;n++}

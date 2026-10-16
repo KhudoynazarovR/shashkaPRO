@@ -47,13 +47,13 @@ function move(j, cb) {
   if (!Array.isArray(b) || b.length !== 64 || !b.every(v => Number.isInteger(v) && v >= -2 && v <= 2)) return cb({ error: "bad", code: 400 });
   const secs = Math.min(6, Math.max(0.2, Number(j.time) || 1));
   if (busy >= 2) return cb({ error: "busy", code: 429 });
-  busy++;
+  busy++; const t0 = Date.now();
   run(encode(b, side, secs), secs, (err, v) => {
     busy--;
     if (err) { console.log('[KestoG] xato:', err, '| kirish:', JSON.stringify(encode(b, side, secs))); return cb({ error: err, code: 500 }); }
     const from = v[1] * 8 + (7 - v[0]), to = v[3] * 8 + (7 - v[2]);
     if (!(from >= 0 && from < 64 && to >= 0 && to < 64) || from === to) return cb({ error: "nomove", code: 500 });
-    cb({ from: from, to: to, jumps: v[4] });
+    console.log('[KestoG] vaqt', secs, 'sek soralgan,', Date.now() - t0, 'ms'); cb({ from: from, to: to, jumps: v[4], ms: Date.now() - t0 });
   });
 }
 
