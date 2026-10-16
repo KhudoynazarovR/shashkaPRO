@@ -602,9 +602,9 @@ async function kestoMove(b,side){window.__kOk=false;
   const lv=+S.lvl||0;
   if(lv<2){window.__kWhy='lvl '+lv;return null}
   if(false){window.__kWhy='off '+Math.round((window.__kOff-Date.now())/1000)+'s';return null}
-  const secs={2:0.6,3:1.5,4:3}[lv]||1;
+  const secs={2:0.3,3:0.6,4:1.2}[lv]||0.5;
   const tg=window.Telegram&&window.Telegram.WebApp;
-  const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),(secs+6)*1000);
+  const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),(secs+12)*1000);
   try{
     const r=await fetch('/api/ai/move',{method:'POST',headers:{'Content-Type':'application/json','x-init-data':(tg&&tg.initData)||''},body:JSON.stringify({board:b,side:side,time:secs}),signal:ctl.signal});
     if(!r.ok){let _e='';try{_e=(await r.clone().json()).error}catch(x){}window.__kWhy='http '+r.status+' '+_e;return null}

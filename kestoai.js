@@ -11,7 +11,7 @@ function fresh() {
 
 function run(input, secs, cb) {
   let out = "", done = false, ch;
-  const tm = setTimeout(() => fin("timeout"), (secs + 3) * 1000);
+  const tm = setTimeout(() => fin("timeout"), (secs + 8) * 1000);
   const fin = (err, val) => { if (done) return; done = true; clearTimeout(tm); try { ch.kill("SIGKILL"); } catch (e) {} cb(err, val); };
   try { ch = spawn(BIN, [], { cwd: DIR, stdio: ["pipe", "pipe", "ignore"] }); } catch (e) { return fin("spawn"); }
   ch.on("error", () => fin("spawn"));
