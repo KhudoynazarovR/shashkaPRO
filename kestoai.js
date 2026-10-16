@@ -41,6 +41,7 @@ function encode(board, side, secs) {
 }
 
 function move(j, cb) {
+  console.log("[KestoG] request", j && j.time);
   if (!ready) return cb({ error: "notready", code: 503 });
   const b = j && j.board, side = (j && j.side > 0) ? 1 : -1;
   if (!Array.isArray(b) || b.length !== 64 || !b.every(v => Number.isInteger(v) && v >= -2 && v <= 2)) return cb({ error: "bad", code: 400 });
