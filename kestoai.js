@@ -4,6 +4,7 @@ const fs = require("fs"), path = require("path");
 const DIR = path.join(__dirname, "engine"), BIN = path.join(DIR, "bridge.bin");
 const SRC = [path.join(DIR, "bridge.c"), path.join(DIR, "KestoG.C")];
 let ready = false, busy = 0;
+let BOOK = {}; try { BOOK = JSON.parse(fs.readFileSync(path.join(__dirname, "book.json"), "utf8")); console.log("[Kitob] pozitsiyalar:", Object.keys(BOOK).length); } catch (e) { console.log("[Kitob] book.json yo'q"); }
 
 function fresh() {
   try { const b = fs.statSync(BIN).mtimeMs; return SRC.every(f => fs.statSync(f).mtimeMs <= b); } catch (e) { return false; }
@@ -62,6 +63,8 @@ function move(j, cb) {
   const b = j && j.board, side = (j && j.side > 0) ? 1 : -1;
   if (!Array.isArray(b) || b.length !== 64 || !b.every(v => Number.isInteger(v) && v >= -2 && v <= 2)) return cb({ error: "bad", code: 400 });
   const secs = Math.min(20, Math.max(0.05, Number(j.time) || 1));
+  const bk = BOOK[b.join("") + side];
+  if (bk && j.book) return cb({ from: bk.from, to: bk.to, jumps: 0, ev: null, ms: 0, book: 1 });
   if (busy >= 2) return cb({ error: "busy", code: 429 });
   busy++; const t0 = Date.now();
   run((newGame(b) ? "9 0\n" : "") + encode(b, side, secs), secs, (err, v) => {
@@ -69,7 +72,7 @@ function move(j, cb) {
     if (err) { console.log('[KestoG] xato:', err, '| kirish:', JSON.stringify(encode(b, side, secs))); return cb({ error: err, code: 500 }); }
     const from = v[1] * 8 + (7 - v[0]), to = v[3] * 8 + (7 - v[2]);
     if (!(from >= 0 && from < 64 && to >= 0 && to < 64) || from === to) return cb({ error: "nomove", code: 500 });
-    console.log('[KestoG] vaqt', secs, 'sek soralgan,', Date.now() - t0, 'ms'); cb({ from: from, to: to, jumps: v[4], ev: (v.length > 5 ? v[5] : null), ms: Date.now() - t0 });
+    console.log('[KestoG] vaqt', secs, 'sek soralgan,', Date.now() - t0, 'ms'); cb({ bk: bk ? { from: bk.from, to: bk.to } : null, from: from, to: to, jumps: v[4], ev: (v.length > 5 ? v[5] : null), ms: Date.now() - t0 });
   });
 }
 

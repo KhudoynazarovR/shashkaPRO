@@ -75,7 +75,7 @@
     fetch('/api/ai/move', { method: 'POST', headers: hd(), body: JSON.stringify({ board: toEng(h.b), side: h.t, time: S.t }) })
       .then(function (r) { return r.json(); })
       .then(function (j) {
-        if (j && j.from != null) cb({ ev: typeof j.ev === 'number' ? h.t * j.ev / 200 : null, best: { from: [j.from >> 3, j.from & 7], to: [j.to >> 3, j.to & 7] } });
+        if (j && j.from != null) cb({ ev: typeof j.ev === 'number' ? h.t * j.ev / 200 : null, best: { from: [j.from >> 3, j.from & 7], to: [j.to >> 3, j.to & 7] }, bk: j.bk || null });
         else if (j && j.error === 'busy' && tries < 5) setTimeout(function () { ask(h, cb, tries + 1); }, 800);
         else cb(null);
       }).catch(function () { cb(null); });
@@ -481,7 +481,7 @@
         if (over) info = '🏁 O‘yin tugadi: ' + (h.t > 0 ? '⚫ Qora' : '⚪ Oq') + ' yutdi';
         else if (PL) info += PL.err ? 'Dvigatel javob bermadi <button data-a="retry" style="border:0;border-radius:10px;padding:6px 10px;background:#2e9d6b;color:#fff">Qayta</button>' : PL.th ? '⏳ KestoG o‘ylayapti...' : (h.t === PL.me ? 'Sizning yurishingiz' : '');
         else if (!S.engine) info += 'Dvigatel o‘chiq';
-        else if (e && e.best) info += 'Eng yaxshi: <b>' + sq(e.best.from[0], e.best.from[1]) + ((e.best.cap !== undefined ? e.best.cap : (ms[0] && ms[0].caps.length)) ? ':' : '-') + sq(e.best.to[0], e.best.to[1]) + '</b>' + pvHtml(h);
+        else if (e && e.best) info += (e.bk ? '📖 Kitob: <b>' + sq(e.bk.from >> 3, e.bk.from & 7) + '-' + sq(e.bk.to >> 3, e.bk.to & 7) + '</b> · ' : '') + 'Eng yaxshi: <b>' + sq(e.best.from[0], e.best.from[1]) + ((e.best.cap !== undefined ? e.best.cap : (ms[0] && ms[0].caps.length)) ? ':' : '-') + sq(e.best.to[0], e.best.to[1]) + '</b>' + pvHtml(h);
         else if (busyK[k]) info += '⏳ Dvigatel o‘ylayapti...';
         else if (FAIL[k]) info += 'Baho olinmadi <button data-a="eng" style="display:none"></button><button id="bdRt" style="border:0;border-radius:10px;padding:6px 10px;background:#2e9d6b;color:#fff">Qayta</button>';
       }
