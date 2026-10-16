@@ -240,6 +240,16 @@ function handle(req, res, url) {
     send(res, 200, { top: _rows.slice(0, 100).map(x => ({ id: x.k, name: x.name, n: x.n, me: x.k === String(_tg.id) })), rank: _i < 0 ? 0 : _i + 1, n: _i < 0 ? 0 : _rows[_i].n });
     return true;
   }
+  if (p === '/api/layout') {
+    const _t = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
+    const _a = !!(_t && (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(_t.id)));
+    if (req.method === 'GET') { send(res, 200, { layout: store.db.lobbyLayout || null, admin: _a }); return true; }
+    if (req.method === 'POST') {
+      if (!_a) { send(res, 403, { error: 'admin emassiz' }); return true; }
+      readBody(req, 50000, body => { let j = {}; try { j = JSON.parse(body); } catch (e) {} store.db.lobbyLayout = (j.layout && typeof j.layout === 'object') ? j.layout : null; store.save(); send(res, 200, { ok: true }); });
+      return true;
+    }
+  }
   if (p === '/api/puzzles' && req.method === 'GET') {
     const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
