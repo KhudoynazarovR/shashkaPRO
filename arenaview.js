@@ -25,6 +25,7 @@
     '#avOv .avT{width:100%;margin-top:12px;padding:12px;border:0;border-radius:10px;background:#2e2a70;color:#fff;font-size:15px}';
   document.head.appendChild(st);
 
+  function dt(t) { try { var p = {}; new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Tashkent', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(new Date(t)).forEach(function (x) { p[x.type] = x.value; }); return p.day + '.' + p.month + ' ' + p.hour + ':' + p.minute; } catch (e) { return ''; } }
   function cardTxt(j) {
     if (!j || !j.enabled) return ['\uD83D\uDD34 Bot arenasi', 'Hozir o‘chiq. Reytingni ko‘rish uchun bosing'];
     var g = j.game;
@@ -67,8 +68,8 @@
     (j.bots || []).forEach(function (b) { h += '<tr><td>' + nm(b.name) + '</td><td>' + b.elo + '</td><td>' + b.w + '</td><td>' + b.l + '</td><td>' + b.dr + '</td></tr>'; });
     h += '</table>';
     if (j.log && j.log.length) {
-      h += '<table><tr><th colspan="3">Oxirgi o‘yinlar</th></tr>';
-      j.log.slice(0, 6).forEach(function (x) { h += '<tr><td>' + nm(x.w) + '</td><td>' + esc(x.r) + '</td><td>' + nm(x.b) + '</td></tr>'; });
+      h += '<table><tr><th colspan="4">Oxirgi o‘yinlar</th></tr>';
+      j.log.slice(0, 6).forEach(function (x) { h += '<tr><td>' + nm(x.w) + '</td><td>' + esc(x.r) + '</td><td>' + nm(x.b) + '</td><td style="opacity:.7;font-size:12px">' + dt(x.t) + '</td></tr>'; });
       h += '</table>';
     }
     if (j.admin) h += '<button class="avT" id="avTg">' + (j.enabled ? '\u23F8 Arenani to‘xtatish' : '\u25B6 Arenani yoqish') + '</button>';
