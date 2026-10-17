@@ -310,7 +310,7 @@
       }
       function rcmChatVis() {
         if (!rcm.chat) { elChatBtn.style.display = "none"; elChat.style.display = "none"; }
-        else if (elChatBtn.style.display === "none") elChatBtn.style.display = "";
+        else if (!st.vsBot && elChatBtn.style.display === "none") elChatBtn.style.display = "";
       }
 
       // "Yurmasdan chiqish" uchun: men yurdimmi?
@@ -489,6 +489,8 @@
       elMsgs.appendChild(row);
     }
     function renderChat() {
+      if (st.vsBot) { elChatBtn.style.display = "none"; elChat.style.display = "none"; st._cbHid = true; return; }
+      if (st._cbHid) { elChatBtn.style.display = ""; st._cbHid = false; if (typeof rcmChatVis === "function") rcmChatVis(); }
       elChat.style.display = st.chatOpen ? "" : "none";
       elChatBtn.textContent = "💬 Chat" + (st.unread ? " (" + st.unread + ")" : "");
     }
@@ -1023,7 +1025,7 @@
         st.spectators = m.spectators || 0;
         st.specNames = m.spectatorNames || [];
         st.gamesTotal = m.gamesTotal || 1; st.played = m.played || 0; st.seriesScore = m.seriesScore || null;
-        st.seriesDone = !!m.seriesDone; st.nextIn = !!m.nextIn; st.rematch = m.rematch || null; st.casual = !!m.casual; st.vsBot = !!m.vsBot; st.botStarted = !!m.botStarted; st.botColor = m.botColor || null; st.botSecs = Number(m.botSecs) > 0 ? Number(m.botSecs) : 1.2; st.botBlunder = Number(m.botBlunder) || 0;
+        st.seriesDone = !!m.seriesDone; st.nextIn = !!m.nextIn; st.rematch = m.rematch || null; st.casual = !!m.casual; st.vsBot = !!m.vsBot; try { renderChat(); } catch (e) {} st.botStarted = !!m.botStarted; st.botColor = m.botColor || null; st.botSecs = Number(m.botSecs) > 0 ? Number(m.botSecs) : 1.2; st.botBlunder = Number(m.botBlunder) || 0;
         var openNew = (m.opening ? m.opening.id : null) !== (st.opening ? st.opening.id : null);
         st.opening = m.opening || null;
         var same = !openNew && st.moves.length === (m.moves || []).length && st.turn === m.turn;
