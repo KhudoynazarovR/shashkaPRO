@@ -18,7 +18,14 @@ function payWin(room, whiteUid, blackUid, tid) {
 
 const TCS = ['1+1', '2+2', '3+2', '5+3', '7+5'];
 const DEFAULT_TC = '5+3';
-const BOT_UID = 'bot', BOT_NAME = '🤖 ShashkaBot', BOT_CLIENT = 'bot_ai';
+// 🤖 Botlar: kuch pog'onasi. secs = dvigatelga beriladigan o'ylash vaqti, blunder = tasodifiy yurish ehtimoli
+const BOTS = [
+  { uid: 'bot_easy', name: '🤖 Yengil', secs: 0.05, blunder: 0.35 },
+  { uid: 'bot_mid', name: '🤖 O‘rta', secs: 0.2, blunder: 0.12 },
+  { uid: 'bot', name: '🤖 ShashkaBot', secs: 1.2, blunder: 0 },
+  { uid: 'bot_pro', name: '🤖 Usta', secs: 3, blunder: 0 }
+];
+const botByUid = uid => BOTS.find(b => b.uid === uid) || null;
 const BOT_TCS = ['1+1', '2+2', '3+2', '5+3'];
 const NOSHOW_MS = Number(process.env.LOBBY_NOSHOW_MS || 120000);   // tur boshlangach kelmaganlar uchun kutish
 const NEXT_ROUND_MS = Number(process.env.LOBBY_NEXT_MS || 20000);  // turlar orasidagi tanaffus
@@ -218,16 +225,16 @@ function createLobby({ send, clients, roomsApi }) {
   }
 
   // 🤖 Bot bilan o'yin: chaqiruv darhol qabul qilinadi, xona ochiladi, vaqt/rang/pozitsiya xonada tanlanadi
-  function startBotGame(human, o) {
+  function startBotGame(human, o, bot) {
     const roomId = 'B' + hex(5);
     const tc = o && BOT_TCS.includes(o.tc) ? o.tc : DEFAULT_TC;
     const opening = o && o.pos === 'idf' ? pickOpening() : null;
     roomsApi.create(roomId, {
-      tc, vsBot: true, opening,
+      tc, vsBot: true, opening, botCfg: { id: bot.uid, secs: bot.secs, blunder: bot.blunder },
       white: { uid: human.uid, name: human.name },
-      black: { uid: BOT_UID, name: BOT_NAME, clientId: BOT_CLIENT }
+      black: { uid: bot.uid, name: bot.name, clientId: 'ai_' + bot.uid }
     });
-    sendUid(human.uid, { type: 'lbGo', roomId, reason: 'challenge', color: 'white', opponent: BOT_NAME, tc, series: null });
+    sendUid(human.uid, { type: 'lbGo', roomId, reason: 'challenge', color: 'white', opponent: bot.name, tc, series: null });
   }
 
   // Seriya: 1 o'yin, yoki match = bir pozitsiya, ranglar almashgan 2 o'yin
@@ -840,9 +847,9 @@ function createLobby({ send, clients, roomsApi }) {
         if ([...challenges.values()].some(x => x.fromUid === me.uid && x.toUid === to.lb.uid)) return err(c, 'Chaqiruv allaqachon yuborilgan'), true;
         if (challenges.size > 500) return err(c, 'Hozir band, keyinroq urinib ko‘ring'), true;
         const ch = { id: 'c' + hex(4), fromUid: me.uid, fromName: me.name, toUid: to.lb.uid, tc: TCS.includes(m.tc) ? m.tc : DEFAULT_TC, ...cleanOpts(m), at: Date.now() };
-        if (ch.toUid === BOT_UID) {   // bot taklifni darhol qabul qiladi
+        if (botByUid(ch.toUid)) {   // bot taklifni darhol qabul qiladi
           queue.delete(me.uid);
-          startBotGame({ uid: me.uid, name: me.name }, ch);
+          startBotGame({ uid: me.uid, name: me.name }, ch, botByUid(ch.toUid));
           push();
           break;
         }
@@ -1186,7 +1193,9 @@ function createLobby({ send, clients, roomsApi }) {
 
   // 🤖 ShashkaBot: lobbida doim onlayn turadi (soxta ulanish, unga hech narsa yuborilmaydi)
   const botWs = { readyState: 1, isAlive: true, send() {}, ping() {}, pong() {}, terminate() {}, close() {}, on() {} };
-  clients.set(BOT_CLIENT, { id: BOT_CLIENT, name: BOT_NAME, elo: 0, ws: botWs, isBot: true, hidden: true, lb: { uid: BOT_UID, name: BOT_NAME, tg: false, inRoom: false } });
+  for (const b of BOTS) {
+    clients.set('ai_' + b.uid, { id: 'ai_' + b.uid, name: b.name, elo: 0, ws: botWs, isBot: true, hidden: true, lb: { uid: b.uid, name: b.name, tg: false, inRoom: false } });
+  }
 
   return { handle, onClose, onRoomFinished, tournaments, arenaTick };
 }

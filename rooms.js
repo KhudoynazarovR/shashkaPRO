@@ -11,7 +11,7 @@ const DEFAULT_TC = "5+3";
 const CHAT_KEEP = 50;
 const CHAT_MAX = 200;
 // 🤖 ShashkaBot: serverda faqat "o'rindiq", yurishlarni o'yinchining telefoni hisoblaydi (roomBotMove)
-const BOT_UID = "bot";
+const isBotUid = u => typeof u === "string" && (u === "bot" || u.indexOf("bot_") === 0);
 const BOT_TCS = ["1+1", "2+2", "3+2", "5+3"];
 
 // Telegram Mini App initData imzosini tekshirish (BOT_TOKEN Render'da Environment'ga yoziladi)
@@ -48,7 +48,7 @@ function createRooms({ send, clients, onFinish }) {
   const results = []; // tugagan o'yinlar natijasi (bot olib turadi)
 
   const other = col => (col === "white" ? "black" : "white");
-  const botColorOf = room => (room.vsBot ? (room.white && room.white.uid === BOT_UID ? "white" : (room.black && room.black.uid === BOT_UID ? "black" : null)) : null);
+  const botColorOf = room => (room.vsBot ? (room.white && isBotUid(room.white.uid) ? "white" : (room.black && isBotUid(room.black.uid) ? "black" : null)) : null);
   // vaqt/pozitsiya/rangni kim tanlaydi: oddiy xonada oq, bot xonasida odam (qaysi rangda bo'lmasin)
   const isOwner = (room, col) => !!col && (room.vsBot ? col !== botColorOf(room) : col === "white");
 
@@ -78,7 +78,7 @@ function createRooms({ send, clients, onFinish }) {
   function _pi(seat) {
     try {
       if (!seat || !seat.uid) return null;
-      if (seat.uid === BOT_UID) return { uid: BOT_UID, elo: 0, av: false, bot: true };
+      if (isBotUid(seat.uid)) return { uid: seat.uid, elo: 0, av: false, bot: true };
       var u = require("./store.js").users()[String(seat.uid)] || {};
       return { uid: String(seat.uid), elo: u.elo || 1000, av: !!u.avatar };
     } catch (e) { return null; }
@@ -107,6 +107,7 @@ function createRooms({ send, clients, onFinish }) {
       tc: room.tc,
       tcs: room.vsBot ? BOT_TCS : Object.keys(TCS),
       vsBot: !!room.vsBot, botStarted: !!room.botStarted, botColor: botColorOf(room),
+      botSecs: room.botCfg ? room.botCfg.secs : 1.2, botBlunder: room.botCfg ? room.botCfg.blunder : 0,
       arena: !!room.arena,
       opening: room.opening,
       berserk: room.berserk,
@@ -266,6 +267,7 @@ function createRooms({ send, clients, onFinish }) {
     room.arena = !!(opts && opts.arena);
     room.locked = !!(opts && opts.locked);
     room.vsBot = !!(opts && opts.vsBot);
+    room.botCfg = (opts && opts.botCfg) || null;
     room.botStarted = false;
     if (opts && opts.bonus && opts.bonus.ms > 0) {
       const bc = opts.bonus.color === "black" ? "black" : "white";

@@ -64,7 +64,7 @@
       spectators: 0, finished: false, winner: null, reason: null,
       clock: { white: 0, black: 0 }, clockRunning: false, clockAt: 0, timeMs: 0, incMs: 0, tc: "", tcs: [],
       arena: false, berserk: { white: false, black: false }, drawOffer: null, chat: [], unread: 0, chatOpen: false,
-      vsBot: false, botStarted: false, botColor: null, botNote: "",
+      vsBot: false, botStarted: false, botColor: null, botNote: "", botSecs: 1.2, botBlunder: 0,
       selected: null, forced: null, pending: false, connected: false, joined: false
     };
     var ws = null, hb = null, gid = guestId();
@@ -696,7 +696,14 @@
       var side = st.botColor, legal = allMoves(st.board, codeOf(side));
       if (!legal.length) return cb(null);
       var t0 = Date.now(), done = false;
-      var secs = Math.max(0.1, Math.min(1.2, remaining(side) / 1000 / 40));
+      var secs = Math.max(0.05, Math.min(st.botSecs, remaining(side) / 1000 / 25));
+      if (st.botBlunder > 0 && legal.length > 1 && Math.random() < st.botBlunder) {   // yengil botlar ba'zan tasodifiy yuradi
+        done = true;
+        var pool0 = legal.slice().sort(function () { return Math.random() - 0.5; }), st0 = null;
+        for (var i0 = 0; i0 < pool0.length && !st0; i0++) st0 = stepsOf(pool0[i0]);
+        st.botNote = "🤖 tasodifiy yurish";
+        return setTimeout(function () { cb(st0); }, 450);
+      }
       function finishWith(mv, note) {
         if (done) return; done = true;
         var steps = mv ? stepsOf(mv) : null;
@@ -781,7 +788,7 @@
         st.spectators = m.spectators || 0;
         st.specNames = m.spectatorNames || [];
         st.gamesTotal = m.gamesTotal || 1; st.played = m.played || 0; st.seriesScore = m.seriesScore || null;
-        st.seriesDone = !!m.seriesDone; st.nextIn = !!m.nextIn; st.rematch = m.rematch || null; st.casual = !!m.casual; st.vsBot = !!m.vsBot; st.botStarted = !!m.botStarted; st.botColor = m.botColor || null;
+        st.seriesDone = !!m.seriesDone; st.nextIn = !!m.nextIn; st.rematch = m.rematch || null; st.casual = !!m.casual; st.vsBot = !!m.vsBot; st.botStarted = !!m.botStarted; st.botColor = m.botColor || null; st.botSecs = Number(m.botSecs) > 0 ? Number(m.botSecs) : 1.2; st.botBlunder = Number(m.botBlunder) || 0;
         var openNew = (m.opening ? m.opening.id : null) !== (st.opening ? st.opening.id : null);
         st.opening = m.opening || null;
         var same = !openNew && st.moves.length === (m.moves || []).length && st.turn === m.turn;
