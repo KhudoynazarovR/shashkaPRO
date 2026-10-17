@@ -7,6 +7,7 @@ let store = null; try { store = require('./store.js'); } catch (e) {}
 let IDF = null; try { IDF = require('./idf780.js'); } catch (e) {}
 
 const WHITE = R.WHITE, BLACK = R.BLACK;
+const USE_IDF = false;
 const MAXPLY = 160, ELO_K = 24, BOOT_DELAY = 60000;
 const LOCAL = { botElo: {}, botMem: {}, arenaLog: [] };
 let dirty = false, lastWatch = 0, cur = null, FAST = false;
@@ -57,7 +58,7 @@ function fromIDF(p) {
 }
 function pickStart() {
   for (let t = 0; t < 6; t++) {
-    if (IDF && IDF.length && Math.random() < 0.7) {
+    if (USE_IDF && IDF && IDF.length && Math.random() < 0.7) {
       const s = fromIDF(IDF[rnd(IDF.length)]);
       if (R.getAllMoves(s.board, s.side).length) return s;
     }
