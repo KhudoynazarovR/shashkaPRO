@@ -781,7 +781,7 @@
       if (!_tb) {
         _tb = document.createElement("button"); _tb.id = "rcAn"; _tb.textContent = "🔍 Tahlil";
         elResign.parentNode.appendChild(_tb);
-        _tb.onclick = function () { window.spAnalyze({ moves: st.moves, white: nameLine("white"), black: nameLine("black"), winner: st.winner }); };
+        _tb.onclick = function () { window.spBoardOpen({ moves: st.moves, white: nameLine("white"), black: nameLine("black"), winner: st.winner }); };
       }
       _tb.style.display = (st.finished && st.moves.length) ? "" : "none";
       elDrawOffer.style.display = (playing && st.moves.length >= 2 && st.canDraw && !st.drawOffer) ? "" : "none";
@@ -1209,3 +1209,18 @@
   };
 })();
 
+
+;(function () {
+  if (window.spBoardOpen) return;
+  window.spBoardOpen = function (g) {
+    var fallback = function () { if (window.spAnalyze) window.spAnalyze(g); };
+    try {
+      if (window.spBoard) { window.spBoard(g); return; }
+      var s = document.createElement("script");
+      s.src = "/board.js?v=" + Date.now();
+      s.onload = function () { try { window.spBoard(g); } catch (e) { fallback(); } };
+      s.onerror = fallback;
+      document.head.appendChild(s);
+    } catch (e) { fallback(); }
+  };
+})();

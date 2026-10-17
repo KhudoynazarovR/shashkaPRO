@@ -186,7 +186,7 @@
         Array.prototype.forEach.call(ov.querySelectorAll('[data-i]'), function (el) {
           el.onclick = function () {
             var g = list[Number(el.getAttribute('data-i'))];
-            window.spAnalyze({
+            window.spBoardOpen({
               white: g.w, black: g.b, winner: g.win,
               moves: g.m.map(function (x) { return { from: { r: x[0], c: x[1] }, to: { r: x[2], c: x[3] }, captures: x[4].map(function (y) { return { r: y[0], c: y[1] }; }) }; })
             });
@@ -1052,3 +1052,18 @@ window.spShop = open;
   else if (initData) setTimeout(function () { api('/api/shop').then(function (d) { if (d && !d.error) merge(d); }).catch(function () {}); }, 900);
 })();
 
+
+;(function () {
+  if (window.spBoardOpen) return;
+  window.spBoardOpen = function (g) {
+    var fallback = function () { if (window.spAnalyze) window.spAnalyze(g); };
+    try {
+      if (window.spBoard) { window.spBoard(g); return; }
+      var s = document.createElement("script");
+      s.src = "/board.js?v=" + Date.now();
+      s.onload = function () { try { window.spBoard(g); } catch (e) { fallback(); } };
+      s.onerror = fallback;
+      document.head.appendChild(s);
+    } catch (e) { fallback(); }
+  };
+})();
