@@ -116,6 +116,12 @@ function send(res, code, obj) {
 // HTTP: GET /api/economy, GET /api/balance, POST /api/daily (sarlavha: x-init-data)
 function handle(req, res, url) {
   const p = url.pathname;
+  try {
+    if (p.startsWith('/api/')) {
+      const _sg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
+      if (_sg) { const _su = store.users()[String(_sg.id)]; if (_su && Date.now() - (_su.lastSeen || 0) > 60000) _su.lastSeen = Date.now(); }
+    }
+  } catch (e) {}
   if (p === '/api/economy' && req.method === 'GET') { send(res, 200, CFG); return true; }
   if (p.startsWith('/api/av/') && req.method === 'GET') {
     const _u = store.users()[decodeURIComponent(p.slice(8))];
@@ -475,6 +481,15 @@ function handle(req, res, url) {
       store.save();
       send(res, 200, { ok: true, id });
     });
+    return true;
+  }
+  if (p === '/api/seen' && req.method === 'GET') {
+    const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
+    if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
+    const _id = String(url.searchParams.get('id') || '');
+    if (/^bot(_|$)/.test(_id)) { send(res, 200, { bot: true }); return true; }
+    const _u = store.users()[_id];
+    send(res, 200, { t: (_u && _u.lastSeen) || 0 });
     return true;
   }
   if (p === '/api/profile' && req.method === 'GET') {
