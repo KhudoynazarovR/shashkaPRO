@@ -208,7 +208,7 @@ function handle(req, res, url) {
       id: _id, name: _u.name || 'Oyinchi', elo: _u.elo || 1000, diamonds: _u.diamonds || 0,
       wins: _u.wins || 0, losses: _u.losses || 0, draws: _u.draws || 0, games: _u.games || 0,
       bestStreak: _u.bestStreak || 0, tournWins: _u.tournWins || 0,
-      bio: _u.bio || '', hasAv: !!_u.avatar, premium: !!store.isPremium(_u)
+      bio: _u.bio || '', hasAv: !!_u.avatar, premium: !!store.isPremium(_u), lastSeen: _u.lastSeen || 0
     });
     return true;
   }
