@@ -115,6 +115,7 @@
     root.innerHTML =
       '<div style="display:none">♟️ ShashkaPRO</div>' +
       '<div id="rcStatus" style="margin:8px 0;color:#e3b746;min-height:22px;text-align:center"></div>' +
+      '<div id="rcDrawInfo" style="display:none;margin:0 0 8px;padding:5px 14px;border-radius:14px;background:#3a2f7a;color:#ffe08a;font-size:15px;font-weight:bold;text-align:center"></div>' +
       '<div id="rcTc" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:6px"></div>' +
       '<div id="rcTop" style="width:min(94vw,520px);padding:4px 2px;font-size:15px"></div>' +
       '<div id="rcBoard" style="width:min(94vw,520px);aspect-ratio:1;flex:none;display:grid;grid-template-columns:repeat(8,1fr);' +
@@ -140,6 +141,7 @@
     document.body.appendChild(root);
 
     var elStatus = root.querySelector("#rcStatus");
+    var elDrawInfo = root.querySelector("#rcDrawInfo");
     var elTop = root.querySelector("#rcTop");
     var elBottom = root.querySelector("#rcBottom");
     var elBoard = root.querySelector("#rcBoard");
@@ -529,7 +531,7 @@
       else if (!st.joined) t = "⏳ Xonaga kirilmoqda…";
       else if (st.finished) {
         var tm = st.reason === "timeout" ? "⏰ Vaqt tugadi · " : "";
-        if (st.winner === "draw") t = "🤝 Durang (kelishildi)";
+        if (st.winner === "draw") t = st.drawText ? "🤝 " + st.drawText : "🤝 Durang (kelishildi)";
         else if (st.color === "spectator") t = tm + "🏆 " + sideName(st.winner) + " g‘alaba qozondi";
         else t = tm + (st.winner === st.color ? "🏆 Siz g‘alaba qozondingiz!" : "😔 Siz yutqazdingiz");
       }
@@ -540,6 +542,14 @@
       else t = "⏳ Raqib yurishi kutilmoqda";
       elStatus.textContent = t;
 
+      // doska tepasida durang sanog'i (3 damka, 1 damka va boshqa holatlar)
+      if (st.drawInfo && !st.finished && st.joined) {
+        var di = st.drawInfo;
+        elDrawInfo.textContent = "🤝 Durang sanog‘i: " + di.used + "/" + di.limit +
+          (di.side ? " · " + (di.side === "white" ? "⚪" : "⚫") + " yurishlari" : " yurish");
+        elDrawInfo.style.display = "";
+      } else elDrawInfo.style.display = "none";
+
       var playing = st.color !== "spectator" && !st.finished && bothIn();
       elResign.style.display = playing ? "" : "none";
       var _tb = document.getElementById("rcAn");
@@ -549,7 +559,7 @@
         _tb.onclick = function () { window.spAnalyze({ moves: st.moves, white: nameLine("white"), black: nameLine("black"), winner: st.winner }); };
       }
       _tb.style.display = (st.finished && st.moves.length) ? "" : "none";
-      elDrawOffer.style.display = (playing && st.moves.length >= 2 && !st.drawOffer) ? "" : "none";
+      elDrawOffer.style.display = (playing && st.moves.length >= 2 && st.canDraw && !st.drawOffer) ? "" : "none";
       var canBz = playing && st.arena && st.berserk && !st.berserk[st.color] &&
         (st.color === "white" ? st.moves.length === 0 : st.moves.length <= 1);
       elBerserk.style.display = canBz ? "" : "none";
@@ -802,6 +812,7 @@
         st.tc = m.tc || "";
         st.tcs = m.tcs || [];
         st.drawOffer = m.drawOffer || null;
+        st.drawInfo = m.drawInfo || null; st.drawText = m.drawText || null; st.canDraw = !!m.canDraw;
         st.arena = !!m.arena;
         st.berserk = m.berserk || { white: false, black: false };
         if (m.chat) { st.chat = m.chat; rebuildChat(); }
@@ -811,6 +822,8 @@
         botKick();
       } else if (m.type === "roomMove" && m.roomId === roomId) {
         st.moves.push(m.move);
+        if (m.drawInfo !== undefined) st.drawInfo = m.drawInfo;
+        st.canDraw = !!m.canDraw;
         var _own = m.color === st.color && st.optN > 0; if (_own) st.optN--;
         var _pp = st.board[m.move.from.r] && st.board[m.move.from.r][m.move.from.c];
         if (!_own) st.board = applyStep(st.board, m.move);
@@ -847,6 +860,7 @@
         autoZalStart();
         st.finished = true;
         st.drawOffer = null;
+        st.drawInfo = null; st.drawText = m.text || null;
         st.winner = m.winner;
         st.reason = m.reason || null;
         setClock(m.clock, false);

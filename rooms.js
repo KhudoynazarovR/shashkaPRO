@@ -1,6 +1,7 @@
 // rooms.js — guruh o'yinlari uchun xonalar (Mini App orqali).
 // Birinchi kirgan = oq (white), ikkinchi = qora (black), qolganlar = tomoshabin.
 const crypto = require("crypto");
+const DRAW = require("./draw-rules"); // IDF durang qoidalari (8.2.3 - 8.2.25)
 
 const ROOM_RE = /^[A-Za-z0-9_-]{3,64}$/;
 const MAX_MOVES = 1000;
@@ -112,6 +113,9 @@ function createRooms({ send, clients, onFinish }) {
       opening: room.opening,
       berserk: room.berserk,
       drawOffer: room.drawOffer,
+      drawInfo: (room.dr && room.dr.st && room.dr.st.info) || null,
+      drawText: room.drawText || null,
+      canDraw: DRAW.canOfferDraw(room.dr && room.dr.st),
       chat: room.chat, gamesTotal: room.gamesTotal || 1, played: room.played || 0, seriesScore: (room.gamesTotal > 1 ? { white: (room.white && room.pts && room.pts[room.white.uid]) || 0, black: (room.black && room.pts && room.pts[room.black.uid]) || 0 } : null), seriesDone: (room.gamesTotal > 1 && (room.played || 0) >= room.gamesTotal), nextIn: !!room.nextTimer, rematch: room.rematch || null, casual: !!room.casual
     };
   }
@@ -145,6 +149,7 @@ function createRooms({ send, clients, onFinish }) {
     room.clock = { white: room.timeMs, black: room.timeMs };
     room.berserk = { white: false, black: false };
     room.drawOffer = null; room.offerPly = { white: -1, black: -1 };
+    room.dr = null; room.drawText = null; // yangi o'yin: durang sanog'i noldan
     room.turnStartedAt = 0; room.rematch = null; room.lastActive = Date.now();
     room.turn = room.opening && room.opening.side === "b" ? "black" : "white";
     room.first = room.turn;
@@ -209,7 +214,7 @@ function createRooms({ send, clients, onFinish }) {
         st.save();
       }
     } catch (e) { console.log('Arxiv xatosi:', e.message); }
-    broadcast(room, { type: "roomFinished", roomId: room.id, winner, reason: room.reason, clock: room.clock }); try { afterFinish(room, winner); } catch (e) { console.error("[afterFinish]", e); }
+    broadcast(room, { type: "roomFinished", roomId: room.id, winner, reason: room.reason, clock: room.clock, text: room.drawText || undefined }); try { afterFinish(room, winner); } catch (e) { console.error("[afterFinish]", e); }
     if (typeof onFinish === "function") {
       try { onFinish(room); } catch (e) { console.error("[onFinish]", e); }
     }
@@ -295,6 +300,57 @@ function createRooms({ send, clients, onFinish }) {
     send(c.ws, { type: "error", message });
   }
 
+  // ---- Durang qoidalari: server doskani yuritib boradi ----
+  // Hamma o'yin turi (do'stona, reytingli, turnir, arena, bot) shu yerdan o'tadi.
+  function drawStartBoard(room) {
+    const b = Array.from({ length: 8 }, () => Array(8).fill(null));
+    const o = room.opening && room.opening.board;
+    if (o) {
+      let k = 0;
+      for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+        if ((r + c) % 2 !== 1) continue;
+        const ch = o.charAt(k++);
+        b[r][c] = (ch === "w" || ch === "b" || ch === "W" || ch === "B") ? ch : null;
+      }
+      return b;
+    }
+    for (let r = 0; r < 3; r++) for (let c = 0; c < 8; c++) if ((r + c) % 2 === 1) b[r][c] = "b";
+    for (let r = 5; r < 8; r++) for (let c = 0; c < 8; c++) if ((r + c) % 2 === 1) b[r][c] = "w";
+    return b;
+  }
+
+  // Har bir qadam (zanjirli urishning har bir bosqichi ham) shu yerga keladi.
+  // To'liq yurish tugagandagina qoidalar tekshiriladi va natija qaytariladi.
+  function drawTrack(room, col, m) {
+    try {
+      const mv = m.move;
+      if (!mv || !mv.from || !mv.to) return null;
+      let dr = room.dr;
+      if (!dr) {
+        if (room.moves.length > 1) return null; // kuzatuv boshlanmagan (o'yin o'rtasida server yangilangan)
+        const b0 = drawStartBoard(room);
+        dr = room.dr = { b: b0, pre: null, from: null, cap: false, st: DRAW.createDrawState(b0, room.first || "white") };
+      }
+      if (!dr.pre) { dr.pre = dr.b; dr.from = [mv.from.r, mv.from.c]; dr.cap = false; }
+      const nb = dr.b.map(r => r.slice());
+      let p = nb[mv.from.r][mv.from.c];
+      nb[mv.from.r][mv.from.c] = null;
+      for (const x of mv.captures || []) nb[x.r][x.c] = null;
+      if (p === "w" && mv.to.r === 0) p = "W";
+      if (p === "b" && mv.to.r === 7) p = "B";
+      nb[mv.to.r][mv.to.c] = p;
+      dr.b = nb;
+      if ((mv.captures || []).length) dr.cap = true;
+      if (m.keepTurn) return null; // zanjir davom etyapti
+      const res = DRAW.updateDraw(dr.st, dr.pre, { from: dr.from, to: [mv.to.r, mv.to.c], captures: dr.cap ? [1] : [] }, col, dr.b);
+      dr.pre = null;
+      return res;
+    } catch (e) {
+      console.error("[draw]", e && e.message);
+      return null;
+    }
+  }
+
   // yurishni qo'llash (odam yoki bot nomidan)
   function applyMove(c, room, roomId, col, m) {
       if (!col) return err(c, "Siz tomoshabinsiz"), true;
@@ -323,10 +379,17 @@ function createRooms({ send, clients, onFinish }) {
         room.plies++;
       }
       room.turnStartedAt = now;
+      const dres = drawTrack(room, col, m);
       broadcast(room, {
         type: "roomMove", roomId, move: m.move, turn: room.turn, color: col,
-        clock: currentClock(room), clockRunning: clockRunning(room)
+        clock: currentClock(room), clockRunning: clockRunning(room),
+        drawInfo: dres ? (dres.info || null) : undefined,
+        canDraw: DRAW.canOfferDraw(room.dr && room.dr.st)
       });
+      if (dres && dres.draw) {
+        room.drawText = dres.reason;
+        finish(room, "draw", "rule");
+      }
       return true;
   }
 
@@ -519,6 +582,7 @@ function createRooms({ send, clients, onFinish }) {
       if (!col) return err(c, "Siz tomoshabinsiz"), true;
       if (room.finished || !room.white || !room.black) return true;
       if (room.moves.length < 2) return err(c, "Avval kamida bittadan yurish qiling"), true;
+      if (!DRAW.canOfferDraw(room.dr && room.dr.st)) return err(c, "Durang taklif qilish uchun har tomondan kamida 20 yurish bo‘lishi kerak (qoida 9.2)"), true;
       if (room.drawOffer) return true;
       if (room.offerPly[col] >= room.plies) return err(c, "Durang taklifini keyingi yurishdan so‘ng qayta yuboring"), true;
       room.drawOffer = col;
@@ -528,7 +592,11 @@ function createRooms({ send, clients, onFinish }) {
         setTimeout(() => {
           if (room.drawOffer === col && !room.finished) {
             room.drawOffer = null;
-            broadcast(room, { type: "roomDraw", roomId, offer: null, declined: true });
+            const bc = botColorOf(room);
+            let ok = false;
+            try { ok = !!(bc && room.dr && DRAW.botAcceptsDraw(room.dr.b, bc, room.dr.st)); } catch (e) { console.error("[botDraw]", e && e.message); }
+            if (ok) finish(room, "draw", "agreed");
+            else broadcast(room, { type: "roomDraw", roomId, offer: null, declined: true });
           }
         }, 1500);
       }
