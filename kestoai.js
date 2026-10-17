@@ -58,7 +58,7 @@ function encode(board, side, secs) {
 }
 
 function move(j, cb) {
-  console.log("[KestoG] request", j && j.time);
+  if (process.env.KDEBUG) console.log("[KestoG] request", j && j.time);
   if (!ready) return cb({ error: "notready", code: 503 });
   const b = j && j.board, side = (j && j.side > 0) ? 1 : -1;
   if (!Array.isArray(b) || b.length !== 64 || !b.every(v => Number.isInteger(v) && v >= -2 && v <= 2)) return cb({ error: "bad", code: 400 });
@@ -72,7 +72,7 @@ function move(j, cb) {
     if (err) { console.log('[KestoG] xato:', err, '| kirish:', JSON.stringify(encode(b, side, secs))); return cb({ error: err, code: 500 }); }
     const from = v[1] * 8 + (7 - v[0]), to = v[3] * 8 + (7 - v[2]);
     if (!(from >= 0 && from < 64 && to >= 0 && to < 64) || from === to) return cb({ error: "nomove", code: 500 });
-    console.log('[KestoG] vaqt', secs, 'sek soralgan,', Date.now() - t0, 'ms'); cb({ bk: bk ? { from: bk.from, to: bk.to } : null, from: from, to: to, jumps: v[4], ev: (v.length > 5 ? v[5] : null), ms: Date.now() - t0 });
+    if (process.env.KDEBUG) console.log('[KestoG] vaqt', secs, 'sek soralgan,', Date.now() - t0, 'ms'); cb({ bk: bk ? { from: bk.from, to: bk.to } : null, from: from, to: to, jumps: v[4], ev: (v.length > 5 ? v[5] : null), ms: Date.now() - t0 });
   });
 }
 
@@ -100,4 +100,4 @@ function build() {
   });
 }
 build();
-module.exports = { move };
+module.exports = { move, load: () => busy };

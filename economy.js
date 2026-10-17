@@ -1,4 +1,5 @@
 require('./kestoai.js');
+require('./botarena.js');
 'use strict';
 const store = require('./store');
 const { verifyInitData } = require('./auth');
@@ -219,6 +220,17 @@ function handle(req, res, url) {
     const _rows = (_pd && _pd.d === _dk) ? Object.entries(_pd.c || {}).filter(([k, n]) => n > 0 && _us[k]).map(([k, n]) => ({ uid: k, name: _us[k].name || 'Foydalanuvchi', n })).sort((a, b) => b.n - a.n || String(a.name).localeCompare(String(b.name))) : [];
     send(res, 200, { day: _dk, top: _rows.slice(0, 3), me: _pd && _pd.d === _dk ? (_pd.c[String(_tg.id)] || 0) : 0 });
     return true;
+  }
+  if (p === '/api/arena') {
+    const _ar = require('./botarena.js');
+    const _t = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
+    const _adm = !!(_t && (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(_t.id)));
+    if (req.method === 'GET') { send(res, 200, _ar.state(_adm)); return true; }
+    if (req.method === 'POST') {
+      if (!_adm) { send(res, 403, { error: 'admin emassiz' }); return true; }
+      readBody(req, 2000, body => { let j = {}; try { j = JSON.parse(body); } catch (e) {} _ar.control(j); send(res, 200, { ok: true, enabled: _ar.state(true).enabled }); });
+      return true;
+    }
   }
   if (p === '/api/ai/move' && req.method === 'POST') {
     console.log('[KestoG] http, initData uzunligi:', (req.headers['x-init-data'] || '').length);
