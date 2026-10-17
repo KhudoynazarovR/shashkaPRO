@@ -406,7 +406,7 @@
           if (!st || !st.joined || st.finished || st.color === "spectator" || st.pending) return;
           if (st.vsBot && !st.botStarted) return;
           if (!bothIn() || st.turn !== st.color) return;
-          var now = Date.now(); if (now - rcmLast < 600) return;
+          var now = Date.now(); if (now - rcmLast < (st.forced ? 1200 : 600)) return;
           var chain = !!st.forced;
           var steps = chain ? captureSteps(st.board, st.forced.r, st.forced.c) : allMoves(st.board, codeOf(st.color));
           if (!steps || steps.length !== 1) return;
