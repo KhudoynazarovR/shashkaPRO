@@ -1612,3 +1612,5 @@ document.head.appendChild(_as); }
     } catch (e) { fallback(); }
   };
 })();
+
+;(function(){var s=document.createElement("script");s.src="/arenaview.js";document.head.appendChild(s)})();
