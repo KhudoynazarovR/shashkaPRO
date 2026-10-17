@@ -18,6 +18,8 @@ function payWin(room, whiteUid, blackUid, tid) {
 
 const TCS = ['1+1', '2+2', '3+2', '5+3', '7+5'];
 const DEFAULT_TC = '5+3';
+const BOT_UID = 'bot', BOT_NAME = '🤖 ShashkaBot', BOT_CLIENT = 'bot_ai';
+const BOT_TCS = ['1+1', '2+2', '3+2', '5+3'];
 const NOSHOW_MS = Number(process.env.LOBBY_NOSHOW_MS || 120000);   // tur boshlangach kelmaganlar uchun kutish
 const NEXT_ROUND_MS = Number(process.env.LOBBY_NEXT_MS || 20000);  // turlar orasidagi tanaffus
 const CHALLENGE_TTL = 60000;
@@ -89,7 +91,7 @@ function createLobby({ send, clients, roomsApi }) {
     const seen = new Map();
     for (const c of lbClients()) {
       const p = seen.get(c.lb.uid);
-      if (!p) { let su = null; try { su = require('./store').users()[String(c.lb.uid)]; } catch (e) {} seen.set(c.lb.uid, { uid: c.lb.uid, name: c.lb.name, busy: !!c.lb.inRoom, elo: (su && su.elo) || 1000, gems: (su && su.diamonds) || 0, wins: (su && su.wins) || 0, hasAv: !!(su && su.avatar), prem: !!(su && require('./store').isPremium(su)) }); }
+      if (!p) { let su = null; try { su = require('./store').users()[String(c.lb.uid)]; } catch (e) {} seen.set(c.lb.uid, { uid: c.lb.uid, name: c.lb.name, busy: !!c.lb.inRoom, elo: (su && su.elo) || 1000, gems: (su && su.diamonds) || 0, wins: (su && su.wins) || 0, hasAv: !!(su && su.avatar), bot: !!c.isBot, prem: !!(su && require('./store').isPremium(su)) }); }
       else p.busy = p.busy && !!c.lb.inRoom;
     }
     return [...seen.values()];
@@ -194,7 +196,7 @@ function createLobby({ send, clients, roomsApi }) {
     if (pushTimer) return;
     pushTimer = setTimeout(() => {
       pushTimer = null;
-      for (const c of lbClients()) send(c.ws, stateFor(c));
+      for (const c of lbClients()) if (!c.isBot) send(c.ws, stateFor(c));
     }, 200);
   }
 
@@ -213,6 +215,19 @@ function createLobby({ send, clients, roomsApi }) {
   function seriesScore(s) {
     const [A, B] = s.p;
     return A.name + ' ' + fmtPts(s.pts[A.uid]) + ' – ' + fmtPts(s.pts[B.uid]) + ' ' + B.name;
+  }
+
+  // 🤖 Bot bilan o'yin: chaqiruv darhol qabul qilinadi, xona ochiladi, vaqt/rang/pozitsiya xonada tanlanadi
+  function startBotGame(human, o) {
+    const roomId = 'B' + hex(5);
+    const tc = o && BOT_TCS.includes(o.tc) ? o.tc : DEFAULT_TC;
+    const opening = o && o.pos === 'idf' ? pickOpening() : null;
+    roomsApi.create(roomId, {
+      tc, vsBot: true, opening,
+      white: { uid: human.uid, name: human.name },
+      black: { uid: BOT_UID, name: BOT_NAME, clientId: BOT_CLIENT }
+    });
+    sendUid(human.uid, { type: 'lbGo', roomId, reason: 'challenge', color: 'white', opponent: BOT_NAME, tc, series: null });
   }
 
   // Seriya: 1 o'yin, yoki match = bir pozitsiya, ranglar almashgan 2 o'yin
@@ -825,6 +840,12 @@ function createLobby({ send, clients, roomsApi }) {
         if ([...challenges.values()].some(x => x.fromUid === me.uid && x.toUid === to.lb.uid)) return err(c, 'Chaqiruv allaqachon yuborilgan'), true;
         if (challenges.size > 500) return err(c, 'Hozir band, keyinroq urinib ko‘ring'), true;
         const ch = { id: 'c' + hex(4), fromUid: me.uid, fromName: me.name, toUid: to.lb.uid, tc: TCS.includes(m.tc) ? m.tc : DEFAULT_TC, ...cleanOpts(m), at: Date.now() };
+        if (ch.toUid === BOT_UID) {   // bot taklifni darhol qabul qiladi
+          queue.delete(me.uid);
+          startBotGame({ uid: me.uid, name: me.name }, ch);
+          push();
+          break;
+        }
         challenges.set(ch.id, ch);
         sendUid(ch.toUid, { type: 'lbChallengeIn', id: ch.id, fromName: ch.fromName, tc: ch.tc + describeOpts(ch) });
         push();
@@ -1162,6 +1183,10 @@ function createLobby({ send, clients, roomsApi }) {
     }
     if (ch) push();
   }, 10000).unref();
+
+  // 🤖 ShashkaBot: lobbida doim onlayn turadi (soxta ulanish, unga hech narsa yuborilmaydi)
+  const botWs = { readyState: 1, isAlive: true, send() {}, ping() {}, pong() {}, terminate() {}, close() {}, on() {} };
+  clients.set(BOT_CLIENT, { id: BOT_CLIENT, name: BOT_NAME, elo: 0, ws: botWs, isBot: true, hidden: true, lb: { uid: BOT_UID, name: BOT_NAME, tg: false, inRoom: false } });
 
   return { handle, onClose, onRoomFinished, tournaments, arenaTick };
 }

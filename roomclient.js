@@ -64,6 +64,7 @@
       spectators: 0, finished: false, winner: null, reason: null,
       clock: { white: 0, black: 0 }, clockRunning: false, clockAt: 0, timeMs: 0, incMs: 0, tc: "", tcs: [],
       arena: false, berserk: { white: false, black: false }, drawOffer: null, chat: [], unread: 0, chatOpen: false,
+      vsBot: false, botStarted: false, botColor: null, botNote: "",
       selected: null, forced: null, pending: false, connected: false, joined: false
     };
     var ws = null, hb = null, gid = guestId();
@@ -288,7 +289,7 @@
         line("🏁 Seriya " + (st.seriesDone ? "tugadi" : no + "/" + st.gamesTotal) + " · ⚪ " + sc.white + " – " + sc.black + " ⚫");
         if (st.finished && !st.seriesDone && st.nextIn) line("Keyingi o‘yin 5 soniyadan so‘ng, ranglar almashadi");
       }
-      if (!spec && st.casual && st.finished && st.white && st.black && (!ser || st.seriesDone)) {
+      if (!spec && (st.casual || st.vsBot) && st.finished && st.white && st.black && (!ser || st.seriesDone)) {
         if (st.rematch === st.color) {
           line("⏳ Raqib javobi kutilmoqda…");
           btn("Bekor qilish", function () { send({ type: "roomRematchNo", roomId: roomId }); });
@@ -306,6 +307,7 @@
 
     function renderTc() { try { renderExtra(); } catch (e) { console.error(e); }
       elTc.innerHTML = "";
+      if (st.vsBot) { renderBotSetup(); return; }
       var canPick = st.color === "white" && st.moves.length === 0 && !st.finished;
       if (!canPick) { elTc.style.display = "none"; return; }
       elTc.style.display = "flex";
@@ -399,7 +401,7 @@
       var _inf = color === "white" ? st.wInfo : st.bInfo, _nm = (color === "white" ? st.white : st.black) || "?";
       l.style.cssText = "display:flex;align-items:center;gap:7px;min-width:0";
       function _letter() {
-        var d = document.createElement("span"); d.textContent = String(_nm).charAt(0).toUpperCase();
+        var d = document.createElement("span"); d.textContent = (Array.from(String(_nm))[0] || "?").toUpperCase();
         d.style.cssText = "width:30px;height:30px;border-radius:50%;background:#3b3f8f;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:bold;flex:none";
         return d;
       }
@@ -531,6 +533,7 @@
         else if (st.color === "spectator") t = tm + "🏆 " + sideName(st.winner) + " g‘alaba qozondi";
         else t = tm + (st.winner === st.color ? "🏆 Siz g‘alaba qozondingiz!" : "😔 Siz yutqazdingiz");
       }
+      else if (st.vsBot && !st.botStarted && st.color !== "spectator") t = "⚙️ Vaqt, rang va pozitsiyani tanlang, so‘ng ‘Boshlash’ ni bosing";
       else if (!bothIn()) t = "⏳ Raqib kutilmoqda…";
       else if (st.color === "spectator") t = "👁 Tomoshabin · navbat: " + sideName(st.turn);
       else if (st.turn === st.color) t = st.forced ? "🔴 Yana urish majburiy!" : "✅ Sizning navbatingiz";
@@ -567,6 +570,7 @@
           : "");
       elInfo.style.whiteSpace = "pre-line";
       if (st.opening) elInfo.textContent = "📖 IDF " + st.opening.id + (elInfo.textContent ? "\n" + elInfo.textContent : "");
+      if (st.vsBot && st.botNote) elInfo.textContent += (elInfo.textContent ? "\n" : "") + st.botNote;
     }
 
     // ---------- bosish ----------
@@ -577,7 +581,7 @@
     });
 
     function onCell(r, c) {
-      if (!st.joined || st.finished || st.pending) return;
+      if (!st.joined || st.finished || st.pending || (st.vsBot && !st.botStarted)) return;
       if (st.color === "spectator" || !bothIn()) return;
       if (st.turn !== st.color) return;
       var me = myCode(), p = st.board[r][c], mv;
@@ -613,6 +617,132 @@
       try { if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred("light"); } catch (e) {}
     }
 
+    // ---------- 🤖 ShashkaBot: yurishni shu telefon hisoblaydi (AI so'rovi), server faqat uzatadi ----------
+    var botBusy = false;
+
+    function renderBotSetup() {
+      if (st.color === "spectator" || st.botStarted || st.finished) { elTc.style.display = "none"; return; }
+      elTc.style.display = "flex";
+      elTc.style.flexWrap = "wrap";
+      function lab(t) {
+        var d = document.createElement("div");
+        d.style.cssText = "flex-basis:100%;text-align:center;font-size:13px;opacity:.75;margin-top:4px";
+        d.textContent = t; elTc.appendChild(d);
+      }
+      function btn(t, on, fn) {
+        var b = document.createElement("button");
+        b.textContent = t;
+        b.style.cssText = on ? "background:#2b4a1f;color:#fff;font-weight:bold" : "";
+        b.onclick = fn; elTc.appendChild(b);
+      }
+      lab("⏱ Vaqt (daqiqa + soniya)");
+      (st.tcs || []).forEach(function (tc) {
+        btn(tc, tc === st.tc, function () { send({ type: "roomSetTime", roomId: roomId, tc: tc }); });
+      });
+      lab("🎨 Dona rangi");
+      [["white", "⚪ Oq"], ["black", "⚫ Qora"], ["random", "🎲 Tasodifiy"]].forEach(function (c) {
+        btn(c[1], c[0] === st.color, function () { send({ type: "roomSetColor", roomId: roomId, color: c[0] }); });
+      });
+      lab("📖 Boshlang‘ich holat");
+      [["std", "📋 Standart"], ["idf", "🎲 IDF 780"]].forEach(function (pp) {
+        btn(pp[1], (pp[0] === "idf") === !!st.opening, function () { send({ type: "roomSetPos", roomId: roomId, pos: pp[0] }); });
+      });
+      var go = document.createElement("button");
+      go.textContent = "▶️ Boshlash";
+      go.style.cssText = "flex-basis:100%;margin-top:10px;padding:12px 28px;font-size:18px;font-weight:bold;background:#2e7d32;color:#fff;border-radius:14px";
+      go.onclick = function () { send({ type: "roomBotStart", roomId: roomId }); };
+      elTc.appendChild(go);
+    }
+
+    // doska -> AI uchun 64 katakli massiv (oq musbat: 1 dona, 2 dama; qora manfiy)
+    function flatBoard(b) {
+      var a = [];
+      for (var r = 0; r < 8; r++) for (var c = 0; c < 8; c++) {
+        var p = b[r][c];
+        a.push(p === 1 ? 1 : p === 3 ? 2 : p === 2 ? -1 : p === 4 ? -2 : 0);
+      }
+      return a;
+    }
+
+    // AI javobi (from/to katak raqami) -> mavjud qonuniy yurish
+    function pickLegal(legal, j, rot) {
+      var f = rot ? 63 - j.from : j.from, t = rot ? 63 - j.to : j.to;
+      var hit = [];
+      for (var i = 0; i < legal.length; i++) {
+        var m = legal[i];
+        if (m.from.r === (f >> 3) && m.from.c === (f & 7) && m.to.r === (t >> 3) && m.to.c === (t & 7)) hit.push(m);
+      }
+      if (!hit.length) return null;
+      for (var k = 0; k < hit.length; k++) if (hit[k].captures.length === j.jumps) return hit[k];
+      return hit[0];
+    }
+
+    // ketma-ket urish: har bir qadamni o'yin qoidalari (captureSteps/applyStep) bo'yicha tiklaymiz
+    function chain(b, pos, to, need, acc) {
+      var opts = captureSteps(b, pos.r, pos.c);
+      if (!opts.length) return (acc.length === need && pos.r === to.r && pos.c === to.c) ? acc : null;
+      for (var i = 0; i < opts.length; i++) {
+        var res = chain(applyStep(b, opts[i]), opts[i].to, to, need, acc.concat([opts[i]]));
+        if (res) return res;
+      }
+      return null;
+    }
+    function stepsOf(mv) {
+      if (!mv.captures.length) return [{ from: mv.from, to: mv.to, captures: [] }];
+      return chain(st.board, mv.from, mv.to, mv.captures.length, []);
+    }
+
+    function botThink(cb) {
+      var side = st.botColor, legal = allMoves(st.board, codeOf(side));
+      if (!legal.length) return cb(null);
+      var t0 = Date.now(), done = false;
+      var secs = Math.max(0.1, Math.min(1.2, remaining(side) / 1000 / 40));
+      function finishWith(mv, note) {
+        if (done) return; done = true;
+        var steps = mv ? stepsOf(mv) : null;
+        if (!steps) {   // zaxira: tasodifiy qonuniy yurish
+          note = "🤖 zaxira yurish (AI javobi mos kelmadi)";
+          var pool = legal.slice().sort(function () { return Math.random() - 0.5; });
+          for (var i = 0; i < pool.length && !steps; i++) steps = stepsOf(pool[i]);
+        }
+        st.botNote = note || "";
+        setTimeout(function () { cb(steps); }, Math.max(0, 450 - (Date.now() - t0)));
+      }
+      var ctl = window.AbortController ? new AbortController() : null;
+      var to = setTimeout(function () { try { if (ctl) ctl.abort(); } catch (e) {} finishWith(null, "🤖 zaxira yurish (AI kechikdi)"); }, (secs + 6) * 1000);
+      try {
+        fetch("/api/ai/move", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-init-data": (tg && tg.initData) || "" },
+          body: JSON.stringify({ board: flatBoard(st.board), side: side === "white" ? 1 : -1, time: secs }),
+          signal: ctl ? ctl.signal : undefined
+        }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+          clearTimeout(to);
+          var mv = null;
+          if (j && typeof j.from === "number" && typeof j.to === "number") mv = pickLegal(legal, j, false) || pickLegal(legal, j, true);
+          finishWith(mv, mv ? "🤖 KestoG" + (j.ms ? " · " + j.ms + " ms" : "") : "🤖 zaxira yurish (AI javobi mos kelmadi)");
+        }).catch(function () { clearTimeout(to); finishWith(null, "🤖 zaxira yurish (AI ishlamadi)"); });
+      } catch (e) { clearTimeout(to); finishWith(null, "🤖 zaxira yurish (AI ishlamadi)"); }
+    }
+
+    function botKick() {
+      if (botBusy) return;
+      if (!st.vsBot || !st.botStarted || !st.joined || st.finished || st.color === "spectator") return;
+      if (!st.botColor || st.turn !== st.botColor || !bothIn()) return;
+      botBusy = true;
+      var n0 = st.moves.length;
+      botThink(function (steps) {
+        if (!steps || !steps.length || st.finished || st.moves.length !== n0 || st.turn !== st.botColor) { botBusy = false; return; }
+        var i = 0;
+        (function next() {
+          if (st.finished) { botBusy = false; return; }
+          var s = steps[i++], more = i < steps.length;
+          send({ type: "roomBotMove", roomId: roomId, move: s, keepTurn: more });
+          if (more) setTimeout(next, 380); else { botBusy = false; try { render(); } catch (e) {} }
+        })();
+      });
+    }
+
     // ---------- server ----------
     var _azT = null, _azBox = null;
     function autoZalStop() {
@@ -622,7 +752,7 @@
     }
     function autoZalStart() {
       autoZalStop();
-      if (st.gamesTotal > 1) return;
+      if (st.vsBot || st.gamesTotal > 1) return;   // bot bilan o'yinda zalga avtomatik qaytmaymiz (qayta o'ynash bor)
       if (typeof elZal === "undefined" || !elZal || !elZal.onclick) return;
       var n = 10;
       _azBox = document.createElement("div");
@@ -651,7 +781,7 @@
         st.spectators = m.spectators || 0;
         st.specNames = m.spectatorNames || [];
         st.gamesTotal = m.gamesTotal || 1; st.played = m.played || 0; st.seriesScore = m.seriesScore || null;
-        st.seriesDone = !!m.seriesDone; st.nextIn = !!m.nextIn; st.rematch = m.rematch || null; st.casual = !!m.casual;
+        st.seriesDone = !!m.seriesDone; st.nextIn = !!m.nextIn; st.rematch = m.rematch || null; st.casual = !!m.casual; st.vsBot = !!m.vsBot; st.botStarted = !!m.botStarted; st.botColor = m.botColor || null;
         var openNew = (m.opening ? m.opening.id : null) !== (st.opening ? st.opening.id : null);
         st.opening = m.opening || null;
         var same = !openNew && st.moves.length === (m.moves || []).length && st.turn === m.turn;
@@ -671,6 +801,7 @@
         setClock(m.clock, m.clockRunning);
         if (!same) rebuild();   // yurishlar o'zgarmagan bo'lsa, tanlov saqlanadi
         render();
+        botKick();
       } else if (m.type === "roomMove" && m.roomId === roomId) {
         st.moves.push(m.move);
         var _own = m.color === st.color && st.optN > 0; if (_own) st.optN--;
@@ -689,6 +820,7 @@
             send({ type: "roomFinish", roomId: roomId, winner: m.color });
           }
         }
+        botKick();
       } else if (m.type === "roomDraw" && m.roomId === roomId) {
         st.drawOffer = m.offer || null;
         if (m.declined) elInfo.textContent = "❌ Durang taklifi rad etildi";

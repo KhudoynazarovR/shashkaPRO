@@ -10,6 +10,9 @@ const TCS = { "1+1": [60, 1], "2+2": [120, 2], "3+2": [180, 2], "5+3": [300, 3],
 const DEFAULT_TC = "5+3";
 const CHAT_KEEP = 50;
 const CHAT_MAX = 200;
+// 🤖 ShashkaBot: serverda faqat "o'rindiq", yurishlarni o'yinchining telefoni hisoblaydi (roomBotMove)
+const BOT_UID = "bot";
+const BOT_TCS = ["1+1", "2+2", "3+2", "5+3"];
 
 // Telegram Mini App initData imzosini tekshirish (BOT_TOKEN Render'da Environment'ga yoziladi)
 function verifyInitData(initData) {
@@ -45,6 +48,9 @@ function createRooms({ send, clients, onFinish }) {
   const results = []; // tugagan o'yinlar natijasi (bot olib turadi)
 
   const other = col => (col === "white" ? "black" : "white");
+  const botColorOf = room => (room.vsBot ? (room.white && room.white.uid === BOT_UID ? "white" : (room.black && room.black.uid === BOT_UID ? "black" : null)) : null);
+  // vaqt/pozitsiya/rangni kim tanlaydi: oddiy xonada oq, bot xonasida odam (qaysi rangda bo'lmasin)
+  const isOwner = (room, col) => !!col && (room.vsBot ? col !== botColorOf(room) : col === "white");
 
   function colorOf(room, c) {
     if (room.white && room.white.clientId === c.id) return "white";
@@ -72,6 +78,7 @@ function createRooms({ send, clients, onFinish }) {
   function _pi(seat) {
     try {
       if (!seat || !seat.uid) return null;
+      if (seat.uid === BOT_UID) return { uid: BOT_UID, elo: 0, av: false, bot: true };
       var u = require("./store.js").users()[String(seat.uid)] || {};
       return { uid: String(seat.uid), elo: u.elo || 1000, av: !!u.avatar };
     } catch (e) { return null; }
@@ -98,7 +105,8 @@ function createRooms({ send, clients, onFinish }) {
       timeMs: room.timeMs,
       incMs: room.incMs,
       tc: room.tc,
-      tcs: Object.keys(TCS),
+      tcs: room.vsBot ? BOT_TCS : Object.keys(TCS),
+      vsBot: !!room.vsBot, botStarted: !!room.botStarted, botColor: botColorOf(room),
       arena: !!room.arena,
       opening: room.opening,
       berserk: room.berserk,
@@ -172,7 +180,7 @@ function createRooms({ send, clients, onFinish }) {
     room.drawOffer = null;
     room.winner = winner;
     room.reason = reason || null;
-    results.push({
+    if (!room.vsBot) results.push({
       roomId: room.id,
       winner,
       reason: room.reason,
@@ -257,6 +265,8 @@ function createRooms({ send, clients, onFinish }) {
     room = newRoom(roomId, opts && opts.tc);
     room.arena = !!(opts && opts.arena);
     room.locked = !!(opts && opts.locked);
+    room.vsBot = !!(opts && opts.vsBot);
+    room.botStarted = false;
     if (opts && opts.bonus && opts.bonus.ms > 0) {
       const bc = opts.bonus.color === "black" ? "black" : "white";
       room.clock[bc] += Number(opts.bonus.ms);
@@ -266,8 +276,8 @@ function createRooms({ send, clients, onFinish }) {
       room.turn = room.opening.side === "b" ? "black" : "white";
       room.first = room.turn;
     }
-    if (opts && opts.white) room.white = { uid: String(opts.white.uid), name: opts.white.name, clientId: null };
-    if (opts && opts.black) room.black = { uid: String(opts.black.uid), name: opts.black.name, clientId: null };
+    if (opts && opts.white) room.white = { uid: String(opts.white.uid), name: opts.white.name, clientId: opts.white.clientId || null };
+    if (opts && opts.black) room.black = { uid: String(opts.black.uid), name: opts.black.name, clientId: opts.black.clientId || null };
     rooms.set(roomId, room);
     return room;
   }
@@ -281,6 +291,41 @@ function createRooms({ send, clients, onFinish }) {
 
   function err(c, message) {
     send(c.ws, { type: "error", message });
+  }
+
+  // yurishni qo'llash (odam yoki bot nomidan)
+  function applyMove(c, room, roomId, col, m) {
+      if (!col) return err(c, "Siz tomoshabinsiz"), true;
+      if (room.finished) return err(c, "O‘yin tugagan"), true;
+      if (!room.white || !room.black) return err(c, "Raqib hali qo‘shilmagan"), true;
+      if (col !== room.turn) return err(c, "Hozir navbat sizniki emas"), true;
+      if (room.moves.length >= MAX_MOVES) return err(c, "Yurishlar limiti"), true;
+      const now = Date.now();
+      const wasRunning = clockRunning(room);
+      if (wasRunning) {
+        room.clock[col] -= now - room.turnStartedAt;
+        if (room.clock[col] <= 0) {
+          room.clock[col] = 0;
+          finish(room, other(col), "timeout");
+          return true;
+        }
+      }
+      if (wasRunning && !m.keepTurn && !room.berserk[col]) room.clock[col] += room.incMs; // inkrement (berserkda yo'q)
+      room.moves.push(m.move);
+      if (room.drawOffer) {
+        room.drawOffer = null; // yurish bilan taklif rad etiladi
+        broadcast(room, { type: "roomDraw", roomId, offer: null });
+      }
+      if (!m.keepTurn) {
+        room.turn = other(room.turn); // ketma-ket olishda keepTurn:true yuboring
+        room.plies++;
+      }
+      room.turnStartedAt = now;
+      broadcast(room, {
+        type: "roomMove", roomId, move: m.move, turn: room.turn, color: col,
+        clock: currentClock(room), clockRunning: clockRunning(room)
+      });
+      return true;
   }
 
   function handle(c, m) {
@@ -356,36 +401,32 @@ function createRooms({ send, clients, onFinish }) {
     const col = colorOf(room, c);
 
     if (m.type === "roomMove") {
-      if (!col) return err(c, "Siz tomoshabinsiz"), true;
-      if (room.finished) return err(c, "O‘yin tugagan"), true;
-      if (!room.white || !room.black) return err(c, "Raqib hali qo‘shilmagan"), true;
-      if (col !== room.turn) return err(c, "Hozir navbat sizniki emas"), true;
-      if (room.moves.length >= MAX_MOVES) return err(c, "Yurishlar limiti"), true;
-      const now = Date.now();
-      const wasRunning = clockRunning(room);
-      if (wasRunning) {
-        room.clock[col] -= now - room.turnStartedAt;
-        if (room.clock[col] <= 0) {
-          room.clock[col] = 0;
-          finish(room, other(col), "timeout");
-          return true;
-        }
-      }
-      if (wasRunning && !m.keepTurn && !room.berserk[col]) room.clock[col] += room.incMs; // inkrement (berserkda yo'q)
-      room.moves.push(m.move);
-      if (room.drawOffer) {
-        room.drawOffer = null; // yurish bilan taklif rad etiladi
-        broadcast(room, { type: "roomDraw", roomId, offer: null });
-      }
-      if (!m.keepTurn) {
-        room.turn = other(room.turn); // ketma-ket olishda keepTurn:true yuboring
-        room.plies++;
-      }
-      room.turnStartedAt = now;
-      broadcast(room, {
-        type: "roomMove", roomId, move: m.move, turn: room.turn, color: col,
-        clock: currentClock(room), clockRunning: clockRunning(room)
-      });
+      if (room.vsBot && !room.botStarted) return err(c, "Avval ‘Boshlash’ tugmasini bosing"), true;
+      return applyMove(c, room, roomId, col, m);
+    }
+
+    if (m.type === "roomBotMove") {
+      if (!room.vsBot || !col || !room.botStarted) return true;
+      const bc = botColorOf(room);
+      if (!bc || col === bc) return true;   // faqat odam bot nomidan yubora oladi
+      return applyMove(c, room, roomId, bc, m);
+    }
+
+    if (m.type === "roomBotStart") {
+      if (!room.vsBot || room.botStarted || room.finished || !isOwner(room, col)) return true;
+      room.botStarted = true;
+      room.lastActive = Date.now();
+      pushState(room);
+      return true;
+    }
+
+    if (m.type === "roomSetColor") {
+      if (!room.vsBot) return true;
+      if (!isOwner(room, col)) return err(c, "Rangni faqat o‘yinchi tanlaydi"), true;
+      if (room.botStarted || room.moves.length > 0 || room.finished) return err(c, "O‘yin boshlangan, rangni o‘zgartirib bo‘lmaydi"), true;
+      const want = m.color === "white" || m.color === "black" ? m.color : (Math.random() < 0.5 ? "white" : "black");
+      if (want !== col) { const t = room.white; room.white = room.black; room.black = t; }
+      pushState(room);
       return true;
     }
 
@@ -412,10 +453,11 @@ function createRooms({ send, clients, onFinish }) {
 
     if (m.type === "roomSetTime") {
       if (room.arena || room.locked) return err(c, "Bu o‘yinda vaqtni o‘zgartirib bo‘lmaydi"), true;
-      if (col !== "white") return err(c, "Vaqtni faqat xona egasi (oq) tanlaydi"), true;
-      if (room.moves.length > 0 || room.finished) return err(c, "O‘yin boshlangan, vaqtni o‘zgartirib bo‘lmaydi"), true;
+      if (!isOwner(room, col)) return err(c, "Vaqtni faqat xona egasi tanlaydi"), true;
+      if (room.moves.length > 0 || room.finished || room.botStarted) return err(c, "O‘yin boshlangan, vaqtni o‘zgartirib bo‘lmaydi"), true;
       const t = TCS[m.tc];
       if (!t) return err(c, "Noma’lum vaqt rejimi"), true;
+      if (room.vsBot && !BOT_TCS.includes(m.tc)) return err(c, "Bu vaqt rejimi bot bilan o‘ynashda mavjud emas"), true;
       room.tc = m.tc;
       room.timeMs = t[0] * 1000;
       room.incMs = t[1] * 1000;
@@ -426,8 +468,8 @@ function createRooms({ send, clients, onFinish }) {
 
     if (m.type === "roomSetPos") {
       if (room.arena || room.locked) return err(c, "Bu o‘yinda pozitsiyani o‘zgartirib bo‘lmaydi"), true;
-      if (col !== "white") return err(c, "Pozitsiyani faqat xona egasi (oq) tanlaydi"), true;
-      if (room.moves.length > 0 || room.finished) return err(c, "O‘yin boshlangan, pozitsiyani o‘zgartirib bo‘lmaydi"), true;
+      if (!isOwner(room, col)) return err(c, "Pozitsiyani faqat xona egasi tanlaydi"), true;
+      if (room.moves.length > 0 || room.finished || room.botStarted) return err(c, "O‘yin boshlangan, pozitsiyani o‘zgartirib bo‘lmaydi"), true;
       if (m.pos === "idf") {
         const o = pickIdf();
         if (!o || !o.board) return err(c, "IDF pozitsiyalari topilmadi"), true;
@@ -454,9 +496,10 @@ function createRooms({ send, clients, onFinish }) {
 
     if (m.type === "roomRematch") {
       if (!col) return err(c, "Siz tomoshabinsiz"), true;
-      if (!room.casual || room.arena || room.locked || !room.finished || room.nextTimer) return true;
+      if ((!room.casual && !room.vsBot) || room.arena || room.locked || !room.finished || room.nextTimer) return true;
       if ((room.gamesTotal || 1) > 1 && (room.played || 0) < room.gamesTotal) return true;
       if (!room.white || !room.black) return err(c, "Raqib yo‘q"), true;
+      if (room.vsBot) { startNextGame(room, true, true); return true; }   // bot darhol rozi, ranglar almashadi
       if (room.rematch && room.rematch !== col) { startNextGame(room, true, true); return true; }
       room.rematch = col;
       pushState(room);
@@ -479,6 +522,14 @@ function createRooms({ send, clients, onFinish }) {
       room.drawOffer = col;
       room.offerPly[col] = room.plies;
       broadcast(room, { type: "roomDraw", roomId, offer: col });
+      if (room.vsBot) {
+        setTimeout(() => {
+          if (room.drawOffer === col && !room.finished) {
+            room.drawOffer = null;
+            broadcast(room, { type: "roomDraw", roomId, offer: null, declined: true });
+          }
+        }, 1500);
+      }
       return true;
     }
 
