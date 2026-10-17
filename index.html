@@ -756,4 +756,90 @@ function pickI780(){var L=window.IDF780;if(!L||!L.length)return null;
   if(ch==='b')v=-1;else if(ch==='B')v=-2;else if(ch==='w')v=1;else if(ch==='W')v=2;b[r*8+c]=v}
  return{b:b,s:(String(p.side).toLowerCase()==='w'?1:-1),id:p.id}}
 </script>
+<style id="rcPlayCss">
+#t-play .g.rcIcons{display:flex!important;gap:6px;margin:6px 0}
+#t-play .g.rcIcons button{flex:1;min-width:0;padding:10px 0;font-size:20px;line-height:1}
+#t-play .rcHide{display:none!important}
+#t-play .rcOff{display:none!important}
+body.rcAdmin #t-play .rcOff{display:inline-block!important;opacity:.4}
+#t-play.rcCollapsed .row{display:none}
+#rcSetBtn,#rcAdmBtn{width:100%;margin:6px 0;padding:10px}
+</style>
+<script>
+(function(){
+try{
+  var tab=document.getElementById('t-play'); if(!tab) return;
+  var g=tab.querySelector('.g'); if(!g) return;
+  var LBL={undo:['↩','Orqaga'],hint:['💡','Maslahat'],flip:['🔄','Aylantirish'],analyze:['🔍','Tahlil'],draw:['🤝','Durang'],resign:['🏳','Taslim']};
+  var ORDER=['undo','hint','flip','analyze','draw','resign'];
+  var btn={};
+  Array.prototype.forEach.call(g.querySelectorAll('button'),function(b){
+    var k=b.getAttribute('data-i');
+    if(k&&LBL[k]) btn[k]=b;
+    else if(k==='redo') b.classList.add('rcHide'); else if(k==='new'){b.removeAttribute('data-i');b.textContent='➕';b.title='Yangi';b.setAttribute('data-k','new');g.insertBefore(b,g.firstChild)}
+    else { b.id='rcSigma'; b.classList.add('rcHide'); }
+  });
+  ORDER.forEach(function(k){
+    var b=btn[k]; if(!b) return;
+    var t=(b.textContent||'').trim()||LBL[k][1];
+    b.removeAttribute('data-i'); b.textContent=LBL[k][0]; b.title=t; b.setAttribute('aria-label',t); b.setAttribute('data-k',k);
+    g.appendChild(b);
+  });
+  g.classList.add('rcIcons');
+
+  // 2 kishilik rejim olib tashlandi: doim AI
+  var ms=tab.querySelector('select[data-s="mode"]');
+  if(ms&&ms.parentNode) ms.parentNode.classList.add('rcHide');
+  try{
+    if(typeof S==='object'&&S&&S.mode!=='ai'){ S.mode='ai'; if(typeof svs==='function') svs(); }
+    if(typeof G==='object'&&G&&G.mode==='local') G.mode='ai';
+  }catch(e){}
+  if(ms&&ms.value!=='ai'){ ms.value='ai'; ms.dispatchEvent(new Event('change',{bubbles:true})); }
+
+  // Sozlamalar: yig'iluvchi blok
+  var first=tab.querySelector('.row');
+  if(first){
+    var tgl=document.createElement('button'); tgl.id='rcSetBtn'; tgl.textContent='⚙ Sozlamalar ▾';
+    first.parentNode.insertBefore(tgl,first);
+    tab.classList.add('rcCollapsed');
+    tgl.onclick=function(){ var c=tab.classList.toggle('rcCollapsed'); tgl.textContent='⚙ Sozlamalar '+(c?'▾':'▴'); };
+  }
+
+  // Admin boshqaruvi
+  var init=(window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initData)||'';
+  var isAdm=false, cfg={hide:[]};
+  try{ var sv=JSON.parse(localStorage.getItem('rc_uicfg')||'null'); if(sv&&Array.isArray(sv.hide)) cfg=sv; }catch(e){}
+  var admBtn=document.createElement('button'); admBtn.id='rcAdmBtn'; admBtn.textContent='🛠 Tugmalar (admin)'; admBtn.style.display='none';
+  g.parentNode.insertBefore(admBtn,g.nextSibling);
+  function apply(){
+    ORDER.forEach(function(k){ var b=btn[k]; if(b) b.classList.toggle('rcOff',cfg.hide.indexOf(k)>=0); });
+    document.body.classList.toggle('rcAdmin',isAdm);
+    var s=document.getElementById('rcSigma'); if(s) s.classList.toggle('rcHide',!isAdm);
+    admBtn.style.display=isAdm?'':'none';
+  }
+  apply();
+  fetch('/api/uicfg',{headers:{'x-init-data':init}}).then(function(r){return r.json();}).then(function(j){
+    cfg=(j&&j.cfg&&Array.isArray(j.cfg.hide))?j.cfg:{hide:[]}; isAdm=!!(j&&j.admin);
+    try{ localStorage.setItem('rc_uicfg',JSON.stringify(cfg)); }catch(e){}
+    apply();
+  }).catch(function(){});
+  admBtn.onclick=function(){
+    var ov=document.createElement('div');
+    ov.style.cssText='position:fixed;left:0;right:0;top:0;bottom:0;z-index:100002;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center';
+    var h='<div style="background:#1b1650;color:#fff;border-radius:16px;padding:16px;width:min(86vw,320px)"><b>🛠 Tugmalar (hamma uchun)</b>';
+    ORDER.forEach(function(k){ h+='<label style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #2e2a70"><span>'+LBL[k][0]+' '+LBL[k][1]+'</span><input type="checkbox" data-k="'+k+'"'+(cfg.hide.indexOf(k)<0?' checked':'')+'></label>'; });
+    h+='<div style="display:flex;gap:8px;margin-top:12px"><button id="rcAdmSave" style="flex:1;padding:10px">Saqlash</button><button id="rcAdmX" style="flex:1;padding:10px">Bekor</button></div></div>';
+    ov.innerHTML=h; document.body.appendChild(ov);
+    ov.querySelector('#rcAdmX').onclick=function(){ ov.remove(); };
+    ov.querySelector('#rcAdmSave').onclick=function(){
+      var hide=[]; Array.prototype.forEach.call(ov.querySelectorAll('input[data-k]'),function(i){ if(!i.checked) hide.push(i.getAttribute('data-k')); });
+      fetch('/api/uicfg',{method:'POST',headers:{'Content-Type':'application/json','x-init-data':init},body:JSON.stringify({hide:hide})})
+        .then(function(r){return r.json();})
+        .then(function(j){ if(j&&j.ok){ cfg={hide:hide}; try{ localStorage.setItem('rc_uicfg',JSON.stringify(cfg)); }catch(e){} apply(); ov.remove(); } else alert('Saqlanmadi'); })
+        .catch(function(){ alert('Server bilan aloqa yo‘q'); });
+    };
+  };
+}catch(e){ console.error('rc-playtab xato:',e); }
+})();
+</script>
 </body></html>

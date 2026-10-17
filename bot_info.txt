@@ -1,0 +1,48 @@
+rooms.js:13:// 🤖 ShashkaBot: serverda faqat "o'rindiq", yurishlarni o'yinchining telefoni hisoblaydi (roomBotMove)
+rooms.js:46:function createRooms({ send, clients, onFinish }) {
+rooms.js:177:  function finish(room, winner, reason) {
+rooms.js:261:  // Zal/turnir uchun: xonani oldindan ochib, o'yinchilarni uid bo'yicha o'rindiqqa qo'yadi
+rooms.js:290:    finish(room, winner, reason || "forfeit");
+rooms.js:311:          finish(room, other(col), "timeout");
+rooms.js:410:    if (m.type === "roomBotMove") {
+rooms.js:439:      finish(room, winner, m.type === "roomResign" ? "resign" : "finish");
+rooms.js:542:      finish(room, "draw", "agreed");
+rooms.js:596:        else if (now - room._fmSince >= 30000) { finish(room, other(room.turn), "timeout"); continue; }
+rooms.js:600:        finish(room, other(room.turn), "timeout");
+rooms.js:615:module.exports = { createRooms, verifyInitData };
+lobby.js:2:// lobby.js — onlayn zal: o'yinchilar ro'yxati, chaqiruv, tezkor o'yin, Shveytsar va Arena turnirlari.
+lobby.js:82:  const tournaments = new Map(); // tid -> t
+lobby.js:109:  function swissStats(t, p) {
+lobby.js:122:      const st = swissStats(t, p);
+lobby.js:160:      type: t.type || 'swiss', durationMin: t.durationMin || 0, startAt: t.startAt || 0, endAt: t.endAt || 0, ending: !!t.ending,
+lobby.js:195:      tournaments: [...tournaments.values()].map(pubT), promo: promoInfo(),
+lobby.js:373:  function swissPair(players) {
+lobby.js:401:    const { pairs, bye } = swissPair(active);
+lobby.js:415:      sendUid(w.uid, { type: 'lbGo', roomId, reason: 'tournament', tname: t.name, round: t.round, color: 'white', opponent: b.name, tc: t.tc });
+lobby.js:416:      sendUid(b.uid, { type: 'lbGo', roomId, reason: 'tournament', tname: t.name, round: t.round, color: 'black', opponent: w.name, tc: t.tc });
+lobby.js:467:      if (p.noshows >= 2 && !p.withdrawn) { p.withdrawn = true; toast(p.uid, '⚠️ ' + t.name + ': ketma-ket 2 marta kelmadingiz, turnirdan chiqarildingiz'); }
+lobby.js:613:    for (const t of tournaments.values()) {
+lobby.js:744:    for (const t of tournaments.values()) { const p = t.players.get(uid); if (p) p.name = name; }
+lobby.js:751:    const t0 = tournaments.get(String(m.tid || ''));
+lobby.js:755:      const before = tournaments.size;
+lobby.js:758:      if (tournaments.size === before) economy.refund(uid, FEE.CREATE_COST, 'refund_create');
+lobby.js:762:    if (t0.clubIds && t0.clubIds.length && !clubsApi.inAny(uid, t0.clubIds)) { err(c, 'Bu turnir faqat klub a‘zolari uchun'); return true; }
+lobby.js:776:      if (!tournaments.has(t0.id)) {
+lobby.js:828:          for (const t of tournaments.values()) { const p = t.players.get(me.uid); if (p) p.name = nm; }
+lobby.js:877:        if (tournaments.size >= MAX_TOURNAMENTS) return err(c, 'Turnirlar soni limitga yetdi'), true;
+lobby.js:878:        if ([...tournaments.values()].some(t => t.creatorUid === me.uid && t.status === 'reg')) return err(c, 'Sizda allaqachon ochiq turnir bor'), true;
+lobby.js:892:          at.clubIds = cl.ids; tournaments.set(at.id, at);
+lobby.js:906:        t.clubIds = cl.ids; tournaments.set(t.id, t);
+lobby.js:911:        { const tt = tournaments.get(String(m.tid)); if (tt && tt.clubIds && tt.clubIds.length && !clubsApi.inAny(me.uid, tt.clubIds)) return err(c, 'Bu turn
+lobby.js:912:        const t = tournaments.get(String(m.tid));
+lobby.js:926:          // Lichess kabi: turnir davomida qo'shilish (rejadagi turlarning yarmigacha) va pauzadan qaytish
+lobby.js:944:        const t = tournaments.get(String(m.tid));
+lobby.js:962:        const t = tournaments.get(String(m.tid));
+lobby.js:1070:        const t = tournaments.get(String(m.tid));
+lobby.js:1072:        tournaments.delete(t.id);
+lobby.js:1121:        const t = tournaments.get(id);
+lobby.js:1173:    for (const [id, t] of tournaments) {
+lobby.js:1175:        tournaments.delete(id); changed = true;
+lobby.js:1200:  return { handle, onClose, onRoomFinished, tournaments, arenaTick };
+roomclient.js:24:    if (/^lb[ts]_/.test(roomId)) return; // turnir/sians havolasi - xona emas
+roomclient.js:747:          send({ type: "roomBotMove", roomId: roomId, move: s, keepTurn: more });

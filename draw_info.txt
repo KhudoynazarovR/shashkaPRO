@@ -1,0 +1,46 @@
+russian-rules.js:10: *   'W' = white king
+russian-rules.js:12: *   'B' = black king
+russian-rules.js:181:function kingCaptures(board, r, c, piece, side, captured) {
+russian-rules.js:268:    return kingCaptures(board, r, c, piece, side, captured);
+russian-rules.js:319:        // Flying king.
+rooms.js:114:      drawOffer: room.drawOffer,
+rooms.js:147:    room.drawOffer = null; room.offerPly = { white: -1, black: -1 };
+rooms.js:181:    room.drawOffer = null;
+rooms.js:252:      drawOffer: null,
+rooms.js:253:      offerPly: { white: -1, black: -1 },
+rooms.js:317:      if (room.drawOffer) {
+rooms.js:318:        room.drawOffer = null; // yurish bilan taklif rad etiladi
+rooms.js:319:        broadcast(room, { type: "roomDraw", roomId, offer: null });
+rooms.js:438:      if (winner !== "white" && winner !== "black" && winner !== "draw") winner = other(col);
+rooms.js:522:      if (room.drawOffer) return true;
+rooms.js:523:      if (room.offerPly[col] >= room.plies) return err(c, "Durang taklifini keyingi yurishdan so‘ng qayta yuboring"), true;
+rooms.js:524:      room.drawOffer = col;
+rooms.js:525:      room.offerPly[col] = room.plies;
+rooms.js:526:      broadcast(room, { type: "roomDraw", roomId, offer: col });
+rooms.js:529:          if (room.drawOffer === col && !room.finished) {
+rooms.js:530:            room.drawOffer = null;
+rooms.js:531:            broadcast(room, { type: "roomDraw", roomId, offer: null, declined: true });
+rooms.js:540:      if (!room.drawOffer || room.drawOffer === col) return true;
+rooms.js:541:      room.drawOffer = null;
+rooms.js:542:      finish(room, "draw", "agreed");
+rooms.js:547:      if (!col || !room.drawOffer || room.drawOffer === col) return true;
+rooms.js:548:      room.drawOffer = null;
+rooms.js:549:      broadcast(room, { type: "roomDraw", roomId, offer: null, declined: true });
+server.py:15:  wins INTEGER DEFAULT 0, losses INTEGER DEFAULT 0, draws INTEGER DEFAULT 0);
+server.py:26:def is_king(p): return p in ("W", "B")
+server.py:42:        if is_king(p):
+server.py:61:    if is_king(p):
+server.py:95:        s.draw = None; s.over = False; s.disc = {}
+server.py:124:        if winner is None: u["draws"] += 1
+server.py:127:        db.execute("UPDATE users SET elo=?,wins=?,losses=?,draws=? WHERE id=?",
+server.py:128:                   (u["elo"], u["wins"], u["losses"], u["draws"], u["id"]))
+server.py:132:                f"{winner or 'draw'}:{reason}", int(g.rated), int(time.time())))
+server.py:148:    g.draw = None
+server.py:218:    row = db.execute("SELECT elo,wins,losses,draws FROM users WHERE id=?", (u["id"],)).fetchone()
+server.py:224:            "losses": row[2], "draws": row[3], "ws": None}
+server.py:242:                                "losses": user["losses"], "draws": user["draws"]})
+server.py:258:            elif t == "draw_offer":
+server.py:259:                g.draw = side; await send(g.p[other(side)], {"type": "draw_offered"})
+server.py:260:            elif t == "draw_accept" and g.draw and g.draw != side:
+server.py:261:                await end(g, None, "draw")
+server.py:269:    rows = db.execute("SELECT name,elo,wins,games FROM (SELECT name,elo,wins,wins+losses+draws AS games "
