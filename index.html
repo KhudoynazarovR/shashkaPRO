@@ -198,16 +198,17 @@ function ev6(b){let s=0;for(let i=0;i<64;i++){const p=b[i];if(!p)continue;const 
  if(Math.abs(p)===2){v=320+((c>1&&c<6&&r>1&&r<6)?8:0)}
  else{const adv=w?7-r:r;v=100+adv*7+((c>1&&c<6)?5:0)+(adv>=5?adv*2:0)+(((w&&r===7)||(!w&&r===0))?10:0)-((c===0||c===7)?3:0)}
  s+=w?v:-v}return s}
+function hk(b,s){let a=s>0?17:31,c=s>0?5:9;for(let i=0;i<64;i++){const v=b[i]+2;a=(Math.imul(a,33)+v+i)|0;c=(Math.imul(c,131)^(v*(i+1)))|0}return(a>>>0)*2097152+((c>>>0)&2097151)}
 function ab6(b,side,d,al,be,ply){
  if((++nodes6&1023)===0&&Date.now()>dl6)throw 0;
  const ms=legal(b,side);if(!ms.length)return-9000+ply;
  if(ply>70||(d<=0&&!ms[0].caps.length))return side*ev6(b);
- const key=side+b.join(''),e=TT6.get(key);let tm=-1;
+ const key=hk(b,side),e=TT6.get(key);let tm=-1;
  if(e){tm=e.m;if(e.d>=d){if(e.f===0||(e.f===1&&e.v>=be)||(e.f===2&&e.v<=al))return e.v}}
  const sc=ms.map(m=>{const k=m.path[0]*64+m.path[m.path.length-1];return[(k===tm?1e6:0)+hist6[k]+m.caps.length*100,m,k]});
  sc.sort((x,y)=>y[0]-x[0]);
  const a0=al;let best=-1e9,bk=-1;
- for(const x of sc){const v=-ab6(apply(b,x[1]),-side,d-1,-be,-al,ply+1);
+ let ix=0;for(const x of sc){ix++;let v;if(d>=3&&ix>6&&!x[1].caps.length&&ms.length>1){v=-ab6(apply(b,x[1]),-side,d-2,-be,-al,ply+1);if(v>al)v=-ab6(apply(b,x[1]),-side,d-1,-be,-al,ply+1)}else v=-ab6(apply(b,x[1]),-side,d-1,-be,-al,ply+1);
   if(v>best){best=v;bk=x[2]}if(v>al)al=v;
   if(al>=be){if(!x[1].caps.length)hist6[x[2]]+=d*d;break}}
  TT6.set(key,{d,v:best,f:best<=a0?2:best>=be?1:0,m:bk});return best}
@@ -234,7 +235,7 @@ function multi6(b,side,ms_){
  nodes=nodes6;return{res,d:bd}}
 function pv6(b,side,m){
  const out=[fmt(m)];let bb=apply(b,m),s=-side;
- for(let i=0;i<7;i++){const e=TT6.get(s+bb.join(''));if(!e||e.m<0)break;
+ for(let i=0;i<7;i++){const e=TT6.get(hk(bb,s));if(!e||e.m<0)break;
   const x=legal(bb,s).find(q=>q.path[0]*64+q.path[q.path.length-1]===e.m);if(!x)break;
   out.push(fmt(x));bb=apply(bb,x);s=-s}
  return out.join(' ')}

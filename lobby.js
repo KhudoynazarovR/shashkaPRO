@@ -23,7 +23,9 @@ const BOTS = [
   { uid: 'bot_easy', name: '🤖 Yengil', secs: 0.05, blunder: 0.35 },
   { uid: 'bot_mid', name: '🤖 O‘rta', secs: 0.2, blunder: 0.12 },
   { uid: 'bot', name: '🤖 ShashkaBot', secs: 1.2, blunder: 0 },
-  { uid: 'bot_pro', name: '🤖 Usta', secs: 3, blunder: 0 }
+  { uid: 'bot_pro', name: '🤖 Usta', secs: 3, blunder: 0 },
+  { uid: 'bot_gm', name: '🤖 Grossmeyster', secs: 6, blunder: 0 },
+  { uid: 'bot_champ', name: '🤖 Chempion', secs: 12, blunder: 0 }
 ];
 const botByUid = uid => BOTS.find(b => b.uid === uid) || null;
 const BOT_TCS = ['1+1', '2+2', '3+2', '5+3'];
