@@ -94,12 +94,13 @@ function createLobby({ send, clients, roomsApi }) {
   const sendUid = (uid, data) => connsOf(uid).forEach(c => send(c.ws, data));
 
   // ---------- holat ----------
+  function botElo(u) { try { const m = require('./store').db.botElo; return (m && m[u] && m[u].elo) || 0; } catch (e) { return 0; } }
   function playersList() {
     const seen = new Map();
     for (const c of lbClients()) {
       const p = seen.get(c.lb.uid);
-      if (!p) { let su = null; try { su = require('./store').users()[String(c.lb.uid)]; } catch (e) {} seen.set(c.lb.uid, { uid: c.lb.uid, name: c.lb.name, busy: !!c.lb.inRoom, elo: (su && su.elo) || 1000, gems: (su && su.diamonds) || 0, wins: (su && su.wins) || 0, hasAv: !!(su && su.avatar), bot: !!c.isBot, prem: !!(su && require('./store').isPremium(su)) }); }
-      else p.busy = p.busy && !!c.lb.inRoom;
+      if (!p) { let su = null; try { su = require('./store').users()[String(c.lb.uid)]; } catch (e) {} seen.set(c.lb.uid, { uid: c.lb.uid, name: c.lb.name, busy: !!c.lb.inRoom, elo: (c.isBot ? botElo(c.lb.uid) : 0) || (su && su.elo) || 1000, gems: (su && su.diamonds) || 0, wins: (su && su.wins) || 0, hasAv: !!(su && su.avatar), bot: !!c.isBot, prem: !!(su && require('./store').isPremium(su)) }); }
+      else { p.busy = p.busy && !!c.lb.inRoom; if (c.isBot) p.elo = botElo(c.lb.uid) || p.elo; }
     }
     return [...seen.values()];
   }
