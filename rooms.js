@@ -467,7 +467,7 @@ function createRooms({ send, clients, onFinish }) {
 
     if (m.type === "roomMove") {
       if (room.vsBot && !room.botStarted) return err(c, "Avval ‘Boshlash’ tugmasini bosing"), true;
-      return applyMove(c, room, roomId, col, m);
+      { const _b = room.moves.length; const _r = applyMove(c, room, roomId, col, m); if (col && room.moves.length > _b) { room.mvCount = room.mvCount || {}; room.mvCount[col] = (room.mvCount[col] || 0) + 1; } return _r; }
     }
 
     if (m.type === "roomBotMove") {
@@ -492,6 +492,14 @@ function createRooms({ send, clients, onFinish }) {
       const want = m.color === "white" || m.color === "black" ? m.color : (Math.random() < 0.5 ? "white" : "black");
       if (want !== col) { const t = room.white; room.white = room.black; room.black = t; }
       pushState(room);
+      return true;
+    }
+
+    if (m.type === "roomAbort") {
+      if (!col) return err(c, "Siz tomoshabinsiz"), true;
+      if (room.finished) return true;
+      if (room.mvCount && room.mvCount[col]) return err(c, "Birinchi yurishdan keyin chiqib bo‘lmaydi"), true;
+      finish(room, "draw", "abort");   // rc-menu-v1
       return true;
     }
 
