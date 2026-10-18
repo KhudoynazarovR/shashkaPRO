@@ -211,4 +211,18 @@
   setInterval(function () {
     document.body.classList.toggle('nvT', window.nvK === 't');
   }, 300);
+
+  // ===== nvExit: o'yin xonasida tepada chiqish tugmasi =====
+  var ex = document.createElement('button');
+  ex.id = 'nvExit'; ex.textContent = '←';
+  ex.style.cssText = 'position:fixed;left:8px;top:106px;z-index:99990;width:34px;height:30px;border:0;border-radius:10px;background:#1f2147;color:#fff;font-size:20px;line-height:1;display:none';
+  document.body.appendChild(ex);
+  ex.onclick = function () {
+    var z = $('rcZal');
+    if (z) z.click();
+  };
+  setInterval(function () {
+    var z = $('rcZal');
+    ex.style.display = (z && z.offsetParent !== null) ? 'block' : 'none';
+  }, 400);
 })();

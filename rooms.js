@@ -65,6 +65,7 @@ function createRooms({ send, clients, onFinish }) {
 
   // Soat: har ikki tomonning birinchi yurishi bepul, undan keyin navbatdagi o'yinchi vaqti ketadi.
   function clockRunning(room) {
+    if (room.vsBot) return false;   // bot bilan o'yin vaqtsiz
     return !!(room.white && room.black && !room.finished && room.plies >= 2);
   }
 
