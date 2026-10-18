@@ -24,6 +24,7 @@
         ac = new C();
         master = ac.createGain();
         master.connect(ac.destination);
+        loadMove(ac);
       }
       if (ac.state === "suspended" && ac.resume) ac.resume();
       master.gain.value = Math.max(0, Math.min(1, cfg.vol));
@@ -71,11 +72,31 @@
     tone(a, t, 170, 0.11, "sine", gain * 1.1, 70);
   }
 
+  // yumshoq taxta ovozi (/sounds/move.wav); yuklanmasa eski sintez ovoz ishlaydi
+  var moveBuf = null, moveLoading = false;
+  function loadMove(a) {
+    if (moveBuf || moveLoading) return;
+    moveLoading = true;
+    try {
+      fetch("/sounds/move.wav?v=1").then(function (r) { return r.arrayBuffer(); }).then(function (ab) {
+        a.decodeAudioData(ab, function (b) { moveBuf = b; }, function () { moveLoading = false; });
+      }).catch(function () { moveLoading = false; });
+    } catch (e) { moveLoading = false; }
+  }
+  function wood(a, t, gain, rate, fbPitch, fbGain) {
+    if (!moveBuf) { loadMove(a); knock(a, t, fbPitch, fbGain); return; }
+    var s = a.createBufferSource(), g = a.createGain();
+    s.buffer = moveBuf; s.playbackRate.value = rate || 1;
+    g.gain.value = gain;
+    s.connect(g); g.connect(master);
+    s.start(t);
+  }
+
   var SOUNDS = {
-    move: function (a, t) { knock(a, t, 520, 0.3); },
-    capture: function (a, t) { knock(a, t, 620, 0.42); knock(a, t + 0.05, 430, 0.32); },
+    move: function (a, t) { wood(a, t, 0.9, 1, 520, 0.3); },
+    capture: function (a, t) { wood(a, t, 1, 1.05, 620, 0.42); wood(a, t + 0.06, 0.7, 0.9, 430, 0.32); },
     king: function (a, t) {
-      knock(a, t, 520, 0.28);
+      wood(a, t, 0.8, 1, 520, 0.28);
       tone(a, t + 0.07, 660, 0.14, "triangle", 0.35);
       tone(a, t + 0.17, 880, 0.14, "triangle", 0.35);
       tone(a, t + 0.27, 1320, 0.28, "triangle", 0.32);
