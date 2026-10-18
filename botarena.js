@@ -114,6 +114,7 @@ async function choose(bot, board, side, moves, key) {
   return pick;
 }
 
+const DR = require('./draw-rules');
 function finish(white, black, result, hist, ply) {
   const d = D(), sw = stat(white.uid), sb = stat(black.uid);
   const s = result === WHITE ? 1 : result === BLACK ? 0 : 0.5;
@@ -137,6 +138,7 @@ async function playGame(a, b) {
   const st = pickStart();
   let board = st.board, side = st.side, ply = 0, result = null;
   const seen = {}, hist = { white: [], black: [] };
+  const dst = DR.createDrawState(board, side === WHITE ? 'white' : 'black');
   cur = { id: Date.now(), start: st.id, white: { uid: white.uid, name: white.name, elo: stat(white.uid).elo }, black: { uid: black.uid, name: black.name, elo: stat(black.uid).elo }, board: to64(board), moves: [], ply: 0, turn: side, over: false, result: null };
   while (!result) {
     if (!cur.hist) { cur.hist = [encB(cur.board)]; cur.all = []; }
@@ -151,7 +153,8 @@ async function playGame(a, b) {
     const mv = await choose(bot, board, side, moves, key);
     const el = Date.now() - t0;
     hist[side].push({ key: key, mv: mstr(mv), uid: bot.uid });
-    board = R.applyMove(board, mv);
+    const _b0 = board, _mover = side; board = R.applyMove(board, mv);
+    try { const _dr = DR.updateDraw(dst, _b0, mv, _mover === WHITE ? 'white' : 'black', board); if (_dr && _dr.draw && !result) result = 'draw'; } catch (e) { console.log('[arena] draw-rules xato:', e && e.message); }
     side = side === WHITE ? BLACK : WHITE;
     ply++;
     cur.board = to64(board); cur.moves.push(mstr(mv)); if (cur.moves.length > 14) cur.moves.shift();
@@ -163,7 +166,7 @@ async function playGame(a, b) {
       if (men > 0 || tot !== cur.tot) cur.qc = 0; else cur.qc = (cur.qc || 0) + 1;
       cur.tot = tot;
       const lim = (wk + bk === 3 && Math.min(wk, bk) === 1) ? 10 : 30;
-      if (men === 0 && cur.qc >= lim && !result) result = 'draw'; }
+      }
     if (!FAST) await sleep(watched() ? 1400 : Math.max(150, el * 2));
   }
   finish(white, black, result, hist, ply);
