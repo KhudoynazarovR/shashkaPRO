@@ -168,4 +168,25 @@
     pb.style.display = on ? 'block' : 'none';
     if (!on) po.style.display = 'none';
   }, 400);
+
+  // ===== nvFlat: turnir/lobbi sahifasini soddalashtirish =====
+  var cf = document.createElement('style');
+  cf.id = 'nvFlat';
+  cf.textContent =
+    '#lbPanel{background:#12122b!important}' +
+    '#lbPanel::before{display:none!important}' +
+    '#lbPanel .lbhb{animation:none!important;box-shadow:none!important;background:#1b1c3d!important;border:1px solid #2a2c55!important;border-radius:14px!important;padding:12px 14px!important;margin-bottom:10px}' +
+    '#lbPanel .lbhb h3{font-size:17px!important;margin:6px 0 4px!important}' +
+    '#lbPanel .lbhb p{display:none!important}' +
+    '#lbPanel .lbhb .tg{background:#2a2c55!important;color:#aab!important;font-size:10px!important}' +
+    '#lbPanel .lbhb button{background:#4f5bff!important;color:#fff!important;border-radius:10px!important;padding:8px 14px!important;font-size:14px!important;box-shadow:none!important}' +
+    '#lbPanel .lbdr{display:none!important}' +
+    '#lbPanel .tabs button{box-shadow:none!important}';
+  document.head.appendChild(cf);
+  setInterval(function () {
+    var q = document.querySelectorAll('#lbPanel div[onclick*="lbTPlus"]');
+    [].forEach.call(q, function (e) {
+      if (e.parentNode && e.parentNode.children.length === 2 && e.parentNode.style.display === 'flex') e.parentNode.style.display = 'none';
+    });
+  }, 500);
 })();
