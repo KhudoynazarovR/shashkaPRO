@@ -8,7 +8,7 @@ let IDF = null; try { IDF = require('./idf780.js'); } catch (e) {}
 
 const WHITE = R.WHITE, BLACK = R.BLACK;
 const USE_IDF = false;
-const MAXPLY = 160, ELO_K = 24, BOOT_DELAY = 60000;
+const MAXPLY = 300, ELO_K = 24, BOOT_DELAY = 60000;
 const LOCAL = { botElo: {}, botMem: {}, arenaLog: [] };
 let dirty = false, lastWatch = 0, cur = null, FAST = false;
 
@@ -75,7 +75,7 @@ function memAdd(uid, key, mv) {
 }
 function strength(bot) {
   const e = stat(bot.uid).elo;
-  return { secs: clamp(bot.secs + (e - 1000) / 1000, 0.05, 1.5), blunder: clamp(bot.blunder - (e - 1000) / 1500, 0, 0.6) };
+  return { secs: clamp(bot.secs * 0.5 + (e - 1000) / 1000, 0.05, 6), blunder: clamp(bot.blunder - (e - 1000) / 1500, 0, 0.6) };
 }
 
 async function askEngine(board, side, secs) {
