@@ -951,6 +951,27 @@
       return chain(st.board, mv.from, mv.to, mv.captures.length, []);
     }
 
+    function safePool(legal, side) {
+      var shuffled = legal.slice().sort(function () { return Math.random() - 0.5; });
+      try {
+        var b0 = st.board;
+        if (!Array.isArray(b0) || !Array.isArray(b0[0])) return shuffled;
+        var oppCode = codeOf(side === "white" ? "black" : "white");
+        var safe = shuffled.filter(function (mv) {
+          try {
+            var b = b0.map(function (row) { return row.slice(); });
+            var empty = b[mv.to.r][mv.to.c];
+            var p = b[mv.from.r][mv.from.c];
+            b[mv.from.r][mv.from.c] = empty;
+            (mv.captures || []).forEach(function (x) { b[x.r][x.c] = empty; });
+            b[mv.to.r][mv.to.c] = p;
+            var om = allMoves(b, oppCode);
+            return !(om.length && om[0].captures && om[0].captures.length);
+          } catch (e) { return true; }
+        });
+        return safe.length ? safe : shuffled;
+      } catch (e) { return shuffled; }
+    }
     function botThink(cb) {
       var side = st.botColor, legal = allMoves(st.board, codeOf(side));
       if (!legal.length) return cb(null);
@@ -958,7 +979,7 @@
       var secs = Math.max(0.05, Math.min(st.botSecs, remaining(side) / 1000 / 15));
       if (st.botBlunder > 0 && legal.length > 1 && Math.random() < st.botBlunder) {   // yengil botlar ba'zan tasodifiy yuradi
         done = true;
-        var pool0 = legal.slice().sort(function () { return Math.random() - 0.5; }), st0 = null;
+        var pool0 = safePool(legal, side), st0 = null;
         for (var i0 = 0; i0 < pool0.length && !st0; i0++) st0 = stepsOf(pool0[i0]);
         st.botNote = "🤖 tasodifiy yurish";
         return setTimeout(function () { cb(st0); }, 450);
