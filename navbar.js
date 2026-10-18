@@ -183,12 +183,6 @@
     '#lbPanel .lbdr{display:none!important}' +
     '#lbPanel .tabs button{box-shadow:none!important}';
   document.head.appendChild(cf);
-  setInterval(function () {
-    var q = document.querySelectorAll('#lbPanel div[onclick*="lbTPlus"]');
-    [].forEach.call(q, function (e) {
-      if (e.parentNode && e.parentNode.children.length === 2 && e.parentNode.style.display === 'flex') e.parentNode.style.display = 'none';
-    });
-  }, 500);
 
   // ===== nvFlat2: yaltirash va harakatlanuvchi effektlarni o'chirish =====
   var cf2 = document.createElement('style');
@@ -200,4 +194,11 @@
     '#lbPanel [style*="gradient"],#hzHero [style*="gradient"]{background-size:auto!important}' +
     '#lbPanel .lbhb,#lbPanel .lbc,#lbPanel .lbcl,#hzHero>*{box-shadow:none!important;filter:none!important}';
   document.head.appendChild(cf2);
+
+  var cf3 = document.createElement('style');
+  cf3.id = 'nvFlat3';
+  cf3.textContent =
+    '#lbPanel div[onclick*="lbTPlus"]{display:none!important}' +
+    '#lbPanel div:has(>div[onclick*="lbTPlus"]){display:none!important}';
+  document.head.appendChild(cf3);
 })();
