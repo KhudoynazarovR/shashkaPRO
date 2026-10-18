@@ -682,6 +682,7 @@
     }
 
     function fmt(ms) {
+      if (st && st.vsBot) return "∞";
       var sec = Math.ceil(ms / 1000), m = Math.floor(sec / 60), s = sec % 60;
       return m + ":" + (s < 10 ? "0" : "") + s;
     }
