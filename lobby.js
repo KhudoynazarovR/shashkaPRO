@@ -20,7 +20,7 @@ const TCS = ['1+1', '2+2', '3+2', '5+3', '7+5'];
 const DEFAULT_TC = '5+3';
 // 🤖 Botlar: kuch pog'onasi. secs = dvigatelga beriladigan o'ylash vaqti, blunder = tasodifiy yurish ehtimoli
 const BOTS = [
-  { uid: 'bot_easy', name: '🤖 Yengil', secs: 0.05, blunder: 0.35 },
+  { uid: 'bot_easy', name: '🤖 Yengil', secs: 0.05, blunder: 0.12 },
   { uid: 'bot_mid', name: '🤖 O‘rta', secs: 0.2, blunder: 0.12 },
   { uid: 'bot', name: '🤖 ShashkaBot', secs: 1.2, blunder: 0 },
   { uid: 'bot_pro', name: '🤖 Usta', secs: 3, blunder: 0 },
