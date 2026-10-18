@@ -101,7 +101,7 @@
     var on = s.style.display !== "block"; s.style.display = on ? "block" : "none";
     if (on) { var i = document.getElementById("rkQ"); if (i) i.focus(); } else { q = ""; list(); }
   };
-  function ico() { return tab === "puz" ? "🧩" : "🪙"; }
+  function ico() { return ({ puz: "🧩", elo: "📊", diamonds: "🪙", wins: "🏆", games: "🎮" })[tab] || ""; }
   function loadPuz() {
     var tg = window.Telegram && window.Telegram.WebApp;
     fetch("/api/puzzles/top", { headers: { "x-init-data": (tg && tg.initData) || "" } })
