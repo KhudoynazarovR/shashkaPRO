@@ -22,10 +22,10 @@ const DEFAULT_TC = '5+3';
 const BOTS = [
   { uid: 'bot_easy', name: 'Shogird BOT', secs: 0.05, blunder: 0.12 },
   { uid: 'bot_mid', name: 'Jangchi BOT', secs: 0.2, blunder: 0.12 },
-  { uid: 'bot', name: 'Yo‘lbars BOT', secs: 1.2, blunder: 0 },
-  { uid: 'bot_pro', name: 'Arslon BOT', secs: 3, blunder: 0 },
-  { uid: 'bot_gm', name: 'Sulton BOT', secs: 6, blunder: 0 },
-  { uid: 'bot_champ', name: 'Legend BOT', secs: 12, blunder: 0 }
+  { uid: 'bot', name: 'Yo‘lbars BOT', secs: 1, blunder: 0 },
+  { uid: 'bot_pro', name: 'Arslon BOT', secs: 1, blunder: 0 },
+  { uid: 'bot_gm', name: 'Sulton BOT', secs: 1, blunder: 0 },
+  { uid: 'bot_champ', name: 'Legend BOT', secs: 1, blunder: 0 }
 ];
 const botByUid = uid => BOTS.find(b => b.uid === uid) || null;
 const BOT_TCS = ['1+1', '2+2', '3+2', '5+3'];
