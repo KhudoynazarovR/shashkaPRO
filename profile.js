@@ -130,7 +130,7 @@
       var h = '<div class="pf-grid">' +
         card('📈', 'linear-gradient(135deg,#22c1ff,#0be3ff)', d.elo, 'ELO') +
         card('⭐', 'linear-gradient(135deg,#fbbf24,#f59e0b)', d.bestStreak, 'Eng yaxshi seriya') +
-        card('💎', 'linear-gradient(135deg,#ff6fa5,#ff8fc0)', d.diamonds, 'Olmos') +
+        card('🪙', 'linear-gradient(135deg,#ff6fa5,#ff8fc0)', d.diamonds, 'Tanga') +
         card('🏆', 'linear-gradient(135deg,#fcd34d,#f9a77a)', d.wins, 'G‘alaba') +
         card('✖️', 'linear-gradient(135deg,#ff2e63,#ff6b6b)', d.losses, 'Mag‘lub') +
         card('🤝', 'linear-gradient(135deg,#ff5a00,#fbbf24)', d.draws, 'Durang') +
@@ -144,10 +144,10 @@
         var r = x.r === 'w' ? '✅ G‘alaba' : x.r === 'l' ? '❌ Mag‘lub' : '🤝 Durang';
         h += '<div class="pf-row"><span>' + r + ' · ' + esc(x.opp) + '</span><span class="pf-l">' + ago(x.t) + '</span></div>';
       });
-      h += '</div><div class="pf-box"><h3>Olmos tarixi</h3>';
+      h += '</div><div class="pf-box"><h3>Tanga tarixi</h3>';
       if (!d.log.length) h += '<div class="pf-l">Hali yozuv yo‘q</div>';
       d.log.forEach(function (x) {
-        h += '<div class="pf-row"><span>' + (x.d > 0 ? '+' : '') + x.d + ' 💎</span><span class="pf-l">' + esc(x.why) + ' · ' + ago(x.t) + '</span></div>';
+        h += '<div class="pf-row"><span>' + (x.d > 0 ? '+' : '') + x.d + ' 🪙</span><span class="pf-l">' + esc(x.why) + ' · ' + ago(x.t) + '</span></div>';
       });
       h += '</div><button class="pf-bt" id="pfDaily" disabled>🎁 Kunlik bonus</button><div id="pfMsg" class="pf-l" style="margin:8px 0 20px;text-align:center"></div>';
       $('pfBody').innerHTML = h;
@@ -158,7 +158,7 @@
       });
       $('pfDaily').onclick = function () {
         api('/api/daily', 'POST').then(function (r) {
-          $('pfMsg').textContent = r.ok ? '+' + r.amount + ' 💎 olindi' : 'Bugun olingan';
+          $('pfMsg').textContent = r.ok ? '+' + r.amount + ' 🪙 olindi' : 'Bugun olingan';
           window.nvProfile(pg);
         });
       };

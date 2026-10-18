@@ -639,7 +639,7 @@ function onlineConnect(){
       }
       else if(m.type==='matchFinished'){gameOver=true;stopTimer();toast(m.winner===({white:WHITE,black:BLACK}[onlineColor])?'🎉 Siz g‘alaba qozondingiz!':'🏁 O‘yin tugadi');updateStatus();onlineMatchId='';}
       else if(m.type==='opponentLeft'){finish(m.winner||({white:WHITE,black:BLACK}[onlineColor]));toast('👋 Raqib o‘yindan chiqdi')}
-      else if(m.type==='rewards'){window.onlineMe=m.me||window.onlineMe;toast((m.result==='win'?'🏆 ':'🏁 ')+'Elo '+(m.eloDelta>0?'+':'')+m.eloDelta+'  💎 +'+m.diamonds)}
+      else if(m.type==='rewards'){window.onlineMe=m.me||window.onlineMe;toast((m.result==='win'?'🏆 ':'🏁 ')+'Elo '+(m.eloDelta>0?'+':'')+m.eloDelta+'  🪙 +'+m.diamonds)}
       else if(m.type==='error'){toast('⚠️ '+m.message)}
     };
     return true;

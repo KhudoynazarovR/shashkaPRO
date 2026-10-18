@@ -486,7 +486,7 @@ function createLobby({ send, clients, roomsApi }) {
     if (t.status === 'finished') return;
     if (t.timer) clearTimeout(t.timer);
     t.status = 'finished';
-    t.finishedAt = Date.now(); if (!t.paidOut) { t.paidOut = true; const r = economy.finishTournament(t.creatorUid, [...(t.paid || [])]); if (r.bonus) toast(t.creatorUid, '💎 Yaratuvchi bonusi: +' + r.bonus); }
+    t.finishedAt = Date.now(); if (!t.paidOut) { t.paidOut = true; const r = economy.finishTournament(t.creatorUid, [...(t.paid || [])]); if (r.bonus) toast(t.creatorUid, '🪙 Yaratuvchi bonusi: +' + r.bonus); }
     t.nextAt = 0;
     const st = t.type === 'arena' ? arenaStandings(t) : standings(t);
     const top = st[0] ? st[0].name : '-';
@@ -756,7 +756,7 @@ function createLobby({ send, clients, roomsApi }) {
     if (m.type === 'lbTCreate') {
     { const cl0 = clubsApi.check(uid, m.clubIds); if (cl0.error) { err(c, cl0.error); return true; } }
       const before = tournaments.size;
-      if (!economy.chargeCreate(uid).ok) { err(c, 'Turnir yaratish uchun ' + FEE.CREATE_COST + ' 💎 kerak'); return true; }
+      if (!economy.chargeCreate(uid).ok) { err(c, 'Turnir yaratish uchun ' + FEE.CREATE_COST + ' 🪙 kerak'); return true; }
       const ret = handleInner(c, m);
       if (tournaments.size === before) economy.refund(uid, FEE.CREATE_COST, 'refund_create');
       return ret;
@@ -764,7 +764,7 @@ function createLobby({ send, clients, roomsApi }) {
     if (m.type === 'lbTJoin' && t0 && !t0.players.has(uid)) {
     if (t0.clubIds && t0.clubIds.length && !clubsApi.inAny(uid, t0.clubIds)) { err(c, 'Bu turnir faqat klub a‘zolari uchun'); return true; }
       t0.paid = t0.paid || new Set();
-      if (!economy.chargeJoin(uid).ok) { err(c, 'Qatnashish uchun ' + FEE.JOIN_FEE + ' 💎 kerak'); return true; }
+      if (!economy.chargeJoin(uid).ok) { err(c, 'Qatnashish uchun ' + FEE.JOIN_FEE + ' 🪙 kerak'); return true; }
       const ret = handleInner(c, m);
       if (t0.players.has(uid)) t0.paid.add(uid); else economy.refund(uid, FEE.JOIN_FEE, 'refund_join');
       return ret;
@@ -1047,7 +1047,7 @@ function createLobby({ send, clients, roomsApi }) {
         if ((inv.refCount || 0) >= 50) break;
         u.refBy = rid; inv.refCount = (inv.refCount || 0) + 1; st.save();
         economy.add(rid, 200, 'referral');
-        toast(rid, '🎉 Do‘stingiz ' + u.name + ' qo‘shildi: +200 💎');
+        toast(rid, '🎉 Do‘stingiz ' + u.name + ' qo‘shildi: +200 🪙');
         push();
         break;
       }

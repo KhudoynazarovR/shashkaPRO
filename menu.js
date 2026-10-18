@@ -38,7 +38,7 @@
       ["📁", "Arxiv", "O‘tgan o‘yinlar tarixi", "@arch", "#2fd27f,#1ea36a"],
       ["🔬", "Tahlil taxtasi", "KestoG bilan pozitsiya tahlili", "@board", "#3b82f6,#06b6d4"],
       ["🧩", "Masalalar", "Shashka masalalarini yeching", "@puz", "#f5873b,#f7c02d"],
-      ["💎", "Tosh do‘koni", "Donalar va o‘z donangiz", "@shop", "#7b3ff2,#d62f8f"]]],
+      ["🪙", "Tosh do‘koni", "Donalar va o‘z donangiz", "@shop", "#7b3ff2,#d62f8f"]]],
     ["ILOVA", [
       ["⚙️", "Sozlamalar", "Tema, ovoz va boshqalar", "@ai:set", "#6b7bff,#8fa0ff"],
       ["❓", "Yordam", "Bo‘limlar haqida", "@help", "#17b2f7,#17e3ff"],
@@ -65,7 +65,7 @@
     var av = u.id ? "<img src='/api/av/" + encodeURIComponent(u.id) + "?t=" + Date.now() + "' onerror=\"this.outerHTML='👤'\">" : "👤";
     function v(x) { return x == null ? "—" : x; }
     var P = pst || {};
-    var h = "<div class='mqT'><div class='mqL'><b>Shashka<i>PRO</i> 👑</b><small>Yaxshiroq o‘yinchilar uchun!</small></div><div class='mqR'><span class='mqC'>💎 " + (bal == null ? "—" : bal) + "</span><button class='mnd' onclick=\"mnA('@daily')\"" + (canDaily ? "" : " disabled") + ">" + (canDaily ? "🎁 Bonus" : "✅ Olingan") + "</button></div></div>";
+    var h = "<div class='mqT'><div class='mqL'><b>Shashka<i>PRO</i> 👑</b><small>Yaxshiroq o‘yinchilar uchun!</small></div><div class='mqR'><span class='mqC'>🪙 " + (bal == null ? "—" : bal) + "</span><button class='mnd' onclick=\"mnA('@daily')\"" + (canDaily ? "" : " disabled") + ">" + (canDaily ? "🎁 Bonus" : "✅ Olingan") + "</button></div></div>";
     h += "<div class='mnm' id='mnMsg'></div>";
     SEC.forEach(function (s, i) {
       h += "<div class='mqS'><span>" + (i === 0 ? "🎮" : "⚙️") + "</span>" + s[0] + "</div><div class='mqGr'>" + s[1].map(cardHtml).join("") + "</div>";
@@ -94,7 +94,7 @@
   function daily() {
     if (!initData) { msgSet("Bonus uchun Telegram orqali kiring."); return; }
     fetch("/api/daily", { method: "POST", headers: { "x-init-data": initData } }).then(function (r) { return r.json(); }).then(function (d) {
-      load(); setTimeout(function () { msgSet(d && d.ok ? "+" + d.amount + " 💎 olindi" : "Bugun olingan"); }, 400);
+      load(); setTimeout(function () { msgSet(d && d.ok ? "+" + d.amount + " 🪙 olindi" : "Bugun olingan"); }, 400);
     }).catch(function () { msgSet("Server bilan aloqa yo‘q"); });
   }
   function close() { if (panel) panel.style.display = "none"; }
@@ -473,7 +473,7 @@
     var _sp2 = ''; if (curFo && !curLv) { for (var _k = 0; _k < 18; _k++) _sp2 += '<i style="--a:' + (_k * 20) + 'deg;--r:' + (60 + (_k % 3) * 28) + 'px;animation-delay:' + (_k * 0.18) + 's"></i>'; _sp2 = '<span class="pzSpW">' + _sp2 + '</span>'; }
     h += '<div style="margin:6px 0 12px;font-weight:bold;position:relative;display:inline-block;padding:4px 14px">' + (curLv ? LV[curLv] : '📁 ' + esc(curFo)) + _sp2 + '</div>';
     if (curFo && !curLv) h += '<div style="margin-bottom:12px">' + (S.link ? '<button id="pzShF" style="' + BS + '">🔗 Guruhga yuborish</button>' : '') + '<button id="pzHall" style="' + BG + '">🎮 O‘yin zaliga</button><button id="pzRk" style="' + BG + '">🏅 Unvonlar</button></div>';
-    if (curFo && !curLv && S.promo && Date.now() < S.promo) h += '<div style="font-size:13px;margin:-4px 0 12px;padding:8px 10px;border-radius:10px;background:#2a2560">🎁 Aksiya (' + window.pzLeft(S.promo - Date.now()) + ' qoldi): havolangiz orqali kirgan har bir yangi o‘yinchi masala yechsa, sizga +100 💎' + (S.inv ? '<br>👥 Taklif qilinganlar: ' + S.inv.total : '') + '</div>';
+    if (curFo && !curLv && S.promo && Date.now() < S.promo) h += '<div style="font-size:13px;margin:-4px 0 12px;padding:8px 10px;border-radius:10px;background:#2a2560">🎁 Aksiya (' + window.pzLeft(S.promo - Date.now()) + ' qoldi): havolangiz orqali kirgan har bir yangi o‘yinchi masala yechsa, sizga +100 🪙' + (S.inv ? '<br>👥 Taklif qilinganlar: ' + S.inv.total : '') + '</div>';
     if (S.admin) h += '<div style="margin-bottom:12px"><button id="pzAdd" style="' + BS + '">➕ Masala</button>' + (curFo ? '<button id="pzRF" style="' + BG + '">✏️ Nomi</button><button id="pzDF" style="' + BG + '">🗑 Papkani o‘chirish</button>' : '') + '</div>';
     S.list.forEach(function (p, i) {
       if (curLv ? (lvOf(p) !== curLv || foOf(p)) : foOf(p) !== curFo) return;
@@ -541,11 +541,11 @@
       RK.forEach(function (r) { if (t >= r.n) cur = r; else if (!nxt) nxt = r; });
       var h = head('🏅 Unvonlar');
       h += '<div style="' + CARD + '"><div style="font-size:12px;opacity:.65">JORIY UNVON</div><b style="font-size:20px">' + (cur ? esc(cur.name) : 'Hali unvon yo‘q') + '</b><div style="font-size:13px;margin-top:6px">' + (nxt ? '⬆️ ' + esc(nxt.name) + ' bo‘lish uchun yana ' + (nxt.n - t) + ' ta do‘st kerak' : '🎉 Eng yuqori unvon!') + '</div>' + (nxt ? '<div style="height:8px;border-radius:4px;background:#2c3070;margin-top:8px"><div style="height:8px;border-radius:4px;background:#ffd86b;width:' + Math.min(100, Math.round(t / nxt.n * 100)) + '%"></div></div><div style="text-align:right;font-size:12px;margin-top:4px">' + t + ' / ' + nxt.n + '</div>' : '') + '</div>';
-      if (S.promo && Date.now() < S.promo) h += '<div style="font-size:14px;margin:0 0 12px;padding:10px;border-radius:10px;background:#2a2560">⏰ Aksiya tugashiga: <b>' + window.pzLeft(S.promo - Date.now()) + '</b><br>Har bir yangi o‘yinchi uchun +100 💎</div>';
+      if (S.promo && Date.now() < S.promo) h += '<div style="font-size:14px;margin:0 0 12px;padding:10px;border-radius:10px;background:#2a2560">⏰ Aksiya tugashiga: <b>' + window.pzLeft(S.promo - Date.now()) + '</b><br>Har bir yangi o‘yinchi uchun +100 🪙</div>';
       else h += '<div style="font-size:13px;opacity:.7;margin-bottom:12px">Aksiya tugagan</div>';
       h += '<div style="font-size:12px;opacity:.65;margin:8px 0">BARCHA UNVONLAR</div>';
       RK.slice().reverse().forEach(function (r) {
-        h += '<div style="' + CARD + ';display:flex;justify-content:space-between;align-items:center;opacity:' + (t >= r.n ? 1 : 0.65) + '"><div><b>' + (t >= r.n ? '✅ ' : '') + esc(r.name) + '</b><div style="font-size:12px;opacity:.65">' + r.n + '+ taklif</div></div><b style="color:#ffb84d">' + r.gem + ' 💎</b></div>';
+        h += '<div style="' + CARD + ';display:flex;justify-content:space-between;align-items:center;opacity:' + (t >= r.n ? 1 : 0.65) + '"><div><b>' + (t >= r.n ? '✅ ' : '') + esc(r.name) + '</b><div style="font-size:12px;opacity:.65">' + r.n + '+ taklif</div></div><b style="color:#ffb84d">' + r.gem + ' 🪙</b></div>';
       });
       h += '<div style="font-size:12px;opacity:.65;margin:14px 0 8px">🏆 ENG KO‘P TAKLIF QILGANLAR</div>';
       var tp = S.topInv || [];
@@ -696,7 +696,7 @@
     function solved() { if (tOut) return; try { window.pzFan(); } catch (e) {} var _el = pzEl(), _er = errs; fin = _el;
       done = true; msg = '🎉 Masala yechildi!'; draw();
       api('/api/puzzle/solved', { id: p.id, time: _el, errs: _er, ref: window.__pzRef || '' }).then(function (d) {
-        if (d && d.gain) msg += ' +' + d.gain + ' 💎';
+        if (d && d.gain) msg += ' +' + d.gain + ' 🪙';
         msg += ' · ⏱ ' + _el + ' s · xato: ' + _er;
         if (d && d.best) { S.best = S.best || {}; S.best[p.id] = d.best; msg += ' · 🏅 eng yaxshi: ' + d.best + ' s'; }
         if ((S.solved || []).indexOf(p.id) < 0) S.solved.push(p.id);
@@ -870,7 +870,7 @@
   }
   function close() { if (ov) ov.remove(); }
   function head() {
-    return '<div style="display:flex;justify-content:space-between;align-items:center;font-size:20px;font-weight:700;margin-bottom:12px"><span>💎 Tosh do‘koni</span><span style="font-size:15px">💎 ' + (S.diamonds || 0) + ' <button id="shBack" style="' + BG + '">⬅️</button></span></div>';
+    return '<div style="display:flex;justify-content:space-between;align-items:center;font-size:20px;font-weight:700;margin-bottom:12px"><span>🪙 Tosh do‘koni</span><span style="font-size:15px">🪙 ' + (S.diamonds || 0) + ' <button id="shBack" style="' + BG + '">⬅️</button></span></div>';
   }
   function card(it) {
     var own = S.owned.indexOf(it.id) >= 0 || !!it.def, eq = (S.equipped === '-' ? '' : (S.equipped || S.def)) === it.id;
@@ -880,7 +880,7 @@
       var dark = (i === 1 || i === 2);
       h += '<div style="background:' + (dark ? '#b58863' : '#f0d9b5') + " center/78% no-repeat url('" + imgUrl(it.id, k) + "')\"></div>";
     });
-    h += '</div><div style="font-size:13px;opacity:.8">💎 ' + it.price + ' · 🛒 ' + (it.sold || 0) + '</div>';
+    h += '</div><div style="font-size:13px;opacity:.8">🪙 ' + it.price + ' · 🛒 ' + (it.sold || 0) + '</div>';
     if (own) h += '<button data-a="eq" data-id="' + it.id + '" style="' + (eq ? BS : BG) + ';width:92%">' + (eq ? '✅ Tanlangan' : 'Tanlash') + '</button>';
     else h += '<button data-a="buy" data-id="' + it.id + '" style="' + BO + ';width:92%">🛒 Sotib olish</button>';
     if (S.link) h += '<button data-a="sh" data-id="' + it.id + '" style="' + BG + ';width:92%">🔗 Ulashish</button>';
@@ -906,7 +906,7 @@
   function act(a, id) {
     var it = S.list.filter(function (x) { return x.id === id; })[0]; if (!it) return;
     if (a === 'buy') {
-      if (!confirm(it.name + ' donasini ' + it.price + ' 💎 ga sotib olasizmi?')) return;
+      if (!confirm(it.name + ' donasini ' + it.price + ' 🪙 ga sotib olasizmi?')) return;
       api('/api/shop/buy', { id: id }).then(function (d) {
         if (d && d.ok) { msg = '✅ Sotib olindi'; return reload(); }
         msg = '⚠️ ' + ((d && d.error) || 'Xato');
@@ -917,7 +917,7 @@
         draw();
       });
     } else if (a === 'sh') {
-      var u = S.link + '?startapp=shop_' + id, sh = 'https://t.me/share/url?url=' + encodeURIComponent(u) + '&text=' + encodeURIComponent('💎 Shashka donasi: ' + it.name);
+      var u = S.link + '?startapp=shop_' + id, sh = 'https://t.me/share/url?url=' + encodeURIComponent(u) + '&text=' + encodeURIComponent('🪙 Shashka donasi: ' + it.name);
       if (tg && tg.openTelegramLink) tg.openTelegramLink(sh); else window.open(sh, '_blank');
     } else if (a === 'def') {
       api('/api/shop/default', { id: it.def ? '' : id }).then(reload).then(function () { msg = '✅ Saqlandi'; draw(); });
@@ -932,7 +932,7 @@
     var SB = 'border:0;border-radius:10px;padding:7px 11px;background:#262b66;color:#fff;font-size:15px;margin:2px';
     var h = head() + '<div style="font-size:17px;font-weight:700;margin-bottom:8px">➕ Yangi dona</div>';
     h += '<input id="fN" maxlength="30" placeholder="Nomi" value="' + esc(form.name) + '" style="width:92%;box-sizing:border-box;margin:6px 0;padding:10px;border-radius:12px;border:1px solid #333a80;background:#161a3a;color:#fff;font-size:16px">';
-    h += '<input id="fP" type="number" min="0" placeholder="Narxi (💎)" value="' + esc(form.price) + '" style="width:92%;box-sizing:border-box;margin:6px 0;padding:10px;border-radius:12px;border:1px solid #333a80;background:#161a3a;color:#fff;font-size:16px">';
+    h += '<input id="fP" type="number" min="0" placeholder="Narxi (🪙)" value="' + esc(form.price) + '" style="width:92%;box-sizing:border-box;margin:6px 0;padding:10px;border-radius:12px;border:1px solid #333a80;background:#161a3a;color:#fff;font-size:16px">';
     h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0">';
     KS.forEach(function (k) {
       var has = !!form.src[k], dis = has ? '' : ';opacity:.35';

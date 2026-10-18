@@ -421,7 +421,7 @@
         window.__lbTk = { t: Date.now(), txt: window.__lbTk ? window.__lbTk.txt : "" };
         fetch("/api/leaderboard").then(function (r) { return r.json(); }).then(function (d) {
           var f = function (a, ic, lab, key, suf) { return a && a[0] ? ic + " " + lab + ": " + a[0].name + " — " + a[0][key] + suf : ""; };
-          window.__lbTk.txt = [f(d.wins, "🏆", "Eng ko‘p g‘alaba", "wins", ""), f(d.games, "🎮", "Eng ko‘p o‘yin", "games", ""), f(d.diamonds, "💎", "Boyvachcha", "diamonds", "")].filter(Boolean).join("   •   ");
+          window.__lbTk.txt = [f(d.wins, "🏆", "Eng ko‘p g‘alaba", "wins", ""), f(d.games, "🎮", "Eng ko‘p o‘yin", "games", ""), f(d.diamonds, "🪙", "Boyvachcha", "diamonds", "")].filter(Boolean).join("   •   ");
           var te = document.getElementById("lbTick"); if (te) te.firstChild.textContent = window.__lbTk.txt;
           if (te) te.style.display = window.__lbTk.txt ? "block" : "none";
         }).catch(function () {});
@@ -448,7 +448,7 @@
       if (!list.length) h += "<div class=\"card muted\">Hozircha boshqa o‘yinchi yo‘q. “Tasodifiy o‘yin” ▶ ni bosib raqib kutishingiz mumkin.</div>";
       list.forEach(function (p) {
         h += "<div class=\"lbp\">" + avh(p.uid, p.hasAv, p.name, p.prem) +
-          "<div class=\"lbinf\"><b>" + esc(p.name) + (p.prem ? " <span style=\"color:#f5b82e\">👑</span>" : "") + (p.busy ? " 🟡" : "") + "</b><small>ELO " + (p.elo || 1000) + " · 💎 " + (p.gems || 0) + (p.busy ? " · o‘ynayapti" : "") + "</small></div>" +
+          "<div class=\"lbinf\"><b>" + esc(p.name) + (p.prem ? " <span style=\"color:#f5b82e\">👑</span>" : "") + (p.busy ? " 🟡" : "") + "</b><small>ELO " + (p.elo || 1000) + " · 🪙 " + (p.gems || 0) + (p.busy ? " · o‘ynayapti" : "") + "</small></div>" +
           (p.uid === me ? "<i class='muted'>Bu siz</i>" : p.offline ? "<span class='muted'>oflayn</span>" : (fset[p.uid] || /^bot(_|$)/.test(String(p.uid))) ? "" : "<button class='lbinv' style='background:#2e7d32' data-f='add' data-id='" + esc(p.uid) + "'>➕ Do‘st</button>") + (p.uid === me || p.offline ? "" : out[p.uid] ? "<span class=\"muted\">chaqirildi…</span>" : (p.busy ? "" : "<button class=\"lbinv\" data-a=\"ch\" data-id=\"" + esc(p.uid) + "\">O‘yinga taklif</button>")) + "</div>";
       });
       $("lbPl").innerHTML = h;
@@ -718,13 +718,13 @@
         var p = S.promo, el = document.getElementById("promoBar");
         if (!p || !p.on || hid || !S.me) { if (el) el.remove(); return; }
         var left = Math.max(0, p.end - Date.now()), d = Math.floor(left / 86400000), h = Math.floor(left % 86400000 / 3600000), m = Math.floor(left % 3600000 / 60000);
-        var html = "🔥 Shoshiling! Do‘stingni taklif qil — +200 💎<small>Aksiya tugashiga: " + d + " kun " + h + " soat " + m + " daq · bosib ulashing</small><span id=\"promoX\">✕</span>";
+        var html = "🔥 Shoshiling! Do‘stingni taklif qil — +200 🪙<small>Aksiya tugashiga: " + d + " kun " + h + " soat " + m + " daq · bosib ulashing</small><span id=\"promoX\">✕</span>";
         if (!el) {
           el = document.createElement("div"); el.id = "promoBar"; document.body.appendChild(el);
           el.onclick = function (e) {
             if (e.target.id === "promoX") { hid = true; el.remove(); return; }
             var link = (window.TG_APP_LINK || "https://t.me/DraughtsPRObot/play") + "?startapp=ref_" + S.me.uid;
-            var u = "https://t.me/share/url?url=" + encodeURIComponent(link) + "&text=" + encodeURIComponent("Shashka PRO — kel, 500 💎 sovg‘a!");
+            var u = "https://t.me/share/url?url=" + encodeURIComponent(link) + "&text=" + encodeURIComponent("Shashka PRO — kel, 500 🪙 sovg‘a!");
             if (tg && tg.openTelegramLink) tg.openTelegramLink(u); else window.open(u, "_blank");
           };
         }
@@ -754,12 +754,12 @@
         var p = S.promo, el = document.getElementById("lbPromoC");
         if (!p || !p.on || !S.me) { if (el) el.remove(); return; }
         var left = Math.max(0, p.end - Date.now()), d = Math.floor(left / 86400000), h = Math.floor(left % 86400000 / 3600000), m = Math.floor(left % 3600000 / 60000);
-        var html = "🔥 Shoshiling!<br>Do‘stingni taklif qil: +200 💎<small>" + d + " kun " + h + " soat " + m + " daq qoldi</small>";
+        var html = "🔥 Shoshiling!<br>Do‘stingni taklif qil: +200 🪙<small>" + d + " kun " + h + " soat " + m + " daq qoldi</small>";
         if (!el) {
           el = document.createElement("div"); el.id = "lbPromoC"; top.appendChild(el);
           el.onclick = function () {
             var link = (window.TG_APP_LINK || "https://t.me/DraughtsPRObot/play") + "?startapp=ref_" + S.me.uid;
-            var u = "https://t.me/share/url?url=" + encodeURIComponent(link) + "&text=" + encodeURIComponent("Shashka PRO — kel, 500 💎 sovg‘a!");
+            var u = "https://t.me/share/url?url=" + encodeURIComponent(link) + "&text=" + encodeURIComponent("Shashka PRO — kel, 500 🪙 sovg‘a!");
             if (tg && tg.openTelegramLink) tg.openTelegramLink(u); else window.open(u, "_blank");
           };
         }
@@ -886,7 +886,7 @@
       function sharePromo() {
         if (!S.me) return;
         var link = (window.TG_APP_LINK || "https://t.me/DraughtsPRObot/play") + "?startapp=ref_" + S.me.uid;
-        var u = "https://t.me/share/url?url=" + encodeURIComponent(link) + "&text=" + encodeURIComponent("Shashka PRO — kel, 500 💎 sovg‘a!");
+        var u = "https://t.me/share/url?url=" + encodeURIComponent(link) + "&text=" + encodeURIComponent("Shashka PRO — kel, 500 🪙 sovg‘a!");
         if (tgw && tgw.openTelegramLink) tgw.openTelegramLink(u); else window.open(u, "_blank");
       }
       function loadDaily() {
@@ -975,7 +975,7 @@
         else {
           var left = Math.max(0, p.end - Date.now()), d = Math.floor(left / 86400000), h = Math.floor(left % 86400000 / 3600000), m = Math.floor(left % 3600000 / 60000);
           pe.style.display = "block";
-          setHtml(pe, "🔥 Shoshiling! Do‘stingni taklif qil: +200 💎<small>" + d + " kun " + h + " soat " + m + " daq qoldi · bosib ulashing</small>");
+          setHtml(pe, "🔥 Shoshiling! Do‘stingni taklif qil: +200 🪙<small>" + d + " kun " + h + " soat " + m + " daq qoldi · bosib ulashing</small>");
         }
         var de = $("hzDaily");
         if (!daily) de.style.display = "none";
@@ -1301,7 +1301,7 @@ document.head.appendChild(_as); }
     if (pe && pe.style.display !== "none") {
       var sm = pe.querySelector("small");
       if (sm && !pe.querySelector(".pgT")) {
-        pe.innerHTML = "<div class=\"pgI\">🎁</div><div class=\"pgB\"><div class=\"pgT\">Do‘stingizni taklif qiling! <span class=\"pgP\">+200 💎</span></div><div class=\"pgS\">" + esc(sm.textContent) + "</div></div><div class=\"pgA\">›</div>";
+        pe.innerHTML = "<div class=\"pgI\">🎁</div><div class=\"pgB\"><div class=\"pgT\">Do‘stingizni taklif qiling! <span class=\"pgP\">+200 🪙</span></div><div class=\"pgS\">" + esc(sm.textContent) + "</div></div><div class=\"pgA\">›</div>";
       }
     }
     var lv = document.getElementById("hzLive");
@@ -1352,7 +1352,7 @@ document.head.appendChild(_as); }
     if (!show) return;
     if (Date.now() - last > 30000) { last = Date.now(); load(); }
     var s = info.name + "|" + info.elo + "|" + info.gems; if (s === sig) return; sig = s;
-    bar.innerHTML = "<img src=\"/api/av/" + encodeURIComponent(user.id) + "\" onerror=\"this.outerHTML='<span class=meA>👤</span>'\"><div class=\"meB\"><b>" + esc(info.name) + "</b><small><i class=\"dot\"></i>ELO " + (info.elo == null ? "—" : esc(info.elo)) + " &nbsp; 💎 " + (info.gems == null ? "—" : esc(info.gems)) + "</small></div><div class=\"meG\">›</div>";
+    bar.innerHTML = "<img src=\"/api/av/" + encodeURIComponent(user.id) + "\" onerror=\"this.outerHTML='<span class=meA>👤</span>'\"><div class=\"meB\"><b>" + esc(info.name) + "</b><small><i class=\"dot\"></i>ELO " + (info.elo == null ? "—" : esc(info.elo)) + " &nbsp; 🪙 " + (info.gems == null ? "—" : esc(info.gems)) + "</small></div><div class=\"meG\">›</div>";
   }, 700);
 })();
 

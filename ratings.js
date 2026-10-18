@@ -1,7 +1,7 @@
 (function () {
   "use strict";
   var D = null, tab = "elo", q = "", panel = null, loading = false;
-  var TABS = [["elo", "ELO", "elo"], ["puz", "Masala", "n"], ["diamonds", "Olmos", "diamonds"], ["wins", "G‘alaba", "wins"], ["games", "O‘yin", "games"], ["best", "Seriya", "best"], ["pct", "G‘alaba %", "pct"], ["tourn", "Turnir", "tw"]];
+  var TABS = [["elo", "ELO", "elo"], ["puz", "Masala", "n"], ["diamonds", "Tanga", "diamonds"], ["wins", "G‘alaba", "wins"], ["games", "O‘yin", "games"], ["best", "Seriya", "best"], ["pct", "G‘alaba %", "pct"], ["tourn", "Turnir", "tw"]];
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function fmt(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " "); }
   function css() {
@@ -36,7 +36,7 @@
     if (a && (a.indexOf("http") === 0 || a.indexOf("/") === 0 || a.indexOf("data:image") === 0)) return "<div class=\"rka\"><img src=\"" + esc(a) + "\"></div>";
     return "<div class=\"rka\">" + esc((p.name || "?").charAt(0).toUpperCase()) + "</div>";
   }
-  var ICO = { puz: "🧩", elo: "📊", wins: "🏆", games: "🎮", diamonds: "💎", best: "🔥", pct: "📈", tourn: "🥇" };
+  var ICO = { puz: "🧩", elo: "📊", wins: "🏆", games: "🎮", diamonds: "🪙", best: "🔥", pct: "📈", tourn: "🥇" };
   function myId() { var tg = window.Telegram && window.Telegram.WebApp; var u = tg && tg.initDataUnsafe && tg.initDataUnsafe.user; return u ? String(u.id) : ""; }
   function dl(p) {
     var v = p.delta != null ? p.delta : (p.d != null ? p.d : (p.change != null ? p.change : null));
@@ -101,7 +101,7 @@
     var on = s.style.display !== "block"; s.style.display = on ? "block" : "none";
     if (on) { var i = document.getElementById("rkQ"); if (i) i.focus(); } else { q = ""; list(); }
   };
-  function ico() { return tab === "puz" ? "🧩" : "💎"; }
+  function ico() { return tab === "puz" ? "🧩" : "🪙"; }
   function loadPuz() {
     var tg = window.Telegram && window.Telegram.WebApp;
     fetch("/api/puzzles/top", { headers: { "x-init-data": (tg && tg.initData) || "" } })
@@ -150,7 +150,7 @@
         box.innerHTML = av + "<div style=\"font-size:21px;font-weight:700;margin-top:10px\">" + esc(d.name) + (d.premium ? " 👑" : "") + "</div>" +
           (d.bio ? "<div style=\"font-size:13px;color:#a9b0ff;margin-top:6px\">" + esc(d.bio) + "</div>" : "") +
           "<div style=\"display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0\">" +
-          cell("📈", d.elo, "ELO") + cell("💎", d.diamonds, "Olmos") + cell("🏆", d.wins, "G‘alaba") +
+          cell("📈", d.elo, "ELO") + cell("🪙", d.diamonds, "Tanga") + cell("🏆", d.wins, "G‘alaba") +
           cell("✖️", d.losses, "Mag‘lub") + cell("🤝", d.draws, "Durang") + cell("🎮", d.games, "O‘yinlar") +
           cell("📊", pct + "%", "G‘alaba %") + cell("⭐", d.bestStreak, "Eng yaxshi seriya") + cell("🥇", d.tournWins, "Turnir") +
           "</div><button style=\"width:100%;border:0;border-radius:14px;padding:12px;font-size:15px;color:#fff;background:#6b5cf0\" onclick=\"document.getElementById('spUo').remove()\">Yopish</button>";

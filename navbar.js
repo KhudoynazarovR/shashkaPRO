@@ -46,26 +46,26 @@
     pg.innerHTML = '<h2>Profil</h2><div class="c" style="text-align:center">' + photo +
       '<div id="nvName" style="font-size:20px;font-weight:600;margin-top:8px"></div></div>' +
       '<div class="c"><div class="m">Balans</div>' +
-      '<div id="nvBal" style="font-size:28px">💎 …</div>' +
+      '<div id="nvBal" style="font-size:28px">🪙 …</div>' +
       '<button class="b" id="nvDaily" style="margin-top:10px" disabled>🎁 Kunlik bonus</button>' +
       '<div id="nvMsg" class="m" style="margin-top:8px"></div></div>';
     $('nvName').textContent = name;
     if (!initData) {
       $('nvMsg').textContent = 'Balans uchun Telegram orqali kiring.';
-      $('nvBal').textContent = '💎 —';
+      $('nvBal').textContent = '🪙 —';
       return;
     }
     function load() {
       api('/api/balance').then(function (d) {
-        if (d.error) { $('nvBal').textContent = '💎 —'; return; }
-        $('nvBal').textContent = '💎 ' + d.diamonds;
+        if (d.error) { $('nvBal').textContent = '🪙 —'; return; }
+        $('nvBal').textContent = '🪙 ' + d.diamonds;
         $('nvDaily').disabled = !d.canClaimDaily;
         $('nvDaily').textContent = d.canClaimDaily ? '🎁 Kunlik bonus +20' : '✅ Bonus olingan';
       }).catch(function () { $('nvMsg').textContent = 'Server bilan aloqa yo‘q'; });
     }
     $('nvDaily').onclick = function () {
       api('/api/daily', 'POST').then(function (d) {
-        $('nvMsg').textContent = d.ok ? '+' + d.amount + ' 💎 olindi' : 'Bugun olingan';
+        $('nvMsg').textContent = d.ok ? '+' + d.amount + ' 🪙 olindi' : 'Bugun olingan';
         load();
       });
     };

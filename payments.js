@@ -51,11 +51,11 @@ function handle(req, res, url) {
       store.getOrCreate(user);
       try {
         const r = await tg('createInvoiceLink', {
-          title: '💎 ' + pack.diamonds + ' olmos',
-          description: 'Shashka Pro: ' + pack.diamonds + ' olmos',
+          title: '🪙 ' + pack.diamonds + ' tanga',
+          description: 'Shashka Pro: ' + pack.diamonds + ' tanga',
           payload: user.id + ':' + body.pack,
           currency: 'XTR',
-          prices: [{ label: 'Olmos', amount: pack.stars }],
+          prices: [{ label: 'Tanga', amount: pack.stars }],
         });
         if (!r.ok) { console.log('[pay] invoice xato:', r.description); return send(res, 500, { error: 'invoice' }); }
         send(res, 200, { link: r.result });
@@ -102,7 +102,7 @@ async function onPayment(msg) {
 
   await tg('sendMessage', {
     chat_id: msg.chat.id,
-    text: '💎 +' + pack.diamonds + ' olmos qo‘shildi! Balans: ' + u.diamonds,
+    text: '🪙 +' + pack.diamonds + ' tanga qo‘shildi! Balans: ' + u.diamonds,
   });
 }
 

@@ -41,7 +41,7 @@
   }
   function close() { if (ov) ov.remove(); }
   function head() {
-    return '<div style="display:flex;justify-content:space-between;align-items:center;font-size:20px;font-weight:700;margin-bottom:12px"><span>💎 Tosh do‘koni</span><span style="font-size:15px">💎 ' + (S.diamonds || 0) + ' <button id="shBack" style="' + BG + '">⬅️</button></span></div>';
+    return '<div style="display:flex;justify-content:space-between;align-items:center;font-size:20px;font-weight:700;margin-bottom:12px"><span>🪙 Tosh do‘koni</span><span style="font-size:15px">🪙 ' + (S.diamonds || 0) + ' <button id="shBack" style="' + BG + '">⬅️</button></span></div>';
   }
   function card(it) {
     var own = S.owned.indexOf(it.id) >= 0 || !!it.def, eq = (S.equipped === '-' ? '' : (S.equipped || S.def)) === it.id;
@@ -51,7 +51,7 @@
       var dark = (i === 1 || i === 2);
       h += '<div style="background:' + (dark ? '#b58863' : '#f0d9b5') + " center/78% no-repeat url('" + imgUrl(it.id, k) + "')\"></div>";
     });
-    h += '</div><div style="font-size:13px;opacity:.8">💎 ' + it.price + ' · 🛒 ' + (it.sold || 0) + '</div>';
+    h += '</div><div style="font-size:13px;opacity:.8">🪙 ' + it.price + ' · 🛒 ' + (it.sold || 0) + '</div>';
     if (own) h += '<button data-a="eq" data-id="' + it.id + '" style="' + (eq ? BS : BG) + ';width:92%">' + (eq ? '✅ Tanlangan' : 'Tanlash') + '</button>';
     else h += '<button data-a="buy" data-id="' + it.id + '" style="' + BO + ';width:92%">🛒 Sotib olish</button>';
     if (S.link) h += '<button data-a="sh" data-id="' + it.id + '" style="' + BG + ';width:92%">🔗 Ulashish</button>';
@@ -77,7 +77,7 @@
   function act(a, id) {
     var it = S.list.filter(function (x) { return x.id === id; })[0]; if (!it) return;
     if (a === 'buy') {
-      if (!confirm(it.name + ' donasini ' + it.price + ' 💎 ga sotib olasizmi?')) return;
+      if (!confirm(it.name + ' donasini ' + it.price + ' 🪙 ga sotib olasizmi?')) return;
       api('/api/shop/buy', { id: id }).then(function (d) {
         if (d && d.ok) { msg = '✅ Sotib olindi'; return reload(); }
         msg = '⚠️ ' + ((d && d.error) || 'Xato');
@@ -88,7 +88,7 @@
         draw();
       });
     } else if (a === 'sh') {
-      var u = S.link + '?startapp=shop_' + id, sh = 'https://t.me/share/url?url=' + encodeURIComponent(u) + '&text=' + encodeURIComponent('💎 Shashka donasi: ' + it.name);
+      var u = S.link + '?startapp=shop_' + id, sh = 'https://t.me/share/url?url=' + encodeURIComponent(u) + '&text=' + encodeURIComponent('🪙 Shashka donasi: ' + it.name);
       if (tg && tg.openTelegramLink) tg.openTelegramLink(sh); else window.open(sh, '_blank');
     } else if (a === 'def') {
       api('/api/shop/default', { id: it.def ? '' : id }).then(reload).then(function () { msg = '✅ Saqlandi'; draw(); });
@@ -103,7 +103,7 @@
     var SB = 'border:0;border-radius:10px;padding:7px 11px;background:#262b66;color:#fff;font-size:15px;margin:2px';
     var h = head() + '<div style="font-size:17px;font-weight:700;margin-bottom:8px">➕ Yangi dona</div>';
     h += '<input id="fN" maxlength="30" placeholder="Nomi" value="' + esc(form.name) + '" style="width:92%;box-sizing:border-box;margin:6px 0;padding:10px;border-radius:12px;border:1px solid #333a80;background:#161a3a;color:#fff;font-size:16px">';
-    h += '<input id="fP" type="number" min="0" placeholder="Narxi (💎)" value="' + esc(form.price) + '" style="width:92%;box-sizing:border-box;margin:6px 0;padding:10px;border-radius:12px;border:1px solid #333a80;background:#161a3a;color:#fff;font-size:16px">';
+    h += '<input id="fP" type="number" min="0" placeholder="Narxi (🪙)" value="' + esc(form.price) + '" style="width:92%;box-sizing:border-box;margin:6px 0;padding:10px;border-radius:12px;border:1px solid #333a80;background:#161a3a;color:#fff;font-size:16px">';
     h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0">';
     KS.forEach(function (k) {
       var has = !!form.src[k], dis = has ? '' : ';opacity:.35';

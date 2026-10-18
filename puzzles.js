@@ -267,7 +267,7 @@
     function solved() {
       done = true; msg = '🎉 Masala yechildi!'; draw();
       api('/api/puzzle/solved', { id: p.id }).then(function (d) {
-        if (d && d.gain) msg += ' +' + d.gain + ' 💎';
+        if (d && d.gain) msg += ' +' + d.gain + ' 🪙';
         if ((S.solved || []).indexOf(p.id) < 0) S.solved.push(p.id);
         draw();
       });

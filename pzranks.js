@@ -28,7 +28,7 @@ function onInvite(iv, chat) {
     if (t >= r.n && i + 1 > paid) {
       paid = i + 1;
       iv.diamonds = (iv.diamonds || 0) + r.gem;
-      say(chat, '🏅 Tabriklaymiz! Siz «' + r.name + '» unvoniga erishdingiz: +' + r.gem + ' 💎');
+      say(chat, '🏅 Tabriklaymiz! Siz «' + r.name + '» unvoniga erishdingiz: +' + r.gem + ' 🪙');
     }
   });
   iv.pzRank = paid;
@@ -50,7 +50,7 @@ function folderBonus(store, u, pz, chat) {
   if (all.length < FOLDER_MIN || u.pzFolderDone.includes(f)) return 0;
   if (!all.every(x => (u.solved || []).includes(x.id))) return 0;
   u.pzFolderDone.push(f);
-  say(chat, '🏆 «' + f + '» papkasidagi hamma masalani yechdingiz: +' + FOLDER_GEM + ' 💎');
+  say(chat, '🏆 «' + f + '» papkasidagi hamma masalani yechdingiz: +' + FOLDER_GEM + ' 🪙');
   return FOLDER_GEM;
 }
 
@@ -62,7 +62,7 @@ function watch(store) {
       const now = Date.now(), end = END();
       if (now >= end - 24 * 36e5 && now < end && !store.db.pzPromoNotified) {
         const gc = process.env.GROUP_CHAT_ID, lk = process.env.TG_APP_LINK;
-        if (gc) say(gc, '⏰ Aksiya tugashiga 1 kun qoldi!\n🧩 Masalalar papkasini do‘stlaringizga yuboring: havolangiz orqali kirgan har bir yangi o‘yinchi masala yechsa, +100 💎',
+        if (gc) say(gc, '⏰ Aksiya tugashiga 1 kun qoldi!\n🧩 Masalalar papkasini do‘stlaringizga yuboring: havolangiz orqali kirgan har bir yangi o‘yinchi masala yechsa, +100 🪙',
           lk ? { reply_markup: { inline_keyboard: [[{ text: '🧩 Masalalar', url: lk }]] } } : {});
         store.db.pzPromoNotified = 1; store.save();
       }
