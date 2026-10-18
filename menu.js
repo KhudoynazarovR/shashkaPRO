@@ -429,13 +429,27 @@
     var go = function () { api('/api/puzzle/move', { id: p.id, folder: t }).then(function () { load(); }); };
     if (t && fl.indexOf(t) < 0) api('/api/puzzle/folder', { name: t }).then(go); else go();
   }
+  function pzMap() {
+    var L = S.list, n = L.length, sv = S.solved || [];
+    var cu = 0; while (cu < n && sv.indexOf(L[cu].id) >= 0) cu++;
+    var ch = Math.floor(Math.min(cu, Math.max(n - 1, 0)) / 20), a = ch * 20, b = Math.min(a + 20, n);
+    var h = '<div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:24px">' + sv.length + '<span style="font-size:13px;opacity:.6"> / ' + n + ' yechildi</span></b><span style="opacity:.7">🗺 ' + (ch + 1) + '-bosqich</span></div>';
+    h += '<div style="display:flex;flex-direction:column-reverse;gap:8px;padding:16px 10px;margin:10px 0;border-radius:16px;background:' + (ch % 2 ? '#1d3a5a' : '#1f4a2a') + '">';
+    for (var i = a; i < b; i++) {
+      var done = sv.indexOf(L[i].id) >= 0, now = (i === cu), lock = (i > cu + 3);
+      var off = [0, 60, 110, 60][(i - a) % 4];
+      var bg = done ? '#6fae3d' : now ? '#f5a623' : lock ? '#cfe3ea' : '#b07a3c';
+      var tx = done ? '✓' : now ? '♟' : lock ? '☁️' : (i + 1);
+      h += '<button ' + (lock ? 'disabled' : 'data-pz="' + i + '"') + ' style="margin-left:' + off + 'px;width:64px;height:64px;border:0;border-radius:16px;background:' + bg + ';color:#fff;font-size:24px;font-weight:700;' + (lock ? 'opacity:.55' : '') + '">' + tx + '</button>';
+    }
+    h += '</div><button id="pzGo" style="width:100%;padding:16px;border:0;border-radius:14px;background:#6fae3d;color:#fff;font-size:20px;font-weight:700;margin-bottom:14px">▶ Masalalar yechish</button>';
+    return h;
+  }
   function list() {
     if (window.__pzPF) { var _pf = window.__pzPF; window.__pzPF = ''; if ((S.folders || []).indexOf(_pf) >= 0) { curFo = _pf; curLv = 0; } }
     if (curFo && (S.folders || []).indexOf(curFo) < 0) curFo = '';
     if (curLv || curFo) return items();
-    var fl = S.folders || [], h = head('🧩 Masalalar', topBtns());
-    var _tot = S.list.length, _dn = nDone(S.list), _pc = _tot ? Math.round(_dn * 100 / _tot) : 0;
-    h += '<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px"><b style="font-size:26px">' + _dn + '<span style="font-size:14px;opacity:.6"> / ' + _tot + ' yechildi</span></b><span style="opacity:.7">' + _pc + '%</span></div><div style="height:12px;border-radius:8px;background:#262b5a;overflow:hidden"><div style="height:100%;width:' + _pc + '%;background:#f5873b"></div></div><button id="pzGo" style="width:100%;margin-top:14px;padding:16px;border:0;border-radius:14px;background:#6fae3d;color:#fff;font-size:20px;font-weight:700">▶ Masalalar yechish</button></div>';
+    var fl = S.folders || [], h = head('🧩 Masalalar', topBtns()); h += pzMap();
     if (S.admin) h += '<div style="margin-bottom:10px"><button id="pzNF" style="' + BG + '">📁 Yangi papka</button></div>';
     if (!S.list.length && !fl.length) h += '<div style="padding:30px;opacity:.7">Hozircha masala yo‘q</div>';
     [1, 2, 3].forEach(function (lv) {
@@ -449,6 +463,7 @@
     if (!S.admin) h += '<div style="font-size:11px;opacity:.4;margin-top:16px">ID: ' + esc(S.myId) + '</div>';
     ov.innerHTML = h;
     on('#pzBack', close); on('#pzTop', pzTop);
+    Array.prototype.forEach.call(ov.querySelectorAll('[data-pz]'), function (e) { e.onclick = function () { var p = S.list[Number(e.getAttribute('data-pz'))]; if (p) play(p); }; });
     on('#pzGo', function () { var nx = S.list.filter(function (p) { return (S.solved || []).indexOf(p.id) < 0; })[0] || S.list[0]; if (nx) play(nx); }); on('#pzNew', function () { newPz(0, ''); });
     on('#pzNF', function () {
       var n = cleanName(prompt('Yangi papka nomi:'));
