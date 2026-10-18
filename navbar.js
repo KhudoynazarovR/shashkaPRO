@@ -19,16 +19,17 @@
   document.head.appendChild(css);
   var bar = document.createElement('div');
   bar.id = 'nvBar';
-  var items = [['pf', '👤', 'Profil'], ['pl', '🎮', 'O‘yin'], ['t', '🏆', 'Turnir'], ['rk', '📊', 'Reyting'], ['mn', '☰', 'Menyu']];
+  var items = [['pl', '🏠', 'Bosh'], ['puz', '🧩', 'Masalalar'], ['rk', '📊', 'Reyting'], ['mn', '☰', 'Menyu']];
   bar.innerHTML = items.map(function (i) {
     return '<button data-k="' + i[0] + '"><span>' + i[1] + '</span>' + i[2] + '</button>';
-  }).join('');
+  }).join('') + '<button data-k="pf" style="display:none"><span>👤</span>Profil</button><button data-k="t" style="display:none"><span>🏆</span>Turnir</button>';
   document.body.appendChild(bar);
   var pg = document.createElement('div');
   pg.id = 'nvPg';
   document.body.appendChild(pg);
 
   function mark(k) {
+    window.nvK = k;
     [].forEach.call(bar.querySelectorAll('button'), function (b) {
       b.className = b.getAttribute('data-k') === k ? 'on' : '';
     });
@@ -82,6 +83,12 @@
     if (window.aiHide) window.aiHide();
     if (window.rkClose) window.rkClose();
     if (window.mnClose) window.mnClose();
+    if (k === 'puz') {
+      pg.style.display = 'none';
+      if (window.lbNav) window.lbNav.close();
+      if (window.spPuzzles) window.spPuzzles(); else { pg.style.display = 'block'; soon('Masalalar', 'Yuklanmoqda…'); }
+      return;
+    }
     if (k === 'mn') {
       pg.style.display = 'none';
       if (window.lbNav) window.lbNav.close();
@@ -110,4 +117,55 @@
     bar.style.display = inRoom ? 'none' : 'flex';
     if (inRoom) { pg.style.display = 'none'; if (window.rkClose) window.rkClose(); if (window.mnClose) window.mnClose(); }
   }, 800);
+
+  // ===== O'YNASH tugmasi va sahifasi =====
+  var css2 = document.createElement('style');
+  css2.textContent =
+    '#nvPlayBtn{position:fixed;left:16px;right:16px;bottom:calc(68px + env(safe-area-inset-bottom));height:54px;border:0;border-radius:14px;background:linear-gradient(#7fb847,#5f9a2f);box-shadow:0 5px 0 #3f6f1c;color:#fff;font:800 22px system-ui,sans-serif;z-index:99997;display:none}' +
+    '#nvPlay{position:fixed;left:0;right:0;top:0;bottom:60px;background:#12122b;color:#fff;z-index:99998;overflow:auto;padding:16px;display:none;font-family:system-ui,sans-serif}' +
+    '#nvPlay .hd{display:flex;align-items:center;gap:12px;font-size:22px;font-weight:800;margin-bottom:16px}' +
+    '#nvPlay .hd button{background:none;border:0;color:#fff;font-size:26px}' +
+    '#nvPlay .it{display:flex;align-items:center;gap:14px;width:100%;box-sizing:border-box;margin-bottom:12px;padding:16px;border:0;border-radius:14px;background:#1f2147;color:#fff;font-size:18px;font-weight:700;text-align:left}' +
+    '#nvPlay .it span{font-size:26px}' +
+    '#nvPlay .it.g{background:linear-gradient(#7fb847,#5f9a2f);box-shadow:0 4px 0 #3f6f1c}';
+  document.head.appendChild(css2);
+  var pb = document.createElement('button');
+  pb.id = 'nvPlayBtn'; pb.textContent = '▶ O‘ynash';
+  document.body.appendChild(pb);
+  var po = document.createElement('div');
+  po.id = 'nvPlay';
+  po.innerHTML = '<div class="hd"><button id="nvPlayX">←</button>🎮 O‘ynash</div>' +
+    '<button class="it g" data-a="seek"><span>🔍</span>Raqib qidirish</button>' +
+    '<button class="it" data-a="room"><span>🏠</span>Xona yaratish</button>' +
+    '<button class="it" data-a="trn"><span>🏆</span>Turnirlar</button>' +
+    '<button class="it" data-a="ai"><span>🤖</span>Kompyuterga qarshi</button>';
+  document.body.appendChild(po);
+  function clickText(label) {
+    var all = document.querySelectorAll('button,div,a'), best = null;
+    for (var i = 0; i < all.length; i++) {
+      var e = all[i];
+      if (e.closest('#nvPlay') || e.closest('#nvBar')) continue;
+      var tx = (e.textContent || '').replace(/\s+/g, ' ').trim();
+      if (tx.indexOf(label) >= 0 && tx.length < label.length + 40 && (!best || tx.length < best.n)) best = { e: e, n: tx.length };
+    }
+    if (best) { try { best.e.click(); } catch (x) {} }
+  }
+  pb.onclick = function () { po.style.display = 'block'; };
+  $('nvPlayX').onclick = function () { po.style.display = 'none'; };
+  po.onclick = function (e) {
+    var b = e.target.closest('.it'); if (!b) return;
+    var a = b.getAttribute('data-a');
+    po.style.display = 'none';
+    if (a === 'seek') clickText('Raqib qidirish');
+    else if (a === 'room') clickText('Xona yaratish');
+    else if (a === 'trn') { if (window.lbNav) window.lbNav.open('t'); }
+    else if (a === 'ai') { if (window.lbNav) { try { window.lbNav.close(); } catch (x) {} } if (window.aiShow) window.aiShow('play'); }
+  };
+  window.nvK = window.nvK || 'pl'; mark('pl');
+  setInterval(function () {
+    var inRoom = !!$('lbBack');
+    var on = !inRoom && window.nvK === 'pl' && pg.style.display !== 'block';
+    pb.style.display = on ? 'block' : 'none';
+    if (!on) po.style.display = 'none';
+  }, 400);
 })();
