@@ -293,7 +293,7 @@ function createRooms({ send, clients, onFinish }) {
     room.locked = !!(opts && opts.locked);
     room.vsBot = !!(opts && opts.vsBot);
     room.botCfg = (opts && opts.botCfg) || null;
-    room.botStarted = false;
+    room.botStarted = !!room.vsBot;   // bot bilan o'yin birdan boshlanadi
     if (opts && opts.bonus && opts.bonus.ms > 0) {
       const bc = opts.bonus.color === "black" ? "black" : "white";
       room.clock[bc] += Number(opts.bonus.ms);
