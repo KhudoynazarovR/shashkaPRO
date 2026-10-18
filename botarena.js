@@ -101,13 +101,13 @@ function matchMove(moves, r) {
 }
 async function choose(bot, board, side, moves, key) {
   const sg = strength(bot);
-  let pick = null;
+  let pick = null, why = 'dvigatel';
   if (moves.length === 1) pick = moves[0];
-  else if (Math.random() < sg.blunder) pick = moves[rnd(moves.length)];
+  else if (Math.random() < sg.blunder) { why = 'blunder'; pick = matchMove(moves, await askEngine(board, side, 0.05)); }
   else pick = matchMove(moves, await askEngine(board, side, sg.secs));
   if (!pick) pick = moves[rnd(moves.length)];
-  const bad = memGet(bot.uid, key);
-  if (bad && moves.length > 1 && bad.indexOf(mstr(pick)) >= 0) {
+  const bad = memGet(bot.uid, key); if (process.env.ARDBG) console.log('[arena]', bot.name, why, pick ? mstr(pick) : 'null');
+  if (bad && moves.length > 1 && Math.random() < 0.3 && bad.indexOf(mstr(pick)) >= 0) {
     const alt = moves.filter(m => bad.indexOf(mstr(m)) < 0);
     if (alt.length) pick = alt[rnd(alt.length)];
   }

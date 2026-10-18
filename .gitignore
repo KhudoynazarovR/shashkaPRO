@@ -10,3 +10,5 @@ ngrok
 engine/*.bin
 engine/*.bin.*
 kesto/bridge
+*.bak
+*.bak2
