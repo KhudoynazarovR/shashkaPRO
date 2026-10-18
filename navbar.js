@@ -189,4 +189,15 @@
       if (e.parentNode && e.parentNode.children.length === 2 && e.parentNode.style.display === 'flex') e.parentNode.style.display = 'none';
     });
   }, 500);
+
+  // ===== nvFlat2: yaltirash va harakatlanuvchi effektlarni o'chirish =====
+  var cf2 = document.createElement('style');
+  cf2.id = 'nvFlat2';
+  cf2.textContent =
+    '#lbPanel *,#hzHero *{animation:none!important;transition:none!important;text-shadow:none!important}' +
+    '#lbPanel *::before,#lbPanel *::after,#hzHero *::before,#hzHero *::after{display:none!important;animation:none!important;content:none!important}' +
+    '#lbPanel,#hzHero{background-image:none!important}' +
+    '#lbPanel [style*="gradient"],#hzHero [style*="gradient"]{background-size:auto!important}' +
+    '#lbPanel .lbhb,#lbPanel .lbc,#lbPanel .lbcl,#hzHero>*{box-shadow:none!important;filter:none!important}';
+  document.head.appendChild(cf2);
 })();
