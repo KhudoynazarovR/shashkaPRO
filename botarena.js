@@ -116,8 +116,8 @@ function finish(white, black, result, hist, ply) {
   const d = D(), sw = stat(white.uid), sb = stat(black.uid);
   const s = result === WHITE ? 1 : result === BLACK ? 0 : 0.5;
   const ew = 1 / (1 + Math.pow(10, (sb.elo - sw.elo) / 400));
-  sw.elo = Math.max(600, Math.round(sw.elo + ELO_K * (s - ew)));
-  sb.elo = Math.max(600, Math.round(sb.elo + ELO_K * (ew - s)));
+  sw.elo = Math.max(100, Math.round(sw.elo + ELO_K * (s - ew)));
+  sb.elo = Math.max(100, Math.round(sb.elo + ELO_K * (ew - s)));
   if (s === 1) { sw.w++; sb.l++; } else if (s === 0) { sb.w++; sw.l++; } else { sw.dr++; sb.dr++; }
   if (result !== 'draw') {
     const ls = result === WHITE ? BLACK : WHITE;

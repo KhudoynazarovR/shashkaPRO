@@ -448,7 +448,7 @@
       if (!list.length) h += "<div class=\"card muted\">Hozircha boshqa o‘yinchi yo‘q. “Tasodifiy o‘yin” ▶ ni bosib raqib kutishingiz mumkin.</div>";
       list.forEach(function (p) {
         h += "<div class=\"lbp\">" + avh(p.uid, p.hasAv, p.name, p.prem) +
-          "<div class=\"lbinf\"><b>" + esc(p.name) + (p.prem ? " <span style=\"color:#f5b82e\">👑</span>" : "") + (p.busy ? " 🟡" : "") + "</b><small>ELO " + (p.elo || 1000) + " · 🪙 " + (p.gems || 0) + (p.busy ? " · o‘ynayapti" : "") + "</small></div>" +
+          "<div class=\"lbinf\"><b" + (p.bot ? " style=\"color:#f5b82e;text-shadow:0 0 8px #f5a300\"" : "") + ">" + esc(p.name) + (p.prem ? " <span style=\"color:#f5b82e\">👑</span>" : "") + (p.busy ? " 🟡" : "") + "</b><small>ELO " + (p.elo || 1000) + " · 🪙 " + (p.gems || 0) + (p.busy ? " · o‘ynayapti" : "") + "</small></div>" +
           (p.uid === me ? "<i class='muted'>Bu siz</i>" : p.offline ? "<span class='muted'>oflayn</span>" : (fset[p.uid] || /^bot(_|$)/.test(String(p.uid))) ? "" : "<button class='lbinv' style='background:#2e7d32' data-f='add' data-id='" + esc(p.uid) + "'>➕ Do‘st</button>") + (p.uid === me || p.offline ? "" : out[p.uid] ? "<span class=\"muted\">chaqirildi…</span>" : (p.busy ? "" : "<button class=\"lbinv\" data-a=\"ch\" data-id=\"" + esc(p.uid) + "\">O‘yinga taklif</button>")) + "</div>";
       });
       $("lbPl").innerHTML = h;
