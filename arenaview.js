@@ -55,14 +55,32 @@
     }
     return h;
   }
+  var viewPly = null, vId = null;
+  (function () { var s = document.createElement('style'); s.textContent = '#avOv .avN{border:0;border-radius:10px;background:#2e2a70;color:#fff;padding:8px 14px;font-size:18px}#avOv .avMk{padding:2px 4px;border-radius:6px}'; document.head.appendChild(s); })();
+  function decB(s) { var a = []; for (var i = 0; i < 64; i++) { var c = s.charAt(i); a.push(c === 'w' ? 1 : c === 'W' ? 2 : c === 'b' ? -1 : c === 'B' ? -2 : 0); } return a; }
+  function bindNav(g) {
+    if (!g || !g.hist) return;
+    var n = g.hist.length - 1, cp = (viewPly == null || viewPly > n) ? n : viewPly;
+    ov.querySelectorAll('.avN').forEach(function (b) { b.onclick = function () {
+      var t = b.getAttribute('data-n');
+      if (t === 'first') viewPly = 0; else if (t === 'prev') viewPly = Math.max(0, cp - 1);
+      else if (t === 'next') viewPly = (cp + 1 >= n) ? null : cp + 1; else viewPly = null;
+      draw(last); }; });
+    ov.querySelectorAll('.avMk').forEach(function (a) { a.onclick = function () {
+      var p = +a.getAttribute('data-p'); viewPly = p >= n ? null : p; draw(last); }; });
+  }
   function draw(j) {
     if (!ov) return; last = j;
     var g = j.game, h = '<button class="avX" id="avClose">✕</button><h3>\uD83D\uDD34 Bot arenasi</h3>';
     if (g) {
       h += '<div>\u26AA ' + nm(g.white.name) + ' (' + g.white.elo + ') &nbsp;vs&nbsp; \u26AB ' + nm(g.black.name) + ' (' + g.black.elo + ')</div>';
-      h += '<div id="avBd">' + board64(g.board) + '</div>';
+      if (g.id !== vId) { vId = g.id; viewPly = null; }
+      var cp = -1, tot = 0, shown = g.board;
+      if (g.hist && g.hist.length) { tot = g.hist.length - 1; cp = (viewPly == null || viewPly > tot) ? tot : viewPly; shown = decB(g.hist[cp]); }
+      h += '<div id="avBd">' + board64(shown) + '</div>';
+      if (cp >= 0) h += '<div style="display:flex;gap:8px;justify-content:center;align-items:center;margin:6px 0"><button class="avN" data-n="first">\u23EE</button><button class="avN" data-n="prev">\u25C0</button><b style="min-width:70px;text-align:center">' + cp + ' / ' + tot + '</b><button class="avN" data-n="next">\u25B6</button><button class="avN" data-n="live">\u23ED</button></div>';
       h += '<div class="avMv">' + esc(g.start === 'std' ? 'Oddiy boshlanish' : 'IDF ' + g.start) + ' · yurish: ' + g.ply + (g.over ? ' · tugadi: ' + (g.result === 'white' ? '1-0' : g.result === 'black' ? '0-1' : '1/2') : '') + '</div>';
-      h += '<div class="avMv">' + esc((g.moves || []).join('  ')) + '</div>';
+      if (g.all && g.all.length) { var mh = ''; g.all.forEach(function (mm, i) { mh += '<a class="avMk" data-p="' + (i + 1) + '" style="cursor:pointer;margin-right:6px;display:inline-block;' + (cp === i + 1 ? 'color:#ffd54a;font-weight:700' : '') + '">' + (i + 1) + '.' + esc(mm) + '</a>'; }); h += '<div class="avMv">' + mh + '</div>'; } else h += '<div class="avMv">' + esc((g.moves || []).join('  ')) + '</div>';
     } else h += '<div class="avMv">Keyingi o‘yin boshlanmoqda…</div>';
     h += '<table><tr><th>Bot</th><th>Elo</th><th>G</th><th>M</th><th>D</th></tr>';
     (j.bots || []).forEach(function (b) { h += '<tr><td>' + nm(b.name) + '</td><td>' + b.elo + '</td><td>' + b.w + '</td><td>' + b.l + '</td><td>' + b.dr + '</td></tr>'; });
@@ -73,7 +91,7 @@
       h += '</table>';
     }
     if (j.admin) h += '<button class="avT" id="avTg">' + (j.enabled ? '\u23F8 Arenani to‘xtatish' : '\u25B6 Arenani yoqish') + '</button>';
-    ov.innerHTML = h;
+    ov.innerHTML = h; bindNav(g);
     document.getElementById('avClose').onclick = closeOv;
     var tg = document.getElementById('avTg');
     if (tg) tg.onclick = function () {

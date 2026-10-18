@@ -26,6 +26,7 @@ function D() {
   if (!Array.isArray(d.arenaLog)) d.arenaLog = [];
   return d;
 }
+function encB(b) { let s = ''; for (let i = 0; i < 64; i++) { const v = b[i]; s += v ? (v > 0 ? (v === 2 ? 'W' : 'w') : (v === -2 ? 'B' : 'b')) : '.'; } return s; }
 function stat(uid) { const d = D(); return d.botElo[uid] || (d.botElo[uid] = { elo: 1000, w: 0, l: 0, dr: 0 }); }
 
 function loadBots() {
@@ -137,6 +138,7 @@ async function playGame(a, b) {
   const seen = {}, hist = { white: [], black: [] };
   cur = { id: Date.now(), start: st.id, white: { uid: white.uid, name: white.name, elo: stat(white.uid).elo }, black: { uid: black.uid, name: black.name, elo: stat(black.uid).elo }, board: to64(board), moves: [], ply: 0, turn: side, over: false, result: null };
   while (!result) {
+    if (!cur.hist) { cur.hist = [encB(cur.board)]; cur.all = []; }
     const moves = R.getAllMoves(board, side);
     if (!moves.length) { result = side === WHITE ? BLACK : WHITE; break; }
     const key = String(R.positionKey(board, side));
@@ -153,6 +155,14 @@ async function playGame(a, b) {
     ply++;
     cur.board = to64(board); cur.moves.push(mstr(mv)); if (cur.moves.length > 14) cur.moves.shift();
     cur.ply = ply; cur.turn = side;
+    cur.hist.push(encB(cur.board)); cur.all.push(mstr(mv));
+    { let men = 0, wk = 0, bk = 0;
+      for (let i = 0; i < 64; i++) { const v = cur.board[i]; if (v === 1 || v === -1) men++; else if (v === 2) wk++; else if (v === -2) bk++; }
+      const tot = men + wk + bk;
+      if (men > 0 || tot !== cur.tot) cur.qc = 0; else cur.qc = (cur.qc || 0) + 1;
+      cur.tot = tot;
+      const lim = (wk + bk === 3 && Math.min(wk, bk) === 1) ? 10 : 30;
+      if (men === 0 && cur.qc >= lim && !result) result = 'draw'; }
     if (!FAST) await sleep(watched() ? 1400 : Math.max(150, el * 2));
   }
   finish(white, black, result, hist, ply);
