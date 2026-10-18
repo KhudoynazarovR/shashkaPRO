@@ -125,7 +125,8 @@ function finish(white, black, result, hist, ply) {
     const ls = result === WHITE ? BLACK : WHITE;
     hist[ls].slice(-8).forEach(h => memAdd(h.uid, h.key, h.mv));
   }
-  d.arenaLog.unshift({ w: white.name, b: black.name, r: s === 1 ? '1-0' : s === 0 ? '0-1' : '1/2', n: ply, t: Date.now() });
+  d.arenaLog.unshift({ w: white.name, b: black.name, r: s === 1 ? '1-0' : s === 0 ? '0-1' : '1/2', n: ply, t: Date.now(), s: cur.start, we: cur.white.elo, be: cur.black.elo, h: cur.hist, a: cur.all });
+  d.arenaLog.forEach((x, i) => { if (i >= 6) { delete x.h; delete x.a; } });
   if (d.arenaLog.length > 30) d.arenaLog.length = 30;
   dirty = true;
   cur.over = true; cur.result = result; cur.white.elo = sw.elo; cur.black.elo = sb.elo;

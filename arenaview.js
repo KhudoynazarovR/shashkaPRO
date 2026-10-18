@@ -55,7 +55,7 @@
     }
     return h;
   }
-  var viewPly = null, vId = null;
+  var viewPly = null, vId = null, vLog = null;
   (function () { var s = document.createElement('style'); s.textContent = '#avOv .avN{border:0;border-radius:10px;background:#2e2a70;color:#fff;padding:8px 14px;font-size:18px}#avOv .avMk{padding:2px 4px;border-radius:6px}'; document.head.appendChild(s); })();
   function decB(s) { var a = []; for (var i = 0; i < 64; i++) { var c = s.charAt(i); a.push(c === 'w' ? 1 : c === 'W' ? 2 : c === 'b' ? -1 : c === 'B' ? -2 : 0); } return a; }
   function bindNav(g) {
@@ -70,11 +70,13 @@
       var p = +a.getAttribute('data-p'); viewPly = p >= n ? null : p; draw(last); }; });
   }
   function draw(j) {
-    if (!ov) return; last = j;
+    if (!ov) return; last = j; var rv = null;
+    if (vLog != null && j.log && j.log[vLog] && j.log[vLog].h) { var x0 = j.log[vLog]; rv = x0; j = Object.assign({}, j, { game: { id: 'L' + x0.t, white: { name: x0.w, elo: x0.we || '' }, black: { name: x0.b, elo: x0.be || '' }, board: null, hist: x0.h, all: x0.a, start: x0.s || 'std', ply: x0.n, over: true, result: x0.r === '1-0' ? 'white' : x0.r === '0-1' ? 'black' : 'draw', moves: [] } }); }
     var g = j.game, h = '<button class="avX" id="avClose">✕</button><h3>\uD83D\uDD34 Bot arenasi</h3>';
     if (g) {
       h += '<div>\u26AA ' + nm(g.white.name) + ' (' + g.white.elo + ') &nbsp;vs&nbsp; \u26AB ' + nm(g.black.name) + ' (' + g.black.elo + ')</div>';
       if (g.id !== vId) { vId = g.id; viewPly = null; }
+        if (rv) h += '<button class="avN avBk" style="margin:6px 0">\u2B05 Jonli o‘yin</button>';
       var cp = -1, tot = 0, shown = g.board;
       if (g.hist && g.hist.length) { tot = g.hist.length - 1; cp = (viewPly == null || viewPly > tot) ? tot : viewPly; shown = decB(g.hist[cp]); }
       h += '<div id="avBd">' + board64(shown) + '</div>';
@@ -87,11 +89,13 @@
     h += '</table>';
     if (j.log && j.log.length) {
       h += '<table><tr><th colspan="4">Oxirgi o‘yinlar</th></tr>';
-      j.log.slice(0, 6).forEach(function (x) { h += '<tr><td>' + nm(x.w) + '</td><td>' + esc(x.r) + '</td><td>' + nm(x.b) + '</td><td style="opacity:.7;font-size:12px">' + dt(x.t) + '</td></tr>'; });
+      j.log.slice(0, 6).forEach(function (x, i) { h += '<tr class="avLg" data-i="' + i + '" style="' + (x.h ? 'cursor:pointer;background:rgba(255,255,255,.06)' : '') + '"><td>' + nm(x.w) + '</td><td>' + esc(x.r) + '</td><td>' + nm(x.b) + '</td><td style="opacity:.7;font-size:12px">' + dt(x.t) + '</td></tr>'; });
       h += '</table>';
     }
     if (j.admin) h += '<button class="avT" id="avTg">' + (j.enabled ? '\u23F8 Arenani to‘xtatish' : '\u25B6 Arenani yoqish') + '</button>';
     ov.innerHTML = h; bindNav(g);
+    ov.querySelectorAll('.avLg').forEach(function (r) { r.onclick = function () { var i = +r.getAttribute('data-i'); if (j.log[i] && j.log[i].h) { vLog = i; viewPly = null; vId = null; draw(last); } }; });
+    var bk = ov.querySelector('.avBk'); if (bk) bk.onclick = function () { vLog = null; viewPly = null; vId = null; draw(last); };
     document.getElementById('avClose').onclick = closeOv;
     var tg = document.getElementById('avTg');
     if (tg) tg.onclick = function () {
