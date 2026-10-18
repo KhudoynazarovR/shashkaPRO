@@ -78,7 +78,7 @@
     if (moveBuf || moveLoading) return;
     moveLoading = true;
     try {
-      fetch("/sounds/move.wav?v=1").then(function (r) { return r.arrayBuffer(); }).then(function (ab) {
+      fetch("/sounds/move.wav?v=2").then(function (r) { return r.arrayBuffer(); }).then(function (ab) {
         a.decodeAudioData(ab, function (b) { moveBuf = b; }, function () { moveLoading = false; });
       }).catch(function () { moveLoading = false; });
     } catch (e) { moveLoading = false; }
