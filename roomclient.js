@@ -6,17 +6,18 @@
     v.gain.setValueAtTime(0.0001,t0); v.gain.exponentialRampToValueAtTime(g,t0+0.01); v.gain.exponentialRampToValueAtTime(0.0001,t0+d);
     o.connect(v); v.connect(a.destination); o.start(t0); o.stop(t0+d+0.05); }
   function snd(){ tone(987.77,0,0.18,0.35); tone(1318.5,0.12,0.45,0.35); tone(1975.5,0.12,0.45,0.12); }
+  window.__coinClear=function(){ var e=document.getElementById('coinFxEl'); if(e) e.remove(); };
   window.__coinFx=function(k){
     try{ snd(); }catch(e){}
     if(!document.getElementById('coinFxCss')){
       var st=document.createElement('style'); st.id='coinFxCss';
-      st.textContent='@keyframes coinFxUp{0%{opacity:0;transform:translate(-50%,0) scale(.6)}15%{opacity:1;transform:translate(-50%,-10px) scale(1.15)}70%{opacity:1;transform:translate(-50%,-40px) scale(1)}100%{opacity:0;transform:translate(-50%,-70px) scale(1)}}';
+      st.textContent='@keyframes coinFxIn{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}60%{opacity:1;transform:translate(-50%,-50%) scale(1.2)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}@keyframes coinFxUp{0%{opacity:0;transform:translate(-50%,0) scale(.6)}15%{opacity:1;transform:translate(-50%,-10px) scale(1.15)}70%{opacity:1;transform:translate(-50%,-40px) scale(1)}100%{opacity:0;transform:translate(-50%,-70px) scale(1)}}';
       document.head.appendChild(st);
     }
     var d=document.createElement('div');
     d.textContent='+'+k+' \uD83E\uDE99';
-    d.style.cssText='position:fixed;left:50%;top:45%;z-index:99999;pointer-events:none;font-size:44px;font-weight:800;color:#ffd54a;text-shadow:0 2px 10px #000,0 0 18px #f5a300;animation:coinFxUp 2.2s ease-out forwards';
-    document.body.appendChild(d); setTimeout(function(){ try{ d.remove(); }catch(e){} },2300);
+    d.style.cssText='position:fixed;left:50%;top:48%;z-index:99999;pointer-events:none;font-size:44px;font-weight:800;color:#ffd54a;text-shadow:0 2px 10px #000,0 0 18px #f5a300;animation:coinFxIn .6s ease-out forwards';
+    window.__coinClear(); d.id='coinFxEl'; document.body.appendChild(d); setTimeout(function(){ try{ if(d.parentNode) d.remove(); }catch(e){} },600000);
   };
 })();
 /* roomclient.js — guruh o'yini (xona) rejimi.
@@ -1037,6 +1038,7 @@
     }
     function onMessage(m) {
       if (m.type === "error" && st.optim) { st.optim = false; st.optN = 0; st.pending = false; st.forced = null; send({ type: "roomSync", roomId: roomId }); }
+      if (m.type === "roomState" && m.roomId === roomId && !m.finished) { try { window.__coinClear(); } catch (e) {} }
       if (m.type === "roomState" && m.roomId === roomId) {
         st.optim = false;
         st.joined = true;
