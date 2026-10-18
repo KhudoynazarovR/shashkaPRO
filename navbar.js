@@ -158,7 +158,7 @@
     po.style.display = 'none';
     if (a === 'seek') clickText('Raqib qidirish');
     else if (a === 'room') clickText('Xona yaratish');
-    else if (a === 'trn') { if (window.lbNav) window.lbNav.open('t'); }
+    else if (a === 'trn') { window.nvK = 't'; if (window.lbNav) window.lbNav.open('t'); }
     else if (a === 'ai') { if (window.lbNav) { try { window.lbNav.close(); } catch (x) {} } if (window.aiShow) window.aiShow('play'); }
   };
   window.nvK = window.nvK || 'pl'; mark('pl');
