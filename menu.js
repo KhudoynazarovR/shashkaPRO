@@ -433,20 +433,17 @@
     var L = S.list, n = L.length, sv = S.solved || [];
     var cu = 0; while (cu < n && sv.indexOf(L[cu].id) >= 0) cu++;
     var ch = Math.floor(Math.min(cu, Math.max(n - 1, 0)) / 20), a = ch * 20, b = Math.min(a + 20, n);
+    var P = [[54,95],[68,90],[53,85],[36,82],[54,78],[47,72],[60,67],[42,61],[50,54.5],[34,50],[51,47],[59,41],[46,36],[26,34],[64,30],[45,29],[30,23],[77,20],[42,19],[65,15]];
     var h = '<div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:24px">' + sv.length + '<span style="font-size:13px;opacity:.6"> / ' + n + ' yechildi</span></b><span style="opacity:.7">🗺 ' + (ch + 1) + '-bosqich</span></div>';
-    var bgm = ch % 2 ? '#1d3a5a' : '#2b6a34';
-    h += '<div style="position:relative;display:flex;flex-direction:column-reverse;gap:26px;padding:34px 0 34px 0;margin:10px 0;border-radius:16px;overflow:hidden;background-color:' + bgm + ';background-image:linear-gradient(45deg,rgba(0,0,0,.12) 25%,transparent 25%,transparent 75%,rgba(0,0,0,.12) 75%),linear-gradient(45deg,rgba(0,0,0,.12) 25%,transparent 25%,transparent 75%,rgba(0,0,0,.12) 75%);background-size:48px 48px;background-position:0 0,24px 24px">';
-    h += '<span style="position:absolute;left:8px;top:14px;font-size:44px;opacity:.9">🌳</span><span style="position:absolute;right:10px;bottom:30px;font-size:46px;opacity:.9">🏠</span>';
-    var cnt = b - a;
+    h += '<div style="position:relative;margin:10px 0;border-radius:16px;overflow:hidden;line-height:0"><img src="/img/pzmap.webp?v=1" style="width:100%;display:block" alt="">';
     for (var i = a; i < b; i++) {
-      var k = i - a, done = sv.indexOf(L[i].id) >= 0, now = (i === cu), lock = (i > cu + 3);
-      var x = 8 + Math.round(k * (100 / Math.max(cnt, 1)) * 0.55) % 70;
-      x = 12 + ((k * 17) % 56);
+      var k = i - a, p = P[k], done = sv.indexOf(L[i].id) >= 0, now = (i === cu), lock = (i > cu + 3);
       var bg = done ? 'linear-gradient(135deg,#8fd14f,#5fa02f)' : now ? 'linear-gradient(135deg,#ffc94a,#f08a1a)' : lock ? 'linear-gradient(135deg,#dbe9ee,#aebfc7)' : 'linear-gradient(135deg,#d9a35a,#8a5a26)';
-      var tx = done ? '✓' : now ? '♟' : lock ? '☁️' : (i + 1);
-      h += '<div style="margin-left:' + x + '%;width:58px;height:58px;position:relative"><button ' + (lock ? 'disabled' : 'data-pz="' + i + '"') + ' style="width:58px;height:58px;border:0;border-radius:12px;background:' + bg + ';box-shadow:0 6px 0 rgba(0,0,0,.35);transform:rotate(45deg);' + (lock ? 'opacity:.7' : '') + '"><span style="display:inline-block;transform:rotate(-45deg);color:#fff;font-size:22px;font-weight:800;text-shadow:0 2px 2px rgba(0,0,0,.4)">' + tx + '</span></button></div>';
+      var tx = done ? '✓' : now ? '♟' : lock ? '🔒' : (i + 1);
+      h += '<button ' + (lock ? 'disabled' : 'data-pz="' + i + '"') + ' style="position:absolute;left:' + p[0] + '%;top:' + p[1] + '%;transform:translate(-50%,-50%);width:13%;aspect-ratio:1;max-width:58px;border:3px solid #fff;border-radius:50%;background:' + bg + ';box-shadow:0 4px 0 rgba(0,0,0,.4);color:#fff;font-size:18px;font-weight:800;line-height:1;text-shadow:0 2px 2px rgba(0,0,0,.5);padding:0;' + (lock ? 'opacity:.75;' : '') + (now ? 'animation:pzPulse 1.2s infinite;' : '') + '">' + tx + '</button>';
     }
-    h += '</div><button id="pzGo" style="width:100%;padding:16px;border:0;border-radius:14px;background:#6fae3d;color:#fff;font-size:20px;font-weight:700;margin-bottom:14px;box-shadow:0 5px 0 #4b7f27">▶ Masalalar yechish</button>';
+    h += '<style>@keyframes pzPulse{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.15)}}</style></div>';
+    h += '<button id="pzGo" style="width:100%;padding:16px;border:0;border-radius:14px;background:#6fae3d;color:#fff;font-size:20px;font-weight:700;margin-bottom:14px;box-shadow:0 5px 0 #4b7f27">▶ Masalalar yechish</button>';
     return h;
   }
   function list() {
