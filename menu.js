@@ -434,15 +434,19 @@
     var cu = 0; while (cu < n && sv.indexOf(L[cu].id) >= 0) cu++;
     var ch = Math.floor(Math.min(cu, Math.max(n - 1, 0)) / 20), a = ch * 20, b = Math.min(a + 20, n);
     var h = '<div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:24px">' + sv.length + '<span style="font-size:13px;opacity:.6"> / ' + n + ' yechildi</span></b><span style="opacity:.7">🗺 ' + (ch + 1) + '-bosqich</span></div>';
-    h += '<div style="display:flex;flex-direction:column-reverse;gap:8px;padding:16px 10px;margin:10px 0;border-radius:16px;background:' + (ch % 2 ? '#1d3a5a' : '#1f4a2a') + '">';
+    var bgm = ch % 2 ? '#1d3a5a' : '#2b6a34';
+    h += '<div style="position:relative;display:flex;flex-direction:column-reverse;gap:26px;padding:34px 0 34px 0;margin:10px 0;border-radius:16px;overflow:hidden;background-color:' + bgm + ';background-image:linear-gradient(45deg,rgba(0,0,0,.12) 25%,transparent 25%,transparent 75%,rgba(0,0,0,.12) 75%),linear-gradient(45deg,rgba(0,0,0,.12) 25%,transparent 25%,transparent 75%,rgba(0,0,0,.12) 75%);background-size:48px 48px;background-position:0 0,24px 24px">';
+    h += '<span style="position:absolute;left:8px;top:14px;font-size:44px;opacity:.9">🌳</span><span style="position:absolute;right:10px;bottom:30px;font-size:46px;opacity:.9">🏠</span>';
+    var cnt = b - a;
     for (var i = a; i < b; i++) {
-      var done = sv.indexOf(L[i].id) >= 0, now = (i === cu), lock = (i > cu + 3);
-      var off = [0, 60, 110, 60][(i - a) % 4];
-      var bg = done ? '#6fae3d' : now ? '#f5a623' : lock ? '#cfe3ea' : '#b07a3c';
+      var k = i - a, done = sv.indexOf(L[i].id) >= 0, now = (i === cu), lock = (i > cu + 3);
+      var x = 8 + Math.round(k * (100 / Math.max(cnt, 1)) * 0.55) % 70;
+      x = 12 + ((k * 17) % 56);
+      var bg = done ? 'linear-gradient(135deg,#8fd14f,#5fa02f)' : now ? 'linear-gradient(135deg,#ffc94a,#f08a1a)' : lock ? 'linear-gradient(135deg,#dbe9ee,#aebfc7)' : 'linear-gradient(135deg,#d9a35a,#8a5a26)';
       var tx = done ? '✓' : now ? '♟' : lock ? '☁️' : (i + 1);
-      h += '<button ' + (lock ? 'disabled' : 'data-pz="' + i + '"') + ' style="margin-left:' + off + 'px;width:64px;height:64px;border:0;border-radius:16px;background:' + bg + ';color:#fff;font-size:24px;font-weight:700;' + (lock ? 'opacity:.55' : '') + '">' + tx + '</button>';
+      h += '<div style="margin-left:' + x + '%;width:58px;height:58px;position:relative"><button ' + (lock ? 'disabled' : 'data-pz="' + i + '"') + ' style="width:58px;height:58px;border:0;border-radius:12px;background:' + bg + ';box-shadow:0 6px 0 rgba(0,0,0,.35);transform:rotate(45deg);' + (lock ? 'opacity:.7' : '') + '"><span style="display:inline-block;transform:rotate(-45deg);color:#fff;font-size:22px;font-weight:800;text-shadow:0 2px 2px rgba(0,0,0,.4)">' + tx + '</span></button></div>';
     }
-    h += '</div><button id="pzGo" style="width:100%;padding:16px;border:0;border-radius:14px;background:#6fae3d;color:#fff;font-size:20px;font-weight:700;margin-bottom:14px">▶ Masalalar yechish</button>';
+    h += '</div><button id="pzGo" style="width:100%;padding:16px;border:0;border-radius:14px;background:#6fae3d;color:#fff;font-size:20px;font-weight:700;margin-bottom:14px;box-shadow:0 5px 0 #4b7f27">▶ Masalalar yechish</button>';
     return h;
   }
   function list() {
