@@ -123,6 +123,28 @@ function handle(req, res, url) {
     }
   } catch (e) {}
   if (p === '/api/economy' && req.method === 'GET') { send(res, 200, CFG); return true; }
+  const _ADM = tg => !!(tg && (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(tg.id)));
+  if (p === '/api/botadmin' && req.method === 'GET') { const tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN); send(res, 200, { admin: _ADM(tg) }); return true; }
+  if (p === '/api/botedit' && req.method === 'POST') {
+    const tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
+    if (!_ADM(tg)) { send(res, 403, { error: 'admin emassiz' }); return true; }
+    readBody(req, 200000, body => {
+      let j = {}; try { j = JSON.parse(body); } catch (e) {}
+      const uid = String(j.uid || '');
+      if (!/^bot(_[a-z]+)?$/.test(uid)) return send(res, 400, { error: 'bad_uid' });
+      store.db.botNames = store.db.botNames || {}; store.db.botAv = store.db.botAv || {};
+      if (j.name != null) { const n = String(j.name).replace(/[\u0000-\u001f<>'"\\]/g, '').trim().slice(0, 24); if (n) { store.db.botNames[uid] = n; try { global.__botRename && global.__botRename(uid, n); } catch (e) {} } }
+      if (j.img) { const a = String(j.img); if (!/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(a) || a.length > 150000) return send(res, 400, { error: 'bad_image' }); store.db.botAv[uid] = a; }
+      store.save(); send(res, 200, { ok: true });
+    });
+    return true;
+  }
+  if (p.startsWith('/api/av/bot') && req.method === 'GET') {
+    const a = ((store.db.botAv || {})[decodeURIComponent(p.slice(8))]) || '';
+    const m = /^data:image\/jpeg;base64,(.+)$/.exec(a);
+    if (!m) { res.writeHead(404); res.end(); return true; }
+    res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'no-cache' }); res.end(Buffer.from(m[1], 'base64')); return true;
+  }
   if (p.startsWith('/api/av/') && req.method === 'GET') {
     const _u = store.users()[decodeURIComponent(p.slice(8))];
     const _m = /^data:image\/jpeg;base64,(.+)$/.exec((_u && _u.avatar) || '');

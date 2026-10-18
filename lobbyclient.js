@@ -1616,3 +1616,49 @@ document.head.appendChild(_as); }
 ;(function(){var s=document.createElement("script");s.src="/arenaview.js";document.head.appendChild(s)})();
 
 ;(function(){var s=document.createElement("script");s.src="/uzclock.js";document.head.appendChild(s)})();
+
+
+;(function () {
+  var adm = false;
+  function ini() { return (window.Telegram && Telegram.WebApp && Telegram.WebApp.initData) || ''; }
+  try { fetch('/api/botadmin', { headers: { 'x-init-data': ini() } }).then(function (r) { return r.json(); }).then(function (j) { adm = !!(j && j.admin); }).catch(function () {}); } catch (e) {}
+  document.addEventListener('click', function (e) {
+    if (!adm) return;
+    var t = e.target.closest && e.target.closest('.lbav'); if (!t) return;
+    var m = /spUser\('(bot[a-z_]*)'\)/.exec(t.getAttribute('onclick') || ''); if (!m) return;
+    e.stopPropagation(); e.preventDefault(); openEd(m[1]);
+  }, true);
+  function openEd(uid) {
+    var o = document.createElement('div');
+    o.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#000a;display:flex;align-items:center;justify-content:center';
+    o.innerHTML = '<div style="background:#1b1b3a;color:#fff;padding:18px;border-radius:16px;width:80%;max-width:340px;font-size:15px"><b>Botni tahrirlash</b><input id="beN" placeholder="Yangi nom (masalan: Arslon BOT)" maxlength="24" style="width:100%;box-sizing:border-box;margin:12px 0;padding:10px;border-radius:10px;border:0"><input id="beF" type="file" accept="image/*" style="margin-bottom:12px;width:100%"><div style="display:flex;gap:8px"><button id="beS" style="flex:1;padding:10px;border:0;border-radius:10px;background:#2f7bff;color:#fff">Saqlash</button><button id="beC" style="flex:1;padding:10px;border:0;border-radius:10px;background:#444;color:#fff">Bekor</button></div><div id="beM" style="margin-top:8px;font-size:13px"></div></div>';
+    document.body.appendChild(o);
+    function $(i) { return o.querySelector('#' + i); }
+    $('beC').onclick = function () { o.remove(); };
+    $('beS').onclick = function () {
+      var name = $('beN').value.trim(), f = $('beF').files && $('beF').files[0];
+      function send(img) {
+        var body = { uid: uid }; if (name) body.name = name; if (img) body.img = img;
+        if (!name && !img) { $('beM').textContent = 'Nom yoki rasm tanlang'; return; }
+        $('beM').textContent = 'Saqlanmoqda…';
+        fetch('/api/botedit', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-init-data': ini() }, body: JSON.stringify(body) })
+          .then(function (r) { return r.json(); })
+          .then(function (j) { if (j && j.ok) { $('beM').textContent = '✅ Saqlandi'; setTimeout(function () { location.reload(); }, 600); } else $('beM').textContent = '⚠️ ' + ((j && j.error) || 'xatolik'); })
+          .catch(function () { $('beM').textContent = '⚠️ tarmoq xatosi'; });
+      }
+      if (!f) return send(null);
+      var rd = new FileReader();
+      rd.onload = function () {
+        var im = new Image();
+        im.onload = function () {
+          var z = 256, cv = document.createElement('canvas'); cv.width = z; cv.height = z;
+          var mm = Math.min(im.width, im.height);
+          cv.getContext('2d').drawImage(im, (im.width - mm) / 2, (im.height - mm) / 2, mm, mm, 0, 0, z, z);
+          send(cv.toDataURL('image/jpeg', 0.8));
+        };
+        im.src = rd.result;
+      };
+      rd.readAsDataURL(f);
+    };
+  }
+})();

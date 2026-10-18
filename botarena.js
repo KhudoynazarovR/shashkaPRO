@@ -184,7 +184,7 @@ function state(isAdmin) {
   lastWatch = Date.now();
   return {
     enabled: enabled(), admin: !!isAdmin, game: cur,
-    bots: BOTS.map(b => { const s = stat(b.uid); return { uid: b.uid, name: b.name, elo: s.elo, w: s.w, l: s.l, dr: s.dr }; }).sort((x, y) => y.elo - x.elo),
+    bots: BOTS.map(b => { const s = stat(b.uid); return { uid: b.uid, name: ((D().botNames || {})[b.uid]) || b.name, elo: s.elo, w: s.w, l: s.l, dr: s.dr }; }).sort((x, y) => y.elo - x.elo),
     log: D().arenaLog.slice(0, 10)
   };
 }

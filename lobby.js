@@ -96,13 +96,14 @@ function createLobby({ send, clients, roomsApi }) {
   const sendUid = (uid, data) => connsOf(uid).forEach(c => send(c.ws, data));
 
   // ---------- holat ----------
+  function botX(u) { try { const d = require('./store').db; return { n: (d.botNames || {})[u], a: !!(d.botAv || {})[u] }; } catch (e) { return {}; } }
   function botElo(u) { try { const m = require('./store').db.botElo; return (m && m[u] && m[u].elo) || 0; } catch (e) { return 0; } }
   function playersList() {
     const seen = new Map();
     for (const c of lbClients()) {
       const p = seen.get(c.lb.uid);
       if (!p) { let su = null; try { su = require('./store').users()[String(c.lb.uid)]; } catch (e) {} seen.set(c.lb.uid, { uid: c.lb.uid, name: c.lb.name, busy: !!c.lb.inRoom, elo: (c.isBot ? botElo(c.lb.uid) : 0) || (su && su.elo) || 1000, gems: (su && su.diamonds) || 0, wins: (su && su.wins) || 0, hasAv: !!(su && su.avatar), bot: !!c.isBot, prem: !!(su && require('./store').isPremium(su)) }); }
-      else { p.busy = p.busy && !!c.lb.inRoom; if (c.isBot) p.elo = botElo(c.lb.uid) || p.elo; }
+      else { p.busy = p.busy && !!c.lb.inRoom; if (c.isBot) { p.elo = botElo(c.lb.uid) || p.elo; const x = botX(c.lb.uid); p.hasAv = !!x.a; if (x.n) p.name = x.n; } }
     }
     return [...seen.values()];
   }
@@ -1196,6 +1197,9 @@ function createLobby({ send, clients, roomsApi }) {
 
   // 🤖 ShashkaBot: lobbida doim onlayn turadi (soxta ulanish, unga hech narsa yuborilmaydi)
   const botWs = { readyState: 1, isAlive: true, send() {}, ping() {}, pong() {}, terminate() {}, close() {}, on() {} };
+  global.__botRename = function (uid, name) { const b = BOTS.find(x => x.uid === uid); if (!b) return; b.name = name; const c = clients.get('ai_' + uid); if (c) { c.name = name; if (c.lb) c.lb.name = name; } };
+  const _applyBN = () => { try { const bn = require('./store').db.botNames || {}; for (const k in bn) global.__botRename(k, bn[k]); } catch (e) {} };
+  _applyBN(); setTimeout(_applyBN, 5000); setTimeout(_applyBN, 20000);
   for (const b of BOTS) {
     clients.set('ai_' + b.uid, { id: 'ai_' + b.uid, name: b.name, elo: 0, ws: botWs, isBot: true, hidden: true, lb: { uid: b.uid, name: b.name, tg: false, inRoom: false } });
   }
