@@ -56,7 +56,7 @@
     return h;
   }
   var viewPly = null, vId = null, vLog = null;
-  (function () { var s = document.createElement('style'); s.textContent = '#avOv .avN{border:0;border-radius:10px;background:#2e2a70;color:#fff;padding:8px 14px;font-size:18px}#avOv .avMk{padding:2px 4px;border-radius:6px}'; document.head.appendChild(s); })();
+  (function () { var s = document.createElement('style'); s.textContent = '#avOv .avN{border:0;border-radius:10px;background:#2e2a70;color:#fff;padding:8px 14px;font-size:18px}#avOv .avMk{padding:2px 4px;border-radius:6px}#hzMkR,#hzDaily,#hzPromo{display:none!important}'; document.head.appendChild(s); })();
   function decB(s) { var a = []; for (var i = 0; i < 64; i++) { var c = s.charAt(i); a.push(c === 'w' ? 1 : c === 'W' ? 2 : c === 'b' ? -1 : c === 'B' ? -2 : 0); } return a; }
   function bindNav(g) {
     if (!g || !g.hist) return;
