@@ -74,22 +74,35 @@
 
   // yumshoq taxta ovozi (/sounds/move.wav); yuklanmasa eski sintez ovoz ishlaydi
   var moveBuf = null, moveLoading = false;
+  var _dbgT = null;
+  function dbg(m) {
+    try {
+      var e = document.getElementById("spDbg");
+      if (!e) {
+        e = document.createElement("div"); e.id = "spDbg";
+        e.style.cssText = "position:fixed;top:70px;right:8px;z-index:2147483000;background:rgba(0,0,0,.75);color:#fff;font:12px Arial;padding:4px 8px;border-radius:8px;pointer-events:none";
+        document.body.appendChild(e);
+      }
+      e.textContent = m; e.style.display = "block";
+      clearTimeout(_dbgT); _dbgT = setTimeout(function () { e.style.display = "none"; }, 1500);
+    } catch (x) {}
+  }
   function loadMove(a) {
     if (moveBuf || moveLoading) return;
     moveLoading = true;
     try {
       fetch("/sounds/move.wav?v=2").then(function (r) { return r.arrayBuffer(); }).then(function (ab) {
-        a.decodeAudioData(ab, function (b) { moveBuf = b; }, function () { moveLoading = false; });
-      }).catch(function () { moveLoading = false; });
+        a.decodeAudioData(ab, function (b) { moveBuf = b; dbg("wav yuklandi " + b.duration.toFixed(2) + "s"); }, function () { moveLoading = false; dbg("wav dekod xato"); });
+      }).catch(function () { moveLoading = false; dbg("wav fetch xato"); });
     } catch (e) { moveLoading = false; }
   }
   function wood(a, t, gain, rate, fbPitch, fbGain) {
-    if (!moveBuf) { loadMove(a); knock(a, t, fbPitch, fbGain); return; }
+    if (!moveBuf) { loadMove(a); dbg("🔈 zaxira ovoz"); knock(a, t, fbPitch, fbGain); return; }
     var s = a.createBufferSource(), g = a.createGain();
     s.buffer = moveBuf; s.playbackRate.value = rate || 1;
     g.gain.value = gain;
     s.connect(g); g.connect(master);
-    s.start(t);
+    s.start(t); dbg("🔊 wav ijro");
   }
 
   var SOUNDS = {
