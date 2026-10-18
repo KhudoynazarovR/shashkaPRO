@@ -19,7 +19,7 @@
   document.head.appendChild(css);
   var bar = document.createElement('div');
   bar.id = 'nvBar';
-  var items = [['pf', '👤', 'Profil'], ['pl', '🎮', 'O‘yin'], ['pz', '🧩', 'Masalalar'], ['t', '🏆', 'Turnir'], ['mn', '☰', 'Menyu']];
+  var items = [['pf', '👤', 'Profil'], ['pl', '🎮', 'O‘yin'], ['t', '🏆', 'Turnir'], ['rk', '📊', 'Reyting'], ['mn', '☰', 'Menyu']];
   bar.innerHTML = items.map(function (i) {
     return '<button data-k="' + i[0] + '"><span>' + i[1] + '</span>' + i[2] + '</button>';
   }).join('');
@@ -82,12 +82,6 @@
     if (window.aiHide) window.aiHide();
     if (window.rkClose) window.rkClose();
     if (window.mnClose) window.mnClose();
-    if (k === 'pz') {
-      pg.style.display = 'none';
-      if (window.lbNav) window.lbNav.close();
-      if (window.mnA) window.mnA('@puz');
-      return;
-    }
     if (k === 'mn') {
       pg.style.display = 'none';
       if (window.lbNav) window.lbNav.close();
