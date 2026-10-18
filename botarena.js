@@ -75,13 +75,13 @@ function memAdd(uid, key, mv) {
 }
 function strength(bot) {
   const e = stat(bot.uid).elo;
-  return { secs: clamp(bot.secs * 0.5 + (e - 1000) / 1000, 0.05, 6), blunder: clamp(bot.blunder - (e - 1000) / 1500, 0, 0.6) };
+  return { secs: clamp(bot.secs * 0.25 + (e - 1000) / 1000, 0.05, 2), blunder: clamp(bot.blunder - (e - 1000) / 1500, 0, 0.6) };
 }
 
 async function askEngine(board, side, secs) {
   for (let i = 0; i < 6; i++) {
     const r = await new Promise(res => {
-      try { K.move({ board: to64(board), side: side === WHITE ? 1 : -1, time: secs }, x => res(x || { error: 'x' })); }
+      try { K.move({ board: to64(board), side: side === WHITE ? 1 : -1, time: secs, arena: true }, x => res(x || { error: 'x' })); }
       catch (e) { res({ error: 'throw' }); }
     });
     if (r && !r.error) return r;

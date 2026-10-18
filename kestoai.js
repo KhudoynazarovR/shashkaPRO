@@ -41,7 +41,12 @@ function next() {
   cur.tm = setTimeout(() => finish("timeout"), (cur.secs + 8) * 1000);
   child.stdin.write(cur.input);
 }
-function run(input, secs, cb) { queue.push({ input: input, secs: secs, cb: cb }); next(); }
+let LOWFLAG = false;
+function run(input, secs, cb) {
+  const it = { input: input, secs: secs, cb: cb, low: LOWFLAG };
+  if (!it.low) { const i = queue.findIndex(q => q.low); if (i < 0) queue.push(it); else queue.splice(i, 0, it); } else queue.push(it);
+  next();
+}
 function newGame(b) { let n = 0; for (const v of b) if (Math.abs(v) === 1) n++; return n === 24 && !b.some(v => Math.abs(v) === 2); }
 
 function encode(board, side, secs) {
@@ -58,6 +63,7 @@ function encode(board, side, secs) {
 }
 
 function move(j, cb) {
+  LOWFLAG = !!(j && j.arena);
   if (process.env.KDEBUG) console.log("[KestoG] request", j && j.time);
   if (!ready) return cb({ error: "notready", code: 503 });
   const b = j && j.board, side = (j && j.side > 0) ? 1 : -1;
