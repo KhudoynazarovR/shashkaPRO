@@ -102,7 +102,7 @@ function createLobby({ send, clients, roomsApi }) {
     const seen = new Map();
     for (const c of lbClients()) {
       const p = seen.get(c.lb.uid);
-      if (!p) { let su = null; try { su = require('./store').users()[String(c.lb.uid)]; } catch (e) {} seen.set(c.lb.uid, { uid: c.lb.uid, name: c.lb.name, busy: !!c.lb.inRoom, elo: (c.isBot ? botElo(c.lb.uid) : 0) || (su && su.elo) || 1000, gems: (su && su.diamonds) || 0, wins: (su && su.wins) || 0, hasAv: !!(su && su.avatar), bot: !!c.isBot, prem: !!(su && require('./store').isPremium(su)) }); }
+      if (!p) { let su = null; try { su = require('./store').users()[String(c.lb.uid)]; } catch (e) {} seen.set(c.lb.uid, { uid: c.lb.uid, name: c.lb.name, busy: !!c.lb.inRoom, elo: (c.isBot ? botElo(c.lb.uid) : 0) || (su && su.elo) || 1000, gems: (su && su.diamonds) || 0, wins: (su && su.wins) || 0, hasAv: !!(su && su.avatar) || (!!c.isBot && !!botX(c.lb.uid).a), bot: !!c.isBot, prem: !!(su && require('./store').isPremium(su)) }); }
       else { p.busy = p.busy && !!c.lb.inRoom; if (c.isBot) { p.elo = botElo(c.lb.uid) || p.elo; const x = botX(c.lb.uid); p.hasAv = !!x.a; if (x.n) p.name = x.n; } }
     }
     return [...seen.values()];
