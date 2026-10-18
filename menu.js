@@ -434,6 +434,8 @@
     if (curFo && (S.folders || []).indexOf(curFo) < 0) curFo = '';
     if (curLv || curFo) return items();
     var fl = S.folders || [], h = head('🧩 Masalalar', topBtns());
+    var _tot = S.list.length, _dn = nDone(S.list), _pc = _tot ? Math.round(_dn * 100 / _tot) : 0;
+    h += '<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px"><b style="font-size:26px">' + _dn + '<span style="font-size:14px;opacity:.6"> / ' + _tot + ' yechildi</span></b><span style="opacity:.7">' + _pc + '%</span></div><div style="height:12px;border-radius:8px;background:#262b5a;overflow:hidden"><div style="height:100%;width:' + _pc + '%;background:#f5873b"></div></div><button id="pzGo" style="width:100%;margin-top:14px;padding:16px;border:0;border-radius:14px;background:#6fae3d;color:#fff;font-size:20px;font-weight:700">▶ Masalalar yechish</button></div>';
     if (S.admin) h += '<div style="margin-bottom:10px"><button id="pzNF" style="' + BG + '">📁 Yangi papka</button></div>';
     if (!S.list.length && !fl.length) h += '<div style="padding:30px;opacity:.7">Hozircha masala yo‘q</div>';
     [1, 2, 3].forEach(function (lv) {
@@ -446,7 +448,8 @@
     });
     if (!S.admin) h += '<div style="font-size:11px;opacity:.4;margin-top:16px">ID: ' + esc(S.myId) + '</div>';
     ov.innerHTML = h;
-    on('#pzBack', close); on('#pzTop', pzTop); on('#pzNew', function () { newPz(0, ''); });
+    on('#pzBack', close); on('#pzTop', pzTop);
+    on('#pzGo', function () { var nx = S.list.filter(function (p) { return (S.solved || []).indexOf(p.id) < 0; })[0] || S.list[0]; if (nx) play(nx); }); on('#pzNew', function () { newPz(0, ''); });
     on('#pzNF', function () {
       var n = cleanName(prompt('Yangi papka nomi:'));
       if (!n) return;
