@@ -196,6 +196,7 @@ function createRooms({ send, clients, onFinish }) {
     if (u.botDay.n >= BOT_DAILY) return;
     u.botDay.n++;
     eco.add(human, coins, 'bot_win');
+    broadcast(room, { type: 'botCoins', roomId: room.id, n: coins });
   }
   function finish(room, winner, reason) {
     if (room.finished) return;
