@@ -201,4 +201,14 @@
     '#lbPanel div[onclick*="lbTPlus"]{display:none!important}' +
     '#lbPanel div:has(>div[onclick*="lbTPlus"]){display:none!important}';
   document.head.appendChild(cf3);
+
+  // ===== nvFlat4: Turnir ko'rinishida ortiqcha kartalarni yashirish =====
+  var cf4 = document.createElement('style');
+  cf4.id = 'nvFlat4';
+  cf4.textContent =
+    'body.nvT #hzHero,body.nvT #hzMe,body.nvT #promoBar,body.nvT #lbPanel .lbhb,body.nvT #lbPanel .lbdr{display:none!important}';
+  document.head.appendChild(cf4);
+  setInterval(function () {
+    document.body.classList.toggle('nvT', window.nvK === 't');
+  }, 300);
 })();
