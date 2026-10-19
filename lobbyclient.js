@@ -217,7 +217,7 @@
     }
     function openLinked(kind) {
       var id = kind === "t" ? linkTid : linkSid;
-      if (kind === "t") linkTid = ""; else linkSid = "";
+      if (kind === "t") linkTid = ""; else linkSid = ""; /*TVOPENLINK*/ if (kind === "t" && id) { var _tvi = 0, _tvt = setInterval(function () { if (window.tvOpen) { clearInterval(_tvt); window.tvOpen(id); } else if (++_tvi > 20) clearInterval(_tvt); }, 150); }
       curTab = kind;
       openPanel();
       var list = kind === "t" ? S.tournaments : S.simuls;
