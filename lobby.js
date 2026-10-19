@@ -89,7 +89,7 @@ function createLobby({ send, clients, roomsApi }) {
   const _rev = (k, v) => v && v.__map ? new Map(v.__map) : v && v.__set ? new Set(v.__set) : v;
   function saveTournaments() {
     try {
-      const arr = [...tournaments.values()].filter(t => t.status === 'reg');
+      const arr = [...tournaments.values()].filter(t => { if (t.status !== 'reg' && t.status !== 'finished') return false; try { JSON.stringify(t, _rep); return true; } catch (e) { return false; } });
       fs.writeFileSync(T_FILE + '.tmp', JSON.stringify(arr, _rep));
       fs.renameSync(T_FILE + '.tmp', T_FILE);
     } catch (e) { console.log('[turnir] saqlashda xato:', e.message); }
@@ -1308,7 +1308,7 @@ function createLobby({ send, clients, roomsApi }) {
     let changed = false;
     for (const [id, ch] of challenges) if (now - ch.at > CHALLENGE_TTL) { challenges.delete(id); changed = true; }
     for (const [id, t] of tournaments) {
-      if ((t.status === 'finished' && now - t.finishedAt > KEEP_FINISHED) || (t.status === 'reg' && now - t.created > REG_TTL)) {
+      if ((t.status === 'finished' && now - t.finishedAt > KEEP_FINISHED) || (t.status === 'reg' && now - t.created > REG_TTL && !(t.startAt && t.startAt > now))) {
         tournaments.delete(id); changed = true;
       }
     }
