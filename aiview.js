@@ -25,7 +25,7 @@
   function vis(id) { var e = document.getElementById(id); return !!e && getComputedStyle(e).display !== "none"; }
   setInterval(function () {
     if (wrap.style.display !== "none" || document.getElementById("lbBack")) return;
-    if (vis("lbPanel") || vis("rkPanel") || vis("mnPanel") || vis("nvPg")) return;
+    if (vis("lbPanel") || vis("rkPanel") || vis("mnPanel") || vis("nvPg") || document.getElementById("spPz")) return;
     var m = document.querySelector('#nvBar [data-k="mn"]'); if (m) m.click();
   }, 900);
 })();
