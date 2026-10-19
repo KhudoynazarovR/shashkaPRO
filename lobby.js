@@ -577,6 +577,16 @@ function createLobby({ send, clients, roomsApi }) {
     t.finishedAt = Date.now(); if (!t.paidOut) { t.paidOut = true; const r = economy.finishTournament(t.creatorUid, [...(t.paid || [])]); if (r.bonus) toast(t.creatorUid, '🪙 Yaratuvchi bonusi: +' + r.bonus); }
     t.nextAt = 0;
     const st = t.type === 'arena' ? arenaStandings(t) : standings(t);
+    if (t.prize > 0 && !t.prizeDone) {
+      t.prizeDone = true;
+      const el = st.filter(x => !x.withdrawn && x.games > 0);
+      const sh = el.length >= 3 ? [50, 30, 20] : el.length === 2 ? [60, 40] : el.length === 1 ? [100] : [];
+      sh.forEach((pc, i) => {
+        const amt = Math.floor(t.prize * pc / 100);
+        if (amt > 0 && economy.add(el[i].uid, amt, 'tournament_prize_' + (i + 1))) toast(el[i].uid, '🏆 ' + (i + 1) + '-o‘rin mukofoti: +' + amt + ' 🪙');
+      });
+      if (!sh.length && t.prizePaid) economy.refund(t.creatorUid, t.prizePaid, 'refund_prize');
+    }
     const top = st[0] ? st[0].name : '-';
     if (t.clubIds && t.clubIds.length) { const cs = clubStandings(t); if (cs.length > 1) { clubsApi.award(cs); if (cs[0]) for (const p of t.players.values()) toast(p.uid, '🏅 Klublar hisobida g‘olib: ' + cs[0].name + ' (' + cs[0].score + ')'); } }
     try {
