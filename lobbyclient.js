@@ -312,6 +312,7 @@
 "<div class=\"row\"><span class=\"muted\">Vaqt:</span><select id=\"lbTtc\">" + tcOpts + "</select></div>" +
 "<div class=\"row\" id=\"lbTbzr\"><label><input type=\"checkbox\" id=\"lbTbz\" checked> ⚡ Berserk yoqilgan</label></div>" +
 "<div class=\"row\"><span class=\"muted\">🪙 Mukofot:</span><input id=\"lbTpz\" type=\"number\" min=\"100\" value=\"100\" style=\"flex:1;min-width:0\"></div>" +
+"<div id=\"lbTpzc\" class=\"muted\" style=\"font-size:12px\"></div>" +
         "<div class=\"row\"><span class=\"muted\">📅 Aniq sana va vaqt:</span><input id=\"lbTat\" type=\"datetime-local\" style=\"flex:1;min-width:0\"><button id=\"lbTatX\" type=\"button\" class=\"sec\">✕</button></div>" +
         "<div class=\"row\" id=\"lbSw\" style=\"display:none\"><span class=\"muted\">Turlar:</span><select id=\"lbTr\">" +
         "<option value=\"3\">3</option><option value=\"4\">4</option><option value=\"5\" selected>5</option><option value=\"6\">6</option><option value=\"7\">7</option><option value=\"8\">8</option><option value=\"9\">9</option><option value=\"10\">10</option><option value=\"11\">11</option></select>" +
@@ -343,6 +344,11 @@
         { var br = $("lbTbzr"); if (br) br.style.display = K === "arena" ? "" : "none"; }
       };
       $("lbTk").onchange();
+      var _pzc = function () {
+        var v = Math.floor(Number($("lbTpz").value) || 0), e = $("lbTpzc"); if (!e) return;
+        e.textContent = v < 100 ? "Kamida 100 🪙 (admin uchun cheklov yo‘q)" : "🥇 " + Math.floor(v * 0.5) + " · 🥈 " + Math.floor(v * 0.3) + " · 🥉 " + Math.floor(v * 0.2) + " 🪙 — yaratilganda yechiladi: " + v;
+      };
+      $("lbTpz").oninput = _pzc; _pzc();
       $("lbTCreate").onclick = function () {
         window.lbAtOk() && sendMsg({ type: "lbTCreate", startAt: window.lbAt(), clubIds: lbClubIds(), kind: $("lbTk").value, pos: $("lbTp").value, duration: Number($("lbTdur").value), startIn: Number($($("lbTk").value === "arena" ? "lbTin" : "lbTsin").value), rounds: Number($("lbTr").value), interval: Number($("lbTiv").value), name: $("lbTn").value, tc: $("lbTtc").value, berserk: $("lbTbz").checked, prize: Number($("lbTpz").value)||0 });
         $("lbTn").value = "";
