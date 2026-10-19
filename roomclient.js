@@ -749,6 +749,7 @@
       fillLine(elBottom, bottomColor);
       updateClocks();
 
+      if (st.pre && !st.pre.to && st.turn === st.color && !st.pending) { if (!st.forced) { st.selected = st.pre.from; if (!options().length) st.selected = null; } st.pre = null; }
       var opts = options();
       applySkin();
       var lastMv = st.moves.length ? st.moves[st.moves.length - 1] : null;
@@ -875,7 +876,7 @@
       if (mv) sendMove(mv);
     }
 
-    function sendMove(mv) {
+    function sendMove(mv) { st.pre = null;
       var nb = applyStep(st.board, mv);
       var keep = mv.captures.length > 0 && captureSteps(nb, mv.to.r, mv.to.c).length > 0;
       st.pending = true;
