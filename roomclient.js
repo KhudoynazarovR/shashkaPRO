@@ -886,6 +886,7 @@
         var caps = allCaptures(st.board, me);
         var ok = caps.length ? captureSteps(st.board, r, c).length : simpleSteps(st.board, r, c).length;
         st.selected = ok ? { r: r, c: c } : null;
+        if (st.selected && typeof rcm !== "undefined" && rcm.auto) { var o1 = options(); if (o1.length === 1) { sendMove(o1[0]); return; } }
         render();
         return;
       }
