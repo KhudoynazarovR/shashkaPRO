@@ -398,6 +398,7 @@
   }
 
   function open() {
+    hub = !pending; view = '';
     var old = document.getElementById('spPz'); if (old) old.remove();
     ov = document.createElement('div'); ov.id = 'spPz';
     ov.style.cssText = 'position:fixed;left:0;right:0;top:0;bottom:64px;z-index:9500;background:#0b0e1a;color:#fff;overflow-y:auto;padding:14px;box-sizing:border-box;font-family:inherit;text-align:center';
@@ -414,6 +415,24 @@
     }).catch(function () { ov.innerHTML = head('🧩 Masalalar') + '<div style="padding:30px">Server bilan aloqa yo‘q</div>'; on('#pzBack', close); });
   }
   var curLv = 0, curFo = '', edLv = 0, edFolder = '';
+  var hub = 0, view = '';
+  function hubSoon(n) { var t = '🚧 ' + n + ' tez orada qo‘shiladi!'; if (tg && tg.showAlert) tg.showAlert(t); else alert(t); }
+  function dailyPz() { var L = S.list || []; if (!L.length) return null; return L[Math.floor((Date.now() + 18e6) / 864e5) % L.length]; }
+  function hubView() {
+    var go = function () {
+      var dp = dailyPz();
+      window.pzHub({
+        ov: ov, coins: (S.coins != null ? S.coins : (S.bal != null ? S.bal : null)),
+        dailyDone: !!(dp && (S.solved || []).indexOf(dp.id) >= 0),
+        back: close, soon: hubSoon,
+        daily: function () { var p = dailyPz(); if (!p) { hubSoon('Masalalar'); return; } hub = 0; view = ''; play(p); },
+        custom: function () { hub = 0; view = 'custom'; list(); },
+        solve: function () { hub = 0; view = ''; list(); }
+      });
+    };
+    if (window.pzHub) go();
+    else { var sc = document.createElement('script'); sc.src = '/pzhub.js?v=1'; sc.onload = go; sc.onerror = function () { hub = 0; list(); }; document.head.appendChild(sc); }
+  }
   var CARD = 'text-align:left;background:#161a3a;border:1px solid #262b5a;border-radius:16px;padding:12px;margin-bottom:10px;cursor:pointer';
   function lvOf(p) { return [1, 2, 3].indexOf(p.level) >= 0 ? p.level : 1; }
   function foOf(p) { return (p.folder && (S.folders || []).indexOf(p.folder) >= 0) ? p.folder : ''; }
@@ -464,10 +483,11 @@
     return h;
   }
   function list() {
+    if (hub && !curLv && !curFo && !window.__pzPF) return hubView();
     if (window.__pzPF) { var _pf = window.__pzPF; window.__pzPF = ''; if ((S.folders || []).indexOf(_pf) >= 0) { curFo = _pf; curLv = 0; } }
     if (curFo && (S.folders || []).indexOf(curFo) < 0) curFo = '';
     if (curLv || curFo) return items();
-    var fl = S.folders || [], h = head('🧩 Masalalar', topBtns()); h += pzMap();
+    var fl = S.folders || [], h = head(view === 'custom' ? '🎨 Maxsus masalalar' : '🧩 Masalalar', topBtns()); if (view !== 'custom') h += pzMap();
     if (S.admin) h += '<div style="margin-bottom:10px"><button id="pzNF" style="' + BG + '">📁 Yangi papka</button></div>';
     if (!S.list.length && !fl.length) h += '<div style="padding:30px;opacity:.7">Hozircha masala yo‘q</div>';
     [1, 2, 3].forEach(function (lv) {
@@ -480,7 +500,7 @@
     });
     if (!S.admin) h += '<div style="font-size:11px;opacity:.4;margin-top:16px">ID: ' + esc(S.myId) + '</div>';
     ov.innerHTML = h;
-    on('#pzBack', close); on('#pzTop', pzTop);
+    on('#pzBack', function () { hub = 1; view = ''; list(); }); on('#pzTop', pzTop);
     Array.prototype.forEach.call(ov.querySelectorAll('[data-pz]'), function (e) { e.onclick = function () { var p = S.list[Number(e.getAttribute('data-pz'))]; if (p) play(p); }; });
     on('#pzGo', function () { var nx = S.list.filter(function (p) { return (S.solved || []).indexOf(p.id) < 0; })[0] || S.list[0]; if (nx) play(nx); }); on('#pzNew', function () { newPz(0, ''); });
     on('#pzNF', function () {
