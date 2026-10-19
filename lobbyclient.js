@@ -1147,7 +1147,7 @@ document.head.appendChild(_as); }
         var _dr = $("lbDream");
         if (!_dr) { _dr = document.createElement("div"); _dr.id = "lbDream"; _tsb.parentNode.insertBefore(_dr, _tsb.nextSibling); }
         var _my = (S.tournaments || []).filter(function (t) { return t.players.some(function (p) { return p.uid === me; }); }).slice(0, 4), _mh = "";
-        if (_my.length) {
+        if (false && _my.length) {
           _mh = "<div class='lbcl lbmy'><b>👤 Mening turnirlarim</b>" + _my.map(function (t) {
             var k = 0; t.players.forEach(function (p, i) { if (p.uid === me) k = i + 1; });
             var tx = t.status === "finished" ? "Tugatildi" : (t.status === "running" ? "Davom etmoqda" : "Ro‘yxat ochiq");

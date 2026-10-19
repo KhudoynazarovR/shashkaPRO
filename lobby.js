@@ -95,7 +95,7 @@ function createLobby({ send, clients, roomsApi }) {
     } catch (e) { console.log('[turnir] saqlashda xato:', e.message); }
   }
   try { for (const t of JSON.parse(fs.readFileSync(T_FILE, 'utf8'), _rev)) tournaments.set(t.id, t); } catch (e) {}
-  setInterval(saveTournaments, 5000);
+  console.log('[turnir] yuklandi:', tournaments.size); setInterval(saveTournaments, 5000);
   const roomToBoard = new Map(); // roomId -> { t, b }
   const roomToSeries = new Map();
   const simuls = new Map();       // sid -> simul
@@ -1206,7 +1206,7 @@ function createLobby({ send, clients, roomsApi }) {
       case 'lbTCancel': {
         const t = tournaments.get(String(m.tid));
         if (!t || t.creatorUid !== me.uid || t.status !== 'reg') break;
-        tournaments.delete(t.id);
+        console.log('[turnir] bekor qilindi:', t.id, t.name); tournaments.delete(t.id);
         for (const p of t.players.values()) toast(p.uid, t.name + ' bekor qilindi');
         push();
         break;
@@ -1309,7 +1309,7 @@ function createLobby({ send, clients, roomsApi }) {
     for (const [id, ch] of challenges) if (now - ch.at > CHALLENGE_TTL) { challenges.delete(id); changed = true; }
     for (const [id, t] of tournaments) {
       if ((t.status === 'finished' && now - t.finishedAt > KEEP_FINISHED) || (t.status === 'reg' && now - t.created > REG_TTL && !(t.startAt && t.startAt > now))) {
-        tournaments.delete(id); changed = true;
+        console.log('[turnir] tozalandi:', id, t.name, t.status); tournaments.delete(id); changed = true;
       }
     }
     if (changed) push();
