@@ -355,7 +355,7 @@
       $("lbTpz").oninput = _pzc; $("lbTpl").onchange = _pzc; _pzc();
       $("lbTCreate").onclick = function () {
         window.lbAtOk() && sendMsg({ type: "lbTCreate", startAt: window.lbAt(), clubIds: lbClubIds(), kind: $("lbTk").value, pos: $("lbTp").value, duration: Number($("lbTdur").value), startIn: Number($($("lbTk").value === "arena" ? "lbTin" : "lbTsin").value), rounds: Number($("lbTr").value), interval: Number($("lbTiv").value), name: $("lbTn").value, tc: $("lbTtc").value, berserk: $("lbTbz").checked, prize: Number($("lbTpz").value)||0, places: Number($("lbTpl").value)||3 });
-        $("lbTn").value = "";
+        $("lbTn").value = ""; try { var _d = $("lbTclD"); if (_d) _d.open = false; var _cb = document.querySelectorAll("#lbTclD input[type=checkbox]"); for (var _i = 0; _i < _cb.length; _i++) _cb[_i].checked = false; } catch (e) {}
       };
       if (!initData) {
         $("lbNmSave").onclick = function () {
