@@ -784,6 +784,7 @@
           for (var q = 0; q < po.length; q++) if (po[q].to.r === pm.to.r && po[q].to.c === pm.to.c) pf = po[q];
           if (pf) sendMove(pf); else render(); } catch (e) {} }, 120);
       }
+      try { var _br = elBoard.getBoundingClientRect(), _want = (document.documentElement.clientWidth - _br.width) / 2, _ml = parseFloat(getComputedStyle(elBoard).marginLeft) || 0; if (Math.abs(_br.left - _want) > 0.5) elBoard.style.setProperty("margin-left", (_ml + _want - _br.left) + "px", "important"); } catch (e) {}
       // holat matni
       var t;
       if (!st.connected) t = "🔌 Ulanmoqda… (server uyg‘onishi 50 soniyagacha cho‘zilishi mumkin)";
