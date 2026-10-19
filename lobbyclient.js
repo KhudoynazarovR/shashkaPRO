@@ -1272,8 +1272,8 @@ document.head.appendChild(_as); }
     else {
       h += "<div class=\"hzLvG\">";
       list.slice(0, 10).forEach(function (r) {
-        var c = COL[r.tc] || "#6aaed4";
-        h += "<div class=\"hzLvC\" data-r=\"" + esc(r.id) + "\"><b style=\"background:" + c + "\">Shashka " + esc(r.tc) + "</b><div>⚪ " + esc(r.white) + " (" + (r.wElo || 1000) + ")</div><i>vs</i><div>⚫ " + esc(r.black) + " (" + (r.bElo || 1000) + ")</div><u>👁 " + (r.spectators || 0) + " · " + Math.ceil((r.moves || 0) / 2) + " yurish</u></div>";
+        var bot = r.vsBot || /BOT/.test(String(r.white)+String(r.black)); var tcl = bot ? "∞" : r.tc; var c = bot ? "#8e6bd6" : (COL[r.tc] || "#6aaed4");
+        h += "<div class=\"hzLvC\" data-r=\"" + esc(r.id) + "\"><b style=\"background:" + c + "\">Shashka " + esc(tcl) + "</b><div>⚪ " + esc(r.white) + " (" + (r.wElo || 1000) + ")</div><i>vs</i><div>⚫ " + esc(r.black) + " (" + (r.bElo || 1000) + ")</div><u>👁 " + (r.spectators || 0) + " · " + Math.ceil((r.moves || 0) / 2) + " yurish</u></div>";
       });
       h += "</div>";
     }
