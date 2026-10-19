@@ -398,7 +398,7 @@
       $("lbPl").style.display = curTab === "pl" ? "block" : "none";
       $("lbT").style.display = curTab === "t" ? "block" : "none";
       $("lbS").style.display = curTab === "s" ? "block" : "none";
-      var _t = curTab === "t";
+      var _t = curTab === "t"; panel.classList.toggle("lbTMode", _t);
       var _c = panel.querySelector(".lbcards"); if (_c) _c.style.display = curTab === "pl" ? "flex" : "none";
       var _st = document.getElementById("lbSet"); if (_st && curTab !== "pl") _st.style.display = "none";
       var _tb = panel.querySelector(".tabs"); if (_tb) _tb.style.display = "none";
@@ -1717,4 +1717,33 @@ document.head.appendChild(_as); }
       rd.readAsDataURL(f);
     };
   }
+})();
+;(function(){
+  if (document.getElementById("lbGreenCss")) return;
+  var LEAF = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><g opacity='.55'><path fill='%23238b45' d='M100 5C150 40 160 110 100 195C40 110 50 40 100 5Z'/><path stroke='%2357c27a' stroke-width='3' fill='none' d='M100 15V185'/><path fill='%23186c34' transform='rotate(55 100 100)' d='M100 20C140 50 148 105 100 175C52 105 60 50 100 20Z'/><path fill='%232fa356' transform='rotate(-50 100 100)' d='M100 30C135 55 140 105 100 165C60 105 65 55 100 30Z'/></g></svg>";
+  var ARR = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M6 9l6 6 6-6' stroke='%2390f0b0' stroke-width='2.5' fill='none' stroke-linecap='round'/></svg>";
+  var P = "#lbPanel.lbTMode ";
+  var css =
+  "#lbPanel.lbTMode{background:url(\"data:image/svg+xml," + LEAF + "\") right -40px top -30px/190px no-repeat,url(\"data:image/svg+xml," + LEAF + "\") left -60px bottom 40px/220px no-repeat,radial-gradient(circle at 15% 10%,rgba(80,200,120,.25),transparent 40%),radial-gradient(circle at 90% 85%,rgba(40,160,90,.22),transparent 45%),linear-gradient(160deg,#06281a,#0b3b24 45%,#04170f)!important}" +
+  "#lbPanel.lbTMode::before{display:none!important}" +
+  P+"h2{color:#eafff0;text-shadow:0 2px 8px rgba(0,0,0,.5)}" +
+  P+"#lbT>.card{background:linear-gradient(180deg,rgba(10,60,35,.9),rgba(5,35,20,.94))!important;border:1px solid rgba(110,230,150,.35)!important;border-radius:22px!important;padding:16px!important;box-shadow:0 10px 30px rgba(0,0,0,.45),inset 0 1px 0 rgba(160,255,190,.15)!important}" +
+  P+"#lbT .row{gap:10px;align-items:center;margin:10px 0}" +
+  P+"#lbT .muted{color:#9fe3b4!important;font-weight:600}" +
+  P+"#lbT input:not([type=checkbox]),"+P+"#lbT select{background-color:rgba(3,30,16,.8)!important;color:#eafff0!important;border:1px solid rgba(90,210,130,.45)!important;border-radius:14px!important;padding:11px 12px!important;outline:none;color-scheme:dark;box-shadow:inset 0 2px 6px rgba(0,0,0,.35)}" +
+  P+"#lbT select{-webkit-appearance:none;appearance:none;background-image:url(\"data:image/svg+xml," + ARR + "\")!important;background-repeat:no-repeat!important;background-position:right 10px center!important;background-size:16px!important;padding-right:34px!important}" +
+  P+"#lbT input:focus,"+P+"#lbT select:focus{border-color:#5ee08a!important;box-shadow:0 0 0 3px rgba(94,224,138,.25)!important}" +
+  P+"#lbT input::placeholder{color:#7fbf95}" +
+  P+"#lbTCreate{background:linear-gradient(180deg,#45d873,#1e9e45)!important;color:#fff!important;border:1px solid #7dff9f!important;border-radius:14px!important;font-weight:800;padding:11px 16px!important;box-shadow:0 4px 14px rgba(40,200,90,.45)}" +
+  P+"#lbT .sec{background:rgba(5,40,22,.85)!important;color:#dfffe8!important;border:1px solid rgba(90,210,130,.45)!important;border-radius:14px!important}" +
+  P+"#lbTclS{background:rgba(3,30,16,.8)!important;border:1px solid rgba(90,210,130,.45)!important;color:#eafff0}" +
+  P+"#lbTbzr label{color:#8ff0ae;font-weight:700;display:flex;align-items:center;gap:10px}" +
+  P+"#lbT input[type=checkbox]{accent-color:#2fbf5b;width:22px;height:22px}" +
+  P+"#lbTbzr{padding-bottom:10px;border-bottom:1px solid rgba(110,230,150,.18)}" +
+  P+"#lbTpzc{color:#cdeed7!important;font-size:13px!important;padding:2px 0 10px;border-bottom:1px solid rgba(110,230,150,.18)}" +
+  P+"#lbTinfo{position:relative;background:rgba(20,80,50,.55);border:1px solid rgba(110,230,150,.3);border-radius:14px;padding:10px 12px 10px 40px;margin-top:10px;color:#cdeed7!important;font-weight:400!important}" +
+  P+"#lbTinfo::before{content:'ℹ️';position:absolute;left:12px;top:10px}" +
+  P+"#lbTs .card{background:rgba(6,45,26,.88)!important;border:1px solid rgba(110,230,150,.25)!important;border-radius:18px!important}";
+  var st = document.createElement("style"); st.id = "lbGreenCss"; st.textContent = css;
+  document.head.appendChild(st);
 })();
