@@ -2071,5 +2071,21 @@ document.head.appendChild(_as); }
     } else if (n > 60) clearInterval(iv);
   }, 500);
 })();
+;(function(){
+  if (window.__tvNavFix) return; window.__tvNavFix = 1;
+  var n = 0, iv = setInterval(function(){
+    if (window.lbNav && window.lbNav.open && !window.lbNav.__tvw) {
+      var o = window.lbNav.open;
+      window.lbNav.open = function(tab){
+        window.nvK = tab;
+        var r = o.apply(this, arguments);
+        var h = document.getElementById('hzHero'), b = document.getElementById('nvPlayBtn');
+        if (tab !== 'pl') { if (h) h.style.display = 'none'; if (b) b.style.display = 'none'; }
+        return r;
+      };
+      window.lbNav.__tvw = 1; clearInterval(iv);
+    } else if (++n > 100) clearInterval(iv);
+  }, 100);
+})();
 
 /*TVIEW-END*/
