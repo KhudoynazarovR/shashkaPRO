@@ -2250,5 +2250,13 @@ document.head.appendChild(_as); }
   var st = document.createElement('style'); st.id = 'tvThemeCss'; st.textContent = css;
   (document.body || document.head).appendChild(st);
 })();
+;(function(){
+  if (window.__tvNoRef) return; window.__tvNoRef = 1;
+  setInterval(function(){
+    var bar = document.getElementById('lbTbar'); if (!bar) return;
+    var b = bar.querySelectorAll('button');
+    for (var i = 0; i < b.length; i++) if (b[i].textContent.indexOf('🔄') >= 0 && b[i].style.display !== 'none') b[i].style.display = 'none';
+  }, 500);
+})();
 
 /*TVIEW-END*/
