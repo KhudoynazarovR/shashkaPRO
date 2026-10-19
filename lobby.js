@@ -98,13 +98,17 @@ function createLobby({ send, clients, roomsApi }) {
   try { for (const t of JSON.parse(fs.readFileSync(T_FILE, 'utf8'), _rev)) tournaments.set(t.id, t); } catch (e) {}
   console.log('[turnir] yuklandi:', tournaments.size); /*TSAVE3*/
   var tReady = false;
-  function tFix() {
+  function tFix() { /*TFIX2*/
     const now = Date.now();
+    try { if (roomsApi.restore) roomsApi.restore(); } catch (e) {}
     for (const t of tournaments.values()) if (t.type === 'arena' && t.status === 'running') {
-      t.cur = []; for (const p of t.players.values()) { p.busy = false; p.waitingSince = now; }
+      t.cur = (t.cur || []).filter(b => { const r = roomsApi.get(b.roomId); return r && !r.finished; });
+      const busy = new Set();
+      for (const b of t.cur) { roomToBoard.set(b.roomId, { t, b }); busy.add(b.white); busy.add(b.black); }
+      for (const p of t.players.values()) { p.busy = busy.has(p.uid); if (!p.busy) p.waitingSince = now; }
     }
   }
-  tFix();
+  setTimeout(tFix, 0);
   function tLoad(n) {
     try {
       const st = require('./store');
