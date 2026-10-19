@@ -13,7 +13,7 @@ const CFG = {
   CASUAL_WINS_PER_DAY: 20,
   SAME_OPPONENT_PER_DAY: 3,
   TOURNAMENT_WINS_CAP: 10,
-  HOST_TIERS: [[150, 1000], [100, 350], [50, 150]],
+  HOST_TIERS: [[100, 1500], [70, 1000], [30, 500]],
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -89,6 +89,7 @@ function chargeJoin(id) {
 }
 function refund(id, n, why) { return add(id, n, why || 'refund'); }
 
+function isAdmin(id) { return (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(id)); }
 function hostBonus(n) {
   for (const [min, amt] of CFG.HOST_TIERS) if (n > min) return amt;
   return 0;
@@ -537,4 +538,4 @@ function handle(req, res, url) {
   return false;
 }
 
-module.exports = { CFG, balance, add, spend, claimDaily, rewardWin, chargeCreate, chargeJoin, refund, finishTournament, hostBonus, handle };
+module.exports = { CFG, balance, add, spend, claimDaily, rewardWin, chargeCreate, chargeJoin, refund, finishTournament, hostBonus, isAdmin, handle };

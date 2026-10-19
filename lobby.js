@@ -844,9 +844,15 @@ function createLobby({ send, clients, roomsApi }) {
     if (m.type === 'lbTCreate') {
     { const cl0 = clubsApi.check(uid, m.clubIds); if (cl0.error) { err(c, cl0.error); return true; } }
       const before = tournaments.size;
-      if (!economy.chargeCreate(uid).ok) { err(c, 'Turnir yaratish uchun ' + FEE.CREATE_COST + ' 🪙 kerak'); return true; }
+      const adm = economy.isAdmin(uid);
+      let pz = Math.floor(Number(m.prize) || 0);
+      if (!adm && pz < 100) pz = 100;
+      if (pz < 0) pz = 0;
+      if (pz > 10000000) pz = 10000000;
+      if (!adm && !economy.spend(uid, pz, 'tournament_prize')) { err(c, 'Turnir yaratish uchun ' + pz + ' 🪙 kerak'); return true; }
+      m._prize = pz; m._paid = adm ? 0 : pz;
       const ret = handleInner(c, m);
-      if (tournaments.size === before) economy.refund(uid, FEE.CREATE_COST, 'refund_create');
+      if (tournaments.size === before && m._paid) economy.refund(uid, m._paid, 'refund_create');
       return ret;
     }
     if (m.type === 'lbTJoin' && t0 && !t0.players.has(uid)) {
@@ -865,7 +871,7 @@ function createLobby({ send, clients, roomsApi }) {
     if (m.type === 'lbTCancel' && t0 && t0.status === 'reg' && t0.creatorUid === uid) {
       const ret = handleInner(c, m);
       if (!tournaments.has(t0.id)) {
-        economy.refund(uid, FEE.CREATE_COST, 'refund_create');
+        if (t0.prizePaid) economy.refund(uid, t0.prizePaid, 'refund_create');
         for (const p of (t0.paid || [])) economy.refund(p, FEE.JOIN_FEE, 'refund_join');
       }
       return ret;
@@ -991,7 +997,7 @@ function createLobby({ send, clients, roomsApi }) {
             creatorUid: me.uid, creatorName: me.name, status: 'reg', created: Date.now(),
             players: new Map(), round: 0, rounds: 0, cur: [], curBye: null, nextAt: 0,
             durationMin: dur, startAt, endAt: startAt + dur * 60000, gameNo: 0, ending: false,
-            pos: m.pos === 'idf' ? 'idf' : 'std', berserk: m.berserk !== false
+            pos: m.pos === 'idf' ? 'idf' : 'std', berserk: m.berserk !== false, prize: m._prize || 0, prizePaid: m._paid || 0
           };
           at.players.set(me.uid, newArenaPlayer(me));
           at.clubIds = cl.ids; tournaments.set(at.id, at);
@@ -1003,6 +1009,7 @@ function createLobby({ send, clients, roomsApi }) {
           creatorUid: me.uid, creatorName: me.name, status: 'reg', created: Date.now(),
           players: new Map(), round: 0, rounds: 0, cur: [], curBye: null, nextAt: 0,
           pos: m.pos === 'idf' ? 'idf' : 'std',
+          prize: m._prize || 0, prizePaid: m._paid || 0,
           roundsWanted: SWISS_ROUNDS.includes(Number(m.rounds)) ? Number(m.rounds) : 0,
           interval: SWISS_INTERVALS.includes(Number(m.interval)) ? Number(m.interval) * 1000 : 0,
           startAt: validStart(m.startAt) || (SWISS_STARTS.includes(Number(m.startIn)) ? Date.now() + Number(m.startIn) * 60000 : 0)
