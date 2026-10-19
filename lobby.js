@@ -1290,7 +1290,7 @@ function createLobby({ send, clients, roomsApi }) {
   function shareImageUrl() {
     if (process.env.SHARE_IMAGE_URL) return process.env.SHARE_IMAGE_URL;
     const base = process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || '';
-    return base ? base.replace(/\/$/, '') + '/share.jpg' : '';
+    let v = ''; try { v = '?v=' + Math.floor(require('fs').statSync(require('path').join(__dirname, 'public', 'share.jpg')).mtimeMs); } catch (e) {} return base ? base.replace(/\/$/, '') + '/share.jpg' + v : ''; /*SHAREV*/
   }
   async function handleShare(c, m) {
     const me = c.lb;
