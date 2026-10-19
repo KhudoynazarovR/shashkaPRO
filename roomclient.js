@@ -1026,7 +1026,7 @@
           if (st.finished) { botBusy = false; return; }
           var s = steps[i++], more = i < steps.length;
           send({ type: "roomBotMove", roomId: roomId, move: s, keepTurn: more });
-          if (more) setTimeout(next, 380); else { botBusy = false; try { render(); } catch (e) {} }
+          if (more) setTimeout(next, 700); else { botBusy = false; try { render(); } catch (e) {} }
         })();
       });
     }
