@@ -106,9 +106,15 @@
     s.start(t); dbg("🔊 wav ijro");
   }
 
+  var capBuf = null, capLoading = false;
+  function loadCap(a) { if (capBuf || capLoading) return; capLoading = true;
+    try { fetch("/sounds/capture.wav?v=1").then(function (r) { return r.arrayBuffer(); }).then(function (ab) {
+      a.decodeAudioData(ab, function (b) { capBuf = b; }, function () { capLoading = false; }); }).catch(function () { capLoading = false; });
+    } catch (e) { capLoading = false; } }
   var SOUNDS = {
-    move: function (a, t) { wood(a, t, 0.9, 1, 520, 0.3); },
-    capture: function (a, t) { wood(a, t, 1, 1.05, 620, 0.42); wood(a, t + 0.06, 0.7, 0.9, 430, 0.32); },
+    move: function (a, t) { loadCap(a); wood(a, t, 0.9, 1, 520, 0.3); },
+    capture: function (a, t) { if (!capBuf) { loadCap(a); wood(a, t, 1, 1.05, 620, 0.42); wood(a, t + 0.06, 0.7, 0.9, 430, 0.32); return; }
+      var s = a.createBufferSource(), g = a.createGain(); s.buffer = capBuf; g.gain.value = 1; s.connect(g); g.connect(master); s.start(t); },
     king: function (a, t) {
       wood(a, t, 0.8, 1, 520, 0.28);
       tone(a, t + 0.07, 660, 0.14, "triangle", 0.35);
