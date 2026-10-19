@@ -92,7 +92,7 @@
     if (moveBuf || moveLoading) return;
     moveLoading = true;
     try {
-      fetch("/sounds/move.wav?v=3").then(function (r) { return r.arrayBuffer(); }).then(function (ab) {
+      fetch("/sounds/move.wav?v=4").then(function (r) { return r.arrayBuffer(); }).then(function (ab) {
         a.decodeAudioData(ab, function (b) { moveBuf = b; dbg("wav yuklandi " + b.duration.toFixed(2) + "s"); }, function () { moveLoading = false; dbg("wav dekod xato"); });
       }).catch(function () { moveLoading = false; dbg("wav fetch xato"); });
     } catch (e) { moveLoading = false; }
