@@ -386,8 +386,8 @@
         var box = document.getElementById("rcmBox");
         var T = [
           ["night", "🌙 Tungi rejim", ""], ["sound", "🔊 Ovoz", ""], ["flat", "◐ Oddiy toshlar", ""],
-          ["auto", "⚡ Avtohod", "Faqat 1 ta yurish bo‘lsa, o‘zi yuradi"],
-          ["autoPro", "⚡ Avtohod Pro", "Urish davomi 1 ta bo‘lsa, o‘zi davom ettiradi"],
+          ["auto", "⚡ Avtohod", "1 ta yurish yoki urish davomi bo‘lsa, o‘zi yuradi"],
+          
           ["chat", "💬 Chat", ""]
         ];
         var h = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b style="font-size:19px">☰ Menu</b><span id="rcmX" style="font-size:24px;padding:4px 8px">✕</span></div>';
@@ -451,7 +451,7 @@
           var chain = !!st.forced;
           var steps = chain ? captureSteps(st.board, st.forced.r, st.forced.c) : allMoves(st.board, codeOf(st.color));
           if (!steps || steps.length !== 1) return;
-          if (chain && !rcm.autoPro) return;
+          
           var mv = steps[0];
           if (!mv || !mv.from || !mv.to) return;
           rcmLast = now;
