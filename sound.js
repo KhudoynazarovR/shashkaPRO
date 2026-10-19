@@ -76,6 +76,7 @@
   var moveBuf = null, moveLoading = false;
   var _dbgT = null;
   function dbg(m) {
+    return;
     try {
       var e = document.getElementById("spDbg");
       if (!e) {
