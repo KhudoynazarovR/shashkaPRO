@@ -817,7 +817,7 @@
       else if (st.vsBot && !st.botStarted && st.color !== "spectator") t = "⚙️ Vaqt, rang va pozitsiyani tanlang, so‘ng ‘Boshlash’ ni bosing";
       else if (!bothIn()) t = "⏳ Raqib kutilmoqda…";
       else if (st.color === "spectator") t = "👁 Tomoshabin · navbat: " + sideName(st.turn);
-      else if (st.turn === st.color) t = st.forced ? "🔴 Yana urish majburiy!" : "✅ Sizning navbatingiz";
+      else if (st.turn === st.color) t = st.forced ? "🔴 Yana urish majburiy!" : "";
       else t = "⏳ Raqib yurishi kutilmoqda";
       elStatus.textContent = t;
 
