@@ -49,7 +49,8 @@ const KEEP_FINISHED = 6 * 3600 * 1000;
 
 // ---- Arena sozlamalari ----
 const ARENA_DURATIONS = [10, 20, 30, 45, 60, 90];   // daqiqa
-const ARENA_STARTS = [0, 2, 5, 10, 30];             // boshlanishgacha kutish (daqiqa)
+const ARENA_STARTS = [0, 2, 5, 10, 30];
+const validStart = v => { v = Number(v); const n = Date.now(); return v >= n + 60000 && v <= n + 183 * 86400000 ? Math.floor(v) : 0; };   // aniq boshlanish: 1 daqiqadan 6 oygacha             // boshlanishgacha kutish (daqiqa)
 const ARENA_MAX_PLAYERS = 200;
 const ARENA_FIRE_AFTER = 2;                          // ketma-ket shuncha g'alabadan keyin olov yonadi
 const ARENA_PAIR_DELAY_MS = Number(process.env.ARENA_PAIR_DELAY_MS || 5000);       // o'yin tugagach juftlashgacha
@@ -897,7 +898,7 @@ function createLobby({ send, clients, roomsApi }) {
         if (m.kind === 'arena') {
           const dur = ARENA_DURATIONS.includes(Number(m.duration)) ? Number(m.duration) : 30;
           const delay = ARENA_STARTS.includes(Number(m.startIn)) ? Number(m.startIn) : 5;
-          const startAt = Date.now() + delay * 60000;
+          const startAt = validStart(m.startAt) || (Date.now() + delay * 60000);
           const at = {
             id: hex(3), type: 'arena', name: cleanTitle(m.name) || ('Arena ' + me.name),
             tc: TCS.includes(m.tc) ? m.tc : DEFAULT_TC,
@@ -918,7 +919,7 @@ function createLobby({ send, clients, roomsApi }) {
           pos: m.pos === 'idf' ? 'idf' : 'std',
           roundsWanted: SWISS_ROUNDS.includes(Number(m.rounds)) ? Number(m.rounds) : 0,
           interval: SWISS_INTERVALS.includes(Number(m.interval)) ? Number(m.interval) * 1000 : 0,
-          startAt: SWISS_STARTS.includes(Number(m.startIn)) ? Date.now() + Number(m.startIn) * 60000 : 0
+          startAt: validStart(m.startAt) || (SWISS_STARTS.includes(Number(m.startIn)) ? Date.now() + Number(m.startIn) * 60000 : 0)
         };
         t.players.set(me.uid, newPlayer(me));
         t.clubIds = cl.ids; tournaments.set(t.id, t);

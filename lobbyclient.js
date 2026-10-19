@@ -309,6 +309,7 @@
         "<select id=\"lbTdur\"><option value=\"10\">10 daq</option><option value=\"20\">20 daq</option><option value=\"30\" selected>30 daq</option><option value=\"45\">45 daq</option><option value=\"60\">60 daq</option><option value=\"90\">90 daq</option></select>" +
         "<select id=\"lbTin\"><option value=\"0\">hozir</option><option value=\"2\">2 daq</option><option value=\"5\" selected>5 daq</option><option value=\"10\">10 daq</option><option value=\"30\">30 daq</option></select>" +
         "<select id=\"lbTp\"><option value=\"std\">Standart</option><option value=\"idf\">IDF 780</option></select></div>" +
+        "<div class=\"row\"><span class=\"muted\">📅 Aniq sana va vaqt:</span><input id=\"lbTat\" type=\"datetime-local\" style=\"flex:1;min-width:0\"><button id=\"lbTatX\" type=\"button\" class=\"sec\">✕</button></div>" +
         "<div class=\"row\" id=\"lbSw\" style=\"display:none\"><span class=\"muted\">Turlar:</span><select id=\"lbTr\">" +
         "<option value=\"3\">3</option><option value=\"4\">4</option><option value=\"5\" selected>5</option><option value=\"6\">6</option><option value=\"7\">7</option><option value=\"8\">8</option><option value=\"9\">9</option><option value=\"10\">10</option><option value=\"11\">11</option></select>" +
         "<span class=\"muted\">Tanaffus:</span><select id=\"lbTiv\"><option value=\"10\">10 s</option><option value=\"20\" selected>20 s</option><option value=\"60\">1 daq</option><option value=\"120\">2 daq</option><option value=\"300\">5 daq</option></select>" +
@@ -337,7 +338,7 @@
         $("lbSw").style.display = a ? "none" : "";
       };
       $("lbTCreate").onclick = function () {
-        sendMsg({ type: "lbTCreate", clubIds: lbClubIds(), kind: $("lbTk").value, pos: $("lbTp").value, duration: Number($("lbTdur").value), startIn: Number($($("lbTk").value === "arena" ? "lbTin" : "lbTsin").value), rounds: Number($("lbTr").value), interval: Number($("lbTiv").value), name: $("lbTn").value, tc: $("lbTc").value });
+        window.lbAtOk() && sendMsg({ type: "lbTCreate", startAt: window.lbAt(), clubIds: lbClubIds(), kind: $("lbTk").value, pos: $("lbTp").value, duration: Number($("lbTdur").value), startIn: Number($($("lbTk").value === "arena" ? "lbTin" : "lbTsin").value), rounds: Number($("lbTr").value), interval: Number($("lbTiv").value), name: $("lbTn").value, tc: $("lbTc").value });
         $("lbTn").value = "";
       };
       if (!initData) {
@@ -666,6 +667,14 @@
       }
       el.innerHTML = h;
     }
+    window.lbAt = function () { var e = $("lbTat"); if (!e || !e.value) return 0; var t = new Date(e.value).getTime(); return isNaN(t) ? 0 : t; };
+    window.lbAtOk = function () {
+      var t = window.lbAt(); if (!t) return true;
+      var n = Date.now();
+      if (t < n + 60000 || t > n + 183 * 86400000) { alert("Boshlanish vaqti hozirdan 1 daqiqadan 6 oygacha bo‘lishi kerak"); return false; }
+      return true;
+    };
+    document.addEventListener("click", function (e) { if (e.target && e.target.id === "lbTatX") { var i = $("lbTat"); if (i) i.value = ""; } });
     window.lbClubIds = function () {
       var r = [];
       [].forEach.call(document.querySelectorAll("#lbTclRow input[data-cl]:checked"), function (x) { if (r.indexOf(x.value) < 0 && r.length < 6) r.push(x.value); });
