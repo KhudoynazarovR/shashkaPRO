@@ -162,7 +162,7 @@ function createLobby({ send, clients, roomsApi }) {
     return {
       id: t.id, name: t.name, tc: t.tc, status: t.status, pos: t.pos || 'std',
       roundsWanted: t.roundsWanted || 0, interval: t.interval || 0,
-      type: t.type || 'swiss', durationMin: t.durationMin || 0, startAt: t.startAt || 0, endAt: t.endAt || 0, ending: !!t.ending,
+      type: t.type || 'swiss', durationMin: t.durationMin || 0, prize: t.prize || 0, places: t.places || 0, berserk: t.berserk !== false, tc: t.tc || "", pos: t.pos || "std", startAt: t.startAt || 0, endAt: t.endAt || 0, ending: !!t.ending,
       creatorUid: t.creatorUid, creatorName: t.creatorName, clubIds: t.clubIds || [], clubs: clubStandings(t),
       round: t.round, rounds: t.rounds, nextAt: t.nextAt || 0,
       players: t.type === 'arena' ? arenaStandings(t) : standings(t),
