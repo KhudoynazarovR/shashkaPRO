@@ -12,3 +12,10 @@ engine/*.bin.*
 kesto/bridge
 *.bak
 *.bak2
+
+.env
+tournaments.json
+server.log
+users.json
+node_modules/
+*.bin

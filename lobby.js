@@ -83,6 +83,19 @@ function createLobby({ send, clients, roomsApi }) {
   const queue = new Map();       // uid -> { uid, tc }
   const challenges = new Map();  // id -> { id, fromUid, fromName, toUid, tc, at }
   const tournaments = new Map(); // tid -> t
+  // ---- Turnirlarni faylga saqlash (qayta ishga tushganda yo'qolmasligi uchun) ----
+  const T_FILE = path.join(__dirname, 'tournaments.json');
+  const _rep = (k, v) => v instanceof Map ? { __map: [...v] } : v instanceof Set ? { __set: [...v] } : v;
+  const _rev = (k, v) => v && v.__map ? new Map(v.__map) : v && v.__set ? new Set(v.__set) : v;
+  function saveTournaments() {
+    try {
+      const arr = [...tournaments.values()].filter(t => t.status === 'reg');
+      fs.writeFileSync(T_FILE + '.tmp', JSON.stringify(arr, _rep));
+      fs.renameSync(T_FILE + '.tmp', T_FILE);
+    } catch (e) { console.log('[turnir] saqlashda xato:', e.message); }
+  }
+  try { for (const t of JSON.parse(fs.readFileSync(T_FILE, 'utf8'), _rev)) tournaments.set(t.id, t); } catch (e) {}
+  setInterval(saveTournaments, 5000);
   const roomToBoard = new Map(); // roomId -> { t, b }
   const roomToSeries = new Map();
   const simuls = new Map();       // sid -> simul
