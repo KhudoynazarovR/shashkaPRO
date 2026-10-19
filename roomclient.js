@@ -152,7 +152,7 @@
       '<button id="rcResign" style="display:none">🏳️ Taslim</button>' +
       '<button id="rcLink">🔗 Havola</button>' +
       '<button id="rcChatBtn">💬 Chat</button>' +
-      '<button id="rcZal">🏟 O‘yin zali</button>' +
+      '<button id="rcZal">Chiqish</button>' +
       '<button id="rcClose" style="display:none">✖️ Yopish</button></div>' +
       '<div id="rcChat" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:10000;background:#120b30;border-top:1px solid #3a2f7a;padding:8px 10px calc(env(safe-area-inset-bottom,0px) + 8px);box-sizing:border-box">' +
       '<div id="rcMsgs" style="height:90px;overflow:auto;background:#101a24;border-radius:8px;padding:6px 8px;font-size:14px"></div>' +
@@ -776,7 +776,7 @@
         }
       }
 
-      if (!document.getElementById("rcPreCss")) { var pcs = document.createElement("style"); pcs.id = "rcPreCss"; pcs.textContent = ".cell.pre{box-shadow:inset 0 0 0 4px #4aa3ff!important}"; document.head.appendChild(pcs); }
+      if (!document.getElementById("rcPreCss")) { var pcs = document.createElement("style"); pcs.id = "rcPreCss"; pcs.textContent = ".cell.pre{box-shadow:inset 0 0 0 4px #4aa3ff!important}body.rcPlaying #rcZal{display:none!important}"; document.head.appendChild(pcs); }
       if (st.pre && st.finished) st.pre = null;
       if (st.pre && st.pre.to && st.turn === st.color && !st.pending && !st.forced && !st.finished && !botBusy) {
         var pm = st.pre; st.pre = null;
