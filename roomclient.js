@@ -761,7 +761,7 @@
           cell.dataset.r = r; cell.dataset.c = c;
           if (lastMv && lastMv.from && lastMv.to &&
               ((lastMv.from.r === r && lastMv.from.c === c) || (lastMv.to.r === r && lastMv.to.c === c))) cell.classList.add("lm");
-          if (st.selected && st.selected.r === r && st.selected.c === c) cell.classList.add("sel");
+          if (st.selected && st.selected.r === r && st.selected.c === c) cell.classList.add("sel"); if (st.pre && ((st.pre.from.r === r && st.pre.from.c === c) || (st.pre.to && st.pre.to.r === r && st.pre.to.c === c))) cell.classList.add("pre");
           for (var k = 0; k < opts.length; k++) {
             if (opts[k].to.r === r && opts[k].to.c === c) cell.classList.add(opts[k].captures.length ? "cp" : "tg");
           }
@@ -775,6 +775,14 @@
         }
       }
 
+      if (!document.getElementById("rcPreCss")) { var pcs = document.createElement("style"); pcs.id = "rcPreCss"; pcs.textContent = ".cell.pre{box-shadow:inset 0 0 0 4px #4aa3ff!important}"; document.head.appendChild(pcs); }
+      if (st.pre && st.finished) st.pre = null;
+      if (st.pre && st.pre.to && st.turn === st.color && !st.pending && !st.forced && !st.finished && !botBusy) {
+        var pm = st.pre; st.pre = null;
+        setTimeout(function () { try { st.selected = pm.from; var po = options(), pf = null; st.selected = null;
+          for (var q = 0; q < po.length; q++) if (po[q].to.r === pm.to.r && po[q].to.c === pm.to.c) pf = po[q];
+          if (pf) sendMove(pf); else render(); } catch (e) {} }, 120);
+      }
       // holat matni
       var t;
       if (!st.connected) t = "🔌 Ulanmoqda… (server uyg‘onishi 50 soniyagacha cho‘zilishi mumkin)";
@@ -843,7 +851,7 @@
     function onCell(r, c) {
       if (!st.joined || st.finished || st.pending || (st.vsBot && !st.botStarted)) return;
       if (st.color === "spectator" || !bothIn()) return;
-      if (st.turn !== st.color) return;
+      if (st.turn !== st.color) { var pp = st.board[r][c]; if (sameSide(pp, myCode())) { st.pre = (st.pre && st.pre.from.r === r && st.pre.from.c === c) ? null : { from: { r: r, c: c } }; } else if (st.pre && !pp) { st.pre.to = { r: r, c: c }; } else { st.pre = null; } try { render(); } catch (e) {} return; }
       var me = myCode(), p = st.board[r][c], mv;
 
       if (st.forced) {
