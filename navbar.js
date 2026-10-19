@@ -225,4 +225,83 @@
     var z = $('rcZal');
     ex.style.display = (z && z.offsetParent !== null) ? 'block' : 'none';
   }, 400);
+
+  // ===== nvBots: botlar kartasi (tepada) + botlar oynasi =====
+  var cb = document.createElement('style');
+  cb.id = 'nvBotCss';
+  cb.textContent =
+    '#lbPl .lbp:has(img[src*="/api/av/bot"]),#lbPl .lbp:has([data-a="ch"][data-id^="bot"]){display:none!important}' +
+    '#nvBotRow{order:2;display:flex;align-items:center;gap:14px;margin:0 0 10px;padding:12px 14px;border-radius:16px;background:#1b1c3d;border:1px solid #2a2c55;color:#fff;cursor:pointer}' +
+    '#nvBotRow .st{display:flex;flex:none}' +
+    '#nvBotRow .st img,#nvBotRow .st i{width:46px;height:46px;border-radius:50%;object-fit:cover;border:2px solid #1b1c3d;margin-left:-14px;background:#2a2c55;display:flex;align-items:center;justify-content:center;font-style:normal}' +
+    '#nvBotRow .st :first-child{margin-left:0}' +
+    '#nvBotRow b{display:block;font-size:17px}#nvBotRow small{opacity:.7;font-size:13px}#nvBotRow .ar{margin-left:auto;font-size:26px;opacity:.7}' +
+    '#nvBots{position:fixed;left:0;right:0;top:0;bottom:60px;z-index:99998;background:rgba(0,0,0,.55);display:none;align-items:flex-end}' +
+    '#nvBots .sh{width:100%;max-height:80%;overflow:auto;background:#12122b;border-radius:20px 20px 0 0;padding:14px 16px 20px;color:#fff;font-family:system-ui,sans-serif}' +
+    '#nvBots .hd{display:flex;align-items:center;font-size:20px;font-weight:800;margin-bottom:8px}#nvBots .hd button{margin-left:auto;background:none;border:0;color:#fff;font-size:24px}' +
+    '#nvBots .r{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #22244a}' +
+    '#nvBots .r img,#nvBots .r i{width:52px;height:52px;border-radius:50%;object-fit:cover;flex:none;background:#2a2c55;display:flex;align-items:center;justify-content:center;font-style:normal}' +
+    '#nvBots .r .n{flex:1;min-width:0}#nvBots .r .n b{display:block;font-size:17px}#nvBots .r .n small{opacity:.7}' +
+    '#nvBots .r .n em{color:#ff3b3b;font-style:normal}' +
+    '#nvBots .r button{background:linear-gradient(#7fb847,#5f9a2f);box-shadow:0 3px 0 #3f6f1c;color:#fff;border:0;border-radius:12px;padding:10px 16px;font-size:15px;font-weight:700}';
+  document.head.appendChild(cb);
+
+  var sheet = document.createElement('div');
+  sheet.id = 'nvBots';
+  sheet.innerHTML = '<div class="sh"><div class="hd">🤖 Botlar bilan o‘ynash<button id="nvBotsX">✕</button></div><div id="nvBotsL"></div></div>';
+  document.body.appendChild(sheet);
+  sheet.onclick = function (e) { if (e.target === sheet) sheet.style.display = 'none'; };
+  $('nvBotsX').onclick = function () { sheet.style.display = 'none'; };
+
+  function botRows() {
+    var out = [], seen = {};
+    [].forEach.call(document.querySelectorAll('#lbPl .lbp'), function (row) {
+      var im = row.querySelector('img[src*="/api/av/bot"]'), bt = row.querySelector('[data-a="ch"][data-id^="bot"]');
+      var uid = bt ? bt.getAttribute('data-id') : (im ? decodeURIComponent((im.getAttribute('src').split('/api/av/')[1] || '')) : '');
+      if (!uid || seen[uid]) return; seen[uid] = 1;
+      var nm = row.querySelector('.lbinf b'), sm = row.querySelector('.lbinf small');
+      out.push({ uid: uid, name: nm ? nm.textContent.replace(/\s+/g, ' ').trim() : uid, info: sm ? sm.textContent.split('·')[0].trim() : '', busy: !bt });
+    });
+    out.sort(function (a, b) { return (parseInt((a.info.match(/\d+/) || [0])[0], 10)) - (parseInt((b.info.match(/\d+/) || [0])[0], 10)); });
+    return out;
+  }
+  function avEl(uid) {
+    var im = document.createElement('img');
+    im.src = '/api/av/' + encodeURIComponent(uid);
+    im.onerror = function () { var i = document.createElement('i'); i.textContent = '🤖'; im.replaceWith(i); };
+    return im;
+  }
+  function openBots() {
+    var L = $('nvBotsL'); L.innerHTML = '';
+    var rows = botRows();
+    if (!rows.length) L.innerHTML = '<div style="padding:18px;opacity:.7">Botlar yuklanmoqda…</div>';
+    rows.forEach(function (b) {
+      var r = document.createElement('div'); r.className = 'r';
+      r.appendChild(avEl(b.uid));
+      var n = document.createElement('div'); n.className = 'n';
+      var nb = document.createElement('b'), parts = b.name.split(/\s+BOT\s*$/i);
+      nb.textContent = parts[0] + ' ';
+      var em = document.createElement('em'); em.textContent = 'BOT'; nb.appendChild(em);
+      var sm = document.createElement('small'); sm.textContent = b.info + (b.busy ? ' · band' : '');
+      n.appendChild(nb); n.appendChild(sm); r.appendChild(n);
+      var bt = document.createElement('button'); bt.textContent = 'O‘ynash'; bt.disabled = b.busy; if (b.busy) bt.style.opacity = '.5';
+      bt.onclick = function () {
+        var real = document.querySelector('#lbPl [data-a="ch"][data-id="' + b.uid + '"]');
+        sheet.style.display = 'none';
+        if (real) real.click();
+      };
+      r.appendChild(bt); L.appendChild(r);
+    });
+    sheet.style.display = 'flex';
+  }
+  setInterval(function () {
+    var hero = $('hzHero');
+    if (!hero) { sheet.style.display = sheet.style.display === 'flex' && window.nvK !== 'pl' ? 'none' : sheet.style.display; return; }
+    if ($('nvBotRow')) return;
+    var row = document.createElement('div'); row.id = 'nvBotRow';
+    row.innerHTML = '<div class="st"><img src="/api/av/bot_champ" onerror="this.outerHTML=\'<i>🤖</i>\'"><img src="/api/av/bot_gm" onerror="this.outerHTML=\'<i>🤖</i>\'"><img src="/api/av/bot_pro" onerror="this.outerHTML=\'<i>🤖</i>\'"></div><div><b>Botlar bilan o‘ynash</b><small>6 ta bot · Shogird dan Legend gacha</small></div><span class="ar">›</span>';
+    row.onclick = openBots;
+    var ref = $('hzRow2') || $('hzDaily');
+    if (ref && ref.parentNode === hero) hero.insertBefore(row, ref); else hero.appendChild(row);
+  }, 600);
 })();
