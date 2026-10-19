@@ -1158,6 +1158,7 @@ document.head.appendChild(_as); }
       }
       if (!ts.length) { $("lbTs").innerHTML = tFil === "fin" ? "<div class=\"card muted\">Tugagan turnirlar hali yo‘q.</div>" : ""; return; }
       var h = "";
+      window.__tOpen = window.__tOpen || {}; window.lbTog = function (id) { window.__tOpen[id] = !window.__tOpen[id]; var e = document.querySelector("#lbtc_" + id + " .tbody"); if (e) e.style.display = window.__tOpen[id] ? "block" : "none"; };
       ts.forEach(function (t) {
         var joined = t.players.some(function (p) { return p.uid === me; });
         var arena = t.type === "arena";
@@ -1170,13 +1171,13 @@ document.head.appendChild(_as); }
         if (t.prize > 0) _ex.push("🪙 Mukofot: " + t.prize + " (" + (t.places || 3) + " o‘ringa)");
         if (arena) _ex.push(t.berserk === false ? "⚡ Berserk yo‘q" : "⚡ Berserk");
         if (_ex.length) st += "<br>" + _ex.join(" · ");
-        h += "<div class=\"card lbtk " + (arena ? "lbta" : "lbts") + "\" id=\"lbtc_" + esc(t.id) + "\"><div><b>" + (arena ? "⚔️" : "🏆") + " " + esc(t.name) + "</b></div><div class=\"muted\">" + esc(t.tc) + (t.pos === "idf" ? " · IDF 780" : "") + " · " + st + " · " + t.players.length + " o‘yinchi · ochdi: " + esc(t.creatorName) + "</div><div class=\"row\">";
+        h += "<div class=\"card lbtk " + (arena ? "lbta" : "lbts") + "\" id=\"lbtc_" + esc(t.id) + "\"><div style=\"cursor:pointer\" onclick=\"lbTog('" + esc(t.id) + "')\"><b>" + (arena ? "⚔️" : "🏆") + " " + esc(t.name) + " ▾</b></div><div class=\"muted\">" + esc(t.tc) + (t.pos === "idf" ? " · IDF 780" : "") + " · " + st + " · " + t.players.length + " o‘yinchi · ochdi: " + esc(t.creatorName) + "</div><div class=\"row\">";
         h += "<button class=\"sec\" data-a=\"tlink\" data-id=\"" + esc(t.id) + "\" data-n=\"" + esc(t.name) + "\">🔗 Havola</button>";
         if (t.status === "reg") {
           if (!joined) h += "<button data-a=\"tj\" data-id=\"" + t.id + "\">Qo‘shilish</button>";
           else if (t.creatorUid !== me) h += "<button class=\"sec\" data-a=\"tl\" data-id=\"" + t.id + "\">Chiqish</button>";
           if (t.creatorUid === me) {
-            h += "<button class=\"grn\" data-a=\"ts\" data-id=\"" + t.id + "\">▶ Boshlash</button><button class=\"red\" data-a=\"tc\" data-id=\"" + t.id + "\">Bekor qilish</button>";
+            if (!t.startAt) h += "<button class=\"grn\" data-a=\"ts\" data-id=\"" + t.id + "\">▶ Boshlash</button>"; h += "<button class=\"red\" data-a=\"tc\" data-id=\"" + t.id + "\">Bekor qilish</button>";
           }
         }
         if (!arena && t.status === "running") {
@@ -1197,11 +1198,11 @@ document.head.appendChild(_as); }
           else if (joined) h += "<span class=\"muted\">" + (arena ? "Raqib qidirilmoqda…" : "Stolingiz tugadi, boshqalarni kuting") + "</span>";
         }
         h += "</div>";
-        h += "<table><tr><th>#</th><th>O‘yinchi</th><th>Ochko</th><th>" + (arena ? "O‘yin" : "SB") + "</th>" + (arena ? "" : "<th>Bux.</th>") + "</tr>";
+        h += "<div class=\"tbody\" style=\"max-height:260px;overflow:auto;display:" + (window.__tOpen[t.id] ? "block" : "none") + "\"><table><tr><th>#</th><th>O‘yinchi</th><th>Ochko</th><th>" + (arena ? "O‘yin" : "SB") + "</th>" + (arena ? "" : "<th>Bux.</th>") + "</tr>";
         t.players.slice(0, 12).forEach(function (p, i) {
           h += "<tr><td>" + (i + 1) + "</td><td>" + esc(p.name) + (p.uid === me ? " 👈" : "") + (p.withdrawn ? " <span class=\"muted\">(chiqdi)</span>" : "") + "</td><td>" + p.score + (p.fire ? " 🔥" : "") + "</td><td>" + (arena ? p.games : p.sb) + "</td>" + (arena ? "" : "<td>" + p.buch + "</td>") + "</tr>";
         });
-        h += "</table>";
+        h += "</table></div>";
         h += lbClubTbl(t); if (t.players.length > 12) h += "<div class=\"muted\">… va yana " + (t.players.length - 12) + " o‘yinchi</div>";
         h += "</div>";
       });
