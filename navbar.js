@@ -215,7 +215,7 @@
 
   // ===== nvExit: o'yin xonasida tepada chiqish tugmasi =====
   var ex = document.createElement('button');
-  ex.id = 'nvExit'; ex.textContent = '🚪 Chiqish';
+  ex.id = 'nvExit'; ex.textContent = 'Chiqish';
   ex.style.cssText = 'position:fixed;right:10px;top:28px;z-index:99990;padding:6px 14px;border:1px solid #3a3d7a;border-radius:12px;background:#2a2c5e;color:#fff;font-size:15px;font-weight:600;line-height:1.2;display:none';
   document.body.appendChild(ex);
   ex.onclick = function () {
