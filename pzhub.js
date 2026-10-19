@@ -9,6 +9,7 @@
       'background:radial-gradient(120% 60% at 50% 0%,#1c4a2c 0%,#0f2a1d 45%,#0a1410 100%)}' +
       '.pzhTop{display:flex;align-items:center;justify-content:space-between;gap:8px}' +
       '.pzhBack{width:44px;height:44px;border-radius:12px;border:2px solid #d9a441;background:linear-gradient(#5a3519,#33200f);color:#ffd77a;font-size:24px;font-weight:700;line-height:1;padding:0;box-shadow:0 3px 0 #1c1007}' +
+      '.pzhMu{width:44px;height:44px;border-radius:12px;border:2px solid #d9a441;background:linear-gradient(#3b2610,#22150a);font-size:20px;line-height:1;padding:0;color:#ffe9a8;box-shadow:0 3px 0 #1c1007}.pzhMu.off{opacity:.55}' +
       '.pzhCoin{min-width:84px;height:38px;border-radius:19px;border:2px solid #d9a441;background:linear-gradient(#3b2610,#22150a);color:#ffe9a8;font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;gap:6px;padding:0 12px;box-shadow:0 3px 0 #1c1007}' +
       '.pzhPlaque{margin:2px auto 0;max-width:290px;text-align:center;padding:8px 18px 9px;border-radius:16px;border:3px solid #d9a441;position:relative;' +
       'background:linear-gradient(#7b4a22,#4a2a12);box-shadow:0 5px 0 #24140a,0 0 0 2px #2b180a inset}' +
@@ -33,6 +34,108 @@
       '.pzhOk{position:absolute;left:5px;top:5px;font-size:15px;background:#2a8f3a;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;border:2px solid #fff}';
     document.head.appendChild(s);
   }
+  /* ---- Ertaknomo musiqa (WebAudio, tashqi fayl kerak emas) ---- */
+  var MU = (function () {
+    var BAR = 4, CH = [[72, 76, 79, 84], [69, 72, 76, 81], [65, 69, 72, 77], [67, 71, 74, 79]],
+      PAD = [[48, 55, 64], [45, 57, 64], [41, 57, 65], [43, 59, 62]], PENT = [76, 79, 81, 84, 86, 88],
+      ARP = [0, 1, 2, 1, 3, 2, 1, 2];
+    var ac = null, input = null, master = null, timer = null, nextT = 0, bar = 0, on = false, lastErr = '';
+    function hz(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+    function rng(seed) { var x = seed >>> 0; return function () { x = (Math.imul(x, 1664525) + 1013904223) >>> 0; return x / 4294967296; }; }
+    function bell(c, d, t, m, g, dur) {
+      var f = hz(m), o1 = c.createOscillator(), o2 = c.createOscillator(), o3 = c.createOscillator(), a = c.createGain(), b = c.createGain(), e = c.createGain();
+      o1.type = 'sine'; o2.type = 'triangle'; o3.type = 'sine';
+      o1.frequency.value = f; o2.frequency.value = f * 2; o3.frequency.value = f * 4.01;
+      b.gain.value = 0.22; a.gain.value = 0.05;
+      e.gain.setValueAtTime(0.0001, t); e.gain.exponentialRampToValueAtTime(g, t + 0.006); e.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o1.connect(e); o2.connect(b); b.connect(e); o3.connect(a); a.connect(e); e.connect(d);
+      o1.start(t); o2.start(t); o3.start(t); o1.stop(t + dur + 0.05); o2.stop(t + dur + 0.05); o3.stop(t + dur + 0.05);
+    }
+    function pad(c, d, t, m, g, dur) {
+      var o = c.createOscillator(), e = c.createGain();
+      o.type = 'sine'; o.frequency.value = hz(m);
+      e.gain.setValueAtTime(0.0001, t); e.gain.linearRampToValueAtTime(g, t + 1.2); e.gain.linearRampToValueAtTime(g * 0.7, t + dur - 0.2); e.gain.linearRampToValueAtTime(0.0001, t + dur + 1.2);
+      o.connect(e); e.connect(d); o.start(t); o.stop(t + dur + 1.3);
+    }
+    function score(c, d, t0, idx) {
+      var q = idx % 4, r = rng(idx * 7919 + 13), ch = CH[q], i, st = BAR / 8;
+      for (i = 0; i < 3; i++) pad(c, d, t0, PAD[q][i], 0.035, BAR);
+      for (i = 0; i < 8; i++) bell(c, d, t0 + i * st, ch[ARP[i]], i === 0 ? 0.11 : 0.07, 1.5);
+      [0, 4, 6, 2].forEach(function (s0, k) {
+        if (k > 0 && r() < 0.35) return;
+        var m = PENT[Math.floor(r() * PENT.length)];
+        bell(c, d, t0 + s0 * st + 0.01, m, k === 0 ? 0.13 : 0.09, 2.2);
+      });
+      if (r() < 0.6) bell(c, d, t0 + st * (1 + Math.floor(r() * 6)) + 0.02, 96 + Math.floor(r() * 5), 0.035, 1.2);
+      return t0 + BAR;
+    }
+    function chain(c, out) {
+      var inp = c.createGain(), dl = c.createDelay(1), fb = c.createGain(), lp = c.createBiquadFilter(), wet = c.createGain();
+      dl.delayTime.value = 0.375; fb.gain.value = 0.33; lp.type = 'lowpass'; lp.frequency.value = 2600; wet.gain.value = 0.38;
+      inp.connect(out); inp.connect(dl); dl.connect(lp); lp.connect(fb); fb.connect(dl); lp.connect(wet); wet.connect(out);
+      return inp;
+    }
+    function tick() {
+      if (!on || !ac) return;
+      while (nextT < ac.currentTime + 6) { nextT = score(ac, input, nextT, bar++); }
+    }
+    function start() {
+      if (on) return;
+      var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+      try {
+        ac = new AC(); master = ac.createGain(); master.gain.value = 0.0001; master.connect(ac.destination);
+        input = chain(ac, master); on = true; bar = 0; nextT = ac.currentTime + 0.15;
+        master.gain.setValueAtTime(0.0001, ac.currentTime); master.gain.linearRampToValueAtTime(0.5, ac.currentTime + 2);
+        if (ac.state === 'suspended' && ac.resume) ac.resume();
+        tick(); timer = setInterval(tick, 800);
+      } catch (e) { on = false; lastErr = String(e && e.message || e).slice(0, 40); }
+    }
+    function stop() {
+      if (!on) return; on = false; clearInterval(timer);
+      var a = ac, m = master; ac = null; master = null; input = null;
+      try { m.gain.cancelScheduledValues(a.currentTime); m.gain.setValueAtTime(m.gain.value, a.currentTime); m.gain.linearRampToValueAtTime(0.0001, a.currentTime + 0.7); } catch (e) {}
+      setTimeout(function () { try { a.close(); } catch (e) {} }, 900);
+    }
+    document.addEventListener('visibilitychange', function () {
+      if (!ac) return;
+      try { if (document.hidden) ac.suspend(); else ac.resume(); } catch (e) {}
+    });
+    return { start: start, stop: stop, isOn: function () { return on; }, running: function () { return !!ac && ac.state === 'running'; }, state: function () { var AC = window.AudioContext || window.webkitAudioContext; return !AC ? 'AudioContext yo‘q' : (lastErr ? 'xato: ' + lastErr : (!on ? 'o‘chiq' : (ac ? ac.state : '?'))); }, score: score, chain: chain, resume: function () { if (ac && ac.state === 'suspended') try { ac.resume(); } catch (e) {} } };
+  })();
+  window.pzhMusic = MU;
+  var MUTED = null;
+  function muted() { if (MUTED === null) { try { MUTED = localStorage.getItem('pzhMute') === '1'; } catch (e) { MUTED = false; } } return MUTED; }
+  function setMuted(v) { MUTED = !!v; try { localStorage.setItem('pzhMute', v ? '1' : '0'); } catch (e) {} }
+  var WATCH = null, UNLOCK = false;
+  function hint() {
+    var h = document.getElementById('pzhHint'), need = MU.isOn() && !MU.running() && document.querySelector('.pzh');
+    if (need && !h) {
+      var r = document.querySelector('.pzhPlaque'); if (!r) return;
+      h = document.createElement('div'); h.id = 'pzhHint';
+      h.style.cssText = 'text-align:center;margin:10px auto 0;font-size:13px;color:#ffe9a8;background:rgba(0,0,0,.4);border:1px solid rgba(217,164,65,.5);border-radius:14px;padding:5px 12px;width:fit-content';
+      h.textContent = '🎵 Musiqa uchun ekranga bir marta teging';
+      r.parentNode.insertBefore(h, r.nextSibling);
+    } else if (!need && h) h.parentNode.removeChild(h);
+  }
+  function dbg() {
+    var d = document.getElementById('pzhDbg'), f = document.querySelector('.pzhFoot');
+    if (!f) return;
+    if (!d) { d = document.createElement('div'); d.id = 'pzhDbg'; d.style.cssText = 'text-align:center;font-size:11px;opacity:.6;margin-top:6px;color:#cfe'; f.parentNode.appendChild(d); }
+    d.textContent = 'ovoz holati: ' + MU.state() + ' · v3';
+  }
+  function unlock() {
+    if (UNLOCK) return; UNLOCK = true;
+    var f = function () { MU.resume(); setTimeout(hint, 250); };
+    ['pointerup', 'touchend', 'click'].forEach(function (ev) { document.addEventListener(ev, f, true); });
+  }
+  function watch() {
+    unlock();
+    if (WATCH) return;
+    WATCH = setInterval(function () {
+      if (!document.querySelector('.pzh')) { MU.stop(); clearInterval(WATCH); WATCH = null; hint(); return; }
+      hint(); dbg();
+    }, 400);
+  }
   var CARDS = [
     { k: 'daily', t: 'Kunlik masala', s: 'Har kuni yangi masala', r: '+10', c1: '#1f56c4', c2: '#0e2f7c', bd: '#74a8ff', sh: '#0a1f55' },
     { k: 'rush', t: 'Puzzle Rush', s: 'Vaqtga qarshi masalalar', r: '+15', c1: '#d2281c', c2: '#7a0f0c', bd: '#ff8a68', sh: '#4f0907', soon: 1 },
@@ -48,7 +151,7 @@
   window.pzHub = function (ctx) {
     css();
     var ov = ctx.ov, coin = coinText(ctx), h = '';
-    h += '<div class="pzh"><div class="pzhTop"><button id="pzBack" class="pzhBack" aria-label="Orqaga">‹</button>' +
+    h += '<div class="pzh"><div class="pzhTop"><span style="display:flex;gap:8px"><button id="pzBack" class="pzhBack" aria-label="Orqaga">‹</button><button id="pzhMu" class="pzhMu" aria-label="Musiqa">' + (muted() ? '🔇' : '🎵') + '</button></span>' +
       (coin != null ? '<div class="pzhCoin"><span>🪙</span><span>' + coin + '</span></div>' : '<span></span>') + '</div>';
     h += '<div class="pzhPlaque"><span class="cr">👑</span><b>Masalalar</b><i>Aqlingni sinab ko‘r!</i></div>';
     h += '<img class="pzhBan" alt="" src="' + IMG.banner + '">';
@@ -64,6 +167,16 @@
     h += '</div><div class="pzhFoot">Har bir masala — yangi g‘alaba!</div></div>';
     ov.innerHTML = h;
     var b = ov.querySelector('#pzBack'); if (b) b.onclick = ctx.back;
+    var mb = ov.querySelector('#pzhMu');
+    if (mb) {
+      if (muted()) mb.className = 'pzhMu off';
+      mb.onclick = function () {
+        var m = !muted(); setMuted(m); mb.textContent = m ? '🔇' : '🎵'; mb.className = m ? 'pzhMu off' : 'pzhMu';
+        if (m) MU.stop(); else { MU.start(); watch(); }
+      };
+    }
+    if (!muted()) { MU.start(); watch(); }
+    setTimeout(hint, 500);
     Array.prototype.forEach.call(ov.querySelectorAll('[data-pzh]'), function (e) {
       e.onclick = function () {
         var k = e.getAttribute('data-pzh');
