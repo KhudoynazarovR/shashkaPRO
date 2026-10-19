@@ -304,7 +304,7 @@
         "<div class=\"muted\">Simul: siz bir vaqtning o‘zida ko‘p o‘yinchi bilan o‘ynaysiz. Vaqt rejimi yuqoridagi tanlovdan olinadi; mezbonga har taxtada qo‘shimcha vaqt beriladi.</div></div>" +
         "<div id=\"lbSs\"></div></div>" +
         "<div id=\"lbT\" style=\"display:none\">" +
-        "<div class=\"card\"><div class=\"row\"><input id=\"lbTn\" maxlength=\"30\" placeholder=\"Turnir nomi\" style=\"flex:1\"><button id=\"lbTCreate\">➕ Ochish</button></div>" +
+        "<div class=\"card\"><div class=\"row\"><input id=\"lbTn\" maxlength=\"30\" placeholder=\"Turnir nomi\" style=\"flex:1\"><button id=\"lbTCreate\">➕ Ochish</button><button class=\"sec\" onclick=\"lbTPlus()\" title=\"Yopish\">✕</button></div>" +
         "<div class=\"row\"><select id=\"lbTk\"><option value=\"arena\">⚔️ Arena</option><option value=\"swiss\">Shveytsar</option><option value=\"olympic\">🏆 Olimpiya</option></select>" +
         "<select id=\"lbTdur\"><option value=\"10\">10 daq</option><option value=\"20\">20 daq</option><option value=\"30\" selected>30 daq</option><option value=\"45\">45 daq</option><option value=\"60\">60 daq</option><option value=\"90\">90 daq</option></select>" +
         "<select id=\"lbTin\" style=\"display:none\"><option value=\"0\">hozir</option><option value=\"2\">2 daq</option><option value=\"5\" selected>5 daq</option><option value=\"10\">10 daq</option><option value=\"30\">30 daq</option></select>" +
@@ -353,9 +353,10 @@
         e.textContent = t.map(function (p, i) { return (M[i] || (i + 1) + ".") + " " + Math.floor(v * p / 100); }).join(" · ") + " 🪙 — yaratilganda yechiladi: " + v;
       };
       $("lbTpz").oninput = _pzc; $("lbTpl").onchange = _pzc; _pzc();
+      (function () { var _f0 = $("lbTform"); if (_f0) _f0.style.display = "none"; })();
       $("lbTCreate").onclick = function () {
-        window.lbAtOk() && sendMsg({ type: "lbTCreate", startAt: window.lbAt(), clubIds: lbClubIds(), kind: $("lbTk").value, pos: $("lbTp").value, duration: Number($("lbTdur").value), startIn: Number($($("lbTk").value === "arena" ? "lbTin" : "lbTsin").value), rounds: Number($("lbTr").value), interval: Number($("lbTiv").value), name: $("lbTn").value, tc: $("lbTtc").value, berserk: $("lbTbz").checked, prize: Number($("lbTpz").value)||0, places: Number($("lbTpl").value)||3 });
-        $("lbTn").value = ""; try { var _d = $("lbTclD"); if (_d) _d.open = false; var _cb = document.querySelectorAll("#lbTclD input[type=checkbox]"); for (var _i = 0; _i < _cb.length; _i++) _cb[_i].checked = false; } catch (e) {}
+        var _okc = window.lbAtOk(); _okc && sendMsg({ type: "lbTCreate", startAt: window.lbAt(), clubIds: lbClubIds(), kind: $("lbTk").value, pos: $("lbTp").value, duration: Number($("lbTdur").value), startIn: Number($($("lbTk").value === "arena" ? "lbTin" : "lbTsin").value), rounds: Number($("lbTr").value), interval: Number($("lbTiv").value), name: $("lbTn").value, tc: $("lbTtc").value, berserk: $("lbTbz").checked, prize: Number($("lbTpz").value)||0, places: Number($("lbTpl").value)||3 });
+        $("lbTn").value = ""; if (_okc) { var _tf = $("lbTform"); if (_tf) _tf.style.display = "none"; } try { var _d = $("lbTclD"); if (_d) _d.open = false; var _cb = document.querySelectorAll("#lbTclD input[type=checkbox]"); for (var _i = 0; _i < _cb.length; _i++) _cb[_i].checked = false; } catch (e) {}
       };
       if (!initData) {
         $("lbNmSave").onclick = function () {
