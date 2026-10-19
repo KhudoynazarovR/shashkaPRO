@@ -825,7 +825,7 @@
       elInfo.textContent = (st.color === "spectator"
         ? "Siz tomoshabinsiz" + (st.spectators ? " · " + st.spectators + " ta tomoshabin" + ((st.specNames || []).length ? " (" + st.specNames.join(", ") + ")" : "") : "")
         : (st.spectators ? "👁 Tomoshabinlar: " + st.spectators + ((st.specNames || []).length ? " (" + st.specNames.join(", ") + ")" : "") : "")) +
-        (bothIn() && !st.finished && !st.clockRunning && st.timeMs
+        (bothIn() && !st.finished && !st.clockRunning && !st.vsBot && st.timeMs
           ? (st.spectators || st.color === "spectator" ? "\n" : "") + "⏱ " + st.tc + " (daqiqa + soniya) · soat birinchi ikki yurishdan keyin ishga tushadi"
           : "");
       elInfo.style.whiteSpace = "pre-line";
