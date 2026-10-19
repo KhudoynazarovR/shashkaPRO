@@ -193,3 +193,25 @@
   new MutationObserver(function(){ if (!pend) { pend = true; requestAnimationFrame(decorate); } })
     .observe(document.body, { childList: true, subtree: true });
 })();
+;(function(){
+  if (document.getElementById('tvBlue')) return;
+  var css =
+  "#tvP{color:#eaf2ff!important;background:radial-gradient(circle at 15% 8%,rgba(80,150,255,.22),transparent 40%),radial-gradient(circle at 90% 85%,rgba(40,110,220,.2),transparent 45%),linear-gradient(160deg,#06183a,#0b2a5c 45%,#040f26)!important}" +
+  ".tvHead{background:rgba(3,14,36,.92)!important;border-bottom-color:rgba(90,150,255,.3)!important}" +
+  ".tvIc{background:rgba(8,30,70,.9)!important;color:#e3eeff!important;border-color:rgba(80,140,240,.5)!important}" +
+  ".tvTit small,.tvSh span,.tvSh i,.tvEmpty,.tvTb th{color:#9cc2ff!important}" +
+  ".tvChip{background:rgba(20,60,130,.6)!important;border-color:rgba(90,150,255,.35)!important}" +
+  ".tvSec{background:linear-gradient(180deg,rgba(11,42,92,.92),rgba(6,24,58,.95))!important;border-color:rgba(90,150,255,.35)!important}" +
+  ".tvM{background:rgba(4,18,46,.85)!important;border-color:rgba(80,140,240,.3)!important}" +
+  ".tvM.me{background:linear-gradient(180deg,#2f7bf0,#1d57c4)!important;border-color:#6aa6ff!important}" +
+  ".tvIn input{background:rgba(4,18,46,.85)!important;color:#eaf2ff!important;border-color:rgba(80,140,240,.5)!important}" +
+  ".tvIn button,.tvJ{background:linear-gradient(180deg,#4d95ff,#2563d9)!important}" +
+  ".tvJ{box-shadow:0 4px 16px rgba(47,123,240,.45)!important}" +
+  ".tvG{background:rgba(4,18,46,.85)!important;border-color:rgba(80,140,240,.4)!important}" +
+  ".tvG button{background:rgba(47,123,240,.25)!important;color:#cfe1ff!important;border-color:rgba(106,166,255,.55)!important}" +
+  ".tvTb th{border-bottom-color:rgba(90,150,255,.3)!important}" +
+  ".tvTb td{border-bottom-color:rgba(90,150,255,.12)!important}" +
+  ".tvTb tr.me td{background:rgba(106,166,255,.16)!important}" +
+  ".tvFoot{background:linear-gradient(180deg,transparent,rgba(3,12,32,.96) 35%)!important}";
+  var s = document.createElement('style'); s.id = 'tvBlue'; s.textContent = css; document.head.appendChild(s);
+})();
