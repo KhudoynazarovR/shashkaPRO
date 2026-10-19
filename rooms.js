@@ -421,8 +421,9 @@ function createRooms({ send, clients, onFinish }) {
       const list = [];
       for (const r of rooms.values()) {
         if (!r.white || !r.black || r.finished) continue;
+        if (![...r.members].some(id => { const cl = clients.get(id); return cl && colorOf(r, cl); })) continue;
         list.push({
-          id: r.id, white: r.white.name, black: r.black.name, tc: r.tc, wElo: (_pi(r.white) || {}).elo || 1000, bElo: (_pi(r.black) || {}).elo || 1000,
+          id: r.id, vsBot: !!r.vsBot, white: r.white.name, black: r.black.name, tc: r.tc, wElo: (_pi(r.white) || {}).elo || 1000, bElo: (_pi(r.black) || {}).elo || 1000,
           moves: (r.moves || []).length,
           spectators: [...r.members].filter(id => !colorOf(r, clients.get(id) || {})).length
         });
