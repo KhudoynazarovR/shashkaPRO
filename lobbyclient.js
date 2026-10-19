@@ -411,6 +411,7 @@
       }
       var me = S.me ? S.me.uid : "";
       window.lbFriendAdd = function (u) { sendMsg({ type: "lbFriendReq", uid: String(u) }); };
+      window.lbFriendRemove = function (u) { sendMsg({ type: "lbFriendRemove", uid: String(u) }); };
       window.lbFriendState = function (u) { try { u = String(u); if (u === String(me)) return "me"; if (/^bot(_|$)/.test(u)) return "bot"; return (S.friends || []).some(function (f) { return String(f.uid) === u; }) ? "friend" : "ok"; } catch (e) { return "ok"; } };
       var out = (S.outgoing || []).reduce(function (a, o) { a[o.toUid] = 1; return a; }, {});
 

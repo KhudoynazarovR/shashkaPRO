@@ -792,6 +792,15 @@ function createLobby({ send, clients, roomsApi }) {
     const me = c.lb;
 
     switch (m.type) {
+      case 'lbFriendRemove': {
+        const st = require('./store'), us = st.users();
+        const to = String(m.uid), mine = String(me.uid);
+        const ut = us[to], uu = us[mine];
+        if (!uu || to === mine) break;
+        uu.friends = (uu.friends || []).filter(x => x !== to);
+        if (ut) ut.friends = (ut.friends || []).filter(x => x !== mine);
+        st.save(); push(); break;
+      }
       case 'lbFriendReq': {
         const st = require('./store'), us = st.users();
         const to = String(m.uid), mine = String(me.uid);

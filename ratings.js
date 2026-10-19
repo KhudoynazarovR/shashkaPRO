@@ -160,7 +160,13 @@
           var fb = document.createElement("button");
           fb.style.cssText = "width:100%;border:0;border-radius:14px;padding:12px;font-size:15px;color:#fff;margin-bottom:8px;background:" + (stt === "friend" ? "#3a3f6b" : "#2e7d32");
           fb.textContent = stt === "friend" ? "✓ Do‘stsiz" : "➕ Do‘st bo‘lish";
-          if (stt === "friend") fb.disabled = true;
+          if (stt === "friend") {
+            fb.onclick = function () {
+              if (!window.lbFriendRemove || !confirm("“" + d.name + "” bilan do‘stlikdan chiqasizmi?")) return;
+              window.lbFriendRemove(d.id);
+              fb.textContent = "Do‘stlikdan chiqildi"; fb.disabled = true; fb.style.background = "#3a3f6b";
+            };
+          }
           else fb.onclick = function () { window.lbFriendAdd(d.id); fb.textContent = "✓ Yuborildi"; fb.disabled = true; fb.style.background = "#3a3f6b"; };
           box.insertBefore(fb, box.lastElementChild);
         })();
