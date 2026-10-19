@@ -154,6 +154,16 @@
           cell("✖️", d.losses, "Mag‘lub") + cell("🤝", d.draws, "Durang") + cell("🎮", d.games, "O‘yinlar") +
           cell("📊", pct + "%", "G‘alaba %") + cell("⭐", d.bestStreak, "Eng yaxshi seriya") + cell("🥇", d.tournWins, "Turnir") +
           "</div><button style=\"width:100%;border:0;border-radius:14px;padding:12px;font-size:15px;color:#fff;background:#6b5cf0\" onclick=\"document.getElementById('spUo').remove()\">Yopish</button>";
+        (function () {
+          var stt = window.lbFriendState ? window.lbFriendState(d.id) : "ok";
+          if ((stt !== "ok" && stt !== "friend") || !window.lbFriendAdd) return;
+          var fb = document.createElement("button");
+          fb.style.cssText = "width:100%;border:0;border-radius:14px;padding:12px;font-size:15px;color:#fff;margin-bottom:8px;background:" + (stt === "friend" ? "#3a3f6b" : "#2e7d32");
+          fb.textContent = stt === "friend" ? "✓ Do‘stsiz" : "➕ Do‘st bo‘lish";
+          if (stt === "friend") fb.disabled = true;
+          else fb.onclick = function () { window.lbFriendAdd(d.id); fb.textContent = "✓ Yuborildi"; fb.disabled = true; fb.style.background = "#3a3f6b"; };
+          box.insertBefore(fb, box.lastElementChild);
+        })();
       })
       .catch(function () { box.innerHTML = "<div style=\"padding:30px\">Server bilan aloqa yo‘q</div>"; });
   };

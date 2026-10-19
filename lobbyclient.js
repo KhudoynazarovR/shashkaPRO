@@ -354,7 +354,7 @@
         var t = e.target; if (!t || !t.getAttribute) return;
         var act = t.getAttribute("data-a"), id = t.getAttribute("data-id");
         if (!act) return;
-        if (act === "ch") sendMsg({ type: "lbChallenge", toUid: id, tc: $("lbTc").value, pos: $("lbPos").value, games: Number($("lbGm").value) });
+        if (act === "ch") sendMsg({ type: "lbChallenge", toUid: id, tc: $("lbTc").value, pos: $("lbPos").value, games: Number($("lbGm").value) }); else if (act === "cx") sendMsg({ type: "lbCancelTo", toUid: id });
         else if (act === "tj") sendMsg({ type: "lbTJoin", tid: id });
         else if (act === "tl") sendMsg({ type: "lbTLeave", tid: id });
         else if (act === "ts") sendMsg({ type: "lbTStart", tid: id });
@@ -410,6 +410,8 @@
         document.head.appendChild(st);
       }
       var me = S.me ? S.me.uid : "";
+      window.lbFriendAdd = function (u) { sendMsg({ type: "lbFriendReq", uid: String(u) }); };
+      window.lbFriendState = function (u) { try { u = String(u); if (u === String(me)) return "me"; if (/^bot(_|$)/.test(u)) return "bot"; return (S.friends || []).some(function (f) { return String(f.uid) === u; }) ? "friend" : "ok"; } catch (e) { return "ok"; } };
       var out = (S.outgoing || []).reduce(function (a, o) { a[o.toUid] = 1; return a; }, {});
 
       if (!document.getElementById("lbTickCss")) {
@@ -449,7 +451,7 @@
       list.forEach(function (p) {
         h += "<div class=\"lbp\">" + avh(p.uid, p.hasAv, p.name, p.prem) +
           "<div class=\"lbinf\"><b>" + (p.bot ? esc(p.name).replace(/BOT\s*$/, "<span style=\"color:#ff2b2b;text-shadow:0 0 8px #ff0000\">BOT</span>") : esc(p.name)) + (p.prem ? " <span style=\"color:#f5b82e\">👑</span>" : "") + (p.busy ? " 🟡" : "") + "</b><small>ELO " + (p.elo || 1000) + " · 🪙 " + (p.gems || 0) + (p.busy ? " · o‘ynayapti" : "") + "</small></div>" +
-          (p.uid === me ? "<i class='muted'>Bu siz</i>" : p.offline ? "<span class='muted'>oflayn</span>" : (fset[p.uid] || /^bot(_|$)/.test(String(p.uid))) ? "" : "<button class='lbinv' style='background:#2e7d32' data-f='add' data-id='" + esc(p.uid) + "'>➕ Do‘st</button>") + (p.uid === me || p.offline ? "" : out[p.uid] ? "<span class=\"muted\">chaqirildi…</span>" : (p.busy ? "" : "<button class=\"lbinv\" data-a=\"ch\" data-id=\"" + esc(p.uid) + "\">O‘yinga taklif</button>")) + "</div>";
+          (p.uid === me ? "<i class='muted'>Bu siz</i>" : p.offline ? "<span class='muted'>oflayn</span>" : (fset[p.uid] || /^bot(_|$)/.test(String(p.uid))) ? "" : "") + (p.uid === me || p.offline ? "" : out[p.uid] ? "<button class=\"lbinv\" style=\"background:#8a2b2b\" data-a=\"cx\" data-id=\"" + esc(p.uid) + "\">✕ Bekor</button>" : (p.busy ? "" : "<button class=\"lbinv\" data-a=\"ch\" data-id=\"" + esc(p.uid) + "\">O‘yinga taklif</button>")) + "</div>";
       });
       $("lbPl").innerHTML = h;
     Array.prototype.forEach.call($("lbPl").querySelectorAll('[data-t]'), function (b) {

@@ -845,6 +845,11 @@ function createLobby({ send, clients, roomsApi }) {
         break;
       }
       case 'lbQuickCancel': queue.delete(me.uid); push(); break;
+      case 'lbCancelTo': {
+        const tu = String(m.toUid);
+        [...challenges.entries()].forEach(([cid, x]) => { if (x.fromUid === me.uid && x.toUid === tu) challenges.delete(cid); });
+        push(); break;
+      }
       case 'lbChallenge': {
         const to = connsOf(String(m.toUid))[0];
         if (!to || to.lb.uid === me.uid) return err(c, 'O‘yinchi topilmadi'), true;
