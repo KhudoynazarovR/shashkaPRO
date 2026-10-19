@@ -848,7 +848,7 @@
 
       if (st.forced) {
         var fo = captureSteps(st.board, st.forced.r, st.forced.c);
-        for (var i = 0; i < fo.length; i++) if (fo[i].to.r === r && fo[i].to.c === c) mv = fo[i];
+        for (var i = 0; i < fo.length; i++) if (fo[i].to.r === r && fo[i].to.c === c) mv = fo[i]; if (!mv && fo.length === 1 && r === st.forced.r && c === st.forced.c) mv = fo[0];
         if (mv) sendMove(mv);
         return;
       }
@@ -857,6 +857,7 @@
         var caps = allCaptures(st.board, me);
         var ok = caps.length ? captureSteps(st.board, r, c).length : simpleSteps(st.board, r, c).length;
         st.selected = ok ? { r: r, c: c } : null;
+        if (st.selected) { var o1 = options(); if (o1.length === 1) { sendMove(o1[0]); return; } }
         render();
         return;
       }
