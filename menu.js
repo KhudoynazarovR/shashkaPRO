@@ -432,18 +432,35 @@
   function pzMap() {
     var L = S.list, n = L.length, sv = S.solved || [];
     var cu = 0; while (cu < n && sv.indexOf(L[cu].id) >= 0) cu++;
-    var ch = Math.floor(Math.min(cu, Math.max(n - 1, 0)) / 20), a = ch * 20, b = Math.min(a + 20, n);
-    var P = [[54,95],[68,90],[53,85],[36,82],[54,78],[47,72],[60,67],[42,61],[50,54.5],[34,50],[51,47],[59,41],[46,36],[26,34],[64,30],[45,29],[30,23],[77,20],[42,19],[65,15]];
-    var h = '<div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:24px">' + sv.length + '<span style="font-size:13px;opacity:.6"> / ' + n + ' yechildi</span></b><span style="opacity:.7">🗺 ' + (ch + 1) + '-bosqich</span></div>';
-    h += '<div style="position:relative;margin:10px 0;border-radius:16px;overflow:hidden;line-height:0"><img src="/img/pzmap.webp?v=1" style="width:100%;display:block" alt="">';
-    for (var i = a; i < b; i++) {
-      var k = i - a, p = P[k], done = sv.indexOf(L[i].id) >= 0, now = (i === cu), lock = (i > cu + 3);
-      var bg = done ? 'linear-gradient(135deg,#8fd14f,#5fa02f)' : now ? 'linear-gradient(135deg,#ffc94a,#f08a1a)' : lock ? 'linear-gradient(135deg,#dbe9ee,#aebfc7)' : 'linear-gradient(135deg,#d9a35a,#8a5a26)';
-      var tx = done ? '✓' : now ? '♟' : lock ? '🔒' : (i + 1);
-      h += '<button ' + (lock ? 'disabled' : 'data-pz="' + i + '"') + ' style="position:absolute;left:' + p[0] + '%;top:' + p[1] + '%;transform:translate(-50%,-50%);width:13%;aspect-ratio:1;max-width:58px;border:3px solid #fff;border-radius:50%;background:' + bg + ';box-shadow:0 4px 0 rgba(0,0,0,.4);color:#fff;font-size:18px;font-weight:800;line-height:1;text-shadow:0 2px 2px rgba(0,0,0,.5);padding:0;' + (lock ? 'opacity:.75;' : '') + (now ? 'animation:pzPulse 1.2s infinite;' : '') + '">' + tx + '</button>';
+    var ch = Math.floor(Math.min(cu, Math.max(n - 1, 0)) / 20), NS = Math.max(1, Math.ceil(n / 20));
+    var PM = { 1: [[53.9,94.3],[67.8,89.4],[52.6,84.8],[35.8,81.2],[54.2,77.5],[46.6,71.2],[60.2,66.0],[41.5,60.7],[49.8,53.9],[34.4,49.1],[50.9,46.3],[59.2,40.8],[46.1,35.8],[25.7,32.9],[63.5,29.2],[44.7,28.2],[29.4,22.7],[76.7,19.5],[41.8,18.4],[65.0,14.4]] };
+    var oldSc = document.getElementById('pzScroll'), keep = oldSc ? oldSc.scrollTop : null;
+    var h = '<div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:24px">' + sv.length + '<span style="font-size:13px;opacity:.6"> / ' + n + ' yechildi</span></b><span style="opacity:.7">🗺 ' + (ch + 1) + '/' + NS + '-bosqich</span></div>';
+    h += '<div id="pzScroll" style="position:relative;height:min(68vh,640px);overflow-y:auto;-webkit-overflow-scrolling:touch;margin:10px 0;border:3px solid #f5c542;border-radius:18px;box-shadow:0 0 0 2px #7a5a10,0 6px 18px rgba(0,0,0,.45);background:#0b3a1a">';
+    for (var s = NS; s >= 1; s--) {
+      var a = (s - 1) * 20, b = Math.min(a + 20, n), P = PM[s] || PM[1];
+      var src = s === 1 ? '/img/pzmap.webp?v=1' : '/img/pzmap-' + s + '.webp?v=1';
+      h += '<div style="position:relative;width:100%;aspect-ratio:921/1707;line-height:0;overflow:hidden"><img src="' + src + '" alt="" onerror="if(!this.dataset.f){this.dataset.f=1;this.src=\'/img/pzmap.webp?v=1\'}" style="position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover">';
+      h += '<div style="position:absolute;left:10px;top:10px;z-index:2;background:rgba(0,0,0,.55);color:#fff;font:700 13px/1 system-ui,sans-serif;padding:6px 10px;border-radius:12px">' + s + '-bosqich</div>';
+      for (var i = a; i < b; i++) {
+        var k = i - a, p = P[k]; if (!p) continue;
+        var done = sv.indexOf(L[i].id) >= 0, now = (i === cu), lock = (i > cu + 3);
+        var bg = done ? 'linear-gradient(135deg,#8fd14f,#4f9a24)' : now ? 'linear-gradient(135deg,#ffc94a,#f08a1a)' : lock ? 'linear-gradient(135deg,#dbe9ee,#9fb2bb)' : 'linear-gradient(135deg,#d9a35a,#8a5a26)';
+        var tx = done ? '✓' : now ? '♟' : lock ? '🔒' : (i + 1);
+        h += '<button ' + (lock ? 'disabled' : 'data-pz="' + i + '"') + (now ? ' data-cur="1"' : '') + ' style="position:absolute;z-index:3;left:' + p[0] + '%;top:' + p[1] + '%;transform:translate(-50%,-50%);width:15%;max-width:72px;aspect-ratio:1;border:4px solid #fff;border-radius:50%;background:' + bg + ';box-shadow:0 0 0 2px rgba(0,0,0,.45),0 5px 0 rgba(0,0,0,.4);color:#fff;font:800 22px/1 system-ui,sans-serif;text-shadow:0 2px 2px rgba(0,0,0,.55);padding:0;' + (lock ? 'opacity:.8;' : '') + (now ? 'animation:pzPulse 1.2s infinite;' : '') + '">' + tx + '</button>';
+      }
+      h += '</div>';
     }
-    h += '<style>@keyframes pzPulse{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.15)}}</style></div>';
+    h += '<style>@keyframes pzPulse{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.12)}}</style></div>';
     h += '<button id="pzGo" style="width:100%;padding:16px;border:0;border-radius:14px;background:#6fae3d;color:#fff;font-size:20px;font-weight:700;margin-bottom:14px;box-shadow:0 5px 0 #4b7f27">▶ Masalalar yechish</button>';
+    setTimeout(function () {
+      var c = document.getElementById('pzScroll'); if (!c) return;
+      if (keep != null) { c.scrollTop = keep; return; }
+      var t = c.querySelector('[data-cur]');
+      if (!t) { c.scrollTop = 0; return; }
+      var cr = c.getBoundingClientRect(), tr = t.getBoundingClientRect();
+      c.scrollTop += (tr.top - cr.top) - c.clientHeight / 2 + tr.height / 2;
+    }, 60);
     return h;
   }
   function list() {
