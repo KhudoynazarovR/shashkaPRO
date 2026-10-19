@@ -4,7 +4,7 @@
   "use strict";
   var ROOM_RE = /^[A-Za-z0-9_-]{3,64}$/;
   var q = new URLSearchParams(location.search);
-  var TCS = ["1+1", "2+2", "3+2", "5+3", "7+5"];
+  var TCS = ["1+1", "2+2", "3+2", "5+3"];
 
   function loadTg(cb) {
     if (window.Telegram && window.Telegram.WebApp) return cb();

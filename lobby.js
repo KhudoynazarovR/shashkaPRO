@@ -16,7 +16,7 @@ function payWin(room, whiteUid, blackUid, tid) {
   else if (room.winner === 'black') economy.rewardWin(blackUid, whiteUid, tid);
 }
 
-const TCS = ['1+1', '2+2', '3+2', '5+3', '7+5'];
+const TCS = ['1+1', '2+2', '3+2', '5+3'];
 const DEFAULT_TC = '5+3';
 // 🤖 Botlar: kuch pog'onasi. secs = dvigatelga beriladigan o'ylash vaqti, blunder = tasodifiy yurish ehtimoli
 const BOTS = [
