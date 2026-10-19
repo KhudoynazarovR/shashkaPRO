@@ -810,7 +810,7 @@
       }
       _tb.style.display = (st.finished && st.moves.length) ? "" : "none";
       elDrawOffer.style.display = (playing && st.moves.length >= 2 && st.canDraw && !st.drawOffer) ? "" : "none";
-      var canBz = playing && st.arena && st.berserk && !st.berserk[st.color] &&
+      var canBz = playing && st.arena && !st.noBerserk && st.berserk && !st.berserk[st.color] &&
         (st.color === "white" ? st.moves.length === 0 : st.moves.length <= 1);
       elBerserk.style.display = canBz ? "" : "none";
       if (!st.finished && st.drawOffer && st.color !== "spectator") {
@@ -1087,6 +1087,7 @@
         st.drawInfo = m.drawInfo || null; st.drawText = m.drawText || null; st.canDraw = !!m.canDraw;
         st.arena = !!m.arena;
         st.berserk = m.berserk || { white: false, black: false };
+        st.noBerserk = !!m.noBerserk;
         if (m.chat) { st.chat = m.chat; rebuildChat(); }
         setClock(m.clock, m.clockRunning);
         if (!same) rebuild();   // yurishlar o'zgarmagan bo'lsa, tanlov saqlanadi

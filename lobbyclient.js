@@ -310,6 +310,7 @@
         "<select id=\"lbTin\"><option value=\"0\">hozir</option><option value=\"2\">2 daq</option><option value=\"5\" selected>5 daq</option><option value=\"10\">10 daq</option><option value=\"30\">30 daq</option></select>" +
         "<select id=\"lbTp\"><option value=\"std\">Standart</option><option value=\"idf\">IDF 780</option></select></div>" +
 "<div class=\"row\"><span class=\"muted\">Vaqt:</span><select id=\"lbTtc\">" + tcOpts + "</select></div>" +
+"<div class=\"row\" id=\"lbTbzr\"><label><input type=\"checkbox\" id=\"lbTbz\" checked> ⚡ Berserk yoqilgan</label></div>" +
         "<div class=\"row\"><span class=\"muted\">📅 Aniq sana va vaqt:</span><input id=\"lbTat\" type=\"datetime-local\" style=\"flex:1;min-width:0\"><button id=\"lbTatX\" type=\"button\" class=\"sec\">✕</button></div>" +
         "<div class=\"row\" id=\"lbSw\" style=\"display:none\"><span class=\"muted\">Turlar:</span><select id=\"lbTr\">" +
         "<option value=\"3\">3</option><option value=\"4\">4</option><option value=\"5\" selected>5</option><option value=\"6\">6</option><option value=\"7\">7</option><option value=\"8\">8</option><option value=\"9\">9</option><option value=\"10\">10</option><option value=\"11\">11</option></select>" +
@@ -338,10 +339,11 @@
         $("lbTin").style.display = a ? "" : "none";
         $("lbSw").style.display = this.value === "swiss" ? "" : "none";
         var K = this.value, I = $("lbTinfo"); if (I) I.textContent = K === "swiss" ? "Shveytsar: turlar bo‘yicha o‘ynaladi, kamida 3 o‘yinchi kerak." : K === "olympic" ? "Olimpiya: yutgan keyingi bosqichga o‘tadi, yutqazgan o‘yindan chiqadi." : "Arena: belgilangan vaqt to‘xtovsiz o‘ynaladi (g‘alaba 2, durang 1, ketma-ket 2 g‘alabadan so‘ng olov ×2, berserk +1).";
+        { var br = $("lbTbzr"); if (br) br.style.display = K === "arena" ? "" : "none"; }
       };
       $("lbTk").onchange();
       $("lbTCreate").onclick = function () {
-        window.lbAtOk() && sendMsg({ type: "lbTCreate", startAt: window.lbAt(), clubIds: lbClubIds(), kind: $("lbTk").value, pos: $("lbTp").value, duration: Number($("lbTdur").value), startIn: Number($($("lbTk").value === "arena" ? "lbTin" : "lbTsin").value), rounds: Number($("lbTr").value), interval: Number($("lbTiv").value), name: $("lbTn").value, tc: $("lbTtc").value });
+        window.lbAtOk() && sendMsg({ type: "lbTCreate", startAt: window.lbAt(), clubIds: lbClubIds(), kind: $("lbTk").value, pos: $("lbTp").value, duration: Number($("lbTdur").value), startIn: Number($($("lbTk").value === "arena" ? "lbTin" : "lbTsin").value), rounds: Number($("lbTr").value), interval: Number($("lbTiv").value), name: $("lbTn").value, tc: $("lbTtc").value, berserk: $("lbTbz").checked });
         $("lbTn").value = "";
       };
       if (!initData) {

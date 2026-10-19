@@ -213,8 +213,8 @@ function createLobby({ send, clients, roomsApi }) {
   }
 
   // ---------- xona ochish ----------
-  function openRoom(roomId, tc, w, b, arena, opening) {
-    roomsApi.create(roomId, { tc, arena: !!arena, opening: opening || null, white: { uid: w.uid, name: w.name }, black: { uid: b.uid, name: b.name } });
+  function openRoom(roomId, tc, w, b, arena, opening, noBz) {
+    roomsApi.create(roomId, { tc, arena: !!arena, noBerserk: !!noBz, opening: opening || null, white: { uid: w.uid, name: w.name }, black: { uid: b.uid, name: b.name } });
   }
 
   function cleanOpts(m) {
@@ -620,7 +620,7 @@ function createLobby({ send, clients, roomsApi }) {
     const roomId = 'A' + t.id + 'G' + (++t.gameNo);
     w.colors.w++; k.colors.b++;
     w.busy = true; k.busy = true;
-    openRoom(roomId, t.tc, w, k, true, t.pos === 'idf' ? pickOpening() : null);
+    openRoom(roomId, t.tc, w, k, true, t.pos === 'idf' ? pickOpening() : null, t.berserk === false);
     const board = { board: t.gameNo, roomId, white: w.uid, black: k.uid, done: false, winner: null };
     t.cur.push(board);
     roomToBoard.set(roomId, { t, b: board });
@@ -991,7 +991,7 @@ function createLobby({ send, clients, roomsApi }) {
             creatorUid: me.uid, creatorName: me.name, status: 'reg', created: Date.now(),
             players: new Map(), round: 0, rounds: 0, cur: [], curBye: null, nextAt: 0,
             durationMin: dur, startAt, endAt: startAt + dur * 60000, gameNo: 0, ending: false,
-            pos: m.pos === 'idf' ? 'idf' : 'std'
+            pos: m.pos === 'idf' ? 'idf' : 'std', berserk: m.berserk !== false
           };
           at.players.set(me.uid, newArenaPlayer(me));
           at.clubIds = cl.ids; tournaments.set(at.id, at);

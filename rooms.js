@@ -110,7 +110,7 @@ function createRooms({ send, clients, onFinish }) {
       tcs: room.vsBot ? BOT_TCS : Object.keys(TCS).filter(k => k !== "0.5+0" && k !== "7+5"),
       vsBot: !!room.vsBot, botStarted: !!room.botStarted, botColor: botColorOf(room),
       botSecs: room.botCfg ? room.botCfg.secs : 1.2, botBlunder: room.botCfg ? room.botCfg.blunder : 0,
-      arena: !!room.arena,
+      arena: !!room.arena, noBerserk: !!room.noBerserk,
       opening: room.opening,
       berserk: room.berserk,
       drawOffer: room.drawOffer,
@@ -291,6 +291,7 @@ function createRooms({ send, clients, onFinish }) {
     if (room) return room;
     room = newRoom(roomId, opts && opts.tc);
     room.arena = !!(opts && opts.arena);
+    room.noBerserk = !!(opts && opts.noBerserk);
     room.locked = !!(opts && opts.locked);
     room.vsBot = !!(opts && opts.vsBot);
     room.botCfg = (opts && opts.botCfg) || null;
@@ -535,6 +536,7 @@ function createRooms({ send, clients, onFinish }) {
     if (m.type === "roomBerserk") {
       if (!col) return err(c, "Siz tomoshabinsiz"), true;
       if (!room.arena) return err(c, "Berserk faqat Arena o‘yinlarida"), true;
+      if (room.noBerserk) return err(c, "Bu turnirda berserk o‘chirilgan"), true;
       if (room.finished || !room.white || !room.black) return true;
       if (room.berserk[col]) return true;
       const before = room.plies <= (col === room.first ? 0 : 1);
