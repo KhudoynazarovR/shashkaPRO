@@ -312,6 +312,7 @@
 "<div class=\"row\"><span class=\"muted\">Vaqt:</span><select id=\"lbTtc\">" + tcOpts + "</select></div>" +
 "<div class=\"row\" id=\"lbTbzr\"><label><input type=\"checkbox\" id=\"lbTbz\" checked> ⚡ Berserk yoqilgan</label></div>" +
 "<div class=\"row\"><span class=\"muted\">🪙 Mukofot:</span><input id=\"lbTpz\" type=\"number\" min=\"100\" value=\"100\" style=\"flex:1;min-width:0\"></div>" +
+"<div class=\"row\"><span class=\"muted\">🏅 Mukofot oladigan o‘rinlar:</span><select id=\"lbTpl\"><option value=\"3\">3</option><option value=\"4\">4</option><option value=\"5\">5</option><option value=\"6\">6</option><option value=\"7\">7</option><option value=\"8\">8</option><option value=\"9\">9</option><option value=\"10\">10</option></select></div>" +
 "<div id=\"lbTpzc\" class=\"muted\" style=\"font-size:12px\"></div>" +
         "<div class=\"row\"><span class=\"muted\">📅 Aniq sana va vaqt:</span><input id=\"lbTat\" type=\"datetime-local\" style=\"flex:1;min-width:0\"><button id=\"lbTatX\" type=\"button\" class=\"sec\">✕</button></div>" +
         "<div class=\"row\" id=\"lbSw\" style=\"display:none\"><span class=\"muted\">Turlar:</span><select id=\"lbTr\">" +
@@ -344,13 +345,16 @@
         { var br = $("lbTbzr"); if (br) br.style.display = K === "arena" ? "" : "none"; }
       };
       $("lbTk").onchange();
+      var PZT = { 3: [50,30,20], 4: [40,28,20,12], 5: [35,25,18,13,9], 6: [30,22,17,13,10,8], 7: [28,20,15,12,10,8,7], 8: [26,19,15,12,10,8,5,5], 9: [24,18,14,11,10,8,6,5,4], 10: [22,17,13,11,9,8,7,5,4,4] };
       var _pzc = function () {
-        var v = Math.floor(Number($("lbTpz").value) || 0), e = $("lbTpzc"); if (!e) return;
-        e.textContent = v < 100 ? "Kamida 100 🪙 (admin uchun cheklov yo‘q)" : "🥇 " + Math.floor(v * 0.5) + " · 🥈 " + Math.floor(v * 0.3) + " · 🥉 " + Math.floor(v * 0.2) + " 🪙 — yaratilganda yechiladi: " + v;
+        var v = Math.floor(Number($("lbTpz").value) || 0), n = Number($("lbTpl").value) || 3, e = $("lbTpzc"); if (!e) return;
+        if (v < 100) { e.textContent = "Kamida 100 🪙 (admin uchun cheklov yo‘q)"; return; }
+        var M = ["🥇", "🥈", "🥉"], t = PZT[n] || PZT[3];
+        e.textContent = t.map(function (p, i) { return (M[i] || (i + 1) + ".") + " " + Math.floor(v * p / 100); }).join(" · ") + " 🪙 — yaratilganda yechiladi: " + v;
       };
-      $("lbTpz").oninput = _pzc; _pzc();
+      $("lbTpz").oninput = _pzc; $("lbTpl").onchange = _pzc; _pzc();
       $("lbTCreate").onclick = function () {
-        window.lbAtOk() && sendMsg({ type: "lbTCreate", startAt: window.lbAt(), clubIds: lbClubIds(), kind: $("lbTk").value, pos: $("lbTp").value, duration: Number($("lbTdur").value), startIn: Number($($("lbTk").value === "arena" ? "lbTin" : "lbTsin").value), rounds: Number($("lbTr").value), interval: Number($("lbTiv").value), name: $("lbTn").value, tc: $("lbTtc").value, berserk: $("lbTbz").checked, prize: Number($("lbTpz").value)||0 });
+        window.lbAtOk() && sendMsg({ type: "lbTCreate", startAt: window.lbAt(), clubIds: lbClubIds(), kind: $("lbTk").value, pos: $("lbTp").value, duration: Number($("lbTdur").value), startIn: Number($($("lbTk").value === "arena" ? "lbTin" : "lbTsin").value), rounds: Number($("lbTr").value), interval: Number($("lbTiv").value), name: $("lbTn").value, tc: $("lbTtc").value, berserk: $("lbTbz").checked, prize: Number($("lbTpz").value)||0, places: Number($("lbTpl").value)||3 });
         $("lbTn").value = "";
       };
       if (!initData) {

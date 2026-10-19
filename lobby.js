@@ -580,7 +580,8 @@ function createLobby({ send, clients, roomsApi }) {
     if (t.prize > 0 && !t.prizeDone) {
       t.prizeDone = true;
       const el = st.filter(x => !x.withdrawn && x.games > 0);
-      const sh = el.length >= 3 ? [50, 30, 20] : el.length === 2 ? [60, 40] : el.length === 1 ? [100] : [];
+      const PZT = { 3: [50,30,20], 4: [40,28,20,12], 5: [35,25,18,13,9], 6: [30,22,17,13,10,8], 7: [28,20,15,12,10,8,7], 8: [26,19,15,12,10,8,5,5], 9: [24,18,14,11,10,8,6,5,4], 10: [22,17,13,11,9,8,7,5,4,4] };
+      const sh = el.length >= 3 ? PZT[Math.min(t.places || 3, el.length)] : el.length === 2 ? [60, 40] : el.length === 1 ? [100] : [];
       sh.forEach((pc, i) => {
         const amt = Math.floor(t.prize * pc / 100);
         if (amt > 0 && economy.add(el[i].uid, amt, 'tournament_prize_' + (i + 1))) toast(el[i].uid, '🏆 ' + (i + 1) + '-o‘rin mukofoti: +' + amt + ' 🪙');
@@ -1007,7 +1008,7 @@ function createLobby({ send, clients, roomsApi }) {
             creatorUid: me.uid, creatorName: me.name, status: 'reg', created: Date.now(),
             players: new Map(), round: 0, rounds: 0, cur: [], curBye: null, nextAt: 0,
             durationMin: dur, startAt, endAt: startAt + dur * 60000, gameNo: 0, ending: false,
-            pos: m.pos === 'idf' ? 'idf' : 'std', berserk: m.berserk !== false, prize: m._prize || 0, prizePaid: m._paid || 0
+            pos: m.pos === 'idf' ? 'idf' : 'std', berserk: m.berserk !== false, prize: m._prize || 0, prizePaid: m._paid || 0, places: Math.max(3, Math.min(10, Math.floor(Number(m.places)) || 3))
           };
           at.players.set(me.uid, newArenaPlayer(me));
           at.clubIds = cl.ids; tournaments.set(at.id, at);
@@ -1019,7 +1020,7 @@ function createLobby({ send, clients, roomsApi }) {
           creatorUid: me.uid, creatorName: me.name, status: 'reg', created: Date.now(),
           players: new Map(), round: 0, rounds: 0, cur: [], curBye: null, nextAt: 0,
           pos: m.pos === 'idf' ? 'idf' : 'std',
-          prize: m._prize || 0, prizePaid: m._paid || 0,
+          prize: m._prize || 0, prizePaid: m._paid || 0, places: Math.max(3, Math.min(10, Math.floor(Number(m.places)) || 3)),
           roundsWanted: SWISS_ROUNDS.includes(Number(m.rounds)) ? Number(m.rounds) : 0,
           interval: SWISS_INTERVALS.includes(Number(m.interval)) ? Number(m.interval) * 1000 : 0,
           startAt: validStart(m.startAt) || (SWISS_STARTS.includes(Number(m.startIn)) ? Date.now() + Number(m.startIn) * 60000 : 0)
