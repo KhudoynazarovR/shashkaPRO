@@ -830,7 +830,7 @@
           : "");
       elInfo.style.whiteSpace = "pre-line"; document.body.classList.toggle("rcPlaying", st.color !== "spectator" && !st.finished && (st.moves || []).length > 0);
       if (st.opening) elInfo.textContent = "📖 IDF " + st.opening.id + (elInfo.textContent ? "\n" + elInfo.textContent : "");
-      if (st.vsBot && st.botNote) elInfo.textContent += (elInfo.textContent ? "\n" : "") + st.botNote;
+      if (false && st.vsBot && st.botNote) elInfo.textContent += (elInfo.textContent ? "\n" : "") + st.botNote;
     }
 
     // ---------- bosish ----------
