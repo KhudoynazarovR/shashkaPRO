@@ -44,8 +44,8 @@ const SERIES_GAP_MS = Number(process.env.SERIES_GAP_MS || 5000);  // seriyada o'
 const SWISS_ROUNDS = [3, 4, 5, 6, 7, 8, 9, 10, 11];  // turlar soni
 const SWISS_INTERVALS = [10, 20, 60, 120, 300];       // turlar orasidagi tanaffus (soniya)
 const SWISS_STARTS = [2, 5, 10, 30];                  // rejalashtirilgan boshlanish (daqiqa); boshqasi = qo'lda
-const REG_TTL = 2 * 3600 * 1000;
-const KEEP_FINISHED = 6 * 3600 * 1000;
+const REG_TTL = 24 * 3600 * 1000;
+const KEEP_FINISHED = 24 * 3600 * 1000;
 
 // ---- Arena sozlamalari ----
 const ARENA_DURATIONS = [10, 20, 30, 45, 60, 90];   // daqiqa
