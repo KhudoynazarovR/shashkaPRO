@@ -891,7 +891,7 @@
   var BG = 'border:0;border-radius:12px;padding:9px 12px;background:#262b66;color:#fff;font-size:14px;margin:3px';
   var BO = 'border:0;border-radius:12px;padding:9px 12px;background:linear-gradient(90deg,#f59e0b,#ea580c);color:#fff;font-size:14px;margin:3px';
   var KS = ['w', 'b', 'wk', 'bk'], KN = { w: 'Oq', b: 'Qora', wk: 'Oq damka', bk: 'Qora damka' };
-  var ov = null, S = { list: [], owned: [], equipped: '', diamonds: 0, admin: false, link: '' }, tab = 'app', msg = '', form = null;
+  var ov = null, S = { list: [], owned: [], equipped: '', diamonds: 0, admin: false, link: '' }, tab = 'app', msg = '', form = null; try { var _c = localStorage.getItem('spShopCss'); if (_c && !document.getElementById('spShopCss')) { var _s = document.createElement('style'); _s.id = 'spShopCss'; _s.textContent = _c; document.head.appendChild(_s); } } catch (e) {}
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function api(path, body) {
@@ -900,7 +900,7 @@
   function imgUrl(id, k) { return '/api/shop/img?id=' + encodeURIComponent(id) + '&k=' + k; }
   function applyEq() {
     var o = document.getElementById('spShopCss'); if (o) o.remove();
-    var eqId = S.equipped === '-' ? '' : (S.equipped || S.def || ''); window.spEqId = eqId; if (!eqId || !S.list.some(function (x) { return x.id === eqId; })) return;
+    var eqId = S.equipped === '-' ? '' : (S.equipped || S.def || ''); window.spEqId = eqId; if (!eqId) { try { localStorage.removeItem('spShopCss'); } catch (e) {} } if (!eqId || !S.list.some(function (x) { return x.id === eqId; })) return;
     var id = eqId, B = 'html body #board[data-th][data-ps] .sq .pc';
     var css = B + '::before,' + B + '::after{display:none!important}'
       + B + '{background-color:transparent!important;background-size:contain!important;background-position:center!important;background-repeat:no-repeat!important;border:0!important;box-shadow:none!important;filter:drop-shadow(0 3px 2px #0007)}'
@@ -908,7 +908,7 @@
       + B + '.b{background-image:url("' + imgUrl(id, 'b') + '")!important}'
       + B + '.w.k{background-image:url("' + imgUrl(id, 'wk') + '")!important}'
       + B + '.b.k{background-image:url("' + imgUrl(id, 'bk') + '")!important}';
-    css += css.split(B).join('html body .cell.sq .pc'); var st = document.createElement('style'); st.id = 'spShopCss'; st.textContent = css; document.head.appendChild(st);
+    css += css.split(B).join('html body .cell.sq .pc'); try { localStorage.setItem('spShopCss', css); } catch (e) {} var st = document.createElement('style'); st.id = 'spShopCss'; st.textContent = css; document.head.appendChild(st);
   }
   function merge(d) { S = d; applyEq(); }
 
