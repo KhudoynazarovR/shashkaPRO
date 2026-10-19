@@ -1,0 +1,113 @@
+ const p=b[from],s=Math.sign(p),out=[];b[from]=0;
+ const dfs=(pos,k,caps,path,o)=>{
+  const r=pos>>3,c=pos&7;let found=false;
+  for(const[dr,dc]of DIRS){
+   if(!k){
+    const lr=r+2*dr,lc=c+2*dc;if(!ins(lr,lc))continue;
+    const m=(r+dr)*8+c+dc,l=lr*8+lc;
+    if(b[m]*s<0&&!caps.includes(m)&&b[l]===0){found=true;dfs(l,(s>0&&lr===0)||(s<0&&lr===7),[...caps,m],[...path,l],o)}
+   }else{
+    let nr=r+dr,nc=c+dc;
+    while(ins(nr,nc)&&b[nr*8+nc]===0){nr+=dr;nc+=dc}
+    if(!ins(nr,nc))continue;
+    const m=nr*8+nc;if(b[m]*s>=0||caps.includes(m))continue;
+    const lands=[];let lr=nr+dr,lc=nc+dc;
+    while(ins(lr,lc)&&b[lr*8+lc]===0){lands.push(lr*8+lc);lr+=dr;lc+=dc}
+    if(!lands.length)continue;found=true;
+    const rs=lands.map(l=>{const oo=[];const e=dfs(l,true,[...caps,m],[...path,l],oo);return{oo,e}});
+    const any=rs.some(x=>x.e);rs.forEach(x=>{if(!any||x.e)o.push(...x.oo)});
+   }
+  }
+  if(!found&&caps.length)o.push({path,caps,pk:k});
+  return found};
+ dfs(from,Math.abs(p)===2,[],[from],out);b[from]=p;return out}
+function simple(b,from){
+ const p=b[from],s=Math.sign(p),r=from>>3,c=from&7,o=[];
+ if(Math.abs(p)===2){for(const[dr,dc]of DIRS){let nr=r+dr,nc=c+dc;while(ins(nr,nc)&&!b[nr*8+nc]){o.push({path:[from,nr*8+nc],caps:[]});nr+=dr;nc+=dc}}}
+ else for(const dc of[-1,1]){const nr=r-s,nc=c+dc;if(ins(nr,nc)&&!b[nr*8+nc])o.push({path:[from,nr*8+nc],caps:[]})}
+ return o}
+function legal(b,side){const cs=[];for(let i=0;i<64;i++)if(b[i]*side>0)cs.push(...capsFrom(b,i));if(cs.length)return cs;
+ const ms=[];for(let i=0;i<64;i++)if(b[i]*side>0)ms.push(...simple(b,i));return ms}
+function apply(b,m){const n=b.slice(),f=m.path[0],t=m.path[m.path.length-1];let p=n[f];n[f]=0;m.caps.forEach(x=>n[x]=0);
+ if(Math.abs(p)===1&&(m.pk||(p>0&&t>>3===0)||(p<0&&t>>3===7)))p*=2;n[t]=p;return n}
+/* ---------- AI: iterative deepening alpha-beta + TT ---------- */
+function ev(b){let s=0;for(let i=0;i<64;i++){const p=b[i];if(!p)continue;const r=i>>3,c=i&7,w=p>0;
+ const v=Math.abs(p)===2?330:100+(w?7-r:r)*6+(c>1&&c<6?4:0)+((w&&r===7)||(!w&&r===0)?8:0);s+=w?v:-v}return s}
+let nodes=0,deadline=0;const TT=new Map();
+function ab(b,side,d,al,be,ply){
+ if((++nodes&1023)===0&&Date.now()>deadline)throw 0;
+ const ms=legal(b,side);if(!ms.length)return-9000+ply;
+ if(ply>60||(d<=0&&!ms[0].caps.length))return side*ev(b);
+ const key=side+b.join(''),e=TT.get(key);
+ if(e&&e.d>=d){if(e.f===0||(e.f===1&&e.v>=be)||(e.f===2&&e.v<=al))return e.v}
+ const a0=al;let best=-1e9;
+ for(const m of ms){const v=-ab(apply(b,m),-side,d-1,-be,-al,ply+1);if(v>best)best=v;if(v>al)al=v;if(al>=be)break}
+ TT.set(key,{d,v:best,f:best<=a0?2:best>=be?1:0});return best}
+/* ---------- L6 engine ---------- */
+const TT6=new Map();const hist6=new Int32Array(4096);let nodes6=0,dl6=0;
+function ev6(b){let s=0;for(let i=0;i<64;i++){const p=b[i];if(!p)continue;const r=i>>3,c=i&7,w=p>0;let v;
+ if(Math.abs(p)===2){v=320+((c>1&&c<6&&r>1&&r<6)?8:0)}
+ else{const adv=w?7-r:r;v=100+adv*7+((c>1&&c<6)?5:0)+(adv>=5?adv*2:0)+(((w&&r===7)||(!w&&r===0))?10:0)-((c===0||c===7)?3:0)}
+ s+=w?v:-v}return s}
+function ab6(b,side,d,al,be,ply){
+ if((++nodes6&1023)===0&&Date.now()>dl6)throw 0;
+ const ms=legal(b,side);if(!ms.length)return-9000+ply;
+ if(ply>70||(d<=0&&!ms[0].caps.length))return side*ev6(b);
+ const key=side+b.join(''),e=TT6.get(key);let tm=-1;
+ if(e){tm=e.m;if(e.d>=d){if(e.f===0||(e.f===1&&e.v>=be)||(e.f===2&&e.v<=al))return e.v}}
+ const sc=ms.map(m=>{const k=m.path[0]*64+m.path[m.path.length-1];return[(k===tm?1e6:0)+hist6[k]+m.caps.length*100,m,k]});
+ sc.sort((x,y)=>y[0]-x[0]);
+ const a0=al;let best=-1e9,bk=-1;
+ for(const x of sc){const v=-ab6(apply(b,x[1]),-side,d-1,-be,-al,ply+1);
+  if(v>best){best=v;bk=x[2]}if(v>al)al=v;
+  if(al>=be){if(!x[1].caps.length)hist6[x[2]]+=d*d;break}}
+ TT6.set(key,{d,v:best,f:best<=a0?2:best>=be?1:0,m:bk});return best}
+function bestMove6(b,side,ms_){
+ nodes6=0;dl6=Date.now()+(ms_||4000);let ms=legal(b,side);if(!ms.length)return null;
+ if(TT6.size>6e5)TT6.clear();hist6.fill(0);
+ let best=ms[0],bv=side*ev6(apply(b,ms[0])),bd=0;
+ if(ms.length===1){return{m:best,v:bv*side,d:0}}
+ try{for(let d=1;d<=40;d++){let cb=null,cv=-1e9;const sc=[];
+  for(const m of ms){const v=-ab6(apply(b,m),-side,d-1,-1e9,-cv,1);sc.push([v,m]);if(v>cv){cv=v;cb=m}}
+  best=cb;bv=cv;bd=d;ms=sc.sort((a,c)=>c[0]-a[0]).map(x=>x[1]);
+  if(cv>8000||cv<-8000)break}}catch(e){}
+ nodes=nodes6;return{m:best,v:bv*side,d:bd}}
+
+/* ---------- L6 analysis ---------- */
+function multi6(b,side,ms_){
+ nodes6=0;dl6=Date.now()+ms_;let ms=legal(b,side);if(!ms.length)return null;
+ if(TT6.size>6e5)TT6.clear();hist6.fill(0);
+ let res=ms.map(m=>({m,v:0})),bd=0;
+ try{for(let d=1;d<=40;d++){const cur=[];
+  for(const m of ms){cur.push({m,v:-ab6(apply(b,m),-side,d-1,-1e9,1e9,1)})}
+  cur.sort((a,c)=>c.v-a.v);res=cur;ms=cur.map(x=>x.m);bd=d;
+  if(cur[0].v>8000||cur[0].v<-8000)break}}catch(e){}
+ nodes=nodes6;return{res,d:bd}}
+function pv6(b,side,m){
+ const out=[fmt(m)];let bb=apply(b,m),s=-side;
+ for(let i=0;i<7;i++){const e=TT6.get(s+bb.join(''));if(!e||e.m<0)break;
+  const x=legal(bb,s).find(q=>q.path[0]*64+q.path[q.path.length-1]===e.m);if(!x)break;
+  out.push(fmt(x));bb=apply(bb,x);s=-s}
+ return out.join(' ')}
+function sc6(v,side){
+ const w=v*side;
+ if(Math.abs(v)>8000){return(w>0?'+':'-')+'M'+Math.ceil((9000-Math.abs(v))/2)}
+ return(w>=0?'+':'')+(w/100).toFixed(1)}
+function analyze6(){
+ const b=G.pos[G.cur],s=sideAt(G.cur);$('an').textContent='…';
+ setTimeout(()=>{const r=multi6(b,s,3500);if(!r){$('an').textContent='—';return}
+  const top=r.res.slice(0,3),e0=top[0].v*s;
+  const pct=Math.abs(top[0].v)>8000?(e0>0?100:0):50+50*Math.tanh(e0/400);
+  let h='<div style="height:10px;border-radius:5px;overflow:hidden;background:#222;margin:4px 0"><div style="height:100%;width:'+pct.toFixed(0)+'%;background:#eee"></div></div>';
+  h+='<div style="font-size:12px;opacity:.7">d'+r.d+' · '+nodes+' nodes</div>';
+  top.forEach(x=>{h+='<div style="font-size:13px;margin-top:3px"><b>'+sc6(x.v,s)+'</b> '+pv6(b,s,x.m)+'</div>'});
+  $('an').innerHTML=h;
+  const bm=top[0].m;G.hint=[bm.path[0],bm.path[bm.path.length-1]];render()},30)}
+
+const LV=[[1,40],[3,150],[5,500],[8,1500],[14,3500]];
+function bestMove(b,side,lvl,ms_){if(lvl>=5)return bestMove6(b,side,ms_);
+ const[md,tm]=LV[lvl];nodes=0;deadline=Date.now()+(ms_||tm);let ms=legal(b,side);if(TT.size>3e5)TT.clear();
+ if(!ms.length)return null;let best=ms[0],bv=side*ev(apply(b,ms[0])),bd=0;if(ms.length===1)return{m:best,v:bv*side,d:0};
+ try{for(let d=1;d<=md;d++){let cb=null,cv=-1e9;const sc=[];
+  for(const m of ms){let v=-ab(apply(b,m),-side,d-1,-1e9,-cv,1);if(lvl<2)v+=Math.random()*60;sc.push([v,m]);if(v>cv){cv=v;cb=m}}
+  best=cb;bv=cv;bd=d;ms=sc.sort((a,c)=>c[0]-a[0]).map(x=>x[1])}}catch(e){}
