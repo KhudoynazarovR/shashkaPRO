@@ -39,7 +39,7 @@
     var BAR = 4, CH = [[72, 76, 79, 84], [69, 72, 76, 81], [65, 69, 72, 77], [67, 71, 74, 79]],
       PAD = [[48, 55, 64], [45, 57, 64], [41, 57, 65], [43, 59, 62]], PENT = [76, 79, 81, 84, 86, 88],
       ARP = [0, 1, 2, 1, 3, 2, 1, 2];
-    var ac = null, input = null, master = null, timer = null, nextT = 0, bar = 0, on = false, lastErr = '';
+    var ac = null, input = null, master = null, timer = null, nextT = 0, bar = 0, on = false, lastErr = '', tgt = 0.5;
     function hz(m) { return 440 * Math.pow(2, (m - 69) / 12); }
     function rng(seed) { var x = seed >>> 0; return function () { x = (Math.imul(x, 1664525) + 1013904223) >>> 0; return x / 4294967296; }; }
     function bell(c, d, t, m, g, dur) {
@@ -85,10 +85,14 @@
       try {
         ac = new AC(); master = ac.createGain(); master.gain.value = 0.0001; master.connect(ac.destination);
         input = chain(ac, master); on = true; bar = 0; nextT = ac.currentTime + 0.15;
-        master.gain.setValueAtTime(0.0001, ac.currentTime); master.gain.linearRampToValueAtTime(0.5, ac.currentTime + 2);
+        master.gain.setValueAtTime(0.0001, ac.currentTime); master.gain.linearRampToValueAtTime(tgt, ac.currentTime + 2);
         if (ac.state === 'suspended' && ac.resume) ac.resume();
         tick(); timer = setInterval(tick, 800);
       } catch (e) { on = false; lastErr = String(e && e.message || e).slice(0, 40); }
+    }
+    function level(v) {
+      tgt = v;
+      if (on && ac && master) { try { master.gain.cancelScheduledValues(ac.currentTime); master.gain.setValueAtTime(master.gain.value, ac.currentTime); master.gain.linearRampToValueAtTime(v, ac.currentTime + 0.9); } catch (e) {} }
     }
     function stop() {
       if (!on) return; on = false; clearInterval(timer);
@@ -100,13 +104,13 @@
       if (!ac) return;
       try { if (document.hidden) ac.suspend(); else ac.resume(); } catch (e) {}
     });
-    return { start: start, stop: stop, isOn: function () { return on; }, running: function () { return !!ac && ac.state === 'running'; }, state: function () { var AC = window.AudioContext || window.webkitAudioContext; return !AC ? 'AudioContext yo‘q' : (lastErr ? 'xato: ' + lastErr : (!on ? 'o‘chiq' : (ac ? ac.state : '?'))); }, score: score, chain: chain, resume: function () { if (ac && ac.state === 'suspended') try { ac.resume(); } catch (e) {} } };
+    return { start: start, stop: stop, level: level, isOn: function () { return on; }, running: function () { return !!ac && ac.state === 'running'; }, state: function () { var AC = window.AudioContext || window.webkitAudioContext; return !AC ? 'AudioContext yo‘q' : (lastErr ? 'xato: ' + lastErr : (!on ? 'o‘chiq' : (ac ? ac.state : '?'))); }, score: score, chain: chain, resume: function () { if (ac && ac.state === 'suspended') try { ac.resume(); } catch (e) {} } };
   })();
   window.pzhMusic = MU;
   var MUTED = null;
   function muted() { if (MUTED === null) { try { MUTED = localStorage.getItem('pzhMute') === '1'; } catch (e) { MUTED = false; } } return MUTED; }
   function setMuted(v) { MUTED = !!v; try { localStorage.setItem('pzhMute', v ? '1' : '0'); } catch (e) {} }
-  var WATCH = null, UNLOCK = false;
+  var WATCH = null, UNLOCK = false, CURLV = 0.5;
   function hint() {
     var h = document.getElementById('pzhHint'), need = MU.isOn() && !MU.running() && document.querySelector('.pzh');
     if (need && !h) {
@@ -121,7 +125,22 @@
     var d = document.getElementById('pzhDbg'), f = document.querySelector('.pzhFoot');
     if (!f) return;
     if (!d) { d = document.createElement('div'); d.id = 'pzhDbg'; d.style.cssText = 'text-align:center;font-size:11px;opacity:.6;margin-top:6px;color:#cfe'; f.parentNode.appendChild(d); }
-    d.textContent = 'ovoz holati: ' + MU.state() + ' · v3';
+    d.textContent = 'ovoz holati: ' + MU.state() + ' · v4';
+  }
+  function fab() {
+    var f = document.getElementById('pzhFab'), show = document.getElementById('spPz') && !document.querySelector('.pzh');
+    if (show && !f) {
+      f = document.createElement('button'); f.id = 'pzhFab'; f.setAttribute('aria-label', 'Musiqa');
+      f.style.cssText = 'position:fixed;left:12px;bottom:76px;z-index:9600;width:42px;height:42px;border-radius:50%;border:2px solid #d9a441;background:rgba(34,21,10,.88);color:#ffe9a8;font-size:19px;line-height:1;padding:0;box-shadow:0 3px 8px rgba(0,0,0,.5)';
+      f.onclick = function () {
+        var m = !muted(); setMuted(m);
+        if (m) MU.stop(); else { MU.level(CURLV); MU.start(); watch(); }
+        fab();
+      };
+      document.body.appendChild(f);
+    }
+    if (f && !show) { f.parentNode.removeChild(f); return; }
+    if (f) { var m2 = muted(); f.textContent = m2 ? '🔇' : '🎵'; f.style.opacity = m2 ? '.6' : '1'; }
   }
   function unlock() {
     if (UNLOCK) return; UNLOCK = true;
@@ -132,8 +151,10 @@
     unlock();
     if (WATCH) return;
     WATCH = setInterval(function () {
-      if (!document.querySelector('.pzh')) { MU.stop(); clearInterval(WATCH); WATCH = null; hint(); return; }
-      hint(); dbg();
+      if (!document.getElementById('spPz')) { MU.stop(); clearInterval(WATCH); WATCH = null; hint(); fab(); return; }
+      var inHub = !!document.querySelector('.pzh'), want = inHub ? 0.5 : 0.2;
+      if (want !== CURLV) { CURLV = want; MU.level(want); }
+      hint(); dbg(); fab();
     }, 400);
   }
   var CARDS = [
