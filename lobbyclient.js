@@ -314,7 +314,7 @@
         "<option value=\"3\">3</option><option value=\"4\">4</option><option value=\"5\" selected>5</option><option value=\"6\">6</option><option value=\"7\">7</option><option value=\"8\">8</option><option value=\"9\">9</option><option value=\"10\">10</option><option value=\"11\">11</option></select>" +
         "<span class=\"muted\">Tanaffus:</span><select id=\"lbTiv\"><option value=\"10\">10 s</option><option value=\"20\" selected>20 s</option><option value=\"60\">1 daq</option><option value=\"120\">2 daq</option><option value=\"300\">5 daq</option></select>" +
         "<select id=\"lbTsin\"><option value=\"0\">qo‘lda boshlash</option><option value=\"2\">2 daq</option><option value=\"5\">5 daq</option><option value=\"10\">10 daq</option><option value=\"30\">30 daq</option></select></div>" +
-        "<div class=\"muted\">Arena: belgilangan vaqt to‘xtovsiz o‘ynaladi (g‘alaba 2, durang 1, ketma-ket 2 g‘alabadan so‘ng olov ×2, berserk +1). Shveytsar: kamida 3 o‘yinchi.</div></div>" +
+        "<div id=\"lbTinfo\" class=\"muted\">Arena: belgilangan vaqt to‘xtovsiz o‘ynaladi (g‘alaba 2, durang 1, ketma-ket 2 g‘alabadan so‘ng olov ×2, berserk +1). Shveytsar: kamida 3 o‘yinchi.</div></div>" +
         "<div id=\"lbTs\"></div></div>";
       document.body.appendChild(panel);
 
@@ -336,7 +336,9 @@
         $("lbTdur").style.display = a ? "" : "none";
         $("lbTin").style.display = a ? "" : "none";
         $("lbSw").style.display = this.value === "swiss" ? "" : "none";
+        var K = this.value, I = $("lbTinfo"); if (I) I.textContent = K === "swiss" ? "Shveytsar: turlar bo‘yicha o‘ynaladi, kamida 3 o‘yinchi kerak." : K === "olympic" ? "Olimpiya: yutgan keyingi bosqichga o‘tadi, yutqazgan o‘yindan chiqadi." : "Arena: belgilangan vaqt to‘xtovsiz o‘ynaladi (g‘alaba 2, durang 1, ketma-ket 2 g‘alabadan so‘ng olov ×2, berserk +1).";
       };
+      $("lbTk").onchange();
       $("lbTCreate").onclick = function () {
         window.lbAtOk() && sendMsg({ type: "lbTCreate", startAt: window.lbAt(), clubIds: lbClubIds(), kind: $("lbTk").value, pos: $("lbTp").value, duration: Number($("lbTdur").value), startIn: Number($($("lbTk").value === "arena" ? "lbTin" : "lbTsin").value), rounds: Number($("lbTr").value), interval: Number($("lbTiv").value), name: $("lbTn").value, tc: $("lbTc").value });
         $("lbTn").value = "";
