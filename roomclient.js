@@ -769,7 +769,7 @@
           var p = st.board[r][c];
           if (p) {
             var pc = document.createElement("i");
-            pc.className = "piece pc " + (isWhite(p) ? "w" : "b") + (isKing(p) ? " k" : "");
+            pc.className = "piece pc " + (isWhite(p) ? "w" : "b") + (isKing(p) ? " k" : ""); var _u = window.spPcImg ? window.spPcImg(p) : ""; if (_u) { var _ps = pc.style; _ps.setProperty("background-image", "url(\"" + _u + "\")", "important"); _ps.setProperty("background-size", "contain", "important"); _ps.setProperty("background-position", "center", "important"); _ps.setProperty("background-repeat", "no-repeat", "important"); _ps.setProperty("background-color", "transparent", "important"); _ps.setProperty("border", "0", "important"); _ps.setProperty("box-shadow", "none", "important"); pc.classList.add("spImg"); if (!document.getElementById("spImgCss")) { var _sc = document.createElement("style"); _sc.id = "spImgCss"; _sc.textContent = "html body .cell .pc.spImg::before,html body .cell .pc.spImg::after{display:none!important;content:none!important}"; document.head.appendChild(_sc); } }
             cell.appendChild(pc);
           }
           elBoard.appendChild(cell);
