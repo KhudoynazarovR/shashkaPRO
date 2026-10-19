@@ -908,7 +908,7 @@
       + B + '.b{background-image:url("' + imgUrl(id, 'b') + '")!important}'
       + B + '.w.k{background-image:url("' + imgUrl(id, 'wk') + '")!important}'
       + B + '.b.k{background-image:url("' + imgUrl(id, 'bk') + '")!important}';
-    var st = document.createElement('style'); st.id = 'spShopCss'; st.textContent = css; document.head.appendChild(st);
+    css += css.split(B).join('html body .cell.sq .pc'); var st = document.createElement('style'); st.id = 'spShopCss'; st.textContent = css; document.head.appendChild(st);
   }
   function merge(d) { S = d; applyEq(); }
 
