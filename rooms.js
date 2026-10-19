@@ -7,7 +7,7 @@ const ROOM_RE = /^[A-Za-z0-9_-]{3,64}$/;
 const MAX_MOVES = 1000;
 const IDLE_MS = 6 * 60 * 60 * 1000;
 // Vaqt rejimlari: [boshlang'ich soniya, har yurishdan keyin qo'shiladigan soniya]
-const TCS = { "1+1": [60, 1], "2+2": [120, 2], "3+2": [180, 2], "5+3": [300, 3], "7+5": [420, 5] };
+const TCS = { "1+1": [60, 1], "2+2": [120, 2], "3+2": [180, 2], "5+3": [300, 3], "7+5": [420, 5], "0.5+0": [30, 0] };
 const DEFAULT_TC = "5+3";
 const CHAT_KEEP = 50;
 const CHAT_MAX = 200;
@@ -107,7 +107,7 @@ function createRooms({ send, clients, onFinish }) {
       timeMs: room.timeMs,
       incMs: room.incMs,
       tc: room.tc,
-      tcs: room.vsBot ? BOT_TCS : Object.keys(TCS),
+      tcs: room.vsBot ? BOT_TCS : Object.keys(TCS).filter(k => k !== "0.5+0" && k !== "7+5"),
       vsBot: !!room.vsBot, botStarted: !!room.botStarted, botColor: botColorOf(room),
       botSecs: room.botCfg ? room.botCfg.secs : 1.2, botBlunder: room.botCfg ? room.botCfg.blunder : 0,
       arena: !!room.arena,

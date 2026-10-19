@@ -399,8 +399,93 @@ function createLobby({ send, clients, roomsApi }) {
     return { pairs: pairs.map(([a, b]) => assignColors(a, b)), bye };
   }
 
+  // ---------- Olimpiya tizimi (yutgan o‘tadi) ----------
+  const OLY_LADDER = ['5+3', '3+2', '2+2', '1+1', '0.5+0'];
+  const olyLadder = tc => { const i = OLY_LADDER.indexOf(tc); return OLY_LADDER.slice(i < 0 ? 0 : i); };
+  function olyElo(uid) { try { const u = require('./store').users()[String(uid)]; return u ? (Number(u.elo) || 1000) : 1000; } catch (e) { return 1000; } }
+
+  function olyOpenBoard(t, b, tcN) {
+    const W = t.players.get(b.white), B = t.players.get(b.black);
+    if (!W || !B) return;
+    openRoom(b.roomId, tcN, W, B, false, t.pos === 'idf' ? pickOpening() : null);
+    sendUid(b.white, { type: 'lbGo', roomId: b.roomId, reason: 'tournament', tname: t.name, round: t.round, color: 'white', opponent: B.name, tc: tcN });
+    sendUid(b.black, { type: 'lbGo', roomId: b.roomId, reason: 'tournament', tname: t.name, round: t.round, color: 'black', opponent: W.name, tc: tcN });
+    const nid = b.roomId, rn = t.round;
+    const to = setTimeout(() => { if (t.status === 'running' && t.round === rn && !b.done && b.roomId === nid) forfeitIdle(b); }, NOSHOW_MS);
+    if (to.unref) to.unref();
+  }
+
+  function olyStartRound(t) {
+    const alive = [...t.players.values()].filter(p => !p.withdrawn && !p.out);
+    if (alive.length < 2) return finishT(t);
+    if (t.round === 1) {
+      alive.sort((a, b) => olyElo(b.uid) - olyElo(a.uid)).forEach((p, i) => { p.seed = i + 1; });
+      t.rounds = Math.max(1, Math.ceil(Math.log2(alive.length)));
+    }
+    alive.sort((a, b) => (a.seed || 999) - (b.seed || 999));
+    let k = 1; while (k < alive.length) k *= 2;
+    const nb = k - alive.length, byes = alive.slice(0, nb), rest = alive.slice(nb);
+    t.cur = []; t.nextAt = 0; t.curBye = byes.length ? byes[0].uid : null;
+    byes.forEach(p => { p.score += 1; p.hadBye = true; toast(p.uid, '🏆 ' + t.name + ': bu turda dam olasiz, keyingi turga o‘tdingiz'); });
+    const lad = olyLadder(t.tc);
+    for (let i = 0; i < rest.length / 2; i++) {
+      const w = rest[i], bl = rest[rest.length - 1 - i];
+      const roomId = 'T' + t.id + 'R' + t.round + 'B' + (i + 1);
+      w.opps.push(bl.uid); bl.opps.push(w.uid); w.colors.w++; bl.colors.b++; w.seq.push('w'); bl.seq.push('b');
+      const board = { board: i + 1, roomId, white: w.uid, black: bl.uid, done: false, winner: null, level: 0, game: 1 };
+      t.cur.push(board); roomToBoard.set(roomId, { t, b: board });
+      olyOpenBoard(t, board, lad[0]);
+    }
+    push();
+  }
+
+  function olyGameDone(t, b, room) {
+    const pw = t.players.get(b.white), pb = t.players.get(b.black);
+    if (!pw || !pb) return;
+    let winUid = room.winner === 'white' ? b.white : room.winner === 'black' ? b.black : null;
+    const lad = olyLadder(t.tc);
+    if (!winUid && !room.noshowBoth && b.level + 1 < lad.length) {
+      // durang: keyingi pog‘ona vaqti bilan yana bitta partiya, ranglar almashadi
+      roomToBoard.delete(room.id);
+      b.level++; b.game++;
+      const tmp = b.white; b.white = b.black; b.black = tmp;
+      const nid = 'T' + t.id + 'R' + t.round + 'B' + b.board + 'G' + b.game, tcN = lad[b.level];
+      b.roomId = nid; roomToBoard.set(nid, { t, b });
+      toast(b.white, '🤝 ' + t.name + ': durang! Keyingi partiya ' + tcN);
+      toast(b.black, '🤝 ' + t.name + ': durang! Keyingi partiya ' + tcN);
+      setTimeout(() => { if (t.status === 'running' && !b.done && b.roomId === nid) { olyOpenBoard(t, b, tcN); push(); } }, 4000);
+      push();
+      return;
+    }
+    if (!winUid) {   // hamma partiya durang: reytingi yuqori o‘yinchi o‘tadi
+      winUid = olyElo(b.white) >= olyElo(b.black) ? b.white : b.black;
+      b.byElo = true;
+      toast(b.white, '⚖️ ' + t.name + ': hamma partiya durang, reytingi yuqori o‘yinchi o‘tdi');
+      toast(b.black, '⚖️ ' + t.name + ': hamma partiya durang, reytingi yuqori o‘yinchi o‘tdi');
+    }
+    b.done = true; b.winner = winUid === b.white ? 'white' : 'black';
+    const winP = winUid === b.white ? pw : pb, loseP = winUid === b.white ? pb : pw;
+    winP.score += 1; winP.res.push({ opp: loseP.uid, pts: 1 }); loseP.res.push({ opp: winP.uid, pts: 0 });
+    loseP.out = true; loseP.outRound = t.round;
+    if (room.winner === 'white' || room.winner === 'black') { try { payWin(room, b.white, b.black, t.id); } catch (e) {} }
+    toast(loseP.uid, '❌ ' + t.name + ': turnirdan chiqdingiz');
+    toast(winP.uid, '✅ ' + t.name + ': keyingi turga o‘tdingiz');
+    if (t.status === 'running' && t.cur.every(x => x.done)) {
+      const left = [...t.players.values()].filter(p => !p.withdrawn && !p.out).length;
+      if (t.round >= t.rounds || left < 2) finishT(t);
+      else {
+        const gap = t.interval || NEXT_ROUND_MS;
+        t.nextAt = Date.now() + gap;
+        t.timer = setTimeout(() => { if (t.status === 'running') startRound(t); }, gap);
+        if (t.timer.unref) t.timer.unref();
+      }
+    }
+    push();
+  }
+
   function startRound(t) {
     t.round++;
+    if (t.type === 'olympic') return olyStartRound(t);
     const active = [...t.players.values()].filter(p => !p.withdrawn);
     if (active.length < 2) return finishT(t);
     const { pairs, bye } = swissPair(active);
@@ -453,6 +538,7 @@ function createLobby({ send, clients, roomsApi }) {
     const { t, b } = ref;
     if (b.done) return;
     if (t.type === 'arena') return arenaGameDone(t, b, room);
+    if (t.type === 'olympic') return olyGameDone(t, b, room);
     b.done = true;
     b.winner = room.winner;
     const pw = t.players.get(b.white), pb = t.players.get(b.black);
@@ -922,6 +1008,7 @@ function createLobby({ send, clients, roomsApi }) {
           startAt: validStart(m.startAt) || (SWISS_STARTS.includes(Number(m.startIn)) ? Date.now() + Number(m.startIn) * 60000 : 0)
         };
         t.players.set(me.uid, newPlayer(me));
+        if (m.kind === 'olympic') { t.type = 'olympic'; t.roundsWanted = 0; }
         t.clubIds = cl.ids; tournaments.set(t.id, t);
         push();
         break;
