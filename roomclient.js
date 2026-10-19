@@ -357,7 +357,32 @@
       rcmPanel.onclick = function (e) { if (e.target === rcmPanel) rcmPanel.style.display = "none"; };
       rcmBtn.onclick = function () { rcmBuild(); rcmPanel.style.display = "block"; };
 
-      function rcmBuild() {
+      function rcmShopFill(box) {
+      var g = box.querySelector("#rcmShop"); if (!g) return;
+      var idt = (window.Telegram && Telegram.WebApp && Telegram.WebApp.initData) || "";
+      function sapi(p, b) { return fetch(p, { method: b ? "POST" : "GET", headers: { "Content-Type": "application/json", "x-init-data": idt }, body: b ? JSON.stringify(b) : undefined }).then(function (r) { return r.json(); }); }
+      function note(t) { g.innerHTML = '<div style="grid-column:1/-1;opacity:.6;font-size:13px">' + t + '</div>'; }
+      sapi("/api/shop").then(function (d) {
+        if (!d || d.error) return note("Toshlar yuklanmadi");
+        var eq = d.equipped === "-" ? "" : (d.equipped || d.def || "");
+        var mine = (d.list || []).filter(function (x) { return x.def || d.admin || (d.owned || []).indexOf(x.id) >= 0; });
+        if (!mine.length) return note("Do‘konda tosh yo‘q");
+        g.innerHTML = mine.map(function (x) {
+          var u = "/api/shop/img?id=" + encodeURIComponent(x.id) + "&k=", nm = String(x.name || "").replace(/[<>"']/g, "");
+          return '<div data-sid="' + x.id + '" title="' + nm + '" style="border-radius:10px;background:#26344f;padding:6px 0;display:flex;justify-content:center;border:3px solid ' + (x.id === eq ? "#4c8dff" : "transparent") + '"><div style="display:grid;grid-template-columns:repeat(2,20px);gap:4px">' +
+            ["w", "b", "wk", "bk"].map(function (k) { return '<i style="width:20px;height:20px;display:block;background:url(' + u + k + ') center/contain no-repeat"></i>'; }).join("") + '</div></div>';
+        }).join("");
+        Array.prototype.forEach.call(g.querySelectorAll("[data-sid]"), function (el) {
+          el.onclick = function () {
+            var id = el.getAttribute("data-sid");
+            sapi("/api/shop/equip", { id: id }).then(function (r) {
+              if (r && r.ok) { window.spEqId = id; rcm.pieces = -1; rcmSave(); rcmApply(); try { render(); } catch (e) {} rcmBuild(); }
+            });
+          };
+        });
+      }).catch(function () { note("Toshlar yuklanmadi"); });
+    }
+    function rcmBuild() {
         var box = document.getElementById("rcmBox");
         var T = [
           ["night", "🌙 Tungi rejim", ""], ["sound", "🔊 Ovoz", ""], ["flat", "◐ Oddiy toshlar", ""],
@@ -378,15 +403,9 @@
             (b[3] ? '<span style="position:absolute;top:-8px;right:-4px;font-size:14px">👑</span>' : "") + '</div>';
         });
         h += '</div><div id="rcmReset" style="margin:10px 0 0;font-size:13px;opacity:.7;text-decoration:underline">↺ Standart doska</div>';
-        h += '<div style="margin:18px 0 8px">♟ Toshlar</div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">';
-        RCM_PIECES.forEach(function (nm, i) {
-          var pv = function (cls) { return '<i class="pv ' + cls + '" style="width:20px;height:20px;display:block"></i>'; };
-          h += '<div data-p="' + i + '" title="' + nm + '" class="rcPV' + (i + 1) + '" style="border-radius:10px;background:#26344f;padding:6px 0;display:flex;justify-content:center;border:3px solid ' + (i === rcm.pieces ? "#4c8dff" : "transparent") + '">' +
-            '<div style="display:grid;grid-template-columns:repeat(2,20px);gap:4px">' + pv("w") + pv("b") + pv("w k") + pv("b k") + '</div></div>';
-        });
-        h += '</div><div id="rcmPReset" style="margin:10px 0 0;font-size:13px;opacity:.7;text-decoration:underline">↺ Standart toshlar</div>';
+        h += '<div style="margin:18px 0 8px">♟ Toshlar</div><div id="rcmShop" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px"><div style="grid-column:1/-1;opacity:.6;font-size:13px">Yuklanmoqda…</div></div>';
         if (rcmCanAbort()) h += '<button id="rcmAbort" style="width:100%;margin-top:22px;padding:14px;border:0;border-radius:12px;background:#d32f2f;color:#fff;font-size:16px">⎋ Chiqish (yurmasdan)</button>';
-        box.innerHTML = h;
+        box.innerHTML = h; rcmShopFill(box);
 
         box.querySelector("#rcmX").onclick = function () { rcmPanel.style.display = "none"; };
         Array.prototype.forEach.call(box.querySelectorAll("input[data-k]"), function (inp) {
@@ -867,7 +886,6 @@
         var caps = allCaptures(st.board, me);
         var ok = caps.length ? captureSteps(st.board, r, c).length : simpleSteps(st.board, r, c).length;
         st.selected = ok ? { r: r, c: c } : null;
-        if (st.selected) { var o1 = options(); if (o1.length === 1) { sendMove(o1[0]); return; } }
         render();
         return;
       }
