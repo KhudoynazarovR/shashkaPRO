@@ -668,7 +668,7 @@
     }
     window.lbClubIds = function () {
       var r = [];
-      ["lbTcl", "lbTcl2"].forEach(function (id) { var s = $(id); if (s && s.value && r.indexOf(s.value) < 0) r.push(s.value); });
+      [].forEach.call(document.querySelectorAll("#lbTclRow input[data-cl]:checked"), function (x) { if (r.indexOf(x.value) < 0 && r.length < 6) r.push(x.value); });
       return r;
     };
     window.lbClubTbl = function (t) {
@@ -687,17 +687,22 @@
       var sig = cs.map(function (c) { return c.id + (c.isAdmin ? "a" : "m"); }).join();
       var row = $("lbTclRow");
       if (row && sig === clSig) return;
-      var v1 = $("lbTcl") ? $("lbTcl").value : "", v2 = $("lbTcl2") ? $("lbTcl2").value : "";
+      var keepIds = window.lbClubIds ? window.lbClubIds() : [];
       if (!row) { row = document.createElement("div"); row.id = "lbTclRow"; row.className = "row"; f.insertBefore(row, f.children[1] || null); }
       clSig = sig;
       var adm = cs.filter(function (c) { return c.isAdmin; });
       row.style.display = adm.length ? "" : "none";
-      row.innerHTML = "<select id=\"lbTcl\"><option value=\"\">Klub turniri: yo‘q</option>" +
-        adm.map(function (c) { return "<option value=\"" + esc(c.id) + "\">" + esc(c.name) + "</option>"; }).join("") + "</select>" +
-        "<select id=\"lbTcl2\"><option value=\"\">Raqib klub: yo‘q</option>" +
-        cs.map(function (c) { return "<option value=\"" + esc(c.id) + "\">" + esc(c.name) + "</option>"; }).join("") + "</select>";
-      if ($("lbTcl")) $("lbTcl").value = v1;
-      if ($("lbTcl2")) $("lbTcl2").value = v2;
+      row.className = "";
+      row.innerHTML = "<details id=\"lbTclD\" style=\"width:100%;margin:6px 0\"><summary id=\"lbTclS\" style=\"cursor:pointer;padding:10px;border-radius:12px;background:#161a3a;border:1px solid #262b5a\">🛡 Klub turniri: yo‘q</summary><div style=\"padding:6px 4px\"><div class=\"muted\" style=\"margin-bottom:6px\">Qatnashadigan klublarni belgilang (6 tagacha). Kamida bittasida admin bo‘lishingiz kerak (⭐).</div>" +
+        cs.slice().sort(function (p, q) { return (q.isAdmin ? 1 : 0) - (p.isAdmin ? 1 : 0); }).map(function (c) {
+          return "<label style=\"display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid rgba(255,255,255,.07)\"><input type=\"checkbox\" data-cl=\"1\" value=\"" + esc(c.id) + "\" style=\"width:22px;height:22px\"><span style=\"flex:1\">" + esc(c.name) + "</span>" + (c.isAdmin ? "<span>⭐</span>" : "") + "</label>";
+        }).join("") + "</div></details>";
+      var upd = function () { var ids = window.lbClubIds(), sm = $("lbTclS"); if (sm) sm.textContent = ids.length ? "🛡 Klub turniri: " + ids.length + " ta klub" : "🛡 Klub turniri: yo‘q"; };
+      [].forEach.call(row.querySelectorAll("input[data-cl]"), function (x) {
+        if (keepIds.indexOf(x.value) >= 0) x.checked = true;
+        x.onchange = function () { if (row.querySelectorAll("input[data-cl]:checked").length > 6) x.checked = false; upd(); };
+      });
+      upd();
     }, 1000);
     
 (function () {
