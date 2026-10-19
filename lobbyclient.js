@@ -1165,6 +1165,11 @@ document.head.appendChild(_as); }
         var st = arena
           ? (t.status === "reg" ? "Boshlanishi: " + mins(t.startAt - Date.now()) : (t.status === "running" ? (t.ending ? "Tugayapti…" : "Qoldi: " + mins(t.endAt - Date.now())) : "Tugagan"))
           : (t.status === "reg" ? "Ro‘yxat ochiq · " + (t.roundsWanted || "?") + " tur" + (t.startAt ? " · boshlanishi: " + mins(t.startAt - Date.now()) : "") : (t.status === "running" ? t.round + "/" + t.rounds + "-tur" : "Tugagan"));
+        var _p2 = function (n) { return ("0" + n).slice(-2); }, _ex = [];
+        if (t.startAt && t.status === "reg") { var _d = new Date(t.startAt); _ex.push("🕐 " + (_d.toDateString() === new Date().toDateString() ? "" : _p2(_d.getDate()) + "." + _p2(_d.getMonth() + 1) + " ") + _p2(_d.getHours()) + ":" + _p2(_d.getMinutes())); }
+        if (t.prize > 0) _ex.push("🪙 Mukofot: " + t.prize + " (" + (t.places || 3) + " o‘ringa)");
+        if (arena) _ex.push(t.berserk === false ? "⚡ Berserk yo‘q" : "⚡ Berserk");
+        if (_ex.length) st += "<br>" + _ex.join(" · ");
         h += "<div class=\"card lbtk " + (arena ? "lbta" : "lbts") + "\" id=\"lbtc_" + esc(t.id) + "\"><div><b>" + (arena ? "⚔️" : "🏆") + " " + esc(t.name) + "</b></div><div class=\"muted\">" + esc(t.tc) + (t.pos === "idf" ? " · IDF 780" : "") + " · " + st + " · " + t.players.length + " o‘yinchi · ochdi: " + esc(t.creatorName) + "</div><div class=\"row\">";
         h += "<button class=\"sec\" data-a=\"tlink\" data-id=\"" + esc(t.id) + "\" data-n=\"" + esc(t.name) + "\">🔗 Havola</button>";
         if (t.status === "reg") {
