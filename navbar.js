@@ -224,7 +224,7 @@
   };
   setInterval(function () {
     var z = $('rcZal');
-    ex.style.display = (z && z.offsetParent !== null) ? 'block' : 'none';
+    ex.style.display = (z && z.offsetParent !== null && !document.body.classList.contains('rcPlaying')) ? 'block' : 'none';
   }, 400);
 
   // ===== nvBots: botlar kartasi (tepada) + botlar oynasi =====
