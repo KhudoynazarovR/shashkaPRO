@@ -184,7 +184,7 @@ function createLobby({ send, clients, roomsApi }) {
         whiteName: t.players.get(b.white).name, blackName: t.players.get(b.black).name,
         done: b.done, winner: b.winner || null
       })),
-      bye: t.curBye || null
+      bye: t.curBye || null, chat: (t.chat || []).slice(-60)
     };
   }
 
@@ -865,6 +865,20 @@ function createLobby({ send, clients, roomsApi }) {
     const uid = c.lb.uid;
     const t0 = tournaments.get(String(m.tid || ''));
     const FEE = economy.CFG;
+    if (m.type === 'lbTChat') { /*TVCHAT*/
+      if (!t0) return true;
+      const now = Date.now();
+      if (now - (c.lb._tvChatAt || 0) < 800) return true;
+      const tx = String(m.text || '').replace(/[\u0000-\u001f<>]/g, ' ').trim().slice(0, 200);
+      if (!tx) return true;
+      c.lb._tvChatAt = now;
+      t0.chat = t0.chat || [];
+      t0.chat.push({ uid: uid, name: c.lb.name, text: tx, at: now });
+      if (t0.chat.length > 60) t0.chat.splice(0, t0.chat.length - 60);
+      push();
+      return true;
+    }
+
     if (m.type === 'lbTCreate') {
     { const cl0 = clubsApi.check(uid, m.clubIds); if (cl0.error) { err(c, cl0.error); return true; } }
       const before = tournaments.size;
