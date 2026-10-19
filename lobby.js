@@ -89,13 +89,38 @@ function createLobby({ send, clients, roomsApi }) {
   const _rev = (k, v) => v && v.__map ? new Map(v.__map) : v && v.__set ? new Set(v.__set) : v;
   function saveTournaments() {
     try {
-      const arr = [...tournaments.values()].filter(t => { if (t.status !== 'reg' && t.status !== 'finished') return false; try { JSON.stringify(t, _rep); return true; } catch (e) { return false; } });
+      const arr = [...tournaments.values()].filter(t => { if (t.status !== 'reg' && t.status !== 'finished' && !(t.type === 'arena' && t.status === 'running')) return false; /*TSAVE1*/ try { JSON.stringify(t, _rep); return true; } catch (e) { return false; } });
       fs.writeFileSync(T_FILE + '.tmp', JSON.stringify(arr, _rep));
-      fs.renameSync(T_FILE + '.tmp', T_FILE);
+      fs.renameSync(T_FILE + '.tmp', T_FILE); /*TSAVE2*/
+      if (tReady) { try { const _st = require('./store'), _s = JSON.stringify(arr, _rep); if (_st.db.tSave !== _s) { _st.db.tSave = _s; _st.save(); } } catch (e) { console.log('[turnir] bazaga saqlash xato:', e.message); } }
     } catch (e) { console.log('[turnir] saqlashda xato:', e.message); }
   }
   try { for (const t of JSON.parse(fs.readFileSync(T_FILE, 'utf8'), _rev)) tournaments.set(t.id, t); } catch (e) {}
-  console.log('[turnir] yuklandi:', tournaments.size); setInterval(saveTournaments, 5000);
+  console.log('[turnir] yuklandi:', tournaments.size); /*TSAVE3*/
+  var tReady = false;
+  function tFix() {
+    const now = Date.now();
+    for (const t of tournaments.values()) if (t.type === 'arena' && t.status === 'running') {
+      t.cur = []; for (const p of t.players.values()) { p.busy = false; p.waitingSince = now; }
+    }
+  }
+  tFix();
+  function tLoad(n) {
+    try {
+      const st = require('./store');
+      if (st.db && typeof st.db.tSave === 'string') {
+        if (!tournaments.size) {
+          for (const t of JSON.parse(st.db.tSave, _rev)) tournaments.set(t.id, t);
+          tFix(); console.log('[turnir] bazadan tiklandi:', tournaments.size);
+        }
+        tReady = true; try { push(); } catch (e) {} return;
+      }
+      if (st.db && st.db.users && Object.keys(st.db.users).length) { tReady = true; return; }
+    } catch (e) { console.log('[turnir] bazadan o‘qish xato:', e.message); }
+    if (n > 30) { tReady = true; return; }
+    setTimeout(() => tLoad(n + 1), 2000);
+  }
+  setTimeout(() => tLoad(0), 1500); setInterval(saveTournaments, 5000);
   const roomToBoard = new Map(); // roomId -> { t, b }
   const roomToSeries = new Map();
   const simuls = new Map();       // sid -> simul
