@@ -753,7 +753,7 @@
       var opts = options();
       applySkin();
       var lastMv = st.moves.length ? st.moves[st.moves.length - 1] : null;
-      elBoard.innerHTML = "";
+      if (!elBoard._big) { elBoard._big = 1; var _bs = elBoard.style; _bs.setProperty("width", "min(100vw, 560px)", "important"); _bs.setProperty("height", "min(100vw, 560px)", "important"); _bs.setProperty("max-width", "none", "important"); _bs.setProperty("margin-left", "calc(50% - min(50vw, 280px))", "important"); _bs.setProperty("margin-right", "0", "important"); _bs.setProperty("border", "0", "important"); _bs.setProperty("border-radius", "0", "important"); _bs.setProperty("box-sizing", "border-box", "important"); try { elBoard.parentNode.style.setProperty("overflow", "visible", "important"); } catch (e) {} } elBoard.innerHTML = "";
       for (var dr = 0; dr < 8; dr++) {
         for (var dc = 0; dc < 8; dc++) {
           var r = fl ? 7 - dr : dr, c = fl ? 7 - dc : dc;
