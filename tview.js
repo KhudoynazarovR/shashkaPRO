@@ -78,12 +78,14 @@
     g('tvChatH').onclick = function(){ chatOpen = !chatOpen; g('tvChatBox').style.display = chatOpen ? '' : 'none'; g('tvChatArr').textContent = chatOpen ? '▾' : '▸'; };
     g('tvSend').onclick = sendChat;
     g('tvTxt').onkeydown = function(e){ if (e.key === 'Enter') sendChat(); };
+    P.addEventListener('dblclick', function(e){ var x = e.target.closest('.tvM[data-mid]'); if (x) send({ type: 'lbTChatLike', tid: curId, mid: x.getAttribute('data-mid') }); }); /*TVDBL*/
     P.addEventListener('click', function(e){
       var b = e.target.closest('[data-tv]'); if (!b) return;
       var a = b.getAttribute('data-tv');
       if (a === 'join') send({ type: 'lbTJoin', tid: curId });
       else if (a === 'leave') { if (confirm('Turnirdan chiqasizmi?')) send({ type: 'lbTLeave', tid: curId }); }
       else if (a === 'start') send({ type: 'lbTStart', tid: curId });
+      else if (a === 'like') send({ type: 'lbTChatLike', tid: curId, mid: b.getAttribute('data-mid') }); /*TVLKC*/
       else if (a === 'watch') { var r = b.getAttribute('data-room'), l = L(); close(); if (l && l.go) l.go(r); }
     });
   }
@@ -128,7 +130,7 @@
     var me = meUid(), M = ['🥇', '🥈', '🥉'], ps = t.players || [];
     var h = '<table class="tvTb"><tr><th>#</th><th>O‘yinchi</th><th class="r">O‘yin</th><th class="r">Ochko</th></tr>';
     ps.slice(0, 100).forEach(function(p, i){
-      h += '<tr class="' + (String(p.uid) === me ? 'me' : '') + '"><td>' + (M[i] || (i + 1)) + '</td><td>' + esc(p.name) + (p.fire ? ' 🔥' : '') + (p.busy ? ' 🎮' : '') + (p.withdrawn ? ' ⏸' : '') + '</td><td class="r">' + (p.games || 0) + '</td><td class="r sc">' + (p.score || 0) + '</td></tr>';
+      h += '<tr class="' + (String(p.uid) === me ? 'me' : '') + '"><td>' + (t.status === 'finished' && M[i] ? M[i] : (i + 1) + '.') /*TVRANK*/ + '</td><td>' + esc(p.name) + (p.fire ? ' 🔥' : '') + (p.busy ? ' 🎮' : '') + (p.withdrawn ? ' ⏸' : '') + '</td><td class="r">' + (p.games || 0) + '</td><td class="r sc">' + (p.score || 0) + '</td></tr>';
     });
     g('tvTable').innerHTML = ps.length ? h + '</table>' : '<div class="tvEmpty">Hali ishtirokchi yo‘q</div>';
 
@@ -147,7 +149,8 @@
     var atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
     box.innerHTML = c.length ? c.map(function(m){
       var mine = String(m.uid) === me;
-      return '<div class="tvM' + (mine ? ' me' : '') + '">' + (mine ? '' : '<b>' + esc(m.name) + '</b>') + esc(m.text) + '<small>' + hm(m.at) + '</small></div>';
+      var lk = (m.likes || []).map(String), liked = lk.indexOf(me) >= 0; /*TVLKR*/
+      return '<div class="tvM' + (mine ? ' me' : '') + '"' + (m.id ? ' data-mid="' + esc(m.id) + '"' : '') + '><b>' + (mine ? 'Siz' : esc(m.name)) + (String(m.uid) === String(t.creatorUid) ? ' 👑' : '') + '</b>' + esc(m.text) + '<small>' + (m.id ? '<span class="tvLk" data-tv="like" data-mid="' + esc(m.id) + '">' + (liked ? '❤️' : '🤍') + (lk.length ? ' ' + lk.length : '') + '</span>' : '<span></span>') + '<span>' + hm(m.at) + '</span></small></div>';
     }).join('') : '<div class="tvEmpty">Hali xabar yo‘q. Birinchi bo‘lib yozing!</div>';
     if (atBottom || !box.__init) { box.scrollTop = box.scrollHeight; box.__init = 1; }
   }
@@ -215,3 +218,5 @@
   ".tvFoot{background:linear-gradient(180deg,transparent,rgba(3,12,32,.96) 35%)!important}";
   var s = document.createElement('style'); s.id = 'tvBlue'; s.textContent = css; document.head.appendChild(s);
 })();
+
+;(function(){ if (document.getElementById('tvLikeCss')) return; var s = document.createElement('style'); s.id = 'tvLikeCss'; s.textContent = '.tvM small{display:flex!important;justify-content:space-between;align-items:center;gap:10px;margin-top:2px}.tvLk{cursor:pointer;font-size:13px;opacity:1;padding:2px 6px;border-radius:10px;background:rgba(255,255,255,.08);user-select:none}.tvM.me b{color:#dbe9ff!important}'; document.head.appendChild(s); })();

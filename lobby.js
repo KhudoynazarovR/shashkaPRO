@@ -890,6 +890,15 @@ function createLobby({ send, clients, roomsApi }) {
     const uid = c.lb.uid;
     const t0 = tournaments.get(String(m.tid || ''));
     const FEE = economy.CFG;
+    if (m.type === 'lbTChatLike') { /*TVLIKE*/
+      if (!t0 || !t0.chat) return true;
+      const msg = t0.chat.find(x => x.id && x.id === String(m.mid || ''));
+      if (!msg) return true;
+      msg.likes = msg.likes || [];
+      const k = msg.likes.indexOf(String(uid));
+      if (k >= 0) msg.likes.splice(k, 1); else msg.likes.push(String(uid));
+      push(); return true;
+    }
     if (m.type === 'lbTChat') { /*TVCHAT*/
       if (!t0) return true;
       const now = Date.now();
@@ -898,7 +907,7 @@ function createLobby({ send, clients, roomsApi }) {
       if (!tx) return true;
       c.lb._tvChatAt = now;
       t0.chat = t0.chat || [];
-      t0.chat.push({ uid: uid, name: c.lb.name, text: tx, at: now });
+      t0.chat.push({ id: hex(4), uid: String(uid), name: c.lb.name, text: tx, at: now, likes: [] }); /*TVMID*/
       if (t0.chat.length > 60) t0.chat.splice(0, t0.chat.length - 60);
       push();
       return true;
