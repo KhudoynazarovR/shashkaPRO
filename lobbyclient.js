@@ -2258,5 +2258,22 @@ document.head.appendChild(_as); }
     for (var i = 0; i < b.length; i++) if (b[i].textContent.indexOf('🔄') >= 0 && b[i].style.display !== 'none') b[i].style.display = 'none';
   }, 500);
 })();
+;(function(){
+  if (window.__tvClubFix2) return; window.__tvClubFix2 = 1;
+  var s = document.createElement('style');
+  s.textContent = 'html body #lbPanel.lbTMode .tvPlusBtn{background:#3f3c39!important;color:#fff!important;border:0!important;box-shadow:0 3px 0 #1f1d1b!important}';
+  document.body.appendChild(s);
+  setInterval(function(){
+    var b = document.getElementById('tvClubBtn');
+    if (b && b.style.display === 'none') b.style.display = '';
+    var bar = document.getElementById('lbTbar'); if (!bar) return;
+    var all = bar.querySelectorAll('*');
+    for (var i = 0; i < all.length; i++) {
+      var e = all[i];
+      if (e.classList.contains('tvPlusBtn') || e.textContent.trim() !== '➕') continue;
+      if (e.parentElement === bar || e.parentElement.textContent.trim() !== '➕') e.classList.add('tvPlusBtn');
+    }
+  }, 300);
+})();
 
 /*TVIEW-END*/
