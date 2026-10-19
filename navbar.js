@@ -83,10 +83,11 @@
     if (window.aiHide) window.aiHide();
     if (window.rkClose) window.rkClose();
     if (window.mnClose) window.mnClose();
+    if (k !== 'puz') { for (var zi = 0; zi < 5 && $('pzBack'); zi++) { try { $('pzBack').click(); } catch (x) { break; } } }
     if (k === 'puz') {
       pg.style.display = 'none';
       if (window.lbNav) window.lbNav.close();
-      if (window.spPuzzles) window.spPuzzles(); else { pg.style.display = 'block'; soon('Masalalar', 'Yuklanmoqda…'); }
+      window.nvPzAt = Date.now(); if (window.spPuzzles) window.spPuzzles(); else { pg.style.display = 'block'; soon('Masalalar', 'Yuklanmoqda…'); }
       return;
     }
     if (k === 'mn') {
@@ -304,4 +305,11 @@
     var ref = $('hzRow2') || $('hzDaily');
     if (ref && ref.parentNode === hero) hero.insertBefore(row, ref); else hero.appendChild(row);
   }, 600);
+
+  // ===== nvPzSync: masalalar oynasi bilan panel holatini moslash =====
+  setInterval(function () {
+    var pb = $('pzBack'), open = !!(pb && pb.offsetParent !== null);
+    if (open && window.nvK !== 'puz') { window.nvK = 'puz'; mark('puz'); }
+    else if (!open && window.nvK === 'puz' && Date.now() - (window.nvPzAt || 0) > 3500 && pg.style.display !== 'block') { window.nvK = 'pl'; mark('pl'); }
+  }, 400);
 })();
