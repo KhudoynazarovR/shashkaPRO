@@ -1158,7 +1158,23 @@ document.head.appendChild(_as); }
       }
       if (!ts.length) { $("lbTs").innerHTML = tFil === "fin" ? "<div class=\"card muted\">Tugagan turnirlar hali yo‘q.</div>" : ""; return; }
       var h = "";
-      window.__tOpen = window.__tOpen || {}; window.lbTog = function (id) { window.__tOpen[id] = !window.__tOpen[id]; var e = document.querySelector("#lbtc_" + id + " .tbody"); if (e) e.style.display = window.__tOpen[id] ? "block" : "none"; };
+      window.__tOpen = window.__tOpen || {};
+    (function () { if (document.getElementById("tkStyle")) return; var st = document.createElement("style"); st.id = "tkStyle"; st.textContent = `
+.lbtk{background:#151a38;border:1px solid #2a3160;border-radius:20px;padding:14px;margin:12px 0}
+.lbtk>div:first-child{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:18px}
+.tkb{font-size:12px;padding:5px 10px;border-radius:10px;white-space:nowrap;font-weight:600;background:#1d2a5c;color:#7ea6ff}
+.tkb_running{background:#143d33;color:#2ecc71}
+.tkb_finished{background:#2a2f4a;color:#9aa0c0}
+.lbtk .muted{margin-top:6px}
+.tkd{color:#aab0d6;font-size:14px;margin:6px 0}
+.tkd b{color:#fff}
+.lbtk .row{margin-top:10px;gap:8px;flex-wrap:wrap}
+.lbtk .tbody{border:1px solid #2a3160;border-radius:14px;margin-top:12px}
+.lbtk table{width:100%;border-collapse:collapse;font-size:14px}
+.lbtk th{color:#8087b8;font-size:11px;text-transform:uppercase;text-align:left;padding:9px 8px;background:#1c2250}
+.lbtk td{padding:11px 8px;border-top:1px solid #262c58}
+.lbtk td:nth-child(3){color:#f5c542;font-weight:700}
+`; document.head.appendChild(st); })(); window.lbTog = function (id) { window.__tOpen[id] = !window.__tOpen[id]; var e = document.querySelector("#lbtc_" + id + " .tbody"); if (e) e.style.display = window.__tOpen[id] ? "block" : "none"; };
       ts.forEach(function (t) {
         var joined = t.players.some(function (p) { return p.uid === me; });
         var arena = t.type === "arena";
@@ -1171,7 +1187,7 @@ document.head.appendChild(_as); }
         if (t.prize > 0) _ex.push("🪙 Mukofot: " + t.prize + " (" + (t.places || 3) + " o‘ringa)");
         if (arena) _ex.push(t.berserk === false ? "⚡ Berserk yo‘q" : "⚡ Berserk");
         if (_ex.length) st += "<br>" + _ex.join(" · ");
-        h += "<div class=\"card lbtk " + (arena ? "lbta" : "lbts") + "\" id=\"lbtc_" + esc(t.id) + "\"><div style=\"cursor:pointer\" onclick=\"lbTog('" + esc(t.id) + "')\"><b>" + (arena ? "⚔️" : "🏆") + " " + esc(t.name) + " ▾</b></div><div class=\"muted\">" + esc(t.tc) + (t.pos === "idf" ? " · IDF 780" : "") + " · " + st + " · " + t.players.length + " o‘yinchi · ochdi: " + esc(t.creatorName) + "</div><div class=\"row\">";
+        h += "<div class=\"card lbtk " + (arena ? "lbta" : "lbts") + "\" id=\"lbtc_" + esc(t.id) + "\"><div style=\"cursor:pointer\" onclick=\"lbTog('" + esc(t.id) + "')\"><b>" + (arena ? "⚔️" : "🏆") + " " + esc(t.name) + " ▾</b><span class=\"tkb tkb_" + t.status + "\">" + (t.status === "reg" ? "Ro‘yxat ochiq" : (t.status === "running" ? "O‘ynalmoqda" : "Tugagan")) + "</span></div><div class=\"muted\">" + esc(t.tc) + (t.pos === "idf" ? " · IDF 780" : "") + "</div><div class=\"tkd\">" + st + "</div><div class=\"tkd\">👥 Ishtirokchilar: <b>" + t.players.length + "</b></div><div class=\"tkd\">👤 Yaratuvchi: <b>" + esc(t.creatorName) + "</b>" + "</div><div class=\"row\">";
         h += "<button class=\"sec\" data-a=\"tlink\" data-id=\"" + esc(t.id) + "\" data-n=\"" + esc(t.name) + "\">🔗 Havola</button>";
         if (t.status === "reg") {
           if (!joined) h += "<button data-a=\"tj\" data-id=\"" + t.id + "\">Qo‘shilish</button>";
