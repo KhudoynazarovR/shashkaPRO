@@ -335,7 +335,7 @@
         var a = this.value === "arena";
         $("lbTdur").style.display = a ? "" : "none";
         $("lbTin").style.display = a ? "" : "none";
-        $("lbSw").style.display = a ? "none" : "";
+        $("lbSw").style.display = this.value === "swiss" ? "" : "none";
       };
       $("lbTCreate").onclick = function () {
         window.lbAtOk() && sendMsg({ type: "lbTCreate", startAt: window.lbAt(), clubIds: lbClubIds(), kind: $("lbTk").value, pos: $("lbTp").value, duration: Number($("lbTdur").value), startIn: Number($($("lbTk").value === "arena" ? "lbTin" : "lbTsin").value), rounds: Number($("lbTr").value), interval: Number($("lbTiv").value), name: $("lbTn").value, tc: $("lbTc").value });
