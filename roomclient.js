@@ -97,7 +97,7 @@
       if (!S || !mv || !mv.to) return;
       var toLast = piece === 1 ? mv.to.r === 0 : piece === 2 ? mv.to.r === 7 : false;
       if (toLast) S.play("king");
-      else if (mv.captures && mv.captures.length) S.play("capture");
+      else if (mv.captures && mv.captures.length) { for (var ci = 0; ci < mv.captures.length; ci++) setTimeout(function () { S.play("capture"); }, ci * 120); }
       else S.play("move");
     }
     var lowFlag = { white: false, black: false }, lastTickSec = 0;
