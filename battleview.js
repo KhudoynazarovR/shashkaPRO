@@ -72,7 +72,7 @@
     var me = String((tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id) || '');
     var h = top();
     h += '<div class="btStats"><div class="btBox"><small>REYTING</small><b>' + (d.rt || 1000) + '</b></div><div class="btBox"><small>G‘ALABA</small><b>' + (d.wins || 0) + '/' + (d.games || 0) + '</b></div><div class="btBox"><small>TANGALI</small><b>' + (d.paidLeft == null ? 5 : d.paidLeft) + '</b></div></div>';
-    h += '<button class="btGo" id="btGo">⚔️ Raqib topish</button>';
+    h += '<button class="btGo" id="btGo">⚔️ Raqib topish</button><button class="btSecondary" id="btInv" style="margin:-4px 0 14px;background:rgba(255,255,255,.12);color:#fff;font-size:17px">🔗 Do‘stni chaqirish (havola)</button>';
     var bots = d.bots || [];
     if (bots.length) {
       h += '<div class="btCard"><h3>🤖 Bot bilan bellashish</h3><div class="btBots">';
@@ -96,6 +96,7 @@
     ov.innerHTML = h;
     ov.querySelector('#btX').onclick = close;
     ov.querySelector('#btGo').onclick = find;
+    ov.querySelector('#btInv').onclick = invite;
     Array.prototype.forEach.call(ov.querySelectorAll('[data-lv]'), function (b) { b.onclick = function () { vsBot(Number(b.getAttribute('data-lv'))); }; });
   }
   function vsBot(lv) {
@@ -120,10 +121,64 @@
     ov.querySelector('#btBot').onclick = function () { api('/api/battle/poll', { bot: true }).then(onState).catch(function () {}); };
   }
 
+  // ---------- do'stni havola orqali chaqirish
+  function shareText() { return '⚔️ Seni Puzzle Battle’ga chaqiraman! 3 daqiqa, bir xil masalalar — kim ko‘p yechadi? 🧩'; }
+  function invite() {
+    stopAll(); st = { phase: 'wait', inv: true };
+    ov.innerHTML = top('🔗 Do‘stni chaqirish', '✕') + '<div class="btCard btSearch"><div class="btSpin"></div>Havola tayyorlanmoqda…</div>';
+    ov.querySelector('#btX').onclick = close;
+    api('/api/battle/invite', {}).then(function (v) {
+      onState(v);
+      pollT = setInterval(function () { api('/api/battle/poll', {}).then(onState).catch(function () {}); }, 1000);
+    }).catch(function () { alert('Server bilan aloqa yo‘q'); home(); });
+  }
+  function drawInvite(v) {
+    var link = v.link || (window.TG_APP_LINK ? window.TG_APP_LINK + '?startapp=pb_' + v.code : '');
+    st.link = link;
+    var mins = Math.max(0, Math.ceil((v.left || 0) / 60000));
+    if (ov.querySelector('#btInvBox')) { var t = ov.querySelector('#btInvLeft'); if (t) t.textContent = mins + ' daqiqa amal qiladi'; return; }
+    ov.innerHTML = top('🔗 Do‘stni chaqirish', '✕') + '<div class="btCard btSearch" id="btInvBox"><div class="btSpin"></div>' +
+      '<div style="font-size:20px;font-weight:800">Do‘stingiz kutilmoqda…</div>' +
+      '<div style="margin-top:8px;color:#e9dcff">Havolani guruhga yoki do‘stingizga yuboring. U bosishi bilan bellashuv boshlanadi.</div>' +
+      '<div style="margin:12px 0 4px;padding:10px;border-radius:12px;background:rgba(0,0,0,.35);font-size:14px;word-break:break-all">' + esc(link || 'Havola sozlanmagan (TG_APP_LINK)') + '</div>' +
+      '<div id="btInvLeft" style="font-size:13px;color:#d9c6ff">' + mins + ' daqiqa amal qiladi</div>' +
+      '<button class="btGo" id="btShare" style="margin-top:14px">📤 Telegramda yuborish</button>' +
+      '<button class="btSecondary" id="btCopy">📋 Havolani nusxalash</button><button class="btSecondary" id="btCancel">Bekor qilish</button></div>';
+    ov.querySelector('#btX').onclick = function () { api('/api/battle/cancel', {}).catch(function () {}); close(); };
+    ov.querySelector('#btCancel').onclick = function () { api('/api/battle/cancel', {}).catch(function () {}); home(); };
+    ov.querySelector('#btShare').onclick = function () {
+      if (!st || !st.link) return;
+      var u = 'https://t.me/share/url?url=' + encodeURIComponent(st.link) + '&text=' + encodeURIComponent(shareText());
+      try { if (tg && tg.openTelegramLink) tg.openTelegramLink(u); else window.open(u, '_blank'); } catch (e) { window.open(u, '_blank'); }
+    };
+    ov.querySelector('#btCopy').onclick = function () {
+      var b = this; if (!st || !st.link) return;
+      var done = function () { b.textContent = '✅ Nusxalandi'; setTimeout(function () { b.textContent = '📋 Havolani nusxalash'; }, 1500); };
+      try { navigator.clipboard.writeText(st.link).then(done, function () { prompt('Havolani nusxalang:', st.link); }); } catch (e) { prompt('Havolani nusxalang:', st.link); }
+    };
+  }
+  function join(code) {
+    stopAll(); st = { phase: 'wait' };
+    ov.innerHTML = top() + '<div class="btCard btSearch"><div class="btSpin"></div><div style="font-size:20px;font-weight:800">Bellashuvga ulanmoqda…</div></div>';
+    ov.querySelector('#btX').onclick = close;
+    api('/api/battle/join', { code: code }).then(function (v) {
+      if (v && v.phase === 'invite') { st.inv = true; onState(v); pollT = setInterval(function () { api('/api/battle/poll', {}).then(onState).catch(function () {}); }, 1000); return; }
+      onState(v);
+    }).catch(function () { alert('Server bilan aloqa yo‘q'); home(); });
+  }
+  function notice(t) {
+    stopAll(); st = null;
+    ov.innerHTML = top() + '<div class="btCard btSearch"><div style="font-size:44px">⌛</div><div style="font-size:19px;font-weight:800;margin-top:8px">' + t + '</div><button class="btGo" id="btOk" style="margin-top:16px">⚔️ Battle’ga o‘tish</button></div>';
+    ov.querySelector('#btX').onclick = close; ov.querySelector('#btOk').onclick = home;
+  }
+
   // ---------- server holati
   function onState(v) {
     if (!ov || !st) return;
     if (!v || v.phase === 'idle') return;
+    if (v.phase === 'invite') { if (st.phase === 'wait') drawInvite(v); return; }
+    if (v.phase === 'expired') return notice('Taklif muddati tugagan yoki bekor qilingan');
+    if (v.phase === 'busy') return notice('Do‘stingiz hozir boshqa bellashuvda');
     if (v.phase === 'wait') { if (st.phase === 'wait') drawSearch(v.botIn); return; }
     var first = !st.mid;
     st.mid = v.mid; st.v = v; st.left = v.left; st.at = Date.now();
@@ -250,6 +305,6 @@
     opts = o || {}; css();
     if (ov) ov.remove();
     ov = document.createElement('div'); ov.id = 'spBat'; document.body.appendChild(ov);
-    home();
+    if (opts.join) join(opts.join); else home();
   };
 })();

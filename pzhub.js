@@ -210,7 +210,7 @@
           var onC = function (g) { var c = ov.querySelector('.pzhCoin span:last-child'); if (c && g) c.textContent = String((parseInt(c.textContent, 10) || 0) + g); };
           var ld = function (src, cb) { var sc2 = document.createElement('script'); sc2.src = src; sc2.onload = cb; document.head.appendChild(sc2); };
           var go2 = function () { window.spBattle({ onCoins: onC }); };
-          var need = function () { if (window.spBattle) go2(); else ld('/battleview.js?v=2', go2); };
+          var need = function () { if (window.spBattle) go2(); else ld('/battleview.js?v=3', go2); };
           if (window.spPzRules) need(); else ld('/rushview.js?v=2', need);
           return;
         }

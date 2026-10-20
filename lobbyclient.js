@@ -51,7 +51,7 @@
     var curRoom = "";
     // ?room= (o'yinga o'tish) Telegram start_param dan ustun: aks holda eski havola/turnir havolasi o'yinni bosib ketadi
     if (q.get("room")) curRoom = q.get("room");
-    else if (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param && !/^(ref_|pz_|pf_|go_|shop_)/.test(tg.initDataUnsafe.start_param)) curRoom = String(tg.initDataUnsafe.start_param);
+    else if (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param && !/^(ref_|pz_|pf_|go_|shop_|pb_)/.test(tg.initDataUnsafe.start_param)) curRoom = String(tg.initDataUnsafe.start_param);
     // havola orqali kirish: startapp=lbt_<turnir> / lbs_<sians> yoki ?t= / ?s=
     var linkTid = "", linkSid = "", linkFid = "";
     if (/^lbt_/.test(curRoom)) { linkTid = curRoom.slice(4); curRoom = ""; window.__tvLinkTid = linkTid; }

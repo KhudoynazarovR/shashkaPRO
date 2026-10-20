@@ -1234,3 +1234,18 @@ window.spShop = open;
     } catch (e) { fallback(); }
   };
 })();
+
+/* PBLINK — startapp=pb_<kod>: do'st yuborgan Puzzle Battle havolasi */
+;(function () {
+  var tg = window.Telegram && window.Telegram.WebApp, sp = '';
+  try { sp = (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || ''; } catch (e) {}
+  if (!/^pb_[a-z0-9]{3,12}$/.test(sp)) return;
+  var code = sp.slice(3), key = 'pbDone_' + code;
+  try { if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key, '1'); } catch (e) {}
+  function ld(src, cb) { var s = document.createElement('script'); s.src = src; s.onload = cb; document.head.appendChild(s); }
+  setTimeout(function () {
+    var go = function () { window.spBattle({ join: code }); };
+    var need = function () { if (window.spBattle) go(); else ld('/battleview.js?v=3', go); };
+    if (window.spPzRules) need(); else ld('/rushview.js?v=2', need);
+  }, 1200);
+})();

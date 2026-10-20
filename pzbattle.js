@@ -18,6 +18,11 @@ function makeBotSide(lv) { const b = BOTS[lv]; const s = newSide('bot_' + rid(),
 const Q = new Map();      // uid -> { uid, name, rt, at, seen }
 const M = new Map();      // mid -> match
 const BY = new Map();     // uid -> mid
+const INV = new Map();    // code -> { code, uid, name, rt, at }  (do'stni havola orqali chaqirish)
+const INVBY = new Map();  // uid -> code
+const INV_TTL = 10 * 60 * 1000;
+function appLink() { return process.env.TG_APP_LINK || process.env.APP_LINK || ''; }
+function dropInv(uid) { const c = INVBY.get(uid); if (c) INV.delete(c); INVBY.delete(uid); }
 const dayKey = () => new Date(Date.now() + 5 * 3600e3).toISOString().slice(0, 10);
 const rid = () => Math.random().toString(36).slice(2, 10);
 
@@ -164,6 +169,8 @@ function handle(req, res, p, ctx) {
     if (p === '/api/battle/poll') {
       const cur = BY.get(uid), cm = cur && M.get(cur);
       if (cm && !(cm.over && Q.has(uid))) { meOf(cm, uid).seen = now; return send(res, 200, view(store, cm, uid)); }
+      const ic = INVBY.get(uid), iv = ic && INV.get(ic);
+      if (iv) { if (now - iv.at > INV_TTL) { dropInv(uid); return send(res, 200, { phase: 'expired' }); } return send(res, 200, { phase: 'invite', code: iv.code, link: appLink() ? appLink() + '?startapp=pb_' + iv.code : '', left: INV_TTL - (now - iv.at) }); }
       const w = Q.get(uid);
       if (!w) return send(res, 200, { phase: 'idle' });
       w.seen = now;
@@ -174,7 +181,30 @@ function handle(req, res, p, ctx) {
       }
       return send(res, 200, { phase: 'wait', since: now - w.at, botIn: Math.max(0, BOT_AFTER_MS - (now - w.at)) });
     }
-    if (p === '/api/battle/cancel') { Q.delete(uid); return send(res, 200, { phase: 'idle' }); }
+    if (p === '/api/battle/cancel') { Q.delete(uid); dropInv(uid); return send(res, 200, { phase: 'idle' }); }
+    if (p === '/api/battle/invite') {
+      const cur = BY.get(uid), cm = cur && M.get(cur);
+      if (cm && !cm.over) return send(res, 200, view(store, cm, uid));
+      if (cm) BY.delete(uid);
+      Q.delete(uid); dropInv(uid);
+      let code; do { code = Math.random().toString(36).slice(2, 8); } while (INV.has(code));
+      const iv = { code, uid, name: u.name || 'O‘yinchi', rt: rating(u), at: now };
+      INV.set(code, iv); INVBY.set(uid, code);
+      return send(res, 200, { phase: 'invite', code, link: appLink() ? appLink() + '?startapp=pb_' + code : '', left: INV_TTL });
+    }
+    if (p === '/api/battle/join') {
+      const code = String(j.code || '').replace(/[^a-z0-9]/g, '').slice(0, 12), iv = INV.get(code);
+      const cur = BY.get(uid), cm = cur && M.get(cur);
+      if (cm && !cm.over) return send(res, 200, view(store, cm, uid));
+      if (!iv || now - iv.at > INV_TTL) return send(res, 200, { phase: 'expired' });
+      if (iv.uid === uid) return send(res, 200, { phase: 'invite', code, link: appLink() ? appLink() + '?startapp=pb_' + code : '', left: INV_TTL - (now - iv.at) });
+      if (cm) BY.delete(uid);
+      const host = BY.get(iv.uid) && M.get(BY.get(iv.uid));
+      if (host && !host.over) { dropInv(iv.uid); return send(res, 200, { phase: 'busy' }); }
+      dropInv(iv.uid); Q.delete(uid); Q.delete(iv.uid);
+      const m = makeMatch(store, newSide(iv.uid, iv.name, iv.rt), newSide(uid, u.name || 'O‘yinchi', rating(u)));
+      return send(res, 200, view(store, m, uid));
+    }
     if (p === '/api/battle/bot') { // tanlangan bot bilan darhol
       const cur = BY.get(uid), cm = cur && M.get(cur);
       if (cm && !cm.over) return send(res, 200, view(store, cm, uid));
@@ -236,6 +266,6 @@ function handle(req, res, p, ctx) {
 }
 
 // eski navbat va o'yinlarni tozalash
-setInterval(() => { const now = Date.now(); for (const [k, x] of Q) if (now - x.seen > 15000) Q.delete(k); }, 10000).unref();
+setInterval(() => { const now = Date.now(); for (const [k, x] of Q) if (now - x.seen > 15000) Q.delete(k); for (const [c, x] of INV) if (now - x.at > INV_TTL) { INV.delete(c); INVBY.delete(x.uid); } }, 10000).unref();
 
 module.exports = { handle };
