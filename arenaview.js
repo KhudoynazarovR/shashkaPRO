@@ -49,7 +49,10 @@
     '#pfCard .pfN{font-size:19px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
     '#pfCard .pfS{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}' +
     '#pfCard .pfS span{font-size:14px;font-weight:700;background:#141040;border-radius:9px;padding:4px 9px;white-space:nowrap}' +
-    '#pfCard .pfG{flex:none;font-size:26px;color:#bababa}';
+    '#pfCard .pfG{flex:none;font-size:26px;color:#bababa;margin-right:30px}' +
+    '#pfCard .pfC{font-size:22px;font-weight:900;color:#f5c542;line-height:1.2}' +
+    '#pfCard .pfE{font-size:18px;font-weight:800;margin-top:4px}' +
+    '#pfCard .pfE small{font-size:13px;font-weight:500;color:#bababa}';
     document.head.appendChild(s2); })();
   function myId() { try { var u = Telegram.WebApp.initDataUnsafe.user; return u && u.id ? String(u.id) : ''; } catch (e) { return ''; } }
   function myName() { try { var u = Telegram.WebApp.initDataUnsafe.user || {}; return ((u.first_name || '') + ' ' + (u.last_name || '')).trim(); } catch (e) { return ''; } }
@@ -63,9 +66,7 @@
     var c = document.getElementById('pfCard'); if (!c) return;
     var id = myId(), d = me || {}, nm0 = d.name || myName() || 'Mehmon';
     var av = id ? '<img src="/api/av/' + encodeURIComponent(id) + '" alt="" onerror="this.parentNode.textContent=\'' + esc(nm0.charAt(0).toUpperCase()).replace(/'/g, '') + '\'">' : esc(nm0.charAt(0).toUpperCase());
-    var html = '<div class="pfA">' + av + '</div><div class="pfB"><div class="pfN">' + esc(nm0) + (d.premium ? ' 👑' : '') + '</div><div class="pfS">' +
-      '<span>⚡ ' + (d.elo || 1000) + '</span><span>🪙 ' + (d.diamonds || 0) + '</span>' +
-      (d.games ? '<span>🏆 ' + (d.wins || 0) + ' / ' + d.games + '</span>' : '') + '</div></div><div class="pfG">›</div>';
+    var html = '<div class="pfA">' + av + '</div><div class="pfB"><div class="pfC">🪙 ' + (d.diamonds || 0) + '</div><div class="pfE">⚡ ' + (d.elo || 1000) + ' <small>reyting</small></div></div><div class="pfG">›</div>';
     if (c.__h !== html) { c.__h = html; c.innerHTML = html; }
   }
   function openProfile() {
