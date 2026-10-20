@@ -236,7 +236,7 @@ function serveFile(req, res) {
       html = html.replace("</body>", '<script src="/menu.js?v=' + Date.now() + '"></script>\n</body>');
     }
     if (!html.includes("lobbyclient.js")) {
-      html = html.replace("</body>", '<script src="/lobbyclient.js"></script>\n</body>');
+      html = html.replace("</body>", '<script src="/lobbyclient.js?v=' + String(process.env.RENDER_GIT_COMMIT || Date.now()).slice(0, 8) + '"></script>\n</body>');
     }
     html = html.replace(/(lobbyclient|roomclient|sound)\.js(\?v=\d+)?/g, "$1.js?v=" + Date.now());
     res.writeHead(200, {
