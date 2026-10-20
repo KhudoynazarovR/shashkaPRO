@@ -621,7 +621,7 @@ function createLobby({ send, clients, roomsApi }) {
     const st = t.type === 'arena' ? arenaStandings(t) : standings(t);
     if (t.prize > 0 && !t.prizeDone) {
       t.prizeDone = true;
-      const el = st.filter(x => !x.withdrawn && x.games > 0);
+      const el = st.filter(x => x.games > 0 && (t.type === "arena" || !x.withdrawn));
       const PZT = { 3: [50,30,20], 4: [40,28,20,12], 5: [35,25,18,13,9], 6: [30,22,17,13,10,8], 7: [28,20,15,12,10,8,7], 8: [26,19,15,12,10,8,5,5], 9: [24,18,14,11,10,8,6,5,4], 10: [22,17,13,11,9,8,7,5,4,4] };
       const sh = el.length >= 3 ? PZT[Math.min(t.places || 3, el.length)] : el.length === 2 ? [60, 40] : el.length === 1 ? [100] : [];
       sh.forEach((pc, i) => {
