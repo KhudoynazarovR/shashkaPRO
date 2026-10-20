@@ -159,7 +159,7 @@
   }
   var CARDS = [
     { k: 'daily', t: 'Kunlik masala', s: 'Har kuni yangi masala', r: '+10', c1: '#1f56c4', c2: '#0e2f7c', bd: '#74a8ff', sh: '#0a1f55' },
-    { k: 'rush', t: 'Puzzle Rush', s: 'Vaqtga qarshi masalalar', r: '+15', c1: '#d2281c', c2: '#7a0f0c', bd: '#ff8a68', sh: '#4f0907', soon: 1 },
+    { k: 'rush', t: 'Puzzle Rush', s: '3 daqiqa · 3 ta xato', r: '+15', c1: '#d2281c', c2: '#7a0f0c', bd: '#ff8a68', sh: '#4f0907' },
     { k: 'battle', t: 'Puzzle Battle', s: 'Boshqa o‘yinchilar bilan bellash!', r: '+20', c1: '#6f2fcc', c2: '#391280', bd: '#bb94ff', sh: '#240a54', soon: 1 },
     { k: 'custom', t: 'Maxsus masalalar', s: 'Daraja va papkalar bo‘yicha', r: '+25', c1: '#128ca3', c2: '#0a4d5d', bd: '#63dcee', sh: '#06303a' },
     { k: 'solve', t: 'Masalalarni yechish', s: 'Yeching, o‘sing, mukofot oling!', r: '+30', c1: '#33a13d', c2: '#135a1c', bd: '#85e589', sh: '#0b3a11' }
@@ -201,7 +201,12 @@
     Array.prototype.forEach.call(ov.querySelectorAll('[data-pzh]'), function (e) {
       e.onclick = function () {
         var k = e.getAttribute('data-pzh');
-        if (k === 'rush' || k === 'battle') { ctx.soon(k === 'rush' ? 'Puzzle Rush' : 'Puzzle Battle'); return; }
+        if (k === 'rush') {
+          var go = function () { window.spRush({ onCoins: function (g) { var c = ov.querySelector('.pzhCoin span:last-child'); if (c && g) c.textContent = String((parseInt(c.textContent, 10) || 0) + g); } }); };
+          if (window.spRush) go(); else { var sc = document.createElement('script'); sc.src = '/rushview.js?v=1'; sc.onload = go; document.head.appendChild(sc); }
+          return;
+        }
+        if (k === 'battle') { ctx.soon('Puzzle Battle'); return; }
         if (ctx[k]) ctx[k]();
       };
     });
