@@ -1090,7 +1090,7 @@ document.head.appendChild(_as); }
       renderClubs();
       if ($("lbTbar")) {
         var _n = (S.tournaments || []).filter(function (t) { return t.status !== "finished"; }).length;
-        $("lbTbar").innerHTML = '<div class="tabs"><button class="' + (tFil === "new" ? "on" : "") + '" onclick="lbTF(1)">⚡ Yangi ' + _n + '</button><button class="' + (tFil === "fin" ? "on" : "") + '" onclick="lbTF(2)">🏁 Tugagan</button></div>' +
+        $("lbTbar").innerHTML = '<div class="tabs"><button class="' + (tFil === "new" ? "on" : "") + '" onclick="lbTF(1)">⚡ Yangi ' + _n + '</button><button class="' + (tFil === "fin" ? "on" : "") + '" onclick="lbTF(2)">🏁</button></div>' +
           '<button class="sec ib" onclick="lbTPlus()">➕</button><button class="sec ib" onclick="lbTRef()">🔄</button>';
       }
       var me = S.me ? S.me.uid : "";
@@ -2301,3 +2301,63 @@ document.head.appendChild(_as); }
 })();
 
 /*TVIEW-END*/
+
+/* ===== spBg: fon tanlash (kunduzgi / kechki) ===== */
+;(function () {
+  if (window.spBgInit) return; window.spBgInit = true;
+  var STARS = "radial-gradient(1.5px 1.5px at 12% 18%,#fff,transparent),radial-gradient(1px 1px at 28% 42%,#fff,transparent),radial-gradient(1.5px 1.5px at 46% 12%,#fff,transparent),radial-gradient(1px 1px at 63% 33%,#fff,transparent),radial-gradient(2px 2px at 81% 16%,#fff,transparent),radial-gradient(1px 1px at 90% 48%,#fff,transparent),radial-gradient(1px 1px at 8% 62%,#fff,transparent),radial-gradient(1.5px 1.5px at 37% 72%,#fff,transparent),radial-gradient(1px 1px at 72% 66%,#fff,transparent),radial-gradient(1px 1px at 55% 88%,#fff,transparent),";
+  var BG = [
+    ["auto", "🔄 Avto", ""],
+    ["day", "☀️ Kunduzgi osmon", "linear-gradient(180deg,#2f8fe8 0%,#62b2f5 45%,#a9d8ff 100%)"],
+    ["dawn", "🌅 Tong", "linear-gradient(180deg,#6a5acd 0%,#e98aa6 50%,#ffc58a 100%)"],
+    ["sunset", "🌇 Quyosh botishi", "linear-gradient(180deg,#2b1055 0%,#a3375c 50%,#f28c38 100%)"],
+    ["evening", "🌆 Kechki", "linear-gradient(180deg,#141e46 0%,#2e3b8f 55%,#6a4c9c 100%)"],
+    ["night", "🌙 Tungi yulduzli", STARS + "radial-gradient(circle at 80% 10%,rgba(255,255,220,.35),transparent 18%),linear-gradient(180deg,#05081f 0%,#0d1440 60%,#1b1a4f 100%)"],
+    ["purple", "💜 Binafsha", "linear-gradient(180deg,#1a1650 0%,#3a2a8a 55%,#4a2a9a 100%)"],
+    ["samarqand", "🕌 Samarqand ko‘k", "linear-gradient(180deg,#073b4c 0%,#0f6e8c 50%,#1fa3b5 100%)"],
+    ["garden", "🌿 Bog‘", "linear-gradient(180deg,#0b3d2e 0%,#1d6b45 55%,#4f9a5a 100%)"]
+  ];
+  function get() { try { return localStorage.getItem("spBg") || ""; } catch (e) { return ""; } }
+  function set(v) { try { localStorage.setItem("spBg", v); } catch (e) {} }
+  function val(id) {
+    if (id === "auto") { var h = new Date().getHours(); id = (h >= 6 && h < 18) ? "day" : "night"; }
+    for (var i = 0; i < BG.length; i++) if (BG[i][0] === id) return BG[i][2];
+    return "";
+  }
+  function apply() {
+    var id = get(), st = document.getElementById("spBgCss");
+    if (!id) { if (st) st.remove(); return; }
+    if (!st) { st = document.createElement("style"); st.id = "spBgCss"; document.head.appendChild(st); }
+    st.textContent = "html,html body{background:" + val(id) + " !important;background-attachment:fixed !important;background-size:cover !important;min-height:100vh}";
+  }
+  function picker() {
+    var old = document.getElementById("spBgSheet"); if (old) { old.remove(); return; }
+    var ov = document.createElement("div"); ov.id = "spBgSheet";
+    ov.style.cssText = "position:fixed;inset:0;z-index:2147483000;background:rgba(0,0,0,.55);display:flex;align-items:flex-end";
+    var cur = get() || "purple", h = '<div style="width:100%;background:#141040;color:#fff;border-radius:20px 20px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom));box-sizing:border-box;font-family:system-ui,sans-serif">' +
+      '<div style="display:flex;align-items:center;margin-bottom:12px"><b style="font-size:19px">🎨 Fon tanlash</b><span id="spBgX" style="margin-left:auto;font-size:24px;padding:4px 8px">✕</span></div>' +
+      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">';
+    BG.forEach(function (b) {
+      var prev = b[0] === "auto" ? "linear-gradient(135deg,#62b2f5 0 50%,#0d1440 50% 100%)" : b[2];
+      h += '<div data-bg="' + b[0] + '" style="cursor:pointer;text-align:center;font-size:12px">' +
+        '<div style="height:70px;border-radius:12px;background:' + prev + ';border:3px solid ' + (b[0] === cur ? "#4c8dff" : "rgba(255,255,255,.15)") + '"></div>' +
+        '<div style="margin-top:5px;opacity:.9">' + b[1] + '</div></div>';
+    });
+    ov.innerHTML = h + '</div></div>';
+    document.body.appendChild(ov);
+    ov.onclick = function (e) { if (e.target === ov || e.target.id === "spBgX") ov.remove(); };
+    Array.prototype.forEach.call(ov.querySelectorAll("[data-bg]"), function (el) {
+      el.onclick = function () { set(el.getAttribute("data-bg")); apply(); ov.remove(); };
+    });
+  }
+  window.spBgPicker = picker;
+  var btn = document.createElement("button"); btn.id = "spBgBtn"; btn.textContent = "🎨";
+  btn.style.cssText = "position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);right:10px;z-index:9000;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(20,16,64,.75);color:#fff;font-size:20px;line-height:1;padding:0;display:none";
+  btn.onclick = picker;
+  function boot() {
+    if (!document.body) return setTimeout(boot, 50);
+    document.body.appendChild(btn); apply();
+    setInterval(function () { btn.style.display = document.getElementById("rcZal") ? "none" : "block"; if (get() === "auto") apply(); }, 1000);
+  }
+  boot();
+})();
