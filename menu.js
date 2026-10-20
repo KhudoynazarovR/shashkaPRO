@@ -571,6 +571,13 @@
       var b = document.createElement('button'); b.id = 'pzSelB'; b.setAttribute('style', BG); b.textContent = bulk.on ? '✖ Tanlashni yopish' : '☑️ Tanlash';
       b.onclick = function () { bulk.on = !bulk.on; bulk.sel = {}; items(); };
       row.parentNode.appendChild(b);
+      var rn = document.createElement('button'); rn.id = 'pzRenB'; rn.setAttribute('style', BG); rn.textContent = '🔢 Raqamlash';
+      rn.onclick = function () {
+        if (!confirm('Bu ro‘yxatdagi masalalar 1, 2, 3… tartibida qayta raqamlansinmi?')) return;
+        rn.disabled = true; rn.textContent = '⏳';
+        api('/api/puzzle/renum', { folder: curFo || '', level: curLv || 1 }).then(function () { load(); }).catch(function () { rn.disabled = false; rn.textContent = '🔢 Raqamlash'; });
+      };
+      row.parentNode.appendChild(rn);
     }
     if (!bulk.on) return;
     var cards = ov.querySelectorAll('[data-i]');
@@ -613,7 +620,7 @@
       api('/api/puzzle/del', { ids: ids }).then(function (d) {
         bulk.on = false; bulk.sel = {}; var x = document.getElementById('pzBar'); if (x) x.remove();
         if (d && d.ok) { S.list = S.list.filter(function (p) { return ids.indexOf(p.id) < 0; }); }
-        items();
+        load();
       }).catch(function () { alert('Server bilan aloqa yo‘q'); upd(); });
     };
   }

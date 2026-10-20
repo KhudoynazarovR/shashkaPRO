@@ -103,6 +103,18 @@ function finishTournament(creatorId, participantIds) {
   return { participants: set.size, bonus };
 }
 
+// Papka (yoki papkasiz daraja) ichidagi masalalarni 1, 2, 3... qilib qayta raqamlash /*PZRENUM*/
+function pzRenum(arr, folder, level) {
+  const sib = arr.filter(x => (x.folder || '') === (folder || '') && (folder || x.level === level)).sort((a, b) => (a.no || 0) - (b.no || 0) || (a.at || 0) - (b.at || 0));
+  let ch = 0;
+  sib.forEach((x, i) => {
+    const n = i + 1;
+    if (x.no !== n) { x.no = n; ch++; }
+    const m = /^(.*\S)\s+\d+$/.exec(String(x.title || ''));
+    if (m && x.title !== m[1] + ' ' + n) { x.title = m[1] + ' ' + n; ch++; }
+  });
+  return ch;
+}
 function readBody(req, max, cb) {
   let d = '', big = false;
   req.on('data', c => { d += c; if (d.length > max) { big = true; req.destroy(); } });
@@ -317,7 +329,7 @@ function handle(req, res, url) {
     send(res, 200, { folders: store.db.pzFolders || [], settings: store.db.pzSettings || {}, hideLv: store.db.pzHideLv || [], best: _u.pzBest || {}, inv: _u.pzInv || null, ranks: require('./pzranks.js').RANKS, topInv: (function () { const m = require('./pzranks.js'); m.watch(store); return m.top(store); })(), promo: Date.parse(process.env.PZ_PROMO_END || '2026-10-25T23:59:59+05:00'), admin: _adm, link: process.env.TG_APP_LINK || '', myId: String(_tg.id), solved: _u.solved || [], list: (() => { const _c = {}; Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { _c[i] = (_c[i] || 0) + 1; })); return store.db.puzzles.slice().sort((x, y) => (x.no || 0) - (y.no || 0)).map(x => Object.assign({}, x, { cnt: _c[x.id] || 0 })); })() });
     return true;
   }
-  if ((p === '/api/puzzle' || p === '/api/puzzle/del' || p === '/api/puzzle/solved' || p === '/api/puzzle/rename' || p === '/api/puzzle/folder' || p === '/api/puzzle/move' || p === '/api/puzzle/settings' || p === '/api/puzzle/order' || p === '/api/puzzle/edit') && req.method === 'POST') {
+  if ((p === '/api/puzzle' || p === '/api/puzzle/del' || p === '/api/puzzle/solved' || p === '/api/puzzle/rename' || p === '/api/puzzle/folder' || p === '/api/puzzle/move' || p === '/api/puzzle/settings' || p === '/api/puzzle/order' || p === '/api/puzzle/edit' || p === '/api/puzzle/renum') && req.method === 'POST') {
     const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
     readBody(req, 100000, body => {
@@ -346,6 +358,12 @@ function handle(req, res, url) {
         if (j.lock !== undefined) _c0.lock = !!j.lock;
         store.save();
         return send(res, 200, { ok: true, settings: _st0 });
+      }
+      if (p === '/api/puzzle/renum') {
+        const _fo = String(j.folder || ''), _lv = Number(j.level) || 1;
+        const _ch = pzRenum(arr, _fo || undefined, _lv);
+        if (_ch) { store.db.pzVer = (store.db.pzVer || 0) + 1; store.save(); }
+        return send(res, 200, { ok: true, changed: _ch });
       }
       if (p === '/api/puzzle/order') {
         const _a0 = arr.find(x => x.id === j.id);
@@ -401,12 +419,14 @@ function handle(req, res, url) {
       if (p === '/api/puzzle/del') {
         if (Array.isArray(j.ids)) { /*PZBULK*/
           const _set = new Set(j.ids.slice(0, 1000).map(String)); let _n = 0;
-          for (let _i = arr.length - 1; _i >= 0; _i--) if (_set.has(arr[_i].id)) { arr.splice(_i, 1); _n++; }
+          const _gr = new Map();
+          for (let _i = arr.length - 1; _i >= 0; _i--) if (_set.has(arr[_i].id)) { const _x = arr[_i]; _gr.set((_x.folder || '') + '|' + (_x.folder ? 0 : _x.level), [_x.folder, _x.level]); arr.splice(_i, 1); _n++; }
+          _gr.forEach(v => pzRenum(arr, v[0], v[1]));
           if (_n) { store.db.pzVer = (store.db.pzVer || 0) + 1; store.save(); }
           return send(res, 200, { ok: true, n: _n });
         }
         const i = arr.findIndex(x => x.id === j.id);
-        if (i >= 0) { arr.splice(i, 1); store.save(); }
+        if (i >= 0) { const _x = arr[i]; arr.splice(i, 1); pzRenum(arr, _x.folder, _x.level); store.save(); }
         return send(res, 200, { ok: true });
       }
       const b = j.board; const _sols = Array.isArray(j.sols) ? j.sols.slice(0, 10) : [j.sol]; const sol = _sols[0];
