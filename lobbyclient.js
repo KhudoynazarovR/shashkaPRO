@@ -1389,7 +1389,7 @@ document.head.appendChild(_as); }
     if (pe && pe.style.display !== "none") {
       var sm = pe.querySelector("small");
       if (sm && !pe.querySelector(".pgT")) {
-        pe.innerHTML = "<div class=\"pgI\">🎁</div><div class=\"pgB\"><div class=\"pgT\">Do‘stingizni taklif qiling! <span class=\"pgP\">+200 🪙</span></div><div class=\"pgS\">" + esc(sm.textContent) + "</div></div><div class=\"pgA\">›</div>";
+        pe.innerHTML = "<div class=\"pgI\">🎁</div><div class=\"pgB\"><div class=\"pgT\">Do‘st taklif qiling</div><span class=\"pgP\">+200 🪙</span><div class=\"pgS\">⏳ " + esc(sm.textContent.split(" · ")[0].replace(" qoldi", "")) + "</div></div>";
       }
     }
     var lv = document.getElementById("hzLive");
@@ -1602,6 +1602,10 @@ document.head.appendChild(_as); }
       e.classList.toggle("hzDim", off && editing);
       e.classList.toggle("hzEd", editing);
     });
+    // Taklif banneri doim tepada, profil kartasi yonida yarim kenglikda
+    var pr = $("hzPromo"), pf = $("pfCard"), prOn = !!(pr && pr.style.display !== "none" && !pr.classList.contains("hzOff"));
+    if (pr && !editing) { pr.style.setProperty("order", "0", "important"); pr.style.setProperty("flex", "1 1 calc(50% - 5px)", "important"); }
+    if (pf) pf.classList.toggle("pfHalf", prOn && !editing);
   }
   function tbs() {
     var hero = $("hzHero"); if (!hero) return;
@@ -2710,5 +2714,24 @@ document.head.appendChild(_as); }
     B + '.on{opacity:1;border-color:#fff!important;transform:translateY(-1px)}' +
     B + ' i{background:rgba(255,255,255,.18)!important}' +
     'html body #tvP #tvTabs .dot{background:#fff!important}';
+  document.head.appendChild(s);
+})();
+
+/* PFROW — profil + taklif bir qatorda (yarim/yarim) */
+;(function(){
+  if (document.getElementById('pfRowCss')) return;
+  var s = document.createElement('style'); s.id = 'pfRowCss';
+  s.textContent =
+    '#pfCard{order:-1!important;flex:1 1 100%!important;min-width:0!important;margin:0!important;box-sizing:border-box}' +
+    '#pfCard.pfHalf{flex:1 1 calc(50% - 5px)!important;padding:10px!important;gap:9px!important}' +
+    '#pfCard.pfHalf .pfA{width:46px!important;height:46px!important;border-radius:13px!important}' +
+    '#pfCard.pfHalf .pfC{font-size:18px!important}' +
+    '#pfCard.pfHalf .pfE{font-size:15px!important;margin-top:2px!important}' +
+    '#pfCard.pfHalf .pfE small,#pfCard.pfHalf .pfG{display:none!important}' +
+    '#hzPromo[style*="block"]{gap:8px!important;padding:10px!important;border-radius:18px!important;min-width:0!important;box-sizing:border-box}' +
+    '#hzPromo .pgI{font-size:34px!important}' +
+    '#hzPromo .pgT{font-size:15px!important;line-height:1.15!important}' +
+    '#hzPromo .pgP{margin:3px 0 0!important;font-size:13px!important;padding:2px 8px!important}' +
+    '#hzPromo .pgS{font-size:12px!important;margin-top:3px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}';
   document.head.appendChild(s);
 })();
