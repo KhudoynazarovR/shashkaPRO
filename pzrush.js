@@ -71,7 +71,8 @@ function validLine(p, line) {
 }
 function bank(store) {
   const arr = store.db.puzzles || [];
-  if (BANK && BANK_N === arr.length) return BANK;
+  const key = arr.length + ':' + (store.db.pzVer || 0);
+  if (BANK && BANK_N === key) return BANK;
   const out = [];
   for (const p of arr) {
     try {
@@ -83,7 +84,7 @@ function bank(store) {
     } catch (e) {}
   }
   out.forEach(x => { x.k = x.lv * 100 + Math.min(x.len, 40); });
-  BANK = out; BANK_N = arr.length;
+  BANK = out; BANK_N = key;
   return BANK;
 }
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }

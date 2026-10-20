@@ -317,7 +317,7 @@ function handle(req, res, url) {
     send(res, 200, { folders: store.db.pzFolders || [], settings: store.db.pzSettings || {}, hideLv: store.db.pzHideLv || [], best: _u.pzBest || {}, inv: _u.pzInv || null, ranks: require('./pzranks.js').RANKS, topInv: (function () { const m = require('./pzranks.js'); m.watch(store); return m.top(store); })(), promo: Date.parse(process.env.PZ_PROMO_END || '2026-10-25T23:59:59+05:00'), admin: _adm, link: process.env.TG_APP_LINK || '', myId: String(_tg.id), solved: _u.solved || [], list: (() => { const _c = {}; Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { _c[i] = (_c[i] || 0) + 1; })); return store.db.puzzles.slice().sort((x, y) => (x.no || 0) - (y.no || 0)).map(x => Object.assign({}, x, { cnt: _c[x.id] || 0 })); })() });
     return true;
   }
-  if ((p === '/api/puzzle' || p === '/api/puzzle/del' || p === '/api/puzzle/solved' || p === '/api/puzzle/rename' || p === '/api/puzzle/folder' || p === '/api/puzzle/move' || p === '/api/puzzle/settings' || p === '/api/puzzle/order') && req.method === 'POST') {
+  if ((p === '/api/puzzle' || p === '/api/puzzle/del' || p === '/api/puzzle/solved' || p === '/api/puzzle/rename' || p === '/api/puzzle/folder' || p === '/api/puzzle/move' || p === '/api/puzzle/settings' || p === '/api/puzzle/order' || p === '/api/puzzle/edit') && req.method === 'POST') {
     const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
     readBody(req, 100000, body => {
@@ -407,6 +407,20 @@ function handle(req, res, url) {
       const okB = Array.isArray(b) && b.length === 8 && b.every(r => Array.isArray(r) && r.length === 8 && r.every(v => Number.isInteger(v) && v >= 0 && v <= 4));
       const okS = _sols.length >= 1 && _sols.every(sl => Array.isArray(sl) && sl.length >= 1 && sl.length <= 60 && sl.every(s => Array.isArray(s) && s.length === 4 && s.every(v => Number.isInteger(v) && v >= 0 && v < 8)));
       if (!okB || !okS || (j.side !== 'w' && j.side !== 'b')) return send(res, 400, { error: 'noto‘g‘ri ma‘lumot' });
+      if (p === '/api/puzzle/edit') { /*PZEDIT*/
+        const pz = arr.find(x => x.id === j.id);
+        if (!pz) return send(res, 404, { error: 'Masala topilmadi' });
+        const _V = require('./pzrush.js')._t.validLine;
+        if (!_sols.every(l => _V({ board: b, side: j.side }, l))) return send(res, 400, { error: 'Yechim qoidalarga to‘g‘ri kelmaydi' });
+        const _dk2 = JSON.stringify(b) + j.side; if (arr.some(x => x !== pz && JSON.stringify(x.board) + x.side === _dk2)) return send(res, 400, { error: 'Bunday masala allaqachon mavjud' });
+        const _t1 = String(j.title || '').replace(/[<>]/g, '').trim().slice(0, 40);
+        pz.board = b; pz.side = j.side; pz.sols = _sols; pz.sol = sol;
+        if ([1, 2, 3].includes(j.level)) pz.level = j.level;
+        if (_t1) pz.title = _t1;
+        pz.edited = Date.now(); store.db.pzVer = (store.db.pzVer || 0) + 1;
+        store.save();
+        return send(res, 200, { ok: true, id: pz.id, title: pz.title });
+      }
       const _dk = JSON.stringify(b) + j.side; if (arr.some(x => JSON.stringify(x.board) + x.side === _dk)) return send(res, 400, { error: 'Bunday masala allaqachon mavjud' });
       const id = 'p' + Date.now().toString(36); const _fn = String(j.folder || '').replace(/[<>]/g, '').trim().slice(0, 30), _fo = (store.db.pzFolders || []).includes(_fn) ? _fn : undefined;
       let _mx = 0; arr.forEach(x => { if (x.folder === _fo && x.no) _mx = Math.max(_mx, x.no); });
