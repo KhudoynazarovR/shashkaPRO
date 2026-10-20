@@ -2336,7 +2336,7 @@ document.head.appendChild(_as); }
     var all = document.body ? document.body.getElementsByTagName("*") : [];
     for (var i = 0; i < all.length; i++) {
       var el = all[i];
-      if (el.hasAttribute("data-spbg") || el.id === "spBgSheet" || el.id === "spSetSheet") continue;
+      if (el.hasAttribute("data-spbg") || el.id === "spBgSheet" || el.id === "spSetSheet" || el.id === "tvP") continue;
       if (el.tagName === "CANVAS" || el.tagName === "IMG" || el.tagName === "SVG") continue;
       var r = el.getBoundingClientRect();
       if (r.width < vw * 0.9 || r.height < vh * 0.6) continue;
@@ -2352,10 +2352,10 @@ document.head.appendChild(_as); }
     var b = resolve(), st = document.getElementById("spBgCss");
     if (!b) { if (st) st.remove(); sweep(false); if (document.body) document.body.classList.remove("spLight"); return; }
     if (!st) { st = document.createElement("style"); st.id = "spBgCss"; document.head.appendChild(st); }
-    st.textContent = "html,html body{background:" + b.css + " !important;background-attachment:fixed !important;background-size:cover !important;min-height:100vh}" +
+    st.textContent = "html body.nvT{background:" + b.css + " !important;background-attachment:fixed !important;background-size:cover !important;min-height:100vh}html body #tvP{background:" + b.css + " !important;background-attachment:fixed !important;background-size:cover !important}" +
       "body.spLight,body.spLight *{text-shadow:0 0 2px rgba(0,0,0,.85),0 1px 3px rgba(0,0,0,.55)}";
-    document.body.classList.toggle("spLight", !!b.light);
-    sweep(true);
+    document.body.classList.remove("spLight");
+    sweep(document.body.classList.contains("nvT"));
   }
   function pickColor(done) {
     var i = document.createElement("input"); i.type = "color"; i.value = ls("spBgColor") || "#1a1650";
@@ -2420,7 +2420,7 @@ document.head.appendChild(_as); }
     if (!document.body) return setTimeout(boot, 50);
     var old = document.getElementById("spBgBtn"); if (old) old.remove();
     apply();
-    setInterval(function () { if (resolve()) { if (ls("spBg") === "auto") apply(); else sweep(true); } }, 1500);
+    setInterval(function () { if (resolve()) { if (ls("spBg") === "auto") apply(); else sweep(document.body.classList.contains("nvT")); } else sweep(false); }, 1500);
   }
   boot();
 })();
