@@ -44,6 +44,10 @@
     '.btCount{position:fixed;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(18,5,48,.85)}.btCount b{font-size:120px;font-weight:900;line-height:1}.btCount span{font-size:20px;margin-top:10px;color:#e9dcff}' +
     '.btWait{text-align:center;padding:30px 10px;font-size:18px}' +
     '.btRes{text-align:center}.btRes .big{font-size:44px;font-weight:900;margin:6px 0}.btRes .vs{font-size:56px;font-weight:900;font-variant-numeric:tabular-nums}.btRes .sub{font-size:16px;color:#e9dcff;margin-top:6px}' +
+    '.btBots{display:flex;flex-direction:column;gap:8px}' +
+    '.btBot{display:flex;align-items:center;gap:12px;width:100%;border:0;border-radius:14px;padding:10px 12px;background:rgba(255,255,255,.08);color:#fff;text-align:left}' +
+    '.btBot:active{transform:translateY(2px)}.btBot .bi{font-size:30px;flex:none}.btBot .bt{flex:1;min-width:0;display:flex;flex-direction:column}.btBot .bt b{font-size:17px}.btBot .bt b i{font-style:normal;font-size:14px}.btBot .bt small{font-size:13px;color:#d9c6ff}' +
+    '.btBot .bc{flex:none;font-weight:900;color:#ffcf3f;font-size:15px}' +
     '.btGain{display:inline-block;margin-top:10px;background:#ffcf3f;color:#3a1600;font-weight:900;font-size:20px;border-radius:999px;padding:6px 16px}';
 
   var ov = null, opts = {}, st = null, pollT = null, tickT = null;
@@ -69,13 +73,21 @@
     var h = top();
     h += '<div class="btStats"><div class="btBox"><small>REYTING</small><b>' + (d.rt || 1000) + '</b></div><div class="btBox"><small>G‘ALABA</small><b>' + (d.wins || 0) + '/' + (d.games || 0) + '</b></div><div class="btBox"><small>TANGALI</small><b>' + (d.paidLeft == null ? 5 : d.paidLeft) + '</b></div></div>';
     h += '<button class="btGo" id="btGo">⚔️ Raqib topish</button>';
+    var bots = d.bots || [];
+    if (bots.length) {
+      h += '<div class="btCard"><h3>🤖 Bot bilan bellashish</h3><div class="btBots">';
+      bots.forEach(function (b) {
+        h += '<button class="btBot" data-lv="' + b.lv + '"><span class="bi">' + ['🐣', '🧑‍🎓', '🤴', '🦁', '👑'][b.lv] + '</span><span class="bt"><b>' + esc(b.name.replace(/\s*BOT$/, '')) + (b.beat ? ' <i>✅</i>' : '') + '</b><small>⭐ ' + b.rt + ' · ' + ['Oson', 'O‘rta', 'Qiyin', 'Juda qiyin', 'Afsonaviy'][b.lv] + '</small></span><span class="bc">+' + b.coins + ' 🪙</span></button>';
+      });
+      h += '</div></div>';
+    }
     h += '<div class="btCard"><h3>Qoidalar</h3><ul style="margin:0;padding-left:20px">' +
       '<li>👥 1 ga 1, ikkalangizga <b>bir xil masalalar</b></li>' +
       '<li>⏱ <b>' + Math.round((d.dur || 180) / 60) + ' daqiqa</b>, masalalar osondan qiyinga</li>' +
       '<li>✅ To‘g‘ri yechim — <b>+1 ochko</b>, raqib ochkosi jonli ko‘rinadi</li>' +
       '<li>❌ ' + (d.maxErr || 3) + ' ta xato — chiqasiz (ochkongiz muzlaydi)</li>' +
       '<li>🏆 Ochkosi ko‘p yutadi; teng bo‘lsa — shu ochkoga birinchi yetgan</li>' +
-      '<li>🪙 G‘alaba: +' + (d.coins || 20) + ' (bot bilan +' + (d.coinsBot || 10) + '), kuniga 5 ta tangali g‘alaba</li>' +
+      '<li>🪙 G‘alaba: odamga +' + (d.coins || 20) + ', botga darajasiga qarab +3…+20; kuniga 5 ta tangali g‘alaba</li>' +
       '<li>🤖 20 soniyada raqib topilmasa — bot bilan</li></ul></div>';
     var rows = d.top || [];
     h += '<div class="btCard"><h3>🏆 Reyting</h3>' + (rows.length ? '' : '<div style="opacity:.8">Hali o‘yin yo‘q — birinchi bo‘ling!</div>');
@@ -84,6 +96,13 @@
     ov.innerHTML = h;
     ov.querySelector('#btX').onclick = close;
     ov.querySelector('#btGo').onclick = find;
+    Array.prototype.forEach.call(ov.querySelectorAll('[data-lv]'), function (b) { b.onclick = function () { vsBot(Number(b.getAttribute('data-lv'))); }; });
+  }
+  function vsBot(lv) {
+    stopAll(); st = { phase: 'wait' };
+    ov.innerHTML = top('⚔️ Puzzle Battle', '✕') + '<div class="btCard btSearch"><div class="btSpin"></div><div style="font-size:20px;font-weight:800">Bot tayyorlanmoqda…</div></div>';
+    ov.querySelector('#btX').onclick = close;
+    api('/api/battle/bot', { lv: lv }).then(onState).catch(function () { alert('Server bilan aloqa yo‘q'); home(); });
   }
 
   // ---------- qidirish

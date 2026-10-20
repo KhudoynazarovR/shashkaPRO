@@ -4,7 +4,16 @@
 const E = require('./pzrush.js')._t;
 const DUR_MS = 180 * 1000, MAX_ERR = 3, COUNTDOWN_MS = 4000, BOT_AFTER_MS = 20000, IDLE_MS = 25000;
 const WIN_COINS = 20, WIN_COINS_BOT = 10, PAID_WINS_PER_DAY = 5, SAME_OPP_PER_DAY = 2;
-const BOT_NAMES = ['Shogird BOT', 'Usta BOT', 'Sulton BOT', 'Arslon BOT', 'Legend BOT'];
+// Botlar: aniqlik (acc) va har masalaga sarflaydigan vaqt oralig'i (soniya), g'alaba uchun tanga
+const BOTS = [
+  { name: 'Shogird BOT', rt: 900,  acc: 0.62, gap: [9, 15], coins: 3 },
+  { name: 'Usta BOT',    rt: 1100, acc: 0.74, gap: [7, 11], coins: 5 },
+  { name: 'Sulton BOT',  rt: 1300, acc: 0.84, gap: [5, 8],  coins: 8 },
+  { name: 'Arslon BOT',  rt: 1500, acc: 0.91, gap: [3.5, 6], coins: 12 },
+  { name: 'Legend BOT',  rt: 1800, acc: 0.96, gap: [2.5, 4], coins: 20 }
+];
+function botByRating(rt) { let k = 0; BOTS.forEach((b, i) => { if (Math.abs(b.rt - rt) < Math.abs(BOTS[k].rt - rt)) k = i; }); return k; }
+function makeBotSide(lv) { const b = BOTS[lv]; const s = newSide('bot_' + rid(), b.name, b.rt, true); s.lv = lv; return s; }
 
 const Q = new Map();      // uid -> { uid, name, rt, at, seen }
 const M = new Map();      // mid -> match
@@ -33,16 +42,16 @@ function makeMatch(store, a, b) {
   m.p = [a, b];
   m.p.forEach(s => { if (!s.bot) BY.set(s.uid, m.id); loadNext(store, m, s); });
   const bot = m.p.find(s => s.bot);
-  if (bot) { bot.skill = Math.min(0.92, Math.max(0.55, 0.55 + (bot.rt - 800) / 1500)); bot.next = m.start + botGap(bot); }
+  if (bot) { bot.next = m.start + botGap(bot); }
   M.set(m.id, m);
   return m;
 }
-function botGap(bot) { return Math.round((5 + Math.random() * 9) * 1000 * (1.25 - bot.skill * 0.5)); }
+function botGap(bot) { const g = BOTS[bot.lv || 0].gap; return Math.round((g[0] + Math.random() * (g[1] - g[0])) * 1000); }
 function stepBot(m) {
   const b = m.p.find(s => s.bot); if (!b || b.out) return;
   const now = Math.min(Date.now(), m.end);
   while (!b.out && b.next <= now) {
-    if (Math.random() < b.skill) { b.score++; b.at = b.next; } else { b.err++; if (b.err >= MAX_ERR) b.out = true; }
+    if (Math.random() < BOTS[b.lv || 0].acc) { b.score++; b.at = b.next; } else { b.err++; if (b.err >= MAX_ERR) b.out = true; }
     b.next += botGap(b);
   }
 }
@@ -80,10 +89,11 @@ function finish(store, m) {
     bt.games = (bt.games || 0) + 1;
     if (w === s) {
       bt.wins = (bt.wins || 0) + 1;
-      const o = oppOf(m, s.uid), key = o.bot ? 'bot' : o.uid;
+      const o = oppOf(m, s.uid), key = o.bot ? 'bot' + (o.lv || 0) : o.uid;
+      if (o.bot) { bt.beat = bt.beat || {}; bt.beat[o.lv || 0] = 1; }
       bt.vs[key] = (bt.vs[key] || 0) + 1;
       if (bt.paid < PAID_WINS_PER_DAY && (o.bot || bt.vs[key] <= SAME_OPP_PER_DAY)) {
-        const g = o.bot ? WIN_COINS_BOT : WIN_COINS;
+        const g = o.bot ? BOTS[o.lv || 0].coins : WIN_COINS;
         bt.paid++; u.diamonds = (u.diamonds || 0) + g; res.gain[s.uid] = g;
       }
     }
@@ -122,7 +132,7 @@ function handle(req, res, p, ctx) {
   if (p === '/api/battle/top' && req.method === 'GET') {
     const rows = Object.entries(us).filter(([, v]) => v.battle && v.battle.games > 0).map(([k, v]) => ({ uid: k, name: v.name || 'O‘yinchi', rt: v.battle.rt || 1000, w: v.battle.wins || 0, g: v.battle.games || 0 })).sort((a, b) => b.rt - a.rt).slice(0, 20);
     const bt = u.battle || {};
-    send(res, 200, { top: rows, rt: bt.rt || 1000, wins: bt.wins || 0, games: bt.games || 0, paidLeft: bt.day === dayKey() ? Math.max(0, PAID_WINS_PER_DAY - (bt.paid || 0)) : PAID_WINS_PER_DAY, dur: DUR_MS / 1000, maxErr: MAX_ERR, coins: WIN_COINS, coinsBot: WIN_COINS_BOT, online: Q.size });
+    send(res, 200, { top: rows, rt: bt.rt || 1000, wins: bt.wins || 0, games: bt.games || 0, paidLeft: bt.day === dayKey() ? Math.max(0, PAID_WINS_PER_DAY - (bt.paid || 0)) : PAID_WINS_PER_DAY, dur: DUR_MS / 1000, maxErr: MAX_ERR, coins: WIN_COINS, coinsBot: WIN_COINS_BOT, online: Q.size, bots: BOTS.map((b, i) => ({ lv: i, name: b.name, rt: b.rt, coins: b.coins, beat: !!((u.battle || {}).beat || {})[i] })) });
     return true;
   }
   if (req.method !== 'POST') return false;
@@ -159,14 +169,21 @@ function handle(req, res, p, ctx) {
       w.seen = now;
       if (j.bot || now - w.at >= BOT_AFTER_MS) {
         Q.delete(uid);
-        const rt = Math.max(800, Math.min(1800, w.rt + Math.round((Math.random() - 0.5) * 120)));
-        const nm = BOT_NAMES[Math.min(BOT_NAMES.length - 1, Math.max(0, Math.floor((rt - 800) / 220)))];
-        const m = makeMatch(store, newSide(uid, w.name, w.rt), newSide('bot_' + rid(), nm, rt, true));
+        const m = makeMatch(store, newSide(uid, w.name, w.rt), makeBotSide(botByRating(w.rt)));
         return send(res, 200, view(store, m, uid));
       }
       return send(res, 200, { phase: 'wait', since: now - w.at, botIn: Math.max(0, BOT_AFTER_MS - (now - w.at)) });
     }
     if (p === '/api/battle/cancel') { Q.delete(uid); return send(res, 200, { phase: 'idle' }); }
+    if (p === '/api/battle/bot') { // tanlangan bot bilan darhol
+      const cur = BY.get(uid), cm = cur && M.get(cur);
+      if (cm && !cm.over) return send(res, 200, view(store, cm, uid));
+      if (cm) BY.delete(uid);
+      Q.delete(uid);
+      const lv = Math.max(0, Math.min(BOTS.length - 1, Number(j.lv) || 0));
+      const m = makeMatch(store, newSide(uid, u.name || 'O‘yinchi', rating(u)), makeBotSide(lv));
+      return send(res, 200, view(store, m, uid));
+    }
 
     const m = M.get(String(j.mid || ''));
     if (!m || !meOf(m, uid)) return send(res, 200, { phase: 'idle' });
