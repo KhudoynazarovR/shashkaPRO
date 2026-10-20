@@ -1090,7 +1090,7 @@ document.head.appendChild(_as); }
       renderClubs();
       if ($("lbTbar")) {
         var _n = (S.tournaments || []).filter(function (t) { return t.status !== "finished"; }).length;
-        $("lbTbar").innerHTML = '<div class="tabs"><button class="' + (tFil === "new" ? "on" : "") + '" onclick="lbTF(1)">⚡ Yangi ' + _n + '</button><button class="' + (tFil === "fin" ? "on" : "") + '" onclick="lbTF(2)">🏁</button></div>' +
+        $("lbTbar").innerHTML = '<div class="tabs"><button class="' + (tFil === "new" ? "on" : "") + '" onclick="lbTF(1)">⚡ Yangi ' + _n + '</button><button class="' + (tFil === "fin" ? "on" : "") + '" onclick="lbTF(2)" style="flex:0 0 52px;min-width:52px;max-width:52px;padding:0;font-size:22px">🏁</button><button type="button" onclick="window.spBgPicker&&window.spBgPicker()" style="flex:0 0 52px;min-width:52px;max-width:52px;padding:0;font-size:22px">🎨</button></div>' +
           '<button class="sec ib" onclick="lbTPlus()">➕</button><button class="sec ib" onclick="lbTRef()">🔄</button>';
       }
       var me = S.me ? S.me.uid : "";
@@ -2353,11 +2353,11 @@ document.head.appendChild(_as); }
   window.spBgPicker = picker;
   var btn = document.createElement("button"); btn.id = "spBgBtn"; btn.textContent = "🎨";
   btn.style.cssText = "position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);right:10px;z-index:9000;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(20,16,64,.75);color:#fff;font-size:20px;line-height:1;padding:0;display:none";
-  btn.onclick = picker;
+  btn.onclick = picker; btn.remove = btn.remove; window.spBgNoFloat = true;
   function boot() {
     if (!document.body) return setTimeout(boot, 50);
     document.body.appendChild(btn); apply();
-    setInterval(function () { btn.style.display = document.getElementById("rcZal") ? "none" : "block"; if (get() === "auto") apply(); }, 1000);
+    setInterval(function () { btn.style.display = "none"; if (get() === "auto") apply(); }, 1000);
   }
   boot();
 })();
