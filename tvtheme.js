@@ -1,7 +1,7 @@
 ;(function(){
   if (window.__tvTheme) return; window.__tvTheme = 1;
-  var BG = '#2b2927', CARD = '#363431', DEEP = '#262421', BTN = '#3f3c39', LINE = '#45423e',
-      SH = '0 3px 0 #1f1d1b', TX = '#ffffff', MU = '#bababa', GR = '#81b64c', GRS = '0 4px 0 #45753c';
+  var BG = '#1a1650', CARD = '#2a2470', DEEP = '#141040', BTN = '#352d86', LINE = '#4a42a0',
+      SH = '0 3px 0 #0e0b30', TX = '#ffffff', MU = '#bababa', GR = '#81b64c', GRS = '0 4px 0 #45753c';
   var O = 'html body #lbPanel.lbTMode ', I = 'html body #tvP ';
   var css =
   // ---------- tashqari: turnirlar ro'yxati va yaratish formasi ----------

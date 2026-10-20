@@ -415,8 +415,8 @@
 
 ;(function(){
   if (window.__tvTheme) return; window.__tvTheme = 1;
-  var BG = '#2b2927', CARD = '#363431', DEEP = '#262421', BTN = '#3f3c39', LINE = '#45423e',
-      SH = '0 3px 0 #1f1d1b', TX = '#ffffff', MU = '#bababa', GR = '#81b64c', GRS = '0 4px 0 #45753c';
+  var BG = '#1a1650', CARD = '#2a2470', DEEP = '#141040', BTN = '#352d86', LINE = '#4a42a0',
+      SH = '0 3px 0 #0e0b30', TX = '#ffffff', MU = '#bababa', GR = '#81b64c', GRS = '0 4px 0 #45753c';
   var O = 'html body #lbPanel.lbTMode ', I = 'html body #tvP ';
   var css =
   // ---------- tashqari: turnirlar ro'yxati va yaratish formasi ----------
@@ -474,7 +474,7 @@
   if (window.__tvClub3) return; window.__tvClub3 = 1;
   var s = document.createElement('style');
   s.textContent = '#lbClubBn{display:none!important}' +
-    '#tvClub3{position:fixed;z-index:2147480000;display:none;align-items:center;justify-content:center;border:0;border-radius:14px;background:#3f3c39;color:#fff;font-size:22px;box-shadow:0 3px 0 #1f1d1b;padding:0;min-height:0;margin:0}' +
+    '#tvClub3{position:fixed;z-index:2147480000;display:none;align-items:center;justify-content:center;border:0;border-radius:14px;background:#352d86;color:#fff;font-size:22px;box-shadow:0 3px 0 #0e0b30;padding:0;min-height:0;margin:0}' +
     '#tvClub3.on{background:#81b64c;box-shadow:0 4px 0 #45753c}';
   document.body.appendChild(s);
   var b = document.createElement('button'); b.id = 'tvClub3'; b.type = 'button'; b.textContent = '👥'; b.title = 'Klublar';
