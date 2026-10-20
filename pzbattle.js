@@ -6,11 +6,12 @@ const DUR_MS = 180 * 1000, MAX_ERR = 3, COUNTDOWN_MS = 4000, BOT_AFTER_MS = 2000
 const WIN_COINS = 20, WIN_COINS_BOT = 10, PAID_WINS_PER_DAY = 5, SAME_OPP_PER_DAY = 2;
 // Botlar: aniqlik (acc) va har masalaga sarflaydigan vaqt oralig'i (soniya), g'alaba uchun tanga
 const BOTS = [
-  { name: 'Shogird BOT', rt: 900,  acc: 0.62, gap: [9, 15], coins: 3 },
-  { name: 'Usta BOT',    rt: 1100, acc: 0.74, gap: [7, 11], coins: 5 },
-  { name: 'Sulton BOT',  rt: 1300, acc: 0.84, gap: [5, 8],  coins: 8 },
-  { name: 'Arslon BOT',  rt: 1500, acc: 0.91, gap: [3.5, 6], coins: 12 },
-  { name: 'Legend BOT',  rt: 1800, acc: 0.96, gap: [2.5, 4], coins: 20 }
+  // err: butun o'yin davomida qiladigan xatolar soni oralig'i (3 = chiqib ketishi mumkin)
+  { name: 'Shogird BOT', rt: 900,  err: [2, 3], gap: [9, 15], coins: 3 },
+  { name: 'Usta BOT',    rt: 1100, err: [1, 3], gap: [7, 11], coins: 5 },
+  { name: 'Sulton BOT',  rt: 1300, err: [1, 2], gap: [5, 8],  coins: 8 },
+  { name: 'Arslon BOT',  rt: 1500, err: [0, 2], gap: [3.5, 6], coins: 12 },
+  { name: 'Legend BOT',  rt: 1800, err: [0, 1], gap: [2.5, 4], coins: 20 }
 ];
 function botByRating(rt) { let k = 0; BOTS.forEach((b, i) => { if (Math.abs(b.rt - rt) < Math.abs(BOTS[k].rt - rt)) k = i; }); return k; }
 function makeBotSide(lv) { const b = BOTS[lv]; const s = newSide('bot_' + rid(), b.name, b.rt, true); s.lv = lv; return s; }
@@ -47,7 +48,14 @@ function makeMatch(store, a, b) {
   m.p = [a, b];
   m.p.forEach(s => { if (!s.bot) BY.set(s.uid, m.id); loadNext(store, m, s); });
   const bot = m.p.find(s => s.bot);
-  if (bot) { bot.next = m.start + botGap(bot); }
+  if (bot) {
+    // xatolarni o'yin boshida rejalashtiramiz: kuchli bot hech qachon 3 ta xato qilmaydi
+    const B = BOTS[bot.lv || 0], tries = Math.max(4, Math.round(DUR_MS / 1000 / ((B.gap[0] + B.gap[1]) / 2)));
+    const ne = B.err[0] + Math.floor(Math.random() * (B.err[1] - B.err[0] + 1)), plan = new Set();
+    while (plan.size < ne) plan.add(Math.floor(Math.random() * tries));
+    bot.errPlan = plan; bot.tries = 0;
+    bot.next = m.start + botGap(bot);
+  }
   M.set(m.id, m);
   return m;
 }
@@ -56,7 +64,7 @@ function stepBot(m) {
   const b = m.p.find(s => s.bot); if (!b || b.out) return;
   const now = Math.min(Date.now(), m.end);
   while (!b.out && b.next <= now) {
-    if (Math.random() < BOTS[b.lv || 0].acc) { b.score++; b.at = b.next; } else { b.err++; if (b.err >= MAX_ERR) b.out = true; }
+    if (!(b.errPlan && b.errPlan.has(b.tries++))) { b.score++; b.at = b.next; } else { b.err++; if (b.err >= MAX_ERR) b.out = true; }
     b.next += botGap(b);
   }
 }
