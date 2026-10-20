@@ -2735,3 +2735,57 @@ document.head.appendChild(_as); }
     '#hzPromo .pgS{font-size:12px!important;margin-top:3px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}';
   document.head.appendChild(s);
 })();
+
+/* SPPOD2 — shohsupa: tayyor fon rasmi (/podium.jpg) ustiga jonli ism, avatar, ochko va tanga */
+;(function () {
+  function e(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  var PZT = { 3: [50,30,20], 4: [40,28,20,12], 5: [35,25,18,13,9], 6: [30,22,17,13,10,8], 7: [28,20,15,12,10,8,7], 8: [26,19,15,12,10,8,5,5], 9: [24,18,14,11,10,8,6,5,4], 10: [22,17,13,11,9,8,7,5,4,4] };
+  if (!document.getElementById("spPd2Css")) {
+    var st = document.createElement("style"); st.id = "spPd2Css";
+    st.textContent =
+      ".spPd{position:relative;width:100%;aspect-ratio:1149/1369;border-radius:18px;overflow:hidden;margin-bottom:12px;background:#0b0920 center/cover no-repeat;box-shadow:0 3px 0 #0e0b30;font-family:Roboto,system-ui,sans-serif;color:#fff}" +
+      ".spPd img.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}" +
+      ".spPd .tt{position:absolute;left:12%;right:12%;top:20.1%;transform:translateY(-50%);text-align:center;font:900 2.3em Georgia,'Times New Roman',serif;color:#ffe08a;text-shadow:0 2px 0 #7a4c00,0 0 12px rgba(255,190,60,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
+      ".spPd .sl{position:absolute;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;text-align:center}" +
+      ".spPd .av{border-radius:50%;overflow:hidden;background:#1f4fd6;border:.18em solid #ffd76a;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;box-sizing:border-box}" +
+      ".spPd .av img{width:100%;height:100%;object-fit:cover}" +
+      ".spPd .nm{margin-top:.35em;max-width:100%;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 2px #000}" +
+      ".spPd .sc{font-weight:900;margin-top:.15em;text-shadow:0 1px 2px #000}" +
+      ".spPd .pz{display:inline-block;margin-left:.2em;font-size:.9em;font-weight:900;color:#1a1205;background:#f5c542;border-radius:999px;padding:.05em .55em;white-space:nowrap}";
+    document.head.appendChild(st);
+  }
+  // kartalar joyi (rasmga nisbatan %)
+  var SL = [
+    { x: 50.0, y: 35.6, w: 18, d: 10.0, f: 1.25 },  // 1-o'rin
+    { x: 23.3, y: 43.4, w: 15, d: 7.4,  f: 1.05 },  // 2-o'rin
+    { x: 76.8, y: 44.6, w: 14.5, d: 7.4, f: 1.05 }  // 3-o'rin
+  ];
+  function fit(el) { if (el && el.clientWidth) el.style.fontSize = (el.clientWidth / 40) + "px"; }
+  window.addEventListener("resize", function () { fit(document.querySelector(".spPd")); });
+  window.spPod = function (t) {
+    var box = document.getElementById("tvPod");
+    var live = document.getElementById("tvLive");
+    if (live && live.parentNode) live.parentNode.style.display = t.status === "finished" ? "none" : "";
+    if (!box) return;
+    if (t.status !== "finished") { box.innerHTML = ""; return; }
+    var pl = (t.players || []).filter(function (p) { return p.games > 0 && (t.type === "arena" || !p.withdrawn); });
+    if (!pl.length) { box.innerHTML = ""; return; }
+    var aw = t.awards || [];
+    if (!aw.length && t.prize > 0) {
+      var sh = pl.length >= 3 ? PZT[Math.min(t.places || 3, pl.length)] : pl.length === 2 ? [60, 40] : [100];
+      aw = sh.map(function (pc, i) { return { place: i + 1, amt: Math.floor(t.prize * pc / 100) }; });
+    }
+    var h = '<div class="spPd"><img class="bg" src="/podium.jpg" alt=""><div class="tt">' + e(t.name) + '</div>';
+    for (var i = 0; i < 3; i++) {
+      var p = pl[i]; if (!p) continue;
+      var s = SL[i], a = aw.filter(function (x) { return x.place === i + 1; })[0], ini = e(String(p.name || "?").charAt(0).toUpperCase());
+      var av = /^\d+$/.test(String(p.uid)) ? '<img src="/api/av/' + encodeURIComponent(p.uid) + '" alt="" onerror="this.parentNode.textContent=\'' + ini.replace(/'/g, "") + '\'">' : ini;
+      h += '<div class="sl" style="left:' + s.x + '%;top:' + s.y + '%;width:' + s.w + '%;font-size:' + s.f + 'em">' +
+        '<div class="av" style="width:' + (s.d / s.w * 100) + '%;aspect-ratio:1;font-size:1.6em">' + av + '</div>' +
+        '<div class="nm">' + e(p.name) + '</div>' +
+        '<div class="sc">⭐ ' + (p.score || 0) + (a && a.amt ? ' <span class="pz">+' + a.amt + ' 🪙</span>' : '') + '</div></div>';
+    }
+    box.innerHTML = h + '</div>';
+    var el = box.querySelector(".spPd"); fit(el); setTimeout(function () { fit(el); }, 60);
+  };
+})();
