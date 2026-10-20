@@ -1213,13 +1213,13 @@ document.head.appendChild(_as); }
         var arena = t.type === "arena";
         var mins = function (ms) { return Math.max(0, Math.ceil(ms / 60000)) + " daq"; };
         var st = arena
-          ? (t.status === "reg" ? "Boshlanishi: " + mins(t.startAt - Date.now()) : (t.status === "running" ? (t.ending ? "Tugayapti…" : "Qoldi: " + mins(t.endAt - Date.now())) : "Tugagan"))
-          : (t.status === "reg" ? "Ro‘yxat ochiq · " + (t.roundsWanted || "?") + " tur" + (t.startAt ? " · boshlanishi: " + mins(t.startAt - Date.now()) : "") : (t.status === "running" ? t.round + "/" + t.rounds + "-tur" : "Tugagan"));
+          ? (t.status === "reg" ? (t.startAt ? "" : "Ro‘yxat ochiq") : (t.status === "running" ? (t.ending ? "Tugayapti…" : "") : "Tugagan"))
+          : (t.status === "reg" ? "Ro‘yxat ochiq · " + (t.roundsWanted || "?") + " tur" + "" : (t.status === "running" ? t.round + "/" + t.rounds + "-tur" : "Tugagan"));
         var _p2 = function (n) { return ("0" + n).slice(-2); }, _ex = [];
         if (t.startAt && t.status === "reg") { var _d = new Date(t.startAt); _ex.push("🕐 " + (_d.toDateString() === new Date().toDateString() ? "" : _p2(_d.getDate()) + "." + _p2(_d.getMonth() + 1) + " ") + _p2(_d.getHours()) + ":" + _p2(_d.getMinutes())); }
         if (t.prize > 0) _ex.push("🪙 Mukofot: " + t.prize + " (" + (t.places || 3) + " o‘ringa)");
         if (arena) _ex.push(t.berserk === false ? "⚡ Berserk yo‘q" : "⚡ Berserk");
-        if (_ex.length) st += "<br>" + _ex.join(" · ");
+        if (_ex.length) st += (st ? "<br>" : "") + _ex.join(" · ");
         h += "<div class=\"card lbtk " + (arena ? "lbta" : "lbts") + "\" id=\"lbtc_" + esc(t.id) + "\"><div style=\"cursor:pointer\" onclick=\"lbTog('" + esc(t.id) + "')\"><b>" + (arena ? "⚔️" : "🏆") + " " + esc(t.name) + " ▾</b><span class=\"tkb tkb_" + t.status + "\">" + (t.status === "reg" ? "Ro‘yxat ochiq" : (t.status === "running" ? "O‘ynalmoqda" : "Tugagan")) + "</span></div><div class=\"muted\">⏱ " + esc(t.tc) + " · " + (t.pos === "idf" ? "🎲 IDF 780" : "♟ Standart") + "</div><div class=\"tkd\">" + st + "</div><div class=\"tkd\">👥 Ishtirokchilar: <b>" + t.players.length + "</b></div><div class=\"tkd\">👤 Yaratuvchi: <b>" + esc(t.creatorName) + "</b>" + "</div><div class=\"row\">";
         h += "<button class=\"sec\" data-a=\"tlink\" data-id=\"" + esc(t.id) + "\" data-n=\"" + esc(t.name) + "\">🔗 Havola</button>";
         if (t.status === "reg") {
@@ -2791,4 +2791,47 @@ document.head.appendChild(_as); }
     box.innerHTML = h + '</div>';
     var el = box.querySelector(".spPd"); fit(el); setTimeout(function () { fit(el); }, 60);
   };
+})();
+
+/* TKCD — kartada katta teskari sanoq (Havola va Bekor qilish orasida) + yaqqolroq matn */
+;(function(){
+  if (window.__tkCd) return; window.__tkCd = 1;
+  var P = 'html body #lbPanel #lbTs .lbtk ';
+  var s = document.createElement('style'); s.id = 'tkCdCss';
+  s.textContent =
+    P + '.tkd{color:#f1f0ff!important;font-size:16px!important;line-height:1.45!important}' +
+    P + '.tkd b{color:#fff!important}' +
+    P + '.muted{color:#e2e0ff!important;font-size:15px!important;font-weight:700!important;opacity:1!important}' +
+    P + '.row{align-items:center!important}' +
+    P + '.tkCd{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05;pointer-events:none}' +
+    P + '.tkCd small{font-size:12px;font-weight:700;color:#c9c6f5;letter-spacing:.3px}' +
+    P + '.tkCd b{font-size:30px;font-weight:900;color:#fff;font-variant-numeric:tabular-nums;letter-spacing:.5px}' +
+    P + '.tkCd.soon b{color:#ffb547}' + P + '.tkCd.now b{color:#ff5a5a}';
+  document.head.appendChild(s);
+  function St(){ try { return window.__lb ? window.__lb.S : null; } catch(e){ return null; } }
+  function f2(n){ return (n < 10 ? '0' : '') + n; }
+  function fmt(ms){ ms = Math.max(0, ms); var x = Math.ceil(ms / 1000), h = Math.floor(x / 3600), m = Math.floor(x % 3600 / 60), sc = x % 60; return (h ? h + ':' + f2(m) : f2(m)) + ':' + f2(sc); }
+  setInterval(function(){
+    var S = St(); if (!S || !S.tournaments) return;
+    var skew = window.__lbSkew || 0, now = Date.now() + skew;
+    S.tournaments.forEach(function(t){
+      var card = document.getElementById('lbtc_' + t.id); if (!card) return;
+      var row = card.querySelector('.row'); if (!row) return;
+      var target = 0, label = '';
+      if (t.status === 'reg' && t.startAt) { target = t.startAt; label = 'boshlanishiga'; }
+      else if (t.status === 'running' && t.type === 'arena' && t.endAt && !t.ending) { target = t.endAt; label = 'tugashiga'; }
+      var cd = row.querySelector('.tkCd');
+      if (!target) { if (cd) cd.remove(); return; }
+      if (!cd) {
+        cd = document.createElement('div'); cd.className = 'tkCd'; cd.innerHTML = '<small></small><b></b>';
+        var lk = row.querySelector('[data-a="tlink"]');
+        if (lk && lk.nextSibling) row.insertBefore(cd, lk.nextSibling); else row.appendChild(cd);
+      }
+      var left = target - now;
+      cd.querySelector('small').textContent = label;
+      cd.querySelector('b').textContent = fmt(left);
+      cd.classList.toggle('soon', left <= 60000 && left > 10000);
+      cd.classList.toggle('now', left <= 10000);
+    });
+  }, 250);
 })();
