@@ -204,7 +204,7 @@ function createLobby({ send, clients, roomsApi }) {
     return {
       id: t.id, name: t.name, tc: t.tc, status: t.status, pos: t.pos || 'std',
       roundsWanted: t.roundsWanted || 0, interval: t.interval || 0,
-      type: t.type || 'swiss', durationMin: t.durationMin || 0, prize: t.prize || 0, places: t.places || 0, berserk: t.berserk !== false, tc: t.tc || "", pos: t.pos || "std", startAt: t.startAt || 0, endAt: t.endAt || 0, ending: !!t.ending,
+      type: t.type || 'swiss', durationMin: t.durationMin || 0, awards: t.awards || [], prize: t.prize || 0, places: t.places || 0, berserk: t.berserk !== false, tc: t.tc || "", pos: t.pos || "std", startAt: t.startAt || 0, endAt: t.endAt || 0, ending: !!t.ending,
       creatorUid: t.creatorUid, creatorName: t.creatorName, clubIds: t.clubIds || [], clubs: clubStandings(t),
       round: t.round, rounds: t.rounds, nextAt: t.nextAt || 0,
       players: t.type === 'arena' ? arenaStandings(t) : standings(t),
@@ -626,7 +626,7 @@ function createLobby({ send, clients, roomsApi }) {
       const sh = el.length >= 3 ? PZT[Math.min(t.places || 3, el.length)] : el.length === 2 ? [60, 40] : el.length === 1 ? [100] : [];
       sh.forEach((pc, i) => {
         const amt = Math.floor(t.prize * pc / 100);
-        if (amt > 0 && economy.add(el[i].uid, amt, 'tournament_prize_' + (i + 1))) toast(el[i].uid, '🏆 ' + (i + 1) + '-o‘rin mukofoti: +' + amt + ' 🪙');
+        (t.awards = t.awards || []).push({ uid: el[i].uid, name: el[i].name, place: i + 1, amt: amt }); if (amt > 0 && economy.add(el[i].uid, amt, 'tournament_prize_' + (i + 1))) toast(el[i].uid, '🏆 ' + (i + 1) + '-o‘rin mukofoti: +' + amt + ' 🪙');
       });
       if (!sh.length && t.prizePaid) economy.refund(t.creatorUid, t.prizePaid, 'refund_prize');
     }

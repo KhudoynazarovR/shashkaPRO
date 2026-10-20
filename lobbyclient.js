@@ -1,3 +1,33 @@
+;(function () {
+  if (window.spPod) return;
+  function e(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  var PZT = { 3: [50,30,20], 4: [40,28,20,12], 5: [35,25,18,13,9], 6: [30,22,17,13,10,8], 7: [28,20,15,12,10,8,7], 8: [26,19,15,12,10,8,5,5], 9: [24,18,14,11,10,8,6,5,4], 10: [22,17,13,11,9,8,7,5,4,4] };
+  window.spPod = function (t) {
+    var box = document.getElementById("tvPod");
+    var live = document.getElementById("tvLive");
+    if (live && live.parentNode) live.parentNode.style.display = t.status === "finished" ? "none" : "";
+    if (!box) return;
+    if (t.status !== "finished") { box.innerHTML = ""; return; }
+    var pl = (t.players || []).filter(function (p) { return !p.withdrawn && p.games > 0; });
+    var aw = t.awards || [];
+    if (!aw.length && t.prize > 0) {
+      var sh = pl.length >= 3 ? PZT[Math.min(t.places || 3, pl.length)] : pl.length === 2 ? [60, 40] : pl.length === 1 ? [100] : [];
+      aw = sh.map(function (pc, i) { return { uid: pl[i].uid, name: pl[i].name, place: i + 1, amt: Math.floor(t.prize * pc / 100) }; });
+    }
+    var top = [0, 1, 2].map(function (i) { var p = pl[i]; if (!p) return null; var a = aw.filter(function (x) { return x.place === i + 1; })[0]; return { name: p.name, amt: a ? a.amt : 0 }; });
+    if (!top[0]) { box.innerHTML = ""; return; }
+    var M = ["🥇", "🥈", "🥉"], H = [118, 88, 66], C = ["#f5c542", "#c9d1dc", "#d58a4e"];
+    function col(i) {
+      var p = top[i]; if (!p) return '<div style="flex:1"></div>';
+      return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;min-width:0">' +
+        '<div style="font-size:30px;line-height:1">' + M[i] + '</div>' +
+        '<div style="max-width:100%;font-weight:700;font-size:14px;margin:4px 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + e(p.name) + '</div>' +
+        (p.amt ? '<div style="font-size:13px;color:#ffd54a;margin-bottom:6px">+' + p.amt + ' 🪙</div>' : '<div style="height:6px"></div>') +
+        '<div style="width:100%;height:' + H[i] + 'px;border-radius:10px 10px 0 0;background:linear-gradient(180deg,' + C[i] + ',' + C[i] + '88);display:flex;align-items:flex-start;justify-content:center;padding-top:8px;box-sizing:border-box;font-size:26px;font-weight:800;color:#1a1a1a">' + (i + 1) + '</div></div>';
+    }
+    box.innerHTML = '<div class="tvSec"><div class="tvSh">🏆 Shohsupa</div><div style="display:flex;gap:8px;align-items:flex-end;padding:6px 4px 0">' + col(1) + col(0) + col(2) + '</div></div>';
+  };
+})();
 /* lobbyclient.js — onlayn zal va turnirlar (brauzer qismi).
    index.html ga server avtomatik ulaydi. O'yin xonalari roomclient.js orqali ochiladi (?room=ID). */
 (function () {
@@ -1814,7 +1844,7 @@ document.head.appendChild(_as); }
     '<div class="tvSec"><div class="tvSh" id="tvChatH">💬 Chat <span id="tvChatN"></span><i id="tvChatArr">▾</i></div>' +
       '<div id="tvChatBox"><div id="tvMsgs"></div><div class="tvIn"><input id="tvTxt" maxlength="200" placeholder="Xabar yozing..."><button id="tvSend">➤</button></div></div></div>' +
     '<div class="tvSec"><div class="tvSh">🔴 Live o‘yinlar <span id="tvLiveN"></span></div><div id="tvLive" class="tvLive"></div></div>' +
-    '<div class="tvSec"><div class="tvSh">🏅 Jadval</div><div id="tvTable"></div></div>' +
+    '<div id="tvPod"></div>' + '<div class="tvSec"><div class="tvSh">🏅 Jadval</div><div id="tvTable"></div></div>' +
   '</div>' +
   '<div class="tvFoot" id="tvFoot"></div>';
 
@@ -1887,7 +1917,7 @@ document.head.appendChild(_as); }
     g('tvTable').innerHTML = ps.length ? h + '</table>' : '<div class="tvEmpty">Hali ishtirokchi yo‘q</div>';
 
     var f = '';
-    if (t.status === 'finished') f = '<button class="tvD" disabled>🏁 Turnir tugagan</button>';
+    if (t.status === 'finished') { f = '<button class="tvD" disabled>🏁 Turnir tugagan</button>'; try { window.spPod(t); } catch (e) {} }
     else {
       if (t.status === 'reg' && String(t.creatorUid) === me) f += '<button class="tvS" data-tv="start">▶ Boshlash</button>';
       f += joined(t) ? '<button class="tvL" data-tv="leave">🚪 Chiqish</button>' : '<button class="tvJ" data-tv="join">✅ Qo‘shilish</button>';
