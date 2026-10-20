@@ -2358,7 +2358,8 @@ document.head.appendChild(_as); }
     var b = resolve(), st = document.getElementById("spBgCss");
     if (!b) { if (st) st.remove(); sweep(false); if (document.body) document.body.classList.remove("spLight"); return; }
     if (!st) { st = document.createElement("style"); st.id = "spBgCss"; document.head.appendChild(st); }
-    st.textContent = "html body.nvT{background:" + b.css + " !important;background-attachment:fixed !important;background-size:cover !important;min-height:100vh}html body #tvP{background:" + b.css + " !important;background-attachment:fixed !important;background-size:cover !important}" +
+    st.textContent = "html body.nvT{background:" + b.css + " !important;background-attachment:fixed !important;background-size:cover !important;min-height:100vh}html body div#tvP#tvP{background:" + b.css + " !important;background-attachment:fixed !important;background-size:cover !important}" +
+      "html body div#tvP#tvP .tvHead{background:rgba(8,6,32,.55)!important;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}html body div#tvP#tvP #tvTabs{background:transparent!important}html body div#tvP#tvP .tvFoot{background:linear-gradient(180deg,transparent,rgba(8,6,32,.75) 45%)!important}html body div#tvP#tvP .tvSec:not(.spPdW){background:rgba(42,36,112,.82)!important}" +
       "body.spLight,body.spLight *{text-shadow:0 0 2px rgba(0,0,0,.85),0 1px 3px rgba(0,0,0,.55)}";
     document.body.classList.remove("spLight");
     sweep(document.body.classList.contains("nvT"));
