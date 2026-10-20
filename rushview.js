@@ -1,6 +1,6 @@
 /* Puzzle Rush ekrani: boshlash -> 3 daqiqa masalalar -> natija. Javoblarni server tekshiradi (pzrush.js). */
 ;(function () {
-  if (window.spRush) return;
+  if (window.spRush && window.spPzRules) return;
   var tg = window.Telegram && window.Telegram.WebApp;
   var initData = (tg && tg.initData) || '';
   var DIRS = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
@@ -59,6 +59,7 @@
   }
   function findStep(lg, w) { for (var i = 0; i < lg.length; i++) { var s = lg[i]; if (s.f[0] === w[0] && s.f[1] === w[1] && s.t[0] === w[2] && s.t[1] === w[3]) return s; } return null; }
 
+  window.spPzRules = { legal: legal, adv: adv, findStep: findStep, copy: copy };
   function api(path, body) {
     return fetch(path, { method: body ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json', 'x-init-data': initData }, body: body ? JSON.stringify(body) : undefined })
       .then(function (r) { return r.json(); });

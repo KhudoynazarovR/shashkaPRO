@@ -221,4 +221,4 @@ function handle(req, res, p, ctx) {
   return true;
 }
 
-module.exports = { handle, _t: { bank, makeQueue, validLine, legal, adv } };
+module.exports = { handle, _t: { bank, makeQueue, validLine, legal, adv, findStep, same, copy, linesOf, pub } };

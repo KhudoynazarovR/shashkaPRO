@@ -135,6 +135,7 @@ function handle(req, res, url) {
       if (_sg) { const _su = store.users()[String(_sg.id)]; if (_su && Date.now() - (_su.lastSeen || 0) > 60000) _su.lastSeen = Date.now(); }
     }
   } catch (e) {}
+  if (p.startsWith('/api/battle/')) { if (require('./pzbattle.js').handle(req, res, p, { store, verifyInitData, send, readBody })) return true; }
   if (p.startsWith('/api/rush/')) { if (require('./pzrush.js').handle(req, res, p, { store, verifyInitData, send, readBody })) return true; }
   if (p === '/api/economy' && req.method === 'GET') { send(res, 200, CFG); return true; }
   const _ADM = tg => !!(tg && (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(tg.id)));
