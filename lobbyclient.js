@@ -1962,7 +1962,7 @@ document.head.appendChild(_as); }
       for (var k = 0; k < old.length; k++) old[k].parentNode.removeChild(old[k]);
       var row = document.createElement('div'); row.className = 'tvRow';
       row.innerHTML = (t.status === 'finished' ? '' : (joined(t)
-        ? '<button class="tvCJ" data-a="tl" data-id="' + esc(id) + '">✅ Qo‘shildingiz</button>'
+        ? '<button class="tvCL" data-a="tl" data-id="' + esc(id) + '">✅ Qo‘shildingiz</button>'
         : '<button class="tvCJ" data-a="tj" data-id="' + esc(id) + '">➕ Qo‘shilish</button>')) +
         '<button class="tvCE" data-tvopen="1">🏟 Kirish ›</button>';
       card.appendChild(row);
