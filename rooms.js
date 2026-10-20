@@ -724,7 +724,10 @@ function createRooms({ send, clients, onFinish }) {
     for (const [rid, room] of rooms) {
       if (!global.__spFM) global.__spFM = setInterval(() => { const t0 = Date.now(); for (const rm of rooms.values()) { try {
         if (rm.finished || rm.vsBot || rm.simul || /^S/.test(String(rm.id || "")) || !rm.white || !rm.black || rm.plies >= 2) { if (rm.finished || rm.plies >= 2) rm.waitSince = 0; continue; }
-        if (!rm.waitSince) { rm.waitSince = t0; continue; }
+        // 15 soniya har bir birinchi yurish uchun alohida, va faqat navbatdagi o'yinchi xonaga kirgandan keyin sanaladi
+        if (rm._fmP !== rm.plies) { rm._fmP = rm.plies; rm.waitSince = 0; }
+        if (!rm._crAt) rm._crAt = t0;
+        if (!rm.waitSince) { if (isOnline(rm[rm.turn]) || t0 - rm._crAt > 60000) rm.waitSince = t0; continue; }
         if (t0 - rm.waitSince >= 15000) { rm.waitSince = 0; finish(rm, rm.turn === "white" ? "black" : "white", "noshow"); }
       } catch (e) {} } }, 1000);
       if (now - room.lastActive > IDLE_MS) rooms.delete(rid);
