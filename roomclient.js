@@ -179,7 +179,7 @@
     elZal.onclick = function () {
       var live = st.color !== "spectator" && !st.finished && bothIn() && st.moves.length > 0;
       if (live && !confirm("O‘yin davom etyapti, zalga chiqsangiz vaqtingiz ketadi. Chiqasizmi?")) return;
-      location.href = location.pathname;
+      try { var _tm = String(roomId).match(/^T(.+?)R\d+B\d+|^A(.+?)G\d+/); if (_tm) sessionStorage.setItem("spOpenT", _tm[1] || _tm[2]); } catch (e) {} location.href = location.pathname;
     };
     var elMsgs = root.querySelector("#rcMsgs");
     var elInput = root.querySelector("#rcInput");
@@ -1072,7 +1072,7 @@
       autoZalStop();
       if (st.vsBot || st.gamesTotal > 1) return;   // bot bilan o'yinda zalga avtomatik qaytmaymiz (qayta o'ynash bor)
       if (typeof elZal === "undefined" || !elZal || !elZal.onclick) return;
-      var n = 10;
+      var n = /^T.+?R\d+B\d+|^A.+?G\d+/.test(String(roomId)) ? 3 : 10;
       _azBox = document.createElement("div");
       _azBox.style.cssText = "position:fixed;left:50%;transform:translateX(-50%);bottom:84px;z-index:2147483000;background:#1c2733;color:#fff;border:1px solid #2a3647;border-radius:12px;padding:10px 14px;font:14px Arial,sans-serif;display:flex;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,.4)";
       var tx = document.createElement("span"), bt = document.createElement("button");

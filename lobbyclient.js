@@ -2424,3 +2424,13 @@ document.head.appendChild(_as); }
   }
   boot();
 })();
+
+/* ===== turnir o'yinidan keyin turnir oynasiga qaytish ===== */
+;(function () {
+  var tid; try { tid = sessionStorage.getItem("spOpenT"); if (tid) sessionStorage.removeItem("spOpenT"); } catch (e) {}
+  if (!tid || /[?&]room=|startapp=/.test(location.search)) return;
+  var k = 0, iv = setInterval(function () {
+    if (window.tvOpen && window.__lb) { clearInterval(iv); setTimeout(function () { try { window.tvOpen(tid); } catch (e) {} }, 700); }
+    else if (++k > 60) clearInterval(iv);
+  }, 250);
+})();
