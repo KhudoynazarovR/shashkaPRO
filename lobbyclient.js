@@ -49,8 +49,9 @@
   function boot() {
     var tg = window.Telegram && window.Telegram.WebApp;
     var curRoom = "";
-    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param && !/^(ref_|pz_|pf_|go_|shop_)/.test(tg.initDataUnsafe.start_param)) curRoom = String(tg.initDataUnsafe.start_param);
-    if (!curRoom && q.get("room")) curRoom = q.get("room");
+    // ?room= (o'yinga o'tish) Telegram start_param dan ustun: aks holda eski havola/turnir havolasi o'yinni bosib ketadi
+    if (q.get("room")) curRoom = q.get("room");
+    else if (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param && !/^(ref_|pz_|pf_|go_|shop_)/.test(tg.initDataUnsafe.start_param)) curRoom = String(tg.initDataUnsafe.start_param);
     // havola orqali kirish: startapp=lbt_<turnir> / lbs_<sians> yoki ?t= / ?s=
     var linkTid = "", linkSid = "", linkFid = "";
     if (/^lbt_/.test(curRoom)) { linkTid = curRoom.slice(4); curRoom = ""; window.__tvLinkTid = linkTid; }
@@ -2271,6 +2272,7 @@ document.head.appendChild(_as); }
   try { if (!sp) sp = (Telegram.WebApp.initDataUnsafe || {}).start_param || ''; } catch(e){}
   try { if (!sp) sp = new URLSearchParams(Telegram.WebApp.initData || '').get('start_param') || ''; } catch(e){}
   if (!/^lbt_/.test(sp)) return;
+  if (/[?&]room=/.test(location.search)) return; // o'yin xonasiga o'tilgan - turnir sahifasini ochmaymiz
   var tid = sp.slice(4), key = 'tvLinkDone_' + tid;
   try { if (sessionStorage.getItem(key)) return; } catch(e){}
   function findT(){ try { var s = window.__lb && window.__lb.S; if (!s || !s.tournaments) return null; for (var i = 0; i < s.tournaments.length; i++) if (String(s.tournaments[i].id) === tid) return s.tournaments[i]; } catch(e){} return null; }
