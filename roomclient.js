@@ -804,6 +804,16 @@
           if (pf) sendMove(pf); else render(); } catch (e) {} }, 120);
       }
       try { var _br = elBoard.getBoundingClientRect(), _want = (document.documentElement.clientWidth - _br.width) / 2, _ml = parseFloat(getComputedStyle(elBoard).marginLeft) || 0; if (Math.abs(_br.left - _want) > 0.5) elBoard.style.setProperty("margin-left", (_ml + _want - _br.left) + "px", "important"); } catch (e) {}
+      if (!st.finished && !st.vsBot && st.joined && bothIn() && (st.moves || []).length < 2) { var _fk = st.moves.length + ":" + st.turn; if (st._fmK !== _fk) { st._fmK = _fk; st._fmAt = Date.now(); } } else { st._fmK = null; st._fmAt = 0; }
+      if (!st._fmIv) st._fmIv = setInterval(function () {
+        var el = document.getElementById("rcFM");
+        if (!st._fmAt || st.finished) { if (el) el.style.display = "none"; return; }
+        var left = Math.max(0, Math.ceil(15 - (Date.now() - st._fmAt) / 1000));
+        if (!el) { el = document.createElement("div"); el.id = "rcFM"; document.body.appendChild(el); }
+        var br = elBoard.getBoundingClientRect(), mine = st.turn === st.color;
+        el.style.cssText = "position:fixed;left:" + (br.left + br.width / 2) + "px;top:" + (br.top + br.height / 2) + "px;transform:translate(-50%,-50%);z-index:99990;pointer-events:none;padding:12px 22px;border-radius:18px;background:rgba(10,12,40,.82);color:" + (left <= 5 ? "#ff5a5a" : "#fff") + ";font:800 36px system-ui,sans-serif;text-align:center;box-shadow:0 6px 24px rgba(0,0,0,.5)";
+        el.innerHTML = "⏳ " + left + '<div style="font:600 14px system-ui,sans-serif;opacity:.85;margin-top:4px">' + (st.color === "spectator" ? "Birinchi yurish kutilmoqda" : mine ? "Siz yuring!" : "Raqib yurishi kutilmoqda") + "</div>";
+      }, 250);
       // holat matni
       var t;
       if (!st.connected) t = "🔌 Ulanmoqda… (server uyg‘onishi 50 soniyagacha cho‘zilishi mumkin)";
