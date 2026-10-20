@@ -2302,62 +2302,126 @@ document.head.appendChild(_as); }
 
 /*TVIEW-END*/
 
-/* ===== spBg: fon tanlash (kunduzgi / kechki) ===== */
+/* ===== spBg: fon tanlash (kunduzgi / kechki / o'z rangi / o'z rasmi) ===== */
 ;(function () {
-  if (window.spBgInit) return; window.spBgInit = true;
+  if (window.spBgInit2) return; window.spBgInit2 = true;
   var STARS = "radial-gradient(1.5px 1.5px at 12% 18%,#fff,transparent),radial-gradient(1px 1px at 28% 42%,#fff,transparent),radial-gradient(1.5px 1.5px at 46% 12%,#fff,transparent),radial-gradient(1px 1px at 63% 33%,#fff,transparent),radial-gradient(2px 2px at 81% 16%,#fff,transparent),radial-gradient(1px 1px at 90% 48%,#fff,transparent),radial-gradient(1px 1px at 8% 62%,#fff,transparent),radial-gradient(1.5px 1.5px at 37% 72%,#fff,transparent),radial-gradient(1px 1px at 72% 66%,#fff,transparent),radial-gradient(1px 1px at 55% 88%,#fff,transparent),";
   var BG = [
-    ["auto", "🔄 Avto", ""],
-    ["day", "☀️ Kunduzgi osmon", "linear-gradient(180deg,#2f8fe8 0%,#62b2f5 45%,#a9d8ff 100%)"],
-    ["dawn", "🌅 Tong", "linear-gradient(180deg,#6a5acd 0%,#e98aa6 50%,#ffc58a 100%)"],
-    ["sunset", "🌇 Quyosh botishi", "linear-gradient(180deg,#2b1055 0%,#a3375c 50%,#f28c38 100%)"],
-    ["evening", "🌆 Kechki", "linear-gradient(180deg,#141e46 0%,#2e3b8f 55%,#6a4c9c 100%)"],
-    ["night", "🌙 Tungi yulduzli", STARS + "radial-gradient(circle at 80% 10%,rgba(255,255,220,.35),transparent 18%),linear-gradient(180deg,#05081f 0%,#0d1440 60%,#1b1a4f 100%)"],
-    ["purple", "💜 Binafsha", "linear-gradient(180deg,#1a1650 0%,#3a2a8a 55%,#4a2a9a 100%)"],
-    ["samarqand", "🕌 Samarqand ko‘k", "linear-gradient(180deg,#073b4c 0%,#0f6e8c 50%,#1fa3b5 100%)"],
-    ["garden", "🌿 Bog‘", "linear-gradient(180deg,#0b3d2e 0%,#1d6b45 55%,#4f9a5a 100%)"]
+    ["auto", "🔄 Avto", "", 0],
+    ["white", "⚪ Oq", "linear-gradient(180deg,#ffffff 0%,#eef0f6 100%)", 1],
+    ["day", "☀️ Kunduzgi osmon", "linear-gradient(180deg,#2f8fe8 0%,#62b2f5 45%,#a9d8ff 100%)", 1],
+    ["dawn", "🌅 Tong", "linear-gradient(180deg,#6a5acd 0%,#e98aa6 50%,#ffc58a 100%)", 1],
+    ["sunset", "🌇 Quyosh botishi", "linear-gradient(180deg,#2b1055 0%,#a3375c 50%,#f28c38 100%)", 0],
+    ["evening", "🌆 Kechki", "linear-gradient(180deg,#141e46 0%,#2e3b8f 55%,#6a4c9c 100%)", 0],
+    ["night", "🌙 Tungi yulduzli", STARS + "radial-gradient(circle at 80% 10%,rgba(255,255,220,.35),transparent 18%),linear-gradient(180deg,#05081f 0%,#0d1440 60%,#1b1a4f 100%)", 0],
+    ["purple", "💜 Binafsha", "linear-gradient(180deg,#1a1650 0%,#3a2a8a 55%,#4a2a9a 100%)", 0],
+    ["samarqand", "🕌 Samarqand ko‘k", "linear-gradient(180deg,#073b4c 0%,#0f6e8c 50%,#1fa3b5 100%)", 0],
+    ["garden", "🌿 Bog‘", "linear-gradient(180deg,#0b3d2e 0%,#1d6b45 55%,#4f9a5a 100%)", 0],
+    ["color", "🎨 O‘z rangim", "", 0],
+    ["photo", "🖼 O‘z rasmim", "", 0]
   ];
-  function get() { try { return localStorage.getItem("spBg") || ""; } catch (e) { return ""; } }
-  function set(v) { try { localStorage.setItem("spBg", v); } catch (e) {} }
-  function val(id) {
+  function ls(k, v) { try { if (v === undefined) return localStorage.getItem(k) || ""; if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { return ""; } }
+  function lum(hex) { var n = parseInt(String(hex).replace("#", ""), 16); if (isNaN(n)) return 0; return (0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255)) / 255; }
+  function resolve() {
+    var id = ls("spBg");
+    if (!id) return null;
     if (id === "auto") { var h = new Date().getHours(); id = (h >= 6 && h < 18) ? "day" : "night"; }
-    for (var i = 0; i < BG.length; i++) if (BG[i][0] === id) return BG[i][2];
-    return "";
+    if (id === "color") { var c = ls("spBgColor") || "#1a1650"; return { css: c, light: lum(c) > 0.6 }; }
+    if (id === "photo") { var u = ls("spBgImg"); return u ? { css: 'url("' + u + '") center/cover no-repeat', light: false } : null; }
+    for (var i = 0; i < BG.length; i++) if (BG[i][0] === id && BG[i][2]) return { css: BG[i][2], light: !!BG[i][3] };
+    return null;
+  }
+  function sweep(on) {
+    var vw = window.innerWidth, vh = window.innerHeight;
+    if (!on) { Array.prototype.forEach.call(document.querySelectorAll("[data-spbg]"), function (el) { el.style.removeProperty("background"); el.removeAttribute("data-spbg"); }); return; }
+    var all = document.body ? document.body.getElementsByTagName("*") : [];
+    for (var i = 0; i < all.length; i++) {
+      var el = all[i];
+      if (el.hasAttribute("data-spbg") || el.id === "spBgSheet" || el.id === "spSetSheet") continue;
+      if (el.tagName === "CANVAS" || el.tagName === "IMG" || el.tagName === "SVG") continue;
+      var r = el.getBoundingClientRect();
+      if (r.width < vw * 0.9 || r.height < vh * 0.6) continue;
+      if (el.closest && el.closest("#spBgSheet,#spSetSheet")) continue;
+      var cs = getComputedStyle(el);
+      if ((parseFloat(cs.borderTopLeftRadius) || 0) > 6) continue;
+      var m = cs.backgroundColor.match(/rgba?\(([^)]+)\)/), a = 0;
+      if (m) { var p = m[1].split(","); a = p.length > 3 ? parseFloat(p[3]) : 1; }
+      if (a >= 0.85 || cs.backgroundImage !== "none") { el.setAttribute("data-spbg", "1"); el.style.setProperty("background", "transparent", "important"); }
+    }
   }
   function apply() {
-    var id = get(), st = document.getElementById("spBgCss");
-    if (!id) { if (st) st.remove(); return; }
+    var b = resolve(), st = document.getElementById("spBgCss");
+    if (!b) { if (st) st.remove(); sweep(false); if (document.body) document.body.classList.remove("spLight"); return; }
     if (!st) { st = document.createElement("style"); st.id = "spBgCss"; document.head.appendChild(st); }
-    st.textContent = "html,html body{background:" + val(id) + " !important;background-attachment:fixed !important;background-size:cover !important;min-height:100vh}";
+    st.textContent = "html,html body{background:" + b.css + " !important;background-attachment:fixed !important;background-size:cover !important;min-height:100vh}" +
+      "body.spLight,body.spLight *{text-shadow:0 0 2px rgba(0,0,0,.85),0 1px 3px rgba(0,0,0,.55)}";
+    document.body.classList.toggle("spLight", !!b.light);
+    sweep(true);
+  }
+  function pickColor(done) {
+    var i = document.createElement("input"); i.type = "color"; i.value = ls("spBgColor") || "#1a1650";
+    i.style.cssText = "position:fixed;left:-100px;top:0;opacity:0"; document.body.appendChild(i);
+    i.oninput = i.onchange = function () { ls("spBgColor", i.value); ls("spBg", "color"); apply(); };
+    i.onblur = function () { setTimeout(function () { i.remove(); }, 300); };
+    i.click(); done();
+  }
+  function pickPhoto(done) {
+    var i = document.createElement("input"); i.type = "file"; i.accept = "image/*";
+    i.style.cssText = "position:fixed;left:-100px;top:0;opacity:0"; document.body.appendChild(i);
+    i.onchange = function () {
+      var f = i.files && i.files[0]; i.remove(); if (!f) return;
+      var rd = new FileReader();
+      rd.onload = function () {
+        var im = new Image();
+        im.onload = function () {
+          var W = 1080, sc = Math.min(1, W / im.width), cv = document.createElement("canvas");
+          cv.width = Math.round(im.width * sc); cv.height = Math.round(im.height * sc);
+          cv.getContext("2d").drawImage(im, 0, 0, cv.width, cv.height);
+          var q = 0.82, u = cv.toDataURL("image/jpeg", q);
+          while (u.length > 1500000 && q > 0.4) { q -= 0.1; u = cv.toDataURL("image/jpeg", q); }
+          try { localStorage.setItem("spBgImg", u); ls("spBg", "photo"); apply(); } catch (e) { alert("Rasm juda katta, boshqa rasm tanlang"); }
+        };
+        im.src = rd.result;
+      };
+      rd.readAsDataURL(f);
+    };
+    i.click(); done();
   }
   function picker() {
     var old = document.getElementById("spBgSheet"); if (old) { old.remove(); return; }
     var ov = document.createElement("div"); ov.id = "spBgSheet";
     ov.style.cssText = "position:fixed;inset:0;z-index:2147483000;background:rgba(0,0,0,.55);display:flex;align-items:flex-end";
-    var cur = get() || "purple", h = '<div style="width:100%;background:#141040;color:#fff;border-radius:20px 20px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom));box-sizing:border-box;font-family:system-ui,sans-serif">' +
-      '<div style="display:flex;align-items:center;margin-bottom:12px"><b style="font-size:19px">🎨 Fon tanlash</b><span id="spBgX" style="margin-left:auto;font-size:24px;padding:4px 8px">✕</span></div>' +
+    var cur = ls("spBg") || "", h = '<div style="width:100%;max-height:85vh;overflow:auto;background:#141040;color:#fff;border-radius:20px 20px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom));box-sizing:border-box;font-family:system-ui,sans-serif;text-shadow:none">' +
+      '<div style="display:flex;align-items:center;margin-bottom:12px"><b style="font-size:19px">🎨 Fon tanlash</b><span id="spBgOff" style="margin-left:auto;font-size:13px;opacity:.75;text-decoration:underline;padding:4px 8px">↺ Standart</span><span id="spBgX" style="font-size:24px;padding:4px 8px">✕</span></div>' +
       '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">';
     BG.forEach(function (b) {
-      var prev = b[0] === "auto" ? "linear-gradient(135deg,#62b2f5 0 50%,#0d1440 50% 100%)" : b[2];
+      var prev = b[0] === "auto" ? "linear-gradient(135deg,#62b2f5 0 50%,#0d1440 50% 100%)" :
+        b[0] === "color" ? (ls("spBgColor") ? ls("spBgColor") : "conic-gradient(#f44,#fd4,#4d4,#4df,#44f,#f4f,#f44)") :
+        b[0] === "photo" ? (ls("spBgImg") ? 'url("' + ls("spBgImg") + '") center/cover' : "repeating-linear-gradient(45deg,#2a2470 0 10px,#352d86 10px 20px)") : b[2];
       h += '<div data-bg="' + b[0] + '" style="cursor:pointer;text-align:center;font-size:12px">' +
-        '<div style="height:70px;border-radius:12px;background:' + prev + ';border:3px solid ' + (b[0] === cur ? "#4c8dff" : "rgba(255,255,255,.15)") + '"></div>' +
+        '<div style="height:70px;border-radius:12px;background:' + prev + ';border:3px solid ' + (b[0] === cur ? "#4c8dff" : "rgba(255,255,255,.15)") + ';display:flex;align-items:center;justify-content:center;font-size:24px">' + (b[0] === "photo" && !ls("spBgImg") ? "➕" : "") + '</div>' +
         '<div style="margin-top:5px;opacity:.9">' + b[1] + '</div></div>';
     });
     ov.innerHTML = h + '</div></div>';
     document.body.appendChild(ov);
-    ov.onclick = function (e) { if (e.target === ov || e.target.id === "spBgX") ov.remove(); };
+    function close() { ov.remove(); }
+    ov.onclick = function (e) { if (e.target === ov || e.target.id === "spBgX") close(); };
+    ov.querySelector("#spBgOff").onclick = function () { ls("spBg", null); apply(); close(); };
     Array.prototype.forEach.call(ov.querySelectorAll("[data-bg]"), function (el) {
-      el.onclick = function () { set(el.getAttribute("data-bg")); apply(); ov.remove(); };
+      el.onclick = function () {
+        var id = el.getAttribute("data-bg");
+        if (id === "color") return pickColor(close);
+        if (id === "photo") return pickPhoto(close);
+        ls("spBg", id); apply(); close();
+      };
     });
   }
   window.spBgPicker = picker;
-  var btn = document.createElement("button"); btn.id = "spBgBtn"; btn.textContent = "🎨";
-  btn.style.cssText = "position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);right:10px;z-index:9000;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(20,16,64,.75);color:#fff;font-size:20px;line-height:1;padding:0;display:none";
-  btn.onclick = picker; btn.remove = btn.remove; window.spBgNoFloat = true;
   function boot() {
     if (!document.body) return setTimeout(boot, 50);
-    document.body.appendChild(btn); apply();
-    setInterval(function () { btn.style.display = "none"; if (get() === "auto") apply(); }, 1000);
+    var old = document.getElementById("spBgBtn"); if (old) old.remove();
+    apply();
+    setInterval(function () { if (resolve()) { if (ls("spBg") === "auto") apply(); else sweep(true); } }, 1500);
   }
   boot();
 })();
