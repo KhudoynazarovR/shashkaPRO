@@ -553,6 +553,72 @@
       e.onclick = function () { curFo = (S.folders || [])[Number(e.getAttribute('data-fo'))] || ''; curLv = 0; list(); };
     });
   }
+  // ---- admin: ro'yxatda belgilab bir nechta masalani o'chirish /*PZBULK*/
+  var bulk = { on: false, sel: {} };
+  function bulkUi() {
+    if (!S.admin) return;
+    if (!document.getElementById('pzBulkCss')) {
+      var cs = document.createElement('style'); cs.id = 'pzBulkCss';
+      cs.textContent = '.pzBk{position:relative;outline:2px dashed rgba(255,255,255,.25);outline-offset:-2px}.pzBk.on{outline:3px solid #ff5a5a;background:rgba(179,52,48,.28)!important}' +
+        '.pzBk .pzCb{position:absolute;left:-6px;top:-6px;z-index:3;width:30px;height:30px;border-radius:9px;background:#141040;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff}.pzBk.on .pzCb{background:#e04a4a;border-color:#e04a4a}' +
+        '#pzBar{position:fixed;left:10px;right:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 74px);z-index:100005;display:flex;gap:8px;align-items:center;padding:10px;border-radius:16px;background:#141040;box-shadow:0 6px 24px rgba(0,0,0,.6)}' +
+        '#pzBar b{flex:1;font-size:16px}#pzBar button{border:0;border-radius:12px;padding:10px 12px;font-size:15px;font-weight:700;color:#fff;background:#352d86}#pzBar #pzBDel{background:#b33430}#pzBar #pzBDel[disabled]{opacity:.45}';
+      document.head.appendChild(cs);
+    }
+    var row = ov.querySelector('#pzAdd'), old = document.getElementById('pzBar');
+    if (old) old.remove();
+    if (row && !ov.querySelector('#pzSelB')) {
+      var b = document.createElement('button'); b.id = 'pzSelB'; b.setAttribute('style', BG); b.textContent = bulk.on ? '✖ Tanlashni yopish' : '☑️ Tanlash';
+      b.onclick = function () { bulk.on = !bulk.on; bulk.sel = {}; items(); };
+      row.parentNode.appendChild(b);
+    }
+    if (!bulk.on) return;
+    var cards = ov.querySelectorAll('[data-i]');
+    Array.prototype.forEach.call(cards, function (c) {
+      var p = S.list[Number(c.getAttribute('data-i'))]; if (!p) return;
+      c.classList.add('pzBk'); c.classList.toggle('on', !!bulk.sel[p.id]);
+      var cb = document.createElement('span'); cb.className = 'pzCb'; cb.textContent = bulk.sel[p.id] ? '✓' : ''; c.insertBefore(cb, c.firstChild);
+    });
+    if (!ov.__bulkCap) {
+      ov.__bulkCap = 1;
+      ov.addEventListener('click', function (e) {
+        if (!bulk.on) return;
+        var c = e.target.closest('[data-i]'); if (!c || !ov.contains(c)) return;
+        e.stopPropagation(); e.preventDefault();
+        var p = S.list[Number(c.getAttribute('data-i'))]; if (!p) return;
+        if (bulk.sel[p.id]) delete bulk.sel[p.id]; else bulk.sel[p.id] = 1;
+        c.classList.toggle('on', !!bulk.sel[p.id]); var cb = c.querySelector('.pzCb'); if (cb) cb.textContent = bulk.sel[p.id] ? '✓' : '';
+        upd();
+      }, true);
+    }
+    var bar = document.createElement('div'); bar.id = 'pzBar';
+    bar.innerHTML = '<b id="pzBN"></b><button id="pzBAll">Hammasi</button><button id="pzBDel">🗑 O‘chirish</button>';
+    document.body.appendChild(bar);
+    function visIds() { return Array.prototype.map.call(ov.querySelectorAll('[data-i]'), function (c) { var p = S.list[Number(c.getAttribute('data-i'))]; return p && p.id; }).filter(Boolean); }
+    function upd() {
+      var n = Object.keys(bulk.sel).length, e = document.getElementById('pzBN'), d = document.getElementById('pzBDel');
+      if (e) e.textContent = 'Tanlandi: ' + n; if (d) d.disabled = !n;
+      var all = document.getElementById('pzBAll'), v = visIds(); if (all) all.textContent = v.length && v.every(function (id) { return bulk.sel[id]; }) ? 'Hech biri' : 'Hammasi';
+    }
+    upd();
+    bar.querySelector('#pzBAll').onclick = function () {
+      var v = visIds(), allOn = v.length && v.every(function (id) { return bulk.sel[id]; });
+      v.forEach(function (id) { if (allOn) delete bulk.sel[id]; else bulk.sel[id] = 1; });
+      items();
+    };
+    bar.querySelector('#pzBDel').onclick = function () {
+      var ids = Object.keys(bulk.sel); if (!ids.length) return;
+      if (!confirm(ids.length + ' ta masala o‘chirilsinmi? Buni qaytarib bo‘lmaydi.')) return;
+      this.disabled = true; this.textContent = '⏳';
+      api('/api/puzzle/del', { ids: ids }).then(function (d) {
+        bulk.on = false; bulk.sel = {}; var x = document.getElementById('pzBar'); if (x) x.remove();
+        if (d && d.ok) { S.list = S.list.filter(function (p) { return ids.indexOf(p.id) < 0; }); }
+        items();
+      }).catch(function () { alert('Server bilan aloqa yo‘q'); upd(); });
+    };
+  }
+  // ro'yxatdan chiqilganda pastki panelni olib tashlaymiz
+  setInterval(function () { var x = document.getElementById('pzBar'); if (x && (!ov || !document.body.contains(ov) || !ov.querySelector('.pzBk'))) x.remove(); }, 400);
   function items() { window.pzLeft = window.pzLeft || function (ms) { var d = Math.floor(ms / 864e5), hh = Math.floor(ms % 864e5 / 36e5); return d > 0 ? d + ' kun ' + hh + ' soat' : Math.max(1, hh) + ' soat'; }; if (!document.getElementById('pzCss2')) { var _s2 = document.createElement('style'); _s2.id = 'pzCss2'; _s2.textContent = '.pzSpW{position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;transform:scaleY(.7)}.pzSpW i{position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;background:#fff3c4;border-radius:50%;box-shadow:0 0 10px 4px #ffd86b;opacity:0;animation:pzSp 3.2s ease-in-out infinite both}@keyframes pzSp{0%{transform:rotate(var(--a)) translateX(var(--r)) scale(.3);opacity:0}20%{opacity:1}80%{opacity:1}100%{transform:rotate(calc(var(--a) + 360deg)) translateX(var(--r)) scale(.3);opacity:0}}.pzStars{position:fixed;left:0;top:0;right:0;bottom:0;pointer-events:none;z-index:1}.pzStars i{position:absolute;width:3px;height:3px;border-radius:50%;background:#ffe9a0;box-shadow:0 0 6px 1px #ffd86b;opacity:0;animation:pzTw 3s ease-in-out infinite}@keyframes pzTw{0%,100%{opacity:0;transform:translateY(0) scale(.5)}50%{opacity:.9;transform:translateY(-14px) scale(1.2)}}.pzBfs{position:fixed;left:0;top:0;right:0;bottom:0;pointer-events:none;z-index:1;overflow:hidden}.pzBf{position:absolute;line-height:1;animation:pzFly 18s ease-in-out infinite}.pzBf b{display:inline-block;font-weight:normal;animation:pzFlap .4s ease-in-out infinite alternate}@keyframes pzFly{0%,100%{transform:translate(0,0) rotate(-8deg)}25%{transform:translate(var(--x1),var(--y1)) rotate(14deg)}50%{transform:translate(var(--x2),var(--y2)) rotate(-10deg)}75%{transform:translate(var(--x3),var(--y3)) rotate(12deg)}}@keyframes pzFlap{from{transform:scaleX(1)}to{transform:scaleX(.3)}}@media (prefers-reduced-motion:reduce){.pzSpW,.pzStars,.pzBfs{display:none}}'; document.head.appendChild(_s2); }
     var h = head('🧩 Masalalar', '<button id="pzTop" style="' + BG + '">🏆 TOP</button>'), shown = 0;
     var _sp2 = ''; if (curFo && !curLv) { for (var _k = 0; _k < 18; _k++) _sp2 += '<i style="--a:' + (_k * 20) + 'deg;--r:' + (60 + (_k % 3) * 28) + 'px;animation-delay:' + (_k * 0.18) + 's"></i>'; _sp2 = '<span class="pzSpW">' + _sp2 + '</span>'; }
@@ -572,8 +638,9 @@
       for (var _b2 = 0; _b2 < 7; _b2++) _bf += '<span class="pzBf" style="left:' + Math.round(5 + Math.random() * 85) + '%;top:' + Math.round(10 + Math.random() * 75) + '%;font-size:' + Math.round(22 + Math.random() * 14) + 'px;--x1:' + _rr(130) + 'px;--y1:' + _rr(110) + 'px;--x2:' + _rr(160) + 'px;--y2:' + _rr(140) + 'px;--x3:' + _rr(130) + 'px;--y3:' + _rr(110) + 'px;animation-duration:' + (14 + Math.random() * 10).toFixed(1) + 's;animation-delay:-' + (Math.random() * 10).toFixed(1) + 's"><b style="filter:hue-rotate(' + _hu[_b2] + 'deg) saturate(1.4)">🦋</b></span>';
       h += '<div class="pzBfs">' + _bf + '</div>'; }
     ov.innerHTML = h;
-    on('#pzBack', function () { curLv = 0; curFo = ''; list(); });
+    on('#pzBack', function () { curLv = 0; curFo = ''; bulk.on = false; bulk.sel = {}; list(); });
     on('#pzTop', pzTop);
+    try { bulkUi(); } catch (e) {}
     (function () {
       var cs = (S.settings || {})[curFo] || {}, inF = !curLv && curFo, lockOn = inF && cs.lock && !S.admin, blocked = false;
       function setDlg() {

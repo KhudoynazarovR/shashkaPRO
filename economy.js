@@ -399,6 +399,12 @@ function handle(req, res, url) {
         return send(res, 200, { ok: true });
       }
       if (p === '/api/puzzle/del') {
+        if (Array.isArray(j.ids)) { /*PZBULK*/
+          const _set = new Set(j.ids.slice(0, 1000).map(String)); let _n = 0;
+          for (let _i = arr.length - 1; _i >= 0; _i--) if (_set.has(arr[_i].id)) { arr.splice(_i, 1); _n++; }
+          if (_n) { store.db.pzVer = (store.db.pzVer || 0) + 1; store.save(); }
+          return send(res, 200, { ok: true, n: _n });
+        }
         const i = arr.findIndex(x => x.id === j.id);
         if (i >= 0) { arr.splice(i, 1); store.save(); }
         return send(res, 200, { ok: true });
