@@ -251,7 +251,7 @@
     var b = el("button", "position:fixed;right:12px;bottom:68px;z-index:2147483000;width:38px;height:38px;border-radius:50%;border:0;background:#1c2733;color:#fff;font-size:18px;opacity:.85;box-shadow:0 2px 8px rgba(0,0,0,.4);cursor:pointer", "🔊");
     b.id = "spSndBtn";
     b.setAttribute("aria-label", "Ovoz sozlamalari");
-    b.onclick = openSettings;
+    b.onclick = openSettings; b.style.setProperty("display", "none", "important");
     document.body.appendChild(b);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", addButton);

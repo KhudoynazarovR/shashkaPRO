@@ -1,3 +1,30 @@
+;(function () {
+  if (window.spSettings) return;
+  window.spSettings = function () {
+    var old = document.getElementById("spSetSheet"); if (old) old.remove();
+    var ov = document.createElement("div"); ov.id = "spSetSheet";
+    ov.style.cssText = "position:fixed;inset:0;z-index:2147482500;background:rgba(0,0,0,.55);display:flex;align-items:flex-end";
+    var R = [
+      ["🔊", "Ovoz", "Ovoz balandligi, yurish va olish ovozlari", function () { if (window.SPSound && SPSound.openSettings) SPSound.openSettings(); }],
+      ["🎨", "Fon", "Kunduzgi, kechki va boshqa fonlar", function () { if (window.spBgPicker) window.spBgPicker(); }],
+      ["🤖", "AI o‘yin sozlamalari", "Doska, vaqt va AI bilan o‘yin sozlamalari", function () { if (window.aiShow) window.aiShow("set"); }]
+    ];
+    var h = '<div style="width:100%;background:#141040;color:#fff;border-radius:20px 20px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom));box-sizing:border-box;font-family:system-ui,sans-serif">' +
+      '<div style="display:flex;align-items:center;margin-bottom:10px"><b style="font-size:20px">⚙️ Sozlamalar</b><span id="spSetX" style="margin-left:auto;font-size:24px;padding:4px 8px">✕</span></div>';
+    R.forEach(function (r, i) {
+      h += '<div data-i="' + i + '" style="display:flex;align-items:center;gap:14px;padding:14px 4px;border-bottom:1px solid #26305a;cursor:pointer">' +
+        '<span style="font-size:26px;width:34px;text-align:center">' + r[0] + '</span>' +
+        '<span style="flex:1"><b style="display:block;font-size:17px">' + r[1] + '</b><small style="opacity:.65;font-size:13px">' + r[2] + '</small></span>' +
+        '<span style="font-size:22px;opacity:.6">›</span></div>';
+    });
+    ov.innerHTML = h + '</div>';
+    document.body.appendChild(ov);
+    ov.onclick = function (e) { if (e.target === ov || e.target.id === "spSetX") ov.remove(); };
+    Array.prototype.forEach.call(ov.querySelectorAll("[data-i]"), function (el) {
+      el.onclick = function () { ov.remove(); R[+el.getAttribute("data-i")][3](); };
+    });
+  };
+})();
 (function () {
   "use strict";
   var tg = window.Telegram && window.Telegram.WebApp, initData = (tg && tg.initData) || "";
@@ -40,7 +67,7 @@
       ["🧩", "Masalalar", "Shashka masalalarini yeching", "@puz", "#f5873b,#f7c02d"],
       ["🪙", "Tosh do‘koni", "Donalar va o‘z donangiz", "@shop", "#7b3ff2,#d62f8f"]]],
     ["ILOVA", [
-      ["⚙️", "Sozlamalar", "Tema, ovoz va boshqalar", "@ai:set", "#6b7bff,#8fa0ff"],
+      ["⚙️", "Sozlamalar", "Ovoz, fon va boshqalar", "@set", "#6b7bff,#8fa0ff"],
       ["❓", "Yordam", "Bo‘limlar haqida", "@help", "#17b2f7,#17e3ff"],
       ["💬", "Taklif va shikoyatlar", "Fikringizni yozib qoldiring", "@fb", "#f5873b,#f7c02d"]]]
   ];
@@ -99,7 +126,7 @@
   }
   function close() { if (panel) panel.style.display = "none"; }
   window.mnA = function (a) {
-    if (a.indexOf("@ai:") === 0) { close(); if (window.aiShow) window.aiShow(a.slice(4)); return; }
+    if (a === "@set") { close(); if (window.spSettings) window.spSettings(); return; } if (a.indexOf("@ai:") === 0) { close(); if (window.aiShow) window.aiShow(a.slice(4)); return; }
     if (a === "@live") { close(); liveOpen(); return; }
     if (a === "@arch") { close(); archOpen(); return; }
     if (a === "@board") {
