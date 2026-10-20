@@ -146,7 +146,7 @@ function createRooms({ send, clients, onFinish }) {
       }
     }
     room.moves = [];
-    room.finished = false; room.winner = null; room.reason = null; room.plies = 0;
+    room.finished = false; room.winner = null; room.reason = null; room.plies = 0; room.waitSince = 0;
     room.clock = { white: room.timeMs, black: room.timeMs };
     room.berserk = { white: false, black: false };
     room.drawOffer = null; room.offerPly = { white: -1, black: -1 };
@@ -398,7 +398,7 @@ function createRooms({ send, clients, onFinish }) {
       }
       if (!m.keepTurn) {
         room.turn = other(room.turn); // ketma-ket olishda keepTurn:true yuboring
-        room.plies++;
+        room.plies++; room.waitSince = Date.now();
       }
       room.turnStartedAt = now;
       const dres = drawTrack(room, col, m);
@@ -705,6 +705,11 @@ function createRooms({ send, clients, onFinish }) {
   setInterval(() => {
     const now = Date.now();
     for (const [rid, room] of rooms) {
+      if (!global.__spFM) global.__spFM = setInterval(() => { const t0 = Date.now(); for (const rm of rooms.values()) { try {
+        if (rm.finished || rm.vsBot || rm.simul || /^S/.test(String(rm.id || "")) || !rm.white || !rm.black || rm.plies >= 2) { if (rm.finished || rm.plies >= 2) rm.waitSince = 0; continue; }
+        if (!rm.waitSince) { rm.waitSince = t0; continue; }
+        if (t0 - rm.waitSince >= 15000) { rm.waitSince = 0; finish(rm, rm.turn === "white" ? "black" : "white", "noshow"); }
+      } catch (e) {} } }, 1000);
       if (now - room.lastActive > IDLE_MS) rooms.delete(rid);
     }
   }, 10 * 60 * 1000).unref();
