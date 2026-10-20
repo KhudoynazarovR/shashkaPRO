@@ -84,6 +84,7 @@
     '#rsB{width:min(94vw,460px);aspect-ratio:1;margin:0 auto;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border:4px solid #5a3415;border-radius:8px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.5);transition:box-shadow .2s}' +
     '#rsB.ok{box-shadow:0 0 0 4px #55e07a,0 10px 30px rgba(0,0,0,.5)}#rsB.bad{box-shadow:0 0 0 4px #ff4d4d,0 10px 30px rgba(0,0,0,.5);animation:rsShake .35s}' +
     '@keyframes rsShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}' +
+    '#rsB{touch-action:manipulation;-webkit-user-select:none;user-select:none}' +
     '#rsB>div{position:relative;display:flex;align-items:center;justify-content:center}' +
     '#rsB .l{background:#f0d9b5}#rsB .d{background:#b58863}#rsB .d.sel{box-shadow:inset 0 0 0 4px #f5d92b}#rsB .d.lm{background:#c9a23f}' +
     '#rsB .dot{position:absolute;width:30%;height:30%;border-radius:50%;background:rgba(40,200,120,.85)}' +
@@ -147,6 +148,7 @@
     }).catch(function () { alert('Server bilan aloqa yo‘q'); home(); });
   }
   function setPz(p) { st.pz = p; st.g = { b: copy(p.board), side: p.side, forced: null }; st.sel = null; st.lm = null; }
+  function autoSel() { if (st && st.g && st.pz && st.g.forced && st.g.side === st.pz.side) st.sel = [st.g.forced[0], st.g.forced[1]]; }
   function tick() {
     if (!st || st.over) return;
     var left = st.end - Date.now(), e = ov && ov.querySelector('#rsTime');
@@ -174,7 +176,8 @@
     ov.innerHTML = h;
     ov.querySelector('#rsX').onclick = function () { if (confirm('Rush tugatilsinmi?')) { st.busy = true; api('/api/rush/end', { sid: st.sid }).then(result).catch(close); } };
     ov.querySelector('#rsSkip').onclick = function () { if (st.busy) return; st.busy = true; api('/api/rush/skip', { sid: st.sid }).then(onWrong).catch(function () { st.busy = false; }); };
-    ov.querySelector('#rsB').onclick = function (ev) { var x = ev.target.closest('[data-r]'); if (x) tap(Number(x.getAttribute('data-r')), Number(x.getAttribute('data-c'))); };
+    var bd = ov.querySelector('#rsB');
+    bd.addEventListener('pointerdown', function (ev) { var x = ev.target.closest('[data-r]'); if (!x) return; ev.preventDefault(); tap(Number(x.getAttribute('data-r')), Number(x.getAttribute('data-c'))); });
   }
   function tap(r, c) {
     if (!st || st.busy || st.over || st.g.side !== st.pz.side) return;
@@ -183,14 +186,17 @@
       var s = findStep(lg, [st.sel[0], st.sel[1], r, c]);
       if (s) return send(s);
     }
-    if (lg.some(function (s2) { return s2.f[0] === r && s2.f[1] === c; })) { st.sel = [r, c]; haptic(); draw(); }
-    else if (st.sel) { st.sel = null; draw(); }
+    if (lg.some(function (s2) { return s2.f[0] === r && s2.f[1] === c; })) { st.sel = [r, c]; haptic(); draw(); return; }
+    // tanlamasdan bosilgan katakka faqat bitta yurish bo'lsa — darhol yuramiz
+    var to = lg.filter(function (s3) { return s3.t[0] === r && s3.t[1] === c; });
+    if (to.length === 1) return send(to[0]);
+    if (st.sel) { st.sel = null; draw(); }
   }
   function send(s) {
     st.busy = true;
     var w = [s.f[0], s.f[1], s.t[0], s.t[1]];
     // darhol ko'rsatamiz, server javobini kutamiz
-    var before = st.g; st.g = adv(st.g, s); st.sel = null; st.lm = w; draw();
+    var before = st.g; st.g = adv(st.g, s); st.sel = null; st.lm = w; autoSel(); draw();
     api('/api/rush/move', { sid: st.sid, step: w }).then(function (d) {
       if (!d) { st.busy = false; return; }
       if (d.bad) { st.g = before; st.lm = null; st.busy = false; draw(); return; }
@@ -202,7 +208,7 @@
         if (k < opp.length) {
           var x = opp[k++], os = findStep(legal(st.g.b, st.g.side, st.g.forced), x);
           if (os) { st.g = adv(st.g, os); st.lm = x; draw(); }
-          return setTimeout(playOpp, 380);
+          return setTimeout(playOpp, 170);
         }
         if (d.solved) {
           haptic('ok'); st.flash = 'ok'; st.msg = '✅ +1'; draw();
@@ -210,10 +216,10 @@
             st.flash = ''; st.msg = '';
             if (d.over) return result(d);
             setPz(d.pz); st.busy = false; draw();
-          }, 450);
-        } else { st.busy = false; draw(); }
+          }, 160);
+        } else { st.busy = false; autoSel(); draw(); }
       }
-      if (opp.length) setTimeout(playOpp, 300); else playOpp();
+      if (opp.length) setTimeout(playOpp, 120); else playOpp();
     }).catch(function () { st.g = before; st.busy = false; st.msg = '⚠️ Aloqa uzildi'; draw(); });
   }
   function onWrong(d) {
@@ -226,15 +232,15 @@
       if (k < sol.length && k < 6) {
         var x = sol[k++], s = findStep(legal(st.g.b, st.g.side, st.g.forced), x);
         if (s) { st.g = adv(st.g, s); st.lm = x; st.flash = ''; draw(); }
-        return setTimeout(step, 420);
+        return setTimeout(step, 260);
       }
       setTimeout(function () {
         st.flash = ''; st.msg = '';
         if (d.over) return result(d);
         setPz(d.pz); st.busy = false; draw();
-      }, 350);
+      }, 250);
     }
-    setTimeout(step, 450);
+    setTimeout(step, 250);
   }
 
   // ---------- natija

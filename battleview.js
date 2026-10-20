@@ -37,6 +37,7 @@
     '.btSide{text-align:center;font-size:16px;font-weight:700;margin:2px 0 8px;color:#eadfff}' +
     '#btB{width:min(94vw,460px);aspect-ratio:1;margin:0 auto;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border:4px solid #5a3415;border-radius:8px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.5)}' +
     '#btB.ok{box-shadow:0 0 0 4px #55e07a}#btB.bad{box-shadow:0 0 0 4px #ff4d4d;animation:btSh .35s}@keyframes btSh{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}' +
+    '#btB{touch-action:manipulation;-webkit-user-select:none;user-select:none}' +
     '#btB>div{position:relative;display:flex;align-items:center;justify-content:center}#btB .l{background:#f0d9b5}#btB .d{background:#b58863}#btB .d.sel{box-shadow:inset 0 0 0 4px #f5d92b}#btB .d.lm{background:#c9a23f}' +
     '#btB .dot{position:absolute;width:30%;height:30%;border-radius:50%;background:rgba(40,200,120,.85)}' +
     '#btB .pc{width:82%;height:82%;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;color:#f5b72b;box-shadow:0 2px 3px rgba(0,0,0,.45)}#btB .pw{background:radial-gradient(circle at 35% 28%,#fff,#c9c9c9);border:2px solid #9a9a9a}#btB .pb{background:radial-gradient(circle at 35% 28%,#666,#111);border:2px solid #000}' +
@@ -197,7 +198,9 @@
     if (!st || !v) return;
     if (v.phase === 'over') return result(v);
     st.v = v; st.left = v.left; st.startIn = v.startIn; st.at = Date.now(); st.phase = v.phase;
-    if (!st.busy) draw(); else hud();
+    // so'rovlar har soniyada keladi: doskani qayta chizmaymiz (bosish yo'qolmasin), faqat hisobni yangilaymiz
+    var needDraw = (st.phase === 'count' && !ov.querySelector('#btCd')) || (st.phase === 'play' && ov.querySelector('#btCd')) || (v.me.out && !ov.querySelector('.btWait')) || (!st.busy && !ov.querySelector('#btB') && !v.me.out);
+    if (needDraw && !st.busy) draw(); else hud();
   }
   function tick() {
     if (!st || !st.v) return;
@@ -221,6 +224,7 @@
   }
   function hud() { var e = ov && ov.querySelector('#btHud'); if (e) e.outerHTML = hudHtml(); }
   function setPz(p) { st.pz = p; st.g = { b: R().copy(p.board), side: p.side, forced: null }; st.sel = null; st.lm = null; }
+  function autoSel() { if (st && st.g && st.pz && st.g.forced && st.g.side === st.pz.side) st.sel = [st.g.forced[0], st.g.forced[1]]; }
   function draw() {
     if (!st || !st.v) return;
     var h = top('⚔️ Puzzle Battle', '✕') + hudHtml();
@@ -243,19 +247,21 @@
     ov.innerHTML = h;
     ov.querySelector('#btX').onclick = function () { if (confirm('Bellashuvdan chiqasizmi? Bu mag‘lubiyat hisoblanadi.')) api('/api/battle/resign', { mid: st.mid }).then(onView).catch(close); };
     var sk = ov.querySelector('#btSkip'); if (sk) sk.onclick = function () { if (st.busy || st.phase !== 'play') return; st.busy = true; api('/api/battle/skip', { mid: st.mid }).then(onWrong).catch(function () { st.busy = false; }); };
-    var bd = ov.querySelector('#btB'); if (bd) bd.onclick = function (ev) { var x = ev.target.closest('[data-r]'); if (x) tap(Number(x.getAttribute('data-r')), Number(x.getAttribute('data-c'))); };
+    var bd = ov.querySelector('#btB'); if (bd) bd.addEventListener('pointerdown', function (ev) { var x = ev.target.closest('[data-r]'); if (!x) return; ev.preventDefault(); tap(Number(x.getAttribute('data-r')), Number(x.getAttribute('data-c'))); });
   }
   function tap(r, c) {
     if (!st || st.busy || st.phase !== 'play' || !st.pz || st.g.side !== st.pz.side) return;
     var g = st.g, lg = R().legal(g.b, g.side, g.forced);
     if (st.sel) { var s = R().findStep(lg, [st.sel[0], st.sel[1], r, c]); if (s) return send(s); }
-    if (lg.some(function (s2) { return s2.f[0] === r && s2.f[1] === c; })) { st.sel = [r, c]; haptic(); draw(); }
-    else if (st.sel) { st.sel = null; draw(); }
+    if (lg.some(function (s2) { return s2.f[0] === r && s2.f[1] === c; })) { st.sel = [r, c]; haptic(); draw(); return; }
+    var to = lg.filter(function (s3) { return s3.t[0] === r && s3.t[1] === c; });
+    if (to.length === 1) return send(to[0]);
+    if (st.sel) { st.sel = null; draw(); }
   }
   function send(s) {
     st.busy = true;
     var w = [s.f[0], s.f[1], s.t[0], s.t[1]], before = st.g;
-    st.g = R().adv(st.g, s); st.sel = null; st.lm = w; draw();
+    st.g = R().adv(st.g, s); st.sel = null; st.lm = w; autoSel(); draw();
     api('/api/battle/move', { mid: st.mid, step: w }).then(function (d) {
       if (!d || !st) return;
       if (d.bad) { st.g = before; st.lm = null; st.busy = false; draw(); return; }
@@ -264,11 +270,11 @@
       st.v = d; st.left = d.left; st.at = Date.now();
       var opp = d.opp || [], k = 0;
       (function playOpp() {
-        if (k < opp.length) { var x = opp[k++], os = R().findStep(R().legal(st.g.b, st.g.side, st.g.forced), x); if (os) { st.g = R().adv(st.g, os); st.lm = x; draw(); } return setTimeout(playOpp, 350); }
+        if (k < opp.length) { var x = opp[k++], os = R().findStep(R().legal(st.g.b, st.g.side, st.g.forced), x); if (os) { st.g = R().adv(st.g, os); st.lm = x; draw(); } return setTimeout(playOpp, 170); }
         if (d.solved) {
           haptic('ok'); st.flash = 'ok'; st.msg = '✅ +1'; draw();
-          setTimeout(function () { if (!st) return; st.flash = ''; st.msg = ''; if (d.pz) setPz(d.pz); st.busy = false; draw(); }, 400);
-        } else { st.busy = false; draw(); }
+          setTimeout(function () { if (!st) return; st.flash = ''; st.msg = ''; if (d.pz) setPz(d.pz); st.busy = false; draw(); }, 160);
+        } else { st.busy = false; autoSel(); draw(); }
       })();
     }).catch(function () { st.g = before; st.busy = false; st.msg = '⚠️ Aloqa uzildi'; draw(); });
   }
@@ -279,8 +285,8 @@
     st.flash = 'bad'; st.msg = '❌ Xato! To‘g‘ri yo‘l:'; draw();
     (function step() {
       if (!st) return;
-      if (k < sol.length && k < 6) { var x = sol[k++], s = R().findStep(R().legal(st.g.b, st.g.side, st.g.forced), x); if (s) { st.g = R().adv(st.g, s); st.lm = x; st.flash = ''; draw(); } return setTimeout(step, 380); }
-      setTimeout(function () { if (!st) return; st.flash = ''; st.msg = ''; if (d.phase === 'over') return result(d); if (d.pz) setPz(d.pz); st.busy = false; draw(); }, 300);
+      if (k < sol.length && k < 6) { var x = sol[k++], s = R().findStep(R().legal(st.g.b, st.g.side, st.g.forced), x); if (s) { st.g = R().adv(st.g, s); st.lm = x; st.flash = ''; draw(); } return setTimeout(step, 260); }
+      setTimeout(function () { if (!st) return; st.flash = ''; st.msg = ''; if (d.phase === 'over') return result(d); if (d.pz) setPz(d.pz); st.busy = false; draw(); }, 250);
     })();
   }
 

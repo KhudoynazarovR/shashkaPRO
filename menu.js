@@ -1245,7 +1245,7 @@ window.spShop = open;
   function ld(src, cb) { var s = document.createElement('script'); s.src = src; s.onload = cb; document.head.appendChild(s); }
   setTimeout(function () {
     var go = function () { window.spBattle({ join: code }); };
-    var need = function () { if (window.spBattle) go(); else ld('/battleview.js?v=3', go); };
-    if (window.spPzRules) need(); else ld('/rushview.js?v=2', need);
+    var need = function () { if (window.spBattle) go(); else ld('/battleview.js?v=4', go); };
+    if (window.spPzRules) need(); else ld('/rushview.js?v=3', need);
   }, 1200);
 })();
