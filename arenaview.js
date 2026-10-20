@@ -38,14 +38,48 @@
   }
   function refresh() { get().then(function (j) { last = j; renderCard(j); }).catch(function () {}); }
 
+  // Bosh sahifada endi Bot arenasi o'rnida profil kartasi turadi; arena Menyu ichidan ochiladi (window.avOpen)
+  var me = null, meAt = 0;
+  (function () { var s2 = document.createElement('style'); s2.textContent =
+    '#pfCard{display:flex;align-items:center;gap:12px;margin:10px 0;padding:12px 14px;border-radius:18px;background:#2a2470;box-shadow:0 3px 0 #0e0b30;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none}' +
+    '#pfCard:active{transform:translateY(2px)}' +
+    '#pfCard .pfA{flex:none;width:58px;height:58px;border-radius:16px;overflow:hidden;background:#352d86;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800}' +
+    '#pfCard .pfA img{width:100%;height:100%;object-fit:cover}' +
+    '#pfCard .pfB{flex:1;min-width:0}' +
+    '#pfCard .pfN{font-size:19px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+    '#pfCard .pfS{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}' +
+    '#pfCard .pfS span{font-size:14px;font-weight:700;background:#141040;border-radius:9px;padding:4px 9px;white-space:nowrap}' +
+    '#pfCard .pfG{flex:none;font-size:26px;color:#bababa}';
+    document.head.appendChild(s2); })();
+  function myId() { try { var u = Telegram.WebApp.initDataUnsafe.user; return u && u.id ? String(u.id) : ''; } catch (e) { return ''; } }
+  function myName() { try { var u = Telegram.WebApp.initDataUnsafe.user || {}; return ((u.first_name || '') + ' ' + (u.last_name || '')).trim(); } catch (e) { return ''; } }
+  function loadMe() {
+    var id = myId(); if (!id) return;
+    meAt = Date.now();
+    fetch('/api/user/' + encodeURIComponent(id), { headers: { 'x-init-data': init() } })
+      .then(function (r) { return r.json(); }).then(function (d) { if (d && !d.error) { me = d; drawMe(); } }).catch(function () {});
+  }
+  function drawMe() {
+    var c = document.getElementById('pfCard'); if (!c) return;
+    var id = myId(), d = me || {}, nm0 = d.name || myName() || 'Mehmon';
+    var av = id ? '<img src="/api/av/' + encodeURIComponent(id) + '" alt="" onerror="this.parentNode.textContent=\'' + esc(nm0.charAt(0).toUpperCase()).replace(/'/g, '') + '\'">' : esc(nm0.charAt(0).toUpperCase());
+    var html = '<div class="pfA">' + av + '</div><div class="pfB"><div class="pfN">' + esc(nm0) + (d.premium ? ' 👑' : '') + '</div><div class="pfS">' +
+      '<span>⚡ ' + (d.elo || 1000) + '</span><span>🪙 ' + (d.diamonds || 0) + '</span>' +
+      (d.games ? '<span>🏆 ' + (d.wins || 0) + ' / ' + d.games + '</span>' : '') + '</div></div><div class="pfG">›</div>';
+    if (c.__h !== html) { c.__h = html; c.innerHTML = html; }
+  }
+  function openProfile() {
+    var b = document.querySelector('button[data-k="pf"]');
+    if (b) b.click();
+  }
   function mount() {
     var h = document.getElementById('hzMkR');
-    if (!h || document.getElementById('avCard')) return;
-    var c = document.createElement('div'); c.id = 'avCard'; c.className = 'avCard'; c.onclick = openOv;
-    c.innerHTML = '<b>\uD83D\uDD34 Jonli o‘yin</b><small>Yuklanmoqda…</small>';
+    if (!h || document.getElementById('pfCard')) return;
+    var c = document.createElement('div'); c.id = 'pfCard'; c.onclick = openProfile;
     h.parentNode.insertBefore(c, h.nextSibling);
-    if (last) renderCard(last); else refresh();
+    drawMe(); if (!me || Date.now() - meAt > 30000) loadMe();
   }
+  window.avOpen = function () { openOv(); };
 
   function board64(a) {
     var h = '';
@@ -114,5 +148,5 @@
   function closeOv() { if (tmO) clearInterval(tmO); tmO = null; if (ov) ov.remove(); ov = null; refresh(); }
 
   setInterval(mount, 1500);
-  setInterval(function () { if (!ov && document.getElementById('avCard')) refresh(); }, 20000);
+  setInterval(function () { if (document.getElementById('pfCard') && document.getElementById('pfCard').offsetParent) loadMe(); }, 30000);
 })();

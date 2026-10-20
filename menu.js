@@ -62,6 +62,7 @@
     ["O‘YINLAR", [
       ["🤖", "AI bilan o‘ynash", "Kompyuterga qarshi o‘ynang", "@ai:play", "#8e6ff0,#c58bf2"],
       ["📺", "Jonli efir", "Hozirgi o‘yinlarni kuzating", "@live", "#ff4d6d,#ff8fa3"],
+      ["🔴", "Bot arenasi", "Botlar o‘yinini jonli kuzating", "@arena", "#b91c1c,#ef4444"],
       ["📁", "Arxiv", "O‘tgan o‘yinlar tarixi", "@arch", "#2fd27f,#1ea36a"],
       ["🔬", "Tahlil taxtasi", "KestoG bilan pozitsiya tahlili", "@board", "#3b82f6,#06b6d4"],
       ["🧩", "Masalalar", "Shashka masalalarini yeching", "@puz", "#f5873b,#f7c02d"],
@@ -128,6 +129,7 @@
   window.mnA = function (a) {
     if (a === "@set") { close(); if (window.spSettings) window.spSettings(); return; } if (a.indexOf("@ai:") === 0) { close(); if (window.aiShow) window.aiShow(a.slice(4)); return; }
     if (a === "@live") { close(); liveOpen(); return; }
+    if (a === "@arena") { close(); if (window.avOpen) window.avOpen(); return; }
     if (a === "@arch") { close(); archOpen(); return; }
     if (a === "@board") {
       close();
