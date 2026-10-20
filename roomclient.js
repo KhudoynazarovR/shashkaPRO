@@ -812,8 +812,8 @@
         var left = Math.max(0, Math.ceil(15 - (Date.now() - st._fmAt) / 1000));
         if (!el) { el = document.createElement("div"); el.id = "rcFM"; document.body.appendChild(el); }
         var br = elBoard.getBoundingClientRect(), mine = st.turn === st.color;
-        el.style.cssText = "position:fixed;left:" + (br.left + br.width / 2) + "px;top:" + (br.top + br.height / 2) + "px;transform:translate(-50%,-50%);z-index:99990;pointer-events:none;padding:12px 22px;border-radius:18px;background:rgba(10,12,40,.82);color:" + (left <= 5 ? "#ff5a5a" : "#fff") + ";font:800 36px system-ui,sans-serif;text-align:center;box-shadow:0 6px 24px rgba(0,0,0,.5)";
-        el.innerHTML = "⏳ " + left + '<div style="font:600 14px system-ui,sans-serif;opacity:.85;margin-top:4px">' + (st.color === "spectator" ? "Birinchi yurish kutilmoqda" : mine ? "Siz yuring!" : "Raqib yurishi kutilmoqda") + "</div>";
+        el.style.cssText = "position:fixed;left:" + (br.left + br.width / 2) + "px;top:" + (br.bottom + 8) + "px;transform:translateX(-50%);z-index:99990;pointer-events:none;display:flex;align-items:center;gap:10px;white-space:nowrap;padding:6px 16px;border-radius:14px;background:rgba(10,12,40,.92);color:" + (left <= 5 ? "#ff5a5a" : "#fff") + ";font:800 24px system-ui,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.5)";
+        el.innerHTML = "⏳ " + left + '<span style="font:600 15px system-ui,sans-serif;opacity:.9">' + (st.color === "spectator" ? "Birinchi yurish kutilmoqda" : mine ? "Siz yuring!" : "Raqib yurishi kutilmoqda") + "</span>";
       }, 250);
       // holat matni
       var t;
