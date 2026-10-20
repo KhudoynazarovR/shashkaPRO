@@ -2308,9 +2308,8 @@ document.head.appendChild(_as); }
   var STARS = "radial-gradient(1.5px 1.5px at 12% 18%,#fff,transparent),radial-gradient(1px 1px at 28% 42%,#fff,transparent),radial-gradient(1.5px 1.5px at 46% 12%,#fff,transparent),radial-gradient(1px 1px at 63% 33%,#fff,transparent),radial-gradient(2px 2px at 81% 16%,#fff,transparent),radial-gradient(1px 1px at 90% 48%,#fff,transparent),radial-gradient(1px 1px at 8% 62%,#fff,transparent),radial-gradient(1.5px 1.5px at 37% 72%,#fff,transparent),radial-gradient(1px 1px at 72% 66%,#fff,transparent),radial-gradient(1px 1px at 55% 88%,#fff,transparent),";
   var BG = [
     ["auto", "🔄 Avto", "", 0],
-    ["white", "⚪ Oq", "linear-gradient(180deg,#ffffff 0%,#eef0f6 100%)", 1],
-    ["day", "☀️ Kunduzgi osmon", "linear-gradient(180deg,#2f8fe8 0%,#62b2f5 45%,#a9d8ff 100%)", 1],
-    ["dawn", "🌅 Tong", "linear-gradient(180deg,#6a5acd 0%,#e98aa6 50%,#ffc58a 100%)", 1],
+    ["day", "☀️ Kunduzgi osmon", "linear-gradient(180deg,#0f3d7a 0%,#1f62b0 50%,#3a86cf 100%)", 0],
+    ["dawn", "🌅 Tong", "linear-gradient(180deg,#3b2c7a 0%,#8a3f78 55%,#b8606a 100%)", 0],
     ["sunset", "🌇 Quyosh botishi", "linear-gradient(180deg,#2b1055 0%,#a3375c 50%,#f28c38 100%)", 0],
     ["evening", "🌆 Kechki", "linear-gradient(180deg,#141e46 0%,#2e3b8f 55%,#6a4c9c 100%)", 0],
     ["night", "🌙 Tungi yulduzli", STARS + "radial-gradient(circle at 80% 10%,rgba(255,255,220,.35),transparent 18%),linear-gradient(180deg,#05081f 0%,#0d1440 60%,#1b1a4f 100%)", 0],
@@ -2326,8 +2325,8 @@ document.head.appendChild(_as); }
     var id = ls("spBg");
     if (!id) return null;
     if (id === "auto") { var h = new Date().getHours(); id = (h >= 6 && h < 18) ? "day" : "night"; }
-    if (id === "color") { var c = ls("spBgColor") || "#1a1650"; return { css: c, light: lum(c) > 0.6 }; }
-    if (id === "photo") { var u = ls("spBgImg"); return u ? { css: 'url("' + u + '") center/cover no-repeat', light: false } : null; }
+    if (id === "color") { var c = ls("spBgColor") || "#1a1650"; return { css: lum(c) > 0.5 ? "linear-gradient(rgba(0,0,0,.5),rgba(0,0,0,.5))," + c : c, light: false }; }
+    if (id === "photo") { var u = ls("spBgImg"); return u ? { css: 'linear-gradient(rgba(10,8,40,.45),rgba(10,8,40,.45)),url("' + u + '") center/cover no-repeat', light: false } : null; }
     for (var i = 0; i < BG.length; i++) if (BG[i][0] === id && BG[i][2]) return { css: BG[i][2], light: !!BG[i][3] };
     return null;
   }
