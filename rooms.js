@@ -432,6 +432,23 @@ function createRooms({ send, clients, onFinish }) {
       send(c.ws, { type: "roomLive", list: list.slice(0, 30) });
       return true;
     }
+    if (m.type === "roomPeek") { /*TVPEEK*/
+      const ids = Array.isArray(m.ids) ? m.ids.slice(0, 40) : [];
+      const games = [];
+      for (const id of ids) {
+        const r = rooms.get(String(id));
+        if (!r) continue;
+        games.push({
+          id: r.id, moves: r.moves || [], turn: r.turn, finished: !!r.finished, winner: r.winner || null,
+          clock: currentClock(r), running: clockRunning(r),
+          opening: r.opening && r.opening.board ? { board: r.opening.board } : null,
+          wElo: (_pi(r.white) || {}).elo || 0, bElo: (_pi(r.black) || {}).elo || 0,
+          spectators: [...r.members].filter(x => !colorOf(r, clients.get(x) || {})).length
+        });
+      }
+      send(c.ws, { type: "roomPeek", games });
+      return true;
+    }
 
     const roomId = String(m.roomId || "");
     if (!ROOM_RE.test(roomId)) {

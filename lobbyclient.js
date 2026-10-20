@@ -1938,7 +1938,7 @@ document.head.appendChild(_as); }
   }
 
   function open(id){
-    build(); curId = String(id); lastMain = ''; lastChat = ''; g('tvMsgs').__init = 0;
+    build(); curId = String(id); window.__tvCur = curId; lastMain = ''; lastChat = ''; g('tvMsgs').__init = 0;
     P.classList.add('on'); render();
     if (timer) clearInterval(timer); timer = setInterval(render, 1000);
   }
@@ -2433,4 +2433,248 @@ document.head.appendChild(_as); }
     if (window.tvOpen && window.__lb) { clearInterval(iv); setTimeout(function () { try { window.tvOpen(tid); } catch (e) {} }, 700); }
     else if (++k > 60) clearInterval(iv);
   }, 250);
+})();
+
+/* TVTABS — turnir sahifasida 3 ta tab: Juftliklar · Jadval · LIVE (jonli doskalar) */
+;(function(){
+  if (window.__tvTabs) return; window.__tvTabs = 1;
+  function St(){ try { return window.__lb ? window.__lb.S : null; } catch(e){ return null; } }
+  function findT(id){ var s = St(); if (!s || !s.tournaments) return null; for (var i = 0; i < s.tournaments.length; i++) if (String(s.tournaments[i].id) === String(id)) return s.tournaments[i]; return null; }
+  function me(){ var s = St(); return s && s.me ? String(s.me.uid) : ''; }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(x){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]; }); }
+  function g(id){ return document.getElementById(id); }
+  function fmtC(ms){ ms = Math.max(0, ms); var s = Math.ceil(ms / 1000), m = Math.floor(s / 60), x = s % 60; return m + ':' + (x < 10 ? '0' : '') + x; }
+
+  var BG = '#1a1650', CARD = '#2a2470', DEEP = '#141040', BTN = '#352d86', LINE = '#4a42a0', GR = '#81b64c', MU = '#bababa';
+  var css =
+  '#tvTabs{position:sticky;top:0;z-index:3;display:flex;gap:6px;margin:0 -12px 12px;padding:8px 12px;background:' + BG + '}' +
+  '#tvTabs button{flex:1;min-width:0;min-height:44px!important;padding:0 6px!important;border-radius:12px!important;background:' + CARD + '!important;color:' + MU + '!important;border:2px solid transparent!important;box-shadow:0 3px 0 #0e0b30!important;font-weight:800;font-size:13px;letter-spacing:.3px;display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap}' +
+  '#tvTabs button.on{color:#fff!important;border-color:' + GR + '!important;background:' + BTN + '!important}' +
+  '#tvTabs button i{font-style:normal;font-size:11px;background:' + DEEP + ';border-radius:999px;padding:2px 7px;color:#fff}' +
+  '#tvTabs button.on i{background:' + GR + '}' +
+  '#tvTabs .dot{width:8px;height:8px;border-radius:50%;background:#ff4d4d;box-shadow:0 0 0 0 rgba(255,77,77,.7);animation:tvPulse 1.6s infinite}' +
+  '@keyframes tvPulse{0%{box-shadow:0 0 0 0 rgba(255,77,77,.7)}70%{box-shadow:0 0 0 7px rgba(255,77,77,0)}100%{box-shadow:0 0 0 0 rgba(255,77,77,0)}}' +
+  '#tvBody .tvOldLive{display:none!important}' +
+  '#tvBody[data-tab="p"] .tvPaneT,#tvBody[data-tab="p"] .tvPaneL{display:none!important}' +
+  '#tvBody[data-tab="t"] .tvPaneP,#tvBody[data-tab="t"] .tvPaneL{display:none!important}' +
+  '#tvBody[data-tab="l"] .tvPaneP,#tvBody[data-tab="l"] .tvPaneT{display:none!important}' +
+  '.tvPr{display:flex;align-items:center;gap:10px;background:' + DEEP + ';border-radius:12px;padding:8px 10px;margin-bottom:8px}' +
+  '.tvPr .no{width:22px;text-align:center;color:' + MU + ';font-weight:700;font-size:13px;flex:none}' +
+  '.tvPr .pl{flex:1;min-width:0}' +
+  '.tvPr .pn{display:flex;align-items:center;gap:6px;font-size:14px;padding:3px 0;min-width:0}' +
+  '.tvPr .pn+.pn{border-top:1px solid ' + BTN + '}' +
+  '.tvPr .pn span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+  '.tvPr .pn small{color:' + MU + ';font-size:12px;flex:none}' +
+  '.tvPr .pn.me span{color:' + GR + ';font-weight:700}' +
+  '.tvPr .w{flex:none;font-size:11px;font-weight:800;background:#f5c542;color:#1a1205;border-radius:6px;padding:1px 6px}' +
+  '.tvPr .rs{flex:none;font-size:12px;font-weight:800;border-radius:8px;padding:5px 9px}' +
+  '.tvPr .rs.d{background:rgba(245,197,66,.15);color:#f5c542}' +
+  '.tvPr button.rs{min-height:0!important;background:' + BTN + '!important;color:#fff!important;border:0!important;box-shadow:0 3px 0 #0e0b30!important}' +
+  '.tvPh{color:' + MU + ';font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin:4px 2px 8px}' +
+  '.tvLg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}' +
+  '.tvLc{background:' + DEEP + ';border-radius:12px;padding:6px;cursor:pointer;position:relative}' +
+  '.tvLc .ln{display:flex;align-items:center;gap:4px;font-size:12px;padding:3px 2px;min-width:0}' +
+  '.tvLc .ln span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+  '.tvLc .ln b{flex:none;font-variant-numeric:tabular-nums;font-size:12px;background:' + BTN + ';border-radius:5px;padding:1px 5px;color:' + MU + '}' +
+  '.tvLc .ln b.run{background:#fff;color:#141040}' +
+  '.tvLc .ln b.low{background:#e04a4a;color:#fff}' +
+  '.tvMb{display:grid;grid-template-columns:repeat(8,1fr);aspect-ratio:1;border-radius:6px;overflow:hidden;border:2px solid #302217}' +
+  '.tvMb div{position:relative}' +
+  '.tvMb .lt{background:#f0d9b5}.tvMb .dk{background:#b58863}.tvMb .dk.hl{background:#c9a23f}' +
+  '.tvMb .pc{position:absolute;inset:12%;border-radius:50%}' +
+  '.tvMb .pw{background:radial-gradient(circle at 35% 30%,#fff,#d9d9d9);box-shadow:0 1px 1px rgba(0,0,0,.5)}' +
+  '.tvMb .pb{background:radial-gradient(circle at 35% 30%,#555,#111);box-shadow:0 1px 1px rgba(0,0,0,.5)}' +
+  '.tvMb .kg:after{content:"";position:absolute;inset:28%;border-radius:50%;border:2px solid #f5c542}' +
+  '.tvLc .sp{position:absolute;top:8px;right:8px;font-size:10px;font-weight:800;color:#fff;background:#e04a4a;border-radius:5px;padding:1px 5px;opacity:.95}' +
+  '.tvLe{color:' + MU + ';font-size:13px;padding:6px 2px}';
+  var st = document.createElement('style'); st.id = 'tvTabsCss'; st.textContent = css; document.head.appendChild(st);
+
+  var tab = null, tabFor = null, lastP = '', lastL = '';
+  function key(){ return 'tvTab_' + window.__tvCur; }
+
+  function setup(){
+    var body = g('tvBody'), info = g('tvInfo'), tb = g('tvTable'), lv = g('tvLive'), pod = g('tvPod');
+    if (!body || !info || !tb) return false;
+    if (g('tvTabs')) return true;
+    var bar = document.createElement('div'); bar.id = 'tvTabs';
+    bar.innerHTML = '<button data-tab="p">📋 Juftliklar <i id="tvTabPn">0</i></button><button data-tab="t">🏅 Jadval</button><button data-tab="l"><span class="dot" id="tvTabDot"></span>LIVE <i id="tvTabLn">0</i></button>';
+    info.parentNode.insertBefore(bar, info.nextSibling);
+    var ps = document.createElement('div'); ps.className = 'tvSec tvPaneP'; ps.innerHTML = '<div id="tvPairs"></div>';
+    var ls = document.createElement('div'); ls.className = 'tvSec tvPaneL'; ls.innerHTML = '<div id="tvLiveB"></div>';
+    bar.parentNode.insertBefore(ls, bar.nextSibling);
+    bar.parentNode.insertBefore(ps, bar.nextSibling);
+    tb.closest('.tvSec').classList.add('tvPaneT');
+    if (pod) pod.classList.add('tvPaneT');
+    if (lv && lv.closest('.tvSec')) lv.closest('.tvSec').classList.add('tvOldLive');
+    bar.addEventListener('click', function(e){
+      var b = e.target.closest('[data-tab]'); if (!b) return;
+      setTab(b.getAttribute('data-tab'), true);
+    });
+    var P = g('tvP');
+    P.addEventListener('click', function(e){
+      var c = e.target.closest('.tvLc[data-room]'); if (!c || e.target.closest('[data-tv]')) return;
+      var w = document.createElement('button'); w.setAttribute('data-tv', 'watch'); w.setAttribute('data-room', c.getAttribute('data-room')); w.style.display = 'none';
+      c.appendChild(w); w.click(); c.removeChild(w);
+    });
+    return true;
+  }
+
+  function setTab(k, save){
+    tab = k;
+    var body = g('tvBody'); if (body) body.setAttribute('data-tab', k);
+    var bs = document.querySelectorAll('#tvTabs [data-tab]');
+    for (var i = 0; i < bs.length; i++) bs[i].classList.toggle('on', bs[i].getAttribute('data-tab') === k);
+    if (save) { try { sessionStorage.setItem(key(), k); } catch(e){} }
+    if (k === 'l') peek();
+  }
+
+  function liveBoards(t){ return (t.boards || []).filter(function(b){ return !b.done; }); }
+
+  function renderPairs(t){
+    var pm = {}, ps = t.players || [], u = me();
+    ps.forEach(function(p){ pm[String(p.uid)] = p; });
+    function line(uid, name, won){
+      var p = pm[String(uid)], sc = p ? (p.score || 0) : '';
+      return '<div class="pn' + (String(uid) === u ? ' me' : '') + '"><span>' + esc(name) + '</span>' + (sc !== '' ? '<small>' + sc + '</small>' : '') + (won ? '<em class="w" style="font-style:normal">yutdi</em>' : '') + '</div>';
+    }
+    function row(no, b, live){
+      var res = live
+        ? '<button class="rs" data-tv="watch" data-room="' + esc(b.roomId) + '">👁 Kuzatish</button>'
+        : (b.winner === 'draw' || (!b.winner && b.done) ? '<span class="rs d">Durang</span>' : '');
+      return '<div class="tvPr"><div class="no">' + no + '</div><div class="pl">' +
+        line(b.white, '⚪ ' + b.whiteName, !live && b.winner === 'white') +
+        line(b.black, '⚫ ' + b.blackName, !live && b.winner === 'black') + '</div>' + res + '</div>';
+    }
+    var h = '', bs = t.boards || [], ar = t.type === 'arena';
+    if (ar) {
+      var lv = liveBoards(t), hs = (t.hist || []).slice().reverse();
+      if (lv.length) { h += '<div class="tvPh">🔴 Hozir o‘ynalmoqda</div>'; lv.forEach(function(b, i){ h += row(i + 1, b, true); }); }
+      if (hs.length) { h += '<div class="tvPh">🏁 Tugagan o‘yinlar</div>'; hs.forEach(function(b, i){ h += row(i + 1, b, false); }); }
+    } else {
+      if (bs.length) h += '<div class="tvPh">♟ ' + (t.round || 1) + '-tur juftliklari</div>';
+      bs.forEach(function(b, i){ h += row(b.board || i + 1, b, !b.done); });
+      if (t.bye) { var bp = pm[String(t.bye)]; h += '<div class="tvPr"><div class="no">—</div><div class="pl">' + line(t.bye, (bp ? bp.name : '?')) + '</div><span class="rs d">Bo‘sh (+1)</span></div>'; }
+    }
+    if (!h) h = '<div class="tvLe">' + (t.status === 'reg' ? 'Juftliklar turnir boshlangach shu yerda chiqadi' : t.status === 'finished' ? 'Turnir tugagan' : 'Juftlash kutilmoqda…') + '</div>';
+    g('tvPairs').innerHTML = h;
+    var n = ar ? liveBoards(t).length + (t.hist || []).length : bs.length;
+    g('tvTabPn').textContent = n;
+  }
+
+  // ---------- LIVE: jonli doskalar ----------
+  var ws = null, peekData = {}, peekAt = 0, boardCache = {};
+  function conn(){
+    if (ws) return;
+    try { ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host); } catch(e){ ws = null; return; }
+    ws.onopen = peek;
+    ws.onmessage = function(ev){
+      var m; try { m = JSON.parse(ev.data); } catch(e){ return; }
+      if (!m || m.type !== 'roomPeek') return;
+      peekAt = Date.now(); peekData = {};
+      (m.games || []).forEach(function(x){ peekData[x.id] = x; });
+      lastL = ''; renderLive();
+    };
+    ws.onclose = function(){ ws = null; };
+  }
+  function drop(){ try { if (ws) ws.close(); } catch(e){} ws = null; }
+  function peek(){
+    var t = findT(window.__tvCur); if (!t) return;
+    var ids = liveBoards(t).map(function(b){ return b.roomId; });
+    if (!ids.length) { peekData = {}; return; }
+    if (!ws) return conn();
+    if (ws.readyState === 1) { try { ws.send(JSON.stringify({ type: 'roomPeek', ids: ids })); } catch(e){} }
+  }
+
+  function boardOf(x){
+    var ck = x.id + ':' + x.moves.length;
+    if (boardCache[x.id] && boardCache[x.id].k === ck) return boardCache[x.id].b;
+    if (typeof window.initialBoard !== 'function' || typeof window.applyStep !== 'function') return null;
+    var b = window.initialBoard();
+    if (x.opening && x.opening.board) {
+      var k = 0;
+      for (var r = 0; r < 8; r++) for (var c = 0; c < 8; c++) {
+        if ((r + c) % 2 !== 1) { b[r][c] = 0; continue; }
+        var ch = x.opening.board.charAt(k++);
+        b[r][c] = ch === 'w' ? 1 : ch === 'b' ? 2 : ch === 'W' ? 3 : ch === 'B' ? 4 : 0;
+      }
+    }
+    try { for (var i = 0; i < x.moves.length; i++) b = window.applyStep(b, x.moves[i]); } catch(e){}
+    boardCache[x.id] = { k: ck, b: b };
+    return b;
+  }
+
+  function miniBoard(x){
+    var b = boardOf(x); if (!b) return '<div class="tvMb"></div>';
+    var lm = x.moves.length ? x.moves[x.moves.length - 1] : null, h = '<div class="tvMb">';
+    for (var r = 0; r < 8; r++) for (var c = 0; c < 8; c++) {
+      var dk = (r + c) % 2 === 1, p = b[r][c];
+      var hl = lm && ((lm.from && lm.from.r === r && lm.from.c === c) || (lm.to && lm.to.r === r && lm.to.c === c));
+      h += '<div class="' + (dk ? 'dk' : 'lt') + (hl ? ' hl' : '') + '">' +
+        (p ? '<i class="pc ' + (p === 1 || p === 3 ? 'pw' : 'pb') + (p >= 3 ? ' kg' : '') + '"></i>' : '') + '</div>';
+    }
+    return h + '</div>';
+  }
+
+  function clk(x, col){
+    var cc = col === 'white' ? 'ckw' : 'ckb';
+    if (!x || !x.clock) return '<b class="' + cc + '">–:–</b>';
+    var ms = x.clock[col], run = x.running && x.turn === col && !x.finished;
+    if (run) ms -= Date.now() - peekAt;
+    return '<b class="' + cc + (run ? (ms < 10000 ? ' low' : ' run') : '') + '">' + fmtC(ms) + '</b>';
+  }
+
+  function renderLive(){
+    var t = findT(window.__tvCur), box = g('tvLiveB'); if (!t || !box) return;
+    var lv = liveBoards(t);
+    g('tvTabLn').textContent = lv.length;
+    g('tvTabDot').style.display = lv.length ? '' : 'none';
+    var sig = JSON.stringify([lv.map(function(b){ return b.roomId; }), Object.keys(peekData).map(function(k){ var x = peekData[k]; return [k, x.moves.length, x.turn, x.finished]; })]);
+    if (sig === lastL) { // faqat soatlarni yangilaymiz
+      var cs = box.querySelectorAll('.tvLc[data-room]');
+      for (var i = 0; i < cs.length; i++) {
+        var x = peekData[cs[i].getAttribute('data-room')]; if (!x) continue;
+        var tk = cs[i].querySelector('.ckb'), bk = cs[i].querySelector('.ckw');
+        if (tk) tk.outerHTML = clk(x, 'black');
+        if (bk) bk.outerHTML = clk(x, 'white');
+      }
+      return;
+    }
+    lastL = sig;
+    if (!lv.length) {
+      box.innerHTML = '<div class="tvLe">' + (t.status === 'running' ? 'Hozir jonli o‘yin yo‘q, juftlash kutilmoqda…' : t.status === 'finished' ? 'Turnir tugagan' : 'Jonli o‘yinlar turnir boshlangach shu yerda chiqadi') + '</div>';
+      return;
+    }
+    var h = '<div class="tvLg">';
+    lv.forEach(function(b){
+      var x = peekData[b.roomId];
+      var cb = clk(x, 'black'), cw = clk(x, 'white');
+      h += '<div class="tvLc" data-room="' + esc(b.roomId) + '">' +
+        (x && x.spectators ? '<span class="sp">👁 ' + x.spectators + '</span>' : '') +
+        '<div class="ln"><span>⚫ ' + esc(b.blackName) + (x && x.bElo ? ' <small style="opacity:.6">' + x.bElo + '</small>' : '') + '</span>' + cb + '</div>' +
+        (x ? miniBoard(x) : '<div class="tvMb">' + emptyGrid() + '</div>') +
+        '<div class="ln"><span>⚪ ' + esc(b.whiteName) + (x && x.wElo ? ' <small style="opacity:.6">' + x.wElo + '</small>' : '') + '</span>' + cw + '</div></div>';
+    });
+    box.innerHTML = h + '</div>';
+  }
+  function emptyGrid(){ var h = ''; for (var r = 0; r < 8; r++) for (var c = 0; c < 8; c++) h += '<div class="' + ((r + c) % 2 ? 'dk' : 'lt') + '"></div>'; return h; }
+
+  // ---------- asosiy sikl ----------
+  var lastPeek = 0;
+  setInterval(function(){
+    var P = g('tvP');
+    if (!P || !P.classList.contains('on')) { if (ws) drop(); tabFor = null; return; }
+    if (!setup()) return;
+    var t = findT(window.__tvCur); if (!t) return;
+    if (tabFor !== window.__tvCur) {
+      tabFor = window.__tvCur; lastP = ''; lastL = ''; peekData = {}; boardCache = {};
+      var sv = null; try { sv = sessionStorage.getItem(key()); } catch(e){}
+      setTab(sv || (t.status === 'finished' || t.status === 'reg' ? 't' : 'p'), false);
+    }
+    var sp = JSON.stringify([t.boards, t.hist, t.bye, t.round, t.status, (t.players || []).map(function(p){ return [p.uid, p.score]; }), me()]);
+    if (sp !== lastP) { lastP = sp; renderPairs(t); }
+    renderLive();
+    var n = Date.now();
+    if (tab === 'l' && n - lastPeek > 1500) { lastPeek = n; if (!ws) conn(); else peek(); }
+    if (tab !== 'l' && ws) drop();
+  }, 500);
 })();

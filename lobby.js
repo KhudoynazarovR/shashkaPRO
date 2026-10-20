@@ -213,7 +213,7 @@ function createLobby({ send, clients, roomsApi }) {
         whiteName: t.players.get(b.white).name, blackName: t.players.get(b.black).name,
         done: b.done, winner: b.winner || null
       })),
-      bye: t.curBye || null, chat: (t.chat || []).slice(-60)
+      bye: t.curBye || null, hist: (t.hist || []).slice(-40), chat: (t.chat || []).slice(-60)
     };
   }
 
@@ -718,6 +718,8 @@ function createLobby({ send, clients, roomsApi }) {
     roomToBoard.delete(room.id);
     const pw = t.players.get(b.white), pb = t.players.get(b.black);
     const now = Date.now();
+    (t.hist = t.hist || []).push({ white: b.white, black: b.black, whiteName: pw ? pw.name : '?', blackName: pb ? pb.name : '?', winner: b.winner || 'draw', at: now }); /*TVHIST*/
+    if (t.hist.length > 60) t.hist.splice(0, t.hist.length - 60);
     // Berserk: rooms.js room.berserk = { white: bool, black: bool } ni to'ldiradi.
     // Berserk qilgan o'yinchi g'alaba qozonsa +1 ochko (kamida ARENA_BERSERK_MIN_PLIES yurishdan keyin).
     const award = (p, kind, color) => {
