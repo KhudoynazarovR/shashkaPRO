@@ -738,12 +738,13 @@
       if (_i > 0) h += '<button id="pzPrev" style="' + BG + '">⬅️ Oldingi</button>';
       if (_a.length > 1) h += done ? ('<div style="text-align:center"><span class="pzWrap"><span class="pzO">' + [0,1,2,3,4,5,6,7].map(function (k) { return '<i style="animation-delay:-' + (k * 0.375) + 's"></i>'; }).join('') + '</span><button id="pzNext" class="pzBig" style="' + BS + '">➡️ Keyingi masala</button></span></div>') : '<button id="pzNext" style="' + BG + '">➡️ Keyingi</button>';
       h += '<button id="pzR" style="' + BG + '">🔄 Qayta</button><button id="pzH" style="' + BS + '">💡 Ko‘rsatma</button>';
-      if (S.link) h += '<button id="pzS" style="' + BS + '">📤 Yuborish</button>'; if (S.admin) h += '<button id="pzN" style="' + BG + '">✏️ Nomi</button>'; if (S.admin) h += '<button id="pzD" style="' + BG + '">🗑 O‘chirish</button>';
+      if (S.link) h += '<button id="pzS" style="' + BS + '">📤 Yuborish</button>'; if (S.admin) h += '<button id="pzE" style="' + BS + '">🛠 Tahrirlash</button>'; if (S.admin) h += '<button id="pzN" style="' + BG + '">✏️ Nomi</button>'; if (S.admin) h += '<button id="pzD" style="' + BG + '">🗑 O‘chirish</button>';
       ov.innerHTML = h;
       on('#pzBack', list);
       on('#pzPrev', function () { var a = sibs(), i = a.findIndex(function (x) { return x.id === p.id; }); if (i > 0) play(a[i - 1]); });
       on('#pzNext', goNext);
       on('#pzR', function () { play(p); });
+      on('#pzE', function () { window.__pzTok = (window.__pzTok || 0) + 1; editor(p); });
       on('#pzS', function () {
         var u = S.link + '?startapp=pz_' + p.id, t = '🧩 Shashka masalasi: ' + p.title;
         var sh = 'https://t.me/share/url?url=' + encodeURIComponent(u) + '&text=' + encodeURIComponent(t);
@@ -822,8 +823,13 @@
   }
 
   // ---- masala kiritish (faqat admin)
-  function editor() {
-    var b = blank(), tool = 1, side = 'w', title = '', level = (edLv || 1), mode = 'edit', g = null, hist = [], rec = [], recSides = [], sel = null, b0 = null, msg = '', extra = [];
+  function editor(src) {
+    var b = blank(), tool = 1, side = 'w', title = '', level = (edLv || 1), mode = 'edit', g = null, hist = [], rec = [], recSides = [], sel = null, b0 = null, msg = '', extra = [], edId = null, dirty = false;
+    if (src) { /*PZEDIT*/
+      edId = src.id; b = copy(src.board); side = src.side; title = src.title || ''; level = [1, 2, 3].indexOf(src.level) >= 0 ? src.level : 1;
+      extra = ((src.sols && src.sols.length) ? src.sols : [src.sol]).filter(function (l) { return l && l.length; }).map(function (l) { return l.map(function (x) { return x.slice(); }); });
+      b0 = copy(src.board);
+    }
     function sync() {
       var t = ov.querySelector('#pzT'); if (t) title = t.value;
       var l = ov.querySelector('#pzL'); if (l) level = Number(l.value);
@@ -831,7 +837,8 @@
     function draw() {
       var sc = ov.scrollTop, h, tools = [[1, '⚪'], [2, '⚫'], [3, '⚪♛'], [4, '⚫♛'], [0, '🧽']];
       if (mode === 'edit') {
-        h = head('➕ Yangi masala');
+        h = head(edId ? '🛠 Masalani tahrirlash' : '➕ Yangi masala');
+        if (edId) h += '<div style="font-size:14px;margin-bottom:8px;padding:8px 10px;border-radius:10px;background:#1d2250">' + (dirty ? '⚠️ Doska o‘zgardi — yechimni qayta kiriting' : (extra.length ? '✅ Saqlangan yechim: ' + extra.length + ' ta variant. Nom/darajani o‘zgartirib darhol saqlash mumkin yoki yechimni qayta kiriting.' : '⚠️ Yechim yo‘q — kiriting')) + '</div>';
         h += '<div style="font-size:13px;opacity:.7;margin-bottom:8px">Asbobni tanlang, to‘q katakka bosing</div>';
         h += boardHtml(b, {});
         h += '<div style="margin-top:8px">' + tools.map(function (t) { return '<button data-t="' + t[0] + '" style="' + (tool === t[0] ? BS : BG) + '">' + t[1] + '</button>'; }).join('') + '</div>';
@@ -839,7 +846,7 @@
         h += '<input id="pzT" maxlength="40" placeholder="Masala nomi" value="' + esc(title) + '" style="width:92%;box-sizing:border-box;margin:8px 0;padding:10px;border-radius:12px;border:1px solid #333a80;background:#161a3a;color:#fff;font-size:16px">';
         h += '<div><select id="pzL" style="padding:10px;border-radius:12px;background:#161a3a;color:#fff;border:1px solid #333a80;font-size:15px">' + [1, 2, 3].map(function (i) { return '<option value="' + i + '"' + (level === i ? ' selected' : '') + '>' + LV[i] + '</option>'; }).join('') + '</select></div>';
         h += '<div style="min-height:24px;margin:8px 0;color:#ffb3b3">' + msg + '</div>';
-        h += '<button id="pzClr" style="' + BG + '">🧹 Tozalash</button><button id="pzStd" style="' + BG + '">📋 Boshlang‘ich</button><button id="pzRec" style="' + BS + '">▶ Yechimni kiritish</button>';
+        h += '<button id="pzClr" style="' + BG + '">🧹 Tozalash</button><button id="pzStd" style="' + BG + '">📋 Boshlang‘ich</button><button id="pzRec" style="' + BS + '">▶ Yechimni ' + (edId ? 'qayta ' : '') + 'kiritish</button>' + (edId && !dirty && extra.length ? '<button id="pzQs" style="' + BS + '">💾 Saqlash</button>' : '');
       } else {
         var tg2 = [];
         if (sel) tg2 = legal(g.b, g.side, g.forced).filter(function (s) { return s.f[0] === sel[0] && s.f[1] === sel[1]; }).map(function (s) { return s.t; });
@@ -854,10 +861,11 @@
       on('#pzBack', function () { if (mode === 'rec') { mode = 'edit'; msg = ''; draw(); } else list(); });
       if (mode === 'edit') {
         Array.prototype.forEach.call(ov.querySelectorAll('[data-t]'), function (e) { e.onclick = function () { sync(); tool = Number(e.getAttribute('data-t')); draw(); }; });
-        Array.prototype.forEach.call(ov.querySelectorAll('[data-s]'), function (e) { e.onclick = function () { sync(); side = e.getAttribute('data-s'); draw(); }; });
-        bindBoard(function (r, c) { if ((r + c) % 2 !== 1) return; sync(); b[r][c] = tool; msg = ''; draw(); });
-        on('#pzClr', function () { sync(); b = blank(); draw(); });
-        on('#pzStd', function () { sync(); b = std(); draw(); });
+        Array.prototype.forEach.call(ov.querySelectorAll('[data-s]'), function (e) { e.onclick = function () { sync(); var ns = e.getAttribute('data-s'); if (ns !== side) dirty = true; side = ns; draw(); }; });
+        bindBoard(function (r, c) { if ((r + c) % 2 !== 1) return; sync(); if (b[r][c] !== tool) dirty = true; b[r][c] = tool; msg = ''; draw(); });
+        on('#pzClr', function () { sync(); b = blank(); dirty = true; draw(); });
+        on('#pzStd', function () { sync(); b = std(); dirty = true; draw(); });
+        on('#pzQs', function () { sync(); save(); });
         on('#pzRec', function () {
           sync();
           var w = 0, k = 0, r, c;
@@ -897,7 +905,7 @@
       if (!rec.length && !extra.length) { msg = 'Avval yechim yurishlarini kiriting'; return draw(); }
       if (rec.length && (recSides[recSides.length - 1] !== side || g.forced)) { msg = '⚠️ Oxirgi yurish yechuvchiniki bo‘lishi va zarba tugallanishi kerak'; return draw(); }
       msg = 'Saqlanmoqda…'; draw();
-      api('/api/puzzle', { folder: edFolder, title: title || 'Masala', level: level, side: side, board: b0, sol: (extra.length ? extra[0] : rec), sols: (rec.length ? extra.concat([rec]) : extra) }).then(function (d) {
+      api(edId ? '/api/puzzle/edit' : '/api/puzzle', { id: edId || undefined, folder: edFolder, title: title || 'Masala', level: level, side: side, board: b0, sol: (extra.length ? extra[0] : rec), sols: (rec.length ? extra.concat([rec]) : extra) }).then(function (d) {
         if (d && d.ok) load(); else { msg = '⚠️ Saqlanmadi: ' + ((d && d.error) || ''); draw(); }
       }).catch(function () { msg = '⚠️ Server bilan aloqa yo‘q'; draw(); });
     }
