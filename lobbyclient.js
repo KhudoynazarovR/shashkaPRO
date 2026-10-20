@@ -8,7 +8,7 @@
     if (live && live.parentNode) live.parentNode.style.display = t.status === "finished" ? "none" : "";
     if (!box) return;
     if (t.status !== "finished") { box.innerHTML = ""; return; }
-    var pl = (t.players || []).filter(function (p) { return !p.withdrawn && p.games > 0; });
+    var pl = (t.players || []).filter(function (p) { return p.games > 0 && (t.type === "arena" || !p.withdrawn); });
     var aw = t.awards || [];
     if (!aw.length && t.prize > 0) {
       var sh = pl.length >= 3 ? PZT[Math.min(t.places || 3, pl.length)] : pl.length === 2 ? [60, 40] : pl.length === 1 ? [100] : [];
@@ -2692,5 +2692,23 @@ document.head.appendChild(_as); }
     '#lbTs .lbtk .row [data-a="tj"],#lbTs .lbtk .row [data-a="tl"]{display:none!important}' +
     '#lbTs .lbtk button{transition:transform .08s,filter .08s}' +
     '#lbTs .lbtk button:active{transform:translateY(2px) scale(.98);filter:brightness(.9)}';
+  document.head.appendChild(s);
+})();
+
+/* TVLOOK — ichkarida ma'lumot chiplari yashiriladi (ular kartada bor), tablar rangli */
+;(function(){
+  if (document.getElementById('tvLookCss')) return;
+  var s = document.createElement('style'); s.id = 'tvLookCss';
+  var B = 'html body #tvP #tvTabs button';
+  s.textContent =
+    'html body #tvP #tvInfo{display:none!important}' +
+    'html body #tvP #tvTabs{gap:10px!important;padding-top:12px!important}' +
+    B + '{border:2px solid transparent!important;color:#fff!important;opacity:.72}' +
+    B + '[data-tab="p"]{background:#352d86!important;box-shadow:0 4px 0 #0e0b30!important}' +
+    B + '[data-tab="t"]{background:#0b0920!important;box-shadow:0 4px 0 #000!important}' +
+    B + '[data-tab="l"]{background:#b33430!important;box-shadow:0 4px 0 #7a201d!important}' +
+    B + '.on{opacity:1;border-color:#fff!important;transform:translateY(-1px)}' +
+    B + ' i{background:rgba(255,255,255,.18)!important}' +
+    'html body #tvP #tvTabs .dot{background:#fff!important}';
   document.head.appendChild(s);
 })();
