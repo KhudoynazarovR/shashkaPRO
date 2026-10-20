@@ -2403,9 +2403,11 @@ document.head.appendChild(_as); }
     BG.forEach(function (b) {
       var prev = b[0] === "auto" ? "linear-gradient(135deg,#62b2f5 0 50%,#0d1440 50% 100%)" :
         b[0] === "color" ? (ls("spBgColor") ? ls("spBgColor") : "conic-gradient(#f44,#fd4,#4d4,#4df,#44f,#f4f,#f44)") :
-        b[0] === "photo" ? (ls("spBgImg") ? 'url("' + ls("spBgImg") + '") center/cover' : "repeating-linear-gradient(45deg,#2a2470 0 10px,#352d86 10px 20px)") : b[2];
+        b[0] === "photo" ? (ls("spBgImg") ? "url('" + ls("spBgImg") + "') center/cover no-repeat" : "linear-gradient(135deg,#3a2a8a,#1f62b0)") : b[2];
       h += '<div data-bg="' + b[0] + '" style="cursor:pointer;text-align:center;font-size:12px">' +
-        '<div style="height:70px;border-radius:12px;background:' + prev + ';border:3px solid ' + (b[0] === cur ? "#4c8dff" : "rgba(255,255,255,.15)") + ';display:flex;align-items:center;justify-content:center;font-size:24px">' + (b[0] === "photo" && !ls("spBgImg") ? "➕" : "") + '</div>' +
+        '<div style="height:70px;border-radius:12px;background:' + prev + ';border:3px solid ' + (b[0] === cur ? "#4c8dff" : "rgba(255,255,255,.15)") + ';display:flex;align-items:center;justify-content:center;font-size:24px;position:relative;overflow:hidden">' + (b[0] !== "photo" ? "" : ls("spBgImg")
+          ? '<span style="position:absolute;right:5px;bottom:5px;font-size:12px;font-weight:700;background:rgba(0,0,0,.65);border-radius:8px;padding:3px 7px">📷 Almashtirish</span>'
+          : '<span style="display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;font-weight:700"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 8"/><path d="M18 2v5M15.5 4.5h5"/></svg>Rasm yuklash</span>') + '</div>' +
         '<div style="margin-top:5px;opacity:.9">' + b[1] + '</div></div>';
     });
     ov.innerHTML = h + '</div></div>';
