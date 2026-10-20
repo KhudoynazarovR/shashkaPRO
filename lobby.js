@@ -1381,7 +1381,7 @@ function createLobby({ send, clients, roomsApi }) {
       const url = appLink ? appLink + '?startapp=lbt_' + t.id : '';
       for (const p of t.players.values()) {
         if (p.withdrawn || !/^\d+$/.test(String(p.uid))) continue;
-        const msg = { chat_id: Number(p.uid), text: '⏰ ' + title + '\n' + mins + ' daqiqadan keyin boshlanadi!\n⏱ ' + t.tc + (t.prize ? ' · 🪙 ' + t.prize : '') + ' · 👥 ' + t.players.size + '\nTayyor turing 💪' };
+        const msg = { chat_id: Number(p.uid), text: '⏰ ' + title + '\n' + mins + ' daqiqadan keyin boshlanadi!\n⏱ ' + t.tc + (t.prize ? ' · 💰 ' + t.prize : '') + ' · 👥 ' + t.players.size + '\nTayyor turing 💪' };
         if (url) msg.reply_markup = { inline_keyboard: [[{ text: '▶ Turnirga kirish', url }]] };
         tgCall('sendMessage', msg).catch(() => {});
       }
