@@ -1220,7 +1220,7 @@ document.head.appendChild(_as); }
         if (t.prize > 0) _ex.push("🪙 Mukofot: " + t.prize + " (" + (t.places || 3) + " o‘ringa)");
         if (arena) _ex.push(t.berserk === false ? "⚡ Berserk yo‘q" : "⚡ Berserk");
         if (_ex.length) st += "<br>" + _ex.join(" · ");
-        h += "<div class=\"card lbtk " + (arena ? "lbta" : "lbts") + "\" id=\"lbtc_" + esc(t.id) + "\"><div style=\"cursor:pointer\" onclick=\"lbTog('" + esc(t.id) + "')\"><b>" + (arena ? "⚔️" : "🏆") + " " + esc(t.name) + " ▾</b><span class=\"tkb tkb_" + t.status + "\">" + (t.status === "reg" ? "Ro‘yxat ochiq" : (t.status === "running" ? "O‘ynalmoqda" : "Tugagan")) + "</span></div><div class=\"muted\">" + esc(t.tc) + (t.pos === "idf" ? " · IDF 780" : "") + "</div><div class=\"tkd\">" + st + "</div><div class=\"tkd\">👥 Ishtirokchilar: <b>" + t.players.length + "</b></div><div class=\"tkd\">👤 Yaratuvchi: <b>" + esc(t.creatorName) + "</b>" + "</div><div class=\"row\">";
+        h += "<div class=\"card lbtk " + (arena ? "lbta" : "lbts") + "\" id=\"lbtc_" + esc(t.id) + "\"><div style=\"cursor:pointer\" onclick=\"lbTog('" + esc(t.id) + "')\"><b>" + (arena ? "⚔️" : "🏆") + " " + esc(t.name) + " ▾</b><span class=\"tkb tkb_" + t.status + "\">" + (t.status === "reg" ? "Ro‘yxat ochiq" : (t.status === "running" ? "O‘ynalmoqda" : "Tugagan")) + "</span></div><div class=\"muted\">⏱ " + esc(t.tc) + " · " + (t.pos === "idf" ? "🎲 IDF 780" : "♟ Standart") + "</div><div class=\"tkd\">" + st + "</div><div class=\"tkd\">👥 Ishtirokchilar: <b>" + t.players.length + "</b></div><div class=\"tkd\">👤 Yaratuvchi: <b>" + esc(t.creatorName) + "</b>" + "</div><div class=\"row\">";
         h += "<button class=\"sec\" data-a=\"tlink\" data-id=\"" + esc(t.id) + "\" data-n=\"" + esc(t.name) + "\">🔗 Havola</button>";
         if (t.status === "reg") {
           if (!joined) h += "<button data-a=\"tj\" data-id=\"" + t.id + "\">Qo‘shilish</button>";
@@ -1976,7 +1976,7 @@ document.head.appendChild(_as); }
       })(id);
     }
   }
-  new MutationObserver(function(){ if (!pend) { pend = true; requestAnimationFrame(decorate); } })
+  new MutationObserver(function(){ if (!pend) { pend = true; decorate(); } })
     .observe(document.body, { childList: true, subtree: true });
 })();
 ;(function(){
@@ -2679,4 +2679,18 @@ document.head.appendChild(_as); }
     if (tab === 'l' && n - lastPeek > 1500) { lastPeek = n; if (!ws) conn(); else peek(); }
     if (tab !== 'l' && ws) drop();
   }, 500);
+})();
+
+/* TVTAP — bosilganda faqat tugma sezilsin, butun karta emas */
+;(function(){
+  if (document.getElementById('tvTapCss')) return;
+  var s = document.createElement('style'); s.id = 'tvTapCss';
+  s.textContent =
+    '#lbTs .lbtk,#lbTs .lbtk *{-webkit-tap-highlight-color:transparent!important}' +
+    '#lbTs .lbtk{-webkit-user-select:none;user-select:none}' +
+    '#lbTs .lbtk:active{transform:none!important;filter:none!important}' +
+    '#lbTs .lbtk .row [data-a="tj"],#lbTs .lbtk .row [data-a="tl"]{display:none!important}' +
+    '#lbTs .lbtk button{transition:transform .08s,filter .08s}' +
+    '#lbTs .lbtk button:active{transform:translateY(2px) scale(.98);filter:brightness(.9)}';
+  document.head.appendChild(s);
 })();
