@@ -217,7 +217,7 @@
           return;
         }
         if (k === 'trap') {
-          if (window.spTraps) window.spTraps(); else { var st = document.createElement('script'); st.src = '/tuzoq.js?v=1'; st.onload = function () { window.spTraps(); }; document.head.appendChild(st); }
+          if (window.spTraps) window.spTraps(); else { var st = document.createElement('script'); st.src = '/tuzoq.js?v=2'; st.onload = function () { window.spTraps(); }; document.head.appendChild(st); }
           return;
         }
         if (k === 'pzt') {

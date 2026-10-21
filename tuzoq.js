@@ -27,12 +27,13 @@
       '#spTrap .go{display:block;width:100%;border:0;border-radius:14px;padding:14px;font:900 17px system-ui;color:#fff;background:linear-gradient(90deg,#e11d48,#be123c);box-shadow:0 3px 0 #6d0a22;margin-bottom:12px}' +
       '#spTrap .gr{background:rgba(0,0,0,.28);border-radius:14px;margin-bottom:8px;overflow:hidden}#spTrap .gh{display:flex;align-items:center;gap:8px;width:100%;border:0;background:transparent;color:#fff;padding:12px;text-align:left;font:700 16px system-ui}#spTrap .gh span{flex:1}#spTrap .gh small{color:#ffb4c0;font-weight:600}' +
       '#spTrap .ti{display:flex;align-items:center;gap:8px;width:100%;border:0;border-top:1px solid rgba(255,255,255,.08);background:transparent;color:#fff;padding:10px 12px;text-align:left;font:600 14px system-ui}#spTrap .ti span{flex:1;color:#ffd9de}#spTrap .ti i{font-style:normal}' +
-      '#spTrap .bd{width:min(94vw,440px);aspect-ratio:1;margin:0 auto;display:grid;grid-template-columns:repeat(8,1fr);border:4px solid #8a4a1c;border-radius:6px;overflow:hidden}' +
-      '#spTrap .bd>div{position:relative;display:flex;align-items:center;justify-content:center}#spTrap .bd .l{background:#f3bb86}#spTrap .bd .d{background:#7b2f13}#spTrap .bd .lm{box-shadow:inset 0 0 0 100px rgba(245,217,43,.35)}#spTrap .bd .bad{box-shadow:inset 0 0 0 100px rgba(239,68,68,.55)}#spTrap .bd .sel{box-shadow:inset 0 0 0 3px #f5d92b}#spTrap .bd .hint{box-shadow:inset 0 0 0 4px #34f5c5}' +
-      '#spTrap .pc{width:80%;height:80%;border-radius:50%;border:2px solid #000;display:flex;align-items:center;justify-content:center;color:#f5b72b;font-size:18px}#spTrap .pc.w{background:radial-gradient(circle at 35% 28%,#fff,#bbb);border-color:#9a9a9a}#spTrap .pc.b{background:radial-gradient(circle at 35% 28%,#888,#111)}' +
-      '#spTrap .msg{min-height:44px;margin:10px 0;padding:10px;border-radius:12px;text-align:center;font-weight:800;font-size:15px;line-height:1.35}#spTrap .msg.e{background:rgba(239,68,68,.22);color:#ffc9c9}#spTrap .msg.o{background:rgba(34,197,94,.2);color:#bbf7d0}#spTrap .msg.i{background:rgba(255,255,255,.08)}' +
-      '#spTrap .ml{display:flex;flex-wrap:wrap;gap:4px;margin:10px 0;font-family:ui-monospace,Menlo,monospace;font-size:13px}#spTrap .ml span{padding:4px 6px;border-radius:7px;background:rgba(0,0,0,.3)}#spTrap .ml .no{background:transparent;color:#ffb4c0;padding:4px 1px}#spTrap .ml .on{background:#be123c}#spTrap .ml .bl{background:#7f1d1d;color:#fecaca}#spTrap .ml .sv{background:#166534}' +
+      '#spTrap .bd{width:min(94vw,440px);aspect-ratio:1;margin:0 auto;display:grid;grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:repeat(8,minmax(0,1fr));border:4px solid #8a4a1c;border-radius:6px;overflow:hidden}' +
+      '#spTrap .bd>div{position:relative;display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;overflow:hidden}#spTrap .bd .l{background:#f3bb86}#spTrap .bd .d{background:#7b2f13}#spTrap .bd .lm{box-shadow:inset 0 0 0 100px rgba(245,217,43,.35)}#spTrap .bd .bad{box-shadow:inset 0 0 0 100px rgba(239,68,68,.55)}#spTrap .bd .sel{box-shadow:inset 0 0 0 100px rgba(52,245,197,.28)}#spTrap .bd .sel .pc{box-shadow:0 0 0 3px #34f5c5,0 0 14px 3px rgba(52,245,197,.9)}#spTrap .bd .hint{box-shadow:inset 0 0 0 4px #34f5c5}' +
+      '#spTrap .pc{box-sizing:border-box;width:80%;height:80%;border-radius:50%;border:2px solid #000;position:relative;transition:box-shadow .15s}#spTrap .pc.k::after{content:"";position:absolute;inset:22%;border-radius:50%;border:3px solid #f5b72b;box-shadow:inset 0 0 0 3px rgba(245,183,43,.35)}#spTrap .pc.w{background:radial-gradient(circle at 35% 28%,#fff,#bbb);border-color:#9a9a9a}#spTrap .pc.b{background:radial-gradient(circle at 35% 28%,#888,#111)}' +
+      '#spTrap .msg{min-height:66px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;margin:10px 0;padding:10px;border-radius:12px;text-align:center;font-weight:800;font-size:15px;line-height:1.35}#spTrap .msg.e{background:rgba(239,68,68,.22);color:#ffc9c9}#spTrap .msg.o{background:rgba(34,197,94,.2);color:#bbf7d0}#spTrap .msg.i{background:rgba(255,255,255,.08)}' +
+      '#spTrap .ml{display:flex;flex-wrap:wrap;gap:4px;margin:10px 0;font-family:ui-monospace,Menlo,monospace;font-size:13px}#spTrap .ml span{padding:4px 6px;border-radius:7px;background:rgba(0,0,0,.3)}#spTrap .ml .no{background:transparent;color:#ffb4c0;padding:4px 1px}#spTrap .ml span[data-v]{cursor:pointer}#spTrap .ml .on{outline:2px solid #fff}#spTrap .ml .bl{background:#7f1d1d;color:#fecaca}#spTrap .ml .sv{background:#166534}' +
       '#spTrap .row2{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:6px}#spTrap .bt{white-space:nowrap;border:0;border-radius:12px;padding:11px 14px;background:rgba(255,255,255,.12);color:#fff;font:700 15px system-ui}#spTrap .bt.p{background:#e11d48}#spTrap .bt.g{background:#16a34a}' +
+      '#spTrap .nv{display:flex;gap:6px;justify-content:center;margin:10px 0 0}#spTrap .nv button{border:0;border-radius:12px;height:44px;min-width:50px;background:rgba(255,255,255,.14);color:#fff;font-size:18px}#spTrap .nv button:disabled{opacity:.35}#spTrap .nv .an{background:#2563eb;font:800 15px system-ui;padding:0 14px}' +
       '#spTrap .shake{animation:trSh .3s}@keyframes trSh{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}';
     document.head.appendChild(s);
   }
@@ -62,82 +63,131 @@
   }
 
   // ---------- partiya
-  function open(x) { stop(); cur = x; ply = 0; phase = 'intro'; sel = null; msg = ''; wrong = 0; shown = false; draw(); timer = setTimeout(intro, 500); }
+  // ply — tugallangan yarim yurishlar soni; vw — orqaga/oldinga ko'rish (null = joriy holat);
+  // part — ko'p urishli yurishda nechta sakrash kiritilgani (har bir katakni ketma-ket bosish mumkin)
+  var vw = null, part = 0;
+  function open(x) { stop(); cur = x; ply = 0; phase = 'intro'; sel = null; msg = ''; wrong = 0; shown = false; vw = null; part = 0; busy = false; draw(); timer = setTimeout(intro, 500); }
   function intro() {
     if (!cur || phase !== 'intro') return;
     if (ply < cur.m.length) { ply++; draw(); timer = setTimeout(intro, ply === cur.m.length ? 350 : 420); return; }
     phase = 'solve'; draw(); oppIfNeeded();
   }
-  function skip() { stop(); ply = cur.m.length; phase = 'solve'; sel = null; draw(); oppIfNeeded(); }
+  function skip() { stop(); ply = cur.m.length; phase = 'solve'; sel = null; part = 0; vw = null; draw(); oppIfNeeded(); }
   function oppIfNeeded() {
     if (!cur || phase !== 'solve') return;
     var A = all();
     if (ply >= A.length) return finish();
-    if (sideAt(ply) !== solver()) { busy = true; timer = setTimeout(function () { busy = false; ply++; draw(); oppIfNeeded(); }, 600); }
+    if (sideAt(ply) !== solver()) { busy = true; timer = setTimeout(function () { busy = false; ply++; vw = null; draw(); oppIfNeeded(); }, 650); }
   }
   function finish() {
-    phase = 'done'; busy = false;
+    phase = 'done'; busy = false; sel = null; part = 0; vw = null;
     if (!shown) { var S = solved(); S[cur.n] = 1; ls('trapSolved', S); hap('ok'); msg = '✅ Kombinatsiya topildi! Barakalla!'; }
     else msg = '👁 Yechim ko‘rsatildi. Keyingi safar o‘zingiz toping!';
     draw();
   }
-  function lastSq(n) { if (!n) return null; var p = all()[n - 1]; return [[p[0][0], p[0][1]], [p[p.length - 1][2], p[p.length - 1][3]]]; }
+  function maxView() { return phase === 'done' ? all().length : ply; }
+  function shownN() { return vw == null ? ply : vw; }
+  function live() { return phase === 'solve' && vw == null; }
+  function curBoard() { var n = shownN(), b = pos(n); if (live() && part > 0) all()[ply].slice(0, part).forEach(function (h) { hop(b, h); }); return b; }
+  function lastSq(n) {
+    if (live() && part > 0) { var q = all()[ply]; return q.slice(0, part).map(function (h) { return [h[0], h[1]]; }); }
+    if (!n) return null; var p = all()[n - 1], o = p.map(function (h) { return [h[0], h[1]]; }); o.push([p[p.length - 1][2], p[p.length - 1][3]]); return o;
+  }
   function board(o) {
-    o = o || {}; var b = pos(ply), flip = solver() === 'b', h = '<div class="bd' + (o.shake ? ' shake' : '') + '" id="tB">';
-    var lm = lastSq(ply), isBad = ply === cur.m.length && phase !== 'intro';
+    o = o || {}; var n = shownN(), b = curBoard(), flip = solver() === 'b', h = '<div class="bd' + (o.shake ? ' shake' : '') + '" id="tB">';
+    var lm = lastSq(n), isBad = n === cur.m.length && !(live() && part > 0);
     for (var i = 0; i < 8; i++) for (var j = 0; j < 8; j++) {
       var r = flip ? 7 - i : i, c = flip ? 7 - j : j, v = b[r][c], cls = (r + c) % 2 ? 'd' : 'l';
       if (lm && lm.some(function (x) { return x[0] === r && x[1] === c; })) cls += isBad ? ' bad' : ' lm';
-      if (sel && sel[0] === r && sel[1] === c) cls += ' sel';
+      if (live() && sel && sel[0] === r && sel[1] === c) cls += ' sel';
       if (o.hint && o.hint[0] === r && o.hint[1] === c) cls += ' hint';
-      h += '<div class="' + cls + '" data-r="' + r + '" data-c="' + c + '">' + (v ? '<i class="pc ' + (v === 1 || v === 3 ? 'w' : 'b') + '">' + (v > 2 ? '♛' : '') + '</i>' : '') + '</div>';
+      h += '<div class="' + cls + '" data-r="' + r + '" data-c="' + c + '">' + (v ? '<i class="pc ' + (v === 1 || v === 3 ? 'w' : 'b') + (v > 2 ? ' k' : '') + '"></i>' : '') + '</div>';
     }
     return h + '</div>';
   }
   function moveList() {
-    var A = all(), h = '<div class="ml">';
-    for (var i = 0; i < ply; i++) {
+    var A = all(), mx = maxView(), n = shownN(), h = '<div class="ml">';
+    for (var i = 0; i < mx; i++) {
       if (i % 2 === 0) h += '<span class="no">' + (i / 2 + 1) + '.</span>';
       var cls = i === cur.m.length - 1 ? 'bl' : i >= cur.m.length ? 'sv' : '';
-      h += '<span class="' + cls + '">' + nota(A[i]) + (i === cur.m.length - 1 ? '??' : '') + '</span>';
+      if (i === n - 1) cls += ' on';
+      h += '<span class="' + cls + '" data-v="' + (i + 1) + '">' + nota(A[i]) + (i === cur.m.length - 1 ? '??' : '') + '</span>';
     }
     return h + '</div>';
   }
+  function nav() {
+    if (phase === 'intro') return '';
+    var n = shownN(), mx = maxView(), d1 = n <= 0 ? ' disabled' : '', d2 = n >= mx ? ' disabled' : '';
+    return '<div class="nv"><button data-nv="0"' + d1 + '>⏮</button><button data-nv="-1"' + d1 + '>◀</button><button data-nv="1"' + d2 + '>▶</button><button data-nv="9"' + d2 + '>⏭</button><button id="tAn" class="an">🔬 Tahlil</button></div>';
+  }
+  function go(n) { var mx = maxView(); n = Math.max(0, Math.min(mx, n)); vw = (phase === 'solve' && n === ply) || (phase === 'done' && n === mx) ? null : n; sel = null; part = 0; draw(); }
+  function analysis() {
+    // tahlil taxtasi: hozirgacha ko'rinadigan yurishlar (yechim oldindan oshkor qilinmaydi)
+    var A = all().slice(0, maxView()), b = init(), mv = [];
+    A.forEach(function (p) {
+      var caps = []; p.forEach(function (h) { var dr = h[2] > h[0] ? 1 : -1, dc = h[3] > h[1] ? 1 : -1; for (var r = h[0] + dr, c = h[1] + dc; r !== h[2]; r += dr, c += dc) if (b[r][c]) caps.push({ r: r, c: c }); hop(b, h); });
+      mv.push({ from: { r: p[0][0], c: p[0][1] }, to: { r: p[p.length - 1][2], c: p[p.length - 1][3] }, captures: caps });
+    });
+    var g = { moves: mv, at: shownN(), flip: solver() === 'b', title: '🪤 №' + cur.n + ' · ' + cur.u };
+    var me = ov; me.style.display = 'none';
+    var back = function () { if (!me || !document.body.contains(me)) return; if (document.getElementById('spBd')) return setTimeout(back, 400); me.style.display = ''; };
+    var run = function () { try { window.spBoard(g); setTimeout(back, 400); } catch (e) { me.style.display = ''; } };
+    if (window.spBoard) run(); else { var sc = document.createElement('script'); sc.src = '/board.js?v=' + Date.now(); sc.onload = run; sc.onerror = function () { me.style.display = ''; }; document.head.appendChild(sc); }
+  }
   function draw(o) {
     o = o || {};
-    var x = cur, S = solver(), Sn = S === 'w' ? '⚪ Oqlar' : '⚫ Qoralar', On = S === 'w' ? 'qoralar' : 'oqlar';
+    var x = cur, S = solver(), Sn = S === 'w' ? '⚪ Oqlar' : '⚫ Qoralar', On = S === 'w' ? 'Qoralar' : 'Oqlar';
     var h = '<div class="tp"><button id="tBk">‹</button><b>№' + x.n + ' · ' + esc(x.u) + '</b></div>';
     if (phase === 'intro') h += '<div class="msg i">📖 Debyut: ' + ply + ' / ' + x.m.length + ' yurish…</div>';
-    else if (phase === 'solve') h += '<div class="msg ' + (msg && msg.charAt(0) === '❌' ? 'e' : 'i') + '">' + (msg || ('⚠️ ' + On.charAt(0).toUpperCase() + On.slice(1) + ' xato qildi: <b>' + nota(x.m[x.m.length - 1]) + '??</b><br>🎯 ' + Sn + ' — g‘alaba kombinatsiyasini toping!')) + '</div>';
+    else if (phase === 'solve' && vw != null) h += '<div class="msg i">👀 Ko‘rish rejimi: ' + vw + ' / ' + ply + '<br><small>Davom etish uchun ⏭ ni bosing</small></div>';
+    else if (phase === 'solve') h += '<div class="msg ' + (msg && msg.charAt(0) === '❌' ? 'e' : 'i') + '">' + (msg || ('⚠️ ' + On + ' xato qildi: <b>' + nota(x.m[x.m.length - 1]) + '??</b><br>🎯 ' + Sn + ' — g‘alaba kombinatsiyasini toping!')) + '</div>';
     else h += '<div class="msg o">' + msg + '</div>';
     h += board(o);
+    h += nav();
     h += moveList();
     if (phase === 'intro') h += '<div class="row2"><button class="bt" id="tSk">⏭ Xatogacha o‘tkazish</button></div>';
-    else if (phase === 'solve') h += '<div class="row2"><button class="bt" id="tH">💡 Ko‘rsatma</button>' + (wrong >= 2 ? '<button class="bt" id="tSh">👁 Yechimni ko‘rsatish</button>' : '') + '<button class="bt" id="tRe">🔄 Debyutni qayta</button></div>';
+    else if (phase === 'solve') h += '<div class="row2"><button class="bt" id="tH">💡 Ko‘rsatma</button>' + (wrong >= 2 ? '<button class="bt" id="tSh">👁 Yechim</button>' : '') + '<button class="bt" id="tRe">🔄 Qayta</button></div>';
     else {
       var S2 = solved(), nx = D.filter(function (y) { return !S2[y.n] && y.n !== x.n; })[0];
       h += '<div class="row2">' + (nx ? '<button class="bt g" id="tNx">➡️ Keyingi tuzoq</button>' : '') + '<button class="bt" id="tRe">🔄 Qayta</button><button class="bt" id="tLs">📋 Ro‘yxat</button></div>';
     }
-    ov.innerHTML = h;
+    var y0 = ov.scrollTop;
+    ov.innerHTML = h; ov.scrollTop = y0;
     ov.querySelector('#tBk').onclick = list;
     var e;
     if ((e = ov.querySelector('#tSk'))) e.onclick = skip;
     if ((e = ov.querySelector('#tRe'))) e.onclick = function () { open(cur); };
     if ((e = ov.querySelector('#tLs'))) e.onclick = list;
+    if ((e = ov.querySelector('#tAn'))) e.onclick = analysis;
     if ((e = ov.querySelector('#tNx'))) e.onclick = function () { var S3 = solved(); open(D.filter(function (y) { return !S3[y.n] && y.n !== cur.n; })[0]); };
-    if ((e = ov.querySelector('#tH'))) e.onclick = function () { var A = all(); if (ply < A.length && sideAt(ply) === solver()) { sel = null; draw({ hint: [A[ply][0][0], A[ply][0][1]] }); } };
-    if ((e = ov.querySelector('#tSh'))) e.onclick = function () { shown = true; stop(); msg = ''; (function step() { var A = all(); if (!cur || ply >= A.length) return finish(); ply++; draw(); timer = setTimeout(step, 700); })(); };
-    var bd = ov.querySelector('#tB'); if (bd && phase === 'solve') bd.onclick = function (ev) { var c = ev.target.closest('[data-r]'); if (c) tap(+c.getAttribute('data-r'), +c.getAttribute('data-c')); };
+    if ((e = ov.querySelector('#tH'))) e.onclick = function () {
+      var A = all(); vw = null;
+      if (ply < A.length && sideAt(ply) === solver()) { var q = A[ply], hs = part > 0 ? [q[part][2], q[part][3]] : [q[0][0], q[0][1]]; draw({ hint: hs }); }
+    };
+    if ((e = ov.querySelector('#tSh'))) e.onclick = function () { shown = true; stop(); msg = ''; vw = null; part = 0; sel = null; (function step() { var A = all(); if (!cur || ply >= A.length) return finish(); ply++; draw(); timer = setTimeout(step, 700); })(); };
+    Array.prototype.forEach.call(ov.querySelectorAll('[data-nv]'), function (b) { b.onclick = function () { if (busy) return; var k = +b.getAttribute('data-nv'), n = shownN(); go(k === 0 ? 0 : k === 9 ? maxView() : n + k); }; });
+    Array.prototype.forEach.call(ov.querySelectorAll('.ml [data-v]'), function (b) { b.onclick = function () { if (!busy && phase !== 'intro') go(+b.getAttribute('data-v')); }; });
+    var bd = ov.querySelector('#tB'); if (bd && live()) bd.onclick = function (ev) { var c = ev.target.closest('[data-r]'); if (c) tap(+c.getAttribute('data-r'), +c.getAttribute('data-c')); };
   }
+  function ok() { sel = null; part = 0; msg = '✅ To‘g‘ri! Davom eting…'; ply++; draw(); oppIfNeeded(); }
+  function bad() { sel = null; part = 0; wrong++; msg = '❌ Bu yo‘l emas. Yana o‘ylab ko‘ring' + (wrong >= 2 ? ' yoki yechimni ko‘ring' : '') + '.'; hap('bad'); draw({ shake: true }); }
   function tap(r, c) {
-    if (busy || phase !== 'solve') return;
+    if (busy || !live()) return;
     var A = all(); if (ply >= A.length || sideAt(ply) !== solver()) return;
-    var b = pos(ply), v = b[r][c], mine = solver() === 'w' ? (v === 1 || v === 3) : (v === 2 || v === 4);
-    if (mine) { sel = [r, c]; hap(); draw(); return; }
-    if (!sel) return;
     var p = A[ply], f = p[0], t = p[p.length - 1];
-    if (sel[0] === f[0] && sel[1] === f[1] && r === t[2] && c === t[3]) { sel = null; msg = '✅ To‘g‘ri! Davom eting…'; hap(); ply++; draw(); oppIfNeeded(); }
-    else { sel = null; wrong++; msg = '❌ Bu yo‘l emas. Yana o‘ylab ko‘ring' + (wrong >= 2 ? ' yoki yechimni ko‘ring' : '') + '.'; hap('bad'); draw({ shake: true }); }
+    if (part > 0) { // urishni davom ettirish: keyingi katak yoki to'g'ridan-to'g'ri oxirgi katak
+      if (sel && sel[0] === r && sel[1] === c) return;
+      if (r === t[2] && c === t[3]) return ok();
+      if (r === p[part][2] && c === p[part][3]) { part++; sel = [r, c]; msg = '⚔️ Urishni davom ettiring…'; draw(); return; }
+      return bad();
+    }
+    var b = curBoard(), v = b[r][c], mine = solver() === 'w' ? (v === 1 || v === 3) : (v === 2 || v === 4);
+    if (mine) { sel = sel && sel[0] === r && sel[1] === c ? null : [r, c]; draw(); return; }
+    if (!sel) return;
+    if (sel[0] !== f[0] || sel[1] !== f[1]) return bad();
+    if (r === t[2] && c === t[3]) return ok();
+    if (p.length > 1 && r === f[2] && c === f[3]) { part = 1; sel = [r, c]; msg = '⚔️ Urishni davom ettiring…'; draw(); return; }
+    bad();
   }
   function close() { stop(); if (ov) ov.remove(); ov = null; cur = null; }
   window.spTraps = function () { css(); if (ov) ov.remove(); ov = document.createElement('div'); ov.id = 'spTrap'; document.body.appendChild(ov); list(); };
