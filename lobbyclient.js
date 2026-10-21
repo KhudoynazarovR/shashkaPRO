@@ -1666,7 +1666,9 @@ document.head.appendChild(_as); }
     var hero = $("hzHero"), vis = !!(hero && hero.offsetParent !== null);
     var eb = $("hzEdBtn");
     if (!eb) { eb = document.createElement("button"); eb.id = "hzEdBtn"; eb.textContent = "+"; document.body.appendChild(eb); eb.onclick = function () { if (admin) { editing = true; draft = clone(L); } }; }
-    eb.style.display = (admin && vis && !editing) ? "block" : "none";
+    eb.style.display = "none"; // suzib yuruvchi «+» halaqit berardi — endi ⚙️ Sozlamalar → «Bosh sahifani tahrirlash»
+    window.hzIsAdmin = function () { return !!admin; };
+    window.hzEdit = function () { if (admin) { editing = true; draft = clone(L); } };
     var bar = $("hzEdBar");
     if (!bar) {
       bar = document.createElement("div"); bar.id = "hzEdBar";

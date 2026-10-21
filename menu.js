@@ -9,6 +9,7 @@
       ["🎨", "Fon", "Kunduzgi, kechki va boshqa fonlar", function () { if (window.spBgPicker) window.spBgPicker(); }],
       ["🤖", "AI o‘yin sozlamalari", "Doska, vaqt va AI bilan o‘yin sozlamalari", function () { if (window.aiShow) window.aiShow("set"); }]
     ];
+    if (window.hzIsAdmin && window.hzIsAdmin()) R.push(["🛠", "Bosh sahifani tahrirlash", "Admin: tugmalar tartibi va ko‘rinishi", function () { var b = document.querySelector('#nvBar button[data-k="pl"]'); if (b) b.click(); setTimeout(function () { if (window.hzEdit) window.hzEdit(); }, 300); }]);
     if (window.SP_WEB && window.spLogout) R.push(["🚪", "Hisobdan chiqish", "Bu qurilmada hisobdan chiqish", function () { if (confirm("Hisobdan chiqasizmi?")) window.spLogout(); }]);
     var h = '<div style="width:100%;background:#141040;color:#fff;border-radius:20px 20px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom));box-sizing:border-box;font-family:system-ui,sans-serif">' +
       '<div style="display:flex;align-items:center;margin-bottom:10px"><b style="font-size:20px">⚙️ Sozlamalar</b><span id="spSetX" style="margin-left:auto;font-size:24px;padding:4px 8px">✕</span></div>';
