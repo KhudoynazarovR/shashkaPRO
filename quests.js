@@ -15,6 +15,8 @@ const POOL = [
   { k: 'battle', t: 'Masala jangida qatnashing', n: 1, r: 25, ic: '⚔️' },
   { k: 'share', t: 'Natijangizni ulashing', n: 1, r: 20, ic: '📸' },
 ];
+// Har kuni birinchi vazifa — Petrova kitobidan navbatdagi masala (oyna tepasida doska bilan ko'rsatiladi)
+const FIXED = { k: 'petrova', t: 'Petrova masalasini yeching', n: 1, r: 40, ic: '📗' };
 const BONUS = 50;                                   // uchala vazifa bajarilsa sandiq
 const STREAK = [20, 25, 30, 35, 40, 50, 150];       // 1..7-kun kirish mukofoti (7-kundan keyin qaytadan)
 
@@ -35,18 +37,29 @@ function todays(d) {
   return out;
 }
 
+function qlist(d) { return [FIXED].concat(todays(d).slice(0, 2).map(i => POOL[i])); }
+function nextPetrova(u) {
+  const all = ((store && store.db.puzzles) || []).filter(x => /^Petrova/.test(x.folder || '')).sort((a, b) => (a.no || 0) - (b.no || 0));
+  if (!all.length) return null;
+  const sv = new Set(u.solved || []), q = u.qd || {};
+  // bugun yechilgan bo'lsa — o'sha masalani "yechildi" deb ko'rsatamiz
+  let p = q.pz && all.find(x => x.id === q.pz && sv.has(x.id));
+  if (!p) p = all.find(x => !sv.has(x.id)) || all[Math.floor(Date.now() / 864e5) % all.length];
+  return { id: p.id, board: p.board, side: p.side, no: p.no || 0, title: p.title || '', level: p.level || 1, total: all.length, done: sv.has(p.id), solvedN: all.filter(x => sv.has(x.id)).length };
+}
 function users() { return store ? store.users() : {}; }
 function qstate(u) {
   const d = dayKey();
   if (!u.qd || u.qd.d !== d) u.qd = { d, p: {}, c: [], b: false };
   return u.qd;
 }
-function bump(uid, kind, n) {
+function bump(uid, kind, n, pzId) {
   try {
     if (!store) store = require('./store');
     const u = users()[String(uid)]; if (!u) return;
     const q = qstate(u);
     q.p[kind] = (q.p[kind] || 0) + (n || 1);
+    if (pzId && kind === 'petrova') q.pz = pzId;
     store.save();
   } catch (e) { console.log('[quests]', e.message); }
 }
@@ -71,9 +84,10 @@ function claimStreak(u) {
 }
 
 function view(u) {
-  const q = qstate(u), list = todays(q.d);
+  const q = qstate(u), list = qlist(q.d);
   return {
-    quests: list.map((pi, j) => { const x = POOL[pi]; return { i: j, ic: x.ic, t: x.t, n: x.n, r: x.r, p: Math.min(x.n, q.p[x.k] || 0), done: (q.p[x.k] || 0) >= x.n, claimed: !!q.c[j] }; }),
+    pz: nextPetrova(u),
+    quests: list.map((x, j) => { return { i: j, ic: x.ic, t: x.t, n: x.n, r: x.r, p: Math.min(x.n, q.p[x.k] || 0), done: (q.p[x.k] || 0) >= x.n, claimed: !!q.c[j] }; }),
     bonus: { r: BONUS, claimed: !!q.b, ready: list.every((_, j) => q.c[j]) },
     streak: Object.assign(streakInfo(u), { list: STREAK, best: (u.strk && u.strk.best) || 0 }),
     reset: nextReset(), coins: u.diamonds || 0, day: q.d,
@@ -131,7 +145,7 @@ function handle(req, res, p, ctx) {
   if (p === '/api/quests/claim') {
     readBody(req, 1000, body => {
       let j = {}; try { j = JSON.parse(body); } catch (e) {}
-      const q = qstate(u), list = todays(q.d);
+      const q = qstate(u), list = qlist(q.d);
       if (j.bonus) {
         if (q.b) return send(res, 200, { error: 'Olingan' });
         if (!list.every((_, k) => q.c[k])) return send(res, 200, { error: 'Avval uchala vazifani bajaring' });
@@ -139,7 +153,7 @@ function handle(req, res, p, ctx) {
         return send(res, 200, { ok: true, amount: BONUS, state: view(u) });
       }
       const k = Math.floor(+j.i); if (!(k >= 0 && k < list.length)) return send(res, 200, { error: 'xato' });
-      const x = POOL[list[k]];
+      const x = list[k];
       if (q.c[k]) return send(res, 200, { error: 'Olingan' });
       if ((q.p[x.k] || 0) < x.n) return send(res, 200, { error: 'Hali bajarilmagan' });
       q.c[k] = true; u.diamonds = (u.diamonds || 0) + x.r; store.save();
@@ -173,4 +187,4 @@ function handle(req, res, p, ctx) {
   return false;
 }
 
-module.exports = { handle, bump, view, _t: { todays, POOL, streakInfo, claimStreak, dayKey, IMG } };
+module.exports = { handle, bump, view, _t: { todays, qlist, nextPetrova, POOL, streakInfo, claimStreak, dayKey, IMG } };

@@ -41,6 +41,17 @@
     '#dqOv .chest{display:flex;align-items:center;gap:10px}#dqOv .chest .ic{font-size:34px}#dqOv .chest .tx{flex:1;font-weight:800}#dqOv .chest small{display:block;font-weight:600;color:#bab7e8;font-size:12px}' +
     '#dqOv .chest button{border:0;border-radius:12px;padding:10px 12px;font:900 14px system-ui,Roboto,sans-serif;background:#352d86;color:#bab7e8}#dqOv .chest button.on{background:linear-gradient(90deg,#ffcf3f,#ff9f1a);color:#2a1600}' +
     '#dqOv .shr{display:block;width:100%;border:0;border-radius:14px;padding:12px;margin-top:4px;font:800 15px system-ui,Roboto,sans-serif;color:#fff;background:#352d86}' +
+    // shashka doskali sarlavha
+    '#dqOv .ban{position:relative;display:flex;align-items:flex-start;gap:14px;margin:-16px -14px 12px;padding:16px 14px 14px;border-radius:24px 24px 0 0;background:radial-gradient(circle at 20% 30%,#3b2a8a,#1a1650 70%);overflow:hidden}' +
+    '#dqOv .ban .x{position:absolute;top:12px;right:12px}' +
+    '#dqOv .mb{flex:none;width:150px;height:150px;display:grid;grid-template-columns:repeat(8,1fr);border:5px solid #8a4b1f;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.5),inset 0 0 0 1px #c47a3a;position:relative;}' +
+    '#dqOv .mb i{display:flex;align-items:center;justify-content:center}#dqOv .mb .l{background:#f0d9b5}#dqOv .mb .d{background:#a8673a}' +
+    '#dqOv .mb .p{position:relative;width:84%;height:84%;border-radius:50%;box-shadow:0 2px 0 rgba(0,0,0,.45)}' +
+    '#dqOv .mb .w{background:radial-gradient(circle at 40% 35%,#fff,#d9d2c3)}#dqOv .mb .b{background:radial-gradient(circle at 40% 35%,#555,#111)}' +
+    '#dqOv .mb .k::after{content:"♛";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#e0a800;font-size:11px}' +
+    '#dqOv .ban .gt{flex:1;min-width:0;padding-right:4px}#dqOv .ban .gt b{display:block;font-size:19px;line-height:1.2;margin-top:2px;padding-right:38px}#dqOv .ban .gt small{display:block;margin-top:5px;font-size:13px;color:#d6d3ff;font-weight:600}#dqOv .ban .gt .hi{color:#ffcf3f;font-weight:700;padding-right:40px}' +
+    '#dqOv .pzb{display:block;width:100%;margin-top:8px;border:0;border-radius:12px;padding:11px 8px;font:900 15px system-ui,Roboto,sans-serif;color:#fff;background:linear-gradient(90deg,#22c55e,#16a34a);box-shadow:0 3px 0 #0d6b30;animation:dqP 1.4s infinite}#dqOv .pzb.dn{background:#2a2470;color:#4ade80;box-shadow:none;animation:none}' +
+    '#dqOv .ld{text-align:center;padding:30px 0;color:#bab7e8;font-weight:700}' +
     // bosh sahifadagi karta
     '#dqCard{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:18px;cursor:pointer;color:#fff;background:linear-gradient(90deg,#e8590c,#f59f00);box-shadow:0 3px 0 #8a3a06;font-family:system-ui,Roboto,sans-serif;box-sizing:border-box;position:relative}' +
     '#dqCard .f{font-size:30px;flex:none}#dqCard .t{flex:1;min-width:0}#dqCard .t b{display:block;font-size:16px;font-weight:900}#dqCard .t small{font-size:13px;font-weight:700;opacity:.95}' +
@@ -62,9 +73,32 @@
   }
 
   // ---------- oyna
+  // Petrova kitobidagi navbatdagi masala — haqiqiy pozitsiya
+  function board(pz) {
+    var h = '<div class="mb">', B = pz && pz.board, flip = pz && pz.side === 'b';
+    for (var i = 0; i < 8; i++) for (var j = 0; j < 8; j++) {
+      var r = flip ? 7 - i : i, c = flip ? 7 - j : j, v = B ? B[r][c] : 0;
+      h += '<i class="' + ((r + c) % 2 ? 'd' : 'l') + '">' + (v ? '<b class="p ' + (v === 1 || v === 3 ? 'w' : 'b') + (v > 2 ? ' k' : '') + '"></b>' : '') + '</i>';
+    }
+    return h + '</div>';
+  }
+  function banner() {
+    var nm = ''; try { nm = tg.initDataUnsafe.user.first_name || ''; } catch (e) {}
+    var pz = S && S.pz, q0 = S && S.quests && S.quests[0], solved = q0 && (q0.done || q0.claimed);
+    var h = '<div class="ban">' + board(pz) + '<div class="gt"><small class="hi">Salom' + (nm ? ', ' + esc(nm) : '') + '! 👋</small><b>📗 Kunning masalasi</b>';
+    if (!S) h += '<small>⏳ Yuklanmoqda…</small>';
+    else if (!pz) h += '<small>Petrova papkasi topilmadi</small>';
+    else {
+      h += '<small class="mt">Petrova · №' + pz.no + ' · ' + (pz.side === 'b' ? '⚫ Qoralar' : '⚪ Oqlar') + ' yuradi</small>';
+      h += solved ? '<button class="pzb dn" disabled>✅ Bugun yechildi</button>' : '<button class="pzb" id="dqPz">▶ Yechish · +' + (q0 ? q0.r : 40) + ' 🪙</button>';
+      h += '<small class="mt">Kitobdan: ' + pz.solvedN + ' / ' + pz.total + '</small>';
+    }
+    return h + '</div><button class="x" id="dqX">✕</button></div>';
+  }
   function render() {
-    var ov = $('dqOv'); if (!ov || !S) return;
-    var s = S.streak, h = '<div class="bx"><div class="hd"><b>📋 Kunlik vazifalar<small id="dqT">Yangilanishiga ' + hms(S.reset - Date.now()) + '</small></b><button class="x" id="dqX">✕</button></div>';
+    var ov = $('dqOv'); if (!ov) return;
+    if (!S) { ov.innerHTML = '<div class="bx">' + banner() + '<div class="ld">⏳ Vazifalar yuklanmoqda…</div></div>'; ov.querySelector('#dqX').onclick = hide; return; }
+    var s = S.streak, h = '<div class="bx">' + banner();
     // seriya
     h += '<div class="sec"><div class="sh">🔥 Kirish seriyasi: ' + s.n + ' kun<span>Rekord: ' + Math.max(s.best, s.n) + '</span></div><div class="days">';
     var base = s.claimed ? s.n : s.n; // 7 kunlik halqa ichidagi o'rin
@@ -80,7 +114,7 @@
     if (s.lost && !s.claimed) h += '<div class="lost">😔 ' + s.lost + ' kunlik seriya uzildi — bugundan qaytadan boshlang</div>';
     h += '</div>';
     // vazifalar
-    h += '<div class="sec"><div class="sh">🎯 Bugungi vazifalar<span>' + doneN() + '/' + S.quests.length + '</span></div>';
+    h += '<div class="sec"><div class="sh">🎯 Bugungi vazifalar ' + doneN() + '/' + S.quests.length + '<span id="dqT">⏳ ' + hms(S.reset - Date.now()) + '</span></div>';
     S.quests.forEach(function (q) {
       var btn = q.claimed ? '<button class="dn" disabled>✅</button>' : q.done ? '<button class="cl" data-q="' + q.i + '">+' + q.r + ' 🪙</button>' : '<button class="rw" data-go="' + q.i + '">+' + q.r + ' 🪙</button>';
       h += '<div class="q"><span class="ic">' + q.ic + '</span><div class="tx"><b>' + esc(q.t) + '</b><div class="bar"><i style="width:' + Math.round(q.p / q.n * 100) + '%"></i></div><small>' + q.p + ' / ' + q.n + '</small></div>' + btn + '</div>';
@@ -93,6 +127,7 @@
     ov.innerHTML = h;
     ov.querySelector('#dqX').onclick = hide;
     var e;
+    if ((e = ov.querySelector('#dqPz'))) e.onclick = function () { var id = S.pz && S.pz.id; hide(); if (window.spPuzzleOpenId && id) window.spPuzzleOpenId(id); else if (window.mnA) window.mnA('@puz'); };
     if ((e = ov.querySelector('#dqS'))) e.onclick = function () { act('/api/quests/streak', {}); };
     if ((e = ov.querySelector('#dqB'))) e.onclick = function () { act('/api/quests/claim', { bonus: 1 }); };
     if ((e = ov.querySelector('#dqShare'))) e.onclick = function () { window.spShareCard({ theme: 'streak', title: 'KETMA-KET KIRISH', big: String(S.streak.n), unit: 'kun ketma-ket 🔥', sub: 'Har kuni shashka o‘ynayman!', cap: '🔥 ShashkaPRO’da ' + S.streak.n + ' kun ketma-ket o‘ynayapman!' }); };
@@ -102,6 +137,7 @@
   function goTo(q) {
     hide();
     var t = q.t;
+    if (/Petrova/.test(t) && S && S.pz && window.spPuzzleOpenId) { window.spPuzzleOpenId(S.pz.id); return; }
     if (/masala|Rush|jang/i.test(t)) { if (window.mnA) window.mnA('@puz'); return; }
     if (/Bot/i.test(t)) { var b = document.getElementById('nvBotRow'); if (b) { b.click(); return; } }
     if (/ulash/i.test(t)) { try { tg.showAlert('O‘yin, Rush, masala jangi yoki turnirdan keyin “📸 Ulashish” tugmasini bosing'); } catch (e) {} return; }
@@ -121,7 +157,7 @@
     var ov = document.createElement('div'); ov.id = 'dqOv';
     ov.onclick = function (e) { if (e.target === ov) hide(); };
     document.body.appendChild(ov); open = true;
-    ls('dq_seen', S ? S.day : '');
+    ls('dq_seen', today());
     render(); load();
   }
   function hide() { var ov = $('dqOv'); if (ov) ov.remove(); open = false; }
@@ -132,16 +168,16 @@
       if (!x || x.error) return;
       S = x; card(); if (open) render();
       // kuniga birinchi kirishda (yoki bugungi sovg'a olinmagan bo'lsa) oyna o'zi ochiladi
-      if (!autoDone) {
-        autoDone = true;
-        if (ls('dq_seen') !== S.day || !S.streak.claimed) setTimeout(function () { if (!document.querySelector('#spRush,#spBattle,#ptOv,.rcRoom.on')) show(); }, 900);
-      }
+      if (!autoDone) { autoDone = true; if (!S.streak.claimed && !open) show(); }
     }).catch(function () {});
   }
+  // kuniga birinchi kirishda — server javobini kutmasdan darhol ochiladi
+  function today() { return new Date(Date.now() + 5 * 3600e3).toISOString().slice(0, 10); }
+  if (ls('dq_seen') !== today()) { autoDone = true; var _go = function () { if (document.body) show(); else setTimeout(_go, 50); }; _go(); }
   load();
   setInterval(function () {
     card();
-    var t = $('dqT'); if (t && S) t.textContent = 'Yangilanishiga ' + hms(S.reset - Date.now());
+    var t = $('dqT'); if (t && S) t.textContent = '⏳ ' + hms(S.reset - Date.now());
     if (S && Date.now() > S.reset) { S.reset = Date.now() + 60000; load(); }
   }, 1000);
   setInterval(function () { if (!open) load(); }, 45000);
