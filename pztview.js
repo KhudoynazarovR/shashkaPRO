@@ -270,9 +270,18 @@
     if ((b = ov.querySelector('#ptShareB'))) b.onclick = function () {
       var l = d.link || (window.TG_APP_LINK ? window.TG_APP_LINK + '?startapp=pzt_' + curId : '');
       if (!l) return alert('Havola sozlanmagan (TG_APP_LINK)');
-      var tx = '🧩 «' + d.name + '» masala turniri ' + hm(d.startAt) + ' da boshlanadi!\n📚 ' + d.count + ' ta masala' + (d.prize ? ' · 🪙 ' + d.prize + ' mukofot' : '') + '\nKim tez va ko‘p yechadi? Qatnash! 👇';
+      var tx = '🧩 «' + d.name + '» masala turniri ' + hm(d.startAt) + ' da boshlanadi!\n📚 ' + d.count + ' ta masala' + (d.prize ? ' · 💰 ' + d.prize + ' mukofot' : '') + '\nKim tez va ko‘p yechadi? Qatnash! 👇';
       var u = 'https://t.me/share/url?url=' + encodeURIComponent(l) + '&text=' + encodeURIComponent(tx);
-      try { if (tg && tg.openTelegramLink) tg.openTelegramLink(u); else window.open(u, '_blank'); } catch (e) { window.open(u, '_blank'); }
+      function plain() { try { if (tg && tg.openTelegramLink) tg.openTelegramLink(u); else window.open(u, '_blank'); } catch (e) { window.open(u, '_blank'); } }
+      // yangi Telegram: rasmli tayyor xabar (banner + "Qatnashish" tugmasi)
+      if (tg && tg.shareMessage && tg.isVersionAtLeast && tg.isVersionAtLeast('8.0')) {
+        var bt = this, old = bt.textContent; bt.disabled = true; bt.textContent = '⏳';
+        api('/api/pzt/shareprep', { id: curId }).then(function (x) {
+          bt.disabled = false; bt.textContent = old;
+          if (!x || !x.pid) return plain();
+          try { tg.shareMessage(x.pid); } catch (e) { plain(); }
+        }).catch(function () { bt.disabled = false; bt.textContent = old; plain(); });
+      } else plain();
     };
     if ((b = ov.querySelector('#ptAnn'))) b.onclick = function () { var bt = this; bt.disabled = true; bt.textContent = '⏳'; api('/api/pzt/announce', { id: curId }).then(function (x) { bt.textContent = x && x.ok ? '✅ Yuborildi' : '⚠️ ' + ((x && x.error) || 'Xato'); }).catch(function () { bt.textContent = '⚠️ Xato'; }); };
     if ((b = ov.querySelector('#ptStart'))) b.onclick = function () { api('/api/pzt/go', { id: curId }).then(onState); };

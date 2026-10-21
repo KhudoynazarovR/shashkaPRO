@@ -157,6 +157,21 @@ function tg(method, body) {
     } catch (e) { res(null); }
   });
 }
+// banner rasm: /img/pzt.jpg (Telegram file_id keshlanadi)
+function baseUrl(req) {
+  const b = process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || '';
+  if (b) return b.replace(/\/$/, '');
+  const h = req && (req.headers['x-forwarded-host'] || req.headers.host);
+  return h ? 'https://' + h : 'https://shashkapro.onrender.com';
+}
+function photoSrc(req) { return (store.db && store.db.pztPhotoId) || baseUrl(req) + '/img/pzt.jpg?v=1'; }
+function rememberPhoto(r) {
+  try { const j = JSON.parse(r || '{}'); const ph = j.ok && j.result && j.result.photo; if (ph && ph.length && !store.db.pztPhotoId) { store.db.pztPhotoId = ph[ph.length - 1].file_id; store.save(); } return !!j.ok; } catch (e) { return false; }
+}
+function annText(t) {
+  const d = new Date(t.startAt + 5 * 3600e3).toISOString().slice(11, 16);
+  return '🧩 Masala turniri: «' + t.name + '»\n🕐 ' + d + ' da boshlanadi\n📚 ' + t.q.length + ' ta masala' + (t.per ? ', har biriga ' + (t.per < 60 ? t.per + ' s' : t.per / 60 + ' daq') : '') + (t.prize ? '\n💰 Mukofot: ' + t.prize + ' (' + t.places + ' o‘ringa)' : '') + '\n👥 Qatnashing — kim tez va ko‘p yechadi?';
+}
 function link(t) { const l = process.env.TG_APP_LINK || ''; return l ? l + '?startapp=pzt_' + t.id : ''; }
 function fmt(ms) { const s = ms / 1000, m = Math.floor(s / 60); return m + ':' + (s % 60 < 10 ? '0' : '') + (s % 60).toFixed(1); }
 function notifyStart(t) {
@@ -174,7 +189,7 @@ function postResults(t, st) {
   let tx = '🧩 «' + t.name + '» masala turniri yakunlandi!\n👥 ' + st.length + ' ishtirokchi · ' + t.q.length + ' ta masala\n\n';
   st.slice(0, 10).forEach((x, i) => {
     const a = (t.awards || []).find(z => z.uid === x.uid);
-    tx += (M[i] || (i + 1) + '.') + ' ' + x.name + ' — ' + x.solved + '/' + t.q.length + ' · ' + fmt(x.time) + (x.firsts ? ' · ⚡' + x.firsts : '') + (a && a.amt ? ' · +' + a.amt + ' 🪙' : '') + '\n';
+    tx += (M[i] || (i + 1) + '.') + ' ' + x.name + ' — ' + x.solved + '/' + t.q.length + ' · ' + fmt(x.time) + (x.firsts ? ' · ⚡' + x.firsts : '') + (a && a.amt ? ' · +' + a.amt + ' 💰' : '') + '\n';
   });
   const b = { chat_id: gc, text: tx };
   if (process.env.GROUP_TOPIC_ID) b.message_thread_id = Number(process.env.GROUP_TOPIC_ID);
@@ -285,14 +300,29 @@ function handle(req, res, p, ctx) {
       if (t.chat.length > 120) t.chat.splice(0, t.chat.length - 120);
       save(); return send(res, 200, full(t, uid, now));
     }
+    if (p === '/api/pzt/shareprep') { // foydalanuvchi ulashishi uchun rasmli tayyor xabar (WebApp.shareMessage)
+      const l = link(t); if (!l || !/^\d+$/.test(uid)) return send(res, 200, { error: 'no' });
+      const fid = store.db.pztPhotoId, cap = annText(t) + '\n👇';
+      const r0 = { id: ('pzt' + t.id + Date.now().toString(36)).slice(0, 60), caption: cap, reply_markup: { inline_keyboard: [[{ text: '✅ Qatnashish', url: l }]] } };
+      if (fid) { r0.type = 'photo'; r0.photo_file_id = fid; } else { const u2 = baseUrl(req) + '/img/pzt.jpg?v=1'; r0.type = 'photo'; r0.photo_url = u2; r0.thumbnail_url = u2; }
+      tg('savePreparedInlineMessage', { user_id: Number(uid), result: r0, allow_user_chats: true, allow_group_chats: true, allow_channel_chats: true }).then(r => {
+        let pid = null; try { const j = JSON.parse(r || '{}'); if (j.ok) pid = j.result.id; } catch (e) {}
+        send(res, 200, pid ? { pid } : { error: 'prep' });
+      });
+      return;
+    }
     if (p === '/api/pzt/announce') { // admin: bot orqali guruhga e'lon
       if (!adm) return send(res, 403, { error: 'admin emassiz' });
       const gc = process.env.GROUP_CHAT_ID; if (!gc) return send(res, 200, { error: 'GROUP_CHAT_ID sozlanmagan' });
-      const l = link(t), d = new Date(t.startAt + 5 * 3600e3).toISOString().slice(11, 16);
-      const b = { chat_id: gc, text: '🧩 Masala turniri: «' + t.name + '»\n🕐 ' + d + ' da boshlanadi\n📚 ' + t.q.length + ' ta masala' + (t.per ? ', har biriga ' + (t.per < 60 ? t.per + ' s' : t.per / 60 + ' daq') : '') + (t.prize ? '\n🪙 Mukofot: ' + t.prize + ' (' + t.places + ' o‘ringa)' : '') + '\n👥 Qatnashing — kim tez va ko‘p yechadi?' };
+      const l = link(t), mk = l ? { inline_keyboard: [[{ text: '✅ Qatnashish', url: l }]] } : undefined;
+      const b = { chat_id: gc, photo: photoSrc(req), caption: annText(t) };
       if (process.env.GROUP_TOPIC_ID) b.message_thread_id = Number(process.env.GROUP_TOPIC_ID);
-      if (l) b.reply_markup = { inline_keyboard: [[{ text: '✅ Qatnashish', url: l }]] };
-      tg('sendMessage', b).then(r => { let ok = false; try { ok = JSON.parse(r || '{}').ok; } catch (e) {} send(res, 200, ok ? { ok: true } : { error: 'Guruhga yuborilmadi' }); });
+      if (mk) b.reply_markup = mk;
+      tg('sendPhoto', b).then(r => {
+        if (rememberPhoto(r)) return send(res, 200, { ok: true });
+        const m = { chat_id: gc, text: annText(t) }; if (b.message_thread_id) m.message_thread_id = b.message_thread_id; if (mk) m.reply_markup = mk;
+        tg('sendMessage', m).then(r2 => { let ok = false; try { ok = JSON.parse(r2 || '{}').ok; } catch (e) {} send(res, 200, ok ? { ok: true } : { error: 'Guruhga yuborilmadi' }); });
+      });
       return;
     }
     const P = player(t, uid);
