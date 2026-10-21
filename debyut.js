@@ -77,9 +77,21 @@
     cur.steps.forEach(function (s, i) { if (i % 2 === 0) h += '<span class="no">' + (i / 2 + 1) + '.</span>'; h += '<span data-p="' + (i + 1) + '" class="' + (i + 1 === n ? 'on' : '') + '">' + s.n + '</span>'; });
     return h + '</div>';
   }
+  function stepSound(b, p, from) { // b — yurishdan oldingi holat; p — sakrashlar; from — nechanchi sakrashdan
+    var S = window.SPSound; if (!S || !p || from >= p.length) return;
+    try {
+      b = b.map(function (x) { return x.slice(); }); var caps = 0, pc = b[p[from][0]][p[from][1]];
+      for (var i = from; i < p.length; i++) { var h = p[i], dr = h[2] > h[0] ? 1 : -1, dc = h[3] > h[1] ? 1 : -1; for (var r = h[0] + dr, c = h[1] + dc; r !== h[2]; r += dr, c += dc) if (b[r][c]) caps++; hop(b, h); }
+      var last = p[p.length - 1], king = (pc === 1 && last[2] === 0) || (pc === 2 && last[2] === 7);
+      if (king) S.play('king'); else if (caps) { for (var k = 0; k < caps; k++) setTimeout(function () { S.play('capture'); }, k * 120); } else S.play('move');
+    } catch (e) {}
+  }
+  var sCur = null, sN = 0;
+  function sounds() { if (sCur === cur && ply === sN + 1) stepSound(pos(ply - 1), cur.steps[ply - 1].p, 0); sCur = cur; sN = ply; }
   function draw(o) {
     o = o || {};
     var d = cur, h = '<div class="tp"><button id="dBk">‹</button><b>' + esc(d.uz) + '</b></div>';
+    sounds();
     h += '<div style="color:#9aa3d9;font-size:13px;margin:-6px 0 10px 4px">' + esc(d.ru) + '</div>';
     if (mode === 'view') {
       h += board(pos(ply), { lm: lastSq(ply) });

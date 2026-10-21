@@ -134,6 +134,24 @@
     var run = function () { try { window.spBoard(g); setTimeout(back, 400); } catch (e) { me.style.display = ''; } };
     if (window.spBoard) run(); else { var sc = document.createElement('script'); sc.src = '/board.js?v=' + Date.now(); sc.onload = run; sc.onerror = function () { me.style.display = ''; }; document.head.appendChild(sc); }
   }
+  function stepSound(b, p, from) { // b — yurishdan oldingi holat; p — sakrashlar; from — nechanchi sakrashdan
+    var S = window.SPSound; if (!S || !p || from >= p.length) return;
+    try {
+      b = b.map(function (x) { return x.slice(); }); var caps = 0, pc = b[p[from][0]][p[from][1]];
+      for (var i = from; i < p.length; i++) { var h = p[i], dr = h[2] > h[0] ? 1 : -1, dc = h[3] > h[1] ? 1 : -1; for (var r = h[0] + dr, c = h[1] + dc; r !== h[2]; r += dr, c += dc) if (b[r][c]) caps++; hop(b, h); }
+      var last = p[p.length - 1], king = (pc === 1 && last[2] === 0) || (pc === 2 && last[2] === 7);
+      if (king) S.play('king'); else if (caps) { for (var k = 0; k < caps; k++) setTimeout(function () { S.play('capture'); }, k * 120); } else S.play('move');
+    } catch (e) {}
+  }
+  var sCur = null, sN = 0, sP = 0;
+  function sounds() { // faqat oldinga bir qadam yurilganda ovoz
+    var k = shownN(), pk = live() ? part : 0, A = all();
+    if (sCur === cur) {
+      if (k === sN + 1 && pk === 0) { var b = pos(k - 1); A[k - 1].slice(0, sP).forEach(function (h) { hop(b, h); }); stepSound(b, A[k - 1], sP); }
+      else if (k === sN && pk === sP + 1) { var b2 = pos(k); A[k].slice(0, sP).forEach(function (h) { hop(b2, h); }); stepSound(b2, A[k].slice(0, pk), sP); }
+    }
+    sCur = cur; sN = k; sP = pk;
+  }
   function draw(o) {
     o = o || {};
     var x = cur, S = solver(), Sn = S === 'w' ? '⚪ Oqlar' : '⚫ Qoralar', On = S === 'w' ? 'Qoralar' : 'Oqlar';
@@ -142,6 +160,7 @@
     else if (phase === 'solve' && vw != null) h += '<div class="msg i">👀 Ko‘rish rejimi: ' + vw + ' / ' + ply + '<br><small>Davom etish uchun ⏭ ni bosing</small></div>';
     else if (phase === 'solve') h += '<div class="msg ' + (msg && msg.charAt(0) === '❌' ? 'e' : 'i') + '">' + (msg || ('⚠️ ' + On + ' xato qildi: <b>' + nota(x.m[x.m.length - 1]) + '??</b><br>🎯 ' + Sn + ' — g‘alaba kombinatsiyasini toping!')) + '</div>';
     else h += '<div class="msg o">' + msg + '</div>';
+    sounds();
     h += board(o);
     h += nav();
     h += moveList();

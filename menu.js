@@ -131,7 +131,7 @@
   window.mnA = function (a) {
     if (a === "@set") { close(); if (window.spSettings) window.spSettings(); return; } if (a.indexOf("@ai:") === 0) { close(); if (window.aiShow) window.aiShow(a.slice(4)); return; }
     if (a === "@live") { close(); liveOpen(); return; }
-    if (a === "@deb") { close(); if (window.spDebut) window.spDebut(); else { var _d = document.createElement('script'); _d.src = '/debyut.js?v=1'; _d.onload = function () { window.spDebut(); }; document.head.appendChild(_d); } return; }
+    if (a === "@deb") { close(); if (window.spDebut) window.spDebut(); else { var _d = document.createElement('script'); _d.src = '/debyut.js?v=2'; _d.onload = function () { window.spDebut(); }; document.head.appendChild(_d); } return; }
     if (a === "@stats") { close(); if (window.spStats) window.spStats(); else { var _s = document.createElement('script'); _s.src = '/statsview.js?v=1'; _s.onload = function () { window.spStats(); }; document.head.appendChild(_s); } return; }
     if (a === "@arena") { close(); if (window.avOpen) window.avOpen(); return; }
     if (a === "@arch") { close(); archOpen(); return; }
@@ -465,7 +465,7 @@
       });
     };
     if (window.pzHub) go();
-    else { var sc = document.createElement('script'); sc.src = '/pzhub.js?v=7'; sc.onload = go; sc.onerror = function () { hub = 0; list(); }; document.head.appendChild(sc); }
+    else { var sc = document.createElement('script'); sc.src = '/pzhub.js?v=8'; sc.onload = go; sc.onerror = function () { hub = 0; list(); }; document.head.appendChild(sc); }
   }
   var CARD = 'text-align:left;background:#161a3a;border:1px solid #262b5a;border-radius:16px;padding:12px;margin-bottom:10px;cursor:pointer';
   function lvOf(p) { return [1, 2, 3].indexOf(p.level) >= 0 ? p.level : 1; }
