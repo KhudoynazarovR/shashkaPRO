@@ -1356,7 +1356,7 @@ document.head.appendChild(_as); }
     var q = !!(rb && /Bekor/.test(rb.textContent));
     var tx = q ? "⏳ Qidirilmoqda… (bekor qilish)" : "🔍 Raqib qidirish";
     if (b.textContent !== tx) b.textContent = tx;
-    b.className = q ? "on" : "";
+    b.classList.toggle("on", q); // className= hzOff (yashirish) ni o'chirib, miltillatardi
   }, 500);
 })();
 
