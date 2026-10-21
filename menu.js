@@ -406,43 +406,21 @@
   function head(t, extra) {
     return '<div style="display:flex;justify-content:space-between;align-items:center;font-size:20px;font-weight:700;margin-bottom:12px"><span>' + t + '</span><span>' + (extra || '') + '<button id="pzBack" style="' + BG + '">⬅️</button></span></div>';
   }
-  // Doska: ko'k-binafsha, bezakli ramka, koordinatalar (barcha masalalarda)
-  function pzBoardCss() {
-    if (document.getElementById('pzBoardCss')) return;
-    var st = document.createElement('style'); st.id = 'pzBoardCss';
-    st.textContent =
-      '.pzFr{position:relative;width:min(94vw,470px);margin:4px auto 0;padding:20px;box-sizing:border-box;border-radius:20px;background:linear-gradient(145deg,#5a4ad8,#2a2178 55%,#1a1452);box-shadow:0 0 0 2px #8f80ff inset,0 0 0 5px #1a1452 inset,0 0 26px rgba(124,108,255,.55),0 10px 24px rgba(0,0,0,.55)}' +
-      '.pzFr .orn{position:absolute;width:22px;height:22px;color:#ffd76a;font-size:18px;line-height:22px;text-align:center;text-shadow:0 0 8px rgba(255,200,80,.9)}' +
-      '.pzFr .orn.tl{left:0;top:0}.pzFr .orn.tr{right:0;top:0}.pzFr .orn.bl{left:0;bottom:0}.pzFr .orn.br{right:0;bottom:0}' +
-      '.pzFr .lb{position:absolute;display:flex;color:#cfc8ff;font:700 11px system-ui,Roboto,sans-serif;opacity:.85}' +
-      '.pzFr .lb.f{left:20px;right:20px;bottom:3px;height:14px}.pzFr .lb.f span,.pzFr .lb.r span{flex:1;display:flex;align-items:center;justify-content:center}' +
-      '.pzFr .lb.r{top:20px;bottom:20px;left:3px;width:14px;flex-direction:column}' +
-      '#pzB{width:100%;aspect-ratio:1;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border-radius:8px;overflow:hidden;box-shadow:0 0 0 2px #ffd76a,0 0 14px rgba(255,215,106,.35)}' +
-      '#pzB .sq{position:relative;display:flex;align-items:center;justify-content:center}' +
-      '#pzB .sq.l{background:linear-gradient(135deg,#d9d3ff,#bdb4f5)}#pzB .sq.d{background:linear-gradient(135deg,#4a3fb0,#2f2788)}' +
-      '#pzB .sq.sel{box-shadow:inset 0 0 0 3px #ffd76a,inset 0 0 18px rgba(255,215,106,.7)}' +
-      '#pzB .dot{position:absolute;width:30%;height:30%;border-radius:50%;background:radial-gradient(circle,#7fffd4,#2ad4a0);box-shadow:0 0 10px #39f5c0}' +
-      '#pzB .pc{width:80%;height:80%;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:clamp(14px,4.4vw,22px);position:relative}' +
-      '#pzB .pc.w{background:radial-gradient(circle at 35% 28%,#ffffff,#e4e1f5 45%,#a9a4c9);box-shadow:0 3px 0 #6c6796,0 5px 8px rgba(0,0,0,.45),inset 0 0 0 3px rgba(255,255,255,.55)}' +
-      '#pzB .pc.b{background:radial-gradient(circle at 35% 28%,#6b6b80,#22202e 55%,#0b0a12);box-shadow:0 3px 0 #000,0 5px 8px rgba(0,0,0,.55),inset 0 0 0 3px rgba(140,130,255,.35)}' +
-      '#pzB .pc::before{content:"";position:absolute;inset:18%;border-radius:50%;border:2px solid rgba(0,0,0,.12)}#pzB .pc.b::before{border-color:rgba(160,150,255,.25)}' +
-      '#pzB .pc.k{color:#ffcf3f;text-shadow:0 0 6px rgba(255,190,40,.9),0 1px 0 #7a4c00}';
-    document.head.appendChild(st);
-  }
   function boardHtml(b, o) {
-    o = o || {}; pzBoardCss();
-    var F = 'abcdefgh', h = '<div class="pzFr"><span class="orn tl">✦</span><span class="orn tr">✦</span><span class="orn bl">✦</span><span class="orn br">✦</span>', r, c;
-    h += '<div class="lb f">' + F.split('').map(function (x) { return '<span>' + x + '</span>'; }).join('') + '</div><div class="lb r">' + [8, 7, 6, 5, 4, 3, 2, 1].map(function (x) { return '<span>' + x + '</span>'; }).join('') + '</div>';
-    h += '<div id="pzB">';
+    o = o || {};
+    var h = '<div id="pzB" style="width:min(94vw,460px);aspect-ratio:1;margin:0 auto;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border:4px solid #8a4a1c;border-radius:6px;overflow:hidden">', r, c;
     for (r = 0; r < 8; r++) for (c = 0; c < 8; c++) {
-      var dark = (r + c) % 2 === 1, p = b[r][c], cls = 'sq ' + (dark ? 'd' : 'l');
-      if (o.sel && o.sel[0] === r && o.sel[1] === c) cls += ' sel';
-      h += '<div class="' + cls + '" data-r="' + r + '" data-c="' + c + '">';
-      if ((o.hl || []).some(function (x) { return x[0] === r && x[1] === c; })) h += '<i class="dot"></i>';
-      if (p) h += '<div class="pc ' + (p === 1 || p === 3 ? 'w' : 'b') + (p > 2 ? ' k' : '') + '">' + (p > 2 ? '♛' : '') + '</div>';
+      var dark = (r + c) % 2 === 1, p = b[r][c], sh = '', dot = '';
+      if (o.sel && o.sel[0] === r && o.sel[1] === c) sh = 'box-shadow:inset 0 0 0 3px #f5d92b;';
+      if ((o.hl || []).some(function (x) { return x[0] === r && x[1] === c; })) dot = '<i style="position:absolute;width:30%;height:30%;border-radius:50%;background:#34f5c5"></i>';
+      h += '<div data-r="' + r + '" data-c="' + c + '" style="position:relative;background:' + (dark ? '#7b2f13' : '#f3bb86') + ';' + sh + 'display:flex;align-items:center;justify-content:center">' + dot;
+      if (p) {
+        var w = p === 1 || p === 3;
+        h += '<div style="width:80%;height:80%;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;color:#f5b72b;border:2px solid ' + (w ? '#9a9a9a' : '#000') + ';background:' + (w ? 'radial-gradient(circle at 35% 28%,#fff,#bbb)' : 'radial-gradient(circle at 35% 28%,#888,#111)') + '">' + (p > 2 ? '♛' : '') + '</div>';
+      }
       h += '</div>';
     }
-    return h + '</div></div>';
+    return h + '</div>';
   }
   function bindBoard(fn) {
     var e = ov.querySelector('#pzB'); if (!e) return;
