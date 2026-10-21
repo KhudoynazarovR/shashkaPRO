@@ -1533,6 +1533,7 @@ document.head.appendChild(_as); }
 
 ;(function () {
   var DEF = ["hzSeek", "hzPromo", "hzDaily", "hzMkR", "hzLive"], HALF = { hzDaily: 1, hzMkR: 1 };
+  var GONE = { hzSeek: 1, hzPromo: 1, hzDaily: 1 }; // bosh sahifadan butunlay olib tashlangan (Raqib qidirish, Do‘st taklif, Kunning masala ustasi)
   var AC = [["nav:Turnir", "🏆 Turnir"], ["nav:Reyting", "📊 Reyting"], ["nav:Menyu", "☰ Menyu"], ["nav:Profil", "👤 Profil"], ["puz", "🧩 Masalalar"], ["arch", "📁 Arxiv"], ["ai", "🤖 Kompyuterga qarshi"], ["url", "🔗 Havola"]];
   var CL = [["#2b7cff", "Ko‘k"], ["#16a34a", "Yashil"], ["#e8590c", "To‘q sariq"], ["#c0392b", "Qizil"], ["#7c3aed", "Binafsha"], ["#0f766e", "Moviy-yashil"]];
   var init = ""; try { init = (window.Telegram && Telegram.WebApp && Telegram.WebApp.initData) || ""; } catch (e) {}
@@ -1545,7 +1546,7 @@ document.head.appendChild(_as); }
   var st = document.createElement("style");
   st.textContent =
     "#hzHero{position:relative!important;flex-direction:row!important;flex-wrap:wrap!important;gap:10px!important;align-content:flex-start}#hzRow2{display:contents!important}" +
-    "#hzHero>*,#hzRow2>*{margin:0!important;box-sizing:border-box}.hzOff{display:none!important}.hzDim{opacity:.35}" +
+    "#hzHero>*,#hzRow2>*{margin:0!important;box-sizing:border-box}.hzOff,html body #hzHero #hzPromo.hzOff{display:none!important}.hzDim{opacity:.35}" +
     ".hzCus{display:flex;align-items:center;gap:10px;padding:14px;border-radius:18px;cursor:pointer;color:#fff;font-weight:800;font-size:17px;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35)}.hzCus .cI{font-size:28px;flex:none}" +
     ".hzEd{outline:2px dashed rgba(255,255,255,.5);outline-offset:-2px}" +
     ".hzTb{position:absolute;display:flex;gap:4px;z-index:5;transform:translateX(-100%)}.hzTb i{font-style:normal;background:rgba(0,0,0,.7);color:#fff;border-radius:8px;padding:5px 9px;font-size:15px;line-height:1.2}" +
@@ -1597,7 +1598,7 @@ document.head.appendChild(_as); }
       e.style.setProperty("order", String(n + 1), "important");
       e.style.setProperty("flex", isHalf(c, id) ? "1 1 calc(50% - 5px)" : "1 1 100%", "important");
       e.style.setProperty("min-width", "0", "important");
-      var off = !!(c.h && c.h[id]);
+      var off = !!GONE[id] || !!(c.h && c.h[id]);
       e.classList.toggle("hzOff", off && !editing);
       e.classList.toggle("hzDim", off && editing);
       e.classList.toggle("hzEd", editing);
