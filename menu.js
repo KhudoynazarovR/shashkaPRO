@@ -648,6 +648,20 @@
     on('#pzBack', function () { curLv = 0; curFo = ''; bulk.on = false; bulk.sel = {}; list(); });
     on('#pzTop', pzTop);
     try { bulkUi(); } catch (e) {}
+    // masaladan qaytganda ro'yxat oxirgi ochilgan masala yonida tursin
+    try {
+      var _lid = window.__pzLast;
+      if (_lid) {
+        var _cs = ov.querySelectorAll('[data-i]'), _el = null;
+        for (var _q = 0; _q < _cs.length; _q++) { var _pp = S.list[Number(_cs[_q].getAttribute('data-i'))]; if (_pp && _pp.id === _lid) { _el = _cs[_q]; break; } }
+        if (_el) {
+          var _go = function () { _el.scrollIntoView({ block: 'center' }); };
+          _go(); requestAnimationFrame(_go); setTimeout(_go, 60);
+          _el.style.transition = 'box-shadow .3s'; _el.style.boxShadow = '0 0 0 3px #ffcf3f';
+          setTimeout(function () { _el.style.boxShadow = ''; }, 1500);
+        }
+      }
+    } catch (e) {}
     (function () {
       var cs = (S.settings || {})[curFo] || {}, inF = !curLv && curFo, lockOn = inF && cs.lock && !S.admin, blocked = false;
       function setDlg() {
@@ -766,6 +780,7 @@
     }).catch(function () { ov.innerHTML = head('🏆 TOP') + '<div style="padding:30px">Server bilan aloqa yo‘q</div>'; on('#pzBack', list); });
   }
   function play(p) {
+    window.__pzLast = p && p.id; /*PZBACKPOS*/
     p = Object.assign({}, p);
     var lines = (p.sols && p.sols.length) ? p.sols : [p.sol], alive = lines.map(function (_, i) { return i; });
     p.sol = lines[0];
