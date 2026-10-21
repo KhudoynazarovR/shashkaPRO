@@ -218,7 +218,7 @@ function full(t, uid, now) {
   const r = summary(t, uid, now), P = player(t, uid);
   r.now = now; r.link = link(t); r.admin = isAdmin(uid);
   r.chat = (t.chat || []).slice(-60).map(m => ({ id: m.id, name: m.name, text: m.text, at: m.at, me: m.uid === uid, host: m.uid === t.creatorUid }));
-  r.table = standings(t).map((x, i) => Object.assign({ place: i + 1, me: x.uid === uid }, x, { uid: undefined }));
+  r.table = standings(t).map((x, i) => Object.assign({ place: i + 1, me: x.uid === uid }, x, { uid: undefined, av: i < 3 && /^\d+$/.test(x.uid) ? x.uid : undefined }));
   r.awards = (t.awards || []).map(a => ({ place: a.place, amt: a.amt, name: (t.players[a.uid] || {}).name }));
   if (P) {
     r.me = { k: P.k, solved: P.solved, points: P.points, firsts: P.firsts, time: P.time, done: P.k >= t.q.length, started: !!P.started, res: P.res };

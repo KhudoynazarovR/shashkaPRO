@@ -46,7 +46,7 @@
     '.ptM{max-width:82%;align-self:flex-start;background:rgba(0,0,0,.35);border-radius:14px 14px 14px 4px;padding:6px 10px;font-size:15px;word-wrap:break-word}.ptM.me{align-self:flex-end;background:#18a77a;border-radius:14px 14px 4px 14px}.ptM b{display:block;font-size:12px;color:#ffe08a}.ptM small{display:block;text-align:right;font-size:10px;opacity:.6}' +
     '.ptQuick{display:flex;gap:6px;overflow-x:auto;padding:8px 0 2px}.ptQuick button{flex:none;border:0;border-radius:999px;padding:7px 12px;background:rgba(255,255,255,.12);color:#fff;font-size:14px}' +
     '.ptIn{display:flex;gap:8px;margin-top:8px}.ptIn input{flex:1;min-width:0;padding:11px 12px;border-radius:14px;border:1px solid #1f7a63;background:#04241f;color:#fff;font-size:16px;outline:none}.ptIn button{width:48px;border:0;border-radius:14px;background:#18a77a;color:#fff;font-size:18px}' +
-    '.ptPod{display:flex;align-items:flex-end;gap:8px;padding-top:6px}.ptPod>div{flex:1;min-width:0;text-align:center}.ptPod .st{border-radius:10px 10px 0 0;color:#1a1205;font-weight:900;font-size:24px;padding-top:6px}.ptPod .nm{font-weight:800;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ptPod .sc{font-size:13px;color:#c5f3e2}';
+    '.ptPd{margin-bottom:12px}.ptPod{display:flex;align-items:flex-end;gap:8px;padding-top:6px}.ptPod>div{flex:1;min-width:0;text-align:center}.ptPod .st{border-radius:10px 10px 0 0;color:#1a1205;font-weight:900;font-size:24px;padding-top:6px}.ptPod .nm{font-weight:800;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ptPod .sc{font-size:13px;color:#c5f3e2}';
 
   // mukofot taqsimoti (serverdagi bilan bir xil)
   var PZT = { 1: [100], 2: [60, 40], 3: [50, 30, 20], 4: [40, 28, 20, 12], 5: [35, 25, 18, 13, 9], 6: [30, 22, 17, 13, 10, 8], 7: [28, 20, 15, 12, 10, 8, 7], 8: [26, 19, 15, 12, 10, 8, 5, 5], 9: [24, 18, 14, 11, 10, 8, 6, 5, 4], 10: [22, 17, 13, 11, 9, 8, 7, 5, 4, 4] };
@@ -259,7 +259,7 @@
       h += finished(d);
     }
     var keep = document.getElementById('ptSheet');
-    ov.innerHTML = h; bindX(function () { closeChat(); var k = document.getElementById('ptSheet'); if (k) k.remove(); list(); });
+    ov.innerHTML = h; podFit(); bindX(function () { closeChat(); var k = document.getElementById('ptSheet'); if (k) k.remove(); list(); });
     if (keep) ov.appendChild(keep);
     var cb = ov.querySelector('#ptChatB'); if (cb) cb.onclick = openChat;
     chatBadge(); if (chatOpen) renderChat();
@@ -293,16 +293,29 @@
     var me = d.me; if (!me || !me.res || !me.res.length) return '';
     return '<div class="ptCard"><h3>📝 Sizning natijangiz</h3><table class="ptTb"><tr><th>#</th><th>Natija</th><th class="r">Vaqt</th></tr>' + me.res.map(function (r) { return '<tr><td>' + (r.k + 1) + '</td><td>' + (r.ok ? '✅ yechildi' : '❌') + '</td><td class="r">' + sec(r.ms) + '</td></tr>'; }).join('') + '</table></div>';
   }
+  function podFit() {
+    if (!document.getElementById('spPd2Css') && !document.getElementById('ptPdCss')) {
+      var c = document.createElement('style'); c.id = 'ptPdCss';
+      c.textContent = '.spPd{position:relative;width:100%;aspect-ratio:1149/1369;border-radius:18px;overflow:hidden;margin-bottom:12px;background:#0b0920;font-family:Roboto,system-ui,sans-serif;color:#fff}.spPd img.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.spPd .tt{position:absolute;left:12%;right:12%;top:20.1%;transform:translateY(-50%);text-align:center;font:900 2.3em Georgia,serif;color:#ffe08a;text-shadow:0 2px 0 #7a4c00,0 0 12px rgba(255,190,60,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.spPd .sl{position:absolute;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;text-align:center}.spPd .av{border-radius:50%;overflow:hidden;background:#1f4fd6;border:.18em solid #ffd76a;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;box-sizing:border-box}.spPd .av img{width:100%;height:100%;object-fit:cover}.spPd .nm{margin-top:.35em;max-width:100%;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 2px #000}.spPd .sc{font-weight:900;margin-top:.15em;text-shadow:0 1px 2px #000}.spPd .pz{display:inline-block;font-size:.9em;font-weight:900;color:#1a1205;background:#f5c542;border-radius:999px;padding:.05em .55em;white-space:nowrap}';
+      document.head.appendChild(c);
+    }
+    var el = ov.querySelector('.ptPd'); if (!el) return;
+    function f() { if (el.clientWidth) el.style.fontSize = (el.clientWidth / 40) + 'px'; }
+    f(); setTimeout(f, 60);
+  }
   function finished(d) {
     var h = '', tb = d.table || [];
     if (d.cancelled) return '<div class="ptCard">Turnir bekor qilingan</div>';
     if (tb.length) {
-      var C = ['#c9d1dc', '#f5c542', '#d58a4e'], H = [70, 96, 54], O = [1, 0, 2];
-      h += '<div class="ptCard"><h3>🏆 G‘oliblar</h3><div class="ptPod">' + O.map(function (i) {
-        var x = tb[i]; if (!x) return '<div></div>';
-        var a = (d.awards || []).filter(function (z) { return z.place === i + 1; })[0];
-        return '<div><div style="font-size:28px">' + ['🥇', '🥈', '🥉'][i] + '</div><div class="nm">' + esc(x.name) + '</div><div class="sc">✅ ' + x.solved + ' · ' + sec(x.time) + (a && a.amt ? '<br><b style="color:#ffcf3f">+' + a.amt + ' 🪙</b>' : '') + '</div><div class="st" style="height:' + H[i] + 'px;background:' + C[i] + '">' + (i + 1) + '</div></div>';
-      }).join('') + '</div></div>';
+      // shohsupa — oddiy turnirdagi kabi (/podium.jpg ustiga avatar, ism, natija, mukofot)
+      var SL = [{ x: 50.0, y: 35.6, w: 18, d: 10.0, f: 1.25 }, { x: 23.3, y: 43.4, w: 15, d: 7.4, f: 1.05 }, { x: 76.8, y: 44.6, w: 14.5, d: 7.4, f: 1.05 }];
+      h += '<div class="spPd ptPd"><img class="bg" src="/podium.jpg" alt=""><div class="tt">' + esc(d.name) + '</div>';
+      for (var i = 0; i < 3 && i < tb.length; i++) {
+        var x = tb[i], s = SL[i], a = (d.awards || []).filter(function (z) { return z.place === i + 1; })[0], ini = esc(String(x.name || '?').charAt(0).toUpperCase()).replace(/'/g, '');
+        var av = x.av ? '<img src="/api/av/' + encodeURIComponent(x.av) + '" alt="" onerror="this.parentNode.textContent=\'' + ini + '\'">' : ini;
+        h += '<div class="sl" style="left:' + s.x + '%;top:' + s.y + '%;width:' + s.w + '%;font-size:' + s.f + 'em"><div class="av" style="width:' + (s.d / s.w * 100) + '%;aspect-ratio:1;font-size:1.6em">' + av + '</div><div class="nm">' + esc(x.name) + '</div><div class="sc" style="white-space:nowrap;font-size:.8em">✅ ' + x.solved + ' · ' + sec(x.time) + '</div>' + (a && a.amt ? '<div class="sc"><span class="pz">+' + a.amt + ' 🪙</span></div>' : '') + '</div>';
+      }
+      h += '</div>';
     }
     var tab = st.tab === 'stats' ? 'stats' : 'live';
     h += '<div class="ptChips" style="margin-bottom:10px"><button data-tab="live" class="' + (tab === 'live' ? 'on' : '') + '">🏅 Jadval</button><button data-tab="stats" class="' + (tab === 'stats' ? 'on' : '') + '">📊 Masalalar</button></div>';
