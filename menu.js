@@ -782,7 +782,7 @@
   function play(p) {
     window.__pzLast = p && p.id; /*PZBACKPOS*/
     p = Object.assign({}, p);
-    var lines = (p.sols && p.sols.length) ? p.sols : [p.sol], alive = lines.map(function (_, i) { return i; });
+    var lines = ((p.sols && p.sols.length) ? p.sols : [p.sol]).map(function (l) { return l.slice(); }), alive = lines.map(function (_, i) { return i; });
     p.sol = lines[0];
     var g = { b: copy(p.board), side: p.side, forced: null }, idx = 0, sel = null, msg = '', done = false, busy = false;
     var _fs = (S.settings || {})[foOf(p)] || {}, tLim = _fs.time || 0, t0 = Date.now(), errs = 0, tOut = false, fin = -1, myT = window.__pzTok = (window.__pzTok || 0) + 1;
@@ -799,6 +799,16 @@
     function pick(st) {
       var m = null, keep = [], want = [st.f[0], st.f[1], st.t[0], st.t[1]];
       alive.forEach(function (i) { var x = lines[i][idx]; if (same(x, want)) { keep.push(i); m = x; } });
+      // dama urganda boshqa (lekin teng kuchli) katakka tushsa ham qabul qilamiz: o'sha donani urgan va yechimning davomi ham to'g'ri bo'lsa /*ALTLAND*/
+      if (!keep.length && st.x) alive.forEach(function (i) {
+        if (keep.length) return;
+        var x = lines[i][idx]; if (!x || x[0] !== st.f[0] || x[1] !== st.f[1]) return;
+        var es = findStep(legal(g.b, g.side, g.forced), [x[0], x[1]], [x[2], x[3]]);
+        if (!es || !es.x || es.x[0] !== st.x[0] || es.x[1] !== st.x[1]) return;
+        var gg = adv(g, st), ok = true;
+        for (var k = idx + 1; k < lines[i].length; k++) { var y = lines[i][k], s2 = findStep(legal(gg.b, gg.side, gg.forced), [y[0], y[1]], [y[2], y[3]]); if (!s2) { ok = false; break; } gg = adv(gg, s2); }
+        if (ok) { lines[i][idx] = want; keep.push(i); m = want; }
+      });
       if (keep.length) {
         alive = keep;
         var fin = keep.filter(function (i) { return lines[i].length === idx + 1; });

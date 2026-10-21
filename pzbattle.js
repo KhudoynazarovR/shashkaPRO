@@ -251,7 +251,8 @@ function handle(req, res, p, ctx) {
       if (!c || c.g.side !== c.p.side) return send(res, 200, { bad: true });
       const st = E.findStep(E.legal(c.g.b, c.g.side, c.g.forced), w);
       if (!st) return send(res, 200, { bad: true });
-      const keep = c.alive.filter(i => E.same(c.lines[i][c.idx], w));
+      let keep = c.alive.filter(i => E.same(c.lines[i][c.idx], w));
+      if (!keep.length) keep = E.altLanding(c, st, w);
       if (!keep.length) return wrong();
       c.alive = keep; c.g = E.adv(c.g, st); c.idx++;
       const opp = [], done = () => c.alive.some(i => c.lines[i].length === c.idx);

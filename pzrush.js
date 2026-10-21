@@ -61,6 +61,20 @@ function adv(g, s) {
 const findStep = (lg, w) => lg.find(s => s.f[0] === w[0] && s.f[1] === w[1] && s.t[0] === w[2] && s.t[1] === w[3]) || null;
 const same = (x, y) => x && y && x[0] === y[0] && x[1] === y[1] && x[2] === y[2] && x[3] === y[3];
 
+// Dama urishda boshqa katakka tushdi: o'sha donani urgan va yechim davomi ham qonuniy bo'lsa — qabul (c.lines nusxalanadi)
+function altLanding(c, st, w) {
+  if (!st.x) return [];
+  const out = [];
+  for (const i of c.alive) {
+    const x = c.lines[i][c.idx]; if (!x || x[0] !== st.f[0] || x[1] !== st.f[1]) continue;
+    const es = findStep(legal(c.g.b, c.g.side, c.g.forced), x);
+    if (!es || !es.x || es.x[0] !== st.x[0] || es.x[1] !== st.x[1]) continue;
+    let gg = adv(c.g, st), ok = true;
+    for (let k = c.idx + 1; k < c.lines[i].length; k++) { const s2 = findStep(legal(gg.b, gg.side, gg.forced), c.lines[i][k]); if (!s2) { ok = false; break; } gg = adv(gg, s2); }
+    if (ok) { c.lines[i] = c.lines[i].slice(); c.lines[i][c.idx] = w.slice(); out.push(i); }
+  }
+  return out;
+}
 // ---- masalalar banki: faqat yechimi qoidalarga to'g'ri keladiganlar, osondan qiyinga
 let BANK = null, BANK_N = -1;
 function linesOf(p) { return (Array.isArray(p.sols) && p.sols.length ? p.sols : [p.sol]).filter(l => Array.isArray(l) && l.length); }
@@ -187,7 +201,8 @@ function handle(req, res, p, ctx) {
       if (!c || c.g.side !== c.p.side) return send(res, 200, { bad: true });
       const st = findStep(legal(c.g.b, c.g.side, c.g.forced), w);
       if (!st) return send(res, 200, { bad: true });
-      const keep = c.alive.filter(i => same(c.lines[i][c.idx], w));
+      let keep = c.alive.filter(i => same(c.lines[i][c.idx], w));
+      if (!keep.length) keep = altLanding(c, st, w);
       if (!keep.length) {
         const sol = c.lines[c.alive[0]].slice(c.idx);
         s.err++;
@@ -221,4 +236,4 @@ function handle(req, res, p, ctx) {
   return true;
 }
 
-module.exports = { handle, _t: { bank, makeQueue, validLine, legal, adv, findStep, same, copy, linesOf, pub } };
+module.exports = { handle, _t: { bank, makeQueue, validLine, legal, adv, findStep, same, copy, linesOf, pub, altLanding } };
