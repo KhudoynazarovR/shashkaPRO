@@ -40,7 +40,7 @@
     '.ptCalc{margin-top:10px;padding:10px;border-radius:14px;background:rgba(255,207,63,.08);border:1px solid rgba(255,207,63,.35)}.ptCalcH{font-weight:800;margin-bottom:8px;color:#ffe08a}.ptCalcG{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px}.ptCalcG>div{background:rgba(0,0,0,.3);border-radius:10px;padding:6px 8px;display:flex;flex-direction:column}.ptCalcG span{font-size:13px;color:#c5f3e2}.ptCalcG b{font-size:17px;color:#ffcf3f}.ptCalcG small{font-size:11px;opacity:.6}.ptCalcN{font-size:12px;color:#c5f3e2;margin-top:8px;line-height:1.4}' +
     '.ptShare{display:flex;gap:8px;margin:0 0 12px}.ptShare button{flex:1;border:0;border-radius:14px;padding:12px 8px;background:rgba(255,255,255,.12);color:#fff;font-size:15px;font-weight:800}' +
     '.ptChatB{position:relative}.ptChatB i{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:#e04a4a;color:#fff;font-size:11px;font-style:normal;font-weight:800;line-height:18px;padding:0 4px;box-sizing:border-box}' +
-    '#ptSheet{position:fixed;left:0;right:0;bottom:0;height:70%;z-index:5;display:none;flex-direction:column;background:#06322a;border-radius:20px 20px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.5);padding:12px 12px calc(12px + env(safe-area-inset-bottom,0px));box-sizing:border-box}' +
+    '#ptSheet{position:fixed;left:0;right:0;bottom:0;height:70%;z-index:2147482700;color:#fff;font-family:Roboto,system-ui,sans-serif;display:none;flex-direction:column;background:#06322a;border-radius:20px 20px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.5);padding:12px 12px calc(12px + env(safe-area-inset-bottom,0px));box-sizing:border-box}' +
     '.ptShH{display:flex;align-items:center;margin-bottom:8px}.ptShH b{flex:1;font-size:18px}.ptShH button{border:0;background:none;color:#c5f3e2;font-size:22px}' +
     '#ptMsgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;min-height:0}' +
     '.ptM{max-width:82%;align-self:flex-start;background:rgba(0,0,0,.35);border-radius:14px 14px 14px 4px;padding:6px 10px;font-size:15px;word-wrap:break-word}.ptM.me{align-self:flex-end;background:#18a77a;border-radius:14px 14px 4px 14px}.ptM b{display:block;font-size:12px;color:#ffe08a}.ptM small{display:block;text-align:right;font-size:10px;opacity:.6}' +
@@ -63,7 +63,7 @@
   var ov = null, view = 'list', L = null, curId = null, st = null, pollT = null, tickT = null, form = null, opts = {};
   function css() { if (!document.getElementById('ptCss')) { var s = document.createElement('style'); s.id = 'ptCss'; s.textContent = CSS; document.head.appendChild(s); } }
   function stop() { if (pollT) clearInterval(pollT); if (tickT) clearInterval(tickT); pollT = tickT = null; }
-  function close() { stop(); if (ov) ov.remove(); ov = null; }
+  function close() { stop(); if (ov) ov.remove(); ov = null; chatOpen = false; var k = document.getElementById('ptSheet'); if (k) k.remove(); }
   function top(t, x) { return '<div class="ptTop"><button class="ptX" id="ptX">' + (x || '‹') + '</button><div class="ptT">' + t + '</div>' + (view === 't' ? '<button class="ptX ptChatB" id="ptChatB" aria-label="Chat">💬<i id="ptChatN"></i></button>' : '') + '</div>'; }
   // ---------- chat
   var chatOpen = false;
@@ -93,7 +93,7 @@
       sh.innerHTML = '<div class="ptShH"><b>💬 Turnir chati</b><button id="ptShX">✕</button></div><div id="ptMsgs"></div>' +
         '<div class="ptQuick">' + ['👍', '🔥', '😅', '🎉', 'Omad! 🍀', 'Zo‘r masala!'].map(function (q) { return '<button data-q="' + q + '">' + q + '</button>'; }).join('') + '</div>' +
         '<div class="ptIn"><input id="ptTxt" maxlength="200" placeholder="Xabar yozing…"><button id="ptSend">➤</button></div>';
-      ov.appendChild(sh);
+      document.body.appendChild(sh); // sahifa qayta chizilganda yozish maydoni fokusni yo'qotmasin
       var send = function (t) { t = String(t || '').trim(); if (!t) return; api('/api/pzt/chat', { id: curId, text: t }).then(function (d) { if (d && !d.error) { st.d.chat = d.chat; renderChat(); } }); };
       sh.querySelector('#ptShX').onclick = closeChat;
       sh.querySelector('#ptSend').onclick = function () { var i = sh.querySelector('#ptTxt'); send(i.value); i.value = ''; };
@@ -258,11 +258,9 @@
     } else {
       h += finished(d);
     }
-    var keep = document.getElementById('ptSheet');
     ov.innerHTML = h; podFit();
     var _sh = ov.querySelector('#ptShr'); if (_sh) _sh.onclick = function () { var m = (d.table || []).filter(function (x) { return x.me; })[0]; if (!m) return; var a = (d.awards || []).filter(function (z) { return z.place === m.place; })[0]; window.spShareCard({ theme: 'pzt', title: '🧩 ' + d.name, big: m.place <= 3 ? ['🥇', '🥈', '🥉'][m.place - 1] : m.place + '-o‘rin', unit: m.place <= 3 ? m.place + '-o‘rin · ' + (d.table || []).length + ' ishtirokchi' : (d.table || []).length + ' ishtirokchi', badge: a && a.amt ? '+' + a.amt + ' tanga' : '', sub: '✅ ' + m.solved + '/' + d.count + ' masala · ⏱ ' + sec(m.time), cap: '🧩 «' + d.name + '» masala turnirida ' + m.place + '-o‘rin oldim!' }); };
     bindX(function () { closeChat(); var k = document.getElementById('ptSheet'); if (k) k.remove(); list(); });
-    if (keep) ov.appendChild(keep);
     var cb = ov.querySelector('#ptChatB'); if (cb) cb.onclick = openChat;
     chatBadge(); if (chatOpen) renderChat();
     var b;

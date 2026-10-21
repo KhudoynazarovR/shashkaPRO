@@ -1297,7 +1297,7 @@ window.spShop = open;
   function ld(src, cb) { var s = document.createElement('script'); s.src = src; s.onload = cb; document.head.appendChild(s); }
   setTimeout(function () {
     var go = function () { window.spPzt({ open: id }); };
-    var need = function () { if (window.spPzt) go(); else ld('/pztview.js?v=7', go); };
+    var need = function () { if (window.spPzt) go(); else ld('/pztview.js?v=8', go); };
     if (window.spPzRules) need(); else ld('/rushview.js?v=4', need);
   }, 1200);
 })();
