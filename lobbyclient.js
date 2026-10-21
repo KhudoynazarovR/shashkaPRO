@@ -2836,3 +2836,11 @@ document.head.appendChild(_as); }
     });
   }, 250);
 })();
+
+/* CARDTHEME — turnir kartalari: qora fon (ko'zga yengil) */
+;(function(){
+  if (document.getElementById('cardThemeCss')) return;
+  var s = document.createElement('style'); s.id = 'cardThemeCss';
+  s.textContent = "html body #lbPanel #lbTs .card.lbtk{background:#1c1c22!important;border:1px solid #2e2e38!important;box-shadow:0 3px 0 #000!important;color:#c9c9d2!important}html body #lbPanel #lbTs .card.lbtk>div:first-child b{color:#ffffff!important}html body #lbPanel #lbTs .card.lbtk .muted{color:#b4b4bf!important}html body #lbPanel #lbTs .card.lbtk .tkd{color:#c9c9d2!important}html body #lbPanel #lbTs .card.lbtk .tkd b{color:#ffffff!important}html body #lbPanel #lbTs .card.lbtk .tkb{background:#2c2c35!important;color:#b4b4bf!important}html body #lbPanel #lbTs .card.lbtk .tkb_running{background:#143d2a!important;color:#2ecc71!important}html body #lbPanel #lbTs .card.lbtk .tkb_reg{background:#1f2a4d!important;color:#8fb0ff!important}html body #lbPanel #lbTs .card.lbtk [data-a=\"tlink\"]{background:#2c2c35!important;color:#ffffff!important;border:0!important;box-shadow:0 2px 0 #000!important}html body #lbPanel #lbTs .card.lbtk .tvCE{background:#34343f!important;color:#ffffff!important;border:0!important;box-shadow:0 3px 0 #000!important}html body #lbPanel #lbTs .card.lbtk .tbody{border-color:#2c2c35!important}html body #lbPanel #lbTs .card.lbtk th{background:#24242c!important;color:#9a9aa6!important}html body #lbPanel #lbTs .card.lbtk td{border-top-color:#2c2c35!important;color:#c9c9d2!important}html body #lbPanel #lbTs .card.lbtk .tkCd small{color:#b4b4bf!important}html body #lbPanel #lbTs .card.lbtk .tkCd b{color:#ffffff!important}";
+  document.head.appendChild(s);
+})();
