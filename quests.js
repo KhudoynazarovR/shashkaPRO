@@ -16,7 +16,8 @@ const POOL = [
   { k: 'share', t: 'Natijangizni ulashing', n: 1, r: 20, ic: '📸' },
 ];
 // Har kuni birinchi vazifa — Petrova kitobidan navbatdagi masala (oyna tepasida doska bilan ko'rsatiladi)
-const FIXED = { k: 'petrova', t: 'Petrova masalasini yeching', n: 1, r: 40, ic: '📗' };
+const DAY_PZ = 5; // kuniga Petrova kitobidan nechta masala
+const FIXED = { k: 'petrova', t: 'Petrova kitobidan 5 ta masala yeching', n: DAY_PZ, r: 50, ic: '📗' };
 const BONUS = 50;                                   // uchala vazifa bajarilsa sandiq
 const STREAK = [20, 25, 30, 35, 40, 50, 150];       // 1..7-kun kirish mukofoti (7-kundan keyin qaytadan)
 
@@ -38,14 +39,26 @@ function todays(d) {
 }
 
 function qlist(d) { return [FIXED].concat(todays(d).slice(0, 2).map(i => POOL[i])); }
+function petrovaAll() { return ((store && store.db.puzzles) || []).filter(x => /^Petrova/.test(x.folder || '')).sort((a, b) => (a.no || 0) - (b.no || 0)); }
+// Bugungi 5 ta masala: kun boshida kitob tartibida keyingi yechilmaganlar (kun davomida o'zgarmaydi)
+function daySet(u) {
+  const q = qstate(u), all = petrovaAll(); if (!all.length) return [];
+  const ids = new Set(all.map(x => x.id));
+  if (!Array.isArray(q.pzs) || !q.pzs.length || q.pzs.some(id => !ids.has(id))) {
+    const sv = new Set(u.solved || []);
+    let pick = all.filter(x => !sv.has(x.id)).slice(0, DAY_PZ);
+    if (pick.length < DAY_PZ) { const off = Math.floor(Date.now() / 864e5) * DAY_PZ; for (let i = 0; pick.length < Math.min(DAY_PZ, all.length); i++) { const x = all[(off + i) % all.length]; if (!pick.includes(x)) pick.push(x); } }
+    q.pzs = pick.map(x => x.id);
+  }
+  return q.pzs;
+}
 function nextPetrova(u) {
-  const all = ((store && store.db.puzzles) || []).filter(x => /^Petrova/.test(x.folder || '')).sort((a, b) => (a.no || 0) - (b.no || 0));
-  if (!all.length) return null;
-  const sv = new Set(u.solved || []), q = u.qd || {};
-  // bugun yechilgan bo'lsa — o'sha masalani "yechildi" deb ko'rsatamiz
-  let p = q.pz && all.find(x => x.id === q.pz && sv.has(x.id));
-  if (!p) p = all.find(x => !sv.has(x.id)) || all[Math.floor(Date.now() / 864e5) % all.length];
-  return { id: p.id, board: p.board, side: p.side, no: p.no || 0, title: p.title || '', level: p.level || 1, total: all.length, done: sv.has(p.id), solvedN: all.filter(x => sv.has(x.id)).length };
+  const all = petrovaAll(); if (!all.length) return null;
+  const set = daySet(u), q = qstate(u), sv = new Set(u.solved || []), dn = new Set(q.pzd || []);
+  const byId = id => all.find(x => x.id === id);
+  const left = set.filter(id => !dn.has(id) && !sv.has(id));
+  const p = byId(left[0] || set[set.length - 1]);
+  return { id: p.id, board: p.board, side: p.side, no: p.no || 0, title: p.title || '', level: p.level || 1, total: all.length, set: set, setDone: set.filter(id => dn.has(id) || sv.has(id)).length, done: !left.length, solvedN: all.filter(x => sv.has(x.id)).length };
 }
 function users() { return store ? store.users() : {}; }
 function qstate(u) {
@@ -58,8 +71,11 @@ function bump(uid, kind, n, pzId) {
     if (!store) store = require('./store');
     const u = users()[String(uid)]; if (!u) return;
     const q = qstate(u);
+    if (kind === 'petrova') { // faqat bugungi 5 talikdagi masala hisoblanadi
+      const set = daySet(u); if (!set.includes(pzId)) { store.save(); return; }
+      q.pzd = q.pzd || []; if (q.pzd.includes(pzId)) return; q.pzd.push(pzId);
+    }
     q.p[kind] = (q.p[kind] || 0) + (n || 1);
-    if (pzId && kind === 'petrova') q.pz = pzId;
     store.save();
   } catch (e) { console.log('[quests]', e.message); }
 }

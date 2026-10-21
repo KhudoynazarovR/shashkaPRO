@@ -84,14 +84,14 @@
   }
   function banner() {
     var nm = ''; try { nm = tg.initDataUnsafe.user.first_name || ''; } catch (e) {}
-    var pz = S && S.pz, q0 = S && S.quests && S.quests[0], solved = q0 && (q0.done || q0.claimed);
-    var h = '<div class="ban">' + board(pz) + '<div class="gt"><small class="hi">Salom' + (nm ? ', ' + esc(nm) : '') + '! 👋</small><b>📗 Kunning masalasi</b>';
+    var pz = S && S.pz, q0 = S && S.quests && S.quests[0], solved = pz && pz.done;
+    var h = '<div class="ban">' + board(pz) + '<div class="gt"><small class="hi">Salom' + (nm ? ', ' + esc(nm) : '') + '! 👋</small><b>📗 Kunning masalalari</b>';
     if (!S) h += '<small>⏳ Yuklanmoqda…</small>';
     else if (!pz) h += '<small>Petrova papkasi topilmadi</small>';
     else {
       h += '<small class="mt">Petrova · №' + pz.no + ' · ' + (pz.side === 'b' ? '⚫ Qoralar' : '⚪ Oqlar') + ' yuradi</small>';
-      h += solved ? '<button class="pzb dn" disabled>✅ Bugun yechildi</button>' : '<button class="pzb" id="dqPz">▶ Yechish · +' + (q0 ? q0.r : 40) + ' 🪙</button>';
-      h += '<small class="mt">Kitobdan: ' + pz.solvedN + ' / ' + pz.total + '</small>';
+      h += solved ? '<button class="pzb dn" disabled>✅ Bugungi ' + pz.set.length + ' ta yechildi</button>' : '<button class="pzb" id="dqPz">▶ Yechish · ' + pz.setDone + '/' + pz.set.length + '</button>';
+      h += '<small class="mt">Bugun ' + (pz.set ? pz.set.length : 5) + ' ta masala · +' + (q0 ? q0.r : 50) + ' 🪙 · kitobdan ' + pz.solvedN + '/' + pz.total + '</small>';
     }
     return h + '</div><button class="x" id="dqX">✕</button></div>';
   }
@@ -127,7 +127,7 @@
     ov.innerHTML = h;
     ov.querySelector('#dqX').onclick = hide;
     var e;
-    if ((e = ov.querySelector('#dqPz'))) e.onclick = function () { var id = S.pz && S.pz.id; hide(); if (window.spPuzzleOpenId && id) window.spPuzzleOpenId(id); else if (window.mnA) window.mnA('@puz'); };
+    if ((e = ov.querySelector('#dqPz'))) e.onclick = function () { var id = S.pz && S.pz.id; hide(); if (window.spPuzzleDaily && id) window.spPuzzleDaily(S.pz.set, id); else if (window.mnA) window.mnA('@puz'); };
     if ((e = ov.querySelector('#dqS'))) e.onclick = function () { act('/api/quests/streak', {}); };
     if ((e = ov.querySelector('#dqB'))) e.onclick = function () { act('/api/quests/claim', { bonus: 1 }); };
     if ((e = ov.querySelector('#dqShare'))) e.onclick = function () { window.spShareCard({ theme: 'streak', title: 'KETMA-KET KIRISH', big: String(S.streak.n), unit: 'kun ketma-ket 🔥', sub: 'Har kuni shashka o‘ynayman!', cap: '🔥 ShashkaPRO’da ' + S.streak.n + ' kun ketma-ket o‘ynayapman!' }); };
@@ -137,7 +137,7 @@
   function goTo(q) {
     hide();
     var t = q.t;
-    if (/Petrova/.test(t) && S && S.pz && window.spPuzzleOpenId) { window.spPuzzleOpenId(S.pz.id); return; }
+    if (/Petrova/.test(t) && S && S.pz && window.spPuzzleDaily) { if (!S.pz.done) window.spPuzzleDaily(S.pz.set, S.pz.id); return; }
     if (/masala|Rush|jang/i.test(t)) { if (window.mnA) window.mnA('@puz'); return; }
     if (/Bot/i.test(t)) { var b = document.getElementById('nvBotRow'); if (b) { b.click(); return; } }
     if (/ulash/i.test(t)) { try { tg.showAlert('O‘yin, Rush, masala jangi yoki turnirdan keyin “📸 Ulashish” tugmasini bosing'); } catch (e) {} return; }
