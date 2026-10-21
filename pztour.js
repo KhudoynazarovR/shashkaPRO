@@ -1,5 +1,5 @@
 // 🧩 Masala turniri: hamma bir vaqtda, bir xil masalalar, quiz kabi. Javob va vaqtni server o'lchaydi.
-// Ochko: yechilgan masala = 2, masalani birinchi yechgan = +1 bonus. Teng bo'lsa — umumiy vaqt kam bo'lgan yuqorida.
+// O'rin: avval yechilgan masalalar soni, teng bo'lsa — umumiy vaqt kam bo'lgan yuqorida, keyin ⚡ birinchi yechganlar soni.
 'use strict';
 const E = require('./pzrush.js')._t;
 const https = require('https');
@@ -105,7 +105,7 @@ function tickPlayer(t, uid, now) {
 const wtok = (t, uid) => crypto.createHash('sha1').update(t.id + ':' + uid).digest('hex').slice(0, 10);
 function standings(t) {
   return Object.entries(t.players).map(([uid, P]) => ({ uid, w: wtok(t, uid), name: P.name, solved: P.solved, points: P.points, firsts: P.firsts, time: P.time, k: P.k, done: P.k >= t.q.length, out: !!P.out }))
-    .sort((a, b) => b.points - a.points || a.time - b.time || a.name.localeCompare(b.name));
+    .sort((a, b) => b.solved - a.solved || a.time - b.time || b.firsts - a.firsts || a.name.localeCompare(b.name));
 }
 function step(now) {
   for (const t of db()) {
@@ -258,7 +258,7 @@ function handle(req, res, p, ctx) {
       const name = clean(j.name).slice(0, 40) || 'Masala turniri';
       const fs = new Set(folderStats().map(f => f.name)), folders = (Array.isArray(j.folders) ? j.folders : []).map(String).filter(f => fs.has(f)).slice(0, 20);
       if (!folders.length) return send(res, 200, { error: 'Kamida bitta papka tanlang' });
-      const count = COUNTS.includes(+j.count) ? +j.count : 10, per = PER.includes(+j.per) ? +j.per : 0, prize = PRIZES.includes(+j.prize) ? +j.prize : 0, places = Math.max(1, Math.min(10, Math.floor(+j.places) || 3));
+      const count = COUNTS.includes(+j.count) ? +j.count : 10, per = PER.includes(+j.per) ? +j.per : 0, prize = adm ? Math.max(0, Math.min(10000000, Math.floor(+j.prize) || 0)) : (PRIZES.includes(+j.prize) ? +j.prize : 0), places = Math.max(1, Math.min(10, Math.floor(+j.places) || 3));
       const startIn = Math.max(1, Math.min(24 * 60, Math.floor(+j.startIn) || 10)), maxErr = MAXERR.includes(+j.maxErr) ? +j.maxErr : 0;
       const avail = folderStats().filter(f => folders.includes(f.name)).reduce((s, f) => s + f.n, 0);
       if (avail < 5) return send(res, 200, { error: 'Tanlangan papkalarda masala kam (' + avail + ')' });
@@ -299,6 +299,15 @@ function handle(req, res, p, ctx) {
       save(); return send(res, 200, { ok: true });
     }
     if (p === '/api/pzt/state') return send(res, 200, full(t, uid, now));
+    if (p === '/api/pzt/review') { // tugagan masalani ko'rish: holat + to'g'ri yechim
+      const k = Math.floor(+j.k), me = player(t, uid), len = t.q.length;
+      if (!(k >= 0 && k < len)) return send(res, 200, { error: 'Masala topilmadi' });
+      if (t.status !== 'finished' && !(me && me.k >= len)) return send(res, 200, { error: 'Masalalarni o‘zingiz tugatganingizdan keyin ko‘rasiz' });
+      const pz = puzzle(t.q[k]); if (!pz) return send(res, 200, { error: 'Masala o‘chirilgan' });
+      const line = E.linesOf(pz).filter(l => E.validLine(pz, l))[0] || [];
+      const r = me && me.res.filter(x => x.k === k)[0];
+      return send(res, 200, Object.assign(E.pub(pz), { k, count: len, sol: line, res: r ? { ok: r.ok, ms: r.ms } : null, first: t.firsts[k] ? (t.players[t.firsts[k]] || {}).name || '' : '' }));
+    }
     if (p === '/api/pzt/watch') { // boshqa o'yinchi qaysi masalani qanday yechayotganini kuzatish
       const tu = Object.keys(t.players).find(x => wtok(t, x) === String(j.w || '')), Q = tu && t.players[tu];
       if (!Q) return send(res, 200, { error: 'O‘yinchi topilmadi' });

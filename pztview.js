@@ -66,6 +66,8 @@
     '#ptW .wInfo{text-align:center;font-weight:700;margin:6px 0 10px;font-size:15px}#ptW .wLock{text-align:center;padding:30px 14px;font-size:17px;line-height:1.5}' +
     '#ptW .wRes{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}#ptW .wRes i{font-style:normal;width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;background:rgba(255,255,255,.1)}#ptW .wRes i.o{background:#1f8a4c}#ptW .wRes i.x{background:#a83232}#ptW .wRes i.c{outline:2px solid #ffcf3f}' +
     '#ptW .wNav{display:flex;gap:8px;margin-top:10px}#ptW .wNav button{flex:1;border:0;border-radius:12px;padding:11px;background:rgba(0,0,0,.35);color:#fff;font-size:15px;font-weight:700}' +
+    '.ptMy{gap:6px!important}.ptMy button{width:38px;height:38px;border:0;border-radius:9px;background:rgba(255,255,255,.12);color:#fff;font-size:15px;font-weight:800;padding:0}.ptMy button.o{background:#1f8a4c}.ptMy button.x{background:#a83232}' +
+    '#ptW .rvMsg{text-align:center;font-weight:800;font-size:16px;min-height:46px;margin:6px 0 10px;display:flex;flex-direction:column;justify-content:center}' +
     '.ptTb tr[data-w]{cursor:pointer}.ptTb tr[data-w] td:nth-child(2):after{content:" 👁";opacity:.55;font-size:13px}.ptWn{float:right;font-size:13px;font-weight:600;color:#9fe3c9}' +
     '.ptTabs{display:flex;gap:6px;margin-bottom:12px;background:rgba(0,0,0,.3);padding:4px;border-radius:14px}.ptTabs button{flex:1;border:0;border-radius:11px;padding:10px;background:transparent;color:#c5f3e2;font-size:16px;font-weight:800}.ptTabs button.on{background:#18a77a;color:#fff}';
   function css() { if (!document.getElementById('ptCss')) { var s = document.createElement('style'); s.id = 'ptCss'; s.textContent = CSS; document.head.appendChild(s); } }
@@ -163,7 +165,7 @@
     h += '<div class="ptField"><label>⏱ Har bir masalaga vaqt</label>' + chips('per', L.pers || [0, 30, 60, 120, 180, 300], function (v) { return v ? (v < 60 ? v + ' s' : v / 60 + ' daq') : 'Chegarasiz'; }) + '</div>';
     h += '<div class="ptField"><label>❌ Xatolar chegarasi</label><button class="ptFold' + (form.maxErr ? ' on' : '') + '" id="ptErrSw"><i>' + (form.maxErr ? '✓' : '') + '</i><span>' + (form.maxErr ? 'Yoqilgan — ' + form.maxErr + ' ta xatoda chiqib ketadi' : 'O‘chirilgan — xatolar cheklanmaydi') + '</span></button>' + (form.maxErr ? chips('maxErr', (L.maxErrs || [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]).filter(function (v) { return v; }), function (v) { return v; }) : '') + '</div>';
     h += '<div class="ptField"><label>🕐 Boshlanishi</label>' + chips('startIn', [2, 5, 10, 15, 30, 60, 120], function (v) { return v < 60 ? v + ' daq' : v / 60 + ' soat'; }) + '</div>';
-    h += '<div class="ptField"><label>🪙 Mukofot fondi' + (L.admin ? ' (admin: bepul)' : ' (o‘zingiz to‘laysiz)') + '</label>' + chips('prize', L.prizes || [0, 100, 200, 300, 500, 1000], function (v) { return v ? v : 'Yo‘q'; }) + '</div>';
+    h += '<div class="ptField"><label>🪙 Mukofot fondi' + (L.admin ? ' (admin: bepul, istalgan miqdor)' : ' (o‘zingiz to‘laysiz)') + '</label>' + chips('prize', L.prizes || [0, 100, 200, 300, 500, 1000], function (v) { return v ? v : 'Yo‘q'; }) + (L.admin ? '<input type="number" id="ptPrizeX" inputmode="numeric" min="0" max="10000000" placeholder="Boshqa miqdor, masalan 5000" value="' + ((L.prizes || []).indexOf(form.prize) < 0 ? form.prize : '') + '" style="width:100%;box-sizing:border-box;margin-top:8px;padding:12px;border-radius:12px;border:1px solid #1f7a63;background:#04241f;color:#fff;font-size:16px">' : '') + '</div>';
     if (form.prize) h += '<div class="ptField"><label>🏅 Necha o‘ringa</label>' + chips('places', [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], function (v) { return v; }) + calcHtml(form.prize, form.places) + '</div>';
     if (L.admin) h += '<div class="ptField"><button class="ptFold' + (form.daily ? ' on' : '') + '" id="ptDailyChk"><i>' + (form.daily ? '✓' : '') + '</i><span>🔁 Har kuni shu vaqtda takrorlash</span></button></div>';
     h += '<div id="ptErr" style="color:#ffb3b3;min-height:20px;font-weight:700"></div>';
@@ -174,6 +176,7 @@
     Array.prototype.forEach.call(ov.querySelectorAll('[data-f]'), function (b) { b.onclick = function () { var f = b.getAttribute('data-f'), i = form.folders.indexOf(f); if (i >= 0) form.folders.splice(i, 1); else form.folders.push(f); drawForm(); }; });
     Array.prototype.forEach.call(ov.querySelectorAll('[data-k]'), function (b) { b.onclick = function () { form[b.getAttribute('data-k')] = Number(b.getAttribute('data-v')); drawForm(); }; });
     var dc = ov.querySelector('#ptDailyChk'); if (dc) dc.onclick = function () { form.daily = !form.daily; drawForm(); };
+    var px = ov.querySelector('#ptPrizeX'); if (px) px.onchange = function () { form.prize = Math.max(0, Math.min(10000000, Math.floor(+px.value) || 0)); drawForm(); };
     var es = ov.querySelector('#ptErrSw'); if (es) es.onclick = function () { form.maxErr = form.maxErr ? 0 : 3; drawForm(); };
     ov.querySelector('#ptCreate').onclick = function () {
       var b = this; if (!form.folders.length) { ov.querySelector('#ptErr').textContent = 'Kamida bitta papka tanlang'; return; }
@@ -229,7 +232,7 @@
   function hud() { chatBadge(); if (chatOpen) renderChat(); var e = ov.querySelector('#ptHud'); if (e && st.d) e.outerHTML = hudHtml(st.d); var lb = ov.querySelector('#ptLive'); if (lb) lb.innerHTML = tableHtml(st.d, 5); }
   function hudHtml(d) {
     var me = d.me || {};
-    return '<div id="ptHud"><div class="ptHud"' + (d.maxErr ? ' style="grid-template-columns:repeat(4,minmax(0,1fr))"' : '') + '><div class="ptBox"><small>MASALA</small><b>' + Math.min(me.k + 1, d.count) + '/' + d.count + '</b></div><div class="ptBox"><small>' + (d.per ? 'QOLDI' : 'VAQTINGIZ') + '</small><b id="' + (d.per ? 'ptPer' : 'ptMyT') + '">' + (d.per && d.deadline ? mmss(d.deadline - now()) : sec(me.time || 0)) + '</b></div><div class="ptBox"><small>OCHKO</small><b>' + (me.points || 0) + '</b></div>' + (d.maxErr ? '<div class="ptBox"' + ((me.err || 0) >= d.maxErr - 1 ? ' style="background:rgba(224,74,74,.35)"' : '') + '><small>XATO</small><b>' + (me.err || 0) + '/' + d.maxErr + '</b></div>' : '') + '</div>' +
+    return '<div id="ptHud"><div class="ptHud"' + (d.maxErr ? ' style="grid-template-columns:repeat(4,minmax(0,1fr))"' : '') + '><div class="ptBox"><small>MASALA</small><b>' + Math.min(me.k + 1, d.count) + '/' + d.count + '</b></div><div class="ptBox"><small>' + (d.per ? 'QOLDI' : 'VAQTINGIZ') + '</small><b id="' + (d.per ? 'ptPer' : 'ptMyT') + '">' + (d.per && d.deadline ? mmss(d.deadline - now()) : sec(me.time || 0)) + '</b></div><div class="ptBox"><small>YECHDI</small><b>' + (me.solved || 0) + '</b></div>' + (d.maxErr ? '<div class="ptBox"' + ((me.err || 0) >= d.maxErr - 1 ? ' style="background:rgba(224,74,74,.35)"' : '') + '><small>XATO</small><b>' + (me.err || 0) + '/' + d.maxErr + '</b></div>' : '') + '</div>' +
       '<div class="ptBar"><i style="width:' + Math.round((me.k || 0) / d.count * 100) + '%"></i></div></div>';
   }
   function draw() {
@@ -305,7 +308,9 @@
   }
   function myRes(d) {
     var me = d.me; if (!me || !me.res || !me.res.length) return '';
-    return '<div class="ptCard"><h3>📝 Sizning natijangiz</h3><table class="ptTb"><tr><th>#</th><th>Natija</th><th class="r">Vaqt</th></tr>' + me.res.map(function (r) { return '<tr><td>' + (r.k + 1) + '</td><td>' + (r.ok ? '✅ yechildi' : '❌') + '</td><td class="r">' + sec(r.ms) + '</td></tr>'; }).join('') + '</table></div>';
+    var h = '<div class="ptCard"><h3>📝 Sizning natijangiz <span class="ptWn">✅ ' + me.solved + ' · ❌ ' + me.res.filter(function (r) { return !r.ok; }).length + '</span></h3><div class="wRes ptMy">';
+    for (var q = 0; q < d.count; q++) { var r = me.res.filter(function (x) { return x.k === q; })[0]; h += '<button data-rv="' + q + '" class="' + (r ? (r.ok ? 'o' : 'x') : '') + '">' + (q + 1) + '</button>'; }
+    return h + '</div><div style="font-size:12px;color:#9fe3c9;margin-top:8px">Raqamni bosing — masala ochiladi. ❌ yechilmaganlarda to‘g‘ri yechim avtomatik ko‘rsatiladi.</div></div>';
   }
   function podFit() {
     if (!document.getElementById('spPd2Css') && !document.getElementById('ptPdCss')) {
@@ -335,7 +340,7 @@
     if (mine && window.spShareCard) h += '<button class="ptSec" id="ptShr" style="margin-bottom:10px">📸 Natijamni ulashish</button>';
     var tab = st.tab === 'stats' ? 'stats' : 'live';
     h += '<div class="ptChips" style="margin-bottom:10px"><button data-tab="live" class="' + (tab === 'live' ? 'on' : '') + '">🏅 Jadval</button><button data-tab="stats" class="' + (tab === 'stats' ? 'on' : '') + '">📊 Masalalar</button></div>';
-    if (tab === 'live') h += '<div class="ptCard">' + tableHtml(d) + '<div style="font-size:12px;color:#9fe3c9;margin-top:8px">✅ yechilgan · ⚡ birinchi yechgan (+1 ochko) · vaqt soniya aniqligida</div></div>' + myRes(d);
+    if (tab === 'live') h += '<div class="ptCard">' + tableHtml(d) + '<div style="font-size:12px;color:#9fe3c9;margin-top:8px">O‘rin: ✅ ko‘p yechgan → teng bo‘lsa ⏱ tezroq → ⚡ birinchi yechganlar soni</div></div>' + myRes(d);
     else h += '<div class="ptCard"><table class="ptTb"><tr><th>#</th><th>Masala</th><th class="r">Yechdi</th><th class="r">O‘rtacha</th></tr>' + (d.stats || []).map(function (s) {
       var pc = s.tried ? Math.round(s.solved / s.tried * 100) : 0;
       return '<tr><td>' + (s.k + 1) + '</td><td>' + esc(s.title) + (s.first ? '<br><small style="opacity:.7">⚡ ' + esc(s.first) + '</small>' : '') + '</td><td class="r">' + s.solved + '/' + s.tried + '<br><small style="opacity:.7">' + pc + '%</small></td><td class="r">' + (s.avg ? sec(s.avg) : '—') + '</td></tr>';
@@ -368,7 +373,7 @@
       (function playOpp() {
         if (i < opp.length) { var x = opp[i++], os = R().findStep(R().legal(st.g.b, st.g.side, st.g.forced), x); if (os) { st.g = R().adv(st.g, os); st.lm = x; draw(); } return setTimeout(playOpp, 170); }
         if (d.solved) {
-          haptic('ok'); st.flash = 'ok'; st.msg = d.first ? '⚡ Birinchi bo‘lib yechdingiz! +3' : '✅ +2'; draw();
+          haptic('ok'); st.flash = 'ok'; st.msg = d.first ? '⚡ Birinchi bo‘lib yechdingiz!' : '✅ To‘g‘ri!'; draw();
           setTimeout(function () { st.flash = ''; st.msg = ''; st.busy = false; st.pzk = -1; onState(d); }, d.first ? 700 : 350);
         } else { st.busy = false; autoSel(); st.d.me = d.me; draw(); }
       })();
@@ -388,7 +393,7 @@
     wPoll(); W.t = setInterval(wPoll, 1500); W.tk = setInterval(wTick, 250);
     try { if (tg && tg.BackButton) { tg.BackButton.show(); tg.BackButton.onClick(unwatch); } } catch (e) {}
   }
-  function unwatch() { if (!W) return; clearInterval(W.t); clearInterval(W.tk); if (W.el) W.el.remove(); W = null; try { if (tg && tg.BackButton) tg.BackButton.offClick(unwatch); } catch (e) {} }
+  function unwatch() { if (!W) return; clearInterval(W.t); clearInterval(W.tk); clearInterval(W.auto); if (W.el) W.el.remove(); W = null; try { if (tg && tg.BackButton) tg.BackButton.offClick(unwatch); } catch (e) {} }
   function wPoll() { if (!W) return; var me = W; api('/api/pzt/watch', { id: curId, w: W.w }).then(function (d) { if (W !== me || !d) return; d.skew = d.now ? d.now - Date.now() : 0; W.d = d; wDraw(); }).catch(function () {}); }
   function wTick() { if (!W || !W.d) return; var e = W.el.querySelector('#ptWT'), d = W.d, n = Date.now() + (d.skew || 0); if (!e || !d.pz) return; e.textContent = d.deadline ? mmss(d.deadline - n) : sec(n - d.shownAt); }
   function wDraw() {
@@ -424,11 +429,55 @@
     var b; if ((b = el.querySelector('#ptWP'))) b.onclick = function () { sw(-1); }; if ((b = el.querySelector('#ptWN'))) b.onclick = function () { sw(1); };
   }
 
+  // ================= MASALANI KO'RISH (natijalardan)
+  function review(k) {
+    unwatch();
+    var el = document.createElement('div'); el.id = 'ptW'; document.body.appendChild(el);
+    W = { el: el, rv: true, t: 0, tk: 0, at: 0, pos: [], d: null, auto: 0 };
+    el.innerHTML = '<div class="ptTop"><button class="ptX" id="ptWX">‹</button><div class="ptT">🧩 Masala ' + (k + 1) + '</div></div><div class="ptCard">Yuklanmoqda…</div>';
+    el.querySelector('#ptWX').onclick = unwatch;
+    try { if (tg && tg.BackButton) { tg.BackButton.show(); tg.BackButton.onClick(unwatch); } } catch (e) {}
+    var me = W;
+    api('/api/pzt/review', { id: curId, k: k }).then(function (d) {
+      if (W !== me) return;
+      if (!d || d.error) { el.querySelector('.ptCard').textContent = (d && d.error) || 'Xato'; return; }
+      var g = { b: R().copy(d.board), side: d.side, forced: null }, pos = [{ b: R().copy(g.b), lm: null }];
+      (d.sol || []).forEach(function (w) { var s = R().findStep(R().legal(g.b, g.side, g.forced), w); if (s) { g = R().adv(g, s); pos.push({ b: R().copy(g.b), lm: w }); } });
+      W.d = d; W.pos = pos; W.at = 0; rvDraw();
+      if (!d.res || !d.res.ok) rvPlay(); // topa olmagan bo'lsa — yechim avtomatik ko'rsatiladi
+    }).catch(function () { el.querySelector('.ptCard').textContent = 'Server bilan aloqa yo‘q'; });
+  }
+  function rvPlay() { if (!W || !W.rv) return; clearInterval(W.auto); if (W.at >= W.pos.length - 1) W.at = 0; rvDraw(); W.auto = setInterval(function () { if (!W || !W.rv) return; if (W.at >= W.pos.length - 1) { clearInterval(W.auto); W.auto = 0; rvDraw(); return; } W.at++; rvSound(); rvDraw(); }, 900); rvDraw(); }
+  function rvSound() { try { var S = window.SPSound, a = W.pos[W.at - 1], b = W.pos[W.at]; if (!S || !a || !b) return; var n = 0; for (var r = 0; r < 8; r++) for (var c = 0; c < 8; c++) if (a.b[r][c] && !b.b[r][c]) n++; S.play(n > 1 ? 'capture' : 'move'); } catch (e) {} }
+  function rvDraw() {
+    var d = W.d, el = W.el, P = W.pos[W.at], flip = d.side === 'b', last = W.pos.length - 1;
+    var h = '<div class="ptTop"><button class="ptX" id="ptWX">‹</button><div class="ptT">🧩 Masala ' + (d.k + 1) + ' / ' + d.count + '</div></div>';
+    var rs = d.res ? (d.res.ok ? '✅ Yechdingiz · ' + sec(d.res.ms) : '❌ Topa olmadingiz · ' + sec(d.res.ms)) : '⏳ Bu masalaga yetib bormagansiz';
+    h += '<div class="rvMsg"><div>' + rs + '</div><small style="font-weight:600;color:#9fe3c9">' + (d.side === 'w' ? '⚪ Oqlar yuradi' : '⚫ Qoralar yuradi') + ' · ' + ['', '🟢 Oson', '🟡 O‘rta', '🔴 Qiyin'][d.level || 1] + (d.first ? ' · ⚡ ' + esc(d.first) : '') + '</small></div>';
+    h += '<div id="ptWB">';
+    for (var i = 0; i < 8; i++) for (var j = 0; j < 8; j++) {
+      var r = flip ? 7 - i : i, c = flip ? 7 - j : j, pc = P.b[r][c], cls = (r + c) % 2 ? 'd' : 'l', lm = P.lm;
+      if (lm && ((lm[0] === r && lm[1] === c) || (lm[lm.length - 2] === r && lm[lm.length - 1] === c))) cls += ' lm';
+      h += '<div class="' + cls + '">' + (pc ? '<div class="pc ' + (pc === 1 || pc === 3 ? 'pw' : 'pb') + '">' + (pc > 2 ? '♛' : '') + '</div>' : '') + '</div>';
+    }
+    h += '</div><div class="rvMsg" style="min-height:30px">' + (W.at === 0 ? 'Boshlang‘ich holat' : W.at === last ? '🏁 Yechim tugadi (' + last + ' yurish)' : 'Yurish ' + W.at + ' / ' + last) + '</div>';
+    h += '<div class="wNav"><button data-rn="0">⏮</button><button data-rn="-1">◀</button><button data-rn="p">' + (W.auto ? '⏸' : '▶️ Yechim') + '</button><button data-rn="1">▶</button><button data-rn="9">⏭</button></div>';
+    h += '<div class="wNav"><button id="ptRvP"' + (d.k <= 0 ? ' disabled style="opacity:.4"' : '') + '>◀ Oldingi masala</button><button id="ptRvN"' + (d.k >= d.count - 1 ? ' disabled style="opacity:.4"' : '') + '>Keyingi masala ▶</button></div>';
+    el.innerHTML = h;
+    el.querySelector('#ptWX').onclick = unwatch;
+    Array.prototype.forEach.call(el.querySelectorAll('[data-rn]'), function (b) { b.onclick = function () {
+      var v = b.getAttribute('data-rn');
+      if (v === 'p') { if (W.auto) { clearInterval(W.auto); W.auto = 0; rvDraw(); } else rvPlay(); return; }
+      clearInterval(W.auto); W.auto = 0; var o = W.at; v = +v; W.at = v === 0 ? 0 : v === 9 ? last : Math.max(0, Math.min(last, W.at + v)); if (W.at === o + 1) rvSound(); rvDraw();
+    }; });
+    var b2; if ((b2 = el.querySelector('#ptRvP'))) b2.onclick = function () { review(d.k - 1); }; if ((b2 = el.querySelector('#ptRvN'))) b2.onclick = function () { review(d.k + 1); };
+  }
+
   window.spPzt = function (o) {
     opts = o || {}; css();
     if (ov) ov.remove();
     ov = document.createElement('div'); ov.id = 'spPzt'; document.body.appendChild(ov);
-    ov.addEventListener('click', function (e) { var x = e.target.closest && e.target.closest('tr[data-w]'); if (x && view === 't') watch(x.getAttribute('data-w')); });
+    ov.addEventListener('click', function (e) { var x = e.target.closest && e.target.closest('tr[data-w]'); if (x && view === 't') watch(x.getAttribute('data-w')); var y = e.target.closest && e.target.closest('[data-rv]'); if (y && view === 't') review(+y.getAttribute('data-rv')); });
     if (opts.open) openT(opts.open); else list();
   };
 })();
