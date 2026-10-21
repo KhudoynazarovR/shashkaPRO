@@ -1,0 +1,9 @@
+{
+  "name": "shashkapro-android",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ShashkaPRO Android ilovasi (Capacitor). Sayt https://shashkapro.onrender.com ni ochadi, AdMob reklamasi bilan.",
+  "scripts": {
+    "sync": "cap sync android"
+  }
+}

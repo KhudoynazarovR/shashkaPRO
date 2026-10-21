@@ -1,0 +1,17 @@
+{
+  "appId": "uz.shashkapro.app",
+  "appName": "ShashkaPRO",
+  "webDir": "www",
+  "server": {
+    "url": "https://shashkapro.onrender.com",
+    "androidScheme": "https",
+    "cleartext": false
+  },
+  "android": {
+    "backgroundColor": "#140a33",
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "SplashScreen": { "launchShowDuration": 1500, "backgroundColor": "#140a33", "showSpinner": false }
+  }
+}

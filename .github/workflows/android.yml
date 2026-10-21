@@ -1,0 +1,81 @@
+# ShashkaPRO Android ilovasini GitHub serverida yig'adi (kompyuter kerak emas).
+# Natija: Actions → oxirgi ishga tushirish → Artifacts bo'limida APK (telefonga o'rnatish) va AAB (Play Market uchun).
+name: Android ilova
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'android-app/**'
+      - 'public/app/**'
+      - '.github/workflows/android.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Capacitor va AdMob o'rnatish
+        run: npm install --no-audit --no-fund @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7 @capacitor/splash-screen@7 @capacitor-community/admob@7 sharp@0.33
+
+      - name: Android loyihasini yaratish
+        run: npx cap add android
+
+      - name: ShashkaPRO sozlamalari (ikonka, AdMob, versiya)
+        env:
+          ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
+        run: node prepare.js
+
+      - name: Sinxronlash
+        run: npx cap sync android
+
+      - name: Sinov APK (debug)
+        working-directory: android-app/android
+        run: ./gradlew --no-daemon assembleDebug
+
+      - name: Imzo kaliti (bo'lsa)
+        id: key
+        env:
+          KS: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KS" ]; then echo "$KS" | base64 -d > android/app/upload.jks; echo "ok=1" >> "$GITHUB_OUTPUT"; else echo "ok=0" >> "$GITHUB_OUTPUT"; echo "Imzo kaliti yo'q — faqat sinov APK yig'iladi"; fi
+
+      - name: Play Market uchun AAB (imzolangan)
+        if: steps.key.outputs.ok == '1'
+        working-directory: android-app/android
+        env:
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KS_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          ./gradlew --no-daemon bundleRelease \
+            -Pandroid.injected.signing.store.file=$PWD/app/upload.jks \
+            -Pandroid.injected.signing.store.password="$KS_PASS" \
+            -Pandroid.injected.signing.key.alias="${KS_ALIAS:-upload}" \
+            -Pandroid.injected.signing.key.password="$KS_PASS"
+
+      - name: APK ni yuklab olish uchun saqlash
+        uses: actions/upload-artifact@v4
+        with:
+          name: ShashkaPRO-APK-${{ github.run_number }}
+          path: android-app/android/app/build/outputs/apk/debug/*.apk
+
+      - name: AAB ni saqlash
+        if: steps.key.outputs.ok == '1'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ShashkaPRO-AAB-${{ github.run_number }}
+          path: android-app/android/app/build/outputs/bundle/release/*.aab
