@@ -63,9 +63,71 @@ function botConfirm(code, from) { // «✅ Ha, kiraman» tugmasi
   return true;
 }
 
+// ---------- Google orqali kirish (tashqi brauzerda Google OAuth; ilova esa /api/auth/poll bilan kutadi)
+// Render Environment: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET (Google Cloud → OAuth client, turi «Web application»)
+// Redirect URI: https://shashkapro.onrender.com/api/auth/gcb
+function gconf() { return { id: process.env.GOOGLE_CLIENT_ID || '', secret: process.env.GOOGLE_CLIENT_SECRET || '' }; }
+function baseUrl(req) { return process.env.PUBLIC_URL || ('https://' + (req.headers['x-forwarded-host'] || req.headers.host || 'shashkapro.onrender.com')); }
+function gRedirect(req) { return baseUrl(req) + '/api/auth/gcb'; }
+// Google foydalanuvchisiga barqaror raqamli ID (Telegram ID lar bilan to'qnashmaydi: 9·10^11 dan boshlanadi)
+function gUid(sub) {
+  const store = require('./store');
+  const db = store.db; db.gauth = db.gauth || {}; db.gnext = db.gnext || 900000000001;
+  if (!db.gauth[sub]) { db.gauth[sub] = db.gnext++; store.save(); }
+  return db.gauth[sub];
+}
+function htmlPage(title, body) {
+  return '<!doctype html><html lang="uz"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + title + '</title>' +
+    '<style>body{margin:0;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;box-sizing:border-box;text-align:center;color:#fff;font-family:system-ui,Roboto,sans-serif;background:radial-gradient(circle at 50% 20%,#3a1a7a,#140a33 70%)}h1{margin:0;font-size:26px}p{margin:0;color:#d9d2ff;max-width:340px;line-height:1.5;font-size:17px}a.b{display:inline-block;border-radius:14px;padding:14px 24px;font:800 17px system-ui;color:#fff;background:#2563eb;text-decoration:none}</style></head><body>' + body + '</body></html>';
+}
+function sendHtml(res, code, html) { res.writeHead(code, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(html); }
+async function gCallback(req, res, url) {
+  const st = url.searchParams.get('state') || '', code = url.searchParams.get('code') || '', P = PEND.get(st);
+  if (!P || Date.now() - P.at > TTL) return sendHtml(res, 400, htmlPage('ShashkaPRO', '<h1>⌛ Havola eskirgan</h1><p>Ilovaga qaytib, «Google orqali kirish» ni qaytadan bosing.</p>'));
+  if (!code) return sendHtml(res, 400, htmlPage('ShashkaPRO', '<h1>❌ Kirish bekor qilindi</h1><p>Ilovaga qaytib, qaytadan urinib ko‘ring.</p>'));
+  try {
+    const g = gconf();
+    const r = await fetch('https://oauth2.googleapis.com/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ code, client_id: g.id, client_secret: g.secret, redirect_uri: gRedirect(req), grant_type: 'authorization_code' }).toString() });
+    const j = await r.json();
+    if (!j.id_token) throw new Error(j.error_description || j.error || 'token');
+    // id_token Google'ning token manzilidan to'g'ridan-to'g'ri (TLS) keldi — imzoni qayta tekshirish shart emas
+    const c = JSON.parse(Buffer.from(j.id_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString());
+    if (c.aud !== g.id || !c.sub) throw new Error('aud');
+    const user = { id: gUid(String(c.sub)), first_name: String(c.given_name || c.name || (c.email || '').split('@')[0] || 'O‘yinchi').slice(0, 40) };
+    if (c.family_name) user.last_name = String(c.family_name).slice(0, 40);
+    if (c.locale) user.language_code = String(c.locale).slice(0, 2);
+    P.user = pickUser(user); P.ok = true; P.via = 'google';
+    try { require('./store').getOrCreate(P.user); } catch (e) {}
+    if (P.app) return sendHtml(res, 200, htmlPage('ShashkaPRO', '<h1>✅ Kirdingiz, ' + P.user.first_name.replace(/[<>&"]/g, '') + '!</h1><p>Endi <b>ShashkaPRO ilovasiga qayting</b> — o‘yin o‘zi ochiladi.</p><p style="font-size:14px;opacity:.75">Bu oynani yopsangiz bo‘ladi.</p>'));
+    // brauzerda (sayt): sessiyani shu yerning o'zida saqlab, o'yinga qaytamiz
+    const s = session(P.user); PEND.delete(st);
+    const a = JSON.stringify({ initData: s.initData, user: s.user, refresh: s.refresh, at: Date.now() }).replace(/</g, '\\u003c');
+    return sendHtml(res, 200, htmlPage('ShashkaPRO', '<h1>✅ Kirdingiz!</h1><p>O‘yin ochilmoqda…</p><script>try{localStorage.setItem("spAuth",' + JSON.stringify(a) + ')}catch(e){}location.replace("/")</script>'));
+  } catch (e) {
+    console.log('[gauth]', e.message);
+    return sendHtml(res, 500, htmlPage('ShashkaPRO', '<h1>⚠️ Google bilan kirib bo‘lmadi</h1><p>Birozdan keyin qaytadan urinib ko‘ring.</p>'));
+  }
+}
+
 // ---------- HTTP
 function handle(req, res, p, ctx) {
   const { send, readBody } = ctx;
+  if (p === '/api/auth/config' && req.method === 'GET') { send(res, 200, { google: !!(gconf().id && gconf().secret), telegram: !!tok() }); return true; }
+  if (p === '/api/auth/gcb' && req.method === 'GET') { gCallback(req, res, new URL(req.url, 'http://x')); return true; }
+  if (p === '/api/auth/gstart' && req.method === 'POST') {
+    const g = gconf(); if (!g.id || !g.secret) { send(res, 200, { error: 'Google kirish hali sozlanmagan' }); return true; }
+    readBody(req, 300, body => {
+      let j = {}; try { j = JSON.parse(body); } catch (e) {}
+      cleanup();
+      if (PEND.size > 5000) return send(res, 429, { error: 'Keyinroq urinib ko‘ring' });
+      const code = rcode();
+      PEND.set(code, { at: Date.now(), user: null, ok: false, app: !!j.app });
+      const q = new URLSearchParams({ client_id: g.id, redirect_uri: gRedirect(req), response_type: 'code', scope: 'openid email profile', state: code, prompt: 'select_account' });
+      send(res, 200, { code, url: 'https://accounts.google.com/o/oauth2/v2/auth?' + q.toString(), ttl: TTL });
+    });
+    return true;
+  }
   if (!tok()) { send(res, 500, { error: 'BOT_TOKEN yo‘q' }); return true; }
   if (p === '/api/auth/start' && req.method === 'POST') {
     cleanup();
