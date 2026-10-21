@@ -135,7 +135,8 @@
   function createForm() {
     stop(); view = 'create';
     if (!L) return list();
-    form = form || { name: '', folders: [], count: 10, per: 60, prize: 0, places: 3, startIn: 10, daily: false };
+    form = form || { name: '', folders: [], count: 10, per: 60, prize: 0, places: 3, startIn: 10, daily: false, maxErr: 0 };
+    if (form.maxErr == null) form.maxErr = 0;
     drawForm();
   }
   function chips(key, vals, label) {
@@ -150,6 +151,7 @@
     h += '<div class="ptField"><label>📁 Papkalar (bir nechtasini tanlash mumkin)</label>' + (L.folders || []).map(function (f) { var on = form.folders.indexOf(f.name) >= 0; return '<button class="ptFold' + (on ? ' on' : '') + '" data-f="' + esc(f.name) + '"><i>' + (on ? '✓' : '') + '</i><span>' + esc(f.title) + '</span><small>' + f.n + ' ta</small></button>'; }).join('') + '<div style="font-size:13px;color:#c5f3e2;margin-top:4px">Tanlangan: ' + avail + ' ta masala</div></div>';
     h += '<div class="ptField"><label>📚 Masalalar soni</label>' + chips('count', L.counts || [10, 20, 30, 40, 50, 60, 70, 80, 90, 100], function (v) { return v; }) + '</div>';
     h += '<div class="ptField"><label>⏱ Har bir masalaga vaqt</label>' + chips('per', L.pers || [0, 30, 60, 120, 180, 300], function (v) { return v ? (v < 60 ? v + ' s' : v / 60 + ' daq') : 'Chegarasiz'; }) + '</div>';
+    h += '<div class="ptField"><label>❌ Xatolar chegarasi</label><button class="ptFold' + (form.maxErr ? ' on' : '') + '" id="ptErrSw"><i>' + (form.maxErr ? '✓' : '') + '</i><span>' + (form.maxErr ? 'Yoqilgan — ' + form.maxErr + ' ta xatoda chiqib ketadi' : 'O‘chirilgan — xatolar cheklanmaydi') + '</span></button>' + (form.maxErr ? chips('maxErr', (L.maxErrs || [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]).filter(function (v) { return v; }), function (v) { return v; }) : '') + '</div>';
     h += '<div class="ptField"><label>🕐 Boshlanishi</label>' + chips('startIn', [2, 5, 10, 15, 30, 60, 120], function (v) { return v < 60 ? v + ' daq' : v / 60 + ' soat'; }) + '</div>';
     h += '<div class="ptField"><label>🪙 Mukofot fondi' + (L.admin ? ' (admin: bepul)' : ' (o‘zingiz to‘laysiz)') + '</label>' + chips('prize', L.prizes || [0, 100, 200, 300, 500, 1000], function (v) { return v ? v : 'Yo‘q'; }) + '</div>';
     if (form.prize) h += '<div class="ptField"><label>🏅 Necha o‘ringa</label>' + chips('places', [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], function (v) { return v; }) + calcHtml(form.prize, form.places) + '</div>';
@@ -162,6 +164,7 @@
     Array.prototype.forEach.call(ov.querySelectorAll('[data-f]'), function (b) { b.onclick = function () { var f = b.getAttribute('data-f'), i = form.folders.indexOf(f); if (i >= 0) form.folders.splice(i, 1); else form.folders.push(f); drawForm(); }; });
     Array.prototype.forEach.call(ov.querySelectorAll('[data-k]'), function (b) { b.onclick = function () { form[b.getAttribute('data-k')] = Number(b.getAttribute('data-v')); drawForm(); }; });
     var dc = ov.querySelector('#ptDailyChk'); if (dc) dc.onclick = function () { form.daily = !form.daily; drawForm(); };
+    var es = ov.querySelector('#ptErrSw'); if (es) es.onclick = function () { form.maxErr = form.maxErr ? 0 : 3; drawForm(); };
     ov.querySelector('#ptCreate').onclick = function () {
       var b = this; if (!form.folders.length) { ov.querySelector('#ptErr').textContent = 'Kamida bitta papka tanlang'; return; }
       b.disabled = true;
@@ -206,16 +209,16 @@
     if (!rows.length) return '<div style="opacity:.8">Hali ishtirokchi yo‘q</div>';
     var M = ['🥇', '🥈', '🥉'];
     return '<table class="ptTb"><tr><th>#</th><th>O‘yinchi</th><th class="r">✅</th><th class="r">⚡</th><th class="r">Vaqt</th></tr>' + rows.map(function (x) {
-      return '<tr class="' + (x.me ? 'me' : '') + '"><td>' + (d.status === 'finished' && M[x.place - 1] ? M[x.place - 1] : x.place) + '</td><td>' + esc(x.name) + (d.status === 'running' && !x.done ? ' <small style="opacity:.6">' + (x.k + 1) + '/' + d.count + '</small>' : '') + '</td><td class="r"><b>' + x.solved + '</b></td><td class="r">' + (x.firsts || '') + '</td><td class="r">' + sec(x.time) + '</td></tr>';
+      return '<tr class="' + (x.me ? 'me' : '') + '"><td>' + (d.status === 'finished' && M[x.place - 1] ? M[x.place - 1] : x.place) + '</td><td>' + esc(x.name) + (x.out ? ' <small title="Xatolar chegarasi">🚫</small>' : '') + (d.status === 'running' && !x.done ? ' <small style="opacity:.6">' + (x.k + 1) + '/' + d.count + '</small>' : '') + '</td><td class="r"><b>' + x.solved + '</b></td><td class="r">' + (x.firsts || '') + '</td><td class="r">' + sec(x.time) + '</td></tr>';
     }).join('') + '</table>';
   }
   function info(d) {
-    return '<div style="font-size:15px;color:#c5f3e2;line-height:1.5">📚 ' + d.count + ' ta masala' + (d.per ? ' · ⏱ har biriga ' + (d.per < 60 ? d.per + ' s' : d.per / 60 + ' daq') : ' · ⏱ chegarasiz') + '<br>📁 ' + esc((d.folders || []).join(', ')) + '<br>👥 ' + d.players + ' ishtirokchi' + (d.prize ? ' · 🪙 ' + d.prize + ' (' + d.places + ' o‘ringa)' : '') + '<br>👤 ' + esc(d.creatorName || '') + '</div>';
+    return '<div style="font-size:15px;color:#c5f3e2;line-height:1.5">📚 ' + d.count + ' ta masala' + (d.per ? ' · ⏱ har biriga ' + (d.per < 60 ? d.per + ' s' : d.per / 60 + ' daq') : ' · ⏱ chegarasiz') + '<br>📁 ' + esc((d.folders || []).join(', ')) + '<br>👥 ' + d.players + ' ishtirokchi' + (d.prize ? ' · 🪙 ' + d.prize + ' (' + d.places + ' o‘ringa)' : '') + (d.maxErr ? '<br>❌ ' + d.maxErr + ' ta xatoda turnirdan chiqiladi' : '') + '<br>👤 ' + esc(d.creatorName || '') + '</div>';
   }
   function hud() { chatBadge(); if (chatOpen) renderChat(); var e = ov.querySelector('#ptHud'); if (e && st.d) e.outerHTML = hudHtml(st.d); var lb = ov.querySelector('#ptLive'); if (lb) lb.innerHTML = tableHtml(st.d, 5); }
   function hudHtml(d) {
     var me = d.me || {};
-    return '<div id="ptHud"><div class="ptHud"><div class="ptBox"><small>MASALA</small><b>' + Math.min(me.k + 1, d.count) + '/' + d.count + '</b></div><div class="ptBox"><small>' + (d.per ? 'QOLDI' : 'VAQTINGIZ') + '</small><b id="' + (d.per ? 'ptPer' : 'ptMyT') + '">' + (d.per && d.deadline ? mmss(d.deadline - now()) : sec(me.time || 0)) + '</b></div><div class="ptBox"><small>OCHKO</small><b>' + (me.points || 0) + '</b></div></div>' +
+    return '<div id="ptHud"><div class="ptHud"' + (d.maxErr ? ' style="grid-template-columns:repeat(4,minmax(0,1fr))"' : '') + '><div class="ptBox"><small>MASALA</small><b>' + Math.min(me.k + 1, d.count) + '/' + d.count + '</b></div><div class="ptBox"><small>' + (d.per ? 'QOLDI' : 'VAQTINGIZ') + '</small><b id="' + (d.per ? 'ptPer' : 'ptMyT') + '">' + (d.per && d.deadline ? mmss(d.deadline - now()) : sec(me.time || 0)) + '</b></div><div class="ptBox"><small>OCHKO</small><b>' + (me.points || 0) + '</b></div>' + (d.maxErr ? '<div class="ptBox"' + ((me.err || 0) >= d.maxErr - 1 ? ' style="background:rgba(224,74,74,.35)"' : '') + '><small>XATO</small><b>' + (me.err || 0) + '/' + d.maxErr + '</b></div>' : '') + '</div>' +
       '<div class="ptBar"><i style="width:' + Math.round((me.k || 0) / d.count * 100) + '%"></i></div></div>';
   }
   function draw() {
@@ -238,7 +241,7 @@
         h += '<div class="ptCard ptCd"><small>Turnir boshlandi! Tugashiga</small><b id="ptEndCd">' + mmss(d.endAt - now()) + '</b></div><div class="ptCard">' + info(d) + '</div><button class="ptGo" id="ptStart">▶ Yechishni boshlash</button>';
         h += '<div class="ptCard"><h3>🔴 Jonli jadval</h3>' + tableHtml(d) + '</div>';
       } else if (me.done) {
-        h += '<div class="ptCard ptCd"><small>Siz tugatdingiz! ✅ ' + me.solved + '/' + d.count + ' · ⏱ ' + sec(me.time) + '</small><b id="ptEndCd" style="font-size:36px">' + mmss(d.endAt - now()) + '</b><small>turnir tugashiga</small></div>';
+        h += '<div class="ptCard ptCd"><small>' + (me.out ? '🚫 ' + d.maxErr + ' ta xato — turnirdan chiqdingiz · ' : 'Siz tugatdingiz! ') + '✅ ' + me.solved + '/' + d.count + ' · ⏱ ' + sec(me.time) + '</small><b id="ptEndCd" style="font-size:36px">' + mmss(d.endAt - now()) + '</b><small>turnir tugashiga</small></div>';
         h += '<div class="ptCard"><h3>🔴 Jonli jadval</h3>' + tableHtml(d) + '</div>' + myRes(d);
       } else if (d.pz) {
         var p = d.pz, g = st.g, lg = st.sel ? R().legal(g.b, g.side, g.forced).filter(function (s) { return s.f[0] === st.sel[0] && s.f[1] === st.sel[1]; }) : [];

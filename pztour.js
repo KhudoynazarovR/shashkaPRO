@@ -8,6 +8,7 @@ const CREATE_FEE = 50;                       // turnir yaratish narxi (admin uch
 const COUNTS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
 const PER = [0, 30, 60, 120, 180, 300];      // har masalaga vaqt (0 = chegarasiz)
 const PRIZES = [0, 100, 200, 300, 500, 1000];
+const MAXERR = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];                // 0 = o'chiq; N ta xato qilgan o'yinchi turnirdan chiqadi
 const PZT = { 1: [100], 2: [60, 40], 3: [50, 30, 20], 4: [40, 28, 20, 12], 5: [35, 25, 18, 13, 9], 6: [30, 22, 17, 13, 10, 8], 7: [28, 20, 15, 12, 10, 8, 7], 8: [26, 19, 15, 12, 10, 8, 5, 5], 9: [24, 18, 14, 11, 10, 8, 6, 5, 4], 10: [22, 17, 13, 11, 9, 8, 7, 5, 4, 4] };
 const LATE_JOIN = 0.5;                       // davomiylikning yarmigacha kech qo'shilish mumkin
 const NOFOLDER = '__nofolder__';
@@ -48,6 +49,7 @@ function duration(t) { return t.per ? t.q.length * t.per * 1000 : Math.min(90, M
 function make(o) {
   const q = pickPuzzles(o.folders, o.count);
   const t = { id: rid(), name: o.name, creatorUid: o.uid, creatorName: o.uname, folders: o.folders, per: o.per, q, prize: o.prize, paid: o.paid || 0, places: o.places, startAt: o.startAt, status: 'reg', players: {}, firsts: {}, at: Date.now(), daily: o.daily || null };
+  t.maxErr = MAXERR.includes(+o.maxErr) ? +o.maxErr : 0;
   t.endAt = t.startAt + duration(t);
   db().push(t); save();
   return t;
@@ -75,7 +77,7 @@ function cur(t, uid) {
   LIVE.set(key, { k: P.k, c });
   return c;
 }
-function resolve(t, uid, ok, ms) {
+function resolve(t, uid, ok, ms, isErr) {
   const P = player(t, uid); if (!P || P.k >= t.q.length) return;
   const k = P.k;
   P.res.push({ k, ok, ms });
@@ -85,6 +87,7 @@ function resolve(t, uid, ok, ms) {
     if (!t.firsts[k]) { t.firsts[k] = uid; P.firsts++; P.points += 1; }
   }
   P.k++; P.steps = []; P.shownAt = 0;
+  if (!ok && isErr) { P.err = (P.err || 0) + 1; if (t.maxErr && P.err >= t.maxErr) { P.out = true; P.k = t.q.length; } } // xatolar chegarasi
   if (P.k >= t.q.length) P.doneAt = Date.now();
   LIVE.delete(t.id + ':' + uid);
   save();
@@ -97,7 +100,7 @@ function tickPlayer(t, uid, now) {
   if (P.k < t.q.length && !P.shownAt) { P.shownAt = Math.max(now, t.startAt); save(); }
 }
 function standings(t) {
-  return Object.entries(t.players).map(([uid, P]) => ({ uid, name: P.name, solved: P.solved, points: P.points, firsts: P.firsts, time: P.time, k: P.k, done: P.k >= t.q.length }))
+  return Object.entries(t.players).map(([uid, P]) => ({ uid, name: P.name, solved: P.solved, points: P.points, firsts: P.firsts, time: P.time, k: P.k, done: P.k >= t.q.length, out: !!P.out }))
     .sort((a, b) => b.points - a.points || a.time - b.time || a.name.localeCompare(b.name));
 }
 function step(now) {
@@ -170,7 +173,7 @@ function rememberPhoto(r) {
 }
 function annText(t) {
   const d = new Date(t.startAt + 5 * 3600e3).toISOString().slice(11, 16);
-  return '🧩 Masala turniri: «' + t.name + '»\n🕐 ' + d + ' da boshlanadi\n📚 ' + t.q.length + ' ta masala' + (t.per ? ', har biriga ' + (t.per < 60 ? t.per + ' s' : t.per / 60 + ' daq') : '') + (t.prize ? '\n💰 Mukofot: ' + t.prize + ' (' + t.places + ' o‘ringa)' : '') + '\n👥 Qatnashing — kim tez va ko‘p yechadi?';
+  return '🧩 Masala turniri: «' + t.name + '»\n🕐 ' + d + ' da boshlanadi\n📚 ' + t.q.length + ' ta masala' + (t.per ? ', har biriga ' + (t.per < 60 ? t.per + ' s' : t.per / 60 + ' daq') : '') + (t.prize ? '\n💰 Mukofot: ' + t.prize + ' (' + t.places + ' o‘ringa)' : '') + (t.maxErr ? '\n❌ ' + t.maxErr + ' ta xatoda turnirdan chiqiladi' : '') + '\n👥 Qatnashing — kim tez va ko‘p yechadi?';
 }
 function link(t) { const l = process.env.TG_APP_LINK || ''; return l ? l + '?startapp=pzt_' + t.id : ''; }
 function fmt(ms) { const s = ms / 1000, m = Math.floor(s / 60); return m + ':' + (s % 60 < 10 ? '0' : '') + (s % 60).toFixed(1); }
@@ -205,13 +208,13 @@ function daily(now) {
   if (now < start - 60 * 60000 || now >= start) return;
   if (db().some(t => t.daily === day)) return;
   if (!pickPuzzles(D.folders, 1).length) return;
-  make({ name: D.name, uid: 'system', uname: 'ShashkaPRO', folders: D.folders, count: D.count, per: D.per, prize: D.prize, places: D.places, startAt: start, daily: day });
+  make({ name: D.name, uid: 'system', uname: 'ShashkaPRO', folders: D.folders, count: D.count, per: D.per, prize: D.prize, places: D.places, maxErr: D.maxErr || 0, startAt: start, daily: day });
 }
 
 // ---------- ko'rinishlar
 function summary(t, uid, now) {
   const P = player(t, uid);
-  return { id: t.id, name: t.name, status: t.status, startAt: t.startAt, endAt: t.endAt, count: t.q.length, per: t.per, prize: t.prize, places: t.places, creatorName: t.creatorName, mine: t.creatorUid === uid, joined: !!P, players: Object.keys(t.players).length, daily: !!t.daily, folders: t.folders.map(f => f === NOFOLDER ? 'Papkasiz' : f), canJoin: canJoin(t, now) };
+  return { id: t.id, name: t.name, status: t.status, startAt: t.startAt, endAt: t.endAt, count: t.q.length, per: t.per, prize: t.prize, places: t.places, creatorName: t.creatorName, mine: t.creatorUid === uid, joined: !!P, players: Object.keys(t.players).length, maxErr: t.maxErr || 0, daily: !!t.daily, folders: t.folders.map(f => f === NOFOLDER ? 'Papkasiz' : f), canJoin: canJoin(t, now) };
 }
 function canJoin(t, now) { return t.status === 'reg' || (t.status === 'running' && now < t.startAt + duration(t) * LATE_JOIN); }
 function full(t, uid, now) {
@@ -221,7 +224,7 @@ function full(t, uid, now) {
   r.table = standings(t).map((x, i) => Object.assign({ place: i + 1, me: x.uid === uid }, x, { uid: undefined, av: i < 3 && /^\d+$/.test(x.uid) ? x.uid : undefined }));
   r.awards = (t.awards || []).map(a => ({ place: a.place, amt: a.amt, name: (t.players[a.uid] || {}).name }));
   if (P) {
-    r.me = { k: P.k, solved: P.solved, points: P.points, firsts: P.firsts, time: P.time, done: P.k >= t.q.length, started: !!P.started, res: P.res };
+    r.me = { k: P.k, solved: P.solved, points: P.points, firsts: P.firsts, time: P.time, done: P.k >= t.q.length, started: !!P.started, res: P.res, err: P.err || 0, out: !!P.out };
     if (t.status === 'running' && P.started && P.k < t.q.length) {
       const c = cur(t, uid);
       if (c) { r.pz = Object.assign(E.pub(c.p), { k: P.k }); r.steps = P.steps || []; r.shownAt = P.shownAt; r.deadline = t.per ? P.shownAt + t.per * 1000 : 0; }
@@ -241,7 +244,7 @@ function handle(req, res, p, ctx) {
 
   if (p === '/api/pzt/list' && req.method === 'GET') {
     const list = db().filter(t => t.status !== 'finished' || now - (t.finishedAt || t.endAt) < 3 * 86400e3).sort((a, b) => (a.status === 'finished') - (b.status === 'finished') || (a.status === 'finished' ? b.endAt - a.endAt : a.startAt - b.startAt)).slice(0, 30);
-    send(res, 200, { tours: list.map(t => summary(t, uid, now)), folders: folderStats(), admin: adm, fee: adm ? 0 : CREATE_FEE, coins: u.diamonds || 0, counts: COUNTS, pers: PER, prizes: PRIZES, daily: adm ? (store.db.pztDaily || null) : undefined, now });
+    send(res, 200, { tours: list.map(t => summary(t, uid, now)), folders: folderStats(), admin: adm, fee: adm ? 0 : CREATE_FEE, coins: u.diamonds || 0, counts: COUNTS, pers: PER, prizes: PRIZES, maxErrs: MAXERR, daily: adm ? (store.db.pztDaily || null) : undefined, now });
     return true;
   }
   if (req.method !== 'POST') return false;
@@ -252,17 +255,17 @@ function handle(req, res, p, ctx) {
       const fs = new Set(folderStats().map(f => f.name)), folders = (Array.isArray(j.folders) ? j.folders : []).map(String).filter(f => fs.has(f)).slice(0, 20);
       if (!folders.length) return send(res, 200, { error: 'Kamida bitta papka tanlang' });
       const count = COUNTS.includes(+j.count) ? +j.count : 10, per = PER.includes(+j.per) ? +j.per : 0, prize = PRIZES.includes(+j.prize) ? +j.prize : 0, places = Math.max(1, Math.min(10, Math.floor(+j.places) || 3));
-      const startIn = Math.max(1, Math.min(24 * 60, Math.floor(+j.startIn) || 10));
+      const startIn = Math.max(1, Math.min(24 * 60, Math.floor(+j.startIn) || 10)), maxErr = MAXERR.includes(+j.maxErr) ? +j.maxErr : 0;
       const avail = folderStats().filter(f => folders.includes(f.name)).reduce((s, f) => s + f.n, 0);
       if (avail < 5) return send(res, 200, { error: 'Tanlangan papkalarda masala kam (' + avail + ')' });
       if (db().filter(t => t.creatorUid === uid && t.status !== 'finished').length >= 3 && !adm) return send(res, 200, { error: 'Bir vaqtda 3 tadan ortiq turnir yaratib bo‘lmaydi' });
       const cost = (adm ? 0 : CREATE_FEE) + (adm ? 0 : prize);
       if (cost > 0) { if ((u.diamonds || 0) < cost) return send(res, 200, { error: 'Yetarli tanga yo‘q: ' + cost + ' 🪙 kerak' }); u.diamonds -= cost; }
-      const t = make({ name, uid, uname: u.name || 'O‘yinchi', folders, count, per, prize, paid: adm ? 0 : prize, places, startAt: now + startIn * 60000 });
+      const t = make({ name, uid, uname: u.name || 'O‘yinchi', folders, count, per, prize, paid: adm ? 0 : prize, places, maxErr, startAt: now + startIn * 60000 });
       t.players[uid] = newP(u);
       if (adm && j.daily) {
         const hm = new Date(t.startAt + 5 * 3600e3).toISOString().slice(11, 16);
-        store.db.pztDaily = { on: true, name, hm, folders, count, per, prize, places };
+        store.db.pztDaily = { on: true, name, hm, folders, count, per, prize, places, maxErr };
         t.daily = tzDay(t.startAt);
       }
       save();
@@ -347,7 +350,7 @@ function handle(req, res, p, ctx) {
       if (!keep.length) keep = E.altLanding(c, st, w);
       if (!keep.length) {
         const sol = c.lines[c.alive[0]].slice(c.idx);
-        resolve(t, uid, false, now - P.shownAt); tickPlayer(t, uid, now); step(now);
+        resolve(t, uid, false, now - P.shownAt, true); tickPlayer(t, uid, now); step(now);
         return send(res, 200, Object.assign(full(t, uid, now), { wrong: true, sol }));
       }
       c.alive = keep; c.g = E.adv(c.g, st); c.idx++; P.steps = (P.steps || []).concat([w]);
