@@ -66,6 +66,7 @@
       ["📁", "Arxiv", "O‘tgan o‘yinlar tarixi", "@arch", "#2fd27f,#1ea36a"],
       ["🔬", "Tahlil taxtasi", "KestoG bilan pozitsiya tahlili", "@board", "#3b82f6,#06b6d4"],
       ["🧩", "Masalalar", "Shashka masalalarini yeching", "@puz", "#f5873b,#f7c02d"],
+      ["📖", "Debyutlar", "Mashhur ochilishlar va yod olish", "@deb", "#0ea5e9,#6366f1"],
       ["🪙", "Tosh do‘koni", "Donalar va o‘z donangiz", "@shop", "#7b3ff2,#d62f8f"]]],
     ["ILOVA", [
       ["⚙️", "Sozlamalar", "Ovoz, fon va boshqalar", "@set", "#6b7bff,#8fa0ff"],
@@ -130,6 +131,7 @@
   window.mnA = function (a) {
     if (a === "@set") { close(); if (window.spSettings) window.spSettings(); return; } if (a.indexOf("@ai:") === 0) { close(); if (window.aiShow) window.aiShow(a.slice(4)); return; }
     if (a === "@live") { close(); liveOpen(); return; }
+    if (a === "@deb") { close(); if (window.spDebut) window.spDebut(); else { var _d = document.createElement('script'); _d.src = '/debyut.js?v=1'; _d.onload = function () { window.spDebut(); }; document.head.appendChild(_d); } return; }
     if (a === "@stats") { close(); if (window.spStats) window.spStats(); else { var _s = document.createElement('script'); _s.src = '/statsview.js?v=1'; _s.onload = function () { window.spStats(); }; document.head.appendChild(_s); } return; }
     if (a === "@arena") { close(); if (window.avOpen) window.avOpen(); return; }
     if (a === "@arch") { close(); archOpen(); return; }
