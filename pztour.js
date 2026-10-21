@@ -200,7 +200,7 @@ function summary(t, uid, now) {
 function canJoin(t, now) { return t.status === 'reg' || (t.status === 'running' && now < t.startAt + duration(t) * LATE_JOIN); }
 function full(t, uid, now) {
   const r = summary(t, uid, now), P = player(t, uid);
-  r.now = now;
+  r.now = now; r.link = link(t); r.admin = isAdmin(uid);
   r.table = standings(t).map((x, i) => Object.assign({ place: i + 1, me: x.uid === uid }, x, { uid: undefined }));
   r.awards = (t.awards || []).map(a => ({ place: a.place, amt: a.amt, name: (t.players[a.uid] || {}).name }));
   if (P) {
@@ -274,6 +274,16 @@ function handle(req, res, p, ctx) {
       save(); return send(res, 200, { ok: true });
     }
     if (p === '/api/pzt/state') return send(res, 200, full(t, uid, now));
+    if (p === '/api/pzt/announce') { // admin: bot orqali guruhga e'lon
+      if (!adm) return send(res, 403, { error: 'admin emassiz' });
+      const gc = process.env.GROUP_CHAT_ID; if (!gc) return send(res, 200, { error: 'GROUP_CHAT_ID sozlanmagan' });
+      const l = link(t), d = new Date(t.startAt + 5 * 3600e3).toISOString().slice(11, 16);
+      const b = { chat_id: gc, text: '🧩 Masala turniri: «' + t.name + '»\n🕐 ' + d + ' da boshlanadi\n📚 ' + t.q.length + ' ta masala' + (t.per ? ', har biriga ' + (t.per < 60 ? t.per + ' s' : t.per / 60 + ' daq') : '') + (t.prize ? '\n🪙 Mukofot: ' + t.prize + ' (' + t.places + ' o‘ringa)' : '') + '\n👥 Qatnashing — kim tez va ko‘p yechadi?' };
+      if (process.env.GROUP_TOPIC_ID) b.message_thread_id = Number(process.env.GROUP_TOPIC_ID);
+      if (l) b.reply_markup = { inline_keyboard: [[{ text: '✅ Qatnashish', url: l }]] };
+      tg('sendMessage', b).then(r => { let ok = false; try { ok = JSON.parse(r || '{}').ok; } catch (e) {} send(res, 200, ok ? { ok: true } : { error: 'Guruhga yuborilmadi' }); });
+      return;
+    }
     const P = player(t, uid);
     if (!P) return send(res, 200, full(t, uid, now));
     if (p === '/api/pzt/go') { // o'yinchi yechishni boshlaydi

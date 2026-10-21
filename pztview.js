@@ -37,8 +37,22 @@
     '#ptB .pc{width:82%;height:82%;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;color:#f5b72b;box-shadow:0 2px 3px rgba(0,0,0,.45)}#ptB .pw{background:radial-gradient(circle at 35% 28%,#fff,#c9c9c9);border:2px solid #9a9a9a}#ptB .pb{background:radial-gradient(circle at 35% 28%,#666,#111);border:2px solid #000}' +
     '.ptMsg{min-height:26px;text-align:center;font-size:17px;font-weight:800;margin:10px 0 4px}' +
     '.ptCd{text-align:center;padding:12px 0}.ptCd small{display:block;font-size:14px;color:#c5f3e2}.ptCd b{display:block;font-size:54px;font-weight:900;font-variant-numeric:tabular-nums}' +
+    '.ptCalc{margin-top:10px;padding:10px;border-radius:14px;background:rgba(255,207,63,.08);border:1px solid rgba(255,207,63,.35)}.ptCalcH{font-weight:800;margin-bottom:8px;color:#ffe08a}.ptCalcG{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px}.ptCalcG>div{background:rgba(0,0,0,.3);border-radius:10px;padding:6px 8px;display:flex;flex-direction:column}.ptCalcG span{font-size:13px;color:#c5f3e2}.ptCalcG b{font-size:17px;color:#ffcf3f}.ptCalcG small{font-size:11px;opacity:.6}.ptCalcN{font-size:12px;color:#c5f3e2;margin-top:8px;line-height:1.4}' +
+    '.ptShare{display:flex;gap:8px;margin:0 0 12px}.ptShare button{flex:1;border:0;border-radius:14px;padding:12px 8px;background:rgba(255,255,255,.12);color:#fff;font-size:15px;font-weight:800}' +
     '.ptPod{display:flex;align-items:flex-end;gap:8px;padding-top:6px}.ptPod>div{flex:1;min-width:0;text-align:center}.ptPod .st{border-radius:10px 10px 0 0;color:#1a1205;font-weight:900;font-size:24px;padding-top:6px}.ptPod .nm{font-weight:800;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ptPod .sc{font-size:13px;color:#c5f3e2}';
 
+  // mukofot taqsimoti (serverdagi bilan bir xil)
+  var PZT = { 1: [100], 2: [60, 40], 3: [50, 30, 20], 4: [40, 28, 20, 12], 5: [35, 25, 18, 13, 9], 6: [30, 22, 17, 13, 10, 8], 7: [28, 20, 15, 12, 10, 8, 7], 8: [26, 19, 15, 12, 10, 8, 5, 5], 9: [24, 18, 14, 11, 10, 8, 6, 5, 4], 10: [22, 17, 13, 11, 9, 8, 7, 5, 4, 4] };
+  function calc(prize, places, n) { var k = Math.min(places, n || places); return (PZT[k] || []).map(function (pc) { return Math.floor(prize * pc / 100); }); }
+  function calcHtml(prize, places, players) {
+    if (!prize) return '';
+    var M = ['🥇', '🥈', '🥉'], a = calc(prize, places), h = '<div class="ptCalc"><div class="ptCalcH">🧮 Mukofot taqsimoti</div><div class="ptCalcG">';
+    a.forEach(function (x, i) { h += '<div><span>' + (M[i] || (i + 1) + '-o‘rin') + '</span><b>' + x + ' 🪙</b><small>' + PZT[a.length][i] + '%</small></div>'; });
+    h += '</div>';
+    if (players && players < places) { var b = calc(prize, places, players); h += '<div class="ptCalcN">Hozir ' + players + ' ishtirokchi bor: shu holatda ' + b.map(function (x, i) { return (i + 1) + '-o‘rin ' + x; }).join(', ') + ' 🪙</div>'; }
+    else h += '<div class="ptCalcN">Kamida 1 ta masala yechganlar o‘rin oladi. Qatnashchilar ' + places + ' tadan kam bo‘lsa, fond ular orasida qayta taqsimlanadi.</div>';
+    return h + '</div>';
+  }
   var ov = null, view = 'list', L = null, curId = null, st = null, pollT = null, tickT = null, form = null, opts = {};
   function css() { if (!document.getElementById('ptCss')) { var s = document.createElement('style'); s.id = 'ptCss'; s.textContent = CSS; document.head.appendChild(s); } }
   function stop() { if (pollT) clearInterval(pollT); if (tickT) clearInterval(tickT); pollT = tickT = null; }
@@ -93,7 +107,7 @@
     h += '<div class="ptField"><label>⏱ Har bir masalaga vaqt</label>' + chips('per', L.pers || [0, 30, 60, 120, 180, 300], function (v) { return v ? (v < 60 ? v + ' s' : v / 60 + ' daq') : 'Chegarasiz'; }) + '</div>';
     h += '<div class="ptField"><label>🕐 Boshlanishi</label>' + chips('startIn', [2, 5, 10, 15, 30, 60, 120], function (v) { return v < 60 ? v + ' daq' : v / 60 + ' soat'; }) + '</div>';
     h += '<div class="ptField"><label>🪙 Mukofot fondi' + (L.admin ? ' (admin: bepul)' : ' (o‘zingiz to‘laysiz)') + '</label>' + chips('prize', L.prizes || [0, 100, 200, 300, 500, 1000], function (v) { return v ? v : 'Yo‘q'; }) + '</div>';
-    if (form.prize) h += '<div class="ptField"><label>🏅 Necha o‘ringa</label>' + chips('places', [1, 2, 3, 5, 10], function (v) { return v; }) + '</div>';
+    if (form.prize) h += '<div class="ptField"><label>🏅 Necha o‘ringa</label>' + chips('places', [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], function (v) { return v; }) + calcHtml(form.prize, form.places) + '</div>';
     if (L.admin) h += '<div class="ptField"><button class="ptFold' + (form.daily ? ' on' : '') + '" id="ptDailyChk"><i>' + (form.daily ? '✓' : '') + '</i><span>🔁 Har kuni shu vaqtda takrorlash</span></button></div>';
     h += '<div id="ptErr" style="color:#ffb3b3;min-height:20px;font-weight:700"></div>';
     h += '<button class="ptGo" id="ptCreate">✅ Yaratish' + (cost ? ' · ' + cost + ' 🪙' : '') + '</button>';
@@ -164,7 +178,8 @@
     var d = st.d, h = top(esc(d.name));
     if (d.status === 'reg') {
       h += '<div class="ptCard ptCd"><small>Boshlanishiga</small><b id="ptStartCd">' + mmss(d.startAt - now()) + '</b><small>🕐 ' + hm(d.startAt) + '</small></div>';
-      h += '<div class="ptCard">' + info(d) + '</div>';
+      h += '<div class="ptCard">' + info(d) + calcHtml(d.prize, d.places, d.players) + '</div>';
+      h += '<div class="ptShare"><button id="ptShareB">📤 Guruhga / do‘stga yuborish</button>' + (d.admin ? '<button id="ptAnn">📣 Bot e‘loni</button>' : '') + '</div>';
       h += d.joined ? '<button class="ptGo ptRed" id="ptLeave">✅ Qo‘shildingiz · chiqish</button>' : '<button class="ptGo" id="ptJoin">➕ Qo‘shilish</button>';
       if (d.mine) h += '<button class="ptSec" id="ptCancel">🗑 Turnirni bekor qilish</button>';
       h += '<div class="ptCard"><h3>👥 Ishtirokchilar</h3>' + tableHtml(d) + '</div>';
@@ -203,6 +218,14 @@
     if ((b = ov.querySelector('#ptJoin'))) b.onclick = function () { api('/api/pzt/join', { id: curId }).then(function (x) { if (x.error) return alert(x.error); onState(x); if (x.status === 'running') api('/api/pzt/go', { id: curId }).then(onState); }); };
     if ((b = ov.querySelector('#ptLeave'))) b.onclick = function () { api('/api/pzt/leave', { id: curId }).then(onState); };
     if ((b = ov.querySelector('#ptCancel'))) b.onclick = function () { if (confirm('Turnir bekor qilinsinmi? Tangalar qaytariladi.')) api('/api/pzt/cancel', { id: curId }).then(function (x) { if (x.error) alert(x.error); list(); }); };
+    if ((b = ov.querySelector('#ptShareB'))) b.onclick = function () {
+      var l = d.link || (window.TG_APP_LINK ? window.TG_APP_LINK + '?startapp=pzt_' + curId : '');
+      if (!l) return alert('Havola sozlanmagan (TG_APP_LINK)');
+      var tx = '🧩 «' + d.name + '» masala turniri ' + hm(d.startAt) + ' da boshlanadi!\n📚 ' + d.count + ' ta masala' + (d.prize ? ' · 🪙 ' + d.prize + ' mukofot' : '') + '\nKim tez va ko‘p yechadi? Qatnash! 👇';
+      var u = 'https://t.me/share/url?url=' + encodeURIComponent(l) + '&text=' + encodeURIComponent(tx);
+      try { if (tg && tg.openTelegramLink) tg.openTelegramLink(u); else window.open(u, '_blank'); } catch (e) { window.open(u, '_blank'); }
+    };
+    if ((b = ov.querySelector('#ptAnn'))) b.onclick = function () { var bt = this; bt.disabled = true; bt.textContent = '⏳'; api('/api/pzt/announce', { id: curId }).then(function (x) { bt.textContent = x && x.ok ? '✅ Yuborildi' : '⚠️ ' + ((x && x.error) || 'Xato'); }).catch(function () { bt.textContent = '⚠️ Xato'; }); };
     if ((b = ov.querySelector('#ptStart'))) b.onclick = function () { api('/api/pzt/go', { id: curId }).then(onState); };
     if ((b = ov.querySelector('#ptSkip'))) b.onclick = function () { if (st.busy) return; if (!confirm('Masala o‘tkazib yuborilsinmi? U yechilmagan hisoblanadi.')) return; st.busy = true; api('/api/pzt/skip', { id: curId }).then(function (x) { st.busy = false; onState(x); }).catch(function () { st.busy = false; }); };
     if ((b = ov.querySelector('#ptB'))) b.addEventListener('pointerdown', function (ev) { var x = ev.target.closest('[data-r]'); if (!x) return; ev.preventDefault(); tap(Number(x.getAttribute('data-r')), Number(x.getAttribute('data-c'))); });
