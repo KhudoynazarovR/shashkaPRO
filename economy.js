@@ -46,11 +46,11 @@ function balance(id) { const u = user(id); return u ? (u.diamonds || 0) : 0; }
 function claimDaily(id) {
   const u = user(id);
   if (!u) return { ok: false, error: 'no_user' };
-  const d = today();
-  if (u.lastDaily === d) return { ok: false, error: 'already', diamonds: u.diamonds };
-  u.lastDaily = d;
-  add(id, CFG.DAILY_BONUS, 'daily');
-  return { ok: true, amount: CFG.DAILY_BONUS, diamonds: u.diamonds };
+  // kunlik bonus endi 🔥 kirish seriyasi bilan bir (quests.js): 1..7-kun 20…150 tanga
+  const r = require('./quests.js')._t.claimStreak(u);
+  if (r.error) return { ok: false, error: 'already', diamonds: u.diamonds };
+  note(u, r.amount, 'daily_streak_' + r.day);
+  return { ok: true, amount: r.amount, day: r.day, diamonds: u.diamonds };
 }
 
 function dayState(u) {
@@ -138,6 +138,7 @@ function handle(req, res, url) {
   } catch (e) {}
   if (p.startsWith('/api/pzt/')) { if (require('./pztour.js').handle(req, res, p, { store, verifyInitData, send, readBody })) return true; }
   if (p.startsWith('/api/battle/')) { if (require('./pzbattle.js').handle(req, res, p, { store, verifyInitData, send, readBody })) return true; }
+  if (p === '/api/quests' || p.startsWith('/api/quests/') || p.startsWith('/api/share/')) { if (require('./quests.js').handle(req, res, p, { store, verifyInitData, send, readBody })) return true; }
   if (p.startsWith('/api/rush/')) { if (require('./pzrush.js').handle(req, res, p, { store, verifyInitData, send, readBody })) return true; }
   if (p === '/api/economy' && req.method === 'GET') { send(res, 200, CFG); return true; }
   const _ADM = tg => !!(tg && (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(tg.id)));
@@ -347,7 +348,7 @@ function handle(req, res, url) {
         let gain = 0;
         if (!u.solved.includes(pz.id)) { if (Date.now() - (u.lastSolve || 0) < 6000) return send(res, 429, { error: 'slow' }); u.lastSolve = Date.now();
           try { const _rf = String(j.ref || ''); if (/^\d{3,15}$/.test(_rf) && _rf !== String(_tg.id) && !u.pzRef && !(u.solved || []).length && Date.now() <= Date.parse(process.env.PZ_PROMO_END || '2026-10-25T23:59:59+05:00')) { const _iv = store.users()[_rf]; if (_iv) { const _day = new Date().toISOString().slice(0, 10); _iv.pzInv = _iv.pzInv || { d: '', n: 0, total: 0 }; if (_iv.pzInv.d !== _day) { _iv.pzInv.d = _day; _iv.pzInv.n = 0; } if (_iv.pzInv.n < 30) { u.pzRef = _rf; _iv.pzInv.n++; _iv.pzInv.total++; _iv.diamonds = (_iv.diamonds || 0) + 100; try { require('./pzranks.js').onInvite(_iv, _rf); } catch (e) {} if (process.env.BOT_TOKEN) fetch('https://api.telegram.org/bot' + process.env.BOT_TOKEN + '/sendMessage', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ chat_id: _rf, text: '🎉 ' + (u.name || 'Yangi o‘yinchi') + ' havolangiz orqali masala yechdi! +100 🪙' }) }).catch(() => {}); } } } } catch (e) {}
-          u.solved.push(pz.id); gain = 5; try { gain += require('./pzranks.js').folderBonus(store, u, pz, _tg.id); } catch (e) {} u.diamonds = (u.diamonds || 0) + gain; pz.sv = (pz.sv || []).concat([u.name || 'Foydalanuvchi']).slice(-200); try { const _dk = new Date(Date.now() + 5 * 3600e3).toISOString().slice(0, 10); if (!store.db.pzDay || store.db.pzDay.d !== _dk) store.db.pzDay = { d: _dk, c: {} }; const _us = store.users(), _uk = Object.keys(_us).find(k => _us[k] === u); if (_uk) store.db.pzDay.c[_uk] = (store.db.pzDay.c[_uk] || 0) + 1; } catch (e) {} store.save(); try { require('./grpupd.js')(pz, () => Object.values(store.users()).filter(v => (v.solved || []).includes(pz.id)).length); } catch (e) {} }
+          u.solved.push(pz.id); try { require('./quests.js').bump(_tg.id, 'puzzle'); } catch (e) {} gain = 5; try { gain += require('./pzranks.js').folderBonus(store, u, pz, _tg.id); } catch (e) {} u.diamonds = (u.diamonds || 0) + gain; pz.sv = (pz.sv || []).concat([u.name || 'Foydalanuvchi']).slice(-200); try { const _dk = new Date(Date.now() + 5 * 3600e3).toISOString().slice(0, 10); if (!store.db.pzDay || store.db.pzDay.d !== _dk) store.db.pzDay = { d: _dk, c: {} }; const _us = store.users(), _uk = Object.keys(_us).find(k => _us[k] === u); if (_uk) store.db.pzDay.c[_uk] = (store.db.pzDay.c[_uk] || 0) + 1; } catch (e) {} store.save(); try { require('./grpupd.js')(pz, () => Object.values(store.users()).filter(v => (v.solved || []).includes(pz.id)).length); } catch (e) {} }
         const _tm = Math.round(Number(j.time)); if (_tm > 0 && _tm < 36000) { u.pzBest = u.pzBest || {}; if (!u.pzBest[pz.id] || _tm < u.pzBest[pz.id]) { u.pzBest[pz.id] = _tm; store.save(); } } return send(res, 200, { ok: true, gain, best: (u.pzBest || {})[pz.id] || 0 });
       }
       const adm = (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(_tg.id));
@@ -576,7 +577,7 @@ function handle(req, res, url) {
     if (!tg) { send(res, 401, { error: 'auth' }); return true; }
     const u = store.getOrCreate(tg);
     if (p === '/api/daily') send(res, 200, claimDaily(tg.id));
-    else send(res, 200, { diamonds: u.diamonds || 0, canClaimDaily: u.lastDaily !== today() });
+    else { const _si = require('./quests.js')._t.streakInfo(u); send(res, 200, { diamonds: u.diamonds || 0, canClaimDaily: !_si.claimed, dailyAmount: _si.reward, streak: _si.n }); }
     return true;
   }
   return false;

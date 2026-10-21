@@ -254,12 +254,14 @@
     h += '<div class="rsCard rsRes"><div class="sub">' + why + '</div><div class="big">' + (d.score || 0) + '</div><div class="sub">ta masala yechildi</div>' +
       (d.record ? '<div class="rsRec">🏆 Yangi rekord!</div>' : '<div class="sub" style="font-size:15px">Rekordingiz: ' + (d.best || 0) + '</div>') +
       (d.gain ? '<div class="rsGain">+' + d.gain + ' 🪙</div>' : (d.runsLeft === 0 ? '<div class="sub" style="font-size:14px;margin-top:10px">Bugungi tangali urinishlar tugadi — rekord uchun o‘ynashingiz mumkin</div>' : '')) + '</div>';
+    if ((d.score || 0) > 0 && window.spShareCard) h += '<button class="rsSkip" id="rsShr" style="width:100%;margin-bottom:8px">📸 Natijani ulashish</button>';
     h += '<button class="rsGo" id="rsGo">🔄 Yana o‘ynash</button><button class="rsSkip" id="rsHome" style="width:100%">🏆 Reyting</button>';
     ov.innerHTML = h;
     st = null;
     ov.querySelector('#rsX').onclick = close;
     ov.querySelector('#rsGo').onclick = start;
     ov.querySelector('#rsHome').onclick = home;
+    var _sh = ov.querySelector('#rsShr'); if (_sh) _sh.onclick = function () { window.spShareCard({ theme: 'rush', title: '⚡ PUZZLE RUSH', big: String(d.score || 0), unit: 'ta masala 3 daqiqada', badge: d.record ? '🏆 Yangi rekord!' : '', sub: 'Rekordim: ' + (d.best || d.score || 0), cap: '⚡ Puzzle Rush: 3 daqiqada ' + (d.score || 0) + ' ta masala yechdim! Sen-chi?' }); };
   }
 
   window.spRush = function (o) {

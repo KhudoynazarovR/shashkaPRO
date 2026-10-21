@@ -166,6 +166,7 @@ function leaveClient(c) {
 }
 
 const BLOCKED = new Set([
+  "quests.js",
   "server.js", "rooms.js", "pzrush.js", "pzbattle.js", "pztour.js", "draw-rules.js", "lobby.js", "users.json", "package.json", "package-lock.json"
 ]);
 
@@ -234,6 +235,9 @@ function serveFile(req, res) {
     }
     if (!html.includes("/menu.js")) {
       html = html.replace("</body>", '<script src="/menu.js?v=' + Date.now() + '"></script>\n</body>');
+    }
+    if (!html.includes("dailyq.js")) {
+      html = html.replace("</body>", '<script src="/sharecard.js?v=' + String(process.env.RENDER_GIT_COMMIT || Date.now()).slice(0, 8) + '"></script>\n<script src="/dailyq.js?v=' + String(process.env.RENDER_GIT_COMMIT || Date.now()).slice(0, 8) + '"></script>\n</body>');
     }
     if (!html.includes("lobbyclient.js")) {
       html = html.replace("</body>", '<script src="/lobbyclient.js?v=' + String(process.env.RENDER_GIT_COMMIT || Date.now()).slice(0, 8) + '"></script>\n</body>');

@@ -259,7 +259,9 @@
       h += finished(d);
     }
     var keep = document.getElementById('ptSheet');
-    ov.innerHTML = h; podFit(); bindX(function () { closeChat(); var k = document.getElementById('ptSheet'); if (k) k.remove(); list(); });
+    ov.innerHTML = h; podFit();
+    var _sh = ov.querySelector('#ptShr'); if (_sh) _sh.onclick = function () { var m = (d.table || []).filter(function (x) { return x.me; })[0]; if (!m) return; var a = (d.awards || []).filter(function (z) { return z.place === m.place; })[0]; window.spShareCard({ theme: 'pzt', title: '🧩 ' + d.name, big: m.place <= 3 ? ['🥇', '🥈', '🥉'][m.place - 1] : m.place + '-o‘rin', unit: m.place <= 3 ? m.place + '-o‘rin · ' + (d.table || []).length + ' ishtirokchi' : (d.table || []).length + ' ishtirokchi', badge: a && a.amt ? '+' + a.amt + ' tanga' : '', sub: '✅ ' + m.solved + '/' + d.count + ' masala · ⏱ ' + sec(m.time), cap: '🧩 «' + d.name + '» masala turnirida ' + m.place + '-o‘rin oldim!' }); };
+    bindX(function () { closeChat(); var k = document.getElementById('ptSheet'); if (k) k.remove(); list(); });
     if (keep) ov.appendChild(keep);
     var cb = ov.querySelector('#ptChatB'); if (cb) cb.onclick = openChat;
     chatBadge(); if (chatOpen) renderChat();
@@ -317,6 +319,8 @@
       }
       h += '</div>';
     }
+    var mine = tb.filter(function (x) { return x.me; })[0];
+    if (mine && window.spShareCard) h += '<button class="ptSec" id="ptShr" style="margin-bottom:10px">📸 Natijamni ulashish</button>';
     var tab = st.tab === 'stats' ? 'stats' : 'live';
     h += '<div class="ptChips" style="margin-bottom:10px"><button data-tab="live" class="' + (tab === 'live' ? 'on' : '') + '">🏅 Jadval</button><button data-tab="stats" class="' + (tab === 'stats' ? 'on' : '') + '">📊 Masalalar</button></div>';
     if (tab === 'live') h += '<div class="ptCard">' + tableHtml(d) + '<div style="font-size:12px;color:#9fe3c9;margin-top:8px">✅ yechilgan · ⚡ birinchi yechgan (+1 ochko) · vaqt soniya aniqligida</div></div>' + myRes(d);

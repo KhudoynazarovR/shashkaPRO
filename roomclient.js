@@ -572,6 +572,7 @@
           btn("🔁 Qayta o‘ynash", function () { send({ type: "roomRematch", roomId: roomId }); });
         }
       }
+      if (!spec && st.finished && st.winner === st.color && window.spShareCard) btn("📸 G‘alabani ulashish", function () { var opp = st.color === "white" ? st.black : st.white; window.spShareCard({ theme: "win", title: "G‘ALABA!", big: "🏆", sub: "Raqib: " + (st.vsBot ? "🤖 " : "") + (opp || ""), sub2: (st.tc ? "⏱ " + st.tc : "") + (st.reason === "timeout" ? " · vaqt bo‘yicha" : ""), cap: "🏆 ShashkaPRO’da " + (opp || "raqib") + "ni yutdim!" }); });
       if (spec) { line("👁 Siz tomoshabinsiz"); btn("🏟 O‘yin zaliga o‘tish", function () { elZal.onclick(); }); }
       ex.style.display = ex.childNodes.length ? "block" : "none";
     }

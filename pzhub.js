@@ -205,22 +205,22 @@
         var k = e.getAttribute('data-pzh');
         if (k === 'rush') {
           var go = function () { window.spRush({ onCoins: function (g) { var c = ov.querySelector('.pzhCoin span:last-child'); if (c && g) c.textContent = String((parseInt(c.textContent, 10) || 0) + g); } }); };
-          if (window.spRush) go(); else { var sc = document.createElement('script'); sc.src = '/rushview.js?v=3'; sc.onload = go; document.head.appendChild(sc); }
+          if (window.spRush) go(); else { var sc = document.createElement('script'); sc.src = '/rushview.js?v=4'; sc.onload = go; document.head.appendChild(sc); }
           return;
         }
         if (k === 'pzt') {
           var ld3 = function (src, cb) { var sc3 = document.createElement('script'); sc3.src = src; sc3.onload = cb; document.head.appendChild(sc3); };
           var go3 = function () { window.spPzt({ onCoins: function (g) { var c = ov.querySelector('.pzhCoin span:last-child'); if (c && g) c.textContent = String((parseInt(c.textContent, 10) || 0) + g); } }); };
-          var need3 = function () { if (window.spPzt) go3(); else ld3('/pztview.js?v=6', go3); };
-          if (window.spPzRules) need3(); else ld3('/rushview.js?v=3', need3);
+          var need3 = function () { if (window.spPzt) go3(); else ld3('/pztview.js?v=7', go3); };
+          if (window.spPzRules) need3(); else ld3('/rushview.js?v=4', need3);
           return;
         }
         if (k === 'battle') {
           var onC = function (g) { var c = ov.querySelector('.pzhCoin span:last-child'); if (c && g) c.textContent = String((parseInt(c.textContent, 10) || 0) + g); };
           var ld = function (src, cb) { var sc2 = document.createElement('script'); sc2.src = src; sc2.onload = cb; document.head.appendChild(sc2); };
           var go2 = function () { window.spBattle({ onCoins: onC }); };
-          var need = function () { if (window.spBattle) go2(); else ld('/battleview.js?v=4', go2); };
-          if (window.spPzRules) need(); else ld('/rushview.js?v=3', need);
+          var need = function () { if (window.spBattle) go2(); else ld('/battleview.js?v=5', go2); };
+          if (window.spPzRules) need(); else ld('/rushview.js?v=4', need);
           return;
         }
         if (ctx[k]) ctx[k]();

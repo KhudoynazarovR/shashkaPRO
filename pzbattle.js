@@ -80,7 +80,7 @@ function finish(store, m) {
   if (a.score !== b.score) w = a.score > b.score ? a : b;
   else if (a.score > 0) w = a.at <= b.at ? a : b;
   const us = store.users(), d = dayKey(), res = { winner: w ? w.uid : null, draw: !w, gain: {}, delta: {}, scores: {} };
-  m.p.forEach(s => { res.scores[s.uid] = s.score; });
+  m.p.forEach(s => { res.scores[s.uid] = s.score; if (!s.bot) { try { require('./quests.js').bump(s.uid, 'battle'); } catch (e) {} } });
   const human = !a.bot && !b.bot;
   // reyting (faqat odam vs odam)
   if (human) {

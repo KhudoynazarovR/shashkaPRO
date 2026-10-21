@@ -300,10 +300,12 @@
       '<div class="vs">' + (me.score || 0) + ' : ' + (op.score || 0) + '</div><div class="sub">Siz · ' + (op.bot ? '🤖 ' : '') + esc(op.name) + '</div>' +
       (r.delta ? '<div class="sub">Reyting: ' + r.rt + ' (' + (r.delta > 0 ? '+' : '') + r.delta + ')</div>' : '') +
       (r.gain ? '<div class="btGain">+' + r.gain + ' 🪙</div>' : '') + '</div>';
+    if (r.win && window.spShareCard) h += '<button class="btSecondary" id="btShr" style="margin-bottom:8px">📸 G‘alabani ulashish</button>';
     h += '<button class="btGo" id="btAgain">⚔️ Yana bellashish</button><button class="btSecondary" id="btHome">🏆 Reyting</button>';
     ov.innerHTML = h; st = null;
     ov.querySelector('#btX').onclick = close;
     ov.querySelector('#btAgain').onclick = find;
+    var _sh = ov.querySelector('#btShr'); if (_sh) _sh.onclick = function () { window.spShareCard({ theme: 'battle', title: '⚔️ MASALA JANGI', big: (me.score || 0) + ':' + (op.score || 0), unit: 'G‘ALABA! 🏆', sub: 'Raqib: ' + (op.bot ? '🤖 ' : '') + (op.name || ''), sub2: r.delta ? 'Reyting: ' + r.rt + ' (+' + r.delta + ')' : '', cap: '⚔️ Masala jangida ' + (me.score || 0) + ':' + (op.score || 0) + ' hisobida yutdim!' }); };
     ov.querySelector('#btHome').onclick = home;
   }
 

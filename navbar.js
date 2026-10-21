@@ -61,7 +61,7 @@
         if (d.error) { $('nvBal').textContent = '🪙 —'; return; }
         $('nvBal').textContent = '🪙 ' + d.diamonds;
         $('nvDaily').disabled = !d.canClaimDaily;
-        $('nvDaily').textContent = d.canClaimDaily ? '🎁 Kunlik bonus +20' : '✅ Bonus olingan';
+        $('nvDaily').textContent = d.canClaimDaily ? '🎁 Kunlik bonus +' + (d.dailyAmount || 20) + (d.streak ? ' · 🔥' + d.streak : '') : '✅ Bonus olingan';
       }).catch(function () { $('nvMsg').textContent = 'Server bilan aloqa yo‘q'; });
     }
     $('nvDaily').onclick = function () {

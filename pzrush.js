@@ -136,6 +136,7 @@ function loadNext(store, s) {
 function finish(store, s, why) {
   if (s.over) return s.res;
   s.over = true; S.delete(s.uid);
+  if (why !== 'restart') { try { require('./quests.js').bump(s.uid, 'rush'); } catch (e) {} }
   const u = store.users()[s.uid];
   let gain = 0, best = s.score, rec = false;
   if (u) {
