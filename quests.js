@@ -76,6 +76,7 @@ function bump(uid, kind, n, pzId) {
       q.pzd = q.pzd || []; if (q.pzd.includes(pzId)) return; q.pzd.push(pzId);
     }
     q.p[kind] = (q.p[kind] || 0) + (n || 1);
+    try { require('./leagues.js').event(uid, kind, n || 1); } catch (e) {}
     stat(kind, n || 1);
     store.save();
   } catch (e) { console.log('[quests]', e.message); }
@@ -95,7 +96,7 @@ function claimStreak(u) {
   if (i.claimed) return { error: 'Bugun olingan' };
   u.strk = { n: i.day, d: dayKey(), best: Math.max(i.day, (u.strk && u.strk.best) || 0) };
   u.diamonds = (u.diamonds || 0) + i.reward;
-  stat('streak_claim');
+  stat('streak_claim'); try { require('./leagues.js').event((Object.entries(users()).find(([, v]) => v === u) || [])[0], 'streak_claim'); } catch (e) {}
   u.lastDaily = new Date().toISOString().slice(0, 10); // eski "kunlik bonus" bilan ikki marta olinmasin
   store.save();
   return { ok: true, amount: i.reward, day: i.day };
@@ -244,14 +245,14 @@ function handle(req, res, p, ctx) {
       if (j.bonus) {
         if (q.b) return send(res, 200, { error: 'Olingan' });
         if (!list.every((_, k) => q.c[k])) return send(res, 200, { error: 'Avval uchala vazifani bajaring' });
-        q.b = true; u.diamonds = (u.diamonds || 0) + BONUS; stat('q_bonus'); store.save();
+        q.b = true; u.diamonds = (u.diamonds || 0) + BONUS; stat('q_bonus'); try { require('./leagues.js').event(uid, 'q_bonus'); } catch (e) {} store.save();
         return send(res, 200, { ok: true, amount: BONUS, state: view(u) });
       }
       const k = Math.floor(+j.i); if (!(k >= 0 && k < list.length)) return send(res, 200, { error: 'xato' });
       const x = list[k];
       if (q.c[k]) return send(res, 200, { error: 'Olingan' });
       if ((q.p[x.k] || 0) < x.n) return send(res, 200, { error: 'Hali bajarilmagan' });
-      q.c[k] = true; u.diamonds = (u.diamonds || 0) + x.r; stat('q_claim'); store.save();
+      q.c[k] = true; u.diamonds = (u.diamonds || 0) + x.r; stat('q_claim'); try { require('./leagues.js').event(uid, 'q_claim'); } catch (e) {} store.save();
       send(res, 200, { ok: true, amount: x.r, state: view(u) });
     });
     return true;

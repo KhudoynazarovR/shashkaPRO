@@ -213,7 +213,7 @@ function createRooms({ send, clients, onFinish }) {
         for (const c of ['white', 'black']) {
           const id = seats[c]; if (!id || isBotUid(id)) continue;
           q.bump(id, 'game');
-          if (winner === c) { q.bump(id, 'win'); const o = seats[c === 'white' ? 'black' : 'white']; if (isBotUid(o)) q.bump(id, 'bot'); }
+          if (winner === c) { q.bump(id, 'win'); const o = seats[c === 'white' ? 'black' : 'white']; if (isBotUid(o)) { q.bump(id, 'bot'); try { require('./leagues.js').event(id, 'beat_' + o); } catch (e) {} } }
         }
       }
     } catch (e) { console.log('quests:', e.message); }
