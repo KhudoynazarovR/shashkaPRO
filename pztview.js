@@ -308,12 +308,12 @@
     if (d.cancelled) return '<div class="ptCard">Turnir bekor qilingan</div>';
     if (tb.length) {
       // shohsupa — oddiy turnirdagi kabi (/podium.jpg ustiga avatar, ism, natija, mukofot)
-      var SL = [{ x: 50.0, y: 35.6, w: 18, d: 10.0, f: 1.25 }, { x: 23.3, y: 43.4, w: 15, d: 7.4, f: 1.05 }, { x: 76.8, y: 44.6, w: 14.5, d: 7.4, f: 1.05 }];
-      h += '<div class="spPd ptPd"><img class="bg" src="/podium.jpg" alt=""><div class="tt">' + esc(d.name) + '</div>';
+      var K = 0.70, SL = [{ x: 50.0, y: 31.5, w: 21, d: 15.5, f: 1.25 }, { x: 23.3, y: 39.6, w: 17, d: 11.5, f: 1.05 }, { x: 76.8, y: 40.6, w: 17, d: 11.5, f: 1.05 }]; // K: rasmning yuqori 70% (zinapoya kesiladi)
+      h += '<div class="spPd ptPd" style="aspect-ratio:1149/' + Math.round(1369 * K) + '"><img class="bg" src="/podium.jpg" alt="" style="height:' + (100 / K).toFixed(2) + '%;bottom:auto;object-fit:fill"><div class="tt" style="top:' + (20.1 / K).toFixed(2) + '%">' + esc(d.name) + '</div>';
       for (var i = 0; i < 3 && i < tb.length; i++) {
         var x = tb[i], s = SL[i], a = (d.awards || []).filter(function (z) { return z.place === i + 1; })[0], ini = esc(String(x.name || '?').charAt(0).toUpperCase()).replace(/'/g, '');
         var av = x.av ? '<img src="/api/av/' + encodeURIComponent(x.av) + '" alt="" onerror="this.parentNode.textContent=\'' + ini + '\'">' : ini;
-        h += '<div class="sl" style="left:' + s.x + '%;top:' + s.y + '%;width:' + s.w + '%;font-size:' + s.f + 'em"><div class="av" style="width:' + (s.d / s.w * 100) + '%;aspect-ratio:1;font-size:1.6em">' + av + '</div><div class="nm">' + esc(x.name) + '</div><div class="sc" style="white-space:nowrap;font-size:.8em">✅ ' + x.solved + ' · ' + sec(x.time) + '</div>' + (a && a.amt ? '<div class="sc"><span class="pz">+' + a.amt + ' 🪙</span></div>' : '') + '</div>';
+        h += '<div class="sl" style="left:' + s.x + '%;top:' + (s.y / K).toFixed(2) + '%;width:' + s.w + '%;font-size:' + s.f + 'em"><div class="av" style="width:' + (s.d / s.w * 100) + '%;aspect-ratio:1;font-size:1.6em">' + av + '</div><div class="nm">' + esc(x.name) + '</div><div class="sc" style="white-space:nowrap;font-size:.8em">✅ ' + x.solved + ' · ' + sec(x.time) + '</div>' + (a && a.amt ? '<div class="sc"><span class="pz">+' + a.amt + ' 🪙</span></div>' : '') + '</div>';
       }
       h += '</div>';
     }
