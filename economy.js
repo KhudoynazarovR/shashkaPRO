@@ -138,6 +138,7 @@ function handle(req, res, url) {
       if (_sg) { const _su = store.users()[String(_sg.id)]; if (_su && Date.now() - (_su.lastSeen || 0) > 60000) _su.lastSeen = Date.now(); }
     }
   } catch (e) {}
+  if (p.startsWith('/api/auth/')) { if (require('./weblogin.js').handle(req, res, p, { send, readBody })) return true; }
   if (p.startsWith('/api/pzt/')) { if (require('./pztour.js').handle(req, res, p, { store, verifyInitData, send, readBody })) return true; }
   if (p.startsWith('/api/battle/')) { if (require('./pzbattle.js').handle(req, res, p, { store, verifyInitData, send, readBody })) return true; }
   if (p === '/api/quests' || p.startsWith('/api/quests/') || p.startsWith('/api/share/') || p === '/api/admin/stats') { if (require('./quests.js').handle(req, res, p, { store, verifyInitData, send, readBody })) return true; }

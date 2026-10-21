@@ -95,6 +95,14 @@ async function onMessage(msg) {
     }
   }
   const text = (msg.text || "").trim();
+  // Telegramdan tashqarida (sayt / Play Market ilovasi) kirishni tasdiqlash
+  const _lg = /^\/start(?:@\w+)?\s+login_([A-Za-z0-9]{10,40})$/.exec(text);
+  if (_lg && msg.chat && msg.chat.type === "private" && msg.from) {
+    const P = require("./weblogin.js").botStart(_lg[1], msg.from);
+    if (!P) { await api("sendMessage", { chat_id: msg.chat.id, text: "⌛ Kirish havolasi eskirgan. Ilovada «Telegram orqali kirish» tugmasini qaytadan bosing." }); return; }
+    await api("sendMessage", { chat_id: msg.chat.id, text: "🔐 ShashkaPRO ilovasiga yoki saytiga kirish so‘raldi.\n\nBu siz bo‘lsangiz — «✅ Ha, kiraman» ni bosing.\n⚠️ Agar bu havolani sizga boshqa odam yuborgan bo‘lsa, BOSMANG — u sizning hisobingizga kirib oladi.", reply_markup: { inline_keyboard: [[{ text: "✅ Ha, kiraman", callback_data: "lg:" + _lg[1], style: "success" }], [{ text: "❌ Yo‘q, bu men emas", callback_data: "lgno:" + _lg[1] }]] } });
+    return;
+  }
   const _go = { "🎮 Shashka Mini App": ["Shashka Mini App", "main"], "🧩 Masala yechish": ["Masalalar", "puz"], "🤖 AI bilan o‘ynash": ["AI bilan o‘yin", "ai"] }[text];
   if (_go) {
     try { await api("deleteMessage", { chat_id: msg.chat.id, message_id: msg.message_id }); } catch (e) {}
@@ -186,6 +194,13 @@ async function start() {
     } catch (e) { console.log('[bot] my_chat_member xato:', e.message); }
   }
   async function onCallback(q) {
+    if (q.data && (q.data.indexOf('lg:') === 0 || q.data.indexOf('lgno:') === 0)) {
+      const yes = q.data.indexOf('lg:') === 0, code = q.data.slice(yes ? 3 : 5);
+      const ok = yes && require('./weblogin.js').botConfirm(code, q.from);
+      try { await api("answerCallbackQuery", { callback_query_id: q.id, text: yes ? (ok ? '✅ Kirdingiz!' : '⌛ Havola eskirgan') : 'Bekor qilindi' }); } catch (e) {}
+      try { if (q.message) await api("editMessageText", { chat_id: q.message.chat.id, message_id: q.message.message_id, text: yes ? (ok ? '✅ Kirish tasdiqlandi. Ilovaga qayting — o‘yin ochiladi.' : '⌛ Havola eskirgan. Ilovada qaytadan urinib ko‘ring.') : '❌ Kirish rad etildi.' }); } catch (e) {}
+      return;
+    }
     if (q.data !== 'top10') return;
     let txt = '🏆 TOP 10';
     try {

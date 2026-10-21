@@ -166,7 +166,7 @@ function leaveClient(c) {
 }
 
 const BLOCKED = new Set([
-  "quests.js", "leagues.js",
+  "quests.js", "leagues.js", "weblogin.js",
   "server.js", "rooms.js", "pzrush.js", "pzbattle.js", "pztour.js", "draw-rules.js", "lobby.js", "users.json", "package.json", "package-lock.json"
 ]);
 
@@ -212,6 +212,8 @@ function serveFile(req, res) {
   // index.html ga guruh (xona) rejimi skriptini avtomatik ulaymiz
   if (base === "index.html") {
     let html = fs.readFileSync(file, "utf8");
+    // Telegramdan tashqarida kirish (sayt / Play Market ilovasi) — boshqa skriptlardan oldin
+    if (!html.includes("webauth.js")) html = html.replace('<script src="https://telegram.org/js/telegram-web-app.js"></script>', '<script src="https://telegram.org/js/telegram-web-app.js"></script><script src="/webauth.js?v=1"></script>');
     if (!html.includes("aiview.js")) {
       html = html.replace("</body>", '<script src="/aiview.js?v=' + Date.now() + '"></script>\n</body>');
     }
