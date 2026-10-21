@@ -166,7 +166,7 @@ function leaveClient(c) {
 }
 
 const BLOCKED = new Set([
-  "server.js", "rooms.js", "pzrush.js", "pzbattle.js", "draw-rules.js", "lobby.js", "users.json", "package.json", "package-lock.json"
+  "server.js", "rooms.js", "pzrush.js", "pzbattle.js", "pztour.js", "draw-rules.js", "lobby.js", "users.json", "package.json", "package-lock.json"
 ]);
 
 function serveFile(req, res) {

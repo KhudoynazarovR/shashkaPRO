@@ -1274,3 +1274,18 @@ window.spShop = open;
     if (window.spPzRules) need(); else ld('/rushview.js?v=3', need);
   }, 1200);
 })();
+
+/* PZTLINK — startapp=pzt_<id>: masala turniri havolasi (bot eslatmasidan) */
+;(function () {
+  var tg = window.Telegram && window.Telegram.WebApp, sp = '';
+  try { sp = (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || ''; } catch (e) {}
+  if (!/^pzt_[a-z0-9]{3,12}$/.test(sp)) return;
+  var id = sp.slice(4), key = 'pztDone_' + id;
+  try { if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key, '1'); } catch (e) {}
+  function ld(src, cb) { var s = document.createElement('script'); s.src = src; s.onload = cb; document.head.appendChild(s); }
+  setTimeout(function () {
+    var go = function () { window.spPzt({ open: id }); };
+    var need = function () { if (window.spPzt) go(); else ld('/pztview.js?v=1', go); };
+    if (window.spPzRules) need(); else ld('/rushview.js?v=3', need);
+  }, 1200);
+})();
