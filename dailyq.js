@@ -11,7 +11,7 @@
   function ls(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
   function api(p, body) { return fetch(p, { method: body ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json', 'x-init-data': initData }, body: body ? JSON.stringify(body) : undefined }).then(function (r) { return r.json(); }); }
   function hms(ms) { ms = Math.max(0, ms); var s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return h + ':' + (m < 10 ? '0' : '') + m + ':' + (x < 10 ? '0' : '') + x; }
-  function coin(n) { try { if (window.__coinFx) window.__coinFx(n); } catch (e) {} }
+  function coin(n) { try { if (window.__coinFx) { window.__coinFx(n); setTimeout(function () { try { window.__coinClear(); } catch (e) {} }, 1600); } } catch (e) {} }
   function haptic() { try { tg.HapticFeedback.notificationOccurred('success'); } catch (e) {} }
 
   var st = document.createElement('style'); st.id = 'dqCss';

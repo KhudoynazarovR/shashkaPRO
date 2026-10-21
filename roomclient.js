@@ -18,6 +18,8 @@
     d.textContent='+'+k+' \uD83E\uDE99';
     d.style.cssText='position:fixed;left:50%;top:48%;z-index:99999;pointer-events:none;font-size:44px;font-weight:800;color:#ffd54a;text-shadow:0 2px 10px #000,0 0 18px #f5a300;animation:coinFxIn .6s ease-out forwards';
     window.__coinClear(); d.id='coinFxEl'; document.body.appendChild(d); setTimeout(function(){ try{ if(d.parentNode) d.remove(); }catch(e){} },600000);
+    // ekranning istalgan joyiga tegilsa tanga yo'qoladi (ekranda qolib ketmasin)
+    setTimeout(function(){ var off=function(){ document.removeEventListener('pointerdown',off,true); try{ if(d.parentNode) d.remove(); }catch(e){} }; document.addEventListener('pointerdown',off,true); },700);
   };
 })();
 /* roomclient.js — guruh o'yini (xona) rejimi.
