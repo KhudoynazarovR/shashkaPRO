@@ -2746,9 +2746,9 @@ document.head.appendChild(_as); }
   if (!document.getElementById("spPd2Css")) {
     var st = document.createElement("style"); st.id = "spPd2Css";
     st.textContent =
-      ".spPd{position:relative;width:100%;aspect-ratio:1149/1369;border-radius:18px;overflow:hidden;margin-bottom:12px;background:#0b0920 center/cover no-repeat;box-shadow:0 3px 0 #0e0b30;font-family:Roboto,system-ui,sans-serif;color:#fff}" +
-      ".spPd img.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}" +
-      ".spPd .tt{position:absolute;left:12%;right:12%;top:20.1%;transform:translateY(-50%);text-align:center;font:900 2.3em Georgia,'Times New Roman',serif;color:#ffe08a;text-shadow:0 2px 0 #7a4c00,0 0 12px rgba(255,190,60,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
+      ".spPd{position:relative;width:100%;aspect-ratio:1149/958;border-radius:18px;overflow:hidden;margin-bottom:12px;background:#0b0920 center/cover no-repeat;box-shadow:0 3px 0 #0e0b30;font-family:Roboto,system-ui,sans-serif;color:#fff}" +
+      ".spPd img.bg{position:absolute;left:0;top:0;width:100%;height:142.86%;object-fit:fill}" +
+      ".spPd .tt{position:absolute;left:12%;right:12%;top:28.71%;transform:translateY(-50%);text-align:center;font:900 2.3em Georgia,'Times New Roman',serif;color:#ffe08a;text-shadow:0 2px 0 #7a4c00,0 0 12px rgba(255,190,60,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
       ".spPd .sl{position:absolute;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;text-align:center}" +
       ".spPd .av{border-radius:50%;overflow:hidden;background:#1f4fd6;border:.18em solid #ffd76a;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;box-sizing:border-box}" +
       ".spPd .av img{width:100%;height:100%;object-fit:cover}" +
@@ -2759,9 +2759,10 @@ document.head.appendChild(_as); }
   }
   // kartalar joyi (rasmga nisbatan %)
   var SL = [
-    { x: 50.0, y: 35.6, w: 18, d: 10.0, f: 1.25 },  // 1-o'rin
-    { x: 23.3, y: 43.4, w: 15, d: 7.4,  f: 1.05 },  // 2-o'rin
-    { x: 76.8, y: 44.6, w: 14.5, d: 7.4, f: 1.05 }  // 3-o'rin
+    // rasmning yuqori 70% ko'rsatiladi (zinapoya kesilgan) — y: to'liq rasmdagi %, K ga bo'linadi
+    { x: 50.0, y: 31.5, w: 21, d: 15.5, f: 1.25 },  // 1-o'rin
+    { x: 23.3, y: 39.6, w: 17, d: 11.5, f: 1.05 },  // 2-o'rin
+    { x: 76.8, y: 40.6, w: 17, d: 11.5, f: 1.05 }   // 3-o'rin
   ];
   function fit(el) { if (el && el.clientWidth) el.style.fontSize = (el.clientWidth / 40) + "px"; }
   window.addEventListener("resize", function () { fit(document.querySelector(".spPd")); });
@@ -2783,7 +2784,7 @@ document.head.appendChild(_as); }
       var p = pl[i]; if (!p) continue;
       var s = SL[i], a = aw.filter(function (x) { return x.place === i + 1; })[0], ini = e(String(p.name || "?").charAt(0).toUpperCase());
       var av = /^\d+$/.test(String(p.uid)) ? '<img src="/api/av/' + encodeURIComponent(p.uid) + '" alt="" onerror="this.parentNode.textContent=\'' + ini.replace(/'/g, "") + '\'">' : ini;
-      h += '<div class="sl" style="left:' + s.x + '%;top:' + s.y + '%;width:' + s.w + '%;font-size:' + s.f + 'em">' +
+      h += '<div class="sl" style="left:' + s.x + '%;top:' + (s.y / 0.70).toFixed(2) + '%;width:' + s.w + '%;font-size:' + s.f + 'em">' +
         '<div class="av" style="width:' + (s.d / s.w * 100) + '%;aspect-ratio:1;font-size:1.6em">' + av + '</div>' +
         '<div class="nm">' + e(p.name) + '</div>' +
         '<div class="sc">⭐ ' + (p.score || 0) + (a && a.amt ? ' <span class="pz">+' + a.amt + ' 🪙</span>' : '') + '</div></div>';
