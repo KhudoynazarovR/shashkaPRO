@@ -5,7 +5,7 @@
   var tg = window.Telegram && window.Telegram.WebApp;
   var initData = (tg && tg.initData) || '';
   if (!initData) return;
-  var S = null, open = false, autoDone = false, busy = false;
+  var S = null, open = false, autoDone = false, busy = false, openSent = false;
   function $(i) { return document.getElementById(i); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function ls(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
@@ -122,6 +122,7 @@
     h += '</div>';
     var b = S.bonus;
     h += '<div class="sec chest"><span class="ic">' + (b.claimed ? '📭' : '🧰') + '</span><div class="tx">Uchala vazifa uchun sandiq<small>' + (b.claimed ? 'Olindi — ertaga yangi vazifalar' : 'Hammasini bajarib, qo‘shimcha mukofot oling') + '</small></div><button id="dqB" class="' + (b.ready && !b.claimed ? 'on' : '') + '"' + (b.ready && !b.claimed ? '' : ' disabled') + '>' + (b.claimed ? '✅' : '+' + b.r + ' 🪙') + '</button></div>';
+    h += '<button class="shr" id="dqNt" style="background:transparent;color:#bab7e8;font-weight:700">' + (S.ntfOn ? '🔔 Eslatmalar yoqilgan · o‘chirish' : '🔕 Eslatmalar o‘chirilgan · yoqish') + '</button>';
     if (s.n >= 2 && window.spShareCard) h += '<button class="shr" id="dqShare">📸 ' + s.n + ' kunlik seriyamni ulashish</button>';
     h += '</div>';
     ov.innerHTML = h;
@@ -129,6 +130,7 @@
     var e;
     if ((e = ov.querySelector('#dqPz'))) e.onclick = function () { var id = S.pz && S.pz.id; hide(); if (window.spPuzzleDaily && id) window.spPuzzleDaily(S.pz.set, id); else if (window.mnA) window.mnA('@puz'); };
     if ((e = ov.querySelector('#dqS'))) e.onclick = function () { act('/api/quests/streak', {}); };
+    if ((e = ov.querySelector('#dqNt'))) e.onclick = function () { api('/api/quests/notify', { on: !S.ntfOn }).then(function (x) { if (x && x.ok) { S.ntfOn = x.on; render(); } }); };
     if ((e = ov.querySelector('#dqB'))) e.onclick = function () { act('/api/quests/claim', { bonus: 1 }); };
     if ((e = ov.querySelector('#dqShare'))) e.onclick = function () { window.spShareCard({ theme: 'streak', title: 'KETMA-KET KIRISH', big: String(S.streak.n), unit: 'kun ketma-ket 🔥', sub: 'Har kuni shashka o‘ynayman!', cap: '🔥 ShashkaPRO’da ' + S.streak.n + ' kun ketma-ket o‘ynayapman!' }); };
     Array.prototype.forEach.call(ov.querySelectorAll('[data-q]'), function (x) { x.onclick = function () { act('/api/quests/claim', { i: +x.getAttribute('data-q') }); }; });
@@ -166,7 +168,8 @@
   function load() {
     return api('/api/quests').then(function (x) {
       if (!x || x.error) return;
-      S = x; card(); if (open) render();
+      S = x; window.__isAdmin = !!x.admin; card(); if (open) render();
+      if (!openSent) { openSent = true; var sp = ''; try { sp = tg.initDataUnsafe.start_param || ''; } catch (e) {} if (/^ntf_/.test(sp)) api('/api/quests/open', { src: sp }); }
       // kuniga birinchi kirishda (yoki bugungi sovg'a olinmagan bo'lsa) oyna o'zi ochiladi
       if (!autoDone) { autoDone = true; if (!S.streak.claimed && !open) show(); }
     }).catch(function () {});

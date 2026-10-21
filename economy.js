@@ -4,6 +4,7 @@ require('./botarena.js');
 const store = require('./store');
 const { verifyInitData } = require('./auth');
 setTimeout(() => { try { require('./pztour.js').init(store); } catch (e) { console.log('[pzt init]', e.message); } }, 3000);
+setTimeout(() => { try { require('./quests.js').init(store); } catch (e) { console.log('[quests init]', e.message); } }, 4000);
 
 const CFG = {
   CREATE_COST: 100,
@@ -138,7 +139,7 @@ function handle(req, res, url) {
   } catch (e) {}
   if (p.startsWith('/api/pzt/')) { if (require('./pztour.js').handle(req, res, p, { store, verifyInitData, send, readBody })) return true; }
   if (p.startsWith('/api/battle/')) { if (require('./pzbattle.js').handle(req, res, p, { store, verifyInitData, send, readBody })) return true; }
-  if (p === '/api/quests' || p.startsWith('/api/quests/') || p.startsWith('/api/share/')) { if (require('./quests.js').handle(req, res, p, { store, verifyInitData, send, readBody })) return true; }
+  if (p === '/api/quests' || p.startsWith('/api/quests/') || p.startsWith('/api/share/') || p === '/api/admin/stats') { if (require('./quests.js').handle(req, res, p, { store, verifyInitData, send, readBody })) return true; }
   if (p.startsWith('/api/rush/')) { if (require('./pzrush.js').handle(req, res, p, { store, verifyInitData, send, readBody })) return true; }
   if (p === '/api/economy' && req.method === 'GET') { send(res, 200, CFG); return true; }
   const _ADM = tg => !!(tg && (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(tg.id)));

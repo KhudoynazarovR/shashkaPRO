@@ -76,6 +76,7 @@ function bump(uid, kind, n, pzId) {
       q.pzd = q.pzd || []; if (q.pzd.includes(pzId)) return; q.pzd.push(pzId);
     }
     q.p[kind] = (q.p[kind] || 0) + (n || 1);
+    stat(kind, n || 1);
     store.save();
   } catch (e) { console.log('[quests]', e.message); }
 }
@@ -94,6 +95,7 @@ function claimStreak(u) {
   if (i.claimed) return { error: 'Bugun olingan' };
   u.strk = { n: i.day, d: dayKey(), best: Math.max(i.day, (u.strk && u.strk.best) || 0) };
   u.diamonds = (u.diamonds || 0) + i.reward;
+  stat('streak_claim');
   u.lastDaily = new Date().toISOString().slice(0, 10); // eski "kunlik bonus" bilan ikki marta olinmasin
   store.save();
   return { ok: true, amount: i.reward, day: i.day };
@@ -136,6 +138,74 @@ function tg(method, body) {
   });
 }
 
+// ---------- statistika: faollik va kunlik hisoblagichlar
+function stat(key, n) {
+  try {
+    if (!store) store = require('./store');
+    const d = dayKey(), m = store.db.mstat = store.db.mstat || {};
+    const x = m[d] = m[d] || {}; x[key] = (x[key] || 0) + (n || 1);
+    const ks = Object.keys(m).sort(); while (ks.length > 60) delete m[ks.shift()];
+  } catch (e) {}
+}
+function touch(u) { // ilovaga kirgan kunlar (oxirgi 40 kun) — DAU va qaytish (retention) uchun
+  const d = dayKey(); u.seen = Date.now();
+  if (!u.created) u.created = 1; // eski foydalanuvchi: yaratilgan sanasi noma'lum — "yangi" deb sanalmasin
+  u.days = Array.isArray(u.days) ? u.days : [];
+  if (u.days[u.days.length - 1] !== d) { u.days.push(d); if (u.days.length > 40) u.days.splice(0, u.days.length - 40); }
+}
+const addDay = (d, n) => new Date(Date.parse(d + 'T00:00:00Z') + n * 86400e3).toISOString().slice(0, 10);
+function adminStats() {
+  const us = users(), all = Object.entries(us).filter(([k]) => /^\d+$/.test(k)).map(([, v]) => v), today = dayKey(), m = store.db.mstat || {};
+  const cday = u => u.created ? dayKey(u.created) : null, act = (u, d) => Array.isArray(u.days) && u.days.includes(d);
+  const days = [];
+  for (let i = 0; i < 14; i++) {
+    const d = addDay(today, -i), nw = all.filter(u => cday(u) === d);
+    const r = k => { const t = addDay(d, k); if (t > today || !nw.length) return null; return Math.round(nw.filter(u => act(u, t)).length * 100 / nw.length); };
+    days.push({ d, dau: all.filter(u => act(u, d)).length, nw: nw.length, d1: r(1), d7: r(7), ev: m[d] || {} });
+  }
+  const within = n => { const from = addDay(today, -(n - 1)); return all.filter(u => Array.isArray(u.days) && u.days.some(x => x >= from)).length; };
+  const lead = all.filter(u => u.strk && (u.strk.d === today || u.strk.d === addDay(today, -1))).sort((a, b) => b.strk.n - a.strk.n).slice(0, 10).map(u => ({ name: u.name || 'O‘yinchi', n: u.strk.n }));
+  const since = Object.keys(m).sort()[0] || today;
+  return { today, total: all.length, dau: days[0].dau, wau: within(7), mau: within(30), days, lead, ntfOff: all.filter(u => u.ntfOff || u.ntfOn === false).length, since };
+}
+
+// ---------- bot eslatmalari (kuniga ko'pi bilan 1 ta xabar)
+let NT = null;
+function tzHour() { return new Date(Date.now() + 5 * 3600e3).getUTCHours(); }
+function notifyTick(hh) {
+  if (process.env.NOTIFY_OFF === '1' || !process.env.BOT_TOKEN || !process.env.TG_APP_LINK || !store) return;
+  const h = hh == null ? tzHour() : hh, today = dayKey(), now = Date.now(), y = prevDay(today), out = [];
+  for (const [uid, u] of Object.entries(users())) {
+    if (!/^\d+$/.test(uid) || u.ntfOff || u.ntfOn === false) continue;
+    const n = u.ntf = u.ntf || {};
+    if (n.d === today) continue;
+    const s = u.strk;
+    if (h >= 19 && h < 21 && s && s.d === y && s.n >= 2) out.push([uid, u, 'streak']);
+    else if (h >= 18 && h < 20 && u.seen && now - u.seen > 3 * 864e5 && now - u.seen < 21 * 864e5 && (!n.back || now - n.back > 7 * 864e5)) out.push([uid, u, 'back']);
+    if (out.length >= 300) break;
+  }
+  let i = 0, stop = false;
+  const next = () => {
+    if (stop || i >= out.length) { if (out.length) store.save(); return; }
+    const [uid, u, type] = out[i++], s = u.strk || { n: 0 }, si = streakInfo(u);
+    const text = type === 'streak'
+      ? '🔥 ' + s.n + ' kunlik seriyangiz bugun uziladi!\n\nKirib bugungi sovg‘ani oling: +' + si.reward + ' 🪙\n📗 Kunlik 5 ta masala ham kutyapti.'
+      : '👋 Sizni sog‘indik!\n\n📗 Bugungi 5 ta masala va 🎁 kunlik sovg‘a sizni kutyapti. Bir partiya o‘ynaymizmi?';
+    const body = { chat_id: Number(uid), text, reply_markup: { inline_keyboard: [[{ text: type === 'streak' ? '🔥 Seriyani saqlash' : '🎮 O‘ynash', url: process.env.TG_APP_LINK + '?startapp=ntf_' + type }]] } };
+    u.ntf.d = today; if (type === 'back') u.ntf.back = Date.now();
+    if (process.env.NOTIFY_DRY === '1') { console.log('[notify dry]', uid, type); stat('ntf_' + type); return setTimeout(next, 10); }
+    tg('sendMessage', body).then(r => {
+      let j = {}; try { j = JSON.parse(r || '{}'); } catch (e) {}
+      if (j.ok) stat('ntf_' + type);
+      else if (j.error_code === 403 || j.error_code === 400) { u.ntfOff = true; stat('ntf_blocked'); }
+      else if (j.error_code === 429) stop = true;
+      setTimeout(next, 70);
+    });
+  };
+  next();
+}
+function init(st) { store = st; if (NT) return; NT = setInterval(() => { try { notifyTick(); } catch (e) { console.log('[notify]', e.message); } }, 5 * 60e3); }
+
 function handle(req, res, p, ctx) {
   store = ctx.store;
   const { verifyInitData, send, readBody } = ctx;
@@ -154,8 +224,17 @@ function handle(req, res, p, ctx) {
   const uid = String(tgu.id), u = users()[uid];
   if (!u) { send(res, 200, { error: 'no_user' }); return true; }
 
-  if (p === '/api/quests' && req.method === 'GET') { const v = view(u); store.save(); send(res, 200, v); return true; }
+  if (p === '/api/quests' && req.method === 'GET') { touch(u); const v = view(u); v.admin = isAdmin(uid); v.ntfOn = !u.ntfOff && u.ntfOn !== false; store.save(); send(res, 200, v); return true; }
+  if (p === '/api/admin/stats' && req.method === 'GET') { if (!isAdmin(uid)) { send(res, 403, { error: 'admin emassiz' }); return true; } send(res, 200, adminStats()); return true; }
   if (req.method !== 'POST') return false;
+  if (p === '/api/quests/notify' || p === '/api/quests/open') {
+    readBody(req, 500, body => {
+      let j = {}; try { j = JSON.parse(body); } catch (e) {}
+      if (p === '/api/quests/notify') { u.ntfOn = !!j.on; if (j.on) u.ntfOff = false; store.save(); return send(res, 200, { ok: true, on: u.ntfOn }); }
+      const src = String(j.src || '').replace(/[^a-z_]/g, '').slice(0, 20); if (/^ntf_/.test(src)) stat('open_' + src); send(res, 200, { ok: true });
+    });
+    return true;
+  }
 
   if (p === '/api/quests/streak') { const r = claimStreak(u); send(res, 200, Object.assign(r, { state: view(u) })); return true; }
   if (p === '/api/quests/claim') {
@@ -165,14 +244,14 @@ function handle(req, res, p, ctx) {
       if (j.bonus) {
         if (q.b) return send(res, 200, { error: 'Olingan' });
         if (!list.every((_, k) => q.c[k])) return send(res, 200, { error: 'Avval uchala vazifani bajaring' });
-        q.b = true; u.diamonds = (u.diamonds || 0) + BONUS; store.save();
+        q.b = true; u.diamonds = (u.diamonds || 0) + BONUS; stat('q_bonus'); store.save();
         return send(res, 200, { ok: true, amount: BONUS, state: view(u) });
       }
       const k = Math.floor(+j.i); if (!(k >= 0 && k < list.length)) return send(res, 200, { error: 'xato' });
       const x = list[k];
       if (q.c[k]) return send(res, 200, { error: 'Olingan' });
       if ((q.p[x.k] || 0) < x.n) return send(res, 200, { error: 'Hali bajarilmagan' });
-      q.c[k] = true; u.diamonds = (u.diamonds || 0) + x.r; store.save();
+      q.c[k] = true; u.diamonds = (u.diamonds || 0) + x.r; stat('q_claim'); store.save();
       send(res, 200, { ok: true, amount: x.r, state: view(u) });
     });
     return true;
@@ -203,4 +282,5 @@ function handle(req, res, p, ctx) {
   return false;
 }
 
-module.exports = { handle, bump, view, _t: { todays, qlist, nextPetrova, POOL, streakInfo, claimStreak, dayKey, IMG } };
+const isAdmin = id => (process.env.ADMIN_IDS || '').split(',').map(x => x.trim()).filter(Boolean).includes(String(id));
+module.exports = { handle, bump, view, init, stat, _t: { adminStats, notifyTick, touch, todays, qlist, nextPetrova, POOL, streakInfo, claimStreak, dayKey, IMG } };
