@@ -12,6 +12,8 @@
     tg = W.Telegram.WebApp = { initData: '', initDataUnsafe: {}, ready: noop, expand: noop, close: noop, onEvent: noop, offEvent: noop, setHeaderColor: noop, setBackgroundColor: noop, openLink: function (u) { W.open(u, '_blank'); }, openTelegramLink: function (u) { W.location.href = u; }, HapticFeedback: { impactOccurred: noop, notificationOccurred: noop, selectionChanged: noop }, BackButton: { show: noop, hide: noop, onClick: noop, offClick: noop }, MainButton: { show: noop, hide: noop, onClick: noop, offClick: noop, setText: noop }, platform: 'web', version: '6.0', colorScheme: 'dark', themeParams: {} };
   }
   W.SP_WEB = true;
+  // ilova rejimi (Play Market / bosh ekranga o'rnatish): oflayn sahifa uchun service worker
+  try { if ('serviceWorker' in navigator) W.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); }); } catch (e) {}
   function load() { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { return null; } }
   function save(a) { try { localStorage.setItem(KEY, JSON.stringify(a)); } catch (e) {} }
   function apply(a) {
