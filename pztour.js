@@ -56,6 +56,7 @@ function find(id) { return db().find(x => x.id === id) || null; }
 function player(t, uid) { return t.players[uid] || null; }
 
 // o'yinchining joriy masalasi holati (xotirada; serverni qayta ishga tushirsa steps orqali tiklanadi)
+const CHAT_AT = new Map();
 const LIVE = new Map(); // tid:uid -> { c }
 function cur(t, uid) {
   const P = player(t, uid); if (!P || P.k >= t.q.length) return null;
@@ -201,6 +202,7 @@ function canJoin(t, now) { return t.status === 'reg' || (t.status === 'running' 
 function full(t, uid, now) {
   const r = summary(t, uid, now), P = player(t, uid);
   r.now = now; r.link = link(t); r.admin = isAdmin(uid);
+  r.chat = (t.chat || []).slice(-60).map(m => ({ id: m.id, name: m.name, text: m.text, at: m.at, me: m.uid === uid, host: m.uid === t.creatorUid }));
   r.table = standings(t).map((x, i) => Object.assign({ place: i + 1, me: x.uid === uid }, x, { uid: undefined }));
   r.awards = (t.awards || []).map(a => ({ place: a.place, amt: a.amt, name: (t.players[a.uid] || {}).name }));
   if (P) {
@@ -274,6 +276,15 @@ function handle(req, res, p, ctx) {
       save(); return send(res, 200, { ok: true });
     }
     if (p === '/api/pzt/state') return send(res, 200, full(t, uid, now));
+    if (p === '/api/pzt/chat') { // turnir chati
+      const tx = clean(j.text).slice(0, 200);
+      if (!tx) return send(res, 200, full(t, uid, now));
+      const last = CHAT_AT.get(uid) || 0; if (now - last < 1000) return send(res, 200, full(t, uid, now));
+      CHAT_AT.set(uid, now);
+      t.chat = t.chat || []; t.chat.push({ id: rid(), uid, name: u.name || 'O‘yinchi', text: tx, at: now });
+      if (t.chat.length > 120) t.chat.splice(0, t.chat.length - 120);
+      save(); return send(res, 200, full(t, uid, now));
+    }
     if (p === '/api/pzt/announce') { // admin: bot orqali guruhga e'lon
       if (!adm) return send(res, 403, { error: 'admin emassiz' });
       const gc = process.env.GROUP_CHAT_ID; if (!gc) return send(res, 200, { error: 'GROUP_CHAT_ID sozlanmagan' });

@@ -39,6 +39,13 @@
     '.ptCd{text-align:center;padding:12px 0}.ptCd small{display:block;font-size:14px;color:#c5f3e2}.ptCd b{display:block;font-size:54px;font-weight:900;font-variant-numeric:tabular-nums}' +
     '.ptCalc{margin-top:10px;padding:10px;border-radius:14px;background:rgba(255,207,63,.08);border:1px solid rgba(255,207,63,.35)}.ptCalcH{font-weight:800;margin-bottom:8px;color:#ffe08a}.ptCalcG{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px}.ptCalcG>div{background:rgba(0,0,0,.3);border-radius:10px;padding:6px 8px;display:flex;flex-direction:column}.ptCalcG span{font-size:13px;color:#c5f3e2}.ptCalcG b{font-size:17px;color:#ffcf3f}.ptCalcG small{font-size:11px;opacity:.6}.ptCalcN{font-size:12px;color:#c5f3e2;margin-top:8px;line-height:1.4}' +
     '.ptShare{display:flex;gap:8px;margin:0 0 12px}.ptShare button{flex:1;border:0;border-radius:14px;padding:12px 8px;background:rgba(255,255,255,.12);color:#fff;font-size:15px;font-weight:800}' +
+    '.ptChatB{position:relative}.ptChatB i{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:#e04a4a;color:#fff;font-size:11px;font-style:normal;font-weight:800;line-height:18px;padding:0 4px;box-sizing:border-box}' +
+    '#ptSheet{position:fixed;left:0;right:0;bottom:0;height:70%;z-index:5;display:none;flex-direction:column;background:#06322a;border-radius:20px 20px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.5);padding:12px 12px calc(12px + env(safe-area-inset-bottom,0px));box-sizing:border-box}' +
+    '.ptShH{display:flex;align-items:center;margin-bottom:8px}.ptShH b{flex:1;font-size:18px}.ptShH button{border:0;background:none;color:#c5f3e2;font-size:22px}' +
+    '#ptMsgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;min-height:0}' +
+    '.ptM{max-width:82%;align-self:flex-start;background:rgba(0,0,0,.35);border-radius:14px 14px 14px 4px;padding:6px 10px;font-size:15px;word-wrap:break-word}.ptM.me{align-self:flex-end;background:#18a77a;border-radius:14px 14px 4px 14px}.ptM b{display:block;font-size:12px;color:#ffe08a}.ptM small{display:block;text-align:right;font-size:10px;opacity:.6}' +
+    '.ptQuick{display:flex;gap:6px;overflow-x:auto;padding:8px 0 2px}.ptQuick button{flex:none;border:0;border-radius:999px;padding:7px 12px;background:rgba(255,255,255,.12);color:#fff;font-size:14px}' +
+    '.ptIn{display:flex;gap:8px;margin-top:8px}.ptIn input{flex:1;min-width:0;padding:11px 12px;border-radius:14px;border:1px solid #1f7a63;background:#04241f;color:#fff;font-size:16px;outline:none}.ptIn button{width:48px;border:0;border-radius:14px;background:#18a77a;color:#fff;font-size:18px}' +
     '.ptPod{display:flex;align-items:flex-end;gap:8px;padding-top:6px}.ptPod>div{flex:1;min-width:0;text-align:center}.ptPod .st{border-radius:10px 10px 0 0;color:#1a1205;font-weight:900;font-size:24px;padding-top:6px}.ptPod .nm{font-weight:800;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ptPod .sc{font-size:13px;color:#c5f3e2}';
 
   // mukofot taqsimoti (serverdagi bilan bir xil)
@@ -57,7 +64,45 @@
   function css() { if (!document.getElementById('ptCss')) { var s = document.createElement('style'); s.id = 'ptCss'; s.textContent = CSS; document.head.appendChild(s); } }
   function stop() { if (pollT) clearInterval(pollT); if (tickT) clearInterval(tickT); pollT = tickT = null; }
   function close() { stop(); if (ov) ov.remove(); ov = null; }
-  function top(t, x) { return '<div class="ptTop"><button class="ptX" id="ptX">' + (x || '‹') + '</button><div class="ptT">' + t + '</div></div>'; }
+  function top(t, x) { return '<div class="ptTop"><button class="ptX" id="ptX">' + (x || '‹') + '</button><div class="ptT">' + t + '</div>' + (view === 't' ? '<button class="ptX ptChatB" id="ptChatB" aria-label="Chat">💬<i id="ptChatN"></i></button>' : '') + '</div>'; }
+  // ---------- chat
+  var chatOpen = false;
+  function seenKey() { return 'ptSeen_' + curId; }
+  function getSeen() { try { return Number(localStorage.getItem(seenKey()) || 0); } catch (e) { return 0; } }
+  function setSeen(v) { try { localStorage.setItem(seenKey(), String(v)); } catch (e) {} }
+  function chatBadge() {
+    var n = 0, d = st && st.d, seen = getSeen(); if (!d || !d.chat) return;
+    d.chat.forEach(function (m) { if (!m.me && m.at > seen) n++; });
+    var e = ov && ov.querySelector('#ptChatN'); if (e) { e.textContent = n ? (n > 9 ? '9+' : n) : ''; e.style.display = n ? '' : 'none'; }
+  }
+  function chatHtml() {
+    var c = (st.d && st.d.chat) || [];
+    return c.length ? c.map(function (m) { return '<div class="ptM' + (m.me ? ' me' : '') + '"><b>' + (m.me ? 'Siz' : esc(m.name)) + (m.host ? ' 👑' : '') + '</b>' + esc(m.text) + '<small>' + hm(m.at) + '</small></div>'; }).join('') : '<div style="opacity:.75;padding:10px 2px">Hali xabar yo‘q. Birinchi bo‘lib yozing! 👋</div>';
+  }
+  function renderChat() {
+    var sh = document.getElementById('ptSheet'); if (!sh || !chatOpen) return;
+    var box = sh.querySelector('#ptMsgs'), atB = box.scrollHeight - box.scrollTop - box.clientHeight < 40, html = chatHtml();
+    if (box.__h !== html) { box.__h = html; box.innerHTML = html; if (atB || !box.__i) { box.scrollTop = box.scrollHeight; box.__i = 1; } }
+    var c = (st.d && st.d.chat) || []; if (c.length) setSeen(c[c.length - 1].at); chatBadge();
+  }
+  function openChat() {
+    chatOpen = true;
+    var sh = document.getElementById('ptSheet');
+    if (!sh) {
+      sh = document.createElement('div'); sh.id = 'ptSheet';
+      sh.innerHTML = '<div class="ptShH"><b>💬 Turnir chati</b><button id="ptShX">✕</button></div><div id="ptMsgs"></div>' +
+        '<div class="ptQuick">' + ['👍', '🔥', '😅', '🎉', 'Omad! 🍀', 'Zo‘r masala!'].map(function (q) { return '<button data-q="' + q + '">' + q + '</button>'; }).join('') + '</div>' +
+        '<div class="ptIn"><input id="ptTxt" maxlength="200" placeholder="Xabar yozing…"><button id="ptSend">➤</button></div>';
+      ov.appendChild(sh);
+      var send = function (t) { t = String(t || '').trim(); if (!t) return; api('/api/pzt/chat', { id: curId, text: t }).then(function (d) { if (d && !d.error) { st.d.chat = d.chat; renderChat(); } }); };
+      sh.querySelector('#ptShX').onclick = closeChat;
+      sh.querySelector('#ptSend').onclick = function () { var i = sh.querySelector('#ptTxt'); send(i.value); i.value = ''; };
+      sh.querySelector('#ptTxt').onkeydown = function (e) { if (e.key === 'Enter') { send(this.value); this.value = ''; } };
+      Array.prototype.forEach.call(sh.querySelectorAll('[data-q]'), function (b) { b.onclick = function () { send(b.getAttribute('data-q')); }; });
+    }
+    sh.style.display = 'flex'; sh.querySelector('#ptMsgs').__i = 0; sh.querySelector('#ptMsgs').__h = ''; renderChat();
+  }
+  function closeChat() { chatOpen = false; var sh = document.getElementById('ptSheet'); if (sh) sh.style.display = 'none'; chatBadge(); }
   function bindX(fn) { var b = ov.querySelector('#ptX'); if (b) b.onclick = fn; }
 
   // ================= RO'YXAT
@@ -130,7 +175,7 @@
 
   // ================= TURNIR SAHIFASI
   function openT(id) {
-    stop(); view = 't'; curId = id; st = { busy: false, sel: null, msg: '', flash: '', pzk: -1, tab: 'live' };
+    stop(); view = 't'; curId = id; chatOpen = false; var oldSh = document.getElementById('ptSheet'); if (oldSh) oldSh.remove(); st = { busy: false, sel: null, msg: '', flash: '', pzk: -1, tab: 'live' };
     ov.innerHTML = top('🧩 Turnir') + '<div class="ptCard">Yuklanmoqda…</div>'; bindX(list);
     refresh();
     pollT = setInterval(function () { if (!st.busy) refresh(); }, 2000);
@@ -167,7 +212,7 @@
   function info(d) {
     return '<div style="font-size:15px;color:#c5f3e2;line-height:1.5">📚 ' + d.count + ' ta masala' + (d.per ? ' · ⏱ har biriga ' + (d.per < 60 ? d.per + ' s' : d.per / 60 + ' daq') : ' · ⏱ chegarasiz') + '<br>📁 ' + esc((d.folders || []).join(', ')) + '<br>👥 ' + d.players + ' ishtirokchi' + (d.prize ? ' · 🪙 ' + d.prize + ' (' + d.places + ' o‘ringa)' : '') + '<br>👤 ' + esc(d.creatorName || '') + '</div>';
   }
-  function hud() { var e = ov.querySelector('#ptHud'); if (e && st.d) e.outerHTML = hudHtml(st.d); var lb = ov.querySelector('#ptLive'); if (lb) lb.innerHTML = tableHtml(st.d, 5); }
+  function hud() { chatBadge(); if (chatOpen) renderChat(); var e = ov.querySelector('#ptHud'); if (e && st.d) e.outerHTML = hudHtml(st.d); var lb = ov.querySelector('#ptLive'); if (lb) lb.innerHTML = tableHtml(st.d, 5); }
   function hudHtml(d) {
     var me = d.me || {};
     return '<div id="ptHud"><div class="ptHud"><div class="ptBox"><small>MASALA</small><b>' + Math.min(me.k + 1, d.count) + '/' + d.count + '</b></div><div class="ptBox"><small>' + (d.per ? 'QOLDI' : 'VAQTINGIZ') + '</small><b id="' + (d.per ? 'ptPer' : 'ptMyT') + '">' + (d.per && d.deadline ? mmss(d.deadline - now()) : sec(me.time || 0)) + '</b></div><div class="ptBox"><small>OCHKO</small><b>' + (me.points || 0) + '</b></div></div>' +
@@ -213,7 +258,11 @@
     } else {
       h += finished(d);
     }
-    ov.innerHTML = h; bindX(list);
+    var keep = document.getElementById('ptSheet');
+    ov.innerHTML = h; bindX(function () { closeChat(); var k = document.getElementById('ptSheet'); if (k) k.remove(); list(); });
+    if (keep) ov.appendChild(keep);
+    var cb = ov.querySelector('#ptChatB'); if (cb) cb.onclick = openChat;
+    chatBadge(); if (chatOpen) renderChat();
     var b;
     if ((b = ov.querySelector('#ptJoin'))) b.onclick = function () { api('/api/pzt/join', { id: curId }).then(function (x) { if (x.error) return alert(x.error); onState(x); if (x.status === 'running') api('/api/pzt/go', { id: curId }).then(onState); }); };
     if ((b = ov.querySelector('#ptLeave'))) b.onclick = function () { api('/api/pzt/leave', { id: curId }).then(onState); };
