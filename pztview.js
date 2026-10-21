@@ -61,9 +61,16 @@
     return h + '</div>';
   }
   var ov = null, view = 'list', L = null, curId = null, st = null, pollT = null, tickT = null, form = null, opts = {};
+  CSS += (CSS.match(/#ptB[^{]*\{[^}]*\}/g) || []).map(function (r) { return r.replace(/#ptB/g, '#ptWB'); }).join('') +
+    '#ptW{position:fixed;inset:0;z-index:2147482650;overflow-y:auto;color:#fff;font-family:Roboto,system-ui,sans-serif;background:radial-gradient(circle at 50% 0,#0f5e4c,#062a23 70%);padding:12px 12px 90px;box-sizing:border-box}' +
+    '#ptW .wInfo{text-align:center;font-weight:700;margin:6px 0 10px;font-size:15px}#ptW .wLock{text-align:center;padding:30px 14px;font-size:17px;line-height:1.5}' +
+    '#ptW .wRes{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}#ptW .wRes i{font-style:normal;width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;background:rgba(255,255,255,.1)}#ptW .wRes i.o{background:#1f8a4c}#ptW .wRes i.x{background:#a83232}#ptW .wRes i.c{outline:2px solid #ffcf3f}' +
+    '#ptW .wNav{display:flex;gap:8px;margin-top:10px}#ptW .wNav button{flex:1;border:0;border-radius:12px;padding:11px;background:rgba(0,0,0,.35);color:#fff;font-size:15px;font-weight:700}' +
+    '.ptTb tr[data-w]{cursor:pointer}.ptTb tr[data-w] td:nth-child(2):after{content:" 👁";opacity:.55;font-size:13px}.ptWn{float:right;font-size:13px;font-weight:600;color:#9fe3c9}' +
+    '.ptTabs{display:flex;gap:6px;margin-bottom:12px;background:rgba(0,0,0,.3);padding:4px;border-radius:14px}.ptTabs button{flex:1;border:0;border-radius:11px;padding:10px;background:transparent;color:#c5f3e2;font-size:16px;font-weight:800}.ptTabs button.on{background:#18a77a;color:#fff}';
   function css() { if (!document.getElementById('ptCss')) { var s = document.createElement('style'); s.id = 'ptCss'; s.textContent = CSS; document.head.appendChild(s); } }
-  function stop() { if (pollT) clearInterval(pollT); if (tickT) clearInterval(tickT); pollT = tickT = null; }
-  function close() { stop(); if (ov) ov.remove(); ov = null; chatOpen = false; var k = document.getElementById('ptSheet'); if (k) k.remove(); }
+  function stop() { unwatch(); if (pollT) clearInterval(pollT); if (tickT) clearInterval(tickT); pollT = tickT = null; }
+  function close() { unwatch(); stop(); if (ov) ov.remove(); ov = null; chatOpen = false; var k = document.getElementById('ptSheet'); if (k) k.remove(); }
   function top(t, x) { return '<div class="ptTop"><button class="ptX" id="ptX">' + (x || '‹') + '</button><div class="ptT">' + t + '</div>' + (view === 't' ? '<button class="ptX ptChatB" id="ptChatB" aria-label="Chat">💬<i id="ptChatN"></i></button>' : '') + '</div>'; }
   // ---------- chat
   var chatOpen = false;
@@ -118,8 +125,10 @@
     var h = top('🧩 Masala turnirlari');
     h += '<button class="ptGo" id="ptNew">➕ Turnir yaratish</button>';
     if (L.admin && L.daily) h += '<div class="ptCard" style="font-size:15px">🔁 Har kuni ' + esc(L.daily.hm) + ' da: «' + esc(L.daily.name) + '» · ' + L.daily.count + ' ta · ' + (L.daily.on ? '<b style="color:#5ee0b0">yoqiq</b>' : '<b style="color:#ff9a7a">o‘chiq</b>') + '<button class="ptSec" id="ptDaily">' + (L.daily.on ? '⏸ Kunlik turnirni to‘xtatish' : '▶ Kunlik turnirni yoqish') + '</button></div>';
-    var ts = L.tours || [];
-    if (!ts.length) h += '<div class="ptCard">Hozircha turnir yo‘q. Birinchisini siz yarating! 🏆</div>';
+    var all = L.tours || [], nNew = all.filter(function (t) { return t.status !== 'finished'; }).length, nFin = all.length - nNew;
+    var ts = all.filter(function (t) { return listTab === 'fin' ? t.status === 'finished' : t.status !== 'finished'; });
+    h += '<div class="ptTabs"><button data-lt="new" class="' + (listTab === 'new' ? 'on' : '') + '">🆕 Yangi (' + nNew + ')</button><button data-lt="fin" class="' + (listTab === 'fin' ? 'on' : '') + '">🏁 Tugagan (' + nFin + ')</button></div>';
+    if (!ts.length) h += '<div class="ptCard">' + (listTab === 'fin' ? 'Hali tugagan turnir yo‘q.' : 'Hozircha yangi turnir yo‘q. Birinchisini siz yarating! 🏆') + '</div>';
     ts.forEach(function (t) {
       var badge = t.status === 'running' ? '<span class="ptBadge run">● Ketmoqda</span>' : t.status === 'finished' ? '<span class="ptBadge fin">Tugagan</span>' : '<span class="ptBadge">' + (t.joined ? '✅ Qo‘shildingiz' : 'Ro‘yxat ochiq') + '</span>';
       var when = t.status === 'reg' ? '⏳ <span data-cd="' + t.startAt + '">' + mmss(t.startAt - Date.now()) + '</span> · 🕐 ' + hm(t.startAt) : t.status === 'running' ? '🔥 tugashiga <span data-cd="' + t.endAt + '">' + mmss(t.endAt - Date.now()) + '</span>' : '🏁 ' + hm(t.endAt);
@@ -129,6 +138,7 @@
     ov.querySelector('#ptNew').onclick = createForm;
     var dl = ov.querySelector('#ptDaily'); if (dl) dl.onclick = function () { api('/api/pzt/daily', { on: !L.daily.on }).then(function () { list(); }); };
     Array.prototype.forEach.call(ov.querySelectorAll('[data-id]'), function (b) { b.onclick = function () { openT(b.getAttribute('data-id')); }; });
+    Array.prototype.forEach.call(ov.querySelectorAll('[data-lt]'), function (b) { b.onclick = function () { listTab = b.getAttribute('data-lt'); drawList(); }; });
   }
 
   // ================= YARATISH
@@ -209,9 +219,10 @@
     if (!rows.length) return '<div style="opacity:.8">Hali ishtirokchi yo‘q</div>';
     var M = ['🥇', '🥈', '🥉'];
     return '<table class="ptTb"><tr><th>#</th><th>O‘yinchi</th><th class="r">✅</th><th class="r">⚡</th><th class="r">Vaqt</th></tr>' + rows.map(function (x) {
-      return '<tr class="' + (x.me ? 'me' : '') + '"><td>' + (d.status === 'finished' && M[x.place - 1] ? M[x.place - 1] : x.place) + '</td><td>' + esc(x.name) + (x.out ? ' <small title="Xatolar chegarasi">🚫</small>' : '') + (d.status === 'running' && !x.done ? ' <small style="opacity:.6">' + (x.k + 1) + '/' + d.count + '</small>' : '') + '</td><td class="r"><b>' + x.solved + '</b></td><td class="r">' + (x.firsts || '') + '</td><td class="r">' + sec(x.time) + '</td></tr>';
+      return '<tr class="' + (x.me ? 'me' : '') + '"' + (d.status === 'running' && x.w && !x.me && !x.done ? ' data-w="' + esc(x.w) + '"' : '') + '><td>' + (d.status === 'finished' && M[x.place - 1] ? M[x.place - 1] : x.place) + '</td><td>' + esc(x.name) + (x.out ? ' <small title="Xatolar chegarasi">🚫</small>' : '') + (d.status === 'running' && !x.done ? ' <small style="opacity:.6">' + (x.k + 1) + '/' + d.count + '</small>' : '') + '</td><td class="r"><b>' + x.solved + '</b></td><td class="r">' + (x.firsts || '') + '</td><td class="r">' + sec(x.time) + '</td></tr>';
     }).join('') + '</table>';
   }
+  function wn(d) { return (d.watchers ? '<span class="ptWn">👀 ' + d.watchers + '</span>' : '') + (d.status === 'running' ? '<div style="font-size:12px;font-weight:500;color:#9fe3c9;margin-top:2px">O‘yinchini bossangiz, masalani qanday yechayotganini ko‘rasiz</div>' : ''); }
   function info(d) {
     return '<div style="font-size:15px;color:#c5f3e2;line-height:1.5">📚 ' + d.count + ' ta masala' + (d.per ? ' · ⏱ har biriga ' + (d.per < 60 ? d.per + ' s' : d.per / 60 + ' daq') : ' · ⏱ chegarasiz') + '<br>📁 ' + esc((d.folders || []).join(', ')) + '<br>👥 ' + d.players + ' ishtirokchi' + (d.prize ? ' · 🪙 ' + d.prize + ' (' + d.places + ' o‘ringa)' : '') + (d.maxErr ? '<br>❌ ' + d.maxErr + ' ta xatoda turnirdan chiqiladi' : '') + '<br>👤 ' + esc(d.creatorName || '') + '</div>';
   }
@@ -236,13 +247,13 @@
       if (!me) {
         h += '<div class="ptCard ptCd"><small>Tugashiga</small><b id="ptEndCd">' + mmss(d.endAt - now()) + '</b></div>';
         h += d.canJoin ? '<button class="ptGo" id="ptJoin">➕ Qo‘shilish va boshlash</button>' : '<div class="ptCard">Qo‘shilish vaqti o‘tdi — natijalarni kuzating</div>';
-        h += '<div class="ptCard"><h3>🔴 Jonli jadval</h3>' + tableHtml(d) + '</div>';
+        h += '<div class="ptCard"><h3>🔴 Jonli jadval' + wn(d) + '</h3>' + tableHtml(d) + '</div>';
       } else if (!me.started) {
         h += '<div class="ptCard ptCd"><small>Turnir boshlandi! Tugashiga</small><b id="ptEndCd">' + mmss(d.endAt - now()) + '</b></div><div class="ptCard">' + info(d) + '</div><button class="ptGo" id="ptStart">▶ Yechishni boshlash</button>';
-        h += '<div class="ptCard"><h3>🔴 Jonli jadval</h3>' + tableHtml(d) + '</div>';
+        h += '<div class="ptCard"><h3>🔴 Jonli jadval' + wn(d) + '</h3>' + tableHtml(d) + '</div>';
       } else if (me.done) {
         h += '<div class="ptCard ptCd"><small>' + (me.out ? '🚫 ' + d.maxErr + ' ta xato — turnirdan chiqdingiz · ' : 'Siz tugatdingiz! ') + '✅ ' + me.solved + '/' + d.count + ' · ⏱ ' + sec(me.time) + '</small><b id="ptEndCd" style="font-size:36px">' + mmss(d.endAt - now()) + '</b><small>turnir tugashiga</small></div>';
-        h += '<div class="ptCard"><h3>🔴 Jonli jadval</h3>' + tableHtml(d) + '</div>' + myRes(d);
+        h += '<div class="ptCard"><h3>🔴 Jonli jadval' + wn(d) + '</h3>' + tableHtml(d) + '</div>' + myRes(d);
       } else if (d.pz) {
         var p = d.pz, g = st.g, lg = st.sel ? R().legal(g.b, g.side, g.forced).filter(function (s) { return s.f[0] === st.sel[0] && s.f[1] === st.sel[1]; }) : [];
         h += hudHtml(d);
@@ -364,10 +375,60 @@
     }).catch(function () { st.g = before; st.busy = false; st.msg = '⚠️ Aloqa uzildi'; draw(); });
   }
 
+  // ================= TOMOSHA: boshqa o'yinchi masalani qanday yechayotgani
+  var listTab = 'new', W = null;
+  function watch(w) {
+    if (!st.d) return;
+    if (!st.d.me && st.d.canJoin && !st.d.watched && !confirm('Tomosha qilsangiz, masalalarni ko‘rganingiz uchun bu turnirga qo‘shila olmaysiz. Davom etasizmi?')) return;
+    unwatch();
+    var el = document.createElement('div'); el.id = 'ptW'; document.body.appendChild(el);
+    W = { w: w, el: el, d: null, key: '' };
+    el.innerHTML = '<div class="ptTop"><button class="ptX" id="ptWX">‹</button><div class="ptT">👁 Tomosha</div></div><div class="ptCard">Yuklanmoqda…</div>';
+    el.querySelector('#ptWX').onclick = unwatch;
+    wPoll(); W.t = setInterval(wPoll, 1500); W.tk = setInterval(wTick, 250);
+    try { if (tg && tg.BackButton) { tg.BackButton.show(); tg.BackButton.onClick(unwatch); } } catch (e) {}
+  }
+  function unwatch() { if (!W) return; clearInterval(W.t); clearInterval(W.tk); if (W.el) W.el.remove(); W = null; try { if (tg && tg.BackButton) tg.BackButton.offClick(unwatch); } catch (e) {} }
+  function wPoll() { if (!W) return; var me = W; api('/api/pzt/watch', { id: curId, w: W.w }).then(function (d) { if (W !== me || !d) return; d.skew = d.now ? d.now - Date.now() : 0; W.d = d; wDraw(); }).catch(function () {}); }
+  function wTick() { if (!W || !W.d) return; var e = W.el.querySelector('#ptWT'), d = W.d, n = Date.now() + (d.skew || 0); if (!e || !d.pz) return; e.textContent = d.deadline ? mmss(d.deadline - n) : sec(n - d.shownAt); }
+  function wDraw() {
+    var d = W.d, el = W.el;
+    if (d.error) { el.innerHTML = '<div class="ptTop"><button class="ptX" id="ptWX">‹</button><div class="ptT">👁 Tomosha</div></div><div class="ptCard">' + esc(d.error) + '</div>'; el.querySelector('#ptWX').onclick = unwatch; return; }
+    var key = JSON.stringify([d.k, d.steps, d.lock, d.done, d.res.length, d.watchers]); if (key === W.key) return; W.key = key;
+    var h = '<div class="ptTop"><button class="ptX" id="ptWX">‹</button><div class="ptT">👁 ' + esc(d.name) + '</div></div>';
+    h += '<div class="ptHud"' + (d.maxErr ? ' style="grid-template-columns:repeat(4,minmax(0,1fr))"' : '') + '><div class="ptBox"><small>MASALA</small><b>' + Math.min(d.k + 1, d.count) + '/' + d.count + '</b></div><div class="ptBox"><small>' + (d.deadline ? 'QOLDI' : 'BU MASALADA') + '</small><b id="ptWT">–</b></div><div class="ptBox"><small>YECHDI</small><b>' + d.solved + '</b></div>' + (d.maxErr ? '<div class="ptBox"><small>XATO</small><b>' + d.err + '/' + d.maxErr + '</b></div>' : '') + '</div>';
+    if (d.done) h += '<div class="ptCard wLock">🏁 ' + esc(d.name) + (d.out ? ' xatolar chegarasi tufayli chiqdi' : ' barcha masalalarni tugatdi') + '<br>✅ ' + d.solved + '/' + d.count + ' · ⏱ ' + sec(d.time) + '</div>';
+    else if (!d.started) h += '<div class="ptCard wLock">⏳ ' + esc(d.name) + ' hali yechishni boshlamadi</div>';
+    else if (d.lock) h += '<div class="ptCard wLock">🔒 ' + esc(d.name) + ' hozir <b>' + (d.k + 1) + '-masala</b>da.<br>Siz bu masalani hali yechmagansiz — adolat uchun uni o‘zingiz o‘tganingizdan keyin ko‘rasiz.</div>';
+    else if (d.pz) {
+      var g = { b: R().copy(d.pz.board), side: d.pz.side, forced: null }, lm = null;
+      (d.steps || []).forEach(function (w) { var x = R().findStep(R().legal(g.b, g.side, g.forced), w); if (x) { g = R().adv(g, x); lm = w; } });
+      h += '<div class="wInfo">' + (d.pz.side === 'w' ? '⚪ Oqlar yuradi' : '⚫ Qoralar yuradi') + ' · ' + ['', '🟢 Oson', '🟡 O‘rta', '🔴 Qiyin'][d.pz.level || 1] + (d.steps && d.steps.length ? ' · ' + d.steps.length + ' yurish qilindi' : ' · o‘ylamoqda… 🤔') + '</div><div id="ptWB">';
+      var flip = d.pz.side === 'b';
+      for (var i = 0; i < 8; i++) for (var j = 0; j < 8; j++) {
+        var r = flip ? 7 - i : i, c = flip ? 7 - j : j, pc = g.b[r][c], cls = (r + c) % 2 ? 'd' : 'l';
+        if (lm && ((lm[0] === r && lm[1] === c) || (lm[lm.length - 2] === r && lm[lm.length - 1] === c))) cls += ' lm';
+        h += '<div class="' + cls + '">' + (pc ? '<div class="pc ' + (pc === 1 || pc === 3 ? 'pw' : 'pb') + '">' + (pc > 2 ? '♛' : '') + '</div>' : '') + '</div>';
+      }
+      h += '</div>';
+    }
+    h += '<div class="ptCard" style="margin-top:12px"><h3>📊 Masalalar' + (d.watchers ? '<span class="ptWn">👀 ' + d.watchers + '</span>' : '') + '</h3><div class="wRes">';
+    for (var q = 0; q < d.count; q++) { var rr = d.res.filter(function (x) { return x.k === q; })[0]; h += '<i class="' + (rr ? (rr.ok ? 'o' : 'x') : q === d.k ? 'c' : '') + '" title="' + (rr ? sec(rr.ms) : '') + '">' + (q + 1) + '</i>'; }
+    h += '</div></div>';
+    var rows = (st.d && st.d.table || []).filter(function (x) { return x.w && !x.me && !x.done; }), ix = -1;
+    rows.forEach(function (x, i) { if (x.w === W.w) ix = i; });
+    if (rows.length > 1) h += '<div class="wNav"><button id="ptWP">◀ Oldingi o‘yinchi</button><button id="ptWN">Keyingi ▶</button></div>';
+    el.innerHTML = h; wTick();
+    el.querySelector('#ptWX').onclick = unwatch;
+    var sw = function (k) { var x = rows[(ix + k + rows.length) % rows.length]; if (x) { W.w = x.w; W.key = ''; W.d = null; wPoll(); } };
+    var b; if ((b = el.querySelector('#ptWP'))) b.onclick = function () { sw(-1); }; if ((b = el.querySelector('#ptWN'))) b.onclick = function () { sw(1); };
+  }
+
   window.spPzt = function (o) {
     opts = o || {}; css();
     if (ov) ov.remove();
     ov = document.createElement('div'); ov.id = 'spPzt'; document.body.appendChild(ov);
+    ov.addEventListener('click', function (e) { var x = e.target.closest && e.target.closest('tr[data-w]'); if (x && view === 't') watch(x.getAttribute('data-w')); });
     if (opts.open) openT(opts.open); else list();
   };
 })();

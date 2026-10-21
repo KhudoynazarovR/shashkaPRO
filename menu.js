@@ -465,7 +465,7 @@
       });
     };
     if (window.pzHub) go();
-    else { var sc = document.createElement('script'); sc.src = '/pzhub.js?v=8'; sc.onload = go; sc.onerror = function () { hub = 0; list(); }; document.head.appendChild(sc); }
+    else { var sc = document.createElement('script'); sc.src = '/pzhub.js?v=9'; sc.onload = go; sc.onerror = function () { hub = 0; list(); }; document.head.appendChild(sc); }
   }
   var CARD = 'text-align:left;background:#161a3a;border:1px solid #262b5a;border-radius:16px;padding:12px;margin-bottom:10px;cursor:pointer';
   function lvOf(p) { return [1, 2, 3].indexOf(p.level) >= 0 ? p.level : 1; }
@@ -1299,7 +1299,7 @@ window.spShop = open;
   function ld(src, cb) { var s = document.createElement('script'); s.src = src; s.onload = cb; document.head.appendChild(s); }
   setTimeout(function () {
     var go = function () { window.spPzt({ open: id }); };
-    var need = function () { if (window.spPzt) go(); else ld('/pztview.js?v=10', go); };
+    var need = function () { if (window.spPzt) go(); else ld('/pztview.js?v=11', go); };
     if (window.spPzRules) need(); else ld('/rushview.js?v=4', need);
   }, 1200);
 })();

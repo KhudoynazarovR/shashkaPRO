@@ -3,6 +3,7 @@
 'use strict';
 const E = require('./pzrush.js')._t;
 const https = require('https');
+const crypto = require('crypto');
 
 const CREATE_FEE = 50;                       // turnir yaratish narxi (admin uchun bepul)
 const COUNTS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
@@ -59,6 +60,8 @@ function player(t, uid) { return t.players[uid] || null; }
 
 // o'yinchining joriy masalasi holati (xotirada; serverni qayta ishga tushirsa steps orqali tiklanadi)
 const CHAT_AT = new Map();
+const WATCH = new Map(); // tid -> Map(uid -> ts) tomoshabinlar
+function watchers(t, now) { const m = WATCH.get(t.id); if (!m) return 0; let n = 0; for (const [k, ts] of m) { if (now - ts < 12000) n++; else m.delete(k); } return n; }
 const LIVE = new Map(); // tid:uid -> { c }
 function cur(t, uid) {
   const P = player(t, uid); if (!P || P.k >= t.q.length) return null;
@@ -99,8 +102,9 @@ function tickPlayer(t, uid, now) {
   while (P.k < t.q.length && t.per && P.shownAt && now - P.shownAt >= t.per * 1000) resolve(t, uid, false, t.per * 1000);
   if (P.k < t.q.length && !P.shownAt) { P.shownAt = Math.max(now, t.startAt); save(); }
 }
+const wtok = (t, uid) => crypto.createHash('sha1').update(t.id + ':' + uid).digest('hex').slice(0, 10);
 function standings(t) {
-  return Object.entries(t.players).map(([uid, P]) => ({ uid, name: P.name, solved: P.solved, points: P.points, firsts: P.firsts, time: P.time, k: P.k, done: P.k >= t.q.length, out: !!P.out }))
+  return Object.entries(t.players).map(([uid, P]) => ({ uid, w: wtok(t, uid), name: P.name, solved: P.solved, points: P.points, firsts: P.firsts, time: P.time, k: P.k, done: P.k >= t.q.length, out: !!P.out }))
     .sort((a, b) => b.points - a.points || a.time - b.time || a.name.localeCompare(b.name));
 }
 function step(now) {
@@ -219,7 +223,7 @@ function summary(t, uid, now) {
 function canJoin(t, now) { return t.status === 'reg' || (t.status === 'running' && now < t.startAt + duration(t) * LATE_JOIN); }
 function full(t, uid, now) {
   const r = summary(t, uid, now), P = player(t, uid);
-  r.now = now; r.link = link(t); r.admin = isAdmin(uid);
+  r.now = now; r.link = link(t); r.admin = isAdmin(uid); r.watchers = watchers(t, now); r.watched = !!(t.watched && t.watched[uid]);
   r.chat = (t.chat || []).slice(-60).map(m => ({ id: m.id, name: m.name, text: m.text, at: m.at, me: m.uid === uid, host: m.uid === t.creatorUid }));
   r.table = standings(t).map((x, i) => Object.assign({ place: i + 1, me: x.uid === uid }, x, { uid: undefined, av: i < 3 && /^\d+$/.test(x.uid) ? x.uid : undefined }));
   r.awards = (t.awards || []).map(a => ({ place: a.place, amt: a.amt, name: (t.players[a.uid] || {}).name }));
@@ -280,6 +284,7 @@ function handle(req, res, p, ctx) {
     if (!t) return send(res, 200, { error: 'Turnir topilmadi' });
     if (p === '/api/pzt/join') {
       if (!canJoin(t, now)) return send(res, 200, { error: 'Qo‘shilish vaqti o‘tgan' });
+      if (t.status === 'running' && t.watched && t.watched[uid] && !t.players[uid]) return send(res, 200, { error: 'Masalalarni tomosha qilganingiz uchun bu turnirga qo‘shila olmaysiz' });
       if (!t.players[uid]) { t.players[uid] = newP(u); save(); }
       return send(res, 200, full(t, uid, now));
     }
@@ -294,6 +299,20 @@ function handle(req, res, p, ctx) {
       save(); return send(res, 200, { ok: true });
     }
     if (p === '/api/pzt/state') return send(res, 200, full(t, uid, now));
+    if (p === '/api/pzt/watch') { // boshqa o'yinchi qaysi masalani qanday yechayotganini kuzatish
+      const tu = Object.keys(t.players).find(x => wtok(t, x) === String(j.w || '')), Q = tu && t.players[tu];
+      if (!Q) return send(res, 200, { error: 'O‘yinchi topilmadi' });
+      const me = player(t, uid), len = t.q.length;
+      const r = { name: Q.name, k: Q.k, count: len, done: Q.k >= len, out: !!Q.out, started: !!Q.started, solved: Q.solved, points: Q.points, time: Q.time, err: Q.err || 0, maxErr: t.maxErr || 0, res: Q.res.map(x => ({ k: x.k, ok: x.ok, ms: x.ms })), status: t.status, now, watchers: watchers(t, now) };
+      if (t.status !== 'running' || !Q.started || Q.k >= len) return send(res, 200, r);
+      // adolat: o'zi hali yechmagan masalani ko'ra olmaydi
+      if (me && me.k < len && Q.k >= me.k) { r.lock = true; return send(res, 200, r); }
+      if (!me && canJoin(t, now)) { t.watched = t.watched || {}; if (!t.watched[uid]) { t.watched[uid] = 1; save(); } }
+      if (tu !== uid) { if (!WATCH.has(t.id)) WATCH.set(t.id, new Map()); WATCH.get(t.id).set(uid, now); }
+      const c = cur(t, tu);
+      if (c) { r.pz = Object.assign(E.pub(c.p), { k: Q.k }); r.steps = Q.steps || []; r.shownAt = Q.shownAt; r.deadline = t.per ? Q.shownAt + t.per * 1000 : 0; }
+      return send(res, 200, r);
+    }
     if (p === '/api/pzt/chat') { // turnir chati
       const tx = clean(j.text).slice(0, 200);
       if (!tx) return send(res, 200, full(t, uid, now));
