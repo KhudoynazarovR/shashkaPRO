@@ -6,7 +6,7 @@ const TIERS = [
   { n: 'Bronza', ic: '🥉', c: '#cd7f32' },
   { n: 'Kumush', ic: '🥈', c: '#c0c7d1' },
   { n: 'Oltin', ic: '🥇', c: '#ffcf3f' },
-  { n: 'Olmos', ic: '💎', c: '#5ad1ff' },
+  { n: 'Platina', ic: '💠', c: '#7fd8e8' },
   { n: 'Usta', ic: '👑', c: '#c084fc' },
 ];
 const XP = { game: 5, win: 10, bot: 5, puzzle: 3, petrova: 5, rush: 5, battle: 5, q_claim: 10, q_bonus: 15, streak_claim: 5, share: 0 };
