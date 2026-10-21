@@ -465,7 +465,7 @@
       });
     };
     if (window.pzHub) go();
-    else { var sc = document.createElement('script'); sc.src = '/pzhub.js?v=4'; sc.onload = go; sc.onerror = function () { hub = 0; list(); }; document.head.appendChild(sc); }
+    else { var sc = document.createElement('script'); sc.src = '/pzhub.js?v=5'; sc.onload = go; sc.onerror = function () { hub = 0; list(); }; document.head.appendChild(sc); }
   }
   var CARD = 'text-align:left;background:#161a3a;border:1px solid #262b5a;border-radius:16px;padding:12px;margin-bottom:10px;cursor:pointer';
   function lvOf(p) { return [1, 2, 3].indexOf(p.level) >= 0 ? p.level : 1; }
