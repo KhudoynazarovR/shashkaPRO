@@ -55,5 +55,14 @@ function edit(file, fn) { const p = path.join(ROOT, file); fs.writeFileSync(p, f
     fs.renameSync(f + '.tmp', f);
   }
 
+  // 5) Ekran: Android 15 dagi «butun ekran» (edge-to-edge) ni o'chiramiz — aks holda sahifa
+  //    holat paneli va pastki tugmalar ostiga kirib qoladi. Panellar o'yin rangida bo'ladi.
+  edit('android/app/src/main/res/values/styles.xml', s => s.replace(/<\/style>/g,
+    '    <item name="android:windowOptOutEdgeToEdgeEnforcement" tools:targetApi="35">true</item>\n' +
+    '        <item name="android:statusBarColor">' + BG + '</item>\n' +
+    '        <item name="android:navigationBarColor">' + BG + '</item>\n' +
+    '        <item name="android:windowLightStatusBar">false</item>\n    </style>')
+    .replace(/<resources(\s[^>]*)?>/, m => m.includes('xmlns:tools') ? m : m.replace('<resources', '<resources xmlns:tools="http://schemas.android.com/tools"')));
+
   console.log('✅ prepare.js: AdMob=' + ADMOB_APP_ID + ' versionCode=' + RUN);
 })().catch(e => { console.error(e); process.exit(1); });
