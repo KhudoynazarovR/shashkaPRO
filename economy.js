@@ -1,5 +1,6 @@
 require('./kestoai.js');
 require('./botarena.js');
+try { require('./lidraughts.js'); } catch (e) { console.log('[lidraughts] yuklanmadi:', e.message); }
 'use strict';
 const store = require('./store');
 const { verifyInitData } = require('./auth');
@@ -282,6 +283,7 @@ function handle(req, res, url) {
       return true;
     }
   }
+  if (p === '/api/lidraughts/status' && req.method === 'GET') { send(res, 200, require('./lidraughts.js').status()); return true; }
   if (p === '/api/ai/move' && req.method === 'POST') {
     const _tk = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!_tk) { send(res, 401, { error: 'auth' }); return true; }

@@ -394,8 +394,8 @@ function applyMove(board, move) {
     next[r][c] = null;
   }
 
-  // Promotion at final square.
-  piece = promoteIfNeeded(piece, tr);
+  // Promotion at final square (or during a capture — Russian rule: a man that reached the last row continues as a king).
+  piece = move.promotion && piece === 'w' ? 'W' : move.promotion && piece === 'b' ? 'B' : promoteIfNeeded(piece, tr);
 
   next[tr][tc] = piece;
 
