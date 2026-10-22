@@ -177,6 +177,7 @@
       '<button class="it" data-a="ai"><span>🤖</span>Kompyuterga qarshi</button>' +
       '<button class="it" data-a="trn"><span>🏆</span>Turnirlar</button>' +
       '<button class="it" data-a="room"><span>🏠</span>Xona yaratish</button>' +
+      (window.spVoice && window.spVoice.supported() ? '<button class="it" data-a="vb"><span>🎤</span>Ovozli bellashuv</button>' : '') +
       '<button class="it" data-a="pb"><span>⚔️</span>Masala jangi</button>' +
       '<button class="it" data-a="live"><span>📺</span>Jonli o‘yinlar</button>';
     if (html === drawPlay.last && $('nvGo')) return;
@@ -230,6 +231,28 @@
       else { if (window.lbNav) window.lbNav.open('pl'); setTimeout(function () { var c = $('hzCf'); if (c) c.click(); }, 300); }
     };
   }
+  function voiceSheet() {
+    var old = $('nvFrS'); if (old) old.remove();
+    var s = st() || {}, n = (s.seekers || {})[TC + 'v'] || 0;
+    var d = document.createElement('div'); d.id = 'nvFrS';
+    d.innerHTML = '<div><div style="display:flex;align-items:center"><b style="font-size:20px">🎤 Ovozli bellashuv</b><span data-x="1" style="margin-left:auto;font-size:24px;padding:4px 8px">✕</span></div>' +
+      '<div style="margin-top:8px;color:#cfd2f5;font-size:14px;line-height:1.45">Donalarni bosib bo‘lmaydi — har bir yurishni 🎤 tugmasini bosib <b>ovoz bilan</b> aytasiz (masalan: «c3 d4»).<br>❌ <b>Qoidaga zid yurish aytgan o‘yinchi darhol yutqazadi.</b><br>🤔 Tushunilmagan gap hisobga olinmaydi — qayta aytasiz.</div>' +
+      '<div style="margin-top:6px;color:#a9acd6;font-size:14px">⏱ Vaqt: ' + tcLabel(TC) + (n ? ' · ' + n + ' kishi kutmoqda' : '') + '</div>' +
+      '<button class="it" data-f="seek"><span>🔍</span><div>Raqib qidirish<small>Ovozli bellashuvni tanlagan o‘yinchi bilan</small></div></button>' +
+      '<button class="it" data-f="link"><span>🔗</span><div>Do‘stga havola<small>Do‘stingiz bilan ovozli bellashuv</small></div></button>' +
+      '<button class="it" data-f="help"><span>❔</span><div>Qanday aytiladi?<small>Ovozli buyruqlar ro‘yxati</small></div></button></div>';
+    document.body.appendChild(d);
+    d.onclick = function (e) {
+      var b = e.target.closest('[data-f],[data-x]');
+      if (e.target === d || (b && b.getAttribute('data-x'))) return d.remove();
+      if (!b) return;
+      var f = b.getAttribute('data-f'); d.remove();
+      if (f === 'help') { if (window.spVoice) window.spVoice.help(); return; }
+      if (!window.lbPlay) return;
+      if (f === 'seek') { window.lbPlay.quick(TC, true); setTimeout(drawPlay, 400); }
+      else { po.style.display = 'none'; window.lbPlay.friend(TC, true); }
+    };
+  }
   function clickText(label) {
     var all = document.querySelectorAll('button,div,a'), best = null;
     for (var i = 0; i < all.length; i++) {
@@ -247,6 +270,7 @@
     var b = e.target.closest('.it'); if (!b) return;
     var a = b.getAttribute('data-a');
     if (a === 'fr') return friendSheet();
+    if (a === 'vb') return voiceSheet();
     po.style.display = 'none';
     if (a === 'room') { if (window.lbNav) window.lbNav.open('pl'); setTimeout(function () { var m = $('hzMkR'); if (m) m.click(); }, 300); }
     else if (a === 'trn') { window.nvK = 't'; if (window.lbNav) window.lbNav.open('t'); }

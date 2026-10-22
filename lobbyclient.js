@@ -1056,9 +1056,9 @@
     })();
     // O'ynash sahifasi (navbar.js) uchun: tanlangan vaqt bilan raqib qidirish / do'stga havola
     window.lbPlay = {
-      quick: function (tc) { if (S.inQueue) sendMsg({ type: "lbQuickCancel" }); sendMsg({ type: "lbQuick", tc: tc, pos: ($("lbPos") || {}).value || "std", games: 1 }); },
+      quick: function (tc, voice) { if (S.inQueue) sendMsg({ type: "lbQuickCancel" }); sendMsg({ type: "lbQuick", tc: tc, pos: ($("lbPos") || {}).value || "std", games: 1, voice: !!voice }); },
       cancel: function () { sendMsg({ type: "lbQuickCancel" }); },
-      friend: function (tc) { sendMsg({ type: "lbFriendNew", tc: tc, pos: ($("lbPos") || {}).value || "std", games: 1 }); toast("🔗 Havola tayyorlanmoqda…", null, 2000); },
+      friend: function (tc, voice) { sendMsg({ type: "lbFriendNew", tc: tc, pos: ($("lbPos") || {}).value || "std", games: 1, voice: !!voice }); toast("🔗 Havola tayyorlanmoqda…", null, 2000); },
       state: function () { return { inQueue: !!S.inQueue, tc: S.myQueueTc || null, seekers: S.seekers || {}, online: (S.players || []).length, friendsOnline: (S.friends || []).filter(function (f) { return f.online; }).length }; }
     };
     window.lbFriend = function () { sendMsg({ type: "lbFriendNew", tc: $("lbTc").value, pos: $("lbPos").value, games: Number($("lbGm").value) }); toast("🔗 Havola tayyorlanmoqda…", null, 2000); };

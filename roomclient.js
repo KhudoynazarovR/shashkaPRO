@@ -823,7 +823,7 @@
       if (!st.connected) t = "🔌 Ulanmoqda… (server uyg‘onishi 50 soniyagacha cho‘zilishi mumkin)";
       else if (!st.joined) t = "⏳ Xonaga kirilmoqda…";
       else if (st.finished) {
-        var tm = st.reason === "timeout" ? "⏰ Vaqt tugadi · " : st.reason === "noshow" ? "⏳ Birinchi yurish qilinmadi · " : "";
+        var tm = st.reason === "timeout" ? "⏰ Vaqt tugadi · " : st.reason === "noshow" ? "⏳ Birinchi yurish qilinmadi · " : st.reason === "voice" ? "🎤 Noto‘g‘ri yurish aytildi" + (st.voiceSaid ? " («" + st.voiceSaid + "»)" : "") + " · " : "";
         if (st.winner === "draw") t = st.drawText ? "🤝 " + st.drawText : "🤝 Durang (kelishildi)";
         else if (st.color === "spectator") t = tm + "🏆 " + sideName(st.winner) + " g‘alaba qozondi";
         else t = tm + (st.winner === st.color ? "🏆 Siz g‘alaba qozondingiz!" : "😔 Siz yutqazdingiz");
@@ -885,6 +885,7 @@
 
     function onCell(r, c) {
       if (!st.joined || st.finished || st.pending || (st.vsBot && !st.botStarted)) return;
+      if (st.voice && st.color !== "spectator") { if (window.spVoice) window.spVoice.hint("🎤 Ovozli bellashuv: yurishni 🎤 tugmasini bosib ayting (masalan: «c3 d4»)"); return; }
       if (st.color === "spectator" || !bothIn()) return;
       if (st.turn !== st.color) { var pp = st.board[r][c]; if (sameSide(pp, myCode())) { st.pre = (st.pre && st.pre.from.r === r && st.pre.from.c === c) ? null : { from: { r: r, c: c } }; } else if (st.pre && !pp) { st.pre.to = { r: r, c: c }; } else { st.pre = null; } try { render(); } catch (e) {} return; }
       var me = myCode(), p = st.board[r][c], mv;
@@ -920,6 +921,41 @@
       try { render(); } catch (e) {}
       try { if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred("light"); } catch (e) {}
     }
+
+    // ---------- 🎤 ovozli boshqaruv uchun (voice.js): kataklar ro'yxati bo'yicha yurish
+    window.rcVoice = {
+      info: function () {
+        var playing = !!(st.joined && !st.finished && st.color && st.color !== "spectator" && bothIn() && !(st.vsBot && !st.botStarted));
+        return { inRoom: true, voice: !!st.voice, playing: playing, myTurn: playing && st.turn === st.color && !st.pending };
+      },
+      move: function (sqs, said) {   // sqs: [{r,c}, ...] — 'ok' | 'illegal' | 'wait' | 'off'
+        var inf = window.rcVoice.info();
+        if (!inf.playing) return "off";
+        if (!inf.myTurn) return "wait";
+        var me = myCode(), last = sqs[sqs.length - 1], eq = function (a, b) { return a.r === b.r && a.c === b.c; };
+        if (st.forced) {
+          var fo = captureSteps(st.board, st.forced.r, st.forced.c), hit = null;
+          for (var i = 0; i < fo.length; i++) if (eq(fo[i].to, last)) hit = fo[i];
+          if (!hit) return "illegal";
+          sendMove(hit); return "ok";
+        }
+        var all = allMoves(st.board, me), cand = [];
+        for (var k = 0; k < all.length; k++) {
+          var m = all[k]; if (!eq(m.from, sqs[0]) || !eq(m.to, last)) continue;
+          if (sqs.length > 2 && m.path) { var okp = true; for (var q = 1; q < sqs.length - 1; q++) if (!m.path[q - 1] || !eq(m.path[q - 1], sqs[q])) okp = false; if (!okp) continue; }
+          cand.push(m);
+        }
+        if (!cand.length) return "illegal";
+        var mv = cand[0], steps = mv.captures.length ? chain(st.board, mv.from, mv.to, mv.captures.length, []) : [{ from: mv.from, to: mv.to, captures: [] }];
+        if (!steps || !steps.length) return "illegal";
+        sendMove(steps[0]);
+        steps.slice(1).forEach(function (sp, j) { setTimeout(function () { try { sendMove(sp); } catch (e) {} }, 320 * (j + 1)); });
+        return "ok";
+      },
+      fail: function (said) { send({ type: "roomVoiceFail", roomId: roomId, said: String(said || "").slice(0, 60) }); },
+      resign: function () { if (confirm("Taslim bo‘lasizmi?")) send({ type: "roomResign", roomId: roomId }); },
+      draw: function () { send({ type: "roomDrawOffer", roomId: roomId }); }
+    };
 
     // ---------- 🤖 ShashkaBot: yurishni shu telefon hisoblaydi (AI so'rovi), server faqat uzatadi ----------
     var botBusy = false;
@@ -1155,7 +1191,7 @@
         st.spectators = m.spectators || 0;
         st.specNames = m.spectatorNames || [];
         st.gamesTotal = m.gamesTotal || 1; st.played = m.played || 0; st.seriesScore = m.seriesScore || null;
-        st.seriesDone = !!m.seriesDone; st.nextIn = !!m.nextIn; st.rematch = m.rematch || null; st.casual = !!m.casual; st.vsBot = !!m.vsBot; try { var _bk = "spBotRoom:" + roomId; if (st.vsBot) localStorage.setItem(_bk, "1"); else if (localStorage.getItem(_bk) === "1") { localStorage.removeItem(_bk); alert("Server qayta ishga tushdi, bot bilan o‘yin uzildi. Zalga qaytasiz."); location.href = location.pathname; return; } } catch (e) {} try { renderChat(); } catch (e) {} st.botStarted = !!m.botStarted; st.botColor = m.botColor || null; st.botSecs = Number(m.botSecs) > 0 ? Number(m.botSecs) : 1.2; st.botBlunder = Number(m.botBlunder) || 0;
+        st.seriesDone = !!m.seriesDone; st.nextIn = !!m.nextIn; st.rematch = m.rematch || null; st.casual = !!m.casual; st.voice = !!m.voice; st.voiceSaid = m.voiceSaid || null; st.vsBot = !!m.vsBot; try { var _bk = "spBotRoom:" + roomId; if (st.vsBot) localStorage.setItem(_bk, "1"); else if (localStorage.getItem(_bk) === "1") { localStorage.removeItem(_bk); alert("Server qayta ishga tushdi, bot bilan o‘yin uzildi. Zalga qaytasiz."); location.href = location.pathname; return; } } catch (e) {} try { renderChat(); } catch (e) {} st.botStarted = !!m.botStarted; st.botColor = m.botColor || null; st.botSecs = Number(m.botSecs) > 0 ? Number(m.botSecs) : 1.2; st.botBlunder = Number(m.botBlunder) || 0;
         var openNew = (m.opening ? m.opening.id : null) !== (st.opening ? st.opening.id : null);
         st.opening = m.opening || null;
         var same = !openNew && st.moves.length === (m.moves || []).length && st.turn === m.turn;

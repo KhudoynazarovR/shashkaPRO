@@ -112,7 +112,7 @@ function createRooms({ send, clients, onFinish }) {
       tcs: room.vsBot ? BOT_TCS : Object.keys(TCS).filter(k => k !== "0.5+0" && k !== "7+5"),
       vsBot: !!room.vsBot, botStarted: !!room.botStarted, botColor: botColorOf(room),
       botSecs: room.botCfg ? room.botCfg.secs : 1.2, botBlunder: room.botCfg ? room.botCfg.blunder : 0,
-      arena: !!room.arena, noBerserk: !!room.noBerserk,
+      arena: !!room.arena, noBerserk: !!room.noBerserk, voice: !!room.voice, voiceSaid: room.voiceSaid || null,
       opening: room.opening,
       berserk: room.berserk,
       drawOffer: room.drawOffer,
@@ -306,6 +306,7 @@ function createRooms({ send, clients, onFinish }) {
     room.noBerserk = !!(opts && opts.noBerserk);
     room.locked = !!(opts && opts.locked);
     room.vsBot = !!(opts && opts.vsBot);
+    room.voice = !!(opts && opts.voice);   // 🎤 ovozli bellashuv: noto'g'ri yurish aytgan yutqazadi
     room.botCfg = (opts && opts.botCfg) || null;
     room.botStarted = !!room.vsBot;   // bot bilan o'yin birdan boshlanadi
     if (opts && opts.bonus && opts.bonus.ms > 0) {
@@ -555,6 +556,13 @@ function createRooms({ send, clients, onFinish }) {
       return true;
     }
 
+    if (m.type === "roomVoiceFail") {   // ovozli bellashuvda noto'g'ri yurish aytildi — o'sha o'yinchi yutqazadi
+      if (!col) return err(c, "Siz tomoshabinsiz"), true;
+      if (!room.voice || room.finished || !room.white || !room.black) return true;
+      room.voiceSaid = String(m.said || "").slice(0, 60);
+      finish(room, other(col), "voice");
+      return true;
+    }
     if (m.type === "roomFinish" || m.type === "roomResign") {
       if (!col) return err(c, "Siz tomoshabinsiz"), true;
       let winner = m.type === "roomFinish" ? m.winner : null;

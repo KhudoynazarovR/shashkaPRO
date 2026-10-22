@@ -30,7 +30,7 @@ jobs:
           java-version: 21
 
       - name: Capacitor va AdMob o'rnatish
-        run: npm install --no-audit --no-fund @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7 @capacitor/splash-screen@7 @capacitor-community/admob@7 sharp@0.33
+        run: npm install --no-audit --no-fund @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7 @capacitor/splash-screen@7 @capacitor-community/admob@7 @capacitor-community/speech-recognition@7 sharp@0.33
 
       - name: Android loyihasini yaratish
         run: npx cap add android

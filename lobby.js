@@ -237,7 +237,7 @@ function createLobby({ send, clients, roomsApi }) {
       me: { uid, name: c.lb.name }, ...friendState(uid),
       players: playersList(),
       inQueue: queue.has(uid), myQueueTc: (queue.get(uid) || {}).tc || null,
-      seekers: [...queue.values()].reduce((o, x) => { if (x.uid !== uid && connsOf(x.uid).length) o[x.tc] = (o[x.tc] || 0) + 1; return o; }, {}),
+      seekers: [...queue.values()].reduce((o, x) => { if (x.uid !== uid && connsOf(x.uid).length) { const k = x.tc + (x.voice ? 'v' : ''); o[k] = (o[k] || 0) + 1; } return o; }, {}),
       incoming: [...challenges.values()].filter(x => x.toUid === uid)
         .map(x => ({ id: x.id, fromName: x.fromName, tc: x.tc + describeOpts(x) })),
       outgoing: [...challenges.values()].filter(x => x.fromUid === uid)
@@ -258,15 +258,15 @@ function createLobby({ send, clients, roomsApi }) {
   }
 
   // ---------- xona ochish ----------
-  function openRoom(roomId, tc, w, b, arena, opening, noBz) {
-    roomsApi.create(roomId, { tc, arena: !!arena, noBerserk: !!noBz, opening: opening || null, white: { uid: w.uid, name: w.name }, black: { uid: b.uid, name: b.name } });
+  function openRoom(roomId, tc, w, b, arena, opening, noBz, voice) {
+    roomsApi.create(roomId, { tc, arena: !!arena, noBerserk: !!noBz, voice: !!voice, opening: opening || null, white: { uid: w.uid, name: w.name }, black: { uid: b.uid, name: b.name } });
   }
 
   function cleanOpts(m) {
-    return { pos: m && m.pos === 'idf' ? 'idf' : 'std', games: GAMES_OPTS.includes(Number(m && m.games)) ? Number(m.games) : 1 };
+    return { pos: m && m.pos === 'idf' ? 'idf' : 'std', games: GAMES_OPTS.includes(Number(m && m.games)) ? Number(m.games) : 1, voice: !!(m && m.voice) };
   }
   function describeOpts(o) {
-    return (o.pos === 'idf' ? ' · IDF 780' : '') + (o.games > 1 ? ' · ' + o.games + ' o‘yin' : '');
+    return (o.pos === 'idf' ? ' · IDF 780' : '') + (o.games > 1 ? ' · ' + o.games + ' o‘yin' : '') + (o.voice ? ' · 🎤 ovozli' : '');
   }
   const fmtPts = x => String(x);
   function seriesScore(s) {
@@ -291,7 +291,7 @@ function createLobby({ send, clients, roomsApi }) {
   function makeMatch(a, b, tc, reason, o) {
     o = o || { pos: 'std', games: 1 };
     const first = Math.random() < 0.5 ? a : b;
-    const s = { id: hex(4), p: [first, first === a ? b : a], tc, pos: o.pos, total: o.games, played: 0, pts: {}, opening: null, reason };
+    const s = { id: hex(4), p: [first, first === a ? b : a], tc, pos: o.pos, total: o.games, voice: !!o.voice, played: 0, pts: {}, opening: null, reason };
     s.pts[a.uid] = 0; s.pts[b.uid] = 0;
     startSeriesGame(s);
     push();
@@ -303,7 +303,7 @@ function createLobby({ send, clients, roomsApi }) {
     const w = g % 2 === 0 ? s.p[0] : s.p[1];
     const k = g % 2 === 0 ? s.p[1] : s.p[0];             // matchning 2-o'yinida ranglar almashadi
     const roomId = 'L' + hex(5);
-    openRoom(roomId, s.tc, w, k, false, s.opening);
+    openRoom(roomId, s.tc, w, k, false, s.opening, false, s.voice);
     roomToSeries.set(roomId, { s, w: w.uid, k: k.uid });
     const series = s.total > 1 ? { game: g + 1, total: s.total, score: seriesScore(s) } : null;
     const reason = g === 0 ? s.reason : 'series';
@@ -1020,11 +1020,11 @@ function createLobby({ send, clients, roomsApi }) {
       case 'lbQuick': {
         const tc = tcOf(m.tc);
         const o = cleanOpts(m);
-        const other = [...queue.values()].find(x => x.uid !== me.uid && x.tc === tc && x.pos === o.pos && x.games === o.games && connsOf(x.uid).length);
+        const other = [...queue.values()].find(x => x.uid !== me.uid && x.tc === tc && x.pos === o.pos && x.games === o.games && !!x.voice === o.voice && connsOf(x.uid).length);
         if (other) {
           queue.delete(other.uid); queue.delete(me.uid);
           makeMatch({ uid: other.uid, name: connsOf(other.uid)[0].lb.name }, { uid: me.uid, name: me.name }, tc, 'quick', o);
-        } else { queue.set(me.uid, { uid: me.uid, tc, pos: o.pos, games: o.games }); push(); }
+        } else { queue.set(me.uid, { uid: me.uid, tc, pos: o.pos, games: o.games, voice: o.voice }); push(); }
         break;
       }
       case 'lbQuickCancel': queue.delete(me.uid); push(); break;

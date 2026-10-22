@@ -21,6 +21,13 @@ function edit(file, fn) { const p = path.join(ROOT, file); fs.writeFileSync(p, f
   edit('android/app/src/main/AndroidManifest.xml', s => s.includes('gms.ads.APPLICATION_ID') ? s :
     s.replace(/<application([^>]*)>/, m => m + '\n        <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="' + ADMOB_APP_ID + '"/>'));
 
+  // 1b) Ovozli boshqaruv: mikrofon ruxsati va Android ovoz tanish xizmatiga murojaat (Android 11+)
+  edit('android/app/src/main/AndroidManifest.xml', s => {
+    if (!s.includes('android.permission.RECORD_AUDIO')) s = s.replace(/<application/, '<uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <application');
+    if (!s.includes('android.speech.RecognitionService')) s = s.replace(/<application/, '<queries>\n        <intent>\n            <action android:name="android.speech.RecognitionService" />\n        </intent>\n    </queries>\n    <application');
+    return s;
+  });
+
   // 2) Versiya: har bir GitHub yig'ishida versionCode oshadi (Play shuni talab qiladi)
   edit('android/app/build.gradle', s => s
     .replace(/versionCode\s+\d+/, 'versionCode ' + RUN)
