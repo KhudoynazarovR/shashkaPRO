@@ -66,7 +66,9 @@ function parseFen(fen) {   // "W:W21,22,K30:B1,2" → board, side
 }
 // "2823" yoki "282319" — ketma-ket qadamlar; urilgan dona olib tashlanadi
 function applyToken(board, tok) {
-  const sq = (tok.match(/\d\d/g) || []).map(Number); let wasCap = false, last = null;
+  // lidraughts ko'p urishni shunday yuboradi: "111825 1825" — birinchi token to'liq yo'l, keyingilari qolgan qadamlar.
+  // Shuning uchun har tokendan faqat BIRINCHI qadam olinadi (lidraughts-bot/pydraughts ham shunday qiladi).
+  const sq = (tok.match(/\d\d/g) || []).map(Number).slice(0, 2); let wasCap = false, last = null;
   for (let i = 1; i < sq.length; i++) {
     const [fr, fc] = locToRC(sq[i - 1]), [tr, tc] = locToRC(sq[i]);
     let p = board[fr][fc]; if (!p) continue;
