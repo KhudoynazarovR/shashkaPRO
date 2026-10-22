@@ -416,7 +416,7 @@
     if (!hero) { sheet.style.display = sheet.style.display === 'flex' && window.nvK !== 'pl' ? 'none' : sheet.style.display; return; }
     if ($('nvBotRow')) return;
     var row = document.createElement('div'); row.id = 'nvBotRow';
-    row.innerHTML = '<div class="st"><img src="/api/av/bot_champ" onerror="this.outerHTML=\'<i>🤖</i>\'"><img src="/api/av/bot_gm" onerror="this.outerHTML=\'<i>🤖</i>\'"><img src="/api/av/bot_pro" onerror="this.outerHTML=\'<i>🤖</i>\'"></div><div><b>Botlar bilan o‘ynash</b><small>6 ta bot · Shogird dan Legend gacha</small></div><span class="ar">›</span>';
+    row.innerHTML = '<div class="st"><img src="/api/av/bot_monster" onerror="this.outerHTML=\'<i>👹</i>\'"><img src="/api/av/bot_champ" onerror="this.outerHTML=\'<i>🤖</i>\'"><img src="/api/av/bot_gm" onerror="this.outerHTML=\'<i>🤖</i>\'"><img src="/api/av/bot_pro" onerror="this.outerHTML=\'<i>🤖</i>\'"></div><div><b>Botlar bilan o‘ynash</b><small>7 ta bot · Shogird dan Monster gacha</small></div><span class="ar">›</span>';
     row.onclick = openBots;
     var ref = $('hzRow2') || $('hzDaily');
     if (ref && ref.parentNode === hero) hero.insertBefore(row, ref); else hero.appendChild(row);

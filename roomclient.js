@@ -575,6 +575,16 @@
         }
       }
       if (!spec && st.finished && st.winner === st.color && window.spShareCard) btn("📸 G‘alabani ulashish", function () { var opp = st.color === "white" ? st.black : st.white; window.spShareCard({ theme: "win", title: "G‘ALABA!", big: "🏆", sub: "Raqib: " + (st.vsBot ? "🤖 " : "") + (opp || ""), sub2: (st.tc ? "⏱ " + st.tc : "") + (st.reason === "timeout" ? " · vaqt bo‘yicha" : ""), cap: "🏆 ShashkaPRO’da " + (opp || "raqib") + "ni yutdim!" }); });
+      if (!spec && st.finished && st.vsBot && !st.opening && /Monster/i.test(String(st[st.botColor] || ""))) {
+        var openRv = function () {
+          var g0 = { moves: st.moves, me: st.color, white: nameLine("white"), black: nameLine("black"), winner: st.winner };
+          var go = function () { window.spReview(g0); };
+          if (window.spReview) go(); else { var sc = document.createElement("script"); sc.src = "/review.js?v=1"; sc.onload = go; document.head.appendChild(sc); }
+        };
+        btn("👹 Monster tahlili: xatolaringiz", openRv);
+        window.__rvDone = window.__rvDone || {};
+        if (!window.__rvDone[roomId] && !st.opening) { window.__rvDone[roomId] = 1; setTimeout(openRv, 1800); }   // o'yin tugashi bilan o'zi ochiladi
+      }
       if (spec) { line("👁 Siz tomoshabinsiz"); btn("🏟 O‘yin zaliga o‘tish", function () { elZal.onclick(); }); }
       ex.style.display = ex.childNodes.length ? "block" : "none";
     }

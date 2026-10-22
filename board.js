@@ -540,5 +540,7 @@
       ov.scrollTop = st;
     }
     draw(); analyzeCur();
+    // 👹 Monster tahlilidan: shu pozitsiyadan kompyuterga qarshi darhol o'ynash
+    if (g && (g.practiceMe === 1 || g.practiceMe === -1)) { if (g.practiceT) S.t = g.practiceT; act('me:' + g.practiceMe); }
   };
 })();

@@ -62,6 +62,7 @@ const ACH = [
   { id: 'win50', ic: '🏆', t: '50 ta g‘alaba', d: '50 ta o‘yinda yuting', k: 'win', n: 50, r: 120 },
   { id: 'win200', ic: '👑', t: 'Shashka qiroli', d: '200 ta o‘yinda yuting', k: 'win', n: 200, r: 300 },
   { id: 'game100', ic: '🎮', t: 'Yuz partiya', d: '100 ta o‘yin o‘ynang', k: 'game', n: 100, r: 80 },
+  { id: 'beatMonster', ic: '👹', t: 'Monsterni yengdi', d: 'Monster BOTni yuting', k: 'beat_bot_monster', n: 1, r: 500 },
   { id: 'beatLegend', ic: '🦁', t: 'Legend yengildi', d: 'Legend BOTni yuting', k: 'beat_bot_champ', n: 1, r: 200 },
   { id: 'beatSulton', ic: '🤴', t: 'Sultonni yiqitdi', d: 'Sulton BOTni yuting', k: 'beat_bot_gm', n: 1, r: 100 },
   { id: 'pz50', ic: '🧩', t: 'Masalachi', d: '50 ta masala yeching', k: '$solved', n: 50, r: 50 },

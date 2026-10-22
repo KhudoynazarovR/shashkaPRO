@@ -182,7 +182,7 @@ function createRooms({ send, clients, onFinish }) {
   }
 
   
-  const BOT_COINS = { bot_easy: 1, bot_mid: 2, bot: 3, bot_pro: 5, bot_gm: 8, bot_champ: 12 };
+  const BOT_COINS = { bot_easy: 1, bot_mid: 2, bot: 3, bot_pro: 5, bot_gm: 8, bot_champ: 12, bot_monster: 25 };
   const BOT_DAILY = 20, BOT_MIN_PLIES = 8;
   function botReward(room, winner) {
     if (!room.vsBot || !winner || (room.moves || []).length < BOT_MIN_PLIES) return;

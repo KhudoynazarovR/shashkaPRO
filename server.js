@@ -214,7 +214,7 @@ function serveFile(req, res) {
   if (base === "index.html") {
     let html = fs.readFileSync(file, "utf8");
     // Telegramdan tashqarida kirish (sayt / Play Market ilovasi) — boshqa skriptlardan oldin
-    if (!html.includes("webauth.js")) html = html.replace('<script src="https://telegram.org/js/telegram-web-app.js"></script>', '<script src="https://telegram.org/js/telegram-web-app.js"></script><script src="/webauth.js?v=4"></script><script src="/i18n.js?v=3"></script><link rel="manifest" href="/app/manifest.webmanifest"><meta name="theme-color" content="#1b1150"><link rel="apple-touch-icon" href="/app/apple-180.png">');
+    if (!html.includes("webauth.js")) html = html.replace('<script src="https://telegram.org/js/telegram-web-app.js"></script>', '<script src="https://telegram.org/js/telegram-web-app.js"></script><script src="/webauth.js?v=4"></script><script src="/i18n.js?v=4"></script><link rel="manifest" href="/app/manifest.webmanifest"><meta name="theme-color" content="#1b1150"><link rel="apple-touch-icon" href="/app/apple-180.png">');
     if (!html.includes("aiview.js")) {
       html = html.replace("</body>", '<script src="/aiview.js?v=' + Date.now() + '"></script>\n</body>');
     }
