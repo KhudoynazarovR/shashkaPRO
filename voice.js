@@ -36,14 +36,28 @@
   }
   var micStream = null, micT = 0;
   function micIdle() { clearTimeout(micT); micT = setTimeout(function () { try { micStream && micStream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {} micStream = null; }, 120000); }   // 2 daqiqa ishlatilmasa — mikrofon yopiladi
-  function webStart(done) {
+  // brauzer o'zbek tilini qo'llamasa — rus, keyin ingliz tiliga o'tamiz (ishlagani eslab qolinadi)
+  function langs() {
+    var saved = null; try { saved = localStorage.getItem('spMicLang'); } catch (e) {}
+    var a = [saved, LANG, 'ru-RU', 'en-US'], out = [];
+    a.forEach(function (x) { if (x && out.indexOf(x) < 0) out.push(x); });
+    return out;
+  }
+  function webStart(done, list) {
     micIdle();
+    list = list || langs();
+    var lang = list[0];
     try {
-      var rec = new SR(); rec.lang = LANG; rec.maxAlternatives = 5; rec.interimResults = false; rec.continuous = false;
+      var rec = new SR(); rec.lang = lang; rec.maxAlternatives = 5; rec.interimResults = false; rec.continuous = false;
       var got = false;
-      rec.onresult = function (e) { got = true; var a = []; var r = e.results[0]; for (var i = 0; i < r.length; i++) a.push(r[i].transcript); done(a); };
-      rec.onerror = function (e) { if (!got) { got = true; done([], e.error || 'error'); } };
-      rec.onend = function () { if (!got) { got = true; done([]); } };
+      rec.onresult = function (e) { got = true; var a = []; var r = e.results[0]; for (var i = 0; i < r.length; i++) a.push(r[i].transcript); try { localStorage.setItem('spMicLang', lang); } catch (x) {} done(a); };
+      rec.onerror = function (e) {
+        if (got) return; got = true;
+        var er = e.error || 'error';
+        if ((er === 'language-not-supported' || er === 'bad-grammar') && list.length > 1) { try { localStorage.removeItem('spMicLang'); } catch (x) {} return webStart(done, list.slice(1)); }
+        done([], er);
+      };
+      rec.onend = function () { if (!got) { got = true; done([], 'no-result'); } };
       rec.start();
     } catch (e) { done([], String(e.message || e)); }
   }

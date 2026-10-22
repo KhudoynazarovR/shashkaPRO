@@ -233,7 +233,7 @@ function serveFile(req, res) {
     if (!html.includes("navbar.js")) {
       html = html.replace("</body>", '<script src="/navbar.js"></script>\n</body>');
     }
-    if (!html.includes("voice.js")) html = html.replace("</body>", '<script src="/voice.js?v=2"></script>\n</body>');
+    if (!html.includes("voice.js")) html = html.replace("</body>", '<script src="/voice.js?v=3"></script>\n</body>');
     if (!html.includes("ratings.js")) {
       html = html.replace("</body>", '<script src="/ratings.js?v=' + Date.now() + '"></script>\n</body>');
     }
