@@ -1,7 +1,7 @@
 "use strict";
 const { spawn, execFile } = require("child_process");
 const fs = require("fs"), path = require("path");
-const DIR = path.join(__dirname, "engine"), BIN = path.join(DIR, "bridge.bin");
+const DIR = path.join(__dirname, "engine"), BIN = process.env.KESTO_BIN || path.join(DIR, "bridge.bin");   // telefonda (Termux) alohida fayl
 const SRC = [path.join(DIR, "bridge.c"), path.join(DIR, "KestoG.C")];
 let ready = false, busy = 0;
 let BOOK = {}; try { BOOK = JSON.parse(fs.readFileSync(path.join(__dirname, "book.json"), "utf8")); console.log("[Kitob] pozitsiyalar:", Object.keys(BOOK).length); } catch (e) { console.log("[Kitob] book.json yo'q"); }
@@ -142,10 +142,14 @@ function build() {
   if (!SRC.every(f => fs.existsSync(f))) return console.log("[KestoG] engine/ papkasida bridge.c yoki KestoG.C yo'q");
   if (fresh()) return selfTest();
   console.log("[KestoG] kompilyatsiya boshlandi...");
-  execFile("gcc", ["-O3", "-w", "-o", BIN, SRC[0], "-lm"], { cwd: DIR, timeout: 240000 }, err => {
-    if (err) return console.log("[KestoG] kompilyatsiya bo'lmadi:", String(err.message).slice(0, 200));
-    selfTest();
-  });
+  const CCS = [process.env.CC, "gcc", "clang", "cc"].filter(Boolean);   // Termux'da gcc yo'q — clang ishlatiladi
+  (function tryCc(i) {
+    if (i >= CCS.length) return console.log("[KestoG] kompilyator topilmadi (gcc/clang)");
+    execFile(CCS[i], ["-O3", "-w", "-o", BIN, SRC[0], "-lm"], { cwd: DIR, timeout: 240000 }, err => {
+      if (err) { if (err.code === "ENOENT") return tryCc(i + 1); return console.log("[KestoG] kompilyatsiya bo'lmadi:", String(err.message).slice(0, 200)); }
+      selfTest();
+    });
+  })(0);
 }
 build();
 module.exports = { move, learn, load: () => busy, mem: () => ({ cache: CACHE.size, deep: DEEP.size }) };

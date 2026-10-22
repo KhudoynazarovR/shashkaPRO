@@ -19,3 +19,4 @@ server.log
 users.json
 node_modules/
 *.bin
+engine/bridge-local.bin
