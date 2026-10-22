@@ -1730,6 +1730,7 @@ document.head.appendChild(_as); }
     var m = /spUser\('(bot[a-z_]*)'\)/.exec(t.getAttribute('onclick') || ''); if (!m) return;
     e.stopPropagation(); e.preventDefault(); openEd(m[1]);
   }, true);
+  window.spBotEdit = function (uid) { if (!adm || !/^bot(_[a-z]+)?$/.test(String(uid))) return false; openEd(uid); return true; };   // botlar ro'yxatidan ham tahrirlash
   function openEd(uid) {
     var o = document.createElement('div');
     o.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#000a;display:flex;align-items:center;justify-content:center';

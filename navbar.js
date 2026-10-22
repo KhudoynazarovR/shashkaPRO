@@ -394,7 +394,9 @@
     if (!rows.length) L.innerHTML = '<div style="padding:18px;opacity:.7">Botlar yuklanmoqda…</div>';
     rows.forEach(function (b) {
       var r = document.createElement('div'); r.className = 'r';
-      r.appendChild(avEl(b.uid));
+      var av = avEl(b.uid); av.style.cursor = 'pointer';
+      av.onclick = function (e) { if (window.spBotEdit && window.spBotEdit(b.uid)) { e.stopPropagation(); sheet.style.display = 'none'; } };   // admin: rasm/nomni o'zgartirish
+      r.appendChild(av);
       var n = document.createElement('div'); n.className = 'n';
       var nb = document.createElement('b'), parts = b.name.split(/\s+BOT\s*$/i);
       nb.textContent = parts[0] + ' ';
