@@ -9,6 +9,8 @@ const IDLE_MS = 6 * 60 * 60 * 1000;
 // Vaqt rejimlari: [boshlang'ich soniya, har yurishdan keyin qo'shiladigan soniya]
 const TCS = { "1+1": [60, 1], "2+2": [120, 2], "3+2": [180, 2], "5+3": [300, 3], "7+5": [420, 5], "0.5+0": [30, 0] };
 const DEFAULT_TC = "5+3";
+// erkin vaqt: "daqiqa+soniya" (1–60 daq, 0–30 s qo'shimcha)
+function tcParse(k) { if (TCS[k]) return TCS[k]; const m = /^(\d{1,2})\+(\d{1,2})$/.exec(String(k || "")); if (!m) return null; const a = +m[1], b = +m[2]; return (a >= 1 && a <= 60 && b <= 30) ? [a * 60, b] : null; }
 const CHAT_KEEP = 50;
 const CHAT_MAX = 200;
 // 🤖 ShashkaBot: serverda faqat "o'rindiq", yurishlarni o'yinchining telefoni hisoblaydi (roomBotMove)
@@ -264,8 +266,8 @@ function createRooms({ send, clients, onFinish }) {
   }
 
   function newRoom(roomId, tcKey) {
-    const t = TCS[tcKey] ? TCS[tcKey] : TCS[DEFAULT_TC];
-    const key = TCS[tcKey] ? tcKey : DEFAULT_TC;
+    const t = tcParse(tcKey) || TCS[DEFAULT_TC];
+    const key = tcParse(tcKey) ? tcKey : DEFAULT_TC;
     return {
       id: roomId,
       white: null,
@@ -579,7 +581,7 @@ function createRooms({ send, clients, onFinish }) {
       if (room.arena || room.locked) return err(c, "Bu o‘yinda vaqtni o‘zgartirib bo‘lmaydi"), true;
       if (!isOwner(room, col)) return err(c, "Vaqtni faqat xona egasi tanlaydi"), true;
       if (room.moves.length > 0 || room.finished || room.botStarted) return err(c, "O‘yin boshlangan, vaqtni o‘zgartirib bo‘lmaydi"), true;
-      const t = TCS[m.tc];
+      const t = tcParse(m.tc);
       if (!t) return err(c, "Noma’lum vaqt rejimi"), true;
       if (room.vsBot && !BOT_TCS.includes(m.tc)) return err(c, "Bu vaqt rejimi bot bilan o‘ynashda mavjud emas"), true;
       room.tc = m.tc;

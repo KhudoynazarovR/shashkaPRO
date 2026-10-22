@@ -752,6 +752,7 @@
     on('#pzHall', function () {
       close();
       setTimeout(function () {
+        var nb = document.querySelector('#nvBar button[data-k="pl"]'); if (nb) { nb.click(); return; }
         var t = Array.prototype.slice.call(document.querySelectorAll('*')).filter(function (e) { return /^\s*(🎮\s*)?O[‘'ʻ’]yin\s*$/.test(e.textContent || ''); });
         if (t.length) t[t.length - 1].click();
       }, 150);

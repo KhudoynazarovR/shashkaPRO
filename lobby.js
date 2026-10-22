@@ -18,6 +18,8 @@ function payWin(room, whiteUid, blackUid, tid) {
 
 const TCS = ['1+1', '2+2', '3+2', '5+3'];
 const DEFAULT_TC = '5+3';
+const tcOk = s => { const m = /^(\d{1,2})\+(\d{1,2})$/.exec(String(s || '')); if (!m) return false; const a = +m[1], b = +m[2]; return a >= 1 && a <= 60 && b <= 30; };
+const tcOf = s => tcOk(s) ? String(s) : DEFAULT_TC;
 // 🤖 Botlar: kuch pog'onasi. secs = dvigatelga beriladigan o'ylash vaqti, blunder = tasodifiy yurish ehtimoli
 const BOTS = [
   { uid: 'bot_easy', name: 'Shogird BOT', secs: 0.1, blunder: 0.08 },
@@ -234,7 +236,8 @@ function createLobby({ send, clients, roomsApi }) {
       type: 'lbState', now: Date.now(),
       me: { uid, name: c.lb.name }, ...friendState(uid),
       players: playersList(),
-      inQueue: queue.has(uid),
+      inQueue: queue.has(uid), myQueueTc: (queue.get(uid) || {}).tc || null,
+      seekers: [...queue.values()].reduce((o, x) => { if (x.uid !== uid && connsOf(x.uid).length) o[x.tc] = (o[x.tc] || 0) + 1; return o; }, {}),
       incoming: [...challenges.values()].filter(x => x.toUid === uid)
         .map(x => ({ id: x.id, fromName: x.fromName, tc: x.tc + describeOpts(x) })),
       outgoing: [...challenges.values()].filter(x => x.fromUid === uid)
@@ -1015,7 +1018,7 @@ function createLobby({ send, clients, roomsApi }) {
         break;
       }
       case 'lbQuick': {
-        const tc = TCS.includes(m.tc) ? m.tc : DEFAULT_TC;
+        const tc = tcOf(m.tc);
         const o = cleanOpts(m);
         const other = [...queue.values()].find(x => x.uid !== me.uid && x.tc === tc && x.pos === o.pos && x.games === o.games && connsOf(x.uid).length);
         if (other) {
@@ -1035,7 +1038,7 @@ function createLobby({ send, clients, roomsApi }) {
         if (!to || to.lb.uid === me.uid) return err(c, 'O‘yinchi topilmadi'), true;
         if ([...challenges.values()].some(x => x.fromUid === me.uid && x.toUid === to.lb.uid)) return err(c, 'Chaqiruv allaqachon yuborilgan'), true;
         if (challenges.size > 500) return err(c, 'Hozir band, keyinroq urinib ko‘ring'), true;
-        const ch = { id: 'c' + hex(4), fromUid: me.uid, fromName: me.name, toUid: to.lb.uid, tc: TCS.includes(m.tc) ? m.tc : DEFAULT_TC, ...cleanOpts(m), at: Date.now() };
+        const ch = { id: 'c' + hex(4), fromUid: me.uid, fromName: me.name, toUid: to.lb.uid, tc: tcOf(m.tc), ...cleanOpts(m), at: Date.now() };
         if (botByUid(ch.toUid)) {   // bot taklifni darhol qabul qiladi
           queue.delete(me.uid);
           startBotGame({ uid: me.uid, name: me.name }, ch, botByUid(ch.toUid));
@@ -1071,7 +1074,7 @@ function createLobby({ send, clients, roomsApi }) {
           const startAt = validStart(m.startAt) || (Date.now() + delay * 60000);
           const at = {
             id: hex(3), type: 'arena', name: cleanTitle(m.name) || ('Arena ' + me.name),
-            tc: TCS.includes(m.tc) ? m.tc : DEFAULT_TC,
+            tc: tcOf(m.tc),
             creatorUid: me.uid, creatorName: me.name, status: 'reg', created: Date.now(),
             players: new Map(), round: 0, rounds: 0, cur: [], curBye: null, nextAt: 0,
             durationMin: dur, startAt, endAt: startAt + dur * 60000, gameNo: 0, ending: false,
@@ -1083,7 +1086,7 @@ function createLobby({ send, clients, roomsApi }) {
           break;
         }
         const t = {
-          id: hex(3), name: cleanTitle(m.name) || ('Turnir ' + me.name), tc: TCS.includes(m.tc) ? m.tc : DEFAULT_TC,
+          id: hex(3), name: cleanTitle(m.name) || ('Turnir ' + me.name), tc: tcOf(m.tc),
           creatorUid: me.uid, creatorName: me.name, status: 'reg', created: Date.now(),
           players: new Map(), round: 0, rounds: 0, cur: [], curBye: null, nextAt: 0,
           pos: m.pos === 'idf' ? 'idf' : 'std',
@@ -1168,7 +1171,7 @@ function createLobby({ send, clients, roomsApi }) {
         if ([...simuls.values()].some(x => x.hostUid === me.uid && x.status !== 'finished')) return err(c, 'Sizda allaqachon faol simul bor'), true;
         const sm = {
           id: hex(3), name: cleanTitle(m.name) || ('Simul ' + me.name), hostUid: me.uid, hostName: me.name,
-          tc: TCS.includes(m.tc) ? m.tc : DEFAULT_TC,
+          tc: tcOf(m.tc),
           bonus: SIMUL_BONUS.includes(Number(m.bonus)) ? Number(m.bonus) : 0,
           color: ['w', 'b', 'alt'].includes(m.color) ? m.color : 'alt',
           pos: m.pos === 'idf' ? 'idf' : 'std',
@@ -1241,7 +1244,7 @@ function createLobby({ send, clients, roomsApi }) {
       }
       case 'lbFriendNew': {
         for (const [k, f] of friends) if (f.fromUid === me.uid || Date.now() - f.at > 1800000) friends.delete(k);
-        const fr = { id: 'f' + hex(4), fromUid: me.uid, fromName: me.name, tc: TCS.includes(m.tc) ? m.tc : DEFAULT_TC, opts: cleanOpts(m), at: Date.now() };
+        const fr = { id: 'f' + hex(4), fromUid: me.uid, fromName: me.name, tc: tcOf(m.tc), opts: cleanOpts(m), at: Date.now() };
         friends.set(fr.id, fr);
         send(c.ws, { type: 'lbFriendLink', id: fr.id });
         break;

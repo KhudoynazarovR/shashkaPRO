@@ -135,12 +135,101 @@
   document.body.appendChild(pb);
   var po = document.createElement('div');
   po.id = 'nvPlay';
-  po.innerHTML = '<div class="hd"><button id="nvPlayX">←</button>🎮 O‘ynash</div>' +
-    '<button class="it g" data-a="seek"><span>🔍</span>Raqib qidirish</button>' +
-    '<button class="it" data-a="room"><span>🏠</span>Xona yaratish</button>' +
-    '<button class="it" data-a="trn"><span>🏆</span>Turnirlar</button>' +
-    '<button class="it" data-a="ai"><span>🤖</span>Kompyuterga qarshi</button>';
   document.body.appendChild(po);
+  // ----- vaqt nazorati (chess.com uslubida): tepada tanlangan vaqt, bosilsa — tanlov oynasi
+  var TCG = [
+    ['⚡', 'Bullet', ['1+0', '1+1', '2+1']],
+    ['🔥', 'Blits', ['3+0', '3+2', '5+0', '5+3']],
+    ['⏱', 'Rapid', ['10+0', '10+5', '15+10', '30+0']]
+  ];
+  function tcName(tc) { var a = +String(tc).split('+')[0]; return a < 3 ? '⚡ Bullet' : a < 10 ? '🔥 Blits' : '⏱ Rapid'; }
+  function tcLabel(tc) { var p = String(tc).split('+'); return p[1] === '0' ? p[0] + ' daq' : p[0] + ' + ' + p[1]; }
+  var TC = '3+2'; try { var _s = localStorage.getItem('nvTc'); if (/^\d{1,2}\+\d{1,2}$/.test(_s || '')) TC = _s; } catch (x) {}
+  function setTc(t) { TC = t; try { localStorage.setItem('nvTc', t); } catch (x) {} drawPlay(); }
+  var css3 = document.createElement('style');
+  css3.textContent =
+    '#nvPlay .tcb{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;box-sizing:border-box;margin-bottom:12px;padding:16px;border:0;border-radius:14px;background:#1f2147;color:#fff;font:800 20px system-ui,sans-serif}' +
+    '#nvPlay .tcb i{font-style:normal;margin-left:auto;opacity:.6}#nvPlay .tcb small{font-size:13px;opacity:.6;font-weight:600}' +
+    '#nvPlay .go{width:100%;padding:18px;border:0;border-radius:14px;background:linear-gradient(#7fb847,#5f9a2f);box-shadow:0 5px 0 #3f6f1c;color:#fff;font:800 24px system-ui,sans-serif;margin-bottom:8px}' +
+    '#nvPlay .go.on{background:linear-gradient(#f5a524,#e07b00);box-shadow:0 5px 0 #9a5300;font-size:19px}' +
+    '#nvPlay .inf{text-align:center;font-size:13px;color:#a9acd6;margin:6px 0 16px;min-height:18px}' +
+    '#nvTcS{position:fixed;inset:0;z-index:2147482400;background:#12122b;color:#fff;overflow:auto;padding:16px;font-family:system-ui,sans-serif}' +
+    '#nvTcS .hd{display:flex;align-items:center;gap:12px;font-size:22px;font-weight:800;margin-bottom:10px}#nvTcS .hd button{background:none;border:0;color:#fff;font-size:26px}' +
+    '#nvTcS h4{margin:16px 0 8px;font-size:18px}#nvTcS .gr{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}' +
+    '#nvTcS .gr button{padding:14px 4px;border:2px solid transparent;border-radius:12px;background:#1f2147;color:#fff;font:700 17px system-ui,sans-serif}#nvTcS .gr button.on{border-color:#7fb847}' +
+    '#nvTcS .cu{background:#1a1b3d;border-radius:14px;padding:14px;margin-top:18px}#nvTcS .cu label{display:block;text-align:center;margin:8px 0 4px;color:#cfd2f5}' +
+    '#nvTcS input[type=range]{width:100%;accent-color:#7fb847}#nvTcS .cu button{width:100%;margin-top:12px;padding:14px;border:0;border-radius:12px;background:#2c2f66;color:#fff;font:700 17px system-ui,sans-serif}' +
+    '#nvFrS{position:fixed;inset:0;z-index:2147482400;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;font-family:system-ui,sans-serif}' +
+    '#nvFrS>div{width:100%;background:#141040;color:#fff;border-radius:20px 20px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom));box-sizing:border-box}' +
+    '#nvFrS .it{display:flex;align-items:center;gap:14px;width:100%;box-sizing:border-box;margin-top:10px;padding:16px;border:0;border-radius:14px;background:#1f2147;color:#fff;font-size:17px;font-weight:700;text-align:left}#nvFrS .it span{font-size:24px}#nvFrS small{display:block;font-weight:500;opacity:.65;font-size:13px;margin-top:2px}';
+  document.head.appendChild(css3);
+  function st() { try { return window.lbPlay ? window.lbPlay.state() : null; } catch (x) { return null; } }
+  function drawPlay() {
+    var s = st() || {}, q = !!s.inQueue;
+    var info = '';
+    if (q) info = '⏳ ' + (s.tc || TC) + ' · raqib kutilmoqda…';
+    else if (s.online) { var n = (s.seekers || {})[TC] || 0; info = '🟢 ' + s.online + ' o‘yinchi onlayn' + (n ? ' · ' + TC + ' da ' + n + ' kishi kutmoqda' : ''); }
+    var html = '<div class="hd"><button id="nvPlayX">←</button>🎮 O‘ynash</div>' +
+      '<button class="tcb" id="nvTcB">⏱ ' + tcLabel(TC) + ' <small>' + tcName(TC) + '</small><i>▾</i></button>' +
+      '<button class="go' + (q ? ' on' : '') + '" id="nvGo">' + (q ? '⏳ Qidirilmoqda… (bekor qilish)' : '▶ O‘ynash') + '</button>' +
+      '<div class="inf">' + info + '</div>' +
+      '<button class="it" data-a="fr"><span>👥</span>Do‘st bilan o‘ynash</button>' +
+      '<button class="it" data-a="ai"><span>🤖</span>Kompyuterga qarshi</button>' +
+      '<button class="it" data-a="trn"><span>🏆</span>Turnirlar</button>' +
+      '<button class="it" data-a="room"><span>🏠</span>Xona yaratish</button>' +
+      '<button class="it" data-a="pb"><span>⚔️</span>Masala jangi</button>' +
+      '<button class="it" data-a="live"><span>📺</span>Jonli o‘yinlar</button>';
+    if (html === drawPlay.last && $('nvGo')) return;
+    drawPlay.last = html; po.innerHTML = html;
+    $('nvPlayX').onclick = function () { po.style.display = 'none'; };
+    $('nvTcB').onclick = tcSheet;
+    $('nvGo').onclick = function () {
+      if (!window.lbPlay) return clickText('Raqib qidirish');
+      var s2 = st() || {};
+      if (s2.inQueue) window.lbPlay.cancel(); else window.lbPlay.quick(TC);
+      setTimeout(drawPlay, 400);
+    };
+  }
+  function tcSheet() {
+    var old = $('nvTcS'); if (old) old.remove();
+    var d = document.createElement('div'); d.id = 'nvTcS';
+    var p = TC.split('+'), h = '<div class="hd"><button data-x="1">←</button>Vaqt</div>';
+    TCG.forEach(function (g) {
+      h += '<h4>' + g[0] + ' ' + g[1] + '</h4><div class="gr">' + g[2].map(function (t) { return '<button data-t="' + t + '"' + (t === TC ? ' class="on"' : '') + '>' + tcLabel(t) + '</button>'; }).join('') + '</div>';
+    });
+    h += '<div class="cu"><h4 style="margin:0">⚙️ O‘zim tanlayman</h4>' +
+      '<label>Boshlang‘ich vaqt: <b id="nvCuM">' + p[0] + '</b> daq</label><input type="range" id="nvCuA" min="1" max="60" value="' + p[0] + '">' +
+      '<label>Har yurishga qo‘shimcha: <b id="nvCuS">' + p[1] + '</b> soniya</label><input type="range" id="nvCuB" min="0" max="30" value="' + p[1] + '">' +
+      '<button id="nvCuOk">Tanlash</button></div>';
+    d.innerHTML = h; document.body.appendChild(d);
+    var A = d.querySelector('#nvCuA'), B = d.querySelector('#nvCuB');
+    A.oninput = function () { d.querySelector('#nvCuM').textContent = A.value; };
+    B.oninput = function () { d.querySelector('#nvCuS').textContent = B.value; };
+    d.querySelector('#nvCuOk').onclick = function () { setTc(A.value + '+' + B.value); d.remove(); };
+    d.onclick = function (e) {
+      var b = e.target.closest('[data-t],[data-x]'); if (!b) return;
+      if (b.getAttribute('data-t')) setTc(b.getAttribute('data-t'));
+      d.remove();
+    };
+  }
+  function friendSheet() {
+    var old = $('nvFrS'); if (old) old.remove();
+    var s = st() || {};
+    var d = document.createElement('div'); d.id = 'nvFrS';
+    d.innerHTML = '<div><div style="display:flex;align-items:center"><b style="font-size:20px">👥 Do‘st bilan o‘ynash</b><span data-x="1" style="margin-left:auto;font-size:24px;padding:4px 8px">✕</span></div>' +
+      '<div style="margin-top:6px;color:#a9acd6;font-size:14px">⏱ Vaqt: ' + tcLabel(TC) + '</div>' +
+      '<button class="it" data-f="link"><span>🔗</span><div>Havola yuborish<small>Telegram’da do‘stingizga yuboring — bosishi bilan o‘yin boshlanadi</small></div></button>' +
+      '<button class="it" data-f="list"><span>🟢</span><div>Onlayn do‘stlar' + (s.friendsOnline ? ' (' + s.friendsOnline + ')' : '') + '<small>Ro‘yxatdan tanlab, o‘yinga chaqiring</small></div></button></div>';
+    document.body.appendChild(d);
+    d.onclick = function (e) {
+      var b = e.target.closest('[data-f],[data-x]');
+      if (e.target === d || (b && b.getAttribute('data-x'))) return d.remove();
+      if (!b) return;
+      var f = b.getAttribute('data-f'); d.remove(); po.style.display = 'none';
+      if (f === 'link') { if (window.lbPlay) window.lbPlay.friend(TC); else if (window.lbFriend) window.lbFriend(); }
+      else { if (window.lbNav) window.lbNav.open('pl'); setTimeout(function () { var c = $('hzCf'); if (c) c.click(); }, 300); }
+    };
+  }
   function clickText(label) {
     var all = document.querySelectorAll('button,div,a'), best = null;
     for (var i = 0; i < all.length; i++) {
@@ -151,16 +240,19 @@
     }
     if (best) { try { best.e.click(); } catch (x) {} }
   }
-  pb.onclick = function () { po.style.display = 'block'; };
-  $('nvPlayX').onclick = function () { po.style.display = 'none'; };
+  function ldJs(src, cb) { var sc = document.createElement('script'); sc.src = src; sc.onload = cb; document.head.appendChild(sc); }
+  pb.onclick = function () { drawPlay(); po.style.display = 'block'; };
+  setInterval(function () { if (po.style.display === 'block') drawPlay(); }, 1500);
   po.onclick = function (e) {
     var b = e.target.closest('.it'); if (!b) return;
     var a = b.getAttribute('data-a');
+    if (a === 'fr') return friendSheet();
     po.style.display = 'none';
-    if (a === 'seek') clickText('Raqib qidirish');
-    else if (a === 'room') clickText('Xona yaratish');
+    if (a === 'room') { if (window.lbNav) window.lbNav.open('pl'); setTimeout(function () { var m = $('hzMkR'); if (m) m.click(); }, 300); }
     else if (a === 'trn') { window.nvK = 't'; if (window.lbNav) window.lbNav.open('t'); }
     else if (a === 'ai') { if (window.lbNav) { try { window.lbNav.close(); } catch (x) {} } if (window.aiShow) window.aiShow('play'); }
+    else if (a === 'pb') { var go = function () { window.spBattle({}); }; if (window.spBattle) go(); else ldJs('/battleview.js?v=5', go); }
+    else if (a === 'live') { if (window.mnA) window.mnA('@live'); }
   };
   window.nvK = window.nvK || 'pl'; mark('pl');
   setInterval(function () {

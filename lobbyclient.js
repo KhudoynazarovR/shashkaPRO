@@ -1054,6 +1054,13 @@
       }
       setInterval(tick, 1000);
     })();
+    // O'ynash sahifasi (navbar.js) uchun: tanlangan vaqt bilan raqib qidirish / do'stga havola
+    window.lbPlay = {
+      quick: function (tc) { if (S.inQueue) sendMsg({ type: "lbQuickCancel" }); sendMsg({ type: "lbQuick", tc: tc, pos: ($("lbPos") || {}).value || "std", games: 1 }); },
+      cancel: function () { sendMsg({ type: "lbQuickCancel" }); },
+      friend: function (tc) { sendMsg({ type: "lbFriendNew", tc: tc, pos: ($("lbPos") || {}).value || "std", games: 1 }); toast("🔗 Havola tayyorlanmoqda…", null, 2000); },
+      state: function () { return { inQueue: !!S.inQueue, tc: S.myQueueTc || null, seekers: S.seekers || {}, online: (S.players || []).length, friendsOnline: (S.friends || []).filter(function (f) { return f.online; }).length }; }
+    };
     window.lbFriend = function () { sendMsg({ type: "lbFriendNew", tc: $("lbTc").value, pos: $("lbPos").value, games: Number($("lbGm").value) }); toast("🔗 Havola tayyorlanmoqda…", null, 2000); };
     var tFil = "new";
     window.lbTF = function (f) { tFil = f === 2 ? "fin" : "new"; renderTournaments(); };
@@ -1353,7 +1360,7 @@ document.head.appendChild(_as); }
       b.onclick = function () { var r = document.getElementById("hzRnd"); if (r) r.click(); };
     }
     var rb = document.getElementById("hzRndB");
-    var q = !!(rb && /Bekor/.test(rb.textContent));
+    var q = window.lbPlay ? !!window.lbPlay.state().inQueue : !!(rb && /Bekor/.test(rb.textContent));
     var tx = q ? "⏳ Qidirilmoqda… (bekor qilish)" : "🔍 Raqib qidirish";
     if (b.textContent !== tx) b.textContent = tx;
     b.classList.toggle("on", q); // className= hzOff (yashirish) ni o'chirib, miltillatardi
@@ -1462,7 +1469,7 @@ document.head.appendChild(_as); }
       r.classList.add("hzGone");
     });
     Array.prototype.forEach.call(p.querySelectorAll("button"), function (b) {
-      if (/Havola yaratish/.test(b.textContent || "")) b.classList.add("hzGone");
+      if (b.id === "hzMk" || /Havola yaratish/.test(b.textContent || "")) b.classList.add("hzGone");
     });
   }, 500);
 })();
