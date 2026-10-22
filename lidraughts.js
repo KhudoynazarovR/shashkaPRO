@@ -110,6 +110,7 @@ function playGame(id) {
   const G = ST.games[id] = { id, color: null, fen: null, busy: false, lastPlies: -1, opp: '?', started: Date.now() };
   let greeted = false;
   const think = async (state) => {
+    G.last = state;
     if (G.busy || state.status && state.status !== 'started' && state.status !== 'created') return;
     const pos = position(G.fen, state.moves);
     if (pos.side !== G.color || pos.plies === G.lastPlies) return;
@@ -130,11 +131,14 @@ function playGame(id) {
       const pts = [mv.from].concat(mv.path && mv.path.length ? mv.path : [mv.to]);
       for (let i = 1; i < pts.length; i++) {
         const part = two(rcToLoc(pts[i - 1][0], pts[i - 1][1])) + two(rcToLoc(pts[i][0], pts[i][1]));
-        const x = await post('/api/bot/game/' + id + '/move/' + part);
+        let x = await post('/api/bot/game/' + id + '/move/' + part);
+        for (let t = 0; t < 4 && (x.s === 0 || x.s >= 500 || x.s === 429); t++) { await sleep(1500 * (t + 1)); x = await post('/api/bot/game/' + id + '/move/' + part); }   // tarmoq uzilsa — qayta yuboramiz
         if (x.s !== 200) { log('yurish rad etildi', id, part, x.s, (x.t || '').slice(0, 120), '| fen:', String(G.fen).slice(0, 90), '| moves:', String(state.moves || '').slice(-80)); G.lastPlies = -1; break; }
       }
     } catch (e) { log('xato', e.message); }
     G.busy = false;
+    if (G.lastPlies === -1 && !G.done && G.last && (G.rej = (G.rej || 0) + 1) <= 5) setTimeout(() => think(G.last), 2000);
+    else if (G.lastPlies !== -1) G.rej = 0;   // rad etildi — holatni qayta tekshirib, yana urinamiz
   };
   const onEnd = (state) => {
     if (G.done) return; G.done = true;
