@@ -28,7 +28,7 @@ const BOTS = [
   { uid: 'bot_pro', name: 'Arslon BOT', secs: 1.2, blunder: 0 },
   { uid: 'bot_gm', name: 'Sulton BOT', secs: 2, blunder: 0 },
   { uid: 'bot_champ', name: 'Legend BOT', secs: 3, blunder: 0 },
-  { uid: 'bot_monster', name: 'Monster BOT', secs: 7, blunder: 0 }
+  { uid: 'bot_monster', name: 'Monster BOT', secs: 5, blunder: 0 }
 ];
 const botByUid = uid => BOTS.find(b => b.uid === uid) || null;
 const BOT_TCS = ['1+1', '2+2', '3+2', '5+3'];

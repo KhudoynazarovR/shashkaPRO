@@ -62,15 +62,54 @@ function encode(board, side, secs) {
   return (side > 0 ? 1 : 2) + " " + secs.toFixed(2) + "\n" + rows.join("\n") + "\n";
 }
 
+// ---------- Tez javob va o'rganish (asosan Monster uchun)
+// CACHE: chuqur hisoblangan pozitsiyalar xotirasi — takrorlanganda darhol javob.
+// DEEP: bot yutqazgan o'yinlardagi pozitsiyalar — keyingi safar 2 barobar chuqurroq o'ylaydi (xatoni takrorlamaydi).
+const CFILE = path.join(__dirname, 'data', 'engcache.json');
+const CACHE = new Map(), DEEP = new Set(), ROOMK = new Map();
+try { const o = JSON.parse(fs.readFileSync(CFILE, 'utf8')); (o.c || []).forEach(x => CACHE.set(x[0], x[1])); (o.d || []).forEach(k => DEEP.add(k)); console.log('[KestoG] xotira:', CACHE.size, 'pozitsiya,', DEEP.size, 'saboq'); } catch (e) {}
+let cDirty = false;
+setInterval(() => {
+  if (!cDirty) return; cDirty = false;
+  try { fs.mkdirSync(path.dirname(CFILE), { recursive: true }); fs.writeFileSync(CFILE, JSON.stringify({ c: [...CACHE.entries()].slice(-60000), d: [...DEEP].slice(-20000) })); } catch (e) {}
+}, 5 * 60 * 1000).unref();
+function remember(key, secs, r) {
+  CACHE.delete(key); CACHE.set(key, { secs, r });
+  if (CACHE.size > 60000) CACHE.delete(CACHE.keys().next().value);
+  cDirty = true;
+}
+// bot yutqazdi → o'sha o'yindagi pozitsiyalarni "saboq" sifatida belgilaymiz
+function learn(roomId) {
+  const ks = ROOMK.get(String(roomId)); ROOMK.delete(String(roomId));
+  if (!ks || !ks.length) return 0;
+  ks.forEach(k => { CACHE.delete(k); DEEP.add(k); });
+  while (DEEP.size > 20000) DEEP.delete(DEEP.values().next().value);
+  cDirty = true;
+  console.log('[KestoG] saboq olindi:', roomId, ks.length, 'pozitsiya');
+  return ks.length;
+}
+function track(roomId, key) {
+  if (!roomId) return;
+  const id = String(roomId).slice(0, 40); let a = ROOMK.get(id);
+  if (!a) { a = []; ROOMK.set(id, a); if (ROOMK.size > 500) ROOMK.delete(ROOMK.keys().next().value); }
+  if (a.length < 200 && a[a.length - 1] !== key) a.push(key);
+}
+
 function move(j, cb) {
   LOWFLAG = !!(j && j.arena);
   if (process.env.KDEBUG) console.log("[KestoG] request", j && j.time);
   if (!ready) return cb({ error: "notready", code: 503 });
   const b = j && j.board, side = (j && j.side > 0) ? 1 : -1;
   if (!Array.isArray(b) || b.length !== 64 || !b.every(v => Number.isInteger(v) && v >= -2 && v <= 2)) return cb({ error: "bad", code: 400 });
-  const secs = Math.min(20, Math.max(0.05, Number(j.time) || 1));
+  let secs = Math.min(20, Math.max(0.05, Number(j.time) || 1));
   const bk = BOOK[b.join("") + side];
   if (bk && j.book) return cb({ from: bk.from, to: bk.to, jumps: 0, ev: null, ms: 0, book: 1 });
+  const key = b.join(",") + "|" + side;
+  if (j.room && secs >= 1) track(j.room, key);
+  const deep = secs >= 1 && DEEP.has(key);
+  if (deep) secs = Math.min(18, secs * 2);   // bu yerda avval yutqazgan — chuqurroq o'ylaymiz
+  const hit = secs >= 1 && CACHE.get(key);
+  if (hit && hit.secs >= secs * 0.9) { cDirty = true; return cb(Object.assign({}, hit.r, { ms: 0, cached: 1 })); }
   // bitta dvigatel jarayoni: so'rovlar navbatga qo'yiladi (rad etilmaydi). Arena (bot va bot) faqat navbat bo'sh bo'lsa.
   if (j && j.arena ? (busy >= 1) : (queue.length >= 12)) return cb({ error: "busy", code: 429 });
   busy++; const t0 = Date.now();
@@ -79,7 +118,9 @@ function move(j, cb) {
     if (err) { console.log('[KestoG] xato:', err, '| kirish:', JSON.stringify(encode(b, side, secs))); return cb({ error: err, code: 500 }); }
     const from = v[1] * 8 + (7 - v[0]), to = v[3] * 8 + (7 - v[2]);
     if (!(from >= 0 && from < 64 && to >= 0 && to < 64) || from === to) return cb({ error: "nomove", code: 500 });
-    if (process.env.KDEBUG) console.log('[KestoG] vaqt', secs, 'sek soralgan,', Date.now() - t0, 'ms'); cb({ bk: bk ? { from: bk.from, to: bk.to } : null, from: from, to: to, jumps: v[4], ev: (v.length > 5 ? v[5] : null), ms: Date.now() - t0 });
+    if (process.env.KDEBUG) console.log('[KestoG] vaqt', secs, 'sek soralgan,', Date.now() - t0, 'ms'); const res = { bk: bk ? { from: bk.from, to: bk.to } : null, from: from, to: to, jumps: v[4], ev: (v.length > 5 ? v[5] : null) };
+    if (secs >= 1 && !newGame(b)) remember(key, secs, res);
+    cb(Object.assign({ ms: Date.now() - t0, deep: deep ? 1 : 0 }, res));
   });
 }
 
@@ -107,4 +148,4 @@ function build() {
   });
 }
 build();
-module.exports = { move, load: () => busy };
+module.exports = { move, learn, load: () => busy, mem: () => ({ cache: CACHE.size, deep: DEEP.size }) };

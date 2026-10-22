@@ -1099,6 +1099,10 @@
       if (!legal.length) return cb(null);
       var t0 = Date.now(), done = false;
       var secs = Math.max(0.05, Math.min(st.botSecs, remaining(side) / 1000 / 15));
+      if (legal.length === 1) {   // yagona yurish (majburiy urish) — o'ylab o'tirmaymiz
+        var only = stepsOf(legal[0]); st.botNote = "🤖 majburiy yurish";
+        if (only) return setTimeout(function () { cb(only); }, 350);
+      }
       if (st.botBlunder > 0 && legal.length > 1 && Math.random() < st.botBlunder) {   // yengil botlar ba'zan tasodifiy yuradi
         done = true;
         var pool0 = safePool(legal, side), st0 = null;
@@ -1126,7 +1130,7 @@
           fetch("/api/ai/move", {
             method: "POST",
             headers: { "Content-Type": "application/json", "x-init-data": (tg && tg.initData) || "" },
-            body: JSON.stringify({ board: flatBoard(st.board), side: side === "white" ? 1 : -1, time: secs, book: secs >= 1 }),
+            body: JSON.stringify({ board: flatBoard(st.board), side: side === "white" ? 1 : -1, time: secs, book: secs >= 1, room: roomId }),
             signal: ctl ? ctl.signal : undefined
           }).then(function (r) {
             if (r.status === 429 || r.status === 503) return { retry: 1 };
@@ -1137,7 +1141,7 @@
             clearTimeout(to);
             var mv = null;
             if (j && typeof j.from === "number" && typeof j.to === "number") mv = pickLegal(legal, j, false) || pickLegal(legal, j, true);
-            finishWith(mv, mv ? "🤖 KestoG" + (j.book ? " · kitob" : j.ms ? " · " + j.ms + " ms" : "") : "🤖 zaxira yurish (AI javobi mos kelmadi)");
+            finishWith(mv, mv ? "🤖 KestoG" + (j.book ? " · kitob" : j.cached ? " · xotiradan ⚡" : j.deep ? " · saboq 🧠 " + j.ms + " ms" : j.ms ? " · " + j.ms + " ms" : "") : "🤖 zaxira yurish (AI javobi mos kelmadi)");
           }).catch(function () { if (done) return; if (Date.now() + 2500 < deadline) return setTimeout(ask, 1200); clearTimeout(to); finishWith(null, "🤖 zaxira yurish (AI ishlamadi)"); });
         } catch (e) { clearTimeout(to); finishWith(null, "🤖 zaxira yurish (AI ishlamadi)"); }
       }

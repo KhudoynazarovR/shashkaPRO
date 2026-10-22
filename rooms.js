@@ -209,6 +209,10 @@ function createRooms({ send, clients, onFinish }) {
     room.winner = winner;
     room.reason = reason || null;
     try { botReward(room, winner); } catch (e) { console.log('botReward:', e.message); }
+    try { // bot yutqazsa — o'sha o'yindan saboq oladi (keyingi safar shu pozitsiyalarda chuqurroq o'ylaydi)
+      const bc = botColorOf(room);
+      if (room.vsBot && bc && winner && winner !== 'draw' && winner !== bc) require('./kestoai.js').learn(room.id);
+    } catch (e) {}
     try { // kunlik vazifalar: o'yin / g'alaba / botni yutish
       if ((room.moves || []).length >= 8 && room.reason !== 'noshow') {
         const q = require('./quests.js'), seats = { white: room.white && room.white.uid, black: room.black && room.black.uid };
