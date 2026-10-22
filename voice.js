@@ -25,6 +25,19 @@
         .catch(function (e) { done([], String(e && e.message || e)); });
       return;
     }
+    // Telegram ichida har safar ruxsat so'ramasligi uchun: mikrofonni bir marta ochib, sessiya davomida ushlab turamiz
+    var inTg = !!(W.Telegram && W.Telegram.WebApp && W.Telegram.WebApp.initData);
+    if (inTg && !micStream && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(function (st) { micStream = st; webStart(done); })
+        .catch(function (e) { done([], 'not-allowed'); });
+      return;
+    }
+    webStart(done);
+  }
+  var micStream = null, micT = 0;
+  function micIdle() { clearTimeout(micT); micT = setTimeout(function () { try { micStream && micStream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {} micStream = null; }, 120000); }   // 2 daqiqa ishlatilmasa — mikrofon yopiladi
+  function webStart(done) {
+    micIdle();
     try {
       var rec = new SR(); rec.lang = LANG; rec.maxAlternatives = 5; rec.interimResults = false; rec.continuous = false;
       var got = false;
@@ -177,10 +190,17 @@
     btn = document.createElement('button'); btn.id = 'spMic'; btn.type = 'button'; btn.textContent = '🎤'; btn.setAttribute('aria-label', 'Ovozli buyruq');
     bub = document.createElement('div'); bub.id = 'spMicB'; bub.setAttribute('aria-live', 'polite');
     document.body.appendChild(bub); document.body.appendChild(btn);
-    var lp = 0;
+    var lp = 0, fails = 0;
     btn.addEventListener('touchstart', function () { lp = setTimeout(function () { lp = -1; help(); }, 650); }, { passive: true });
     btn.addEventListener('touchend', function () { if (lp > 0) clearTimeout(lp); });
-    btn.onclick = function () { if (lp === -1) { lp = 0; return; } listen(function (alts, err) { if (err && !alts.length) return say(err === 'not-allowed' ? '🎤 Mikrofonga ruxsat bering' : '🤔 Eshitilmadi, qayta urinib ko‘ring'); handle(alts); }); };
+    btn.onclick = function () { if (lp === -1) { lp = 0; return; } listen(function (alts, err) {
+      if (err && !alts.length) {
+        fails++;
+        if (err === 'not-allowed' || err === 'service-not-allowed') return say('🎤 Mikrofonga ruxsat bering', 4000);
+        if (fails >= 2 && W.Telegram && W.Telegram.WebApp && W.Telegram.WebApp.initData) return say('🎤 Telegram ichida ovoz tanish ishlamayapti (' + err + '). Saytni Chrome’da oching: shashkapro.onrender.com', 7000);
+        return say('🤔 Eshitilmadi, qayta urinib ko‘ring (' + err + ')');
+      }
+      fails = 0; handle(alts); }); };
     try { if (!localStorage.getItem('spMicSeen')) { localStorage.setItem('spMicSeen', '1'); setTimeout(function () { say('🎤 Yangi: ovozli boshqaruv! Tugmani bosib «O‘ynash» deb ayting. Uzoq bossangiz — buyruqlar ro‘yxati', 6000); }, 4000); } } catch (e) {}
     setInterval(function () {
       var on = true; try { on = localStorage.getItem('spMicOff') !== '1'; } catch (e) {}
