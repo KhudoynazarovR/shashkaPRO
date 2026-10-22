@@ -54,8 +54,12 @@ function parseFen(fen) {   // "W:W21,22,K30:B1,2" → board, side
     const col = p[0] === 'W' ? 'w' : p[0] === 'B' ? 'b' : null; if (!col) continue;
     p.slice(1).split(',').forEach(x => {
       x = x.trim(); if (!x) return;
-      const king = /^K/i.test(x), m = /(\d+)(?:-(\d+))?/.exec(x); if (!m) return;
-      for (let n = +m[1]; n <= +(m[2] || m[1]); n++) { const [r, c] = locToRC(n); b[r][c] = king ? col.toUpperCase() : col; }
+      const king = /^K/i.test(x); if (king) x = x.slice(1);
+      const put = (r, c) => { if (r >= 0 && r < 8 && c >= 0 && c < 8) b[r][c] = king ? col.toUpperCase() : col; };
+      const al = /^([a-h])([1-8])$/i.exec(x);   // algebraik (a1, c3 …) ko'rinishidagi FEN
+      if (al) return put(8 - Number(al[2]), al[1].toLowerCase().charCodeAt(0) - 97);
+      const m = /^(\d+)(?:-(\d+))?$/.exec(x); if (!m) return;
+      for (let n = +m[1]; n <= +(m[2] || m[1]); n++) { const [r, c] = locToRC(n); put(r, c); }
     });
   }
   return { board: b, side };
@@ -125,7 +129,7 @@ function playGame(id) {
       for (let i = 1; i < pts.length; i++) {
         const part = two(rcToLoc(pts[i - 1][0], pts[i - 1][1])) + two(rcToLoc(pts[i][0], pts[i][1]));
         const x = await post('/api/bot/game/' + id + '/move/' + part);
-        if (x.s !== 200) { log('yurish rad etildi', id, part, x.s, (x.t || '').slice(0, 120)); break; }
+        if (x.s !== 200) { log('yurish rad etildi', id, part, x.s, (x.t || '').slice(0, 120), '| fen:', String(G.fen).slice(0, 90), '| moves:', String(state.moves || '').slice(-80)); G.lastPlies = -1; break; }
       }
     } catch (e) { log('xato', e.message); }
     G.busy = false;
@@ -142,6 +146,7 @@ function playGame(id) {
     if (o.type === 'gameFull') {
       G.color = o.white && ST.me && String(o.white.id).toLowerCase() === ST.me ? R.WHITE : R.BLACK;
       G.fen = o.initialFen || 'startpos';
+      log('fen:', String(G.fen).slice(0, 120), '| variant:', o.variant && (o.variant.key || o.variant.name));
       G.opp = (G.color === R.WHITE ? o.black : o.white) || {}; G.opp = G.opp.name || G.opp.id || '?';
       log('o‘yin boshlandi', id, G.color, 'vs', G.opp);
       if (!greeted) { greeted = true; post('/api/bot/game/' + id + '/chat', { room: 'player', text: '👹 ShashkaPRO Monster — omad! Rus shashkasi: t.me/DraughtsPRObot' }); }
