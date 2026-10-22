@@ -71,7 +71,8 @@ function move(j, cb) {
   const secs = Math.min(20, Math.max(0.05, Number(j.time) || 1));
   const bk = BOOK[b.join("") + side];
   if (bk && j.book) return cb({ from: bk.from, to: bk.to, jumps: 0, ev: null, ms: 0, book: 1 });
-  if (busy >= 2) return cb({ error: "busy", code: 429 });
+  // bitta dvigatel jarayoni: so'rovlar navbatga qo'yiladi (rad etilmaydi). Arena (bot va bot) faqat navbat bo'sh bo'lsa.
+  if (j && j.arena ? (busy >= 1) : (queue.length >= 12)) return cb({ error: "busy", code: 429 });
   busy++; const t0 = Date.now();
   run((newGame(b) ? "9 0\n" : "") + encode(b, side, secs), secs, (err, v) => {
     busy--;

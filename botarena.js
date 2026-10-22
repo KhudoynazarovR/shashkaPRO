@@ -81,7 +81,7 @@ function strength(bot) {
 }
 
 async function askEngine(board, side, secs) {
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 15; i++) {
     const r = await new Promise(res => {
       try { K.move({ board: to64(board), side: side === WHITE ? 1 : -1, time: secs, arena: true }, x => res(x || { error: 'x' })); }
       catch (e) { res({ error: 'throw' }); }

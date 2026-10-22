@@ -71,5 +71,5 @@ window.initialBoard=startPosition;
 window.applyStep=applyStep;window.captureSteps=captureSteps;
 window.simpleSteps=simpleMoves;window.allCaptures=allCaptures;
 window.allMoves=getAllMoves;window.sameSide=sameSide;
-window.isWhite=isWhite;window.isKing=isKing;
+window.isWhite=isWhite;window.isKing=isKing;window.applyMoveFull=applyMove;
 })();

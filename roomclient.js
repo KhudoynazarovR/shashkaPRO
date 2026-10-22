@@ -1017,6 +1017,37 @@
         return safe.length ? safe : shuffled;
       } catch (e) { return shuffled; }
     }
+    // zaxira "miya": AI javob bermasa, tasodifiy emas — material bo'yicha alfa-beta qidiruv (bir necha yurish oldinga)
+    function localBest(legal, side) {
+      try {
+        var AM = window.allMoves, AP = window.applyMoveFull; if (!AM || !AP) return null;
+        var me = codeOf(side), op = codeOf(side === "white" ? "black" : "white"), t0 = Date.now(), LIM = 900;
+        function ev(b) {
+          var s = 0;
+          for (var r = 0; r < 8; r++) for (var c = 0; c < 8; c++) {
+            var p = b[r][c]; if (!p) continue;
+            var v = (p === 3 || p === 4) ? 300 : 100 + ((p === 1) ? (7 - r) : r) * 3 + ((c > 1 && c < 6) ? 4 : 0);
+            s += (p === 1 || p === 3) ? v : -v;
+          }
+          return me === WHITE ? s : -s;
+        }
+        function ab(b, d, a, be, mine) {
+          var ms = AM(b, mine ? me : op);
+          if (!ms.length) return mine ? -100000 - d : 100000 + d;
+          if (d <= 0 && !(ms[0].captures && ms[0].captures.length)) return ev(b);
+          if (d <= -4 || Date.now() - t0 > LIM) return ev(b);
+          if (mine) { var bv = -1e9; for (var i = 0; i < ms.length; i++) { var v = ab(AP(b, ms[i]), d - 1, a, be, false); if (v > bv) bv = v; if (bv > a) a = bv; if (a >= be) break; } return bv; }
+          var wv = 1e9; for (var k = 0; k < ms.length; k++) { var w = ab(AP(b, ms[k]), d - 1, a, be, true); if (w < wv) wv = w; if (wv < be) be = wv; if (a >= be) break; } return wv;
+        }
+        var best = null;
+        for (var D = 2; D <= 6 && Date.now() - t0 < LIM / 2; D++) {
+          var bb = null, bv = -1e9, order = legal.slice().sort(function () { return Math.random() - 0.5; });
+          for (var i = 0; i < order.length; i++) { var v = ab(AP(st.board, order[i]), D - 1, -1e9, 1e9, false); if (v > bv) { bv = v; bb = order[i]; } }
+          if (Date.now() - t0 <= LIM || !best) best = bb;
+        }
+        return best;
+      } catch (e) { return null; }
+    }
     function botThink(cb) {
       var side = st.botColor, legal = allMoves(st.board, codeOf(side));
       if (!legal.length) return cb(null);
@@ -1032,29 +1063,39 @@
       function finishWith(mv, note) {
         if (done) return; done = true;
         var steps = mv ? stepsOf(mv) : null;
-        if (!steps) {   // zaxira: tasodifiy qonuniy yurish
-          note = "🤖 zaxira yurish (AI javobi mos kelmadi)";
-          var pool = legal.slice().sort(function () { return Math.random() - 0.5; });
-          for (var i = 0; i < pool.length && !steps; i++) steps = stepsOf(pool[i]);
+        if (!steps) {   // zaxira: o'zimizning qidiruv, bo'lmasa xavfsiz yurish
+          var lb = localBest(legal, side); if (lb) steps = stepsOf(lb);
+          if (!steps) { var pool = safePool(legal, side); for (var i = 0; i < pool.length && !steps; i++) steps = stepsOf(pool[i]); }
+          note = (note || "🤖 zaxira yurish") + "";
         }
         st.botNote = note || "";
         setTimeout(function () { cb(steps); }, Math.max(0, 450 - (Date.now() - t0)));
       }
       var ctl = window.AbortController ? new AbortController() : null;
-      var to = setTimeout(function () { try { if (ctl) ctl.abort(); } catch (e) {} finishWith(null, "🤖 zaxira yurish (AI kechikdi)"); }, (secs + 6) * 1000);
-      try {
-        fetch("/api/ai/move", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "x-init-data": (tg && tg.initData) || "" },
-          body: JSON.stringify({ board: flatBoard(st.board), side: side === "white" ? 1 : -1, time: secs }),
-          signal: ctl ? ctl.signal : undefined
-        }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
-          clearTimeout(to);
-          var mv = null;
-          if (j && typeof j.from === "number" && typeof j.to === "number") mv = pickLegal(legal, j, false) || pickLegal(legal, j, true);
-          finishWith(mv, mv ? "🤖 KestoG" + (j.ms ? " · " + j.ms + " ms" : "") : "🤖 zaxira yurish (AI javobi mos kelmadi)");
-        }).catch(function () { clearTimeout(to); finishWith(null, "🤖 zaxira yurish (AI ishlamadi)"); });
-      } catch (e) { clearTimeout(to); finishWith(null, "🤖 zaxira yurish (AI ishlamadi)"); }
+      var deadline = t0 + (secs * 3 + 25) * 1000;   // dvigatel band bo'lsa navbat kutiladi
+      var to = setTimeout(function () { try { if (ctl) ctl.abort(); } catch (e) {} finishWith(null, "🤖 zaxira yurish (AI kechikdi)"); }, deadline - t0);
+      function ask() {
+        if (done) return;
+        try {
+          fetch("/api/ai/move", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "x-init-data": (tg && tg.initData) || "" },
+            body: JSON.stringify({ board: flatBoard(st.board), side: side === "white" ? 1 : -1, time: secs, book: secs >= 1 }),
+            signal: ctl ? ctl.signal : undefined
+          }).then(function (r) {
+            if (r.status === 429 || r.status === 503) return { retry: 1 };
+            return r.ok ? r.json() : null;
+          }).then(function (j) {
+            if (done) return;
+            if (j && j.retry && Date.now() + 1500 < deadline) return setTimeout(ask, 900);   // band — biroz kutib qayta so'raymiz
+            clearTimeout(to);
+            var mv = null;
+            if (j && typeof j.from === "number" && typeof j.to === "number") mv = pickLegal(legal, j, false) || pickLegal(legal, j, true);
+            finishWith(mv, mv ? "🤖 KestoG" + (j.book ? " · kitob" : j.ms ? " · " + j.ms + " ms" : "") : "🤖 zaxira yurish (AI javobi mos kelmadi)");
+          }).catch(function () { if (done) return; if (Date.now() + 2500 < deadline) return setTimeout(ask, 1200); clearTimeout(to); finishWith(null, "🤖 zaxira yurish (AI ishlamadi)"); });
+        } catch (e) { clearTimeout(to); finishWith(null, "🤖 zaxira yurish (AI ishlamadi)"); }
+      }
+      ask();
     }
 
     function botKick() {
