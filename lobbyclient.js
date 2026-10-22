@@ -816,7 +816,7 @@
         var f = document.querySelector(".lbc1"); if (!f) return;
         var top = document.getElementById("lbTop");
         if (!top) { top = document.createElement("div"); top.id = "lbTop"; f.parentNode.insertBefore(top, f); top.appendChild(f); }
-        var sm = f.querySelector("small"); if (sm && sm.textContent !== "Havola yuboring") sm.textContent = "Havola yuboring";
+        var sm = f.querySelector("small"); if (sm && !sm.getAttribute("data-hy")) { sm.setAttribute("data-hy", "1"); sm.textContent = "Havola yuboring"; }
         var p = S.promo, el = document.getElementById("lbPromoC");
         if (!p || !p.on || !S.me) { if (el) el.remove(); return; }
         var left = Math.max(0, p.end - Date.now()), d = Math.floor(left / 86400000), h = Math.floor(left % 86400000 / 3600000), m = Math.floor(left % 3600000 / 60000);
@@ -1126,7 +1126,7 @@ document.head.appendChild(_as); }
       };
       window.lbClubFix = function () {
         var card = null, all = document.querySelectorAll(".lbcl");
-        for (var i = 0; i < all.length; i++) if (all[i].textContent.indexOf("Klublarga") >= 0) { card = all[i]; break; }
+        for (var i = 0; i < all.length; i++) if (/Klublarga|клубы|clubs/i.test(all[i].textContent)) { card = all[i]; break; }
         var bn = document.getElementById("lbClubBn");
         if (!card) { if (bn) bn.remove(); return; }
         card.style.display = window.__lbCO ? "" : "none";

@@ -5,6 +5,7 @@
     var ov = document.createElement("div"); ov.id = "spSetSheet";
     ov.style.cssText = "position:fixed;inset:0;z-index:2147482500;background:rgba(0,0,0,.55);display:flex;align-items:flex-end";
     var R = [
+      ["🌐", "Til · Язык · Language", (window.spLangName ? window.spLangName() : "O‘zbekcha"), function () { if (window.spLangPicker) window.spLangPicker(); }],
       ["🔊", "Ovoz", "Ovoz balandligi, yurish va olish ovozlari", function () { if (window.SPSound && SPSound.openSettings) SPSound.openSettings(); }],
       ["🎨", "Fon", "Kunduzgi, kechki va boshqa fonlar", function () { if (window.spBgPicker) window.spBgPicker(); }],
       ["🤖", "AI o‘yin sozlamalari", "Doska, vaqt va AI bilan o‘yin sozlamalari", function () { if (window.aiShow) window.aiShow("set"); }]

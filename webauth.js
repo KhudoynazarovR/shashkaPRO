@@ -56,15 +56,20 @@
       '#spLogin .lg{width:120px;height:120px;border-radius:28px;background:#f3bb86;display:grid;grid-template-columns:repeat(4,1fr);overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.5)}#spLogin .lg i{display:block}#spLogin .lg i:nth-child(odd){background:#7b2f13}' +
       '#spLogin h1{margin:6px 0 0;font-size:30px;font-weight:900}#spLogin p{margin:0;max-width:340px;color:#d9d2ff;font-size:16px;line-height:1.45}' +
       '#spLogin button{width:100%;max-width:340px;border:0;border-radius:16px;padding:16px;font:800 18px system-ui;color:#fff;background:linear-gradient(180deg,#38b0e8,#1d8bd1);box-shadow:0 4px 0 #0f5b8c}#spLogin button:disabled{opacity:.6}#spLogin button.g{display:flex;align-items:center;justify-content:center;white-space:nowrap;background:#fff;color:#1f1f1f;box-shadow:0 4px 0 #b9b2e6}' +
-      '#spLogin .st{min-height:44px;font-size:15px;color:#ffe08a;max-width:340px}#spLogin a{color:#9fd6ff;font-size:14px;word-break:break-all}';
+      '#spLogin .st{min-height:44px;font-size:15px;color:#ffe08a;max-width:340px}#spLogin a{color:#9fd6ff;font-size:14px;word-break:break-all}#spLogin .lng{font-size:15px;color:#b9b2e6}#spLogin .lng span{padding:6px;cursor:pointer;text-decoration:underline}#spLogin .lng span.on{color:#fff;font-weight:800;text-decoration:none}';
     document.head.appendChild(css);
     var el = document.createElement('div'); el.id = 'spLogin';
     var sq = ''; for (var i = 0; i < 16; i++) sq += '<i style="' + ((Math.floor(i / 4) + i) % 2 ? 'background:#7b2f13' : 'background:#f3bb86') + '"></i>';
     el.innerHTML = '<div class="lg" style="grid-template-columns:repeat(4,1fr)">' + sq + '</div><h1>ShashkaPRO</h1><p>Rus shashkasi: onlayn o‘yinlar, turnirlar, masalalar va AI bilan o‘yin.</p>' +
       '<button id="spLgG" class="g" style="display:none"><svg width="22" height="22" viewBox="0 0 48 48" style="vertical-align:-5px;margin-right:10px"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.7 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.7c4.3-4 6.9-9.9 6.9-17.1z"/><path fill="#FBBC05" d="M10.6 28.6c-.5-1.4-.8-2.9-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.7 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.8 2.3-8.5 2.3-6.2 0-11.5-4.2-13.4-9.9l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg>Google orqali kirish</button>' +
-      '<button id="spLgBtn">✈️ Telegram orqali kirish</button><div class="st" id="spLgSt">Telegram yoki Google hisobingiz bilan kiring — tangalar, reyting va natijalar saqlanadi.</div>';
+      '<button id="spLgBtn">✈️ Telegram orqali kirish</button><div class="st" id="spLgSt">Telegram yoki Google hisobingiz bilan kiring — tangalar, reyting va natijalar saqlanadi.</div>' +
+      '<div class="lng" data-noi18n="1"><span data-l="uz">O‘zbekcha</span> · <span data-l="ru">Русский</span> · <span data-l="en">English</span></div>';
     document.documentElement.appendChild(el);
     var btn = el.querySelector('#spLgBtn'), gb = el.querySelector('#spLgG'), st = el.querySelector('#spLgSt'), poll = null;
+    Array.prototype.forEach.call(el.querySelectorAll('.lng [data-l]'), function (s) {
+      if (s.getAttribute('data-l') === (W.SP_LANG || 'uz')) s.className = 'on';
+      s.onclick = function () { if (W.spSetLang) W.spSetLang(s.getAttribute('data-l')); };
+    });
     var isApp = !!(W.Capacitor && W.Capacitor.isNativePlatform && W.Capacitor.isNativePlatform());
     fetch('/api/auth/config').then(function (r) { return r.json(); }).then(function (c) { if (c.google) gb.style.display = ''; else st.textContent = 'Telegram’dagi hisobingiz bilan kirasiz — tangalar, reyting va natijalar saqlanadi.'; }).catch(function () {});
     function waitFor(j, b, seenMsg) { // kirish tasdiqlanishini kutish (Telegram boti yoki Google sahifasi)
