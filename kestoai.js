@@ -107,7 +107,7 @@ function move(j, cb) {
   const key = b.join(",") + "|" + side;
   if (j.room && secs >= 1) track(j.room, key);
   const deep = secs >= 1 && DEEP.has(key);
-  if (deep) secs = Math.min(18, secs * 2);   // bu yerda avval yutqazgan — chuqurroq o'ylaymiz
+  if (deep) secs = Math.min(18, secs * 2, Number(j.maxTime) > 0 ? Number(j.maxTime) : 18);   // bu yerda avval yutqazgan — chuqurroq o'ylaymiz (vaqt imkon bergancha)
   const hit = secs >= 1 && CACHE.get(key);
   if (hit && hit.secs >= secs * 0.9) { cDirty = true; return cb(Object.assign({}, hit.r, { ms: 0, cached: 1 })); }
   // bitta dvigatel jarayoni: so'rovlar navbatga qo'yiladi (rad etilmaydi). Arena (bot va bot) faqat navbat bo'sh bo'lsa.

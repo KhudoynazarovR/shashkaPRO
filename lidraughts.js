@@ -92,10 +92,10 @@ function position(fen, moves) {
   return { board, side, plies: toks.length };
 }
 function to64(b) { const o = []; for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) { const p = b[r][c]; o.push(p === 'w' ? 1 : p === 'W' ? 2 : p === 'b' ? -1 : p === 'B' ? -2 : 0); } return o; }
-function engine(board, side, secs, room) {
+function engine(board, side, secs, room, maxTime) {
   return new Promise(async res => {
     for (let i = 0; i < 40; i++) {
-      const r = await new Promise(rs => K.move({ board: to64(board), side: side === R.WHITE ? 1 : -1, time: secs, book: true, room }, rs));
+      const r = await new Promise(rs => K.move({ board: to64(board), side: side === R.WHITE ? 1 : -1, time: secs, book: true, room, maxTime }, rs));
       if (r && !r.error) return res(r);
       if (r && (r.error === 'busy' || r.error === 'notready')) { await sleep(800); continue; }
       return res(null);
@@ -121,7 +121,9 @@ function playGame(id) {
       if (moves.length > 1) {
         const my = (G.color === R.WHITE ? state.wtime : state.btime) || 180000, inc = (G.color === R.WHITE ? state.winc : state.binc) || 0;
         const secs = Math.max(0.3, Math.min(8, my / 1000 / 25 + inc / 1000 * 0.7));
-        const r = await engine(pos.board, pos.side, secs, 'ld_' + id);
+        const t0 = Date.now();
+        const r = await engine(pos.board, pos.side, secs, 'ld_' + id, Math.max(0.5, my / 1000 / 12));
+        log('yurish hisoblandi', id, '#' + pos.plies, ((Date.now() - t0) / 1000).toFixed(1) + 's', '| soat:', Math.round(my / 1000) + 's', r ? (r.cached ? '(xotira)' : r.book ? '(kitob)' : r.deep ? '(saboq)' : '') : '(dvigatel javob bermadi)');
         if (r) {
           const fr = r.from >> 3, fc = r.from & 7, tr = r.to >> 3, tc = r.to & 7;
           const c = moves.filter(m => m.from[0] === fr && m.from[1] === fc && m.to[0] === tr && m.to[1] === tc);
@@ -145,8 +147,8 @@ function playGame(id) {
     const w = state && state.winner, res = !w ? 'durang' : (w === G.color ? 'G‘ALABA' : 'mag‘lubiyat');
     ST.results.unshift({ id, opp: G.opp, res, at: Date.now(), url: 'https://lidraughts.org/' + id });
     ST.results.length = Math.min(ST.results.length, 50);
-    log('o‘yin tugadi', id, 'vs', G.opp, '→', res);
-    if (w && w !== G.color) { try { K.learn('ld_' + id); } catch (e) {} }   // yutqazdi — saboq oladi
+    log('o‘yin tugadi', id, 'vs', G.opp, '→', res, '| sabab:', state && state.status, '| yurishlar:', String(state && state.moves || '').split(' ').filter(Boolean).length);
+    if (w && w !== G.color && !/outoftime|timeout|noStart|aborted/i.test(String(state && state.status))) { try { K.learn('ld_' + id); } catch (e) {} }   // yurish bilan yutqazdi — saboq oladi (vaqt bo'yicha emas)
   };
   stream('/api/bot/game/stream/' + id, async o => {
     if (o.type === 'gameFull') {
