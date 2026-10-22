@@ -182,7 +182,11 @@ async function autoChallenge() {
   for (;;) {
     await sleep(4 * 60 * 1000);
     if (Object.keys(ST.games).length) continue;
-    const who = targets[i++ % targets.length];
+    // faqat hozir onlayn bo'lgan botlarni chaqiramiz
+    let online = targets;
+    try { const st = await get('/api/users/status?ids=' + encodeURIComponent(targets.join(','))); if (st.s === 200 && Array.isArray(st.j)) online = targets.filter(t => st.j.some(u => String(u.id || u.name).toLowerCase() === t.toLowerCase() && u.online)); } catch (e) {}
+    if (!online.length) { if (!(i++ % 6)) log('hech qaysi bot onlayn emas:', targets.join(', ')); continue; }
+    const who = online[i++ % online.length];
     const x = await post('/api/challenge/' + who, { rated: process.env.LIDRAUGHTS_RATED === '0' ? 'false' : 'true', 'clock.limit': String((lim || 3) * 60), 'clock.increment': String(inc || 0), variant: 'russian', color: 'random' });
     log('chaqiruv yuborildi →', who, x.s, x.s === 200 ? '' : (x.t || '').slice(0, 100));
   }
