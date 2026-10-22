@@ -382,11 +382,13 @@
     out.sort(function (a, b) { return (parseInt((a.info.match(/\d+/) || [0])[0], 10)) - (parseInt((b.info.match(/\d+/) || [0])[0], 10)); });
     return out;
   }
-  function avEl(uid) {
+  function avEl(uid) {   // o'ram (display:contents) — rasm yuklanmasa ham bosish ishlaydi
+    var w = document.createElement('span'); w.style.display = 'contents';
     var im = document.createElement('img');
     im.src = '/api/av/' + encodeURIComponent(uid);
-    im.onerror = function () { var i = document.createElement('i'); i.textContent = '🤖'; im.replaceWith(i); };
-    return im;
+    im.onerror = function () { var i = document.createElement('i'); i.textContent = uid === 'bot_monster' ? '👹' : '🤖'; im.replaceWith(i); };
+    w.appendChild(im);
+    return w;
   }
   function openBots() {
     var L = $('nvBotsL'); L.innerHTML = '';
