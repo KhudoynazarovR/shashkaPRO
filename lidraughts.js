@@ -92,9 +92,10 @@ function position(fen, moves) {
   return { board, side, plies: toks.length };
 }
 function to64(b) { const o = []; for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) { const p = b[r][c]; o.push(p === 'w' ? 1 : p === 'W' ? 2 : p === 'b' ? -1 : p === 'B' ? -2 : 0); } return o; }
-function engine(board, side, secs, room, maxTime) {
+function engine(board, side, secs, room, maxTime, maxWait) {
+  const until = Date.now() + (maxWait || 32000);   // dvigatel tayyor bo'lmasa — soatga qarab cheklangan kutish
   return new Promise(async res => {
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 40 && Date.now() < until; i++) {
       const r = await new Promise(rs => K.move({ board: to64(board), side: side === R.WHITE ? 1 : -1, time: secs, book: true, room, maxTime }, rs));
       if (r && !r.error) return res(r);
       if (r && (r.error === 'busy' || r.error === 'notready')) { await sleep(800); continue; }
@@ -102,6 +103,19 @@ function engine(board, side, secs, room, maxTime) {
     }
     res(null);
   });
+}
+
+// zaxira: raqibga eng kam dona urdiradigan yurish (dvigatel hali tayyor bo'lmagan qisqa paytlar uchun)
+function safeMove(board, side, moves) {
+  const opp = side === R.WHITE ? R.BLACK : R.WHITE;
+  let best = moves[0], bs = -1e9;
+  for (const m of moves) {
+    const nb = R.applyMove(board, m), om = R.getAllMoves(nb, opp);
+    const loss = om.reduce((a, x) => Math.max(a, (x.captures || []).length), 0);
+    const sc = (m.captures || []).length * 2 - loss * 2 - (om.length ? 0 : -50) + Math.random() * 0.1;
+    if (sc > bs) { bs = sc; best = m; }
+  }
+  return best;
 }
 
 // ---------- o'yin
@@ -122,8 +136,9 @@ function playGame(id) {
         const my = (G.color === R.WHITE ? state.wtime : state.btime) || 180000, inc = (G.color === R.WHITE ? state.winc : state.binc) || 0;
         const secs = Math.max(0.3, Math.min(Number(process.env.LIDRAUGHTS_MAXSEC || 20), my / 1000 / 20 + inc / 1000 * 0.8));   // uzoq nazoratda chuqurroq o'ylaydi
         const t0 = Date.now();
-        const r = await engine(pos.board, pos.side, secs, 'ld_' + id, Math.max(0.5, my / 1000 / 12));
+        const r = await engine(pos.board, pos.side, secs, 'ld_' + id, Math.max(0.5, my / 1000 / 12), Math.max(1500, Math.min(32000, my * 0.25)));
         log('yurish hisoblandi', id, '#' + pos.plies, ((Date.now() - t0) / 1000).toFixed(1) + 's', '| soat:', Math.round(my / 1000) + 's', r ? (r.cached ? '(xotira)' : r.book ? '(kitob)' : r.deep ? '(saboq)' : '') : '(dvigatel javob bermadi)');
+        if (!r) mv = safeMove(pos.board, pos.side, moves);   // dvigatel javob bermasa — hech bo'lmasa dona bermaydigan yurish
         if (r) {
           const fr = r.from >> 3, fc = r.from & 7, tr = r.to >> 3, tc = r.to & 7;
           const c = moves.filter(m => m.from[0] === fr && m.from[1] === fc && m.to[0] === tr && m.to[1] === tc);
@@ -199,15 +214,24 @@ async function autoChallenge() {
     log('chaqiruv yuborildi →', who, x.s, x.s === 200 ? '' : (x.t || '').slice(0, 100));
   }
 }
+// davom etayotgan o'yinlar (server qayta ishga tushganda yoki oqim uzilganda) — qaytadan ulanamiz
+async function resume() {
+  try {
+    const x = await get('/api/account/playing');
+    const list = (x.j && x.j.nowPlaying) || [];
+    for (const g of list) { const id = g.gameId || g.id; if (id && !ST.games[id]) { log('davom etayotgan o‘yinga qaytildi', id); playGame(id); } }
+  } catch (e) {}
+}
 async function start() {
   if (!TOKEN || ST.on) return;
   ST.on = true;
-  await sleep(8000);   // dvigatel tayyor bo'lsin
+  await sleep(2500);   // server qayta yonganda davom etayotgan o'yinga tezroq qaytamiz (dvigatel build paytida kompilyatsiya qilinadi)
   const a = await get('/api/account');
   if (a.s !== 200 || !a.j) { log('token xato yoki lidraughts javob bermadi:', a.s); ST.on = false; return; }
   ST.me = String(a.j.id || a.j.username || '').toLowerCase();
   log('ulandi:', a.j.username, a.j.title ? '(' + a.j.title + ')' : '');
   events();
+  resume(); setInterval(resume, 60000).unref();   // server qayta yonganda davom etayotgan o'yinlarga qaytamiz
   autoChallenge();
   // Render bepul tarifida server uxlab qolmasligi uchun (bot onlayn tursin)
   const base = process.env.RENDER_EXTERNAL_URL || process.env.PUBLIC_URL || '';

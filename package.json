@@ -4,7 +4,8 @@
   "private": true,
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "postinstall": "gcc -O3 -w -o engine/bridge.bin engine/bridge.c -lm || true"
   },
   "dependencies": {
     "pg": "^8.23.1",
