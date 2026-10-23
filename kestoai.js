@@ -4,6 +4,7 @@ const fs = require("fs"), path = require("path");
 const DIR = path.join(__dirname, "engine"), BIN = process.env.KESTO_BIN || path.join(DIR, "bridge.bin");   // telefonda (Termux) alohida fayl
 const SRC = [path.join(DIR, "bridge.c"), path.join(DIR, "KestoG.C")];
 let ready = false, busy = 0;
+let COLETTE = {}; try { COLETTE = JSON.parse(fs.readFileSync(path.join(__dirname, "partiyalar", "colette_moves.json"), "utf8")); console.log("[Colette uslubi] pozitsiyalar:", Object.keys(COLETTE).length); } catch (e) {}
 let BOOK = {}; try { BOOK = JSON.parse(fs.readFileSync(path.join(__dirname, "book.json"), "utf8")); console.log("[Kitob] pozitsiyalar:", Object.keys(BOOK).length); } catch (e) { console.log("[Kitob] book.json yo'q"); }
 
 function fresh() {
@@ -104,6 +105,8 @@ function move(j, cb) {
   let secs = Math.min(30, Math.max(0.05, Number(j.time) || 1));
   const bk = BOOK[b.join("") + side];
   if (bk && j.book) return cb({ from: bk.from, to: bk.to, jumps: 0, ev: null, ms: 0, book: 1 });
+  const cm = j.book && secs >= 2 && COLETTE[b.join("") + side];   // coletteBOT (2300) o'yin uslubi: u shu pozitsiyada qanday yurgan bo'lsa
+  if (cm) return cb({ from: cm[0], to: cm[1], jumps: 0, ev: null, ms: 0, book: 1, colette: 1 });
   const key = b.join(",") + "|" + side;
   if (j.room && secs >= 1) track(j.room, key);
   const deep = secs >= 1 && DEEP.has(key);
