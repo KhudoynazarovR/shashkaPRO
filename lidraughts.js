@@ -118,6 +118,15 @@ function safeMove(board, side, moves) {
   return best;
 }
 
+// ma'lum botlarga qarshi maxsus kitob: ularning o'yinlaridan yutuq/durang bilan tugagan yo'llar (bot bir xil pozitsiyada odatda bir xil yuradi)
+const ANTI = {};
+try { ANTI.colettebot = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'partiyalar', 'anti_colette.json'), 'utf8')); log('anti-kitob coletteBOT:', Object.keys(ANTI.colettebot).length); } catch (e) {}
+function antiMove(opp, board, side, moves) {
+  const A = ANTI[String(opp || '').toLowerCase()]; if (!A) return null;
+  const hit = A[to64(board).join('') + (side === R.WHITE ? 1 : -1)]; if (!hit) return null;
+  return moves.find(m => m.from[0] * 8 + m.from[1] === hit[0] && m.to[0] * 8 + m.to[1] === hit[1]) || null;
+}
+
 // ---------- o'yin
 function playGame(id) {
   if (ST.games[id]) return;
@@ -132,7 +141,9 @@ function playGame(id) {
     G.busy = true; G.lastPlies = pos.plies;
     try {
       let mv = moves[0];
-      if (moves.length > 1) {
+      const am = moves.length > 1 ? antiMove(G.opp, pos.board, pos.side, moves) : null;
+      if (am) { mv = am; log('yurish (anti-kitob)', id, '#' + pos.plies, 'vs', G.opp); }
+      else if (moves.length > 1) {
         const my = (G.color === R.WHITE ? state.wtime : state.btime) || 180000, inc = (G.color === R.WHITE ? state.winc : state.binc) || 0;
         const exit = (G.outBook || 0) < 4 && my > 90000;   // kitobdan chiqqan dastlabki yurishlar — eng xavfli joy, ko'proq o'ylaymiz
         const secs = Math.max(0.3, Math.min(exit ? 30 : Number(process.env.LIDRAUGHTS_MAXSEC || 20), exit ? my / 1000 / 7 : my / 1000 / (my > 40000 ? 14 : 25) + inc / 1000 * 0.9));   // kitob tejagan vaqtni o'rta o'yinga sarflaymiz (taktik zarbalar shu yerda)
