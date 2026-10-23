@@ -24,14 +24,26 @@
       '#spBaza .rs{font-weight:800;font-size:14px;min-width:42px;text-align:center;padding:5px 6px;border-radius:9px;background:#262b5a}#spBaza .rs.w{background:#e8e8e8;color:#111}#spBaza .rs.b{background:#000;border:1px solid #555}#spBaza .rs.d{background:#4b4f7a}' +
       '#spBaza .more{width:100%;border:0;border-radius:14px;padding:13px;background:#262b5a;color:#fff;font-size:16px;margin-top:4px}' +
       '#spBaza .src{color:#6f77a8;font-size:12px;text-align:center;margin-top:16px}' +
-      '#spBaza .bd{width:min(94vw,440px);aspect-ratio:1;margin:0 auto;display:grid;grid-template-columns:repeat(8,1fr);border:4px solid #8a4a1c;border-radius:6px;overflow:hidden}' +
-      '#spBaza .bd>div{position:relative;display:flex;align-items:center;justify-content:center}#spBaza .bd .l{background:#f3bb86}#spBaza .bd .d{background:#7b2f13}#spBaza .bd .lm{box-shadow:inset 0 0 0 100px rgba(255,214,0,.35)}' +
-      '#spBaza .pc{width:80%;height:80%;border-radius:50%;border:2px solid #000;display:flex;align-items:center;justify-content:center;font-size:min(4vw,18px)}#spBaza .pc.w{background:radial-gradient(circle at 35% 28%,#fff,#bbb);border-color:#9a9a9a;color:#b8860b}#spBaza .pc.b{background:radial-gradient(circle at 35% 28%,#555,#000);color:#ffd34d}' +
-      '#spBaza .crd{font-size:10px;position:absolute;left:2px;bottom:1px;color:rgba(255,255,255,.4);font-weight:700}' +
+      '#bzBoard{--l:#f3bb86;--d:#7b2f13;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);width:min(94vw,440px);height:min(94vw,440px);margin:0 auto;border-radius:6px;overflow:hidden;box-shadow:0 6px 20px #0005;box-sizing:border-box}' +
+      '#bzBoard .sq{min-width:0;min-height:0;overflow:hidden}#bzBoard .crd{font:bold 10px sans-serif;position:absolute;left:3px;bottom:1px;opacity:.6;pointer-events:none}' +
+      '#bzBoard .pc.k::after{font-size:min(5vw,26px)}' +
       '#spBaza .pl{display:flex;align-items:center;gap:8px;max-width:440px;margin:8px auto;font-size:15px}#spBaza .pl i{width:14px;height:14px;border-radius:50%;display:inline-block;border:1px solid #888}#spBaza .pl span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}' +
       '#spBaza .nav{display:flex;gap:6px;justify-content:center;margin:12px 0}#spBaza .nav button{border:0;border-radius:12px;padding:11px 15px;background:#262b5a;color:#fff;font-size:18px}' +
       '#spBaza .ml{display:flex;flex-wrap:wrap;gap:4px;margin:10px auto;max-width:440px;font-family:ui-monospace,Menlo,monospace;font-size:14px}#spBaza .ml span{padding:5px 7px;border-radius:8px;background:#161a3a;cursor:pointer}#spBaza .ml span.on{background:#3b46b8}#spBaza .ml em{font-style:normal;color:#6f77a8;padding:5px 0 5px 4px}';
     document.head.appendChild(s);
+  }
+  // o'yindagi doska mavzusi va donalar uslubini (Sozlamalar) shu yerda ham ishlatamiz
+  var themeDone = false;
+  function themeCss() {
+    if (themeDone) return; var css = '';
+    try { for (var i = 0; i < document.styleSheets.length; i++) { var rl; try { rl = document.styleSheets[i].cssRules; } catch (e) { continue; } for (var j = 0; j < rl.length; j++) { var t = rl[j].cssText || ''; if (t.indexOf('#board[') === 0) css += t.replace(/#board\[/g, '#bzBoard[') + '\n'; } } } catch (e) {}
+    if (css) { themeDone = true; var el = document.createElement('style'); el.id = 'bzThemeCss'; el.textContent = css; document.head.appendChild(el); }
+  }
+  function skin() {
+    var th = 'edeon', ps = 'glossy', km = '\u265B', pz = '80';
+    try { if (typeof S === 'object' && S) { th = S.th || th; ps = S.ps || ps; km = S.km || km; pz = S.pz || pz; } } catch (e) {}
+    if (!/^(classic|green|blue|gray|walnut|purple|sand|ocean|rose|olive|photo|edeon)$/.test(th)) th = 'edeon';
+    return ' data-th="' + th + '" data-ps="' + esc(ps) + '" style="--km:\'' + esc(km) + '\';--pz:' + (+pz || 80) + '%"';
   }
   function close() { stopAuto(); if (ov) ov.remove(); ov = null; }
   function shell() { if (!ov) { ov = document.createElement('div'); ov.id = 'spBaza'; document.body.appendChild(ov); } return ov; }
@@ -108,10 +120,10 @@
     var top = flip ? [cur.w, '#eee'] : [cur.b, '#111'], bot = flip ? [cur.b, '#111'] : [cur.w, '#eee'];
     var h = '<div class="tp"><button data-x="1">‹</button><b>' + esc(cur.w) + ' – ' + esc(cur.b) + '</b></div>' +
       '<div class="sub">' + esc([cur.t, cur.s, cur.y].filter(Boolean).join(' · ')) + (cur.t || cur.s || cur.y ? ' · ' : '') + 'Natija: <b>' + esc(cur.r) + '</b></div>' +
-      '<div class="pl"><i style="background:' + top[1] + '"></i><span>' + esc(top[0]) + '</span></div><div class="bd">';
+      '<div class="pl"><i style="background:' + top[1] + '"></i><span>' + esc(top[0]) + '</span></div><div id="bzBoard"' + skin() + '>';
     for (var i = 0; i < 64; i++) {
       var r = flip ? 7 - (i >> 3) : i >> 3, c = flip ? 7 - (i & 7) : i & 7, dark = (r + c) % 2 === 1, p = b[r][c];
-      h += '<div class="' + (dark ? 'd' : 'l') + (lm[r * 8 + c] ? ' lm' : '') + '">' + (p ? '<div class="pc ' + (p === 1 || p === 3 ? 'w' : 'b') + '">' + (p > 2 ? '♛' : '') + '</div>' : '') +
+      h += '<div class="sq ' + (dark ? 'd' : 'l') + (lm[r * 8 + c] ? ' lm' : '') + '">' + (p ? '<i class="pc ' + (p === 1 || p === 3 ? 'w' : 'b') + (p > 2 ? ' k' : '') + '"></i>' : '') +
         ((flip ? r === 0 : r === 7) ? '<span class="crd">' + String.fromCharCode(97 + c) + '</span>' : '') + '</div>';
     }
     h += '</div><div class="pl"><i style="background:' + bot[1] + '"></i><span>' + esc(bot[0]) + '</span></div>' +
@@ -135,5 +147,5 @@
     var on = ov.querySelector('.ml span.on'); if (on && on.scrollIntoView && auto) { try { on.scrollIntoView({ block: 'nearest' }); } catch (e) {} }
   }
 
-  window.spBaza = function () { css(); q = ''; res = ''; load(true); };
+  window.spBaza = function () { css(); themeCss(); q = ''; res = ''; load(true); };
 })();

@@ -219,7 +219,7 @@
           return;
         }
         if (k === 'baza') {
-          if (window.spBaza) window.spBaza(); else { var sb = document.createElement('script'); sb.src = '/baza.js?v=1'; sb.onload = function () { window.spBaza(); }; document.head.appendChild(sb); }
+          if (window.spBaza) window.spBaza(); else { var sb = document.createElement('script'); sb.src = '/baza.js?v=2'; sb.onload = function () { window.spBaza(); }; document.head.appendChild(sb); }
           return;
         }
         if (k === 'trap') {
