@@ -1094,6 +1094,16 @@
         return best;
       } catch (e) { return null; }
     }
+    // kuchli bot dvigatelni kutayotganini ko'rsatadigan yozuv
+    function botWait(on) {
+      var el = document.getElementById("spBotWait");
+      if (!on) { if (el) el.remove(); return; }
+      if (el) return;
+      el = document.createElement("div"); el.id = "spBotWait";
+      el.style.cssText = "position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:99999;background:#2a1f5c;color:#fff;padding:10px 16px;border-radius:14px;font:600 15px system-ui,sans-serif;box-shadow:0 4px 18px rgba(0,0,0,.4);max-width:90vw;text-align:center";
+      el.textContent = "⏳ Bot chuqur o‘ylayapti… (server yangilangan bo‘lsa, dvigatel 1–2 daqiqada tayyor bo‘ladi)";
+      document.body.appendChild(el);
+    }
     function botThink(cb) {
       var side = st.botColor, legal = allMoves(st.board, codeOf(side));
       if (!legal.length) return cb(null);
@@ -1122,8 +1132,12 @@
         setTimeout(function () { cb(steps); }, Math.max(0, 450 - (Date.now() - t0)));
       }
       var ctl = window.AbortController ? new AbortController() : null;
-      var deadline = t0 + (secs * 3 + 25) * 1000;   // dvigatel band bo'lsa navbat kutiladi
-      var to = setTimeout(function () { try { if (ctl) ctl.abort(); } catch (e) {} finishWith(null, "🤖 zaxira yurish (AI kechikdi)"); }, deadline - t0);
+      // kuchli botlar (Sulton, Legend, Monster) zaif zaxira "miya"ga hech qachon o'tmaydi — dvigatel javob berguncha kutadi
+      var strong = st.botSecs >= 2;
+      var deadline = strong ? Infinity : t0 + (secs * 3 + 25) * 1000;   // dvigatel band bo'lsa navbat kutiladi
+      var to = strong ? null : setTimeout(function () { try { if (ctl) ctl.abort(); } catch (e) {} finishWith(null, "🤖 zaxira yurish (AI kechikdi)"); }, deadline - t0);
+      var waitT = strong ? setTimeout(function () { if (!done) botWait(true); }, Math.max(4000, secs * 1000 + 3000)) : null;
+      var _fw = finishWith; finishWith = function (mv, note) { clearTimeout(waitT); botWait(false); _fw(mv, note); };
       function ask() {
         if (done) return;
         try {
@@ -1137,13 +1151,14 @@
             return r.ok ? r.json() : null;
           }).then(function (j) {
             if (done) return;
-            if (j && j.retry && Date.now() + 1500 < deadline) return setTimeout(ask, 900);   // band — biroz kutib qayta so'raymiz
+            if (j && j.retry && Date.now() + 1500 < deadline) return setTimeout(ask, strong ? 2000 : 900);   // band yoki hali tayyor emas — kutib qayta so'raymiz
+            if (strong && !(j && typeof j.from === "number")) return setTimeout(ask, 3000);   // xato javob — kuchli bot zaxiraga o'tmaydi, qayta so'raydi
             clearTimeout(to);
             var mv = null;
             if (j && typeof j.from === "number" && typeof j.to === "number") mv = pickLegal(legal, j, false) || pickLegal(legal, j, true);
             finishWith(mv, mv ? "🤖 KestoG" + (j.book ? " · kitob" : j.cached ? " · xotiradan ⚡" : j.deep ? " · saboq 🧠 " + j.ms + " ms" : j.ms ? " · " + j.ms + " ms" : "") : "🤖 zaxira yurish (AI javobi mos kelmadi)");
-          }).catch(function () { if (done) return; if (Date.now() + 2500 < deadline) return setTimeout(ask, 1200); clearTimeout(to); finishWith(null, "🤖 zaxira yurish (AI ishlamadi)"); });
-        } catch (e) { clearTimeout(to); finishWith(null, "🤖 zaxira yurish (AI ishlamadi)"); }
+          }).catch(function () { if (done) return; if (Date.now() + 2500 < deadline) return setTimeout(ask, strong ? 3000 : 1200); clearTimeout(to); finishWith(null, "🤖 zaxira yurish (AI ishlamadi)"); });
+        } catch (e) { if (strong) return setTimeout(ask, 3000); clearTimeout(to); finishWith(null, "🤖 zaxira yurish (AI ishlamadi)"); }
       }
       ask();
     }
