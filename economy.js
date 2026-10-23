@@ -283,6 +283,7 @@ function handle(req, res, url) {
       return true;
     }
   }
+  if (p.startsWith('/api/baza/') && req.method === 'GET') { if (require('./bazaserver.js').handle(req, res, url, send)) return true; }
   if (p === '/api/lidraughts/status' && req.method === 'GET') { send(res, 200, require('./lidraughts.js').status()); return true; }
   if (p === '/api/ai/move' && req.method === 'POST') {
     const _tk = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
