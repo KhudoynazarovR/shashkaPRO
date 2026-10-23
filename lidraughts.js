@@ -134,9 +134,11 @@ function playGame(id) {
       let mv = moves[0];
       if (moves.length > 1) {
         const my = (G.color === R.WHITE ? state.wtime : state.btime) || 180000, inc = (G.color === R.WHITE ? state.winc : state.binc) || 0;
-        const secs = Math.max(0.3, Math.min(Number(process.env.LIDRAUGHTS_MAXSEC || 20), my / 1000 / (my > 40000 ? 14 : 25) + inc / 1000 * 0.9));   // kitob tejagan vaqtni o'rta o'yinga sarflaymiz (taktik zarbalar shu yerda)
+        const exit = (G.outBook || 0) < 4 && my > 90000;   // kitobdan chiqqan dastlabki yurishlar — eng xavfli joy, ko'proq o'ylaymiz
+        const secs = Math.max(0.3, Math.min(exit ? 30 : Number(process.env.LIDRAUGHTS_MAXSEC || 20), exit ? my / 1000 / 7 : my / 1000 / (my > 40000 ? 14 : 25) + inc / 1000 * 0.9));   // kitob tejagan vaqtni o'rta o'yinga sarflaymiz (taktik zarbalar shu yerda)
         const t0 = Date.now();
         const r = await engine(pos.board, pos.side, secs, 'ld_' + id, Math.max(0.5, my / 1000 / 12), Math.max(1500, Math.min(32000, my * 0.25)));
+        if (r && !r.book && !r.cached) G.outBook = (G.outBook || 0) + 1;
         log('yurish hisoblandi', id, '#' + pos.plies, ((Date.now() - t0) / 1000).toFixed(1) + 's', '| soat:', Math.round(my / 1000) + 's', r ? (r.cached ? '(xotira)' : r.book ? '(kitob)' : r.deep ? '(saboq)' : '') : '(dvigatel javob bermadi)');
         if (!r) mv = safeMove(pos.board, pos.side, moves);   // dvigatel javob bermasa — hech bo'lmasa dona bermaydigan yurish
         if (r) {

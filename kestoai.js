@@ -101,7 +101,7 @@ function move(j, cb) {
   if (!ready) return cb({ error: "notready", code: 503 });
   const b = j && j.board, side = (j && j.side > 0) ? 1 : -1;
   if (!Array.isArray(b) || b.length !== 64 || !b.every(v => Number.isInteger(v) && v >= -2 && v <= 2)) return cb({ error: "bad", code: 400 });
-  let secs = Math.min(20, Math.max(0.05, Number(j.time) || 1));
+  let secs = Math.min(30, Math.max(0.05, Number(j.time) || 1));
   const bk = BOOK[b.join("") + side];
   if (bk && j.book) return cb({ from: bk.from, to: bk.to, jumps: 0, ev: null, ms: 0, book: 1 });
   const key = b.join(",") + "|" + side;
