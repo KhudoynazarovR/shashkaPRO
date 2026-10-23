@@ -94,6 +94,7 @@ function createRooms({ send, clients, onFinish }) {
       color: color || "spectator",
       white: room.white ? room.white.name : null,
       wInfo: _pi(room.white), bInfo: _pi(room.black),
+      h2h: h2hOf(room),
       black: room.black ? room.black.name : null,
       whiteOnline: isOnline(room.white),
       blackOnline: isOnline(room.black),
@@ -182,7 +183,7 @@ function createRooms({ send, clients, onFinish }) {
   }
 
   
-  const BOT_COINS = { bot_easy: 1, bot_mid: 2, bot: 3, bot_pro: 5, bot_gm: 8, bot_champ: 12, bot_monster: 25 };
+  const BOT_COINS = { bot_easy: 1, bot_mid: 2, bot: 3, bot_pro: 5, bot_gm: 8, bot_champ: 12, bot_monster: 25, bot_terminator: 40 };
   const BOT_DAILY = 20, BOT_MIN_PLIES = 8;
   function botReward(room, winner) {
     if (!room.vsBot || !winner || (room.moves || []).length < BOT_MIN_PLIES) return;
@@ -201,6 +202,29 @@ function createRooms({ send, clients, onFinish }) {
     eco.add(human, coins, 'bot_win');
     broadcast(room, { type: 'botCoins', roomId: room.id, n: coins });
   }
+  // 🤝 o'zaro natija (odam-odam va odam-bot): har bir foydalanuvchida raqib bo'yicha saqlanadi
+  function h2hRecord(room, winner) {
+    if ((room.moves || []).length < 2 || room.reason === 'noshow') return;
+    const wu = room.white && room.white.uid, bu = room.black && room.black.uid; if (!wu || !bu || wu === bu) return;
+    const us = require('./store').users();
+    [[wu, bu, 'white'], [bu, wu, 'black']].forEach(([me, op, col]) => {
+      const u = us[String(me)]; if (!u) return;
+      const h = u.h2h || (u.h2h = {}), e = h[String(op)] || (h[String(op)] = { w: 0, d: 0, l: 0, last: '' });
+      const r = !winner || winner === 'draw' ? 'd' : winner === col ? 'w' : 'l';
+      e[r]++; e.last = (e.last + r).slice(-20); e.at = Date.now();
+    });
+  }
+  function h2hOf(room) {
+    try {
+      const wu = room.white && room.white.uid, bu = room.black && room.black.uid; if (!wu || !bu) return null;
+      const us = require('./store').users(); let e = null, inv = false;
+      if (us[String(wu)] && us[String(wu)].h2h) e = us[String(wu)].h2h[String(bu)];
+      if (!e && us[String(bu)] && us[String(bu)].h2h) { e = us[String(bu)].h2h[String(wu)]; inv = true; }
+      if (!e || !(e.w + e.d + e.l)) return null;
+      const W = inv ? e.l : e.w, L = inv ? e.w : e.l;
+      return { white: W + e.d / 2, black: L + e.d / 2, n: e.w + e.d + e.l, last: e.last.split('').map(c => c === 'd' ? 'd' : (c === 'w') !== inv ? 'w' : 'b') };
+    } catch (e) { return null; }
+  }
   function finish(room, winner, reason) {
     if (room.finished) return;
     room.clock = currentClock(room); // soatni to'xtatamiz
@@ -209,6 +233,7 @@ function createRooms({ send, clients, onFinish }) {
     room.winner = winner;
     room.reason = reason || null;
     try { botReward(room, winner); } catch (e) { console.log('botReward:', e.message); }
+    try { h2hRecord(room, winner); } catch (e) { console.log('h2h:', e.message); }
     try { // bot yutqazsa — o'sha o'yindan saboq oladi (keyingi safar shu pozitsiyalarda chuqurroq o'ylaydi)
       const bc = botColorOf(room);
       if (room.vsBot && bc && winner && winner !== 'draw' && winner !== bc) require('./kestoai.js').learn(room.id);

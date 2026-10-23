@@ -575,7 +575,7 @@
         }
       }
       if (!spec && st.finished && st.winner === st.color && window.spShareCard) btn("📸 G‘alabani ulashish", function () { var opp = st.color === "white" ? st.black : st.white; window.spShareCard({ theme: "win", title: "G‘ALABA!", big: "🏆", sub: "Raqib: " + (st.vsBot ? "🤖 " : "") + (opp || ""), sub2: (st.tc ? "⏱ " + st.tc : "") + (st.reason === "timeout" ? " · vaqt bo‘yicha" : ""), cap: "🏆 ShashkaPRO’da " + (opp || "raqib") + "ni yutdim!" }); });
-      if (!spec && st.finished && st.vsBot && !st.opening && /Monster/i.test(String(st[st.botColor] || ""))) {
+      if (!spec && st.finished && st.vsBot && !st.opening && /Monster|Terminator/i.test(String(st[st.botColor] || ""))) {
         var openRv = function () {
           var g0 = { moves: st.moves, me: st.color, white: nameLine("white"), black: nameLine("black"), winner: st.winner };
           var go = function () { window.spReview(g0); };
@@ -774,12 +774,32 @@
       elBoard.style.setProperty("--pz", pz + "%");
     }
 
+    // 🤝 o'zaro natija (lidraughts uslubida): oxirgi 10 o'yin va umumiy hisob
+    function drawH2H(topColor, bottomColor) {
+      var el = document.getElementById("rcH2H"), h = st.h2h;
+      if (!h || !h.n) { if (el) el.style.display = "none"; return; }
+      if (!el) {
+        el = document.createElement("div"); el.id = "rcH2H";
+        el.style.cssText = "max-width:560px;margin:6px auto;background:#161a3a;border:1px solid #262b5a;border-radius:12px;padding:6px 10px;font:600 14px system-ui,sans-serif;color:#fff;box-sizing:border-box";
+        elBottom.parentNode.insertBefore(el, elBottom.nextSibling);
+      }
+      el.style.display = "";
+      var last = (h.last || []).slice(-10), fmt = function (x) { var i = Math.floor(x), f = x - i > 0.01; return (i || !f ? String(i) : "") + (f ? "½" : ""); };
+      function row(color) {
+        var nm = st[color] || (color === "white" ? "Oq" : "Qora");
+        var cells = last.map(function (r) { var v = r === "d" ? "½" : (r === (color === "white" ? "w" : "b") ? "1" : "0"); return '<span style="width:20px;text-align:center;color:' + (v === "1" ? "#7ee081" : v === "0" ? "#ff8a8a" : "#cfd5ff") + '">' + v + "</span>"; }).join("");
+        return '<div style="display:flex;align-items:center;gap:2px;padding:3px 0"><span style="display:flex;gap:2px;flex:1;min-width:0;overflow:hidden">' + cells + '</span>' +
+          '<b style="min-width:42px;text-align:center;background:#262b5a;border-radius:6px;padding:2px 4px;margin:0 6px">' + fmt(h[color]) + '</b><span style="max-width:40%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.85">' + String(nm).replace(/[<>&]/g, "") + "</span></div>";
+      }
+      el.innerHTML = '<div style="font-size:11px;opacity:.6;margin-bottom:2px">🤝 O‘zaro natija · ' + h.n + ' o‘yin</div>' + row(topColor) + '<div style="height:1px;background:#262b5a"></div>' + row(bottomColor);
+    }
     function render() {
       var fl = flipped();
       var topColor = fl ? "white" : "black";
       var bottomColor = fl ? "black" : "white";
       fillLine(elTop, topColor);
       fillLine(elBottom, bottomColor);
+      try { drawH2H(topColor, bottomColor); } catch (e) {}
       updateClocks();
 
       if (st.pre && !st.pre.to && st.turn === st.color && !st.pending) { if (!st.forced) { st.selected = st.pre.from; if (!options().length) st.selected = null; } st.pre = null; }
@@ -1220,7 +1240,7 @@
         st.spectators = m.spectators || 0;
         st.specNames = m.spectatorNames || [];
         st.gamesTotal = m.gamesTotal || 1; st.played = m.played || 0; st.seriesScore = m.seriesScore || null;
-        st.seriesDone = !!m.seriesDone; st.nextIn = !!m.nextIn; st.rematch = m.rematch || null; st.casual = !!m.casual; st.voice = !!m.voice; st.voiceSaid = m.voiceSaid || null; st.vsBot = !!m.vsBot; try { var _bk = "spBotRoom:" + roomId; if (st.vsBot) localStorage.setItem(_bk, "1"); else if (localStorage.getItem(_bk) === "1") { localStorage.removeItem(_bk); alert("Server qayta ishga tushdi, bot bilan o‘yin uzildi. Zalga qaytasiz."); location.href = location.pathname; return; } } catch (e) {} try { renderChat(); } catch (e) {} st.botStarted = !!m.botStarted; st.botColor = m.botColor || null; st.botSecs = Number(m.botSecs) > 0 ? Number(m.botSecs) : 1.2; st.botBlunder = Number(m.botBlunder) || 0;
+        st.seriesDone = !!m.seriesDone; st.nextIn = !!m.nextIn; st.rematch = m.rematch || null; st.casual = !!m.casual; st.voice = !!m.voice; st.voiceSaid = m.voiceSaid || null; st.vsBot = !!m.vsBot; st.h2h = m.h2h || null; try { var _bk = "spBotRoom:" + roomId; if (st.vsBot) localStorage.setItem(_bk, "1"); else if (localStorage.getItem(_bk) === "1") { localStorage.removeItem(_bk); alert("Server qayta ishga tushdi, bot bilan o‘yin uzildi. Zalga qaytasiz."); location.href = location.pathname; return; } } catch (e) {} try { renderChat(); } catch (e) {} st.botStarted = !!m.botStarted; st.botColor = m.botColor || null; st.botSecs = Number(m.botSecs) > 0 ? Number(m.botSecs) : 1.2; st.botBlunder = Number(m.botBlunder) || 0;
         var openNew = (m.opening ? m.opening.id : null) !== (st.opening ? st.opening.id : null);
         st.opening = m.opening || null;
         var same = !openNew && st.moves.length === (m.moves || []).length && st.turn === m.turn;

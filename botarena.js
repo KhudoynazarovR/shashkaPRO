@@ -23,6 +23,7 @@ function D() {
   if (!d.botElo) d.botElo = {};
   if (!d.botEloInit2) { d.botEloInit2 = true; const E0 = { bot_easy: 1200, bot_mid: 1300, bot: 1500, bot_pro: 1700, bot_gm: 1800, bot_champ: 2000 }; for (const u in E0) { const o = d.botElo[u] || (d.botElo[u] = { w: 0, l: 0, dr: 0 }); o.elo = E0[u]; } dirty = true; }
   if (!d.botElo.bot_monster) { d.botElo.bot_monster = { elo: 2300, w: 0, l: 0, dr: 0 }; dirty = true; }
+  if (!d.botElo.bot_terminator) { d.botElo.bot_terminator = { elo: 2500, w: 0, l: 0, dr: 0 }; dirty = true; }
   if (!d.botMem) d.botMem = {};
   if (!Array.isArray(d.arenaLog)) d.arenaLog = [];
   return d;
