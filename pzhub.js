@@ -180,7 +180,7 @@
   window.pzHub = function (ctx) {
     css();
     var ov = ctx.ov, coin = coinText(ctx), h = '';
-    h += '<div class="pzh"><div class="pzhTop"><span style="display:flex;gap:8px"><button id="pzBack" class="pzhBack" aria-label="Orqaga">‹</button><button id="pzhMu" class="pzhMu" aria-label="Musiqa">' + (muted() ? '🔇' : '🎵') + '</button></span>' +
+    h += '<div class="pzh"><div class="pzhTop"><span style="display:flex;gap:8px"><button id="pzBack" class="pzhBack" aria-label="Orqaga">‹</button><button id="pzhMu" class="pzhMu" aria-label="Musiqa">' + (muted() ? '🔇' : '🎵') + '</button><button id="pzhSk" class="pzhMu" aria-label="Doska va toshlar">🎨</button></span>' +
       (coin != null ? '<div class="pzhCoin"><span>🪙</span><span>' + coin + '</span></div>' : '<span></span>') + '</div>';
     h += '<div class="pzhPlaque"><span class="cr">👑</span><b>Masalalar</b><i>Aqlingni sinab ko‘r!</i></div>';
     h += '<img class="pzhBan" alt="" src="' + IMG.banner + '">';
@@ -196,6 +196,9 @@
     h += '</div><div class="pzhFoot">Har bir masala — yangi g‘alaba!</div></div>';
     ov.innerHTML = h;
     var b = ov.querySelector('#pzBack'); if (b) b.onclick = ctx.back;
+    var skLoad = function (cb) { if (window.spSkin) return cb && cb(); var ss = document.createElement('script'); ss.src = '/skin.js?v=1'; ss.onload = function () { if (cb) cb(); }; document.head.appendChild(ss); };
+    skLoad();
+    var skb = ov.querySelector('#pzhSk'); if (skb) skb.onclick = function () { skLoad(function () { window.spSkin.open(); }); };
     var mb = ov.querySelector('#pzhMu');
     if (mb) {
       if (muted()) mb.className = 'pzhMu off';
@@ -219,7 +222,7 @@
           return;
         }
         if (k === 'baza') {
-          if (window.spBaza) window.spBaza(); else { var sb = document.createElement('script'); sb.src = '/baza.js?v=2'; sb.onload = function () { window.spBaza(); }; document.head.appendChild(sb); }
+          if (window.spBaza) window.spBaza(); else { var sb = document.createElement('script'); sb.src = '/baza.js?v=3'; sb.onload = function () { window.spBaza(); }; document.head.appendChild(sb); }
           return;
         }
         if (k === 'trap') {

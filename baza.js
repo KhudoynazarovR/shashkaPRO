@@ -45,6 +45,8 @@
     if (!/^(classic|green|blue|gray|walnut|purple|sand|ocean|rose|olive|photo|edeon)$/.test(th)) th = 'edeon';
     return ' data-th="' + th + '" data-ps="' + esc(ps) + '" style="--km:\'' + esc(km) + '\';--pz:' + (+pz || 80) + '%"';
   }
+  function skinLoad(cb) { if (window.spSkin) return cb && cb(); var sc = document.createElement('script'); sc.src = '/skin.js?v=1'; sc.onload = function () { if (cb) cb(); }; document.head.appendChild(sc); }
+  function skinOpen(after) { skinLoad(function () { window.spSkin.open(after); }); }
   function close() { stopAuto(); if (ov) ov.remove(); ov = null; }
   function shell() { if (!ov) { ov = document.createElement('div'); ov.id = 'spBaza'; document.body.appendChild(ov); } return ov; }
 
@@ -52,7 +54,7 @@
   function rsCls(r) { return r === '1-0' ? 'w' : r === '0-1' ? 'b' : r === '½-½' ? 'd' : ''; }
   function list() {
     stopAuto(); cur = null; shell();
-    var h = '<div class="tp"><button data-x="1">‹</button><b>📚 Partiyalar bazasi</b></div>' +
+    var h = '<div class="tp"><button data-x="1">‹</button><b>📚 Partiyalar bazasi</b><button data-sk="1" aria-label="Doska">🎨</button></div>' +
       '<div class="sub">Chempionat va turnirlardagi ' + fmt(all || 109409) + ' ta usta partiyasi</div>' +
       '<input class="sr" placeholder="O‘yinchi, turnir, shahar yoki yil…" value="' + esc(q) + '">' +
       '<div class="ch">' + [['', 'Hammasi'], ['1', '⚪ Oq yutgan'], ['2', '½ Durang'], ['3', '⚫ Qora yutgan']].map(function (x) { return '<button data-r="' + x[0] + '"' + (res === x[0] ? ' class="on"' : '') + '>' + x[1] + '</button>'; }).join('') + '</div>' +
@@ -65,6 +67,7 @@
       '<div class="src">Manba: Aurora Borealis dasturining rus shashkasi bazasi (A. Svirin)</div>';
     ov.innerHTML = h;
     ov.querySelector('[data-x]').onclick = close;
+    ov.querySelector('[data-sk]').onclick = function () { skinOpen(); };
     var inp = ov.querySelector('.sr');
     inp.oninput = function () { clearTimeout(qT); qT = setTimeout(function () { q = inp.value.trim(); load(true); }, 450); };
     Array.prototype.forEach.call(ov.querySelectorAll('[data-r]'), function (b) { b.onclick = function () { res = b.getAttribute('data-r'); load(true); }; });
@@ -118,7 +121,7 @@
     var b = ply ? steps[ply - 1].b : init(), last = ply ? steps[ply - 1].sq : [], lm = {};
     last.forEach(function (p) { lm[p[0] * 8 + p[1]] = 1; });
     var top = flip ? [cur.w, '#eee'] : [cur.b, '#111'], bot = flip ? [cur.b, '#111'] : [cur.w, '#eee'];
-    var h = '<div class="tp"><button data-x="1">‹</button><b>' + esc(cur.w) + ' – ' + esc(cur.b) + '</b></div>' +
+    var h = '<div class="tp"><button data-x="1">‹</button><b>' + esc(cur.w) + ' – ' + esc(cur.b) + '</b><button data-sk="1" aria-label="Doska">🎨</button></div>' +
       '<div class="sub">' + esc([cur.t, cur.s, cur.y].filter(Boolean).join(' · ')) + (cur.t || cur.s || cur.y ? ' · ' : '') + 'Natija: <b>' + esc(cur.r) + '</b></div>' +
       '<div class="pl"><i style="background:' + top[1] + '"></i><span>' + esc(top[0]) + '</span></div><div id="bzBoard"' + skin() + '>';
     for (var i = 0; i < 64; i++) {
@@ -135,6 +138,7 @@
     h += '</div>';
     ov.innerHTML = h;
     ov.querySelector('[data-x]').onclick = back;
+    ov.querySelector('[data-sk]').onclick = function () { skinOpen(draw); };
     Array.prototype.forEach.call(ov.querySelectorAll('[data-n]'), function (e) {
       e.onclick = function () {
         var a = e.getAttribute('data-n'); hap();
@@ -147,5 +151,5 @@
     var on = ov.querySelector('.ml span.on'); if (on && on.scrollIntoView && auto) { try { on.scrollIntoView({ block: 'nearest' }); } catch (e) {} }
   }
 
-  window.spBaza = function () { css(); themeCss(); q = ''; res = ''; load(true); };
+  window.spBaza = function () { css(); themeCss(); skinLoad(); q = ''; res = ''; load(true); };
 })();
