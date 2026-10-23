@@ -121,6 +121,52 @@ function safeMove(board, side, moves) {
 // ma'lum botlarga qarshi maxsus kitob: ularning o'yinlaridan yutuq/durang bilan tugagan yo'llar (bot bir xil pozitsiyada odatda bir xil yuradi)
 const ANTI = {};
 try { ANTI.colettebot = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'partiyalar', 'anti_colette.json'), 'utf8')); log('anti-kitob coletteBOT:', Object.keys(ANTI.colettebot).length); } catch (e) {}
+// istalgan bot uchun avtomatik: uning lidraughts'dagi o'yinlarini yuklab, raqiblari durang/yutuq qilgan yo'llardan kitob tuzamiz
+function fetchText(path, ms) {
+  return new Promise(res => {
+    const r = https.get({ host: HOST, path, headers: { Authorization: 'Bearer ' + TOKEN, 'User-Agent': 'ShashkaPRO-Monster/1.0', Accept: 'application/x-chess-pgn' } }, rs => {
+      if (rs.statusCode !== 200) { rs.resume(); return res(null); }
+      let t = ''; rs.setEncoding('utf8'); rs.on('data', d => { t += d; if (t.length > 30e6) r.destroy(); }); rs.on('end', () => res(t)); rs.on('error', () => res(t || null));
+    });
+    r.on('error', () => res(null)); r.setTimeout(ms || 180000, () => r.destroy(new Error('timeout')));
+  });
+}
+const sqA = s => [8 - +s[1], s.charCodeAt(0) - 97];
+function buildAnti(pdn, botName) {
+  const me = String(botName).toLowerCase(), st = {};
+  for (const g of String(pdn).split(/\n(?=\[Event )/)) {
+    if (!/\[GameType "25"\]/.test(g)) continue;
+    const fen = (g.match(/\[FEN "([^"]*)"\]/) || [])[1];
+    if (fen && !/^W:Wa3,c3,e3,g3,b2,d2,f2,h2,a1,c1,e1,g1:Bb8,d8,f8,h8,a7,c7,e7,g7,b6,d6,f6,h6/.test(fen)) continue;
+    const w = String((g.match(/\[White "([^"]*)"\]/) || [])[1] || '').toLowerCase(), res = (g.match(/\[Result "([^"]*)"\]/) || [])[1];
+    if (!res || res === '*') continue;
+    const botWhite = w === me, good = res === '1-1' || ((res === '2-0') !== botWhite);   // raqib durang qildi yoki yutdi
+    const mv = g.split(/\n\n/).slice(1).join(' ').match(/[a-h][1-8](?:[-x][a-h][1-8])+/g) || [];
+    let b = R.startPosition(), side = R.WHITE;
+    for (const m of mv) {
+      const ps = m.split(/[-x]/).map(sqA), f = ps[0], t = ps[ps.length - 1];
+      const lm = R.getAllMoves(b, side).find(x => x.from[0] === f[0] && x.from[1] === f[1] && x.to[0] === t[0] && x.to[1] === t[1]);
+      if (!lm) break;
+      if ((side === R.WHITE) !== botWhite) {   // raqib yurishi
+        const k = to64(b).join('') + (side === R.WHITE ? 1 : -1), mk = (lm.from[0] * 8 + lm.from[1]) + '-' + (lm.to[0] * 8 + lm.to[1]);
+        const e = st[k] || (st[k] = {}), v = e[mk] || (e[mk] = [0, 0]); v[good ? 0 : 1]++;
+      }
+      b = R.applyMove(b, lm); side = side === R.WHITE ? R.BLACK : R.WHITE;
+    }
+  }
+  const book = {};
+  for (const k in st) { let best = null; for (const m in st[k]) { const [gd, ls] = st[k][m]; if (gd && (!best || gd > best.gd || (gd === best.gd && ls < best.ls))) best = { m, gd, ls }; } if (best) book[k] = best.m.split('-').map(Number); }
+  return book;
+}
+const LEARNED = {};
+async function learnBot(name) {
+  const key = String(name || '').toLowerCase(); if (!key || LEARNED[key] && Date.now() - LEARNED[key] < 12 * 3600e3) return;
+  LEARNED[key] = Date.now();
+  const pdn = await fetchText('/api/games/user/' + encodeURIComponent(name) + '?max=2000');
+  if (!pdn) { log('anti-kitob: o‘yinlar yuklanmadi', name); return; }
+  const book = buildAnti(pdn, name), n = Object.keys(book).length;
+  if (n) { ANTI[key] = Object.assign({}, ANTI[key] || {}, book); log('anti-kitob yangilandi:', name, n, 'pozitsiya'); }
+}
 function antiMove(opp, board, side, moves) {
   const A = ANTI[String(opp || '').toLowerCase()]; if (!A) return null;
   const hit = A[to64(board).join('') + (side === R.WHITE ? 1 : -1)]; if (!hit) return null;
@@ -185,6 +231,7 @@ function playGame(id) {
       log('fen:', String(G.fen).slice(0, 120), '| variant:', o.variant && (o.variant.key || o.variant.name));
       G.opp = (G.color === R.WHITE ? o.black : o.white) || {}; G.opp = G.opp.name || G.opp.id || '?';
       log('o‘yin boshlandi', id, G.color, 'vs', G.opp);
+      const ob = G.color === R.WHITE ? o.black : o.white; if (ob && /BOT/i.test(ob.title || '')) learnBot(G.opp);
       if (!greeted) { greeted = true; post('/api/bot/game/' + id + '/chat', { room: 'player', text: '👹 ShashkaPRO Monster — omad! Rus shashkasi: t.me/DraughtsPRObot' }); }
       if (o.state) { if (o.state.status && o.state.status !== 'started' && o.state.status !== 'created') onEnd(o.state); else think(o.state); }
     } else if (o.type === 'gameState') {
@@ -244,7 +291,8 @@ async function start() {
   ST.me = String(a.j.id || a.j.username || '').toLowerCase();
   log('ulandi:', a.j.username, a.j.title ? '(' + a.j.title + ')' : '');
   events();
-  resume(); setInterval(resume, 60000).unref();   // server qayta yonganda davom etayotgan o'yinlarga qaytamiz
+  resume(); setInterval(resume, 60000).unref();
+  (async () => { const tg = String(process.env.LIDRAUGHTS_TARGETS || 'RipeCherry,Adder,coletteBOT').split(',').map(x => x.trim()).filter(Boolean); for (const t of tg) { await learnBot(t); await sleep(3000); } })();   // server qayta yonganda davom etayotgan o'yinlarga qaytamiz
   autoChallenge();
   // Render bepul tarifida server uxlab qolmasligi uchun (bot onlayn tursin)
   const base = process.env.RENDER_EXTERNAL_URL || process.env.PUBLIC_URL || '';
