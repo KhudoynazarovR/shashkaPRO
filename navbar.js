@@ -400,7 +400,7 @@
     if (BM.indexOf(cfg.m) < 0) cfg.m = 3; if (BI.indexOf(cfg.i) < 0) cfg.i = 2;
     try { var tw = window.Telegram && window.Telegram.WebApp; if (tw && tw.disableVerticalSwipes) tw.disableVerticalSwipes(); } catch (e) {}
     var ov = document.createElement('div');
-    ov.style.cssText = 'position:fixed;inset:0;z-index:2147482000;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:2147482000;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;overscroll-behavior:none;-webkit-tap-highlight-color:transparent';
     ov.innerHTML = '<style>#spBS *{-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}' +
       '#spBS .tg{display:flex;border-radius:12px;overflow:hidden;margin:6px 0 4px}#spBS .tg b{flex:1;text-align:center;padding:11px 4px;background:#26344f;cursor:pointer;font-weight:600}#spBS .tg b.on{background:#5a9a2e;color:#fff}' +
       '#spBS .sl{display:flex;align-items:center;gap:10px;margin-top:4px}#spBS .pm{width:40px;height:40px;flex:none;border-radius:50%;background:#26344f;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;cursor:pointer}' +
@@ -408,7 +408,7 @@
       '#spBS .tr s{position:absolute;top:8px;width:24px;height:24px;margin-left:-12px;border-radius:50%;background:#7bd36b;box-shadow:0 2px 6px #0008}' +
       '#spBS .lb{font-size:15px;margin-top:12px;opacity:.9}#spBS .lb b{color:#ffd86b;font-size:17px}' +
       '#spBS .go{display:block;width:100%;margin-top:16px;padding:15px;border:0;border-radius:14px;background:linear-gradient(90deg,#2e9d3a,#5cb85c);color:#fff;font-size:21px;font-weight:800;letter-spacing:1px;box-shadow:0 4px 14px #0007;cursor:pointer}</style>' +
-      '<div id="spBS" style="width:100%;max-width:420px;background:#101a2e;color:#fff;border-radius:18px;padding:18px;box-sizing:border-box;font:16px system-ui,sans-serif;max-height:92vh;overflow:auto">' +
+      '<div id="spBS" style="width:100%;max-width:420px;background:#101a2e;color:#fff;border-radius:18px;padding:18px;box-sizing:border-box;font:16px system-ui,sans-serif;max-height:92vh;overflow-x:hidden;overflow-y:auto;overscroll-behavior:none;touch-action:pan-y">' +
       '<div style="display:flex;align-items:center"><b style="flex:1;font-size:19px">⚔️ Bot bilan o‘ynash</b><span data-x style="font-size:24px;padding:2px 8px;cursor:pointer">✕</span></div>' +
       '<div style="text-align:center;margin:8px 0 4px;font-weight:700;color:#c98bff">' + b.name.replace(/[<>]/g, '') + '</div>' +
       '<div class="lb">⏱ Vaqt nazorati</div><div class="tg" data-g="t"><b data-v="inf">∞ Vaqtsiz</b><b data-v="clk">⏱ Vaqtli</b></div>' +
