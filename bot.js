@@ -88,6 +88,36 @@ async function onMessage(msg) {
       await api("sendMessage", { chat_id: msg.chat.id, text: fid ? "✅ Banner saqlandi. /start yozib ko‘ring.\n\nDoimiy bo‘lishi uchun Render → Environment ga BANNER_FILE_ID qiymatini qo‘ying:\n" + fid : "⚠️ Banner saqlanmadi. Fayl MP4 yoki GIF bo‘lsin (20 MB gacha)." });
       return;
     }
+    if (_adm && /^\/backup\b/i.test(msg.text || "")) {
+      const ok = await require("./store.js").tgBackup(msg.chat.id).catch(e => { console.log("backup xato:", e.message); return false; });
+      if (!ok) await api("sendMessage", { chat_id: msg.chat.id, text: "⚠️ Zaxira yuborilmadi." });
+      return;
+    }
+    if (_adm && !msg.document && /^\/restore\b/i.test(msg.text || "")) {
+      const st = require("./store.js"), day = (msg.text.split(/\s+/)[1] || "").trim();
+      try {
+        if (!day) { const l = await st.backups(); await api("sendMessage", { chat_id: msg.chat.id, text: "Bazadagi zaxiralar:\n" + (l.join("\n") || "(yo‘q)") + "\n\nTiklash: /restore 2026-10-28\nYoki .json.gz faylni «/restore» izohi bilan yuboring." }); return; }
+        await api("sendMessage", { chat_id: msg.chat.id, text: "⏳ " + day + " zaxirasidan tiklanmoqda. Server 1–2 daqiqada qayta ishga tushadi." });
+        await st.restoreDay(day);
+      } catch (e) { await api("sendMessage", { chat_id: msg.chat.id, text: "❌ " + e.message }); }
+      return;
+    }
+    if (_adm && msg.document && /^\/restore\b/i.test(msg.caption || "")) {
+      try {
+        const info = await api("getFile", { file_id: msg.document.file_id });
+        const fp = info && info.result && info.result.file_path;
+        if (!fp) throw new Error("fayl 20 MB dan katta yoki yuklab bo‘lmadi");
+        let buf = Buffer.from(await (await fetch("https://api.telegram.org/file/bot" + process.env.BOT_TOKEN + "/" + fp)).arrayBuffer());
+        if (buf[0] === 0x1f && buf[1] === 0x8b) buf = require("zlib").gunzipSync(buf);
+        const obj = JSON.parse(buf.toString("utf8"));
+        const n = Object.keys((obj && obj.users) || {}).length;
+        await api("sendMessage", { chat_id: msg.chat.id, text: "⏳ Tiklanmoqda: " + n + " foydalanuvchi, " + ((obj.puzzles || []).length) + " masala. Server 1–2 daqiqada qayta ishga tushadi." });
+        await require("./store.js").restore(obj);
+      } catch (e) {
+        await api("sendMessage", { chat_id: msg.chat.id, text: "❌ Tiklanmadi: " + e.message });
+      }
+      return;
+    }
     if (_adm && /^\/bannerdel/i.test(msg.text || "")) {
       const st = require("./store.js"); delete st.db.banner; st.save();
       await api("sendMessage", { chat_id: msg.chat.id, text: "🗑 Banner o‘chirildi (BANNER_FILE_ID bo‘lsa, uni ham Renderdan o‘chiring)." });
