@@ -402,7 +402,7 @@
     var ov = document.createElement('div');
     ov.style.cssText = 'position:fixed;inset:0;z-index:2147482000;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;overscroll-behavior:none;-webkit-tap-highlight-color:transparent';
     ov.innerHTML = '<style>#spBS *{-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}' +
-      '#spBS .tg{display:flex;border-radius:12px;overflow:hidden;margin:6px 0 4px}#spBS .tg b{flex:1;text-align:center;padding:11px 4px;background:#26344f;cursor:pointer;font-weight:600}#spBS .tg b.on{background:#5a9a2e;color:#fff}' +
+      '#spBS .bsg{display:flex;border-radius:12px;overflow:hidden;margin:6px 0 4px}#spBS .bsg b{flex:1;text-align:center;padding:11px 4px;background:#26344f;cursor:pointer;font-weight:600}#spBS .bsg b.on{background:#5a9a2e;color:#fff}' +
       '#spBS .sl{display:flex;align-items:center;gap:10px;margin-top:4px}#spBS .pm{width:40px;height:40px;flex:none;border-radius:50%;background:#26344f;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;cursor:pointer}' +
       '#spBS .tr{flex:1;height:40px;position:relative;touch-action:none;cursor:pointer}#spBS .tr i{position:absolute;left:0;right:0;top:17px;height:6px;border-radius:3px;background:#3a4560}#spBS .tr u{position:absolute;left:0;top:17px;height:6px;border-radius:3px;background:#5cb85c}' +
       '#spBS .tr s{position:absolute;top:8px;width:24px;height:24px;margin-left:-12px;border-radius:50%;background:#7bd36b;box-shadow:0 2px 6px #0008}' +
@@ -411,11 +411,11 @@
       '<div id="spBS" style="width:100%;max-width:420px;background:#101a2e;color:#fff;border-radius:18px;padding:18px;box-sizing:border-box;font:16px system-ui,sans-serif;max-height:92vh;overflow-x:hidden;overflow-y:auto;overscroll-behavior:none;touch-action:pan-y">' +
       '<div style="display:flex;align-items:center"><b style="flex:1;font-size:19px">⚔️ Bot bilan o‘ynash</b><span data-x style="font-size:24px;padding:2px 8px;cursor:pointer">✕</span></div>' +
       '<div style="text-align:center;margin:8px 0 4px;font-weight:700;color:#c98bff">' + b.name.replace(/[<>]/g, '') + '</div>' +
-      '<div class="lb">⏱ Vaqt nazorati</div><div class="tg" data-g="t"><b data-v="inf">∞ Vaqtsiz</b><b data-v="clk">⏱ Vaqtli</b></div>' +
+      '<div class="lb">⏱ Vaqt nazorati</div><div class="bsg" data-g="t"><b data-v="inf">∞ Vaqtsiz</b><b data-v="clk">⏱ Vaqtli</b></div>' +
       '<div data-clk><div class="lb">Daqiqa: <b data-mv></b></div><div class="sl" data-s="m"><span class="pm" data-d="-1">−</span><div class="tr"><i></i><u></u><s></s></div><span class="pm" data-d="1">+</span></div>' +
       '<div class="lb">Har yurishga qo‘shimcha soniya: <b data-iv></b></div><div class="sl" data-s="i"><span class="pm" data-d="-1">−</span><div class="tr"><i></i><u></u><s></s></div><span class="pm" data-d="1">+</span></div></div>' +
-      '<div class="lb">📖 Boshlang‘ich holat</div><div class="tg" data-g="pos"><b data-v="std">📋 Standart</b><b data-v="idf">🎲 IDF 780</b></div>' +
-      '<div class="lb">🎨 Rangingiz</div><div class="tg" data-g="c"><b data-v="white">⚪ Oq</b><b data-v="random">🎲 Tasodifiy</b><b data-v="black">⚫ Qora</b></div>' +
+      '<div class="lb">📖 Boshlang‘ich holat</div><div class="bsg" data-g="pos"><b data-v="std">📋 Standart</b><b data-v="idf">🎲 IDF 780</b></div>' +
+      '<div class="lb">🎨 Rangingiz</div><div class="bsg" data-g="c"><b data-v="white">⚪ Oq</b><b data-v="random">🎲 Tasodifiy</b><b data-v="black">⚫ Qora</b></div>' +
       '<button class="go" data-go>▶ O‘YNASH</button></div>';
     document.body.appendChild(ov);
     var q = function (x) { return ov.querySelector(x); };
@@ -423,7 +423,7 @@
     function upd() {
       q('[data-mv]').textContent = mTxt(cfg.m); q('[data-iv]').textContent = cfg.i;
       q('[data-clk]').style.display = cfg.t === 'clk' ? '' : 'none';
-      [].forEach.call(ov.querySelectorAll('.tg'), function (g) { var k = g.getAttribute('data-g'); [].forEach.call(g.children, function (x) { x.className = x.getAttribute('data-v') === cfg[k] ? 'on' : ''; }); });
+      [].forEach.call(ov.querySelectorAll('.bsg'), function (g) { var k = g.getAttribute('data-g'); [].forEach.call(g.children, function (x) { x.className = x.getAttribute('data-v') === cfg[k] ? 'on' : ''; }); });
       ['m', 'i'].forEach(function (k) {
         var pc = L[k].indexOf(cfg[k]) / (L[k].length - 1) * 100, sl = q('[data-s="' + k + '"]');
         sl.querySelector('u').style.width = pc + '%'; sl.querySelector('s').style.left = pc + '%';
@@ -444,7 +444,7 @@
         pb.onclick = function () { var j = L[k].indexOf(cfg[k]) + (+pb.getAttribute('data-d')); if (j >= 0 && j < L[k].length) { cfg[k] = L[k][j]; upd(); } };
       });
     });
-    [].forEach.call(ov.querySelectorAll('.tg b'), function (x) { x.onclick = function () { cfg[x.parentNode.getAttribute('data-g')] = x.getAttribute('data-v'); upd(); }; });
+    [].forEach.call(ov.querySelectorAll('.bsg b'), function (x) { x.onclick = function () { cfg[x.parentNode.getAttribute('data-g')] = x.getAttribute('data-v'); upd(); }; });
     q('[data-x]').onclick = function () { ov.remove(); };
     ov.onclick = function (e) { if (e.target === ov) ov.remove(); };
     q('[data-go]').onclick = function () {
