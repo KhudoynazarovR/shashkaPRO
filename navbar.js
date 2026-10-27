@@ -497,6 +497,13 @@
       kk.onclick = function () { var t = window.Telegram && window.Telegram.WebApp; var m = '🦍 King Kong BOT tez kunda! Uni birinchilardan bo‘lib sinab ko‘ring — yutganlarga 5000 🪙.'; try { if (t && t.showAlert) t.showAlert(m); else alert(m); } catch (e) { alert(m); } };
       hero.insertBefore(kk, hero.firstChild);
     }
+    if (!$('nvMemRow') && $('nvBotRow')) {   // 🃏 Memori — bosh sahifadan tez kirish
+      var mr = document.createElement('div'); mr.id = 'nvMemRow';
+      mr.style.cssText = 'order:2;display:flex;align-items:center;gap:14px;margin:0 0 10px;padding:12px 14px;border-radius:16px;background:linear-gradient(110deg,#0a3b6b,#0f6fb0);border:1px solid #2f8fd6;color:#fff;cursor:pointer';
+      mr.innerHTML = '<span style="font-size:34px;flex:none">🃏</span><div style="flex:1"><b style="display:block;font-size:17px">Memori</b><small style="opacity:.8;font-size:13px">Juftliklarni toping · 4×4 · 6×6 · 8×8</small></div><span style="margin-left:auto;font-size:26px;opacity:.7">›</span>';
+      mr.onclick = function () { if (window.spMemori) window.spMemori(); else { var sm = document.createElement('script'); sm.src = '/memori.js?v=1'; sm.onload = function () { window.spMemori(); }; document.head.appendChild(sm); } };
+      var br = $('nvBotRow'); br.parentNode.insertBefore(mr, br.nextSibling);
+    }
     if ($('nvBotRow')) return;
     var row = document.createElement('div'); row.id = 'nvBotRow';
     row.innerHTML = '<div class="st"><img src="/api/av/bot_terminator" onerror="this.outerHTML=\'<i>🦾</i>\'"><img src="/api/av/bot_monster" onerror="this.outerHTML=\'<i>👹</i>\'"><img src="/api/av/bot_champ" onerror="this.outerHTML=\'<i>🤖</i>\'"><img src="/api/av/bot_gm" onerror="this.outerHTML=\'<i>🤖</i>\'"><img src="/api/av/bot_pro" onerror="this.outerHTML=\'<i>🤖</i>\'"></div><div><b>Botlar bilan o‘ynash</b><small>8 ta bot · Shogird dan Terminator gacha</small></div><span class="ar">›</span>';

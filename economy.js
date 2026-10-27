@@ -285,6 +285,42 @@ function handle(req, res, url) {
   }
   if (p.startsWith('/api/baza/') && req.method === 'GET') { if (require('./bazaserver.js').handle(req, res, url, send)) return true; }
   if (p === '/api/lidraughts/status' && req.method === 'GET') { send(res, 200, require('./lidraughts.js').status()); return true; }
+  // 🃏 Memori: rekordlar va tanga
+  if (p === '/api/memori/stat' && req.method === 'GET') {
+    const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
+    if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
+    const u = store.users()[String(_tg.id)] || {};
+    const top = Object.values(store.users()).filter(v => v && v.mem && v.mem.best && v.mem.best[8]).map(v => ({ name: v.name || 'O‘yinchi', mv: v.mem.best[8].mv, ms: v.mem.best[8].ms }))
+      .sort((a, b) => a.mv - b.mv || a.ms - b.ms).slice(0, 10);
+    send(res, 200, { best: (u.mem && u.mem.best) || {}, top });
+    return true;
+  }
+  if (p === '/api/memori/done' && req.method === 'POST') {
+    const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
+    if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
+    readBody(req, 2000, body => {
+      let j = {}; try { j = JSON.parse(body); } catch (e) {}
+      const n = [4, 6, 8].includes(+j.n) ? +j.n : 0, pairs = n * n / 2, mv = Math.round(+j.mv || 0), ms = Math.round(+j.ms || 0);
+      if (!n || mv < pairs || mv > 2000) return send(res, 400, { error: 'bad' });
+      const u = store.getOrCreate(_tg); u.mem = u.mem || { best: {} }; u.mem.best = u.mem.best || {};
+      const now = Date.now(), minMs = pairs * 1200;
+      if (now - (u.mem.last || 0) < minMs) return send(res, 429, { error: 'slow' });   // juda tez — o'yin bo'lishi mumkin emas
+      u.mem.last = now;
+      const R = { 4: 2, 6: 5, 8: 10 }[n], day = new Date(now + 5 * 3600e3).toISOString().slice(0, 10);
+      if (u.mem.day !== day) { u.mem.day = day; u.mem.coins = 0; }
+      let gain = 0, record = false;
+      if (j.mode === 'solo') {
+        if (ms >= minMs) { gain = R; const b = u.mem.best[n]; if (!b || mv < b.mv || (mv === b.mv && ms < b.ms)) { u.mem.best[n] = { mv, ms, at: now }; record = true; } }
+      } else if (j.win) gain = Math.round(R * [1, 1.5, 2][Math.max(0, Math.min(2, +j.lv || 0))]);
+      const CAP = 60, capped = gain > 0 && u.mem.coins >= CAP;
+      gain = Math.max(0, Math.min(gain, CAP - u.mem.coins));
+      u.mem.coins += gain; u.diamonds = (u.diamonds || 0) + gain;
+      u.mem.games = (u.mem.games || 0) + 1;
+      store.save();
+      send(res, 200, { ok: true, gain, record, capped, coins: u.diamonds });
+    });
+    return true;
+  }
   if (p === '/api/ai/review' && req.method === 'POST') {
     const _tk = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!_tk) { send(res, 401, { error: 'auth' }); return true; }
