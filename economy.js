@@ -234,12 +234,12 @@ function handle(req, res, url) {
       };
     });
     const top = (key, minGames) => all.filter(x => x.games >= (minGames || 0) && x[key] > 0)
-      .sort((a, b) => b[key] - a[key] || b.elo - a.elo).slice(0, 30);
+      .sort((a, b) => b[key] - a[key] || b.elo - a.elo).slice(0, 200);
     send(res, 200, {
       total: all.length,
-      elo: all.slice().sort((a, b) => b.elo - a.elo || b.games - a.games).slice(0, 30),
+      elo: all.slice().sort((a, b) => b.elo - a.elo || b.games - a.games).slice(0, 200),
       wins: top('wins'), games: top('games'), diamonds: top('diamonds'),
-      best: top('best'), tourn: all.filter(x => x.tw > 0).sort((a, b) => b.tw - a.tw || b.elo - a.elo).slice(0, 30), pct: top('pct', 20)
+      best: top('best'), tourn: all.filter(x => x.tw > 0).sort((a, b) => b.tw - a.tw || b.elo - a.elo).slice(0, 200), pct: top('pct', 20)
     });
     return true;
   }
