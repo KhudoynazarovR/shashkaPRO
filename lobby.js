@@ -29,9 +29,10 @@ const BOTS = [
   { uid: 'bot_gm', name: 'Sulton BOT', secs: 2, blunder: 0 },
   { uid: 'bot_champ', name: 'Legend BOT', secs: 3, blunder: 0 },
   { uid: 'bot_monster', name: 'Monster BOT', secs: 5, blunder: 0 },
-  { uid: 'bot_terminator', name: 'Terminator BOT', secs: 10, blunder: 0 }
+  { uid: 'bot_terminator', name: 'Terminator BOT', secs: 10, blunder: 0 },
+  { uid: 'bot_kingkong', name: 'King Kong BOT', secs: 15, blunder: 0, ponder: true, soon: process.env.KINGKONG_OPEN !== '1' }   // 🦍 eng kuchli: raqib o'ylayotganda ham o'ylaydi, saboqlar bazada saqlanadi
 ];
-const botByUid = uid => BOTS.find(b => b.uid === uid) || null;
+const botByUid = uid => BOTS.find(b => b.uid === uid && !b.soon) || null;   // 'soon' — hali e'lon qilingan, o'ynab bo'lmaydi
 const BOT_TCS = ['1+1', '2+2', '3+2', '5+3'];
 // bot bilan: '∞' (vaqtsiz) yoki 'daqiqa+soniya' (¼ daqiqadan 180 gacha, 0–60 s qo'shimcha)
 const botTcOk = s => { if (s === '∞') return true; const m = /^(\d{1,3}(?:\.\d{1,2})?)\+(\d{1,2})$/.exec(String(s || '')); return !!m && +m[1] >= 0.25 && +m[1] <= 180 && +m[2] <= 60 && (+m[1] * 60) % 1 === 0; };
@@ -286,7 +287,7 @@ function createLobby({ send, clients, roomsApi }) {
     const hw = o && o.color === 'black' ? false : o && o.color === 'random' ? Math.random() < 0.5 : true;
     const H = { uid: human.uid, name: human.name }, B = { uid: bot.uid, name: bot.name, clientId: 'ai_' + bot.uid };
     roomsApi.create(roomId, {
-      tc, vsBot: true, opening, botCfg: { id: bot.uid, secs: bot.secs, blunder: bot.blunder },
+      tc, vsBot: true, opening, botCfg: { id: bot.uid, secs: bot.secs, blunder: bot.blunder, ponder: !!bot.ponder },
       white: hw ? H : B,
       black: hw ? B : H
     });
@@ -1418,6 +1419,7 @@ function createLobby({ send, clients, roomsApi }) {
   const _applyBN = () => { try { const bn = require('./store').db.botNames || {}; for (const k in bn) global.__botRename(k, bn[k]); } catch (e) {} };
   _applyBN(); setTimeout(_applyBN, 5000); setTimeout(_applyBN, 20000);
   for (const b of BOTS) {
+    if (b.soon) continue;
     clients.set('ai_' + b.uid, { id: 'ai_' + b.uid, name: b.name, elo: 0, ws: botWs, isBot: true, hidden: true, lb: { uid: b.uid, name: b.name, tg: false, inRoom: false } });
   }
 

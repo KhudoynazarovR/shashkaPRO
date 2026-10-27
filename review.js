@@ -54,7 +54,7 @@
   }
 
   W.spReview = function (g) {
-    var TERM = /Terminator/i.test(g.bot || '');
+    var TERM = /Terminator/i.test(g.bot || ''), KK = /King ?Kong/i.test(g.bot || ''), phase = 0, rDone = 0, rTot = 0;
     var me = g.me === 'black' ? -1 : 1, mv = group(g.moves || []);
     var bs = [start()], sides = [1], i;
     var stepB = start();
@@ -86,7 +86,9 @@
     }
     function draw() {
       var h = '<div style="display:flex;align-items:center;gap:10px"><span style="font-size:34px">👹</span><div style="flex:1"><b style="font-size:21px">' + T('Monster tahlili') + '</b><div style="font-size:13px;opacity:.75">' + esc(g.white) + ' — ' + esc(g.black) + '</div></div><button id="rvX" class="bt" style="margin:0;background:#2a1f55">✕</button></div>';
-      if (done < total) {
+      if (phase === 0 && done < total) h += '<div class="cd"><b>⚡ ' + T('Tezkor tahlil…') + '</b><div class="bar"><i style="width:35%"></i></div><div style="font-size:13px;opacity:.7;margin-top:6px">' + T('Butun partiya ~10 soniyada tekshiriladi.') + '</div></div>';
+      else if (phase === 2 && rDone < rTot) h += '<div class="cd" style="font-size:14px">🔎 ' + T('Xatolar chuqurroq tekshirilmoqda…') + ' ' + rDone + '/' + rTot + '</div>';
+      if (phase === 1 && done < total) {
         var pc = Math.round(done / Math.max(1, total) * 100);
         h += '<div class="cd"><b>👹 ' + T('Monster partiyangizni tekshirmoqda…') + '</b> ' + done + '/' + total + '<div class="bar"><i style="width:' + pc + '%"></i></div><div style="font-size:13px;opacity:.7;margin-top:6px">' + T('Har bir yurishingiz chuqur tahlil qilinadi. Bu 1–2 daqiqa davom etadi.') + '</div></div>';
       }
@@ -114,6 +116,7 @@
             '<button class="bt" data-v="' + e.k + '">👁 ' + T('Ko‘rish') + '</button><button class="bt g" data-p="' + e.k + '">🔁 ' + T('Shu joydan qayta o‘ynash') + '</button></div>';
         });
       }
+      if (KK) h = h.replace(/👹/g, '🦍').replace(/Монстра/g, 'Кинг-Конга').replace(/Монстр/g, 'Кинг-Конг').replace(/the Monster/g, 'King Kong').replace(/Monster/g, 'King Kong');
       if (TERM) h = h.replace(/👹/g, '🦾').replace(/Монстра/g, 'Терминатора').replace(/Монстр/g, 'Терминатор').replace(/the Monster/g, 'Terminator').replace(/Monster/g, 'Terminator');
       box.innerHTML = h;
       box.querySelector('#rvX').onclick = function () { ov.remove(); };
@@ -122,15 +125,55 @@
     }
     draw();
     var qi = 0;
-    (function next() {
-      if (!document.body.contains(ov) || qi >= need.length) { draw(); return; }
-      var idx = need[qi++], b = bs[idx], side = sides[idx];
-      var ms = W.allMoves ? W.allMoves(b, side > 0 ? 1 : 2) : [1];
-      if (!ms.length) { EV[idx] = side > 0 ? -9.9 : 9.9; done++; draw(); return next(); }
-      ask(b, side, function (j) {
-        if (j) { EV[idx] = Math.max(-9.9, Math.min(9.9, side * j.ev / 200)); if (side === me) BEST[idx] = legalNote(b, side, j); }
-        done++; draw(); next();
-      });
-    })();
+    function slow() {   // eski usul: har pozitsiya alohida (tezkor tahlil ishlamasa)
+      phase = 1;
+      (function next() {
+        if (!document.body.contains(ov) || qi >= need.length) { draw(); return; }
+        var idx = need[qi++], b = bs[idx], side = sides[idx];
+        var ms = W.allMoves ? W.allMoves(b, side > 0 ? 1 : 2) : [1];
+        if (!ms.length) { EV[idx] = side > 0 ? -9.9 : 9.9; done++; draw(); return next(); }
+        ask(b, side, function (j) {
+          if (j) { EV[idx] = Math.max(-9.9, Math.min(9.9, side * j.ev / 200)); if (side === me) BEST[idx] = legalNote(b, side, j); }
+          done++; draw(); next();
+        });
+      })();
+    }
+    function refine() {   // 2-bosqich: topilgan xatolarni chuqurroq (0.8 s) qayta tekshirish
+      var set = {}, list = [];
+      for (var k = 0; k < mv.length; k++) {
+        if (sides[k] !== me || EV[k] == null || EV[k + 1] == null) continue;
+        if (Math.max(0, me * (EV[k] - EV[k + 1])) >= 0.4) { [k, k + 1].forEach(function (x) { if (!set[x]) { set[x] = 1; list.push(x); } }); }
+      }
+      phase = 2; rTot = list.length; rDone = 0; draw();
+      (function nx(i) {
+        if (!document.body.contains(ov) || i >= list.length) { rDone = rTot; draw(); return; }
+        var idx = list[i], b = bs[idx], side = sides[idx];
+        ask(b, side, function (j) {
+          if (j) { EV[idx] = Math.max(-9.9, Math.min(9.9, side * j.ev / 200)); if (side === me) BEST[idx] = legalNote(b, side, j) || BEST[idx]; }
+          rDone++; draw(); nx(i + 1);
+        });
+      })(0);
+    }
+    // 1-bosqich: butun partiya bitta so'rovda (~10 s)
+    var qlist = [], qidx = [];
+    need.forEach(function (idx) {
+      var b = bs[idx], side = sides[idx], ms = W.allMoves ? W.allMoves(b, side > 0 ? 1 : 2) : [1];
+      if (!ms.length) { EV[idx] = side > 0 ? -9.9 : 9.9; done++; return; }
+      qlist.push({ board: toEng(b), side: side }); qidx.push(idx);
+    });
+    var hd = { 'Content-Type': 'application/json', 'x-init-data': (W.Telegram && Telegram.WebApp && Telegram.WebApp.initData) || '' };
+    if (!qlist.length) { phase = 2; draw(); return; }
+    fetch('/api/ai/review', { method: 'POST', headers: hd, body: JSON.stringify({ list: qlist }) })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        if (!d || !Array.isArray(d.res)) { done = 0; return slow(); }
+        d.res.forEach(function (j, i) {
+          var idx = qidx[i], b = bs[idx], side = sides[idx];
+          if (j && typeof j.ev === 'number') { EV[idx] = Math.max(-9.9, Math.min(9.9, side * j.ev / 200)); if (side === me) BEST[idx] = legalNote(b, side, j); }
+          done++;
+        });
+        done = total; refine();
+      })
+      .catch(function () { done = 0; slow(); });
   };
 })();

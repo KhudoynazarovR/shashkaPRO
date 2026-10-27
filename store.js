@@ -227,4 +227,21 @@ async function restoreDay(day) {
   return restore(unpack(r.rows[0].v, bl));
 }
 
-module.exports = { backups, restoreDay, tgBackup, restore, db, getOrCreate, save, isPremium, users: () => db.users };
+// alohida qatorlar (masalan dvigatel xotirasi) — asosiy "players" qatoriga tegmaydi
+function kvGet(k) {
+  return new Promise(res => {
+    if (!pool) return res(null);
+    const t0 = Date.now();
+    (function w() {
+      if (!ready) return Date.now() - t0 < 120e3 ? setTimeout(w, 1000) : res(null);
+      pool.query('select v from kv where k = $1', ['x:' + k]).then(r => res(r.rows.length ? r.rows[0].v : null)).catch(() => res(null));
+    })();
+  });
+}
+async function kvSet(k, v) {
+  if (!pool || !ready) return false;
+  try { await pool.query("insert into kv(k, v) values($1, $2) on conflict (k) do update set v = excluded.v", ['x:' + k, JSON.stringify(v)]); return true; }
+  catch (e) { console.log('kv yozish xatosi:', e.message); return false; }
+}
+
+module.exports = { kvGet, kvSet, backups, restoreDay, tgBackup, restore, db, getOrCreate, save, isPremium, users: () => db.users };

@@ -184,7 +184,7 @@ function createRooms({ send, clients, onFinish }) {
   }
 
   
-  const BOT_COINS = { bot_easy: 1, bot_mid: 2, bot: 3, bot_pro: 5, bot_gm: 8, bot_champ: 12, bot_monster: 25, bot_terminator: 40 };
+  const BOT_COINS = { bot_easy: 1, bot_mid: 2, bot: 3, bot_pro: 5, bot_gm: 8, bot_champ: 12, bot_monster: 25, bot_terminator: 40, bot_kingkong: 100 };
   const BOT_DAILY = 20, BOT_MIN_PLIES = 8;
   function botReward(room, winner) {
     if (!room.vsBot || !winner || (room.moves || []).length < BOT_MIN_PLIES) return;
@@ -246,6 +246,7 @@ function createRooms({ send, clients, onFinish }) {
           const id = seats[c]; if (!id || isBotUid(id)) continue;
           q.bump(id, 'game');
           if (winner === c) { q.bump(id, 'win'); const o = seats[c === 'white' ? 'black' : 'white']; if (isBotUid(o)) { q.bump(id, 'bot'); try { require('./leagues.js').event(id, 'beat_' + o); } catch (e) {} } }
+          else if (winner === 'draw') { const o = seats[c === 'white' ? 'black' : 'white']; if (o === 'bot_kingkong') try { require('./leagues.js').event(id, 'draw_bot_kingkong'); } catch (e) {} }
         }
       }
     } catch (e) { console.log('quests:', e.message); }
@@ -446,6 +447,10 @@ function createRooms({ send, clients, onFinish }) {
       }
       room.turnStartedAt = now;
       const dres = drawTrack(room, col, m);
+      // 🦍 King Kong: o'z yurishidan keyin raqib o'ylayotganda ham o'ylaydi (ponder)
+      if (!m.keepTurn && room.vsBot && room.botCfg && room.botCfg.ponder && col === botColorOf(room) && room.dr && room.dr.b && !room.finished) {
+        try { const b64 = []; for (let r = 0; r < 8; r++) for (let c2 = 0; c2 < 8; c2++) { const p = room.dr.b[r][c2]; b64.push(p === 'w' ? 1 : p === 'W' ? 2 : p === 'b' ? -1 : p === 'B' ? -2 : 0); } require('./kestoai.js').ponder(b64, col === 'white' ? -1 : 1, room.botCfg.secs, room.id); } catch (e) { console.log('[ponder]', e.message); }
+      }
       broadcast(room, {
         type: "roomMove", roomId, move: m.move, turn: room.turn, color: col,
         clock: currentClock(room), clockRunning: clockRunning(room),

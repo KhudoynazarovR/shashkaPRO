@@ -161,7 +161,7 @@
     W.addEventListener('load', wrapDialogs);
   };
   // lug‘atni sahifa tahlil qilinayotgan paytda sinxron yuklaymiz (matnlar o‘zbekcha "miltillamasligi" uchun)
-  var src = '/i18n-' + L + '.js?v=7';
+  var src = '/i18n-' + L + '.js?v=8';
   if (document.readyState === 'loading') document.write('<script src="' + src + '"><\/script>');
   else { var sc = document.createElement('script'); sc.src = src; document.head.appendChild(sc); }
 })();

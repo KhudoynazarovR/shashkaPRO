@@ -575,13 +575,13 @@
         }
       }
       if (!spec && st.finished && st.winner === st.color && window.spShareCard) btn("📸 G‘alabani ulashish", function () { var opp = st.color === "white" ? st.black : st.white; window.spShareCard({ theme: "win", title: "G‘ALABA!", big: "🏆", sub: "Raqib: " + (st.vsBot ? "🤖 " : "") + (opp || ""), sub2: (st.tc ? "⏱ " + st.tc : "") + (st.reason === "timeout" ? " · vaqt bo‘yicha" : ""), cap: "🏆 ShashkaPRO’da " + (opp || "raqib") + "ni yutdim!" }); });
-      if (!spec && st.finished && st.vsBot && !st.opening && /Monster|Terminator/i.test(String(st[st.botColor] || ""))) {
+      if (!spec && st.finished && st.vsBot && !st.opening && /Monster|Terminator|King ?Kong/i.test(String(st[st.botColor] || ""))) {
         var openRv = function () {
           var g0 = { moves: st.moves, me: st.color, white: nameLine("white"), black: nameLine("black"), winner: st.winner, bot: String(st[st.botColor] || "") };
           var go = function () { window.spReview(g0); };
-          if (window.spReview) go(); else { var sc = document.createElement("script"); sc.src = "/review.js?v=2"; sc.onload = go; document.head.appendChild(sc); }
+          if (window.spReview) go(); else { var sc = document.createElement("script"); sc.src = "/review.js?v=3"; sc.onload = go; document.head.appendChild(sc); }
         };
-        if (/Terminator/i.test(String(st[st.botColor] || ""))) btn("🦾 Terminator tahlili: xatolaringiz", openRv); else btn("👹 Monster tahlili: xatolaringiz", openRv);
+        if (/King ?Kong/i.test(String(st[st.botColor] || ""))) btn("🦍 King Kong tahlili: xatolaringiz", openRv); else if (/Terminator/i.test(String(st[st.botColor] || ""))) btn("🦾 Terminator tahlili: xatolaringiz", openRv); else btn("👹 Monster tahlili: xatolaringiz", openRv);
         window.__rvDone = window.__rvDone || {};
         if (!window.__rvDone[roomId] && !st.opening) { window.__rvDone[roomId] = 1; setTimeout(openRv, 1800); }   // o'yin tugashi bilan o'zi ochiladi
       }
@@ -1121,7 +1121,9 @@
       if (el) return;
       el = document.createElement("div"); el.id = "spBotWait";
       el.style.cssText = "position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:99999;background:#2a1f5c;color:#fff;padding:10px 16px;border-radius:14px;font:600 15px system-ui,sans-serif;box-shadow:0 4px 18px rgba(0,0,0,.4);max-width:90vw;text-align:center";
-      el.textContent = "⏳ Bot chuqur o‘ylayapti… (server yangilangan bo‘lsa, dvigatel 1–2 daqiqada tayyor bo‘ladi)";
+      var _kk = /King ?Kong/i.test(String(st[st.botColor] || ""));
+      if (_kk) { el.style.background = "linear-gradient(90deg,#3b1d0e,#6b3410)"; el.style.border = "1px solid #ffb347"; }
+      el.textContent = _kk ? (window.spT ? window.spT("🦍 King Kong o‘ylayapti…") : "🦍 King Kong o‘ylayapti…") : "⏳ Bot chuqur o‘ylayapti… (server yangilangan bo‘lsa, dvigatel 1–2 daqiqada tayyor bo‘ladi)";
       document.body.appendChild(el);
     }
     function botThink(cb) {
@@ -1157,7 +1159,7 @@
       var strong = st.botSecs >= 2 && !timed;   // vaqtli o'yinda kuchli bot ham soatni o'ylaydi
       var deadline = strong ? Infinity : timed ? t0 + Math.max(800, Math.min((secs * 2 + 6) * 1000, rem * 1000 * 0.4)) : t0 + (secs * 3 + 25) * 1000;   // dvigatel band bo'lsa navbat kutiladi
       var to = strong ? null : setTimeout(function () { try { if (ctl) ctl.abort(); } catch (e) {} finishWith(null, "🤖 zaxira yurish (AI kechikdi)"); }, deadline - t0);
-      var waitT = strong ? setTimeout(function () { if (!done) botWait(true); }, Math.max(4000, secs * 1000 + 3000)) : null;
+      var waitT = strong || /King ?Kong/i.test(String(st[st.botColor] || "")) ? setTimeout(function () { if (!done) botWait(true); }, /King ?Kong/i.test(String(st[st.botColor] || "")) ? 1200 : Math.max(4000, secs * 1000 + 3000)) : null;
       var _fw = finishWith; finishWith = function (mv, note) { clearTimeout(waitT); botWait(false); _fw(mv, note); };
       function ask() {
         if (done) return;

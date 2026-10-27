@@ -285,6 +285,16 @@ function handle(req, res, url) {
   }
   if (p.startsWith('/api/baza/') && req.method === 'GET') { if (require('./bazaserver.js').handle(req, res, url, send)) return true; }
   if (p === '/api/lidraughts/status' && req.method === 'GET') { send(res, 200, require('./lidraughts.js').status()); return true; }
+  if (p === '/api/ai/review' && req.method === 'POST') {
+    const _tk = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
+    if (!_tk) { send(res, 401, { error: 'auth' }); return true; }
+    readBody(req, 90000, body => {
+      let j = {};
+      try { j = JSON.parse(body); } catch (e) {}
+      require('./kestoai.js').review(j.list, r => send(res, r.code || 200, r));
+    });
+    return true;
+  }
   if (p === '/api/ai/move' && req.method === 'POST') {
     const _tk = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!_tk) { send(res, 401, { error: 'auth' }); return true; }

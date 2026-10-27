@@ -386,7 +386,7 @@
     var w = document.createElement('span'); w.style.display = 'contents';
     var im = document.createElement('img');
     im.src = '/api/av/' + encodeURIComponent(uid);
-    im.onerror = function () { var i = document.createElement('i'); i.textContent = uid === 'bot_monster' ? '👹' : uid === 'bot_terminator' ? '🦾' : '🤖'; im.replaceWith(i); };
+    im.onerror = function () { var i = document.createElement('i'); i.textContent = uid === 'bot_monster' ? '👹' : uid === 'bot_terminator' ? '🦾' : uid === 'bot_kingkong' ? '🦍' : '🤖'; im.replaceWith(i); };
     w.appendChild(im);
     return w;
   }
@@ -482,6 +482,21 @@
   setInterval(function () {
     var hero = $('hzHero');
     if (!hero) { sheet.style.display = sheet.style.display === 'flex' && window.nvK !== 'pl' ? 'none' : sheet.style.display; return; }
+    if (!$('nvKK')) {   // 🦍 King Kong — tez kunda (premyera e'loni)
+      if (!$('nvKKcss')) { var kc = document.createElement('style'); kc.id = 'nvKKcss'; kc.textContent =
+        '#nvKK{order:-1;position:relative;overflow:hidden;display:flex;align-items:center;gap:12px;margin:0 0 12px;padding:14px;border-radius:18px;color:#fff;cursor:pointer;' +
+        'background:linear-gradient(120deg,#1a0d05,#5a2a0c 45%,#8a3f10 70%,#1a0d05);box-shadow:inset 0 0 0 1.5px #ffb347,0 0 22px rgba(255,140,40,.35)}' +
+        '#nvKK .kf{font-size:46px;flex:none;filter:drop-shadow(0 0 10px #ff8c28);animation:nvKKp 1.6s ease-in-out infinite}' +
+        '#nvKK small{display:inline-block;background:#ff8c28;color:#1a0d05;font-weight:900;font-size:11px;letter-spacing:1px;padding:2px 8px;border-radius:8px}' +
+        '#nvKK b{display:block;font-size:19px;margin:4px 0 2px}#nvKK p{margin:0;font-size:13px;opacity:.85;line-height:1.3}' +
+        '#nvKK:after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);transform:skewX(-20deg);animation:nvKKs 3.2s infinite}' +
+        '@keyframes nvKKp{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}@keyframes nvKKs{0%{left:-60%}60%,100%{left:130%}}';
+        document.head.appendChild(kc); }
+      var kk = document.createElement('div'); kk.id = 'nvKK';
+      kk.innerHTML = '<span class="kf">🦍</span><div><small>TEZ KUNDA</small><b>King Kong BOT</b><p>Eng kuchli bot keladi: Monster va Terminatordan ham kuchli. Siz o‘ylayotganda ham o‘ylaydi!</p></div>';
+      kk.onclick = function () { var t = window.Telegram && window.Telegram.WebApp; var m = '🦍 King Kong BOT tez kunda! Uni birinchilardan bo‘lib sinab ko‘ring — yutganlarga 5000 🪙.'; try { if (t && t.showAlert) t.showAlert(m); else alert(m); } catch (e) { alert(m); } };
+      hero.insertBefore(kk, hero.firstChild);
+    }
     if ($('nvBotRow')) return;
     var row = document.createElement('div'); row.id = 'nvBotRow';
     row.innerHTML = '<div class="st"><img src="/api/av/bot_terminator" onerror="this.outerHTML=\'<i>🦾</i>\'"><img src="/api/av/bot_monster" onerror="this.outerHTML=\'<i>👹</i>\'"><img src="/api/av/bot_champ" onerror="this.outerHTML=\'<i>🤖</i>\'"><img src="/api/av/bot_gm" onerror="this.outerHTML=\'<i>🤖</i>\'"><img src="/api/av/bot_pro" onerror="this.outerHTML=\'<i>🤖</i>\'"></div><div><b>Botlar bilan o‘ynash</b><small>8 ta bot · Shogird dan Terminator gacha</small></div><span class="ar">›</span>';

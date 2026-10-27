@@ -43,9 +43,12 @@ function next() {
   child.stdin.write(cur.input);
 }
 let LOWFLAG = false;
-function run(input, secs, cb) {
-  const it = { input: input, secs: secs, cb: cb, low: LOWFLAG };
+function run(input, secs, cb, opt) {
+  const pon = !!(opt && opt.ponder);
+  const it = { input: input, secs: secs, cb: cb, low: LOWFLAG || pon, ponder: pon };
   if (!it.low) { const i = queue.findIndex(q => q.low); if (i < 0) queue.push(it); else queue.splice(i, 0, it); } else queue.push(it);
+  // haqiqiy so'rov kelsa — oldindan o'ylash (ponder) darhol to'xtatiladi
+  if (!pon && cur && cur.ponder) finish("preempt");
   next();
 }
 function newGame(b) { let n = 0; for (const v of b) if (Math.abs(v) === 1) n++; return n === 24 && !b.some(v => Math.abs(v) === 2); }
@@ -110,7 +113,8 @@ function move(j, cb) {
   const key = b.join(",") + "|" + side;
   if (j.room && secs >= 1) track(j.room, key);
   const deep = secs >= 1 && DEEP.has(key);
-  if (deep) secs = Math.min(18, secs * 2, Number(j.maxTime) > 0 ? Number(j.maxTime) : 18);   // bu yerda avval yutqazgan — chuqurroq o'ylaymiz (vaqt imkon bergancha)
+  const dcap = secs >= 12 ? 30 : 18;   // King Kong saboq joylarida 30 s gacha o'ylaydi
+  if (deep) secs = Math.min(dcap, secs * 2, Number(j.maxTime) > 0 ? Number(j.maxTime) : dcap);   // bu yerda avval yutqazgan — chuqurroq o'ylaymiz (vaqt imkon bergancha)
   const hit = secs >= 1 && CACHE.get(key);
   if (hit && hit.secs >= secs * 0.9) { cDirty = true; return cb(Object.assign({}, hit.r, { ms: 0, cached: 1 })); }
   // bitta dvigatel jarayoni: so'rovlar navbatga qo'yiladi (rad etilmaydi). Arena (bot va bot) faqat navbat bo'sh bo'lsa.
@@ -126,6 +130,87 @@ function move(j, cb) {
     cb(Object.assign({ ms: Date.now() - t0, deep: deep ? 1 : 0 }, res));
   });
 }
+
+// ---------- 🦍 King Kong: raqib o'ylayotganda o'ylash (ponder)
+// 1) raqibning eng ehtimolli javobini qisqa hisoblaymiz, 2) shu javobdan keyingi pozitsiyani King Kong vaqtidan 1.6 barobar uzoq
+// hisoblab CACHE ga yozamiz. Raqib shu yurishni qilsa — King Kong darhol, chuqur hisoblangan javob beradi.
+// Haqiqiy so'rov kelishi bilan to'xtatiladi (boshqa o'yinchilar kutmaydi).
+let RULES = null; try { RULES = require("./kkrules.js"); } catch (e) {}
+let ponderTok = 0;
+const PONDER = { n: 0, hit: 0 };
+function engMove(v) { return { from: v[1] * 8 + (7 - v[0]), to: v[3] * 8 + (7 - v[2]), jumps: v[4], ev: v.length > 5 ? v[5] : null }; }
+function ponder(b, humanSide, kkSecs, room) {
+  if (!ready || !RULES || !Array.isArray(b) || b.length !== 64) return;
+  const tok = ++ponderTok;
+  queue = queue.filter(q => !q.ponder);   // eski ponderlar bekor
+  if (cur && cur.ponder) finish("preempt");
+  const legal = RULES.moves(b, humanSide); if (!legal.length) return;
+  const go2 = mv => {
+    if (tok !== ponderTok || !mv) return;
+    const b2 = mv.board, side2 = -humanSide, key2 = b2.join(",") + "|" + side2, secs2 = Math.min(30, kkSecs * 1.6);
+    if (BOOK[b2.join("") + side2] || COLETTE[b2.join("") + side2]) return;
+    const h = CACHE.get(key2); if (h && h.secs >= secs2 * 0.9) return;
+    const deep = DEEP.has(key2), s2 = deep ? 30 : secs2;
+    run(encode(b2, side2, s2), s2, (err, v) => {
+      if (err || tok !== ponderTok) return;
+      const r = engMove(v); if (!(r.from >= 0 && r.to >= 0 && r.from !== r.to)) return;
+      remember(key2, s2, { bk: null, from: r.from, to: r.to, jumps: r.jumps, ev: r.ev }); PONDER.n++;
+      if (room) track(room, key2);
+    }, { ponder: true });
+  };
+  if (legal.length === 1) return go2(legal[0]);   // majburiy javob — taxmin shart emas
+  run(encode(b, humanSide, 0.5), 0.5, (err, v) => {
+    if (err || tok !== ponderTok) return;
+    const r = engMove(v);
+    go2(legal.find(m => m.from === r.from && m.to === r.to) || legal.find(m => m.to === r.to) || null);
+  }, { ponder: true });
+}
+
+// ---------- tezkor tahlil: butun partiya ~10 soniyada (har pozitsiya qisqa hisob), so'rovlar orasida botlar navbati kutmaydi
+let reviews = 0;
+function review(list, cb) {
+  if (!ready) return cb({ error: "notready", code: 503 });
+  if (!Array.isArray(list) || !list.length || list.length > 220) return cb({ error: "bad", code: 400 });
+  if (reviews >= 2) return cb({ error: "busy", code: 429 });
+  for (const x of list) if (!x || !Array.isArray(x.board) || x.board.length !== 64 || !x.board.every(v => Number.isInteger(v) && v >= -2 && v <= 2)) return cb({ error: "bad", code: 400 });
+  reviews++;
+  const per = Math.max(0.05, Math.min(0.3, 8.5 / list.length)), out = [], t0 = Date.now();
+  (function step(i) {
+    if (i >= list.length || Date.now() - t0 > 25000) { reviews--; return cb({ res: out, ms: Date.now() - t0, per: per }); }
+    const x = list[i], side = x.side > 0 ? 1 : -1, key = x.board.join(",") + "|" + side, h = CACHE.get(key);
+    if (h && h.r && typeof h.r.ev === "number") { out.push({ from: h.r.from, to: h.r.to, ev: h.r.ev }); return step(i + 1); }
+    run(encode(x.board, side, per), per, (err, v) => {
+      if (err) out.push(null); else { const r = engMove(v); out.push({ from: r.from, to: r.to, ev: r.ev }); }
+      step(i + 1);
+    });
+  })(0);
+}
+
+// ---------- xotira (saboqlar + chuqur hisoblar) bazada saqlanadi — deploydan keyin ham yo'qolmaydi
+const zlib = require("zlib");
+function packMem() {
+  const c = [...CACHE.entries()].filter(e => e[1].secs >= 5).slice(-12000);
+  return zlib.gzipSync(Buffer.from(JSON.stringify({ c: c, d: [...DEEP].slice(-8000) }))).toString("base64");
+}
+setTimeout(() => {
+  let st = null; try { st = require("./store.js"); } catch (e) { return; }
+  if (!st.kvGet) return;
+  st.kvGet("engmem").then(v => {
+    if (typeof v === "string") {
+      try {
+        const o = JSON.parse(zlib.gunzipSync(Buffer.from(v, "base64")).toString());
+        (o.c || []).forEach(x => { if (!CACHE.has(x[0])) CACHE.set(x[0], x[1]); }); (o.d || []).forEach(k => DEEP.add(k));
+        console.log("[KestoG] bazadan xotira:", (o.c || []).length, "chuqur hisob,", (o.d || []).length, "saboq");
+      } catch (e) { console.log("[KestoG] xotira o'qilmadi:", e.message); }
+    }
+    let memDirty = false, lastN = CACHE.size + DEEP.size;
+    setInterval(() => {
+      const n = CACHE.size + DEEP.size + PONDER.n;
+      if (n === lastN && !memDirty) return; lastN = n;
+      st.kvSet("engmem", packMem());
+    }, 10 * 60 * 1000).unref();
+  });
+}, 5000).unref();
 
 function selfTest() {
   const b = Array(64).fill(0);
@@ -155,4 +240,4 @@ function build() {
   })(0);
 }
 build();
-module.exports = { move, learn, load: () => busy, mem: () => ({ cache: CACHE.size, deep: DEEP.size }) };
+module.exports = { move, learn, ponder, review, ponderStat: () => PONDER, load: () => busy, mem: () => ({ cache: CACHE.size, deep: DEEP.size }) };
