@@ -1179,7 +1179,7 @@
             clearTimeout(to);
             var mv = null;
             if (j && typeof j.from === "number" && typeof j.to === "number") mv = pickLegal(legal, j, false) || pickLegal(legal, j, true);
-            finishWith(mv, mv ? "🤖 KestoG" + (j.book ? " · kitob" : j.cached ? " · xotiradan ⚡" : j.deep ? " · saboq 🧠 " + j.ms + " ms" : j.ms ? " · " + j.ms + " ms" : "") : "🤖 zaxira yurish (AI javobi mos kelmadi)");
+            finishWith(mv, mv ? "🤖 KestoG" + (j.tb ? " · endshpil bazasi ♟" : j.book ? " · kitob" : j.cached ? " · xotiradan ⚡" : j.deep ? " · saboq 🧠 " + j.ms + " ms" : j.ms ? " · " + j.ms + " ms" : "") : "🤖 zaxira yurish (AI javobi mos kelmadi)");
           }).catch(function () { if (done) return; if (Date.now() + 2500 < deadline) return setTimeout(ask, strong ? 3000 : 1200); clearTimeout(to); finishWith(null, "🤖 zaxira yurish (AI ishlamadi)"); });
         } catch (e) { if (strong) return setTimeout(ask, 3000); clearTimeout(to); finishWith(null, "🤖 zaxira yurish (AI ishlamadi)"); }
       }
