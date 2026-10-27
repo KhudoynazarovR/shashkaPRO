@@ -295,6 +295,20 @@ function handle(req, res, url) {
     send(res, 200, { best: (u.mem && u.mem.best) || {}, top });
     return true;
   }
+  if (p.startsWith('/api/memori/tour')) {   // 🏆 Xotira kunlik turniri
+    const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
+    if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
+    const MT = require('./memtour.js'), uid = String(_tg.id), nm = String(_tg.first_name || _tg.username || 'O‘yinchi').slice(0, 20);
+    if (p === '/api/memori/tour' && req.method === 'GET') { send(res, 200, MT.info(uid)); return true; }
+    if (req.method !== 'POST') return false;
+    readBody(req, 500, body => {
+      let j = {}; try { j = JSON.parse(body); } catch (e) {}
+      if (p === '/api/memori/tour/start') return send(res, 200, MT.start(uid, nm));
+      if (p === '/api/memori/tour/flip') return send(res, 200, MT.flip(uid, String(j.id || ''), j.i));
+      send(res, 404, { error: 'none' });
+    });
+    return true;
+  }
   if (p === '/api/memori/done' && req.method === 'POST') {
     const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
