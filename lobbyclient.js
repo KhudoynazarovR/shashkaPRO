@@ -404,7 +404,8 @@
         var t = e.target; if (!t || !t.getAttribute) return;
         var act = t.getAttribute("data-a"), id = t.getAttribute("data-id");
         if (!act) return;
-        if (act === "ch") sendMsg({ type: "lbChallenge", toUid: id, tc: $("lbTc").value, pos: $("lbPos").value, games: Number($("lbGm").value) }); else if (act === "cx") sendMsg({ type: "lbCancelTo", toUid: id });
+        if (act === "ch" && /^bot/.test(id) && !window.__botTc && window.spBotSetup) { var _row = t.closest(".lbp"), _nm = _row && _row.querySelector(".lbinf b"); window.spBotSetup({ uid: id, name: _nm ? _nm.textContent.replace(/\s+/g, " ").trim() : id }); }
+        else if (act === "ch") { var _bt = /^bot/.test(id) && window.__botTc ? window.__botTc : null; sendMsg({ type: "lbChallenge", toUid: id, tc: _bt || $("lbTc").value, color: _bt ? (window.__botColor || "white") : undefined, pos: _bt && window.__botPos ? window.__botPos : $("lbPos").value, games: _bt ? 1 : Number($("lbGm").value) }); window.__botTc = null; } else if (act === "cx") sendMsg({ type: "lbCancelTo", toUid: id });
         else if (act === "tj") sendMsg({ type: "lbTJoin", tid: id });
         else if (act === "tl") sendMsg({ type: "lbTLeave", tid: id });
         else if (act === "ts") sendMsg({ type: "lbTStart", tid: id });
@@ -1310,7 +1311,7 @@ document.head.appendChild(_as); }
     else {
       h += "<div class=\"hzLvG\">";
       list.slice(0, 10).forEach(function (r) {
-        var bot = r.vsBot || /BOT/.test(String(r.white)+String(r.black)); var tcl = bot ? "∞" : r.tc; var c = bot ? "#8e6bd6" : (COL[r.tc] || "#6aaed4");
+        var bot = r.vsBot || /BOT/.test(String(r.white)+String(r.black)); var tcl = bot ? (r.tc && r.tc !== "∞" ? r.tc.replace(/^0\.25\+/, "¼+").replace(/^0\.5\+/, "½+").replace(/^0\.75\+/, "¾+") : "∞") : r.tc; var c = bot ? "#8e6bd6" : (COL[r.tc] || "#6aaed4");
         h += "<div class=\"hzLvC\" data-r=\"" + esc(r.id) + "\"><b style=\"background:" + c + "\">Shashka " + esc(tcl) + "</b><div>⚪ " + esc(r.white) + " (" + (r.wElo || 1000) + ")</div><i>vs</i><div>⚫ " + esc(r.black) + " (" + (r.bElo || 1000) + ")</div><u>👁 " + (r.spectators || 0) + " · " + Math.ceil((r.moves || 0) / 2) + " yurish</u></div>";
       });
       h += "</div>";

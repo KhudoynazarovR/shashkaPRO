@@ -33,6 +33,8 @@ const BOTS = [
 ];
 const botByUid = uid => BOTS.find(b => b.uid === uid) || null;
 const BOT_TCS = ['1+1', '2+2', '3+2', '5+3'];
+// bot bilan: '∞' (vaqtsiz) yoki 'daqiqa+soniya' (¼ daqiqadan 180 gacha, 0–60 s qo'shimcha)
+const botTcOk = s => { if (s === '∞') return true; const m = /^(\d{1,3}(?:\.\d{1,2})?)\+(\d{1,2})$/.exec(String(s || '')); return !!m && +m[1] >= 0.25 && +m[1] <= 180 && +m[2] <= 60 && (+m[1] * 60) % 1 === 0; };
 const NOSHOW_MS = Number(process.env.LOBBY_NOSHOW_MS || 120000);   // tur boshlangach kelmaganlar uchun kutish
 const NEXT_ROUND_MS = Number(process.env.LOBBY_NEXT_MS || 20000);  // turlar orasidagi tanaffus
 const CHALLENGE_TTL = 60000;
@@ -279,14 +281,16 @@ function createLobby({ send, clients, roomsApi }) {
   // 🤖 Bot bilan o'yin: chaqiruv darhol qabul qilinadi, xona ochiladi, vaqt/rang/pozitsiya xonada tanlanadi
   function startBotGame(human, o, bot) {
     const roomId = 'B' + hex(5);
-    const tc = o && BOT_TCS.includes(o.tc) ? o.tc : DEFAULT_TC;
+    const tc = o && botTcOk(o.tc) ? String(o.tc) : '∞';
     const opening = o && o.pos === 'idf' ? pickOpening() : null;
+    const hw = o && o.color === 'black' ? false : o && o.color === 'random' ? Math.random() < 0.5 : true;
+    const H = { uid: human.uid, name: human.name }, B = { uid: bot.uid, name: bot.name, clientId: 'ai_' + bot.uid };
     roomsApi.create(roomId, {
       tc, vsBot: true, opening, botCfg: { id: bot.uid, secs: bot.secs, blunder: bot.blunder },
-      white: { uid: human.uid, name: human.name },
-      black: { uid: bot.uid, name: bot.name, clientId: 'ai_' + bot.uid }
+      white: hw ? H : B,
+      black: hw ? B : H
     });
-    sendUid(human.uid, { type: 'lbGo', roomId, reason: 'challenge', color: 'white', opponent: bot.name, tc, series: null });
+    sendUid(human.uid, { type: 'lbGo', roomId, reason: 'challenge', color: hw ? 'white' : 'black', opponent: bot.name, tc, series: null });
   }
 
   // Seriya: 1 o'yin, yoki match = bir pozitsiya, ranglar almashgan 2 o'yin
@@ -1043,6 +1047,7 @@ function createLobby({ send, clients, roomsApi }) {
         const ch = { id: 'c' + hex(4), fromUid: me.uid, fromName: me.name, toUid: to.lb.uid, tc: tcOf(m.tc), ...cleanOpts(m), at: Date.now() };
         if (botByUid(ch.toUid)) {   // bot taklifni darhol qabul qiladi
           queue.delete(me.uid);
+          ch.tc = botTcOk(m.tc) ? String(m.tc) : '∞'; ch.color = ['white', 'black', 'random'].includes(m.color) ? m.color : 'white';
           startBotGame({ uid: me.uid, name: me.name }, ch, botByUid(ch.toUid));
           push();
           break;

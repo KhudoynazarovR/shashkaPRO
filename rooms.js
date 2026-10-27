@@ -10,12 +10,13 @@ const IDLE_MS = 6 * 60 * 60 * 1000;
 const TCS = { "1+1": [60, 1], "2+2": [120, 2], "3+2": [180, 2], "5+3": [300, 3], "7+5": [420, 5], "0.5+0": [30, 0] };
 const DEFAULT_TC = "5+3";
 // erkin vaqt: "daqiqa+soniya" (1–60 daq, 0–30 s qo'shimcha)
-function tcParse(k) { if (TCS[k]) return TCS[k]; const m = /^(\d{1,2})\+(\d{1,2})$/.exec(String(k || "")); if (!m) return null; const a = +m[1], b = +m[2]; return (a >= 1 && a <= 60 && b <= 30) ? [a * 60, b] : null; }
+function tcParse(k) { if (TCS[k]) return TCS[k]; const m = /^(\d{1,3}(?:\.\d{1,2})?)\+(\d{1,2})$/.exec(String(k || "")); if (!m) return null; const a = +m[1], b = +m[2]; return (a >= 0.25 && a <= 180 && b <= 60 && (a * 60) % 1 === 0) ? [a * 60, b] : null; }
 const CHAT_KEEP = 50;
 const CHAT_MAX = 200;
 // 🤖 ShashkaBot: serverda faqat "o'rindiq", yurishlarni o'yinchining telefoni hisoblaydi (roomBotMove)
 const isBotUid = u => typeof u === "string" && (u === "bot" || u.indexOf("bot_") === 0);
-const BOT_TCS = ["1+1", "2+2", "3+2", "5+3"];
+const BOT_TCS = ["∞", "1+1", "2+2", "3+2", "5+3"];
+const BOT_INF_MS = 600000;   // vaqtsiz o'yinda bot o'ylash vaqtini hisoblash uchun
 
 // Telegram Mini App initData imzosini tekshirish (BOT_TOKEN Render'da Environment'ga yoziladi)
 function verifyInitData(initData) {
@@ -67,7 +68,7 @@ function createRooms({ send, clients, onFinish }) {
 
   // Soat: har ikki tomonning birinchi yurishi bepul, undan keyin navbatdagi o'yinchi vaqti ketadi.
   function clockRunning(room) {
-    if (room.vsBot) return false;   // bot bilan o'yin vaqtsiz
+    if (room.vsBot && room.tc === "∞") return false;   // bot bilan vaqtsiz o'yin
     return !!(room.white && room.black && !room.finished && room.plies >= 2);
   }
 
@@ -338,6 +339,7 @@ function createRooms({ send, clients, onFinish }) {
     room.voice = !!(opts && opts.voice);   // 🎤 ovozli bellashuv: noto'g'ri yurish aytgan yutqazadi
     room.botCfg = (opts && opts.botCfg) || null;
     room.botStarted = !!room.vsBot;   // bot bilan o'yin birdan boshlanadi
+    if (room.vsBot && (opts.tc === "∞" || !tcParse(opts.tc))) { room.tc = "∞"; room.timeMs = BOT_INF_MS; room.incMs = 0; room.clock = { white: BOT_INF_MS, black: BOT_INF_MS }; }
     if (opts && opts.bonus && opts.bonus.ms > 0) {
       const bc = opts.bonus.color === "black" ? "black" : "white";
       room.clock[bc] += Number(opts.bonus.ms);
@@ -618,9 +620,8 @@ function createRooms({ send, clients, onFinish }) {
       if (room.arena || room.locked) return err(c, "Bu o‘yinda vaqtni o‘zgartirib bo‘lmaydi"), true;
       if (!isOwner(room, col)) return err(c, "Vaqtni faqat xona egasi tanlaydi"), true;
       if (room.moves.length > 0 || room.finished || room.botStarted) return err(c, "O‘yin boshlangan, vaqtni o‘zgartirib bo‘lmaydi"), true;
-      const t = tcParse(m.tc);
+      const t = room.vsBot && m.tc === "∞" ? [BOT_INF_MS / 1000, 0] : tcParse(m.tc);
       if (!t) return err(c, "Noma’lum vaqt rejimi"), true;
-      if (room.vsBot && !BOT_TCS.includes(m.tc)) return err(c, "Bu vaqt rejimi bot bilan o‘ynashda mavjud emas"), true;
       room.tc = m.tc;
       room.timeMs = t[0] * 1000;
       room.incMs = t[1] * 1000;

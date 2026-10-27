@@ -715,7 +715,7 @@
     }
 
     function fmt(ms) {
-      if (st && st.vsBot) return "∞";
+      if (st && st.vsBot && (st.tc === "∞" || !st.tc)) return "∞";
       var sec = Math.ceil(ms / 1000), m = Math.floor(sec / 60), s = sec % 60;
       return m + ":" + (s < 10 ? "0" : "") + s;
     }
@@ -1128,7 +1128,8 @@
       var side = st.botColor, legal = allMoves(st.board, codeOf(side));
       if (!legal.length) return cb(null);
       var t0 = Date.now(), done = false;
-      var secs = Math.max(0.05, Math.min(st.botSecs, remaining(side) / 1000 / 15));
+      var timed = st.tc && st.tc !== "∞", rem = remaining(side) / 1000, inc = (st.incMs || 0) / 1000;
+      var secs = timed ? Math.max(0.05, Math.min(st.botSecs, rem / 22 + inc * 0.8, rem / 3)) : Math.max(0.05, Math.min(st.botSecs, rem / 15));
       if (legal.length === 1) {   // yagona yurish (majburiy urish) — o'ylab o'tirmaymiz
         var only = stepsOf(legal[0]); st.botNote = "🤖 majburiy yurish";
         if (only) return setTimeout(function () { cb(only); }, 350);
@@ -1153,8 +1154,8 @@
       }
       var ctl = window.AbortController ? new AbortController() : null;
       // kuchli botlar (Sulton, Legend, Monster) zaif zaxira "miya"ga hech qachon o'tmaydi — dvigatel javob berguncha kutadi
-      var strong = st.botSecs >= 2;
-      var deadline = strong ? Infinity : t0 + (secs * 3 + 25) * 1000;   // dvigatel band bo'lsa navbat kutiladi
+      var strong = st.botSecs >= 2 && !timed;   // vaqtli o'yinda kuchli bot ham soatni o'ylaydi
+      var deadline = strong ? Infinity : timed ? t0 + Math.max(800, Math.min((secs * 2 + 6) * 1000, rem * 1000 * 0.4)) : t0 + (secs * 3 + 25) * 1000;   // dvigatel band bo'lsa navbat kutiladi
       var to = strong ? null : setTimeout(function () { try { if (ctl) ctl.abort(); } catch (e) {} finishWith(null, "🤖 zaxira yurish (AI kechikdi)"); }, deadline - t0);
       var waitT = strong ? setTimeout(function () { if (!done) botWait(true); }, Math.max(4000, secs * 1000 + 3000)) : null;
       var _fw = finishWith; finishWith = function (mv, note) { clearTimeout(waitT); botWait(false); _fw(mv, note); };

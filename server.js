@@ -231,7 +231,7 @@ function serveFile(req, res) {
       html = html.replace("</body>", '<script src="/profile.js?v=' + Date.now() + '"></script>\n</body>');
     }
     if (!html.includes("navbar.js")) {
-      html = html.replace("</body>", '<script src="/navbar.js"></script>\n</body>');
+      html = html.replace("</body>", '<script src="/navbar.js?v=' + String(process.env.RENDER_GIT_COMMIT || Date.now()).slice(0, 8) + '"></script>\n</body>');
     }
     if (!html.includes("voice.js")) html = html.replace("</body>", '<script src="/voice.js?v=3"></script>\n</body>');
     if (!html.includes("ratings.js")) {
