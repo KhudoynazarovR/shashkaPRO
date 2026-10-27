@@ -395,44 +395,66 @@
   var BI = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 20, 25, 30, 45, 60];
   function mTxt(m) { return m === 0.25 ? '¼' : m === 0.5 ? '½' : m === 0.75 ? '¾' : m === 1.5 ? '1½' : String(m); }
   function botSetup(b) {
-    var cfg = { t: 'inf', m: 6, i: 2, pos: 'std' };
+    var cfg = { t: 'inf', m: 3, i: 2, pos: 'std', c: 'white' };
     try { var sv = JSON.parse(localStorage.getItem('spBotCfg') || 'null'); if (sv) for (var k in cfg) if (sv[k] !== undefined) cfg[k] = sv[k]; } catch (e) {}
+    if (BM.indexOf(cfg.m) < 0) cfg.m = 3; if (BI.indexOf(cfg.i) < 0) cfg.i = 2;
+    try { var tw = window.Telegram && window.Telegram.WebApp; if (tw && tw.disableVerticalSwipes) tw.disableVerticalSwipes(); } catch (e) {}
     var ov = document.createElement('div');
     ov.style.cssText = 'position:fixed;inset:0;z-index:2147482000;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box';
-    ov.innerHTML = '<style>#spBS input[type=range]{width:100%;accent-color:#5cb85c;height:28px}#spBS .tg{display:flex;gap:0;border-radius:10px;overflow:hidden;margin:6px 0 4px}#spBS .tg b{flex:1;text-align:center;padding:10px 4px;background:#26344f;cursor:pointer;font-weight:600}#spBS .tg b.on{background:#5a9a2e;color:#fff}#spBS .cl{display:flex;justify-content:center;gap:14px;margin-top:14px}#spBS .cl b{width:72px;height:72px;border-radius:14px;background:#26344f;display:flex;align-items:center;justify-content:center;font-size:40px;cursor:pointer;box-shadow:0 3px 10px #0006}#spBS .cl b:nth-child(2){width:86px;height:86px;font-size:48px}#spBS .lb{font-size:15px;margin-top:12px;opacity:.9}</style>' +
+    ov.innerHTML = '<style>#spBS *{-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}' +
+      '#spBS .tg{display:flex;border-radius:12px;overflow:hidden;margin:6px 0 4px}#spBS .tg b{flex:1;text-align:center;padding:11px 4px;background:#26344f;cursor:pointer;font-weight:600}#spBS .tg b.on{background:#5a9a2e;color:#fff}' +
+      '#spBS .sl{display:flex;align-items:center;gap:10px;margin-top:4px}#spBS .pm{width:40px;height:40px;flex:none;border-radius:50%;background:#26344f;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;cursor:pointer}' +
+      '#spBS .tr{flex:1;height:40px;position:relative;touch-action:none;cursor:pointer}#spBS .tr i{position:absolute;left:0;right:0;top:17px;height:6px;border-radius:3px;background:#3a4560}#spBS .tr u{position:absolute;left:0;top:17px;height:6px;border-radius:3px;background:#5cb85c}' +
+      '#spBS .tr s{position:absolute;top:8px;width:24px;height:24px;margin-left:-12px;border-radius:50%;background:#7bd36b;box-shadow:0 2px 6px #0008}' +
+      '#spBS .lb{font-size:15px;margin-top:12px;opacity:.9}#spBS .lb b{color:#ffd86b;font-size:17px}' +
+      '#spBS .go{display:block;width:100%;margin-top:16px;padding:15px;border:0;border-radius:14px;background:linear-gradient(90deg,#2e9d3a,#5cb85c);color:#fff;font-size:21px;font-weight:800;letter-spacing:1px;box-shadow:0 4px 14px #0007;cursor:pointer}</style>' +
       '<div id="spBS" style="width:100%;max-width:420px;background:#101a2e;color:#fff;border-radius:18px;padding:18px;box-sizing:border-box;font:16px system-ui,sans-serif;max-height:92vh;overflow:auto">' +
       '<div style="display:flex;align-items:center"><b style="flex:1;font-size:19px">⚔️ Bot bilan o‘ynash</b><span data-x style="font-size:24px;padding:2px 8px;cursor:pointer">✕</span></div>' +
       '<div style="text-align:center;margin:8px 0 4px;font-weight:700;color:#c98bff">' + b.name.replace(/[<>]/g, '') + '</div>' +
       '<div class="lb">⏱ Vaqt nazorati</div><div class="tg" data-g="t"><b data-v="inf">∞ Vaqtsiz</b><b data-v="clk">⏱ Vaqtli</b></div>' +
-      '<div data-clk><div class="lb">Daqiqa: <b data-mv></b></div><input type="range" data-m min="0" max="' + (BM.length - 1) + '" step="1">' +
-      '<div class="lb">Har yurishga qo‘shimcha soniya: <b data-iv></b></div><input type="range" data-i min="0" max="' + (BI.length - 1) + '" step="1"></div>' +
+      '<div data-clk><div class="lb">Daqiqa: <b data-mv></b></div><div class="sl" data-s="m"><span class="pm" data-d="-1">−</span><div class="tr"><i></i><u></u><s></s></div><span class="pm" data-d="1">+</span></div>' +
+      '<div class="lb">Har yurishga qo‘shimcha soniya: <b data-iv></b></div><div class="sl" data-s="i"><span class="pm" data-d="-1">−</span><div class="tr"><i></i><u></u><s></s></div><span class="pm" data-d="1">+</span></div></div>' +
       '<div class="lb">📖 Boshlang‘ich holat</div><div class="tg" data-g="pos"><b data-v="std">📋 Standart</b><b data-v="idf">🎲 IDF 780</b></div>' +
-      '<div class="lb" style="text-align:center;margin-top:14px">Rangni tanlang — o‘yin boshlanadi</div>' +
-      '<div class="cl"><b data-c="black" title="Qora">⚫</b><b data-c="random" title="Tasodifiy">🎲</b><b data-c="white" title="Oq">⚪</b></div></div>';
+      '<div class="lb">🎨 Rangingiz</div><div class="tg" data-g="c"><b data-v="white">⚪ Oq</b><b data-v="random">🎲 Tasodifiy</b><b data-v="black">⚫ Qora</b></div>' +
+      '<button class="go" data-go>▶ O‘YNASH</button></div>';
     document.body.appendChild(ov);
     var q = function (x) { return ov.querySelector(x); };
-    var mI = q('[data-m]'), iI = q('[data-i]');
-    mI.value = Math.max(0, BM.indexOf(cfg.m)); iI.value = Math.max(0, BI.indexOf(cfg.i));
+    var L = { m: BM, i: BI };
     function upd() {
-      cfg.m = BM[+mI.value]; cfg.i = BI[+iI.value];
       q('[data-mv]').textContent = mTxt(cfg.m); q('[data-iv]').textContent = cfg.i;
       q('[data-clk]').style.display = cfg.t === 'clk' ? '' : 'none';
       [].forEach.call(ov.querySelectorAll('.tg'), function (g) { var k = g.getAttribute('data-g'); [].forEach.call(g.children, function (x) { x.className = x.getAttribute('data-v') === cfg[k] ? 'on' : ''; }); });
+      ['m', 'i'].forEach(function (k) {
+        var pc = L[k].indexOf(cfg[k]) / (L[k].length - 1) * 100, sl = q('[data-s="' + k + '"]');
+        sl.querySelector('u').style.width = pc + '%'; sl.querySelector('s').style.left = pc + '%';
+      });
     }
+    ['m', 'i'].forEach(function (k) {
+      var sl = q('[data-s="' + k + '"]'), tr = sl.querySelector('.tr'), drag = false;
+      function at(e) {
+        var r = tr.getBoundingClientRect(), x = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+        var v = L[k][Math.round(x * (L[k].length - 1))];
+        if (v !== cfg[k]) { cfg[k] = v; upd(); }
+      }
+      tr.addEventListener('pointerdown', function (e) { drag = true; try { tr.setPointerCapture(e.pointerId); } catch (x) {} at(e); e.preventDefault(); });
+      tr.addEventListener('pointermove', function (e) { if (drag) { at(e); e.preventDefault(); } });
+      tr.addEventListener('pointerup', function () { drag = false; });
+      tr.addEventListener('pointercancel', function () { drag = false; });
+      [].forEach.call(sl.querySelectorAll('.pm'), function (pb) {
+        pb.onclick = function () { var j = L[k].indexOf(cfg[k]) + (+pb.getAttribute('data-d')); if (j >= 0 && j < L[k].length) { cfg[k] = L[k][j]; upd(); } };
+      });
+    });
     [].forEach.call(ov.querySelectorAll('.tg b'), function (x) { x.onclick = function () { cfg[x.parentNode.getAttribute('data-g')] = x.getAttribute('data-v'); upd(); }; });
-    mI.oninput = iI.oninput = upd;
     q('[data-x]').onclick = function () { ov.remove(); };
     ov.onclick = function (e) { if (e.target === ov) ov.remove(); };
-    [].forEach.call(ov.querySelectorAll('[data-c]'), function (x) {
-      x.onclick = function () {
-        try { localStorage.setItem('spBotCfg', JSON.stringify(cfg)); } catch (e) {}
-        var real = document.querySelector('#lbPl [data-a="ch"][data-id="' + b.uid + '"]');
-        if (!real) { alert('Bot hozir band, birozdan keyin urinib ko‘ring'); return; }
-        window.__botTc = cfg.t === 'clk' ? cfg.m + '+' + cfg.i : '∞';
-        window.__botColor = x.getAttribute('data-c'); window.__botPos = cfg.pos;
-        ov.remove(); real.click();
-      };
-    });
+    q('[data-go]').onclick = function () {
+      try { localStorage.setItem('spBotCfg', JSON.stringify(cfg)); } catch (e) {}
+      var real = document.querySelector('#lbPl [data-a="ch"][data-id="' + b.uid + '"]');
+      if (!real) { alert('Bot hozir band, birozdan keyin urinib ko‘ring'); return; }
+      window.__botTc = cfg.t === 'clk' ? cfg.m + '+' + cfg.i : '∞';
+      window.__botColor = cfg.c; window.__botPos = cfg.pos;
+      ov.remove(); real.click();
+    };
     upd();
   }
   window.spBotSetup = botSetup;
