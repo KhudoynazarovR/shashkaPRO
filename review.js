@@ -54,6 +54,7 @@
   }
 
   W.spReview = function (g) {
+    var TERM = /Terminator/i.test(g.bot || '');
     var me = g.me === 'black' ? -1 : 1, mv = group(g.moves || []);
     var bs = [start()], sides = [1], i;
     var stepB = start();
@@ -113,6 +114,7 @@
             '<button class="bt" data-v="' + e.k + '">👁 ' + T('Ko‘rish') + '</button><button class="bt g" data-p="' + e.k + '">🔁 ' + T('Shu joydan qayta o‘ynash') + '</button></div>';
         });
       }
+      if (TERM) h = h.replace(/👹/g, '🦾').replace(/Монстра/g, 'Терминатора').replace(/Монстр/g, 'Терминатор').replace(/the Monster/g, 'Terminator').replace(/Monster/g, 'Terminator');
       box.innerHTML = h;
       box.querySelector('#rvX').onclick = function () { ov.remove(); };
       [].forEach.call(box.querySelectorAll('[data-p]'), function (b) { b.onclick = function () { playFrom(+b.getAttribute('data-p')); }; });
