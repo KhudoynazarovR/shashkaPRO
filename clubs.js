@@ -15,11 +15,14 @@ try {
 const toRow = c => ({ ...c, members: [...c.members], pending: [...c.pending], admins: [...c.admins] });
 const fromRow = c => ({ id: c.id, name: c.name, desc: c.desc || '', leaderUid: c.leaderUid, leaderName: c.leaderName, created: c.created,
   open: c.open !== false, img: c.img || '', pts: c.pts || 0, tw: c.tw || 0, members: new Map(c.members), pending: new Map(c.pending || []), admins: new Set(c.admins || [c.leaderUid]) });
-let pool = null, ready = false;
+let pool = null, ready = false, lastJ = '';
 async function writeDb() {
   if (!pool || !ready) return;
   try {
-    await pool.query("insert into kv(k, v) values('clubs', $1) on conflict (k) do update set v = excluded.v", [JSON.stringify([...clubs.values()].map(toRow))]);
+    const j = JSON.stringify([...clubs.values()].map(toRow));
+    if (j === lastJ) return;
+    await pool.query("insert into kv(k, v) values('clubs', $1) on conflict (k) do update set v = excluded.v", [j]);
+    lastJ = j;
   } catch (e) { console.log('Klub DB yozish xatosi:', e.message); }
 }
 if (process.env.DATABASE_URL) {
@@ -49,7 +52,7 @@ function save() {
     timer = null;
     try { fs.writeFileSync(FILE, JSON.stringify([...clubs.values()].map(c => ({ ...c, members: [...c.members], pending: [...c.pending], admins: [...c.admins] })))); } catch (e) {}
     writeDb();
-  }, 500);
+  }, 15000);
 }
 const clean = (s, n) => String(s || '').replace(/[<>\u0000-\u001f]/g, '').trim().slice(0, n);
 const okImg = s => typeof s === 'string' && s.length < 30000 && IMG_RE.test(s);

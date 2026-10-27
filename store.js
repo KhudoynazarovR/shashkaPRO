@@ -11,14 +11,60 @@ if (!Array.isArray(db.groups)) db.groups = [];
 const URL_ = process.env.DATABASE_URL;
 let pool = null, ready = false, timer = null;
 
+// Rasmlar (data:image...) alohida "blob:<hash>" qatorlarida bir marta saqlanadi,
+// asosiy "players" qatori kichik bo'ladi. Bazaga ko'pi bilan har 10 soniyada yoziladi.
+const crypto = require('crypto');
+const BLOB = '@@blob:';
+const hashOf = new Map(); // string -> hash
+let lastMain = '', writing = false, lastVac = 0, writes = 0;
+function packJson(blobs) {
+  return JSON.stringify(db, (k, v) => {
+    if (typeof v === 'string' && v.length > 1500 && v.startsWith('data:')) {
+      let h = hashOf.get(v);
+      if (!h) { h = crypto.createHash('sha1').update(v).digest('hex'); hashOf.set(v, h); }
+      blobs.set(h, v);
+      return BLOB + h;
+    }
+    return v;
+  });
+}
+function unpack(v, blobs) {
+  if (typeof v === 'string') return v.startsWith(BLOB) ? (blobs.get(v.slice(BLOB.length)) || '') : v;
+  if (Array.isArray(v)) { for (let i = 0; i < v.length; i++) v[i] = unpack(v[i], blobs); return v; }
+  if (v && typeof v === 'object') { for (const k of Object.keys(v)) v[k] = unpack(v[k], blobs); return v; }
+  return v;
+}
+const savedBlobs = new Set();
 async function writeDb() {
   if (!pool || !ready) return;
+  if (writing) { setTimeout(writeDb, 3000); return; }
+  writing = true;
   try {
-    await pool.query(
-      "insert into kv(k, v) values('players', $1) on conflict (k) do update set v = excluded.v",
-      [JSON.stringify(db)]
-    );
+    const blobs = new Map();
+    const main = packJson(blobs);
+    for (const [h, v] of blobs) {
+      if (savedBlobs.has(h)) continue;
+      await pool.query("insert into kv(k, v) values($1, $2) on conflict (k) do nothing", ['blob:' + h, JSON.stringify(v)]);
+      savedBlobs.add(h);
+    }
+    if (main !== lastMain) {
+      await pool.query(
+        "insert into kv(k, v) values('players', $1) on conflict (k) do update set v = excluded.v",
+        [main]
+      );
+      lastMain = main; writes++;
+    }
+    // soatiga bir marta: ishlatilmayotgan rasmlarni o'chirish va VACUUM
+    if (Date.now() - lastVac > 3600e3) {
+      lastVac = Date.now();
+      const keep = [...blobs.keys()].map(h => 'blob:' + h);
+      await pool.query("delete from kv where k like 'blob:%' and not (k = any($1))", [keep]);
+      for (const h of [...savedBlobs]) if (!blobs.has(h)) savedBlobs.delete(h);
+      if (hashOf.size > 5000) hashOf.clear();
+      await pool.query('vacuum kv');
+    }
   } catch (e) { console.log('DB yozish xatosi:', e.message); }
+  writing = false;
 }
 
 function writeFile() {
@@ -37,8 +83,14 @@ if (URL_) {
   (async () => {
     try {
       await pool.query('create table if not exists kv (k text primary key, v jsonb not null)');
+      // eski shishgan jadvalni siqish (joyni diskka qaytaradi)
+      try { await pool.query('vacuum full kv'); console.log('DB: vacuum full bajarildi'); } catch (e) { console.log('DB vacuum xato:', e.message); }
       const r = await pool.query("select v from kv where k = 'players'");
       if (r.rows.length) {
+        const bl = new Map();
+        const br = await pool.query("select k, v from kv where k like 'blob:%'");
+        for (const row of br.rows) { const h = row.k.slice(5); bl.set(h, row.v); savedBlobs.add(h); }
+        unpack(r.rows[0].v, bl);
         const remote = (r.rows[0].v && r.rows[0].v.users) || {};
         if (r.rows[0].v && Array.isArray(r.rows[0].v.puzzles)) db.puzzles = r.rows[0].v.puzzles;
         if (r.rows[0].v && Array.isArray(r.rows[0].v.shop)) db.shop = r.rows[0].v.shop;
@@ -57,18 +109,15 @@ if (URL_) {
       await writeDb();
     } catch (e) { console.log('DB ulanish xatosi:', e.message); }
   })();
-  const bye = async () => { await writeDb(); process.exit(0); };
+  const bye = async () => { writing = false; await writeDb(); process.exit(0); };
   process.on('SIGTERM', bye);
   process.on('SIGINT', bye);
 }
 
+let dbTimer = null;
 function save() {
-  if (timer) return;
-  timer = setTimeout(() => {
-    timer = null;
-    writeFile();
-    writeDb();
-  }, 200);
+  if (!timer) timer = setTimeout(() => { timer = null; writeFile(); }, 5000);
+  if (!dbTimer) dbTimer = setTimeout(() => { dbTimer = null; writeDb(); }, 10000);
 }
 
 function getOrCreate(tg) {
