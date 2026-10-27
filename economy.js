@@ -300,24 +300,20 @@ function handle(req, res, url) {
     if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
     readBody(req, 2000, body => {
       let j = {}; try { j = JSON.parse(body); } catch (e) {}
-      const n = [4, 6, 8].includes(+j.n) ? +j.n : 0, pairs = n * n / 2, mv = Math.round(+j.mv || 0), ms = Math.round(+j.ms || 0);
-      if (!n || mv < pairs || mv > 2000) return send(res, 400, { error: 'bad' });
-      const u = store.getOrCreate(_tg); u.mem = u.mem || { best: {} }; u.mem.best = u.mem.best || {};
-      const now = Date.now(), minMs = pairs * 1200;
-      if (now - (u.mem.last || 0) < minMs) return send(res, 429, { error: 'slow' });   // juda tez — o'yin bo'lishi mumkin emas
+      const P = { '4x6': 12, '6x6': 18 }[j.n], R = { '4x6': 3, '6x6': 5 }[j.n], mv = Math.round(+j.mv || 0), ms = Math.round(+j.ms || 0);
+      if (!P || mv < Math.ceil(P / 2) || mv > 2000) return send(res, 400, { error: 'bad' });
+      const u = store.getOrCreate(_tg); u.mem = u.mem || {};
+      const now = Date.now();
+      if (now - (u.mem.last || 0) < P * 1500 || ms < P * 1500) return send(res, 200, { ok: true, gain: 0 });   // juda tez — tanga yo'q
       u.mem.last = now;
-      const R = { 4: 2, 6: 5, 8: 10 }[n], day = new Date(now + 5 * 3600e3).toISOString().slice(0, 10);
+      const day = new Date(now + 5 * 3600e3).toISOString().slice(0, 10);
       if (u.mem.day !== day) { u.mem.day = day; u.mem.coins = 0; }
-      let gain = 0, record = false;
-      if (j.mode === 'solo') {
-        if (ms >= minMs) { gain = R; const b = u.mem.best[n]; if (!b || mv < b.mv || (mv === b.mv && ms < b.ms)) { u.mem.best[n] = { mv, ms, at: now }; record = true; } }
-      } else if (j.win) gain = Math.round(R * [1, 1.5, 2][Math.max(0, Math.min(2, +j.lv || 0))]);
+      let gain = j.win && (+j.me || 0) > (+j.bot || 0) ? Math.round(R * [1, 1.5, 2][Math.max(0, Math.min(2, +j.lv || 0))]) : 0;
       const CAP = 60, capped = gain > 0 && u.mem.coins >= CAP;
       gain = Math.max(0, Math.min(gain, CAP - u.mem.coins));
-      u.mem.coins += gain; u.diamonds = (u.diamonds || 0) + gain;
-      u.mem.games = (u.mem.games || 0) + 1;
+      u.mem.coins += gain; u.diamonds = (u.diamonds || 0) + gain; u.mem.games = (u.mem.games || 0) + 1;
       store.save();
-      send(res, 200, { ok: true, gain, record, capped, coins: u.diamonds });
+      send(res, 200, { ok: true, gain, capped, coins: u.diamonds });
     });
     return true;
   }
