@@ -203,6 +203,7 @@ async function onInline(q) {
   const mph = G.mmUrl(mcode, 0, from, mrom), mres = mph && {
     type: "photo", id: "m_" + mcode + "_" + msz + "_" + mtc + (mrom ? "_r" : ""), photo_url: mph, thumbnail_url: mph, photo_width: 1000, photo_height: 700,
     title: (mrom ? "🌹 Xotira · Romantik · " : "🧠 Xotira o‘ynash · ") + msz.replace("x", "×"), description: "Juftliklarni topish o‘yini · birinchi kirgan raqib bo‘ladi. Masalan: xotira romantik 6x6 10s",
+    caption: G.MM_CAP,
     reply_markup: { inline_keyboard: [[{ text: "▶ O‘yinga kirish", url: roomLink("mm_" + mcode) }]] }
   };
   if (mres) { if (/xotira|memori|памят|romant/i.test(mq)) results.unshift(mres); else results.push(mres); }

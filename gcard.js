@@ -139,9 +139,18 @@ function mmInfo(r) {
   return { st, a: P[0] ? P[0].name : '', b: P[1] ? P[1].name : '', sa: S ? S.sc[0] : 0, sb: S ? S.sc[1] : 0, turn: S ? S.turn : 0, win: r ? r.winner : null, size: r ? r.size : '4x6', tc: r ? r.tc : 0, found, v };
 }
 function tcTxt(tc) { return tc > 0 ? tc + ' s' : tc < 0 ? '⚡ ' + (-tc / 60) + ' daq' : 'vaqtsiz'; }
+// emoji rasmlari (public/img/emo/<kod>.png) — server emoji shriftini chiza olmaydi
+const EMO = new Map();
+function emo(s) {
+  const k = Array.from(String(s)).map(c => c.codePointAt(0).toString(16)).filter(h => h !== 'fe0f').join('-');
+  if (EMO.has(k)) return EMO.get(k);
+  let v = null; try { v = 'data:image/png;base64,' + require('fs').readFileSync(require('path').join(__dirname, 'public', 'img', 'emo', k + '.png')).toString('base64'); } catch (e) {}
+  EMO.set(k, v); return v;
+}
 async function mmRender(codeX, from, romQ) {
   const r = MR() && MR().get(codeX), I = mmInfo(r); if (!r && from) I.a = from;
   const rom = r ? r.theme === 'romantic' : !!romQ;
+  const DEMO = r && r.S ? {} : rom ? { 0: ['🌹', 1], 5: ['🌹', 1], 2: ['💌', 0], 9: ['🦋', 0], 14: ['🧸', 2], 19: ['🧸', 2], 22: ['💍', 0], 11: ['🌷', 0] } : { 0: ['🦊', 1], 5: ['🦊', 1], 2: ['🐼', 0], 9: ['🐸', 0], 14: ['🐱', 2], 19: ['🐱', 2], 22: ['🦁', 0] };
   const key = 'mm:' + codeX + ':' + (from || '') + ':' + (rom ? 'r' : '') + ':' + I.st + ':' + I.sa + ':' + I.sb + ':' + I.turn + ':' + I.found + ':' + I.v + ':' + I.a + ':' + I.b + ':' + (r && r.S ? r.S.up.join(',') : '');
   if (cache.has(key)) return cache.get(key);
   const sharp = require('sharp'), F = 'DejaVu Sans,sans-serif';
@@ -149,7 +158,11 @@ async function mmRender(codeX, from, romQ) {
   const cell = Math.floor(Math.min(680 / w, 680 / h)), ox = 10 + (680 - cell * w) / 2, oy = 10 + (680 - cell * h) / 2;
   let g = '';
   for (let i = 0; i < w * h; i++) {
-    const x = ox + (i % w) * cell + 4, y = oy + Math.floor(i / w) * cell + 4, z = cell - 8, d = S && S.done[i], up = S && S.up.includes(i);
+    const x = ox + (i % w) * cell + 4, y = oy + Math.floor(i / w) * cell + 4, z = cell - 8;
+    let d = S && S.done[i], up = S && S.up.includes(i), sym = S ? S.deck[i] : null;
+    if (!S && DEMO[i]) { sym = DEMO[i][0]; d = DEMO[i][1]; up = !d; }   // taklif kartasi: bir nechta karta ochiq (o'yin nima ekani ko'rinsin)
+    const im = sym && emo(sym);
+    if (im && (d || up)) { g += '<rect x="' + x + '" y="' + y + '" width="' + z + '" height="' + z + '" rx="12" fill="' + (d === 1 ? '#c8f7c5' : d === 2 ? '#ffd9cf' : '#fdf6e3') + '" stroke="' + (d === 1 ? '#3fa34d' : d === 2 ? '#e0533d' : '#ffd54f') + '" stroke-width="5"/><image href="' + im + '" x="' + (x + z * .17) + '" y="' + (y + z * .17) + '" width="' + (z * .66) + '" height="' + (z * .66) + '"/>'; continue; }
     if (d) g += '<rect x="' + x + '" y="' + y + '" width="' + z + '" height="' + z + '" rx="12" fill="' + (d === 1 ? '#3fa34d' : '#e0533d') + '"/><path d="M' + (x + z * .28) + ' ' + (y + z * .52) + ' l' + (z * .16) + ' ' + (z * .16) + ' l' + (z * .3) + ' -' + (z * .32) + '" stroke="#fff" stroke-width="' + (z * .09) + '" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
     else if (up) g += '<rect x="' + x + '" y="' + y + '" width="' + z + '" height="' + z + '" rx="12" fill="#fdf6e3" stroke="#ffd54f" stroke-width="4"/><text x="' + (x + z / 2) + '" y="' + (y + z * .66) + '" font-size="' + (z * .5) + '" text-anchor="middle" fill="#7a5a10" font-family="' + F + '">?</text>';
     else if (rom) { const cx = x + z / 2, cy = y + z * .54, k = z * .2; g += '<rect x="' + x + '" y="' + y + '" width="' + z + '" height="' + z + '" rx="12" fill="url(#cb)" stroke="#ffffff" stroke-width="2"/><path d="M' + cx + ' ' + (cy + k * 1.1) + ' C' + (cx - k * 2.2) + ' ' + (cy - k * .3) + ' ' + (cx - k * 1.1) + ' ' + (cy - k * 1.9) + ' ' + cx + ' ' + (cy - k * .8) + ' C' + (cx + k * 1.1) + ' ' + (cy - k * 1.9) + ' ' + (cx + k * 2.2) + ' ' + (cy - k * .3) + ' ' + cx + ' ' + (cy + k * 1.1) + ' Z" fill="#ff4d8d"/>'; }
@@ -172,6 +185,7 @@ async function mmRender(codeX, from, romQ) {
   cache.set(key, buf); if (cache.size > 300) cache.delete(cache.keys().next().value);
   return buf;
 }
+const MM_CAP = 'O‘yla, izla, top — keng mushohada 🎮';
 function mmUrl(codeX, v, from, rom) { const b = BASE(); return b ? b + '/api/mcard/' + codeX + '.jpg?v=' + (v || 0) + (from ? '&f=' + encodeURIComponent(from) : '') + (rom ? '&r=1' : '') : ''; }
 function mmCaption(codeX, from) {
   const r = MR() && MR().get(codeX), I = mmInfo(r), sz = ' · ' + I.size.replace('x', '×') + ' · ⏱ ' + tcTxt(I.tc);
@@ -194,7 +208,7 @@ function mmChosen(codeX, imid, from, link) { if (codeX && imid) msgs.set('mm:' +
 function mmEdit(r, m) {
   m.last = Date.now(); m.ver++;
   const u = mmUrl(r.code, m.ver); if (!u) return;
-  tg('editMessageMedia', { inline_message_id: m.imid, media: { type: 'photo', media: u }, reply_markup: mmMarkup(m.link, r.code) });
+  tg('editMessageMedia', { inline_message_id: m.imid, media: { type: 'photo', media: u, caption: MM_CAP }, reply_markup: mmMarkup(m.link, r.code) });
 }
 function mmTouch(r) {
   const m = r && msgs.get('mm:' + r.code); if (!m) return;
@@ -213,4 +227,4 @@ function handleHttp(req, res, p) {
     .catch(e => { console.log('[gcard]', e.message); res.writeHead(500); res.end(); });
   return true;
 }
-module.exports = { mmUrl, mmCaption, mmMarkup, mmChosen, mmTouch, mmNow, mmRender, setRooms: r => { ROOMS = r; }, setApi: a => { API = a; }, api: () => API, rooms: () => ROOMS, url, caption, markup, chosen, touch, now, msgOf, move, parseOpt, handleHttp, render, tg };
+module.exports = { MM_CAP, mmUrl, mmCaption, mmMarkup, mmChosen, mmTouch, mmNow, mmRender, setRooms: r => { ROOMS = r; }, setApi: a => { API = a; }, api: () => API, rooms: () => ROOMS, url, caption, markup, chosen, touch, now, msgOf, move, parseOpt, handleHttp, render, tg };
