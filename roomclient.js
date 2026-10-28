@@ -93,7 +93,7 @@
         bar.style.cssText = "position:fixed;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:9500;background:#1c2547;border:2px solid #ffd54f;border-radius:18px;padding:12px;color:#fff;font:15px system-ui,sans-serif;box-shadow:0 8px 24px #000a;text-align:center";
         document.body.appendChild(bar);
       }
-      bar.innerHTML = "♟ <b>" + String(m.white || "").replace(/[<>&]/g, "") + "</b> raqib kutyapti" + "<button id=\"rcSitB\" style=\"display:block;width:100%;margin-top:10px;padding:14px;border:0;border-radius:14px;background:linear-gradient(90deg,#2e9d3a,#5cb85c);color:#fff;font:800 18px system-ui\">▶ O‘yinga qo‘shilish (⚫ qora)</button><div style=\"opacity:.7;font-size:13px;margin-top:6px\">yoki shunchaki tomosha qiling 👁</div>";
+      var _bw = m.sitColor !== "black"; bar.innerHTML = "♟ <b>" + String(m.white || m.black || "").replace(/[<>&]/g, "") + "</b> raqib kutyapti" + "<button id=\"rcSitB\" style=\"display:block;width:100%;margin-top:10px;padding:14px;border:0;border-radius:14px;background:linear-gradient(90deg,#2e9d3a,#5cb85c);color:#fff;font:800 18px system-ui\">▶ O‘yinga qo‘shilish (" + (_bw ? "⚪ oq" : "⚫ qora") + ")</button><div style=\"opacity:.7;font-size:13px;margin-top:6px\">yoki shunchaki tomosha qiling 👁</div>";
       document.getElementById("rcSitB").onclick = function () { send({ type: "roomSit", roomId: roomId }); this.disabled = true; this.textContent = "⏳"; };
     }
     var st = {

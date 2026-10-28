@@ -42,6 +42,7 @@ function roomLink(id) {
   return "https://t.me/" + BOT + "/" + APP + "?startapp=" + id;
 }
 
+setTimeout(() => { try { require('./grp.js').setLink(roomLink); } catch (e) {} }, 0);
 function playMarkup(id) {
   return { inline_keyboard: [[{ text: "♟️ O‘ynash", url: roomLink(id) }]] };
 }
@@ -146,6 +147,8 @@ async function onMessage(msg) {
   if (cmd[1] && cmd[1].toLowerCase() !== BOT.toLowerCase()) return; // boshqa botga
   const name = cmd[0].toLowerCase();
 
+  if (name === "/top" || name === "/reyting") { await require("./grp.js").cmdTop(msg); return; }
+  if (name === "/turnir" || name === "/tournament") { await require("./grp.js").cmdTour(msg, text.split(/\s+/).slice(1).join(" ")); return; }
   if (name === "/new" || name === "/shashka") {
     const id = newRoomId();
     await api("sendMessage", {
@@ -184,12 +187,14 @@ async function onMessage(msg) {
 
 async function onInline(q) {
   const id = newRoomId(), G = require("./gcard.js"), from = String((q.from && (q.from.first_name || q.from.username)) || "").slice(0, 30);
+  const o = G.parseOpt(q.query), tcC = (o.tc || "").replace("+", "p").replace(".", "d");
   const results = [];
   const ph = G.url(id, from, 0);
+  const side = o.col === "b" ? "⚪ oq" : o.col === "r" ? "tasodifiy rang" : "⚫ qora", mine = o.col === "b" ? "⚫ qora" : o.col === "r" ? "🎲 tasodifiy" : "⚪ oq";
   if (ph) results.push({   // 🖼 doska kartasi: guruhga rasm + "O'yinga kirish" tugmasi, keyin jonli yangilanadi
-    type: "photo", id: "g_" + id, photo_url: ph, thumbnail_url: ph, photo_width: 1000, photo_height: 700,
-    title: "♟️ Shashka o‘ynash", description: "Doska bilan taklif — birinchi kirgan raqib bo‘ladi",
-    caption: G.caption(id, from), parse_mode: "HTML",
+    type: "photo", id: "g_" + id + "_" + (tcC || "0") + "_" + o.col, photo_url: ph, thumbnail_url: ph, photo_width: 1000, photo_height: 700,
+    title: "♟️ Shashka o‘ynash" + (o.tc ? " · " + o.tc : ""), description: "Siz: " + mine + " · birinchi kirgan raqib bo‘ladi. Masalan: 3+2 qora",
+    caption: "♟ <b>" + from.replace(/[<>&]/g, "") + "</b> shashka o‘ynashga chaqiryapti!" + (o.tc ? " · ⏱ " + o.tc : "") + "\nBosing — " + side + " bilan raqib bo‘lasiz. Qolganlar tomosha qiladi 👁", parse_mode: "HTML",
     reply_markup: { inline_keyboard: [[{ text: "▶ O‘yinga kirish", url: roomLink(id) }]] }
   });
   results.push({
@@ -203,7 +208,7 @@ async function start() {
   try { await api("deleteWebhook"); } catch (e) {}
   try {
     await api("setMyCommands", {
-      commands: [{ command: "new", description: "Yangi shashka xonasi" }]
+      commands: [{ command: "new", description: "Yangi shashka xonasi" }, { command: "turnir", description: "🏆 Guruh turniri (masalan: /turnir 3+2)" }, { command: "top", description: "📊 Guruh reytingi" }]
     });
   } catch (e) {}
   console.log("[bot] ishga tushdi: @" + BOT);
@@ -222,6 +227,7 @@ async function start() {
     } catch (e) { console.log('[bot] my_chat_member xato:', e.message); }
   }
   async function onCallback(q) {
+    try { if (q.data && q.data.indexOf('g:') === 0 && await require('./grp.js').onCallback(q)) return; } catch (e) { console.log('[grp]', e.message); }
     if (q.data && (q.data.indexOf('lg:') === 0 || q.data.indexOf('lgno:') === 0)) {
       const yes = q.data.indexOf('lg:') === 0, code = q.data.slice(yes ? 3 : 5);
       const ok = yes && require('./weblogin.js').botConfirm(code, q.from);
@@ -260,7 +266,7 @@ async function start() {
           else if (u.message && u.message.successful_payment) await pay.onPayment(u.message);
           else if (u.message) await onMessage(u.message);
           else if (u.inline_query) await onInline(u.inline_query);
-          else if (u.chosen_inline_result) { try { const cr = u.chosen_inline_result, rid = String(cr.result_id || '').replace(/^g_/, ''); if (/^g_/.test(cr.result_id || '')) require('./gcard.js').chosen(rid, cr.inline_message_id, (cr.from && (cr.from.first_name || cr.from.username)) || '', roomLink(rid), cr.from && cr.from.id); } catch (e) {} }
+          else if (u.chosen_inline_result) { try { const cr = u.chosen_inline_result, pr = String(cr.result_id || '').split('_'); if (pr[0] === 'g' && pr[1]) { const tc = pr[2] && pr[2] !== '0' ? pr[2].replace('p', '+').replace('d', '.') : ''; require('./gcard.js').chosen(pr[1], cr.inline_message_id, (cr.from && (cr.from.first_name || cr.from.username)) || '', roomLink(pr[1]), cr.from && cr.from.id, tc, pr[3] || 'w'); } } catch (e) { console.log('[gcard]', e.message); } }
           else if (u.callback_query) await onCallback(u.callback_query);
           else if (u.my_chat_member) onMyChat(u.my_chat_member);
         } catch (e) {

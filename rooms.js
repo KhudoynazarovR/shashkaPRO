@@ -97,7 +97,7 @@ function createRooms({ send, clients, onFinish }) {
       wInfo: _pi(room.white), bInfo: _pi(room.black),
       h2h: h2hOf(room),
       black: room.black ? room.black.name : null,
-      whiteOnline: isOnline(room.white), canSit: !!(room.inline && room.white && !room.black && !room.finished),
+      whiteOnline: isOnline(room.white), canSit: !!(room.inline && !room.finished && (!!room.white !== !!room.black)), sitColor: room.white ? 'black' : 'white',
       blackOnline: isOnline(room.black),
       spectators: [...room.members].filter(id => !colorOf(room, clients.get(id) || {})).length,
       spectatorNames: [...room.members].filter(id => !colorOf(room, clients.get(id) || {})).map(id => room.names.get(id) || "Mehmon").slice(0, 8),
@@ -279,7 +279,7 @@ function createRooms({ send, clients, onFinish }) {
         st.save();
       }
     } catch (e) { console.log('Arxiv xatosi:', e.message); }
-    broadcast(room, { type: "roomFinished", roomId: room.id, winner, reason: room.reason, clock: room.clock, text: room.drawText || undefined }); try { require('./gcard.js').touch(room); } catch (e) {} try { afterFinish(room, winner); } catch (e) { console.error("[afterFinish]", e); }
+    broadcast(room, { type: "roomFinished", roomId: room.id, winner, reason: room.reason, clock: room.clock, text: room.drawText || undefined }); try { require('./gcard.js').touch(room); } catch (e) {} try { require('./grp.js').roomFinished(room); } catch (e) {} try { afterFinish(room, winner); } catch (e) { console.error("[afterFinish]", e); }
     if (typeof onFinish === "function") {
       try { onFinish(room); } catch (e) { console.error("[onFinish]", e); }
     }
@@ -560,8 +560,10 @@ function createRooms({ send, clients, onFinish }) {
 
     if (m.type === "roomSit") {   // guruh doskasi: tomoshabin raqib bo'lib o'tiradi
       const u = c.roomUser;
-      if (!room.inline || room.finished || room.black || !u || !room.white || room.white.uid === u.id) return true;
-      room.black = { uid: u.id, name: u.name, clientId: c.id };
+      if (!room.inline || room.finished || !u || (!!room.white === !!room.black)) return true;
+      const own = room.white || room.black; if (own.uid === u.id) return true;
+      const s = { uid: u.id, name: u.name, clientId: c.id };
+      if (room.white) room.black = s; else room.white = s;
       pushState(room);
       return true;
     }
