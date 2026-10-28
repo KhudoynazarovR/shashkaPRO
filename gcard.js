@@ -139,9 +139,10 @@ function mmInfo(r) {
   return { st, a: P[0] ? P[0].name : '', b: P[1] ? P[1].name : '', sa: S ? S.sc[0] : 0, sb: S ? S.sc[1] : 0, turn: S ? S.turn : 0, win: r ? r.winner : null, size: r ? r.size : '4x6', tc: r ? r.tc : 0, found, v };
 }
 function tcTxt(tc) { return tc > 0 ? tc + ' s' : tc < 0 ? '⚡ ' + (-tc / 60) + ' daq' : 'vaqtsiz'; }
-async function mmRender(codeX, from) {
+async function mmRender(codeX, from, romQ) {
   const r = MR() && MR().get(codeX), I = mmInfo(r); if (!r && from) I.a = from;
-  const key = 'mm:' + codeX + ':' + (from || '') + ':' + I.st + ':' + I.sa + ':' + I.sb + ':' + I.turn + ':' + I.found + ':' + I.v + ':' + I.a + ':' + I.b + ':' + (r && r.S ? r.S.up.join(',') : '');
+  const rom = r ? r.theme === 'romantic' : !!romQ;
+  const key = 'mm:' + codeX + ':' + (from || '') + ':' + (rom ? 'r' : '') + ':' + I.st + ':' + I.sa + ':' + I.sb + ':' + I.turn + ':' + I.found + ':' + I.v + ':' + I.a + ':' + I.b + ':' + (r && r.S ? r.S.up.join(',') : '');
   if (cache.has(key)) return cache.get(key);
   const sharp = require('sharp'), F = 'DejaVu Sans,sans-serif';
   const [w, h] = (I.size || '4x6').split('x').map(Number), S = r && r.S;
@@ -151,13 +152,14 @@ async function mmRender(codeX, from) {
     const x = ox + (i % w) * cell + 4, y = oy + Math.floor(i / w) * cell + 4, z = cell - 8, d = S && S.done[i], up = S && S.up.includes(i);
     if (d) g += '<rect x="' + x + '" y="' + y + '" width="' + z + '" height="' + z + '" rx="12" fill="' + (d === 1 ? '#3fa34d' : '#e0533d') + '"/><path d="M' + (x + z * .28) + ' ' + (y + z * .52) + ' l' + (z * .16) + ' ' + (z * .16) + ' l' + (z * .3) + ' -' + (z * .32) + '" stroke="#fff" stroke-width="' + (z * .09) + '" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
     else if (up) g += '<rect x="' + x + '" y="' + y + '" width="' + z + '" height="' + z + '" rx="12" fill="#fdf6e3" stroke="#ffd54f" stroke-width="4"/><text x="' + (x + z / 2) + '" y="' + (y + z * .66) + '" font-size="' + (z * .5) + '" text-anchor="middle" fill="#7a5a10" font-family="' + F + '">?</text>';
+    else if (rom) { const cx = x + z / 2, cy = y + z * .54, k = z * .2; g += '<rect x="' + x + '" y="' + y + '" width="' + z + '" height="' + z + '" rx="12" fill="url(#cb)" stroke="#ffffff" stroke-width="2"/><path d="M' + cx + ' ' + (cy + k * 1.1) + ' C' + (cx - k * 2.2) + ' ' + (cy - k * .3) + ' ' + (cx - k * 1.1) + ' ' + (cy - k * 1.9) + ' ' + cx + ' ' + (cy - k * .8) + ' C' + (cx + k * 1.1) + ' ' + (cy - k * 1.9) + ' ' + (cx + k * 2.2) + ' ' + (cy - k * .3) + ' ' + cx + ' ' + (cy + k * 1.1) + ' Z" fill="#ff4d8d"/>'; }
     else g += '<rect x="' + x + '" y="' + y + '" width="' + z + '" height="' + z + '" rx="12" fill="url(#cb)" stroke="#ffffff33" stroke-width="2"/><text x="' + (x + z / 2) + '" y="' + (y + z * .64) + '" font-size="' + (z * .42) + '" text-anchor="middle" fill="#ffffff40" font-family="' + F + '">♛</text>';
   }
   const live = I.st === 'live';
-  const pl = (y, nm, sc, col, on, crown) => '<g transform="translate(730 ' + y + ')"><rect width="250" height="96" rx="18" fill="' + (on ? '#2b3a6b' : '#1c2547') + '" stroke="' + (on ? '#ffd54f' : '#33406e') + '" stroke-width="3"/><circle cx="40" cy="48" r="20" fill="' + col + '"/>' +
+  const pl = (y, nm, sc, col, on, crown) => '<g transform="translate(730 ' + y + ')"><rect width="250" height="96" rx="18" fill="' + (rom ? (on ? '#ffffff33' : '#ffffff1f') : on ? '#2b3a6b' : '#1c2547') + '" stroke="' + (on ? '#ffd54f' : rom ? '#ffffff55' : '#33406e') + '" stroke-width="3"/><circle cx="40" cy="48" r="20" fill="' + col + '"/>' +
     '<text x="72" y="44" font-size="' + (String(nm || 'Kutilmoqda…').length > 9 ? 18 : 25) + '" font-weight="700" fill="#fff" font-family="' + F + '">' + esc(String(nm || 'Kutilmoqda…').slice(0, 14)) + '</text><text x="72" y="78" font-size="24" font-weight="800" fill="#ffd54f" font-family="' + F + '">' + (I.st === 'wait' ? '' : sc + ' juftlik') + (crown ? '  ★' : '') + '</text></g>';
   const badge = I.st === 'wait' ? '▶ O‘YIN' : live ? 'JONLI' : I.win === -1 ? 'DURANG' : 'G‘OLIB', bc = I.st === 'wait' ? '#2e9d3a' : live ? '#c62828' : '#b7791f';
-  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="700"><defs><linearGradient id="bgm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1f4a8a"/><stop offset="1" stop-color="#060d22"/></linearGradient><linearGradient id="cb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b5ba8"/><stop offset="1" stop-color="#22397a"/></linearGradient></defs>' +
+  const svg = (rom ? '<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="700"><defs><radialGradient id="bgm" cx=".3" cy=".2" r="1"><stop offset="0" stop-color="#ff5c8a"/><stop offset=".55" stop-color="#b0124f"/><stop offset="1" stop-color="#3d0420"/></radialGradient><linearGradient id="cb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#ffd1e0"/></linearGradient></defs>' : '<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="700"><defs><linearGradient id="bgm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1f4a8a"/><stop offset="1" stop-color="#060d22"/></linearGradient><linearGradient id="cb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b5ba8"/><stop offset="1" stop-color="#22397a"/></linearGradient></defs>') +
     '<rect width="1000" height="700" fill="url(#bgm)"/>' + g +
     '<text x="855" y="66" font-size="34" font-weight="800" fill="#ffd54f" text-anchor="middle" font-family="' + F + '">XOTIRA</text>' +
     '<text x="855" y="100" font-size="20" fill="#cbd5f5" text-anchor="middle" font-family="' + F + '">' + esc(I.size.replace('x', '×')) + ' · ' + esc(tcTxt(I.tc).replace('⚡ ', '')) + '</text>' +
@@ -170,7 +172,7 @@ async function mmRender(codeX, from) {
   cache.set(key, buf); if (cache.size > 300) cache.delete(cache.keys().next().value);
   return buf;
 }
-function mmUrl(codeX, v, from) { const b = BASE(); return b ? b + '/api/mcard/' + codeX + '.jpg?v=' + (v || 0) + (from ? '&f=' + encodeURIComponent(from) : '') : ''; }
+function mmUrl(codeX, v, from, rom) { const b = BASE(); return b ? b + '/api/mcard/' + codeX + '.jpg?v=' + (v || 0) + (from ? '&f=' + encodeURIComponent(from) : '') + (rom ? '&r=1' : '') : ''; }
 function mmCaption(codeX, from) {
   const r = MR() && MR().get(codeX), I = mmInfo(r), sz = ' · ' + I.size.replace('x', '×') + ' · ⏱ ' + tcTxt(I.tc);
   const vt = r && r.votes ? Object.values(r.votes) : [], v0 = vt.filter(x => x === 0).length;
@@ -204,7 +206,7 @@ function mmTouch(r) {
 function mmNow(r) { const m = r && msgs.get('mm:' + r.code); if (m) { if (m.tmr) { clearTimeout(m.tmr); m.tmr = null; } mmEdit(r, m); } }
 function handleHttp(req, res, p) {
   const mx = /^\/api\/mcard\/([A-Z0-9]{6})\.jpg$/.exec(p);
-  if (mx) { mmRender(mx[1], String(new URL(req.url, 'http://x').searchParams.get('f') || '').slice(0, 30)).then(buf => { res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=60' }); res.end(buf); }).catch(e => { console.log('[mcard]', e.message); res.writeHead(500); res.end(); }); return true; }
+  if (mx) { mmRender(mx[1], String(new URL(req.url, 'http://x').searchParams.get('f') || '').slice(0, 30), new URL(req.url, 'http://x').searchParams.get('r') === '1').then(buf => { res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=60' }); res.end(buf); }).catch(e => { console.log('[mcard]', e.message); res.writeHead(500); res.end(); }); return true; }
   const mm = /^\/api\/gcard\/([a-z0-9]{4,16})\.jpg$/.exec(p); if (!mm) return false;
   const q = new URL(req.url, 'http://x').searchParams;
   render(mm[1], String(q.get('f') || '').slice(0, 30)).then(buf => { res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=60' }); res.end(buf); })

@@ -223,7 +223,7 @@
         }
         if (k === 'memori') {
           var gom = function () { window.spMemori({ onCoins: function (g) { var c = ov.querySelector('.pzhCoin span:last-child'); if (c && g) c.textContent = String((parseInt(c.textContent, 10) || 0) + g); } }); };
-          if (window.spMemori) gom(); else { var sm = document.createElement('script'); sm.src = '/memori.js?v=8'; sm.onload = gom; document.head.appendChild(sm); }
+          if (window.spMemori) gom(); else { var sm = document.createElement('script'); sm.src = '/memori.js?v=9'; sm.onload = gom; document.head.appendChild(sm); }
           return;
         }
         if (k === 'deb') {

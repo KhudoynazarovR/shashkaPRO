@@ -86,7 +86,7 @@ async function cmdTour(msg, arg) {
   if (old && old.status !== 'done' && Date.now() - old.at < 6 * 3600e3) return G.tg('sendMessage', { chat_id: msg.chat.id, text: tourText(old), parse_mode: 'HTML', reply_markup: tourKb(old), reply_to_message_id: old.msg });
   const mm = /xotira|memori|память/i.test(arg || '');
   const m = /(\d{1,2})\s*\+\s*(\d{1,2})/.exec(arg || ''), tc = mm ? mmTc(arg) : m ? m[1] + '+' + m[2] : '3+2';
-  const t = a[String(msg.chat.id)] = { game: mm ? 'mm' : 'sh', size: /6\s*[x×х]\s*6/i.test(arg || '') ? '6x6' : '4x6', chat: msg.chat.id, tc, by: String(msg.from.id), byName: nm(msg.from), players: [{ uid: String(msg.from.id), name: nm(msg.from) }], status: 'reg', round: 0, at: Date.now(), pairs: [] };
+  const t = a[String(msg.chat.id)] = { theme: /romant|sevgi|yurak|роман/i.test(arg || '') ? 'romantic' : 'animals', game: mm ? 'mm' : 'sh', size: /6\s*[x×х]\s*6/i.test(arg || '') ? '6x6' : '4x6', chat: msg.chat.id, tc, by: String(msg.from.id), byName: nm(msg.from), players: [{ uid: String(msg.from.id), name: nm(msg.from) }], status: 'reg', round: 0, at: Date.now(), pairs: [] };
   const r = await G.tg('sendMessage', { chat_id: msg.chat.id, text: tourText(t), parse_mode: 'HTML', reply_markup: tourKb(t) });
   if (r && r.result) t.msg = r.result.message_id;
   store.save();
@@ -107,7 +107,7 @@ async function nextRound(t) {
   for (let i = 0; i + 1 < al.length; i += 2) {
     const a = P(al[i]), b = P(al[i + 1]);
     if (t.game === 'mm') {   // 🧠 Xotira juftligi
-      const r = require('./memroom.js').createPair(a, b, t.size, t.tc); r.gt = { chat: t.chat };
+      const r = require('./memroom.js').createPair(a, b, t.size, t.tc, t.theme); r.gt = { chat: t.chat };
       t.pairs.push({ room: r.code, a: a.uid, b: b.uid, win: null, mm: true });
       continue;
     }

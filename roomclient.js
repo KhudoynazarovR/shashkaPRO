@@ -45,7 +45,7 @@
     var roomId = "";
     // ?room= (o'yinga o'tish) Telegram start_param dan ustun: aks holda eski havola/turnir havolasi o'yinni bosib ketadi
     // 🧠 Xotira havolasi (mm_KOD): shashka/AI doskasi emas — Xotira o'yinini ochamiz
-    try { var _sp = (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || ""; if (!q.get("room") && /^mm_[A-Z0-9]{6}$/i.test(_sp)) { if (!window.spMemori) { var _ms = document.createElement("script"); _ms.src = "/memori.js?v=8"; document.head.appendChild(_ms); } return; } } catch (e) {}
+    try { var _sp = (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || ""; if (!q.get("room") && /^mm_[A-Z0-9]{6}$/i.test(_sp)) { if (!window.spMemori) { var _ms = document.createElement("script"); _ms.src = "/memori.js?v=9"; document.head.appendChild(_ms); } return; } } catch (e) {}
     if (q.get("room")) roomId = q.get("room");
     else if (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param && !/^(ref_|pz_|pf_|go_|shop_|pb_|pzt_|ntf_|mm_)/.test(tg.initDataUnsafe.start_param)) roomId = String(tg.initDataUnsafe.start_param);
     var _nb = function () { var bt = document.getElementById("rcBoot"); if (bt) bt.remove(); };

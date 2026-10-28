@@ -12,6 +12,7 @@ const byConn = new Map();      // conn id -> code
 const R = () => crypto.randomInt(1e9) / 1e9;
 
 const ANIMALS = Array.from('🐶🐱🐭🐹🐰🦊🐻🐼🐨🐯🦁🐮🐷🐸🐵🐔🐧🐦🦆🦉🐴🦄🐝🦋🐢🐍🐙🦀🐬🐳🦒🐘');
+const ROMANTIC = (s => Array.from(s).reduce((a, c) => { if (/[\u200d\ufe0f]/.test(c) && a.length) a[a.length - 1] += c; else a.push(c); return a; }, []))('💖💘💝💞💗💓🌹🌷🌸🌺🌻💐🦋🦢🕊️🐞🌈⭐🧸🎀🎁💌💍💎🍓🍒🍫🧁🍭🎂🌙✨🕯️🎈🪷🌼');
 function hook(r) { if (r.inline || r.gt) { try { require('./gcard.js').mmTouch(r); } catch (e) {} } }
 function code() { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s = ''; const b = crypto.randomBytes(6); for (let i = 0; i < 6; i++) s += a[b[i] % a.length]; return s; }
 function send(ws, o) { try { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); } catch (e) {} }
@@ -233,12 +234,12 @@ setInterval(() => {
 function newRoom(o) {
   let k = code(); while (rooms.has(k)) k = code();
   const size = SIZES[o.size] ? o.size : '4x6', tc = TCS.includes(+o.tc) ? +o.tc : 0;
-  const r = { code: k, size, tc, rules: { streak: false, shuffle: false, black: false }, theme: 'animals', symbols: ANIMALS, p: o.p, status: 'wait', at: Date.now(), S: null };
+  const rom = o.theme === 'romantic', r = { code: k, size, tc, rules: { streak: false, shuffle: false, black: false }, theme: rom ? 'romantic' : 'animals', symbols: rom ? ROMANTIC : ANIMALS, p: o.p, status: 'wait', at: Date.now(), S: null };
   rooms.set(k, r); return r;
 }
 // guruh kartasi (inline): chaqiruvchi o'rni band
-function createInline(uid, name, size, tc) { const r = newRoom({ size, tc, p: [{ uid: String(uid), name: String(name || 'O‘yinchi').slice(0, 20), ws: null, offAt: 0 }] }); r.inline = true; return r; }
+function createInline(uid, name, size, tc, theme) { const r = newRoom({ size, tc, theme, p: [{ uid: String(uid), name: String(name || 'O‘yinchi').slice(0, 20), ws: null, offAt: 0 }] }); r.inline = true; return r; }
 // kubok: ikkala o'rin band, ikkalasi kirganda boshlanadi
-function createPair(a, b, size, tc) { return newRoom({ size, tc, p: [{ uid: a.uid, name: a.name, ws: null, offAt: 0 }, { uid: b.uid, name: b.name, ws: null, offAt: 0 }] }); }
+function createPair(a, b, size, tc, theme) { return newRoom({ size, tc, theme, p: [{ uid: a.uid, name: a.name, ws: null, offAt: 0 }, { uid: b.uid, name: b.name, ws: null, offAt: 0 }] }); }
 function again(r) { if (!r || r.status !== 'over' || r.p.length !== 2) return false; r.p.reverse(); r.again = {}; r.votes = {}; r.status = 'wait'; r.S = null; r.at = Date.now(); if (r.p.every(x => x.ws)) deal(r); push(r); return true; }
 module.exports = { handle, onClose, rooms, createInline, createPair, again, finish, push, SIZES };

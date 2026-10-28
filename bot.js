@@ -199,12 +199,13 @@ async function onInline(q) {
   // 🧠 Xotira kartasi
   const mq = String(q.query || ""), msz = /6\s*[x×х]\s*6/i.test(mq) ? "6x6" : "4x6", mtc = /\b20\s*s/i.test(mq) ? 20 : /\b10\s*s/i.test(mq) ? 10 : /2\s*(m|daq)|blitz|⚡/i.test(mq) ? -120 : 0;
   const mcode = (() => { const a = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789", bb = crypto.randomBytes(6); let s = ""; for (let i = 0; i < 6; i++) s += a[bb[i] % a.length]; return s; })();
-  const mph = G.mmUrl(mcode, 0, from), mres = mph && {
-    type: "photo", id: "m_" + mcode + "_" + msz + "_" + mtc, photo_url: mph, thumbnail_url: mph, photo_width: 1000, photo_height: 700,
-    title: "🧠 Xotira o‘ynash · " + msz.replace("x", "×"), description: "Juftliklarni topish o‘yini · birinchi kirgan raqib bo‘ladi. Masalan: xotira 6x6 10s",
+  const mrom = /romant|sevgi|yurak|gul|роман/i.test(mq);
+  const mph = G.mmUrl(mcode, 0, from, mrom), mres = mph && {
+    type: "photo", id: "m_" + mcode + "_" + msz + "_" + mtc + (mrom ? "_r" : ""), photo_url: mph, thumbnail_url: mph, photo_width: 1000, photo_height: 700,
+    title: (mrom ? "🌹 Xotira · Romantik · " : "🧠 Xotira o‘ynash · ") + msz.replace("x", "×"), description: "Juftliklarni topish o‘yini · birinchi kirgan raqib bo‘ladi. Masalan: xotira romantik 6x6 10s",
     reply_markup: { inline_keyboard: [[{ text: "▶ O‘yinga kirish", url: roomLink("mm_" + mcode) }]] }
   };
-  if (mres) { if (/xotira|memori|памят/i.test(mq)) results.unshift(mres); else results.push(mres); }
+  if (mres) { if (/xotira|memori|памят|romant/i.test(mq)) results.unshift(mres); else results.push(mres); }
   results.push({
     type: "article", id: id, title: "♟️ Shashka — oddiy havola", description: "Yangi xona ochish va havolani yuborish",
     input_message_content: { message_text: TEXT }, reply_markup: playMarkup(id)
@@ -274,7 +275,7 @@ async function start() {
           else if (u.message && u.message.successful_payment) await pay.onPayment(u.message);
           else if (u.message) await onMessage(u.message);
           else if (u.inline_query) await onInline(u.inline_query);
-          else if (u.chosen_inline_result) { try { const cr = u.chosen_inline_result, pr = String(cr.result_id || '').split('_'); if (pr[0] === 'm' && pr[1]) { const MRm = require('./memroom.js'), nm0 = (cr.from && (cr.from.first_name || cr.from.username)) || ''; const r = MRm.createInline(cr.from.id, nm0, pr[2], +pr[3] || 0); MRm.rooms.delete(r.code); r.code = pr[1]; MRm.rooms.set(pr[1], r); require('./gcard.js').mmChosen(pr[1], cr.inline_message_id, nm0, roomLink('mm_' + pr[1])); } if (pr[0] === 'g' && pr[1]) { const tc = pr[2] && pr[2] !== '0' ? pr[2].replace('p', '+').replace('d', '.') : ''; require('./gcard.js').chosen(pr[1], cr.inline_message_id, (cr.from && (cr.from.first_name || cr.from.username)) || '', roomLink(pr[1]), cr.from && cr.from.id, tc, pr[3] || 'w'); } } catch (e) { console.log('[gcard]', e.message); } }
+          else if (u.chosen_inline_result) { try { const cr = u.chosen_inline_result, pr = String(cr.result_id || '').split('_'); if (pr[0] === 'm' && pr[1]) { const MRm = require('./memroom.js'), nm0 = (cr.from && (cr.from.first_name || cr.from.username)) || ''; const r = MRm.createInline(cr.from.id, nm0, pr[2], +pr[3] || 0, pr[4] === 'r' ? 'romantic' : 'animals'); MRm.rooms.delete(r.code); r.code = pr[1]; MRm.rooms.set(pr[1], r); require('./gcard.js').mmChosen(pr[1], cr.inline_message_id, nm0, roomLink('mm_' + pr[1])); } if (pr[0] === 'g' && pr[1]) { const tc = pr[2] && pr[2] !== '0' ? pr[2].replace('p', '+').replace('d', '.') : ''; require('./gcard.js').chosen(pr[1], cr.inline_message_id, (cr.from && (cr.from.first_name || cr.from.username)) || '', roomLink(pr[1]), cr.from && cr.from.id, tc, pr[3] || 'w'); } } catch (e) { console.log('[gcard]', e.message); } }
           else if (u.callback_query) await onCallback(u.callback_query);
           else if (u.my_chat_member) onMyChat(u.my_chat_member);
         } catch (e) {
