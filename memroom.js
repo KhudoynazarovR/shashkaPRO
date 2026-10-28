@@ -29,7 +29,12 @@ function view(r, uid) {
     status: r.status, winner: r.winner, quit: r.quit != null ? r.quit : null, gain: r.gain || null, ev: r.ev || null
   };
 }
-function push(r) { r.p.forEach(x => send(x.ws, view(r, x.uid))); r.ev = null; }
+function push(r) {
+  r.p.forEach(x => send(x.ws, view(r, x.uid)));
+  if (r.watch && r.watch.size) { const v = Object.assign(view(r, ''), { watch: true, viewers: r.watch.size }); for (const [, ws] of r.watch) send(ws, v); }
+  r.ev = null;
+}
+const watching = new Map();   // conn id -> code (tomoshabinlar)
 function arm(r) {
   clearTimeout(r.tmr); r.deadline = 0;
   if (r.status !== 'play' || r.tc <= 0) return;
@@ -68,17 +73,29 @@ function deal(r) {
 
 let CL = null;   // server.js dagi ulanishlar (o'yin zalidagilarni topish uchun)
 function lobbyConns(uid) { return CL ? [...CL.values()].filter(x => x && x.lb && !x.isBot && String(x.lb.uid) === String(uid)) : []; }
+function invGone(r, except) {   // taklif qilinganlarga: taklif endi amal qilmaydi
+  if (!r.inv) return;
+  for (const uid of Object.keys(r.inv)) if (uid !== except) lobbyConns(uid).forEach(x => send(x.ws, { type: 'mmInviteGone', code: r.code }));
+  r.inv = {};
+}
 function handle(c, m, clients) {
   if (clients) CL = clients;
   if (!m || typeof m.type !== 'string' || !m.type.startsWith('mm')) return false;
   if (m.type === 'mmPlayers') {   // o'yin zalidagi onlayn o'yinchilar (taklif uchun)
-    const u = who(m), seen = new Set(), list = [];
+    const u = who(m), seen = new Set(), list = [], inMem = new Set();
+    for (const r of rooms.values()) if (r.status === 'play') r.p.forEach(x => { if (x.ws) inMem.add(x.uid); });
     if (CL) for (const x of CL.values()) {
       if (!x || !x.lb || x.isBot || x.hidden) continue;
       const id = String(x.lb.uid); if (seen.has(id) || (u && id === u.uid)) continue; seen.add(id);
-      list.push({ uid: id, name: String(x.lb.name || 'O‘yinchi').slice(0, 24), busy: !!x.lb.inRoom });
+      list.push({ uid: id, name: String(x.lb.name || 'O‘yinchi').slice(0, 24), busy: !!x.lb.inRoom || inMem.has(id) });
     }
     send(c.ws, { type: 'mmPlayers', list: list.slice(0, 100) });
+    return true;
+  }
+  if (m.type === 'mmLive') {   // 📺 jonli efir: hozir ketayotgan o'yinlar
+    const list = [];
+    for (const r of rooms.values()) if (r.status === 'play' && r.p.length === 2 && r.S) list.push({ code: r.code, size: r.size, a: r.p[0].name, b: r.p[1].name, sa: r.S.sc[0], sb: r.S.sc[1], v: r.watch ? r.watch.size : 0 });
+    send(c.ws, { type: 'mmLive', list: list.slice(0, 30) });
     return true;
   }
   if (m.type === 'mmCreate') {
@@ -99,14 +116,23 @@ function handle(c, m, clients) {
     const u = who(m); if (!u) return send(c.ws, { type: 'mmErr', msg: 'Telegram orqali kiring' }), true;
     let p = r.p.find(x => x.uid === u.uid);
     if (!p) {
-      if (r.p.length >= 2) return send(c.ws, { type: 'mmErr', msg: 'Bu o‘yinda allaqachon 2 kishi bor' }), true;
+      if (r.p.length >= 2) return send(c.ws, { type: 'mmErr', msg: r.inv && r.inv[u.uid] ? 'Kechikdingiz — boshqa o‘yinchi birinchi qabul qildi' : 'Bu o‘yinda allaqachon 2 kishi bor' }), true;
       p = { uid: u.uid, name: u.name }; r.p.push(p);
+      invGone(r, u.uid);
     }
     p.ws = c.ws; p.cid = c.id; p.offAt = 0; byConn.set(c.id, r.code);
     if (r.p.length === 2 && r.status === 'wait') deal(r);
     push(r);
     return true;
   }
+  if (m.type === 'mmWatch') {
+    if (r.p.some(x => x.cid === c.id)) return true;
+    const old = watching.get(c.id); if (old && rooms.get(old) && rooms.get(old).watch) rooms.get(old).watch.delete(c.id);
+    r.watch = r.watch || new Map(); if (r.watch.size >= 200) return send(c.ws, { type: 'mmErr', msg: 'Tomoshabinlar juda ko‘p' }), true;
+    r.watch.set(c.id, c.ws); watching.set(c.id, r.code); push(r);
+    return true;
+  }
+  if (m.type === 'mmUnwatch') { if (r.watch) r.watch.delete(c.id); watching.delete(c.id); return true; }
   if (m.type === 'mmDecline') {
     const u = who(m); if (u && r.status === 'wait' && r.p[0]) send(r.p[0].ws, { type: 'mmDeclined', name: u.name });
     return true;
@@ -149,7 +175,20 @@ function handle(c, m, clients) {
     send(c.ws, { type: 'mmInviteRes', toUid: to, ok: true });
     return true;
   }
+  if (m.type === 'mmInviteAll') {   // 🎲 tasodifiy raqib: zaldagi hammaga so'rov, kim birinchi qabul qilsa
+    if (r.status !== 'wait' || me !== 0) return true;
+    r.inv = r.inv || {}; const seen = new Set(); let n = 0;
+    if (CL) for (const x of CL.values()) {
+      if (!x || !x.lb || x.isBot || x.hidden || x.lb.inRoom) continue;
+      const id = String(x.lb.uid); if (id === r.p[0].uid) continue;
+      send(x.ws, { type: 'mmInviteIn', code: r.code, fromName: r.p[0].name, size: r.size, tc: r.tc, all: true });
+      if (!seen.has(id)) { seen.add(id); r.inv[id] = Date.now(); n++; }
+    }
+    send(c.ws, { type: 'mmInviteAllRes', n });
+    return true;
+  }
   if (m.type === 'mmLeave') {
+    if (r.status === 'wait' && me === 0) { invGone(r); byConn.delete(c.id); rooms.delete(r.code); return true; }   // bekor qilindi
     r.p[me].ws = null; byConn.delete(c.id);
     if (r.status === 'play') finish(r, me); else push(r);
     return true;
@@ -157,6 +196,7 @@ function handle(c, m, clients) {
   return true;
 }
 function onClose(c) {
+  const wk = watching.get(c.id); if (wk) { watching.delete(c.id); const wr = rooms.get(wk); if (wr && wr.watch) wr.watch.delete(c.id); }
   const k = byConn.get(c.id); if (!k) return; byConn.delete(c.id);
   const r = rooms.get(k); if (!r) return;
   const p = r.p.find(x => x.cid === c.id); if (p) { p.ws = null; p.offAt = Date.now(); }

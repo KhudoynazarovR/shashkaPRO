@@ -130,10 +130,13 @@
         shareLinkPlain("lbf_", "f", m.id, "♟ Keling, shashka o‘ynaymiz! — ShashkaPRO");
       } else if (m.type === "lbGo") {
         onGo(m);
+      } else if (m.type === "mmInviteGone") {   // taklif endi yo'q (boshqasi qabul qildi yoki bekor qilindi)
+        var _gt = (window.__mmInvT || {})[m.code]; if (_gt && _gt.parentNode) _gt.parentNode.removeChild(_gt);
       } else if (m.type === "mmInviteIn") {   // 🧠 Xotira o'yiniga taklif
-        var _mc = m.code;
-        toast("🧠 <b>" + esc(m.fromName) + "</b> sizni <b>Xotira</b> o‘yiniga taklif qilyapti" + (m.size ? " (" + esc(m.size.replace("x", "×")) + ")" : ""),
-          [["▶ Qabul qilish", function () { var go = function () { window.spMemori({ join: _mc }); }; if (window.spMemori) go(); else { var sm = document.createElement("script"); sm.src = "/memori.js?v=4"; sm.onload = go; document.head.appendChild(sm); } }],
+        var _mc = m.code; window.__mmInvT = window.__mmInvT || {};
+        if (window.__mmInvT[_mc] && window.__mmInvT[_mc].parentNode) window.__mmInvT[_mc].parentNode.removeChild(window.__mmInvT[_mc]);
+        window.__mmInvT[_mc] = toast((m.all ? "🎲 <b>" + esc(m.fromName) + "</b> <b>Xotira</b> o‘yini uchun raqib qidiryapti — birinchi qabul qilgan o‘ynaydi!" : "🧠 <b>" + esc(m.fromName) + "</b> sizni <b>Xotira</b> o‘yiniga taklif qilyapti") + (m.size ? " (" + esc(m.size.replace("x", "×")) + ")" : ""),
+          [["▶ Qabul qilish", function () { var go = function () { window.spMemori({ join: _mc }); }; if (window.spMemori) go(); else { var sm = document.createElement("script"); sm.src = "/memori.js?v=5"; sm.onload = go; document.head.appendChild(sm); } }],
            ["Rad etish", function () { sendMsg({ type: "mmDecline", code: _mc, init: (tg && tg.initData) || "" }); }, "no"]], 30000);
       } else if (m.type === "lbToast") {
         toast(esc(m.text), null, 7000);

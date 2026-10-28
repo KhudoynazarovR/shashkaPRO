@@ -497,12 +497,12 @@
       kk.onclick = function () { var t = window.Telegram && window.Telegram.WebApp; var m = '🦍 King Kong BOT tez kunda! Uni birinchilardan bo‘lib sinab ko‘ring — yutganlarga 5000 🪙.'; try { if (t && t.showAlert) t.showAlert(m); else alert(m); } catch (e) { alert(m); } };
       hero.insertBefore(kk, hero.firstChild);
     }
-    if (!window.__mmSP) { window.__mmSP = 1; try { var _sp = window.Telegram && Telegram.WebApp && Telegram.WebApp.initDataUnsafe && Telegram.WebApp.initDataUnsafe.start_param; if (/^mm_/i.test(_sp || '') && !window.spMemori) { var _ms = document.createElement('script'); _ms.src = '/memori.js?v=4'; document.head.appendChild(_ms); } } catch (e) {} }
+    if (!window.__mmSP) { window.__mmSP = 1; try { var _sp = window.Telegram && Telegram.WebApp && Telegram.WebApp.initDataUnsafe && Telegram.WebApp.initDataUnsafe.start_param; if (/^mm_/i.test(_sp || '') && !window.spMemori) { var _ms = document.createElement('script'); _ms.src = '/memori.js?v=5'; document.head.appendChild(_ms); } } catch (e) {} }
     if (!$('nvMemRow') && $('nvBotRow')) {   // 🃏 Memori — bosh sahifadan tez kirish
       var mr = document.createElement('div'); mr.id = 'nvMemRow';
       mr.style.cssText = 'order:2;display:flex;align-items:center;gap:14px;margin:0 0 10px;padding:12px 14px;border-radius:16px;background:linear-gradient(110deg,#0a3b6b,#0f6fb0);border:1px solid #2f8fd6;color:#fff;cursor:pointer';
       mr.innerHTML = '<span style="font-size:34px;flex:none">🧠</span><div style="flex:1"><b style="display:block;font-size:17px">Xotira</b><small style="opacity:.8;font-size:13px">Juftliklarni toping · bot yoki do‘st bilan</small></div><span style="margin-left:auto;font-size:26px;opacity:.7">›</span>';
-      mr.onclick = function () { if (window.spMemori) window.spMemori(); else { var sm = document.createElement('script'); sm.src = '/memori.js?v=4'; sm.onload = function () { window.spMemori(); }; document.head.appendChild(sm); } };
+      mr.onclick = function () { if (window.spMemori) window.spMemori(); else { var sm = document.createElement('script'); sm.src = '/memori.js?v=5'; sm.onload = function () { window.spMemori(); }; document.head.appendChild(sm); } };
       var br = $('nvBotRow'); br.parentNode.insertBefore(mr, br.nextSibling);
     }
     if ($('nvBotRow')) return;

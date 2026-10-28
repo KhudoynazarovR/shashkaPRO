@@ -68,43 +68,68 @@
   function close() { stopAll(); netLeave(); if (ov) ov.remove(); ov = null; }
   function shell() { css(); if (!ov) { ov = document.createElement('div'); ov.id = 'spMem'; document.body.appendChild(ov); } }
 
-  // ---------------- menyu
+  // ---------------- menyu = 🎮 Xotira o'yin zali: sozlamalar tepada, zaldagi o'yinchilar, tasodifiy raqib, jonli efir
+  var SETO = false, PLT = null;
+  function stopPoll() { if (PLT) clearInterval(PLT); PLT = null; HALL = false; }
   function menu() {
-    shell(); stopAll(); netLeave();
-    var h = '<div class="top"><button class="bk" data-x>‹</button><h2>Xotira</h2></div>' +
-      '<div class="tour" data-tour><span style="font-size:34px">🏆</span><div><b>' + T('Kunlik turnir') + '</b><small>' + T('6×6 · kam yurish yutadi · top-3 ga 100/60/30 🪙') + '</small></div><span style="margin-left:auto;font-size:24px">›</span></div>' +
-      '<div class="cd" style="font-size:14px;line-height:1.4">' + T('Kartalarni ochib, bir xil juftliklarni toping. Juftlik topsangiz — yana yurasiz. Ko‘p juftlik yig‘gan yutadi!') + '</div>';
-    h += '<div class="lb">📐 ' + T('Doska') + '</div><div class="row">';
-    SIZES.forEach(function (z) { h += '<button class="op' + (CFG.size === z.k ? ' on' : '') + '" data-s="' + z.k + '">' + z.t + '<small>' + z.p + ' ' + T('juftlik') + ' · 🪙' + z.r + '</small></button>'; });
-    h += '</div><div class="lb">🎨 ' + T('Rasmlar') + '</div><select data-th>';
-    for (var k in THEMES) h += '<option value="' + k + '"' + (CFG.theme === k ? ' selected' : '') + '>' + THEMES[k].ic + '  ' + T(THEMES[k].t) + '</option>';
-    h += '</select><div class="lb">🎮 ' + T('Kim bilan') + '</div><div class="row">' +
-      '<button class="op' + (CFG.mode === 'bot' ? ' on' : '') + '" data-m="bot">🤖 ' + T('Bot bilan') + '</button>' +
-      '<button class="op' + (CFG.mode === 'friend' ? ' on' : '') + '" data-m="friend">👥 ' + T('Do‘st bilan') + '</button></div>';
-    if (CFG.mode === 'bot') {
-      h += '<div class="lb">🧠 ' + T('Bot xotirasi') + '</div><div class="row">';
+    shell(); stopAll(); netLeave(); stopPoll();
+    var z = sizeOf(CFG.size), th = THEMES[CFG.theme] || THEMES.shashka, tcx = TCS.filter(function (t) { return t.k === CFG.tc; })[0] || TCS[0];
+    var h = '<div class="top"><button class="bk" data-x>‹</button><h2>🧠 ' + T('Xotira') + '</h2><button class="bk" data-set style="font-size:20px' + (SETO ? ';background:#3fa34d' : '') + '">⚙️</button></div>';
+    // sozlamalar qisqacha (bosilsa ochiladi)
+    h += '<div class="cd sum" data-set2 style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 12px"><span style="flex:1">📐 <b>' + z.t + '</b> · ' + th.ic + ' ' + T(th.t) + ' · ' + T(tcx.t) + rulesTxt(CFG.rules) + ' · 🤖 ' + T(LV[CFG.lv].t) + '</span><span style="opacity:.7">' + (SETO ? '▲' : '⚙️ ▼') + '</span></div>';
+    if (SETO) {
+      h += '<div class="cd" style="margin-top:-4px"><div class="lb" style="margin-top:0">📐 ' + T('Doska') + '</div><div class="row">';
+      SIZES.forEach(function (zz) { h += '<button class="op' + (CFG.size === zz.k ? ' on' : '') + '" data-s="' + zz.k + '">' + zz.t + '<small>' + zz.p + ' ' + T('juftlik') + ' · 🪙' + zz.r + '</small></button>'; });
+      h += '</div><div class="lb">🎨 ' + T('Rasmlar') + '</div><select data-th>';
+      for (var k in THEMES) h += '<option value="' + k + '"' + (CFG.theme === k ? ' selected' : '') + '>' + THEMES[k].ic + '  ' + T(THEMES[k].t) + '</option>';
+      h += '</select><div class="lb">⏱ ' + T('Vaqt') + '</div><div class="row">';
+      TCS.forEach(function (t) { h += '<button class="op' + (CFG.tc === t.k ? ' on' : '') + '" data-t="' + t.k + '">' + T(t.t) + '</button>'; });
+      h += '</div><div class="lb">📜 ' + T('Qo‘shimcha qoidalar') + '</div>';
+      RULES.forEach(function (r) { h += '<div class="rl' + (CFG.rules[r.k] ? ' on' : '') + '" data-rule="' + r.k + '"><div><b>' + T(r.t) + '</b><small>' + T(r.d) + '</small></div><span class="sw"></span></div>'; });
+      h += '<div class="lb">🤖 ' + T('Bot xotirasi') + '</div><div class="row">';
       LV.forEach(function (l) { h += '<button class="op' + (CFG.lv === l.k ? ' on' : '') + '" data-l="' + l.k + '">' + T(l.t) + '</button>'; });
-      h += '</div>';
+      h += '</div></div>';
     }
-    h += '<div class="lb">📜 ' + T('Qo‘shimcha qoidalar') + '</div>';
-    RULES.forEach(function (r) { h += '<div class="rl' + (CFG.rules[r.k] ? ' on' : '') + '" data-rule="' + r.k + '"><div><b>' + T(r.t) + '</b><small>' + T(r.d) + '</small></div><span class="sw"></span></div>'; });
-    h += '<div class="lb">⏱ ' + T('Vaqt') + '</div><div class="row">';
-    TCS.forEach(function (t) { h += '<button class="op' + (CFG.tc === t.k ? ' on' : '') + '" data-t="' + t.k + '">' + T(t.t) + '</button>'; });
-    h += '</div>';
-    if (CFG.mode === 'friend') {
-      h += '<button class="go" data-go>👥 ' + T('O‘YIN YARATISH') + '</button>';
-    } else h += '<button class="go" data-go>▶ ' + T('O‘YNASH') + '</button>';
+    h += '<div class="row" style="margin-top:4px"><button class="go" data-rnd style="flex:1;margin-top:0">🎲 ' + T('Tasodifiy raqib') + '</button><button class="go g2" data-bot style="flex:1;margin-top:0;font-size:18px">🤖 ' + T('Bot bilan') + '</button></div>';
+    h += '<div class="lb" style="display:flex;justify-content:space-between"><span>🟢 ' + T('O‘yin zali') + ' <span data-pn></span></span><span style="opacity:.7;font-size:12px">' + T('o‘yinchini taklif qiling') + '</span></div><div data-pl class="cd" style="padding:4px 10px;margin-top:0"><div style="text-align:center;padding:10px;opacity:.7">⏳</div></div>';
+    h += '<button class="go g2" data-sh style="margin-top:4px">📤 ' + T('Guruhga yoki do‘stga yuborish') + '</button>';
+    h += '<div class="lb">📺 ' + T('Jonli efir') + '</div><div data-live class="cd" style="padding:4px 10px;margin-top:0"><div style="text-align:center;padding:10px;opacity:.7">⏳</div></div>';
+    h += '<div class="tour" data-tour style="margin-top:14px"><span style="font-size:30px">🏆</span><div><b>' + T('Kunlik turnir') + '</b><small>' + T('6×6 · kam yurish yutadi · top-3 ga 100/60/30 🪙') + '</small></div><span style="margin-left:auto;font-size:24px">›</span></div>';
+    h += '<div class="cd" style="font-size:13px;line-height:1.4;opacity:.85">' + T('Kartalarni ochib, bir xil juftliklarni toping. Juftlik topsangiz — yana yurasiz. Ko‘p juftlik yig‘gan yutadi!') + '</div>';
     ov.innerHTML = h;
     var q = function (s) { return ov.querySelector(s); };
     q('[data-x]').onclick = close;
-    q('[data-th]').onchange = function () { CFG.theme = this.value; saveCfg(); };
+    q('[data-set]').onclick = q('[data-set2]').onclick = function () { SETO = !SETO; menu(); };
+    if (q('[data-th]')) q('[data-th]').onchange = function () { CFG.theme = this.value; saveCfg(); menu(); };
     [].forEach.call(ov.querySelectorAll('[data-s]'), function (b) { b.onclick = function () { CFG.size = b.getAttribute('data-s'); saveCfg(); menu(); }; });
-    [].forEach.call(ov.querySelectorAll('[data-m]'), function (b) { b.onclick = function () { CFG.mode = b.getAttribute('data-m'); saveCfg(); menu(); }; });
     [].forEach.call(ov.querySelectorAll('[data-l]'), function (b) { b.onclick = function () { CFG.lv = +b.getAttribute('data-l'); saveCfg(); menu(); }; });
     [].forEach.call(ov.querySelectorAll('[data-t]'), function (b) { b.onclick = function () { CFG.tc = +b.getAttribute('data-t'); saveCfg(); menu(); }; });
-    [].forEach.call(ov.querySelectorAll('[data-rule]'), function (b) { b.onclick = function () { var k = b.getAttribute('data-rule'); CFG.rules[k] = !CFG.rules[k]; saveCfg(); b.className = 'rl' + (CFG.rules[k] ? ' on' : ''); }; });
-    q('[data-tour]').onclick = tourMenu;
-    q('[data-go]').onclick = function () { if (CFG.mode === 'friend') netCreate(); else startBot(); };
+    [].forEach.call(ov.querySelectorAll('[data-rule]'), function (b) { b.onclick = function () { var k = b.getAttribute('data-rule'); CFG.rules[k] = !CFG.rules[k]; saveCfg(); menu(); }; });
+    q('[data-tour]').onclick = function () { stopPoll(); tourMenu(); };
+    q('[data-bot]').onclick = function () { stopPoll(); startBot(); };
+    q('[data-rnd]').onclick = function () { netCreate({ all: 1 }); };
+    q('[data-sh]').onclick = function () { netCreate({ share: 1 }); };
+    // zal va jonli efirni har 4 soniyada yangilash
+    HALL = true;
+    var poll = function () { sendN({ type: 'mmPlayers', init: (tg && tg.initData) || '' }); sendN({ type: 'mmLive' }); };
+    net(poll); PLT = setInterval(function () { if (!ov || !HALL) return stopPoll(); if (WS && WS.readyState === 1) poll(); else net(poll); }, 4000);
+  }
+  var HALL = false;
+  function hallPlayers(m) {
+    var pl = ov && ov.querySelector('[data-pl]'); if (!pl) return;
+    var pn = ov.querySelector('[data-pn]'); if (pn) pn.textContent = '· ' + m.list.length;
+    if (!m.list.length) { pl.innerHTML = '<div style="text-align:center;padding:10px;opacity:.75">😔 ' + T('Hozir zalda hech kim yo‘q. Guruhga yuboring yoki bot bilan o‘ynang!') + '</div>'; return; }
+    pl.innerHTML = m.list.map(function (p) { return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.08)"><span style="flex:1;text-align:left">' + (p.busy ? '🎮 ' : '🟢 ') + esc(p.name) + (p.busy ? ' <small style="opacity:.6">' + T('o‘yinda') + '</small>' : '') + '</span><button class="op" style="flex:none;min-width:90px;padding:9px 10px" data-inv="' + esc(p.uid) + '" data-nm="' + esc(p.name) + '">' + T('Taklif') + '</button></div>'; }).join('');
+    [].forEach.call(pl.querySelectorAll('[data-inv]'), function (b) { b.onclick = function () {
+      if (NET && NET.code && NET.st && NET.st.status === 'wait') { sendN({ type: 'mmInvite', code: NET.code, toUid: b.getAttribute('data-inv') }); b.textContent = '⏳'; b.disabled = true; }
+      else netCreate({ to: b.getAttribute('data-inv'), name: b.getAttribute('data-nm') });
+    }; });
+  }
+  function hallLive(m) {
+    var lv = ov && ov.querySelector('[data-live]'); if (!lv) return;
+    if (!m.list.length) { lv.innerHTML = '<div style="text-align:center;padding:10px;opacity:.75">' + T('Hozir hech kim o‘ynamayapti') + '</div>'; return; }
+    lv.innerHTML = m.list.map(function (g) { return '<div data-w="' + esc(g.code) + '" style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.08);cursor:pointer"><span style="flex:1;text-align:left">🔴 <b>' + esc(g.a) + '</b> ' + g.sa + ' : ' + g.sb + ' <b>' + esc(g.b) + '</b> <small style="opacity:.6">' + esc(g.size.replace('x', '×')) + '</small></span><span style="opacity:.75;font-size:13px">👁 ' + g.v + '</span><button class="op" style="flex:none;min-width:80px;padding:8px 10px">' + T('Ko‘rish') + '</button></div>'; }).join('');
+    [].forEach.call(lv.querySelectorAll('[data-w]'), function (e) { e.onclick = function () { netWatch(e.getAttribute('data-w')); }; });
   }
 
   // ---------------- doska chizish (umumiy)
@@ -311,22 +336,33 @@
     WS.onclose = function () { if (NET && NET.code && ov && !NET.left) setTimeout(function () { if (NET && !NET.left) net(function () { WS.send(JSON.stringify({ type: 'mmJoin', init: (tg && tg.initData) || '', code: NET.code })); }); }, 1500); };
   }
   function sendN(o) { if (WS && WS.readyState === 1) WS.send(JSON.stringify(o)); }
-  function netCreate() {
+  function netCreate(pend) {
+    stopPoll(); HALL = false;
     shell(); ov.innerHTML = '<div class="top"><button class="bk" data-x>‹</button><h2>👥 ' + T('Do‘st bilan') + '</h2></div><div class="cd" style="text-align:center">⏳ ' + T('Ulanmoqda…') + '</div>';
     ov.querySelector('[data-x]').onclick = menu;
-    NET = { left: false };
+    NET = { left: false, pend: pend || {} };
     net(function () { sendN({ type: 'mmCreate', init: (tg && tg.initData) || '', size: CFG.size, tc: CFG.tc, rules: CFG.rules, theme: CFG.theme, symbols: symbols(CFG.theme) }); });
   }
+  function netWatch(code) {
+    stopPoll(); HALL = false;
+    shell(); ov.innerHTML = '<div class="top"><button class="bk" data-x>‹</button><h2>📺 ' + T('Jonli efir') + '</h2></div><div class="cd" style="text-align:center">⏳ ' + T('Ulanmoqda…') + '</div>';
+    ov.querySelector('[data-x]').onclick = menu;
+    NET = { code: code, left: false, watch: true };
+    net(function () { sendN({ type: 'mmWatch', code: code }); });
+  }
   function netJoin(code) {
+    stopPoll(); HALL = false;
     shell(); ov.innerHTML = '<div class="top"><button class="bk" data-x>‹</button><h2>👥 ' + T('Do‘st bilan') + '</h2></div><div class="cd" style="text-align:center">⏳ ' + T('Ulanmoqda…') + '</div>';
     ov.querySelector('[data-x]').onclick = menu;
     NET = { code: code, left: false };
     net(function () { sendN({ type: 'mmJoin', init: (tg && tg.initData) || '', code: code }); });
   }
-  function netLeave() { if (NET && NET.code) { NET.left = true; sendN({ type: 'mmLeave', code: NET.code }); } NET = null; try { if (WS) WS.close(); } catch (e) {} WS = null; }
+  function netLeave() { if (NET && NET.code) { NET.left = true; sendN({ type: NET.watch ? 'mmUnwatch' : 'mmLeave', code: NET.code }); } NET = null; try { if (WS) WS.close(); } catch (e) {} WS = null; }
   function rulesTxt(r) { r = r || {}; var o = []; if (r.streak) o.push('🔥'); if (r.shuffle) o.push('🔀'); if (r.black) o.push('💀'); return o.length ? ' · ' + o.join(' ') : ''; }
   function shareLink(code) { return (window.TG_APP_LINK || 'https://t.me/DraughtsPRObot/play') + '?startapp=mm_' + code; }
   function onNet(m) {
+    if (ov && HALL && m.type === 'mmPlayers') return hallPlayers(m);
+    if (ov && HALL && m.type === 'mmLive') return hallLive(m);
     if (!ov || !NET) return;
     if (m.type === 'mmErr') { ov.innerHTML = '<div class="top"><button class="bk" data-x>‹</button><h2>Xotira</h2></div><div class="cd" style="text-align:center">⚠️ ' + esc(T(m.msg)) + '</div><button class="go g2" data-x2>☰ ' + T('Menyu') + '</button>'; ov.querySelector('[data-x]').onclick = menu; ov.querySelector('[data-x2]').onclick = menu; NET = null; return; }
     if (m.type === 'mmAgainAsk') { var mm = ov.querySelector('[data-rw]'); if (mm) mm.textContent = '🔁 ' + T('Do‘stingiz yana o‘ynashni xohlayapti'); return; }
@@ -337,24 +373,42 @@
       [].forEach.call(pl.querySelectorAll('[data-inv]'), function (b) { b.onclick = function () { if (!NET || !NET.code) return; sendN({ type: 'mmInvite', code: NET.code, toUid: b.getAttribute('data-inv') }); b.textContent = '⏳'; b.disabled = true; }; });
       return;
     }
+    if (m.type === 'mmInviteAllRes') { var an = ov.querySelector('[data-an]'); if (an) an.innerHTML = '<br><small>(' + m.n + ' ' + T('kishiga') + ')</small>'; if (!m.n) { var dc = ov.querySelector('[data-dec]'); if (dc) dc.innerHTML = '<div class="cd" style="text-align:center">😔 ' + T('Zalda hozir hech kim yo‘q. Guruhga yuboring!') + '</div>'; } return; }
     if (m.type === 'mmInviteRes') { var bi = ov.querySelector('[data-inv="' + m.toUid + '"]'); if (bi) bi.textContent = m.ok ? '✅ ' + T('Yuborildi') : '📴 ' + T('Chiqib ketgan'); return; }
-    if (m.type === 'mmDeclined') { var pl2 = ov.querySelector('[data-pl]'); if (pl2) pl2.insertAdjacentHTML('afterbegin', '<div class="cd" style="text-align:center">🙅 ' + esc(m.name) + ' ' + T('taklifni rad etdi') + '</div>'); return; }
+    if (m.type === 'mmDeclined') { var pl2 = ov.querySelector('[data-dec]') || ov.querySelector('[data-pl]'); if (pl2) pl2.insertAdjacentHTML('afterbegin', '<div class="cd" style="text-align:center">🙅 ' + esc(m.name) + ' ' + T('taklifni rad etdi') + '</div>'); return; }
     if (m.type !== 'mmState') return;
     NET.code = m.code; NET.st = m;
     var z = sizeOf(m.size), me = m.me, op = 1 - me;
     if (m.status === 'wait') {
-      var link = shareLink(m.code);
-      ov.innerHTML = '<div class="top"><button class="bk" data-x>‹</button><h2>👥 ' + T('Do‘st bilan') + '</h2></div>' +
-        '<div class="cd" style="text-align:center">🧠 <b>' + z.t + '</b> · ' + (m.tc > 0 ? '⏱ ' + m.tc + ' s' : m.tc < 0 ? '⚡ ' + (-m.tc / 60) + ' ' + T('daqiqa') : '∞') + rulesTxt(m.rules) + '<br><br>⏳ ' + T('Do‘stingiz kutilmoqda…') + '</div>' +
-        '<button class="go" data-hall>🎮 ' + T('O‘yin zalidagi o‘yinchini taklif qilish') + '</button><div data-pl></div>' +
-        '<button class="go g2" data-sh>📤 ' + T('Guruhga yoki do‘stga yuborish') + '</button>';
-      ov.querySelector('[data-x]').onclick = menu;
+      var link = shareLink(m.code), pd = NET.pend || {};
+      if (!NET.sent) {   // yaratilgach: kutilgan amal (taklif / hammaga so'rov / ulashish)
+        NET.sent = 1;
+        if (pd.to) sendN({ type: 'mmInvite', code: m.code, toUid: pd.to });
+        if (pd.all) sendN({ type: 'mmInviteAll', code: m.code });
+        if (pd.share) setTimeout(function () { var b = ov && ov.querySelector('[data-sh]'); if (b) b.click(); }, 200);
+      }
+      var stx = pd.all ? '🎲 ' + T('Zaldagi barcha o‘yinchilarga so‘rov yuborildi. Kim birinchi qabul qilsa — o‘sha bilan o‘ynaysiz!') + ' <span data-an></span>'
+        : pd.to ? '📨 <b>' + esc(pd.name || '') + '</b> ' + T('ga taklif yuborildi. Javobini kuting…') : '⏳ ' + T('Do‘stingiz kutilmoqda…');
+      ov.innerHTML = '<div class="top"><button class="bk" data-x>‹</button><h2>⏳ ' + T('Raqib kutilmoqda') + '</h2></div>' +
+        '<div class="cd" style="text-align:center;line-height:1.5"><div style="font-size:38px">🧠</div>' + stx + '<div style="opacity:.7;font-size:13px;margin-top:6px">' + z.t + ' · ' + (m.tc > 0 ? '⏱ ' + m.tc + ' s' : m.tc < 0 ? '⚡ ' + (-m.tc / 60) + ' ' + T('daqiqa') : '∞') + rulesTxt(m.rules) + '</div></div>' +
+        '<div data-dec></div><button class="go g2" data-hall>🎮 ' + T('Yana o‘yinchi taklif qilish') + '</button><div data-pl></div>' +
+        '<button class="go g2" data-sh>📤 ' + T('Guruhga yoki do‘stga yuborish') + '</button><button class="go g2" data-cancel style="background:#5b2330">❌ ' + T('Bekor qilish') + '</button>';
+      ov.querySelector('[data-x]').onclick = menu; ov.querySelector('[data-cancel]').onclick = menu;
       ov.querySelector('[data-sh]').onclick = function () {
         var txt = '🧠 ' + T('Xotira o‘yinini o‘ynaymizmi? Bosing va o‘yinga kiring!');
         var u = 'https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encodeURIComponent(txt);
         try { if (tg && tg.openTelegramLink) tg.openTelegramLink(u); else window.open(u, '_blank'); } catch (e) { window.open(u, '_blank'); }
       };
       ov.querySelector('[data-hall]').onclick = function () { var pl = ov.querySelector('[data-pl]'); if (pl) pl.innerHTML = '<div class="cd" style="text-align:center">⏳</div>'; sendN({ type: 'mmPlayers', init: (tg && tg.initData) || '' }); };
+      return;
+    }
+    if (m.watch) {   // 📺 tomoshabin
+      var cw = m.cards.map(function (c) { return c ? { s: c.s, up: !c.o, ok: !!c.o, bt: c.o === 2 } : null; }), Pw = m.players;
+      var hw = '<div class="top"><button class="bk" data-x>‹</button><h2>📺 ' + T('Jonli efir') + ' · ' + z.t + '</h2><span style="opacity:.8">👁 ' + (m.viewers || 1) + '</span></div>' +
+        '<div class="hud"><span class="' + (m.turn === 0 && m.status === 'play' ? 'turn' : '') + '">🟢 ' + esc(Pw[0] ? Pw[0].name : '') + ': <b>' + (Pw[0] ? Pw[0].sc : 0) + '</b></span><span>' + (m.status === 'over' ? '🏁' : '⚔️') + '</span><span class="' + (m.turn === 1 && m.status === 'play' ? 'turn' : '') + '">🔴 ' + esc(Pw[1] ? Pw[1].name : '') + ': <b>' + (Pw[1] ? Pw[1].sc : 0) + '</b></span></div>' +
+        boardHtml(z, cw) + '<div class="msg">' + (m.status === 'over' ? '🏁 ' + (m.winner === -1 ? T('Durang!') : '🏆 ' + esc(Pw[m.winner] ? Pw[m.winner].name : '') + ' ' + T('yutdi!')) : '👉 ' + esc(Pw[m.turn] ? Pw[m.turn].name : '') + ' ' + T('yurmoqda…')) + '</div>' +
+        '<button class="go g2" data-back>☰ ' + T('Zalga qaytish') + '</button>';
+      ov.innerHTML = hw; ov.querySelector('[data-x]').onclick = menu; ov.querySelector('[data-back]').onclick = menu;
       return;
     }
     var cards = m.cards.map(function (c) { return c ? { s: c.s, up: !c.o, ok: !!c.o, bt: c.o && c.o - 1 !== me } : null; });
