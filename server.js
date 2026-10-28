@@ -29,7 +29,7 @@ const { createLobby } = require("./lobby");
 let lobbyApi = null;
 const roomsApi = createRooms({ send, clients, onFinish: room => lobbyApi && lobbyApi.onRoomFinished(room) });
 lobbyApi = createLobby({ send, clients, roomsApi });
-try { require('./gcard.js').setRooms(roomsApi.rooms); } catch (e) { console.log('[gcard]', e.message); }
+try { require('./gcard.js').setRooms(roomsApi.rooms); require('./gcard.js').setApi(roomsApi); } catch (e) { console.log('[gcard]', e.message); }
 
 function broadcast(data, exceptId = null) {
   for (const c of clients.values()) {

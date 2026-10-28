@@ -84,6 +84,18 @@
   }
 
   function start(roomId, tg) {
+    // guruh doskasi: tomoshabin uchun "Qo'shilish" paneli (chaqiruvchi o'z joyida)
+    function sitBar(m) {
+      var bar = document.getElementById("rcSit");
+      if (!(m.canSit && m.color === "spectator")) { if (bar) bar.remove(); return; }
+      if (!bar) {
+        bar = document.createElement("div"); bar.id = "rcSit";
+        bar.style.cssText = "position:fixed;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:9500;background:#1c2547;border:2px solid #ffd54f;border-radius:18px;padding:12px;color:#fff;font:15px system-ui,sans-serif;box-shadow:0 8px 24px #000a;text-align:center";
+        document.body.appendChild(bar);
+      }
+      bar.innerHTML = "♟ <b>" + String(m.white || "").replace(/[<>&]/g, "") + "</b> raqib kutyapti" + "<button id=\"rcSitB\" style=\"display:block;width:100%;margin-top:10px;padding:14px;border:0;border-radius:14px;background:linear-gradient(90deg,#2e9d3a,#5cb85c);color:#fff;font:800 18px system-ui\">▶ O‘yinga qo‘shilish (⚫ qora)</button><div style=\"opacity:.7;font-size:13px;margin-top:6px\">yoki shunchaki tomosha qiling 👁</div>";
+      document.getElementById("rcSitB").onclick = function () { send({ type: "roomSit", roomId: roomId }); this.disabled = true; this.textContent = "⏳"; };
+    }
     var st = {
       color: "spectator", turn: "white", board: startBoard(), moves: [],
       white: null, black: null, whiteOnline: false, blackOnline: false,
@@ -1240,6 +1252,7 @@
         st.optim = false;
         st.joined = true;
         st.color = m.color;
+        try { sitBar(m); } catch (e) {}
         st.white = m.white; st.black = m.black; st.wInfo = m.wInfo || null; st.bInfo = m.bInfo || null;
         st.whiteOnline = m.whiteOnline; st.blackOnline = m.blackOnline;
         st.spectators = m.spectators || 0;

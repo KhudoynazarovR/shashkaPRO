@@ -97,7 +97,7 @@ function createRooms({ send, clients, onFinish }) {
       wInfo: _pi(room.white), bInfo: _pi(room.black),
       h2h: h2hOf(room),
       black: room.black ? room.black.name : null,
-      whiteOnline: isOnline(room.white),
+      whiteOnline: isOnline(room.white), canSit: !!(room.inline && room.white && !room.black && !room.finished),
       blackOnline: isOnline(room.black),
       spectators: [...room.members].filter(id => !colorOf(room, clients.get(id) || {})).length,
       spectatorNames: [...room.members].filter(id => !colorOf(room, clients.get(id) || {})).map(id => room.names.get(id) || "Mehmon").slice(0, 8),
@@ -539,8 +539,10 @@ function createRooms({ send, clients, onFinish }) {
       room.lastActive = Date.now();
 
       const seat = { uid: user.id, name: user.name, clientId: c.id };
+      c.roomUser = { id: user.id, name: user.name };
       if (room.white && room.white.uid === user.id) room.white = seat;
       else if (room.black && room.black.uid === user.id) room.black = seat;
+      else if (room.inline) {}   // guruhdagi doska: chaqiruvchi o'z joyida, qolganlar "Qo'shilish" tugmasini bosguncha tomoshabin
       else if (!room.white) room.white = seat;
       else if (!room.black) room.black = seat;
 
@@ -556,6 +558,13 @@ function createRooms({ send, clients, onFinish }) {
     room.lastActive = Date.now();
     const col = colorOf(room, c);
 
+    if (m.type === "roomSit") {   // guruh doskasi: tomoshabin raqib bo'lib o'tiradi
+      const u = c.roomUser;
+      if (!room.inline || room.finished || room.black || !u || !room.white || room.white.uid === u.id) return true;
+      room.black = { uid: u.id, name: u.name, clientId: c.id };
+      pushState(room);
+      return true;
+    }
     if (m.type === "roomMove") {
       if (room.vsBot && !room.botStarted) return err(c, "Avval ‘Boshlash’ tugmasini bosing"), true;
       { const _b = room.moves.length; const _r = applyMove(c, room, roomId, col, m); if (col && room.moves.length > _b) { room.mvCount = room.mvCount || {}; room.mvCount[col] = (room.mvCount[col] || 0) + 1; } return _r; }

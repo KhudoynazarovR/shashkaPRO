@@ -82,7 +82,13 @@ function markup(link, roomId) {
   return { inline_keyboard: [[{ text: I.st === 'wait' ? '▶ O‘yinga kirish' : I.st === 'live' ? '👁 Tomosha qilish' : '🔁 Yangi o‘yin', url: link }]] };
 }
 // inline natijasi tanlandi — xabarni kuzatamiz
-function chosen(roomId, imid, from, link) { if (!roomId || !imid) return; msgs.set(roomId, { imid, from, link, at: Date.now(), ver: 0, last: 0 }); }
+let API = null;
+function chosen(roomId, imid, from, link, uid) {
+  if (!roomId || !imid) return;
+  msgs.set(roomId, { imid, from, link, at: Date.now(), ver: 0, last: 0 });
+  // chaqiruvchi taniladi: oq o'rindiq uniki, boshqalar "Qo'shilish" bilan raqib bo'ladi
+  try { if (API && uid) { const room = API.create(roomId, { white: { uid: String(uid), name: String(from || 'O‘yinchi').slice(0, 20) } }); if (room && !room.black) { room.inline = true; room.casual = true; } } } catch (e) { console.log('[gcard]', e.message); }
+}
 function touch(room) {   // rooms.js dan: xonada o'zgarish bo'ldi
   const m = room && msgs.get(room.id); if (!m || m.done) return;
   if (m.tmr) return;
@@ -102,4 +108,4 @@ function handleHttp(req, res, p) {
     .catch(e => { console.log('[gcard]', e.message); res.writeHead(500); res.end(); });
   return true;
 }
-module.exports = { setRooms: r => { ROOMS = r; }, url, caption, markup, chosen, touch, handleHttp, render };
+module.exports = { setRooms: r => { ROOMS = r; }, setApi: a => { API = a; }, url, caption, markup, chosen, touch, handleHttp, render };

@@ -260,7 +260,7 @@ async function start() {
           else if (u.message && u.message.successful_payment) await pay.onPayment(u.message);
           else if (u.message) await onMessage(u.message);
           else if (u.inline_query) await onInline(u.inline_query);
-          else if (u.chosen_inline_result) { try { const cr = u.chosen_inline_result, rid = String(cr.result_id || '').replace(/^g_/, ''); if (/^g_/.test(cr.result_id || '')) require('./gcard.js').chosen(rid, cr.inline_message_id, (cr.from && (cr.from.first_name || cr.from.username)) || '', roomLink(rid)); } catch (e) {} }
+          else if (u.chosen_inline_result) { try { const cr = u.chosen_inline_result, rid = String(cr.result_id || '').replace(/^g_/, ''); if (/^g_/.test(cr.result_id || '')) require('./gcard.js').chosen(rid, cr.inline_message_id, (cr.from && (cr.from.first_name || cr.from.username)) || '', roomLink(rid), cr.from && cr.from.id); } catch (e) {} }
           else if (u.callback_query) await onCallback(u.callback_query);
           else if (u.my_chat_member) onMyChat(u.my_chat_member);
         } catch (e) {
