@@ -208,7 +208,7 @@ function mmChosen(codeX, imid, from, link) { if (codeX && imid) msgs.set('mm:' +
 function mmEdit(r, m) {
   m.last = Date.now(); m.ver++;
   const u = mmUrl(r.code, m.ver); if (!u) return;
-  tg('editMessageMedia', { inline_message_id: m.imid, media: { type: 'photo', media: u, caption: MM_CAP }, reply_markup: mmMarkup(m.link, r.code) });
+  tg('editMessageText', { inline_message_id: m.imid, text: MM_CAP, link_preview_options: { url: mmUrl(r.code, m.ver + '_' + Date.now() % 1e6, m.from, r.theme === 'romantic'), prefer_large_media: true, show_above_text: true }, reply_markup: mmMarkup(m.link, r.code) });
 }
 function mmTouch(r) {
   const m = r && msgs.get('mm:' + r.code); if (!m) return;

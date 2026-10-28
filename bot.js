@@ -201,9 +201,10 @@ async function onInline(q) {
   const mcode = (() => { const a = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789", bb = crypto.randomBytes(6); let s = ""; for (let i = 0; i < 6; i++) s += a[bb[i] % a.length]; return s; })();
   const mrom = /romant|sevgi|yurak|gul|роман/i.test(mq);
   const mph = G.mmUrl(mcode, 0, from, mrom), mres = mph && {
-    type: "photo", id: "m_" + mcode + "_" + msz + "_" + mtc + (mrom ? "_r" : ""), photo_url: mph, thumbnail_url: mph, photo_width: 1000, photo_height: 700,
+    // rasmli havola (article): Telegram oldindan ko'rsatmasdan, bir bosishda yuboradi; rasm xabar ustida katta ko'rinadi
+    type: "article", id: "m_" + mcode + "_" + msz + "_" + mtc + (mrom ? "_r" : ""), thumbnail_url: mph, thumbnail_width: 1000, thumbnail_height: 700,
+    input_message_content: { message_text: G.MM_CAP, link_preview_options: { url: mph, prefer_large_media: true, show_above_text: true } },
     title: (mrom ? "🌹 Xotira · Romantik · " : "🧠 Xotira o‘ynash · ") + msz.replace("x", "×"), description: "Juftliklarni topish o‘yini · birinchi kirgan raqib bo‘ladi. Masalan: xotira romantik 6x6 10s",
-    caption: G.MM_CAP,
     reply_markup: { inline_keyboard: [[{ text: "▶ O‘yinga kirish", url: roomLink("mm_" + mcode) }]] }
   };
   if (mres) { if (/xotira|memori|памят|romant/i.test(mq)) results.unshift(mres); else results.push(mres); }
