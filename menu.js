@@ -486,11 +486,35 @@
     var go = function () { api('/api/puzzle/move', { id: p.id, folder: t }).then(function () { load(); }); };
     if (t && fl.indexOf(t) < 0) api('/api/puzzle/folder', { name: t }).then(go); else go();
   }
-  function pzMap() {   // xarita olib tashlandi: faqat natija va "Masalalar yechish" tugmasi
-    var n = S.list.length, sv = S.solved || [], pc = n ? Math.round(sv.length / n * 100) : 0;
-    var h = '<div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:24px">' + sv.length + '<span style="font-size:13px;opacity:.6"> / ' + n + ' yechildi</span></b><span style="opacity:.7">' + pc + '%</span></div>';
-    h += '<div style="height:10px;border-radius:6px;background:rgba(255,255,255,.12);overflow:hidden;margin:8px 0 12px"><i style="display:block;height:100%;width:' + pc + '%;background:linear-gradient(90deg,#8fd14f,#4f9a24)"></i></div>';
-    h += '<button id="pzGo" style="width:100%;padding:16px;border:0;border-radius:14px;background:#6fae3d;color:#fff;font-size:20px;font-weight:700;margin-bottom:14px;box-shadow:0 5px 0 #4b7f27">▶ Masalalar yechish</button>';
+  // 🗺 Sarguzasht xaritasi (pzmapview.js): har 10 masala — bitta manzara, odamcha yechilgan masaladan keyingisiga qadam bosadi
+  function mapJs(cb) {
+    if (window.spPzMap) return window.spPzMap.load(cb);
+    var sc = document.createElement('script'); sc.src = '/pzmapview.js?v=1';
+    sc.onload = function () { window.spPzMap.load(cb); }; sc.onerror = function () {}; document.head.appendChild(sc);
+  }
+  function pzMap(arr, key) {
+    var sv = S.solved || [], n = arr.length, d = 0;
+    var it = arr.map(function (p) { var ok = sv.indexOf(p.id) >= 0; if (ok) d++; return { i: S.list.indexOf(p), done: ok }; });
+    var pc = n ? Math.round(d / n * 100) : 0;
+    var h = '<div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:24px">' + d + '<span style="font-size:13px;opacity:.6"> / ' + n + ' yechildi</span></b><span style="opacity:.7">' + pc + '%</span></div>';
+    if (!n) return h;
+    h += '<div id="pzMapBox">' + (window.spPzMap ? window.spPzMap.html(it, key, S.admin) : '<div style="height:min(66vh,620px);margin:10px 0;border-radius:18px;background:#0b1a33"></div>') + '</div>';
+    if (!key) h += '<button id="pzGo" style="width:100%;padding:16px;border:0;border-radius:14px;background:#6fae3d;color:#fff;font-size:20px;font-weight:700;margin-bottom:14px;box-shadow:0 5px 0 #4b7f27">▶ Masalalar yechish</button>';
+    var me = ov;
+    setTimeout(function () {
+      mapJs(function () {
+        var bx = me.querySelector('#pzMapBox'); if (!bx || !document.body.contains(bx)) return;
+        bx.innerHTML = window.spPzMap.html(it, key, S.admin);
+        Array.prototype.forEach.call(bx.querySelectorAll('[data-pz]'), function (e) {
+          e.onclick = function () {
+            var i = Number(e.getAttribute('data-pz'));
+            var c = key ? me.querySelector('[data-i="' + i + '"]') : null;   // papkada — kartani bosish (qulf qoidalari saqlanadi)
+            if (c) c.click(); else if (S.list[i]) play(S.list[i]);
+          };
+        });
+        window.spPzMap.after(bx, key, function () { list(); });
+      });
+    }, 0);
     return h;
   }
   function list() {
@@ -498,7 +522,7 @@
     if (window.__pzPF) { var _pf = window.__pzPF; window.__pzPF = ''; if ((S.folders || []).indexOf(_pf) >= 0) { curFo = _pf; curLv = 0; } }
     if (curFo && (S.folders || []).indexOf(curFo) < 0) curFo = '';
     if (curLv || curFo) return items();
-    var fl = S.folders || [], h = head(view === 'custom' ? '🎨 Maxsus masalalar' : '🧩 Masalalar', topBtns()); if (view !== 'custom') h += pzMap();
+    var fl = S.folders || [], h = head(view === 'custom' ? '🎨 Maxsus masalalar' : '🧩 Masalalar', topBtns()); if (view !== 'custom') h += pzMap(S.list, '');
     if (S.admin) h += '<div style="margin-bottom:10px"><button id="pzNF" style="' + BG + '">📁 Yangi papka</button></div>';
     if (!S.list.length && !fl.length) h += '<div style="padding:30px;opacity:.7">Hozircha masala yo‘q</div>';
     [1, 2, 3].forEach(function (lv) {
@@ -512,7 +536,6 @@
     if (!S.admin) h += '<div style="font-size:11px;opacity:.4;margin-top:16px">ID: ' + esc(S.myId) + '</div>';
     ov.innerHTML = h;
     on('#pzBack', function () { hub = 1; view = ''; list(); }); on('#pzTop', pzTop);
-    Array.prototype.forEach.call(ov.querySelectorAll('[data-pz]'), function (e) { e.onclick = function () { var p = S.list[Number(e.getAttribute('data-pz'))]; if (p) play(p); }; });
     on('#pzGo', function () { var nx = S.list.filter(function (p) { return (S.solved || []).indexOf(p.id) < 0; })[0] || S.list[0]; if (nx) play(nx); }); on('#pzNew', function () { newPz(0, ''); });
     on('#pzNF', function () {
       var n = cleanName(prompt('Yangi papka nomi:'));
@@ -614,6 +637,7 @@
     h += '<div style="margin:6px 0 12px;font-weight:bold;position:relative;display:inline-block;padding:4px 14px">' + (curLv ? LV[curLv] : '📁 ' + esc(curFo)) + _sp2 + '</div>';
     if (curFo && !curLv) h += '<div style="margin-bottom:12px">' + (S.link ? '<button id="pzShF" style="' + BS + '">🔗 Guruhga yuborish</button>' : '') + '<button id="pzHall" style="' + BG + '">🎮 O‘yin zaliga</button><button id="pzRk" style="' + BG + '">🏅 Unvonlar</button></div>';
     if (curFo && !curLv && S.promo && Date.now() < S.promo) h += '<div style="font-size:13px;margin:-4px 0 12px;padding:8px 10px;border-radius:10px;background:#2a2560">🎁 Aksiya (' + window.pzLeft(S.promo - Date.now()) + ' qoldi): havolangiz orqali kirgan har bir yangi o‘yinchi masala yechsa, sizga +100 🪙' + (S.inv ? '<br>👥 Taklif qilinganlar: ' + S.inv.total : '') + '</div>';
+    if (curFo && !curLv) h += pzMap(S.list.filter(function (p) { return foOf(p) === curFo; }), curFo);
     if (S.admin) h += '<div style="margin-bottom:12px"><button id="pzAdd" style="' + BS + '">➕ Masala</button>' + (curFo ? '<button id="pzRF" style="' + BG + '">✏️ Nomi</button><button id="pzDF" style="' + BG + '">🗑 Papkani o‘chirish</button>' : '') + '</div>';
     S.list.forEach(function (p, i) {
       if (curLv ? (lvOf(p) !== curLv || foOf(p)) : foOf(p) !== curFo) return;
@@ -633,7 +657,7 @@
     // masaladan qaytganda ro'yxat oxirgi ochilgan masala yonida tursin
     try {
       var _lid = window.__pzLast;
-      if (_lid) {
+      if (_lid && !(curFo && !curLv)) {
         var _cs = ov.querySelectorAll('[data-i]'), _el = null;
         for (var _q = 0; _q < _cs.length; _q++) { var _pp = S.list[Number(_cs[_q].getAttribute('data-i'))]; if (_pp && _pp.id === _lid) { _el = _cs[_q]; break; } }
         if (_el) {

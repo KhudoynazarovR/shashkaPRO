@@ -351,6 +351,51 @@ function handle(req, res, url) {
     });
     return true;
   }
+  // 🗺 Masalalar xaritasi: papka bo'yicha manzara rasmlari va bekatlar joyi
+  if (p === '/api/pzmap' && req.method === 'GET') {
+    const M = store.db.pzMaps || {}, out = {};
+    Object.keys(M).forEach(k => { out[k] = (M[k] || []).map(z => ({ id: z.id, w: z.w, h: z.h, pts: z.pts })); });
+    send(res, 200, { maps: out });
+    return true;
+  }
+  if (p === '/api/pzmap/img' && req.method === 'GET') {
+    const id = String(url.searchParams.get('id') || ''), d = (store.db.pzMapImg || {})[id];
+    const m = /^data:(image\/(?:webp|jpeg|png));base64,(.+)$/.exec(d || '');
+    if (!m) { res.writeHead(404); res.end(); return true; }
+    res.writeHead(200, { 'Content-Type': m[1], 'Cache-Control': 'public, max-age=31536000, immutable' });
+    res.end(Buffer.from(m[2], 'base64'));
+    return true;
+  }
+  if (p === '/api/pzmap/save' && req.method === 'POST') {
+    const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
+    if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
+    const adm = (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(_tg.id));
+    if (!adm) { send(res, 403, { error: 'admin emassiz' }); return true; }
+    readBody(req, 12e6, body => {
+      let j = {}; try { j = JSON.parse(body); } catch (e) { return send(res, 400, { error: 'json' }); }
+      const key = String(j.key || '').slice(0, 80), Z = Array.isArray(j.zones) ? j.zones.slice(0, 40) : [];
+      const M = store.db.pzMaps = store.db.pzMaps || {}, I = store.db.pzMapImg = store.db.pzMapImg || {};
+      const zs = [];
+      for (const z of Z) {
+        let id = String(z.id || '');
+        if (z.img) {
+          if (!/^data:image\/(webp|jpeg|png);base64,/.test(z.img) || z.img.length > 1.5e6) return send(res, 400, { error: 'rasm katta yoki noto‘g‘ri' });
+          id = require('crypto').createHash('sha1').update(z.img).digest('hex').slice(0, 16); I[id] = z.img;
+        }
+        if (!I[id]) continue;
+        const pts = Array.isArray(z.pts) && z.pts.length === 10 ? z.pts.map(q => [Math.max(0, Math.min(100, +q[0] || 0)), Math.max(0, Math.min(100, +q[1] || 0))]) : [];
+        zs.push({ id, w: Math.max(50, Math.min(4000, +z.w || 768)), h: Math.max(50, Math.min(8000, +z.h || 758)), pts });
+      }
+      if (zs.length) M[key] = zs; else delete M[key];
+      // ishlatilmayotgan rasmlarni o'chirish
+      const used = new Set(); Object.values(M).forEach(a => a.forEach(z => used.add(z.id)));
+      Object.keys(I).forEach(k => { if (!used.has(k)) delete I[k]; });
+      store.save();
+      const out = {}; Object.keys(M).forEach(k => { out[k] = M[k].map(z => ({ id: z.id, w: z.w, h: z.h, pts: z.pts })); });
+      send(res, 200, { ok: true, maps: out });
+    });
+    return true;
+  }
   if (p === '/api/puzzles/top' && req.method === 'GET') {
     const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
