@@ -457,6 +457,7 @@
   function hubSoon(n) { var t = '🚧 ' + n + ' tez orada qo‘shiladi!'; if (tg && tg.showAlert) tg.showAlert(t); else alert(t); }
   function dailyPz() { var L = S.list || []; if (!L.length) return null; return L[Math.floor((Date.now() + 18e6) / 864e5) % L.length]; }
   function hubView() {
+    window.__pzMapKey = undefined;
     var go = function () {
       var dp = dailyPz();
       window.pzHub({
@@ -650,13 +651,12 @@
   }
   // ro'yxatdan chiqilganda pastki panelni olib tashlaymiz
   setInterval(function () { var x = document.getElementById('pzBar'); if (x && (!ov || !document.body.contains(ov) || !ov.querySelector('.pzBk'))) x.remove(); }, 400);
-  function items() { window.pzLeft = window.pzLeft || function (ms) { var d = Math.floor(ms / 864e5), hh = Math.floor(ms % 864e5 / 36e5); return d > 0 ? d + ' kun ' + hh + ' soat' : Math.max(1, hh) + ' soat'; }; if (!document.getElementById('pzCss2')) { var _s2 = document.createElement('style'); _s2.id = 'pzCss2'; _s2.textContent = '.pzSpW{position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;transform:scaleY(.7)}.pzSpW i{position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;background:#fff3c4;border-radius:50%;box-shadow:0 0 10px 4px #ffd86b;opacity:0;animation:pzSp 3.2s ease-in-out infinite both}@keyframes pzSp{0%{transform:rotate(var(--a)) translateX(var(--r)) scale(.3);opacity:0}20%{opacity:1}80%{opacity:1}100%{transform:rotate(calc(var(--a) + 360deg)) translateX(var(--r)) scale(.3);opacity:0}}.pzStars{position:fixed;left:0;top:0;right:0;bottom:0;pointer-events:none;z-index:1}.pzStars i{position:absolute;width:3px;height:3px;border-radius:50%;background:#ffe9a0;box-shadow:0 0 6px 1px #ffd86b;opacity:0;animation:pzTw 3s ease-in-out infinite}@keyframes pzTw{0%,100%{opacity:0;transform:translateY(0) scale(.5)}50%{opacity:.9;transform:translateY(-14px) scale(1.2)}}.pzBfs{position:fixed;left:0;top:0;right:0;bottom:0;pointer-events:none;z-index:1;overflow:hidden}.pzBf{position:absolute;line-height:1;animation:pzFly 18s ease-in-out infinite}.pzBf b{display:inline-block;font-weight:normal;animation:pzFlap .4s ease-in-out infinite alternate}@keyframes pzFly{0%,100%{transform:translate(0,0) rotate(-8deg)}25%{transform:translate(var(--x1),var(--y1)) rotate(14deg)}50%{transform:translate(var(--x2),var(--y2)) rotate(-10deg)}75%{transform:translate(var(--x3),var(--y3)) rotate(12deg)}}@keyframes pzFlap{from{transform:scaleX(1)}to{transform:scaleX(.3)}}@media (prefers-reduced-motion:reduce){.pzSpW,.pzStars,.pzBfs{display:none}}'; document.head.appendChild(_s2); }
+  function items() { window.__pzMapKey = undefined; window.pzLeft = window.pzLeft || function (ms) { var d = Math.floor(ms / 864e5), hh = Math.floor(ms % 864e5 / 36e5); return d > 0 ? d + ' kun ' + hh + ' soat' : Math.max(1, hh) + ' soat'; }; if (!document.getElementById('pzCss2')) { var _s2 = document.createElement('style'); _s2.id = 'pzCss2'; _s2.textContent = '.pzSpW{position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;transform:scaleY(.7)}.pzSpW i{position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;background:#fff3c4;border-radius:50%;box-shadow:0 0 10px 4px #ffd86b;opacity:0;animation:pzSp 3.2s ease-in-out infinite both}@keyframes pzSp{0%{transform:rotate(var(--a)) translateX(var(--r)) scale(.3);opacity:0}20%{opacity:1}80%{opacity:1}100%{transform:rotate(calc(var(--a) + 360deg)) translateX(var(--r)) scale(.3);opacity:0}}.pzStars{position:fixed;left:0;top:0;right:0;bottom:0;pointer-events:none;z-index:1}.pzStars i{position:absolute;width:3px;height:3px;border-radius:50%;background:#ffe9a0;box-shadow:0 0 6px 1px #ffd86b;opacity:0;animation:pzTw 3s ease-in-out infinite}@keyframes pzTw{0%,100%{opacity:0;transform:translateY(0) scale(.5)}50%{opacity:.9;transform:translateY(-14px) scale(1.2)}}.pzBfs{position:fixed;left:0;top:0;right:0;bottom:0;pointer-events:none;z-index:1;overflow:hidden}.pzBf{position:absolute;line-height:1;animation:pzFly 18s ease-in-out infinite}.pzBf b{display:inline-block;font-weight:normal;animation:pzFlap .4s ease-in-out infinite alternate}@keyframes pzFly{0%,100%{transform:translate(0,0) rotate(-8deg)}25%{transform:translate(var(--x1),var(--y1)) rotate(14deg)}50%{transform:translate(var(--x2),var(--y2)) rotate(-10deg)}75%{transform:translate(var(--x3),var(--y3)) rotate(12deg)}}@keyframes pzFlap{from{transform:scaleX(1)}to{transform:scaleX(.3)}}@media (prefers-reduced-motion:reduce){.pzSpW,.pzStars,.pzBfs{display:none}}'; document.head.appendChild(_s2); }
     var h = head('🧩 Masalalar', '<button id="pzTop" style="' + BG + '">🏆 TOP</button>'), shown = 0;
     var _sp2 = ''; if (curFo && !curLv) { for (var _k = 0; _k < 18; _k++) _sp2 += '<i style="--a:' + (_k * 20) + 'deg;--r:' + (60 + (_k % 3) * 28) + 'px;animation-delay:' + (_k * 0.18) + 's"></i>'; _sp2 = '<span class="pzSpW">' + _sp2 + '</span>'; }
     h += '<div style="margin:6px 0 12px;font-weight:bold;position:relative;display:inline-block;padding:4px 14px">' + (curLv ? LV[curLv] : '📁 ' + esc(curFo)) + _sp2 + '</div>';
     if (curFo && !curLv) h += '<div style="margin-bottom:12px">' + (S.link ? '<button id="pzShF" style="' + BS + '">🔗 Guruhga yuborish</button>' : '') + '<button id="pzHall" style="' + BG + '">🎮 O‘yin zaliga</button><button id="pzRk" style="' + BG + '">🏅 Unvonlar</button></div>';
     if (curFo && !curLv && S.promo && Date.now() < S.promo) h += '<div style="font-size:13px;margin:-4px 0 12px;padding:8px 10px;border-radius:10px;background:#2a2560">🎁 Aksiya (' + window.pzLeft(S.promo - Date.now()) + ' qoldi): havolangiz orqali kirgan har bir yangi o‘yinchi masala yechsa, sizga +100 🪙' + (S.inv ? '<br>👥 Taklif qilinganlar: ' + S.inv.total : '') + '</div>';
-    if (curFo && !curLv) h += pzMap(S.list.filter(function (p) { return foOf(p) === curFo; }), curFo);
     if (S.admin) h += '<div style="margin-bottom:12px"><button id="pzAdd" style="' + BS + '">➕ Masala</button>' + (curFo ? '<button id="pzRF" style="' + BG + '">✏️ Nomi</button><button id="pzDF" style="' + BG + '">🗑 Papkani o‘chirish</button>' : '') + '</div>';
     S.list.forEach(function (p, i) {
       if (curLv ? (lvOf(p) !== curLv || foOf(p)) : foOf(p) !== curFo) return;
@@ -676,7 +676,7 @@
     // masaladan qaytganda ro'yxat oxirgi ochilgan masala yonida tursin
     try {
       var _lid = window.__pzLast;
-      if (_lid && !(curFo && !curLv)) {
+      if (_lid) {
         var _cs = ov.querySelectorAll('[data-i]'), _el = null;
         for (var _q = 0; _q < _cs.length; _q++) { var _pp = S.list[Number(_cs[_q].getAttribute('data-i'))]; if (_pp && _pp.id === _lid) { _el = _cs[_q]; break; } }
         if (_el) {
@@ -784,7 +784,7 @@
       api('/api/puzzle/folder', { name: f, del: true }).then(function () { curFo = ''; load(); });
     });
     Array.prototype.forEach.call(ov.querySelectorAll('[data-i]'), function (e) {
-      e.onclick = function () { window.__pzMapKey = curLv ? undefined : curFo; play(S.list[Number(e.getAttribute('data-i'))]); };
+      e.onclick = function () { window.__pzMapKey = undefined; play(S.list[Number(e.getAttribute('data-i'))]); };
     });
     Array.prototype.forEach.call(ov.querySelectorAll('[data-mv]'), function (e) {
       e.onclick = function (ev) { ev.stopPropagation(); moveDlg(S.list[Number(e.getAttribute('data-mv'))]); };
@@ -921,7 +921,7 @@
         draw();
         // 🗺 xaritaga chiqib, odamcha keyingi masalaga yurib boradi
         setTimeout(function () {
-          if (myT !== window.__pzTok || isDay() || view === 'custom' || !document.getElementById('pzNext')) return;
+          if (myT !== window.__pzTok || isDay() || window.__pzMapKey !== '' || !document.getElementById('pzNext')) return;   // faqat xaritadan ochilganda
           window.__pzTok = (window.__pzTok || 0) + 1;
           window.__pzAuto = 1; hub = 0; curLv = 0; curFo = window.__pzMapKey != null ? window.__pzMapKey : foOf(p); if (curFo === '' && window.__pzMapKey === '') view = 'map'; list();
         }, 2200);
