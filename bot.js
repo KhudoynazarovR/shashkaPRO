@@ -194,16 +194,14 @@ async function onInline(q) {
   if (ph) results.push({   // 🖼 doska kartasi: guruhga rasm + "O'yinga kirish" tugmasi, keyin jonli yangilanadi
     type: "photo", id: "g_" + id + "_" + (tcC || "0") + "_" + o.col, photo_url: ph, thumbnail_url: ph, photo_width: 1000, photo_height: 700,
     title: "♟️ Shashka o‘ynash" + (o.tc ? " · " + o.tc : ""), description: "Siz: " + mine + " · birinchi kirgan raqib bo‘ladi. Masalan: 3+2 qora",
-    caption: "♟ <b>" + from.replace(/[<>&]/g, "") + "</b> shashka o‘ynashga chaqiryapti!" + (o.tc ? " · ⏱ " + o.tc : "") + "\nBosing — " + side + " bilan raqib bo‘lasiz. Qolganlar tomosha qiladi 👁", parse_mode: "HTML",
     reply_markup: { inline_keyboard: [[{ text: "▶ O‘yinga kirish", url: roomLink(id) }]] }
   });
   // 🧠 Xotira kartasi
   const mq = String(q.query || ""), msz = /6\s*[x×х]\s*6/i.test(mq) ? "6x6" : "4x6", mtc = /\b20\s*s/i.test(mq) ? 20 : /\b10\s*s/i.test(mq) ? 10 : /2\s*(m|daq)|blitz|⚡/i.test(mq) ? -120 : 0;
   const mcode = (() => { const a = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789", bb = crypto.randomBytes(6); let s = ""; for (let i = 0; i < 6; i++) s += a[bb[i] % a.length]; return s; })();
-  const mph = G.mmUrl(mcode, 0), mres = mph && {
+  const mph = G.mmUrl(mcode, 0, from), mres = mph && {
     type: "photo", id: "m_" + mcode + "_" + msz + "_" + mtc, photo_url: mph, thumbnail_url: mph, photo_width: 1000, photo_height: 700,
     title: "🧠 Xotira o‘ynash · " + msz.replace("x", "×"), description: "Juftliklarni topish o‘yini · birinchi kirgan raqib bo‘ladi. Masalan: xotira 6x6 10s",
-    caption: "🧠 <b>" + from.replace(/[<>&]/g, "") + "</b> Xotira o‘yiniga chaqiryapti! · " + msz.replace("x", "×") + "\nBosing — raqib bo‘lasiz. Qolganlar tomosha qiladi 👁", parse_mode: "HTML",
     reply_markup: { inline_keyboard: [[{ text: "▶ O‘yinga kirish", url: roomLink("mm_" + mcode) }]] }
   };
   if (mres) { if (/xotira|memori|памят/i.test(mq)) results.unshift(mres); else results.push(mres); }

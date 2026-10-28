@@ -62,8 +62,8 @@ async function render(roomId, from) {
     '<rect width="1000" height="700" fill="url(#bgx)"/><g transform="translate(2 2)">' + inner + '</g>' +
     '<text x="855" y="70" font-size="34" font-weight="800" fill="#ffd54f" text-anchor="middle" font-family="' + F + '">ShashkaPRO</text>' +
     '<text x="855" y="104" font-size="20" fill="#cbd5f5" text-anchor="middle" font-family="' + F + '">Rus shashkasi' + (I.tc ? ' · ' + esc(I.tc) : '') + '</text>' +
-    pl(170, bk, 'bpx', live && I.turn === 'black', I.st === 'over' ? (I.win && I.win === I.k ? '🏆' : '') : live && I.turn === 'black' ? 'navbat' : '') +
-    '<text x="855" y="330" font-size="26" text-anchor="middle" fill="#cbd5f5" font-family="' + F + '">' + (live ? I.n + '-yurish' + (I.v ? ' · 👁 ' + I.v : '') : I.st === 'over' ? (I.win ? '🏆 ' + esc(I.win.slice(0, 14)) : 'Durang') : 'vs') + '</text>' +
+    pl(170, bk, 'bpx', live && I.turn === 'black', I.st === 'over' ? (I.win && I.win === I.k ? '★ g‘olib' : '') : live && I.turn === 'black' ? 'navbat' : '') +
+    '<text x="855" y="330" font-size="26" text-anchor="middle" fill="#cbd5f5" font-family="' + F + '">' + (live ? I.n + '-yurish' + (I.v ? ' · ' + I.v + ' tomosha' : '') : I.st === 'over' ? (I.win ? '★ ' + esc(I.win.slice(0, 14)) : 'Durang') : 'vs') + '</text>' +
     pl(420, wt, 'wpx', live && I.turn === 'white', I.st === 'over' ? '' : live && I.turn === 'white' ? 'navbat' : '') +
     '<rect x="740" y="575" width="230" height="80" rx="20" fill="' + bc + '"/>' + (live ? '<circle cx="785" cy="615" r="11" fill="#fff"/>' : '') +
     '<text x="' + (live ? 870 : 855) + '" y="626" font-size="30" font-weight="800" fill="#fff" text-anchor="middle" font-family="' + F + '">' + badge + '</text></svg>';
@@ -79,7 +79,7 @@ function caption(roomId, from) {
     const who = room && (room.white || room.black), side = room && room.white ? '⚫ qora' : '⚪ oq';
     return '♟ <b>' + esc(from || (who && who.name) || 'Kimdir') + '</b> shashka o‘ynashga chaqiryapti!' + tc + '\nBosing — ' + side + ' bilan raqib bo‘lasiz. Qolganlar tomosha qiladi 👁';
   }
-  if (I.st === 'live') return '🔴 <b>Jonli</b>: ⚪ ' + esc(I.w) + ' — ⚫ ' + esc(I.k) + ' · ' + I.n + '-yurish' + tc + (I.v ? ' · 👁 ' + I.v : '') + (vt.length ? '\n🗳 Kim yutadi? ⚪ ' + vw + ' · ⚫ ' + vb : '\n🗳 Kim yutadi? Ovoz bering — topganlarga +5 💰');
+  if (I.st === 'live') return '🔴 <b>Jonli</b>: ⚪ ' + esc(I.w) + ' — ⚫ ' + esc(I.k) + ' · ' + I.n + '-yurish' + tc + (I.v ? ' · ' + I.v + ' tomosha' : '') + (vt.length ? '\n🗳 Kim yutadi? ⚪ ' + vw + ' · ⚫ ' + vb : '\n🗳 Kim yutadi? Ovoz bering — topganlarga +5 💰');
   return '🏁 O‘yin tugadi: ' + (I.win ? '🏆 G‘olib — <b>' + esc(I.win) + '</b>' : '🤝 durang') + '\n⚪ ' + esc(I.w) + ' — ⚫ ' + esc(I.k) + (vt.length ? '\n🗳 To‘g‘ri topganlar +5 💰 oldi' : '');
 }
 function markup(link, roomId) {
@@ -116,7 +116,7 @@ function chosen(roomId, imid, from, link, uid, tc, col) {
 function edit(room, m) {
   m.last = Date.now(); m.ver++;
   const u = url(room.id, m.from, m.ver + '_' + (room.moves || []).length); if (!u) return;
-  tg('editMessageMedia', { inline_message_id: m.imid, media: { type: 'photo', media: u, caption: caption(room.id, m.from), parse_mode: 'HTML' }, reply_markup: markup(m.link, room.id) });
+  tg('editMessageMedia', { inline_message_id: m.imid, media: { type: 'photo', media: u }, reply_markup: markup(m.link, room.id) });
 }
 function touch(room) {   // rooms.js dan: xonada o'zgarish bo'ldi
   const m = room && msgs.get(room.id); if (!m || m.done) return;
@@ -138,10 +138,10 @@ function mmInfo(r) {
   let v = r && r.watch ? r.watch.size : 0;
   return { st, a: P[0] ? P[0].name : '', b: P[1] ? P[1].name : '', sa: S ? S.sc[0] : 0, sb: S ? S.sc[1] : 0, turn: S ? S.turn : 0, win: r ? r.winner : null, size: r ? r.size : '4x6', tc: r ? r.tc : 0, found, v };
 }
-function tcTxt(tc) { return tc > 0 ? tc + ' s' : tc < 0 ? '⚡ ' + (-tc / 60) + ' daq' : '∞'; }
-async function mmRender(codeX) {
-  const r = MR() && MR().get(codeX), I = mmInfo(r);
-  const key = 'mm:' + codeX + ':' + I.st + ':' + I.sa + ':' + I.sb + ':' + I.turn + ':' + I.found + ':' + I.v + ':' + I.a + ':' + I.b + ':' + (r && r.S ? r.S.up.join(',') : '');
+function tcTxt(tc) { return tc > 0 ? tc + ' s' : tc < 0 ? '⚡ ' + (-tc / 60) + ' daq' : 'vaqtsiz'; }
+async function mmRender(codeX, from) {
+  const r = MR() && MR().get(codeX), I = mmInfo(r); if (!r && from) I.a = from;
+  const key = 'mm:' + codeX + ':' + (from || '') + ':' + I.st + ':' + I.sa + ':' + I.sb + ':' + I.turn + ':' + I.found + ':' + I.v + ':' + I.a + ':' + I.b + ':' + (r && r.S ? r.S.up.join(',') : '');
   if (cache.has(key)) return cache.get(key);
   const sharp = require('sharp'), F = 'DejaVu Sans,sans-serif';
   const [w, h] = (I.size || '4x6').split('x').map(Number), S = r && r.S;
@@ -155,14 +155,14 @@ async function mmRender(codeX) {
   }
   const live = I.st === 'live';
   const pl = (y, nm, sc, col, on, crown) => '<g transform="translate(730 ' + y + ')"><rect width="250" height="96" rx="18" fill="' + (on ? '#2b3a6b' : '#1c2547') + '" stroke="' + (on ? '#ffd54f' : '#33406e') + '" stroke-width="3"/><circle cx="40" cy="48" r="20" fill="' + col + '"/>' +
-    '<text x="72" y="44" font-size="' + (String(nm).length > 9 ? 20 : 25) + '" font-weight="700" fill="#fff" font-family="' + F + '">' + esc(String(nm || 'Kutilmoqda…').slice(0, 14)) + '</text><text x="72" y="78" font-size="24" font-weight="800" fill="#ffd54f" font-family="' + F + '">' + (I.st === 'wait' ? '' : sc + ' juftlik') + (crown ? '  🏆' : '') + '</text></g>';
+    '<text x="72" y="44" font-size="' + (String(nm || 'Kutilmoqda…').length > 9 ? 18 : 25) + '" font-weight="700" fill="#fff" font-family="' + F + '">' + esc(String(nm || 'Kutilmoqda…').slice(0, 14)) + '</text><text x="72" y="78" font-size="24" font-weight="800" fill="#ffd54f" font-family="' + F + '">' + (I.st === 'wait' ? '' : sc + ' juftlik') + (crown ? '  ★' : '') + '</text></g>';
   const badge = I.st === 'wait' ? '▶ O‘YIN' : live ? 'JONLI' : I.win === -1 ? 'DURANG' : 'G‘OLIB', bc = I.st === 'wait' ? '#2e9d3a' : live ? '#c62828' : '#b7791f';
   const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="700"><defs><linearGradient id="bgm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1f4a8a"/><stop offset="1" stop-color="#060d22"/></linearGradient><linearGradient id="cb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b5ba8"/><stop offset="1" stop-color="#22397a"/></linearGradient></defs>' +
     '<rect width="1000" height="700" fill="url(#bgm)"/>' + g +
-    '<text x="855" y="66" font-size="34" font-weight="800" fill="#ffd54f" text-anchor="middle" font-family="' + F + '">🧠 Xotira</text>' +
-    '<text x="855" y="100" font-size="20" fill="#cbd5f5" text-anchor="middle" font-family="' + F + '">' + esc(I.size.replace('x', '×')) + ' · ⏱ ' + esc(tcTxt(I.tc)) + '</text>' +
+    '<text x="855" y="66" font-size="34" font-weight="800" fill="#ffd54f" text-anchor="middle" font-family="' + F + '">XOTIRA</text>' +
+    '<text x="855" y="100" font-size="20" fill="#cbd5f5" text-anchor="middle" font-family="' + F + '">' + esc(I.size.replace('x', '×')) + ' · ' + esc(tcTxt(I.tc).replace('⚡ ', '')) + '</text>' +
     pl(150, I.a, I.sa, '#3fa34d', live && I.turn === 0, I.st === 'over' && I.win === 0) +
-    '<text x="855" y="292" font-size="24" text-anchor="middle" fill="#cbd5f5" font-family="' + F + '">' + (live ? I.found + ' / ' + (w * h / 2) + ' topildi' + (I.v ? ' · 👁 ' + I.v : '') : I.st === 'over' ? 'O‘yin tugadi' : 'vs') + '</text>' +
+    '<text x="855" y="292" font-size="20" text-anchor="middle" fill="#cbd5f5" font-family="' + F + '">' + (live ? I.found + ' / ' + (w * h / 2) + ' topildi' + (I.v ? ' · ' + I.v + ' tomosha' : '') : I.st === 'over' ? 'O‘yin tugadi' : 'vs') + '</text>' +
     pl(330, I.b, I.sb, '#e0533d', live && I.turn === 1, I.st === 'over' && I.win === 1) +
     '<rect x="740" y="575" width="230" height="80" rx="20" fill="' + bc + '"/>' + (live ? '<circle cx="785" cy="615" r="11" fill="#fff"/>' : '') +
     '<text x="' + (live ? 870 : 855) + '" y="626" font-size="30" font-weight="800" fill="#fff" text-anchor="middle" font-family="' + F + '">' + badge + '</text></svg>';
@@ -170,12 +170,12 @@ async function mmRender(codeX) {
   cache.set(key, buf); if (cache.size > 300) cache.delete(cache.keys().next().value);
   return buf;
 }
-function mmUrl(codeX, v) { const b = BASE(); return b ? b + '/api/mcard/' + codeX + '.jpg?v=' + (v || 0) : ''; }
+function mmUrl(codeX, v, from) { const b = BASE(); return b ? b + '/api/mcard/' + codeX + '.jpg?v=' + (v || 0) + (from ? '&f=' + encodeURIComponent(from) : '') : ''; }
 function mmCaption(codeX, from) {
   const r = MR() && MR().get(codeX), I = mmInfo(r), sz = ' · ' + I.size.replace('x', '×') + ' · ⏱ ' + tcTxt(I.tc);
   const vt = r && r.votes ? Object.values(r.votes) : [], v0 = vt.filter(x => x === 0).length;
   if (I.st === 'wait') return I.b ? '🧠 <b>Xotira</b>' + sz + '\n⏳ ' + esc(I.a) + ' va ' + esc(I.b) + ' — ikkalasi kirishi bilan boshlanadi' : '🧠 <b>' + esc(I.a || from || 'Kimdir') + '</b> Xotira o‘yiniga chaqiryapti!' + sz + '\nBosing — raqib bo‘lasiz. Qolganlar tomosha qiladi 👁';
-  if (I.st === 'live') return '🔴 <b>Jonli · Xotira</b>: 🟢 ' + esc(I.a) + ' ' + I.sa + ' : ' + I.sb + ' ' + esc(I.b) + ' 🔴' + sz + (I.v ? ' · 👁 ' + I.v : '') + (vt.length ? '\n🗳 Kim yutadi? 🟢 ' + v0 + ' · 🔴 ' + (vt.length - v0) : '\n🗳 Kim yutadi? Ovoz bering — topganlarga +5 💰');
+  if (I.st === 'live') return '🔴 <b>Jonli · Xotira</b>: 🟢 ' + esc(I.a) + ' ' + I.sa + ' : ' + I.sb + ' ' + esc(I.b) + ' 🔴' + sz + (I.v ? ' · ' + I.v + ' tomosha' : '') + (vt.length ? '\n🗳 Kim yutadi? 🟢 ' + v0 + ' · 🔴 ' + (vt.length - v0) : '\n🗳 Kim yutadi? Ovoz bering — topganlarga +5 💰');
   return '🏁 Xotira tugadi: ' + (I.win >= 0 ? '🏆 G‘olib — <b>' + esc(I.win === 0 ? I.a : I.b) + '</b>' : '🤝 durang') + '\n🟢 ' + esc(I.a) + ' ' + I.sa + ' : ' + I.sb + ' ' + esc(I.b) + ' 🔴' + (vt.length ? '\n🗳 To‘g‘ri topganlar +5 💰 oldi' : '');
 }
 function mmMarkup(link, codeX) {
@@ -192,7 +192,7 @@ function mmChosen(codeX, imid, from, link) { if (codeX && imid) msgs.set('mm:' +
 function mmEdit(r, m) {
   m.last = Date.now(); m.ver++;
   const u = mmUrl(r.code, m.ver); if (!u) return;
-  tg('editMessageMedia', { inline_message_id: m.imid, media: { type: 'photo', media: u, caption: mmCaption(r.code, m.from), parse_mode: 'HTML' }, reply_markup: mmMarkup(m.link, r.code) });
+  tg('editMessageMedia', { inline_message_id: m.imid, media: { type: 'photo', media: u }, reply_markup: mmMarkup(m.link, r.code) });
 }
 function mmTouch(r) {
   const m = r && msgs.get('mm:' + r.code); if (!m) return;
@@ -204,7 +204,7 @@ function mmTouch(r) {
 function mmNow(r) { const m = r && msgs.get('mm:' + r.code); if (m) { if (m.tmr) { clearTimeout(m.tmr); m.tmr = null; } mmEdit(r, m); } }
 function handleHttp(req, res, p) {
   const mx = /^\/api\/mcard\/([A-Z0-9]{6})\.jpg$/.exec(p);
-  if (mx) { mmRender(mx[1]).then(buf => { res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=60' }); res.end(buf); }).catch(e => { console.log('[mcard]', e.message); res.writeHead(500); res.end(); }); return true; }
+  if (mx) { mmRender(mx[1], String(new URL(req.url, 'http://x').searchParams.get('f') || '').slice(0, 30)).then(buf => { res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=60' }); res.end(buf); }).catch(e => { console.log('[mcard]', e.message); res.writeHead(500); res.end(); }); return true; }
   const mm = /^\/api\/gcard\/([a-z0-9]{4,16})\.jpg$/.exec(p); if (!mm) return false;
   const q = new URL(req.url, 'http://x').searchParams;
   render(mm[1], String(q.get('f') || '').slice(0, 30)).then(buf => { res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=60' }); res.end(buf); })
