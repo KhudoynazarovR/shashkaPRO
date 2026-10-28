@@ -492,6 +492,13 @@
     var sc = document.createElement('script'); sc.src = '/pzmapview.js?v=2';
     sc.onload = function () { window.spPzMap.load(cb); }; sc.onerror = function () {}; document.head.appendChild(sc);
   }
+  // umumiy xarita tartibi: papkalar ketma-ket (Kombinatsiyalar → …), keyin papkasizlar
+  function mainOrder() {
+    var o = [];
+    (S.folders || []).forEach(function (f) { S.list.forEach(function (p) { if (foOf(p) === f) o.push(p); }); });
+    S.list.forEach(function (p) { if (!foOf(p)) o.push(p); });
+    return o;
+  }
   function pzMap(arr, key) {
     var sv = S.solved || [], n = arr.length, d = 0;
     var it = arr.map(function (p) { var ok = sv.indexOf(p.id) >= 0; if (ok) d++; return { i: S.list.indexOf(p), done: ok }; });
@@ -509,14 +516,14 @@
           e.onclick = function () {
             var i = Number(e.getAttribute('data-pz'));
             var c = key ? me.querySelector('[data-i="' + i + '"]') : null;   // papkada — kartani bosish (qulf qoidalari saqlanadi)
-            if (c) c.click(); else if (S.list[i]) play(S.list[i]);
+            window.__pzMapKey = key; if (c) c.click(); else if (S.list[i]) play(S.list[i]);
           };
         });
         window.spPzMap.after(bx, key, function () { list(); }, function () {
           // masala yechilgandan keyin: odamcha yetib borgach keyingi masala o'zi ochiladi
           if (!window.__pzAuto) return; window.__pzAuto = 0;
           var nx = null; for (var q = 0; q < arr.length; q++) if (sv.indexOf(arr[q].id) < 0 && (S.solved || []).indexOf(arr[q].id) < 0) { nx = arr[q]; break; }
-          if (nx) play(nx);
+          if (nx) { window.__pzMapKey = key; play(nx); }
         });
       });
     }, 0);
@@ -527,7 +534,7 @@
     if (window.__pzPF) { var _pf = window.__pzPF; window.__pzPF = ''; if ((S.folders || []).indexOf(_pf) >= 0) { curFo = _pf; curLv = 0; } }
     if (curFo && (S.folders || []).indexOf(curFo) < 0) curFo = '';
     if (curLv || curFo) return items();
-    var fl = S.folders || [], h = head(view === 'custom' ? '🎨 Maxsus masalalar' : '🧩 Masalalar', topBtns()); if (view !== 'custom') h += pzMap(S.list, '');
+    var fl = S.folders || [], h = head(view === 'custom' ? '🎨 Maxsus masalalar' : '🧩 Masalalar', topBtns()); if (view !== 'custom') h += pzMap(mainOrder(), '');
     if (S.admin) h += '<div style="margin-bottom:10px"><button id="pzNF" style="' + BG + '">📁 Yangi papka</button></div>';
     if (!S.list.length && !fl.length) h += '<div style="padding:30px;opacity:.7">Hozircha masala yo‘q</div>';
     [1, 2, 3].forEach(function (lv) {
@@ -541,7 +548,7 @@
     if (!S.admin) h += '<div style="font-size:11px;opacity:.4;margin-top:16px">ID: ' + esc(S.myId) + '</div>';
     ov.innerHTML = h;
     on('#pzBack', function () { hub = 1; view = ''; list(); }); on('#pzTop', pzTop);
-    on('#pzGo', function () { var nx = S.list.filter(function (p) { return (S.solved || []).indexOf(p.id) < 0; })[0] || S.list[0]; if (nx) play(nx); }); on('#pzNew', function () { newPz(0, ''); });
+    on('#pzGo', function () { var mo = mainOrder(), nx = mo.filter(function (p) { return (S.solved || []).indexOf(p.id) < 0; })[0] || mo[0]; window.__pzMapKey = ''; if (nx) play(nx); }); on('#pzNew', function () { newPz(0, ''); });
     on('#pzNF', function () {
       var n = cleanName(prompt('Yangi papka nomi:'));
       if (!n) return;
@@ -770,7 +777,7 @@
       api('/api/puzzle/folder', { name: f, del: true }).then(function () { curFo = ''; load(); });
     });
     Array.prototype.forEach.call(ov.querySelectorAll('[data-i]'), function (e) {
-      e.onclick = function () { play(S.list[Number(e.getAttribute('data-i'))]); };
+      e.onclick = function () { window.__pzMapKey = curLv ? undefined : curFo; play(S.list[Number(e.getAttribute('data-i'))]); };
     });
     Array.prototype.forEach.call(ov.querySelectorAll('[data-mv]'), function (e) {
       e.onclick = function (ev) { ev.stopPropagation(); moveDlg(S.list[Number(e.getAttribute('data-mv'))]); };
@@ -909,7 +916,7 @@
         setTimeout(function () {
           if (myT !== window.__pzTok || isDay() || view === 'custom' || !document.getElementById('pzNext')) return;
           window.__pzTok = (window.__pzTok || 0) + 1;
-          window.__pzAuto = 1; hub = 0; curLv = 0; curFo = foOf(p); list();
+          window.__pzAuto = 1; hub = 0; curLv = 0; curFo = window.__pzMapKey != null ? window.__pzMapKey : foOf(p); list();
         }, 2200);
       });
     }
