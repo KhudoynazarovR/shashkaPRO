@@ -46,8 +46,9 @@
     // ?room= (o'yinga o'tish) Telegram start_param dan ustun: aks holda eski havola/turnir havolasi o'yinni bosib ketadi
     if (q.get("room")) roomId = q.get("room");
     else if (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param && !/^(ref_|pz_|pf_|go_|shop_|pb_|pzt_|ntf_)/.test(tg.initDataUnsafe.start_param)) roomId = String(tg.initDataUnsafe.start_param);
-    if (/^lb[ts]_/.test(roomId)) return; // turnir/sians havolasi - xona emas
-    if (!ROOM_RE.test(roomId)) return; // xona rejimi emas
+    var _nb = function () { var bt = document.getElementById("rcBoot"); if (bt) bt.remove(); };
+    if (/^lb[ts]_/.test(roomId)) return _nb(); // turnir/sians havolasi - xona emas
+    if (!ROOM_RE.test(roomId)) return _nb(); // xona rejimi emas
     try { if (tg) { tg.ready(); tg.expand(); if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); } } catch (e) {}
     var missing = missingFns();
     if (missing.length) {
@@ -1235,6 +1236,7 @@
       if (m.type === "error" && st.optim) { st.optim = false; st.optN = 0; st.pending = false; st.forced = null; send({ type: "roomSync", roomId: roomId }); }
       if (m.type === "roomState" && m.roomId === roomId && !m.finished) { try { window.__coinClear(); } catch (e) {} }
       if (m.type === "roomState" && m.roomId === roomId) {
+        setTimeout(function () { var bt = document.getElementById("rcBoot"); if (bt) bt.remove(); }, 250);
         st.optim = false;
         st.joined = true;
         st.color = m.color;

@@ -176,7 +176,9 @@
   }
   // kuniga birinchi kirishda — server javobini kutmasdan darhol ochiladi
   function today() { return new Date(Date.now() + 5 * 3600e3).toISOString().slice(0, 10); }
-  if (ls('dq_seen') !== today()) { autoDone = true; var _go = function () { if (document.body) show(); else setTimeout(_go, 50); }; _go(); }
+  // o'yin havolasi (guruhdagi doska) orqali kirilganda kunlik oyna o'yinni to'smasin
+  try { var _sp0 = (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || new URLSearchParams(location.search).get('tgWebAppStartParam') || ''; if (/^[A-Za-z0-9-]{6,32}$/.test(_sp0) || new URLSearchParams(location.search).get('room')) autoDone = true; } catch (e) {}
+  if (!autoDone && ls('dq_seen') !== today()) { autoDone = true; var _go = function () { if (document.body) show(); else setTimeout(_go, 50); }; _go(); }
   load();
   setInterval(function () {
     card();

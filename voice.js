@@ -215,10 +215,11 @@
         return say('🤔 Eshitilmadi, qayta urinib ko‘ring (' + err + ')');
       }
       fails = 0; handle(alts); }); };
-    try { if (!localStorage.getItem('spMicSeen')) { localStorage.setItem('spMicSeen', '1'); setTimeout(function () { say('🎤 Yangi: ovozli boshqaruv! Tugmani bosib «O‘ynash» deb ayting. Uzoq bossangiz — buyruqlar ro‘yxati', 6000); }, 4000); } } catch (e) {}
+    try { if (false && !localStorage.getItem('spMicSeen')) { localStorage.setItem('spMicSeen', '1'); setTimeout(function () { say('🎤 Yangi: ovozli boshqaruv! Tugmani bosib «O‘ynash» deb ayting. Uzoq bossangiz — buyruqlar ro‘yxati', 6000); }, 4000); } } catch (e) {}
     setInterval(function () {
-      var on = true; try { on = localStorage.getItem('spMicOff') !== '1'; } catch (e) {}
       var room = inRoom(), inf = room && W.rcVoice ? W.rcVoice.info() : null;
+      var on = false; try { on = localStorage.getItem('spMicOff') === '0'; } catch (e) {}   // 🎤 sukut bo'yicha yashirin (Sozlamalardan yoqiladi); ovozli bellashuvda doim ko'rinadi
+      if (inf && inf.voice) on = true;
       btn.style.display = on ? 'flex' : 'none';
       btn.classList.toggle('big', !!(inf && inf.voice && inf.playing));
       if (room) btn.style.bottom = 'calc(' + (inf && inf.voice ? 110 : 90) + 'px + env(safe-area-inset-bottom))';
