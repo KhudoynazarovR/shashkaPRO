@@ -46,8 +46,8 @@ function gameOver(room, m) {
 function T(chat) { const a = store.db.gtour = store.db.gtour || {}; return a[String(chat)]; }
 function tourText(t) {
   const st = t.status === 'reg' ? '📝 Ro‘yxatdan o‘tish' : t.status === 'run' ? '⚔️ ' + t.round + '-tur' : '🏁 Tugadi';
-  let s = '🏆 <b>Guruh turniri</b> · ⏱ ' + esc(t.tc) + ' · olimpiya tizimi\n' + st + '\n\n👥 Qatnashchilar (' + t.players.length + '):\n' + (t.players.map((p, i) => (i + 1) + '. ' + esc(p.name)).join('\n') || '—');
-  if (t.status === 'reg') s += '\n\n«✅ Qatnashaman» ni bosing. ' + esc(t.byName) + ' «▶ Boshlash» ni bosganda turnir boshlanadi.\n🥇 G‘olibga +50 🪙';
+  let s = '🏆 <b>Guruh kubogi</b> · ⏱ ' + esc(t.tc) + ' · olimpiya tizimi\n' + st + '\n\n👥 Qatnashchilar (' + t.players.length + '):\n' + (t.players.map((p, i) => (i + 1) + '. ' + esc(p.name)).join('\n') || '—');
+  if (t.status === 'reg') s += '\n\n«✅ Qatnashaman» ni bosing. ' + esc(t.byName) + ' «▶ Boshlash» ni bosganda kubok boshlanadi.\n🥇 G‘olibga +50 🪙';
   if (t.status === 'done' && t.champ) s += '\n\n🏆 <b>Chempion: ' + esc(t.champ) + '</b> (+50 🪙)';
   return s;
 }
@@ -57,7 +57,7 @@ function tourKb(t) {
 }
 function tourEdit(t) { if (t.msg) G.tg('editMessageText', { chat_id: t.chat, message_id: t.msg, text: tourText(t), parse_mode: 'HTML', reply_markup: tourKb(t) }); }
 async function cmdTour(msg, arg) {
-  if (!msg.chat || msg.chat.type === 'private') return G.tg('sendMessage', { chat_id: msg.chat.id, text: '🏆 Turnir guruhda o‘tkaziladi: botni guruhga qo‘shib, u yerda /turnir yozing.' });
+  if (!msg.chat || msg.chat.type === 'private') return G.tg('sendMessage', { chat_id: msg.chat.id, text: '🏆 Kubok guruhda o‘tkaziladi: botni guruhga qo‘shib, u yerda /kubok yozing.' });
   const a = store.db.gtour = store.db.gtour || {}, old = a[String(msg.chat.id)];
   if (old && old.status !== 'done' && Date.now() - old.at < 6 * 3600e3) return G.tg('sendMessage', { chat_id: msg.chat.id, text: tourText(old), parse_mode: 'HTML', reply_markup: tourKb(old), reply_to_message_id: old.msg });
   const m = /(\d{1,2})\s*\+\s*(\d{1,2})/.exec(arg || ''), tc = m ? m[1] + '+' + m[2] : '3+2';
@@ -73,7 +73,7 @@ async function nextRound(t) {
     t.status = 'done'; const c = t.players.find(p => p.uid === t.alive[0]);
     t.champ = c ? c.name : '—'; if (c) coins(c.uid, 50);
     store.save(); tourEdit(t);
-    return G.tg('sendMessage', { chat_id: t.chat, text: '🏆🎉 Turnir tugadi!\nChempion: <b>' + esc(t.champ) + '</b> — +50 🪙', parse_mode: 'HTML' });
+    return G.tg('sendMessage', { chat_id: t.chat, text: '🏆🎉 Kubok tugadi!\nChempion: <b>' + esc(t.champ) + '</b> — +50 🪙', parse_mode: 'HTML' });
   }
   t.round++; t.pairs = []; t.roundAt = Date.now();
   const al = shuffle(t.alive.slice()), P = uid => t.players.find(p => p.uid === uid);
@@ -158,7 +158,7 @@ async function onCallback(q) {
     return answer(q, topText(q.chat_instance, 5), true), true;
   }
   if (d[1] === 'j' || d[1] === 's' || d[1] === 'x') {   // 🏆 turnir
-    const t = T(d[2]); if (!t) return answer(q, 'Turnir topilmadi'), true;
+    const t = T(d[2]); if (!t) return answer(q, 'Kubok topilmadi'), true;
     if (q.chat_instance) t.ci = q.chat_instance;
     if (t.status !== 'reg') return answer(q, 'Ro‘yxat yopilgan'), true;
     if (d[1] === 'j') {
@@ -168,10 +168,10 @@ async function onCallback(q) {
       return answer(q, '✅ Ro‘yxatga qo‘shildingiz!'), true;
     }
     if (uid !== t.by && !ADM().includes(uid)) return answer(q, 'Faqat ' + t.byName + ' boshqaradi'), true;
-    if (d[1] === 'x') { t.status = 'done'; t.champ = null; store.save(); G.tg('editMessageText', { chat_id: t.chat, message_id: t.msg, text: '❌ Turnir bekor qilindi.' }); return answer(q, 'Bekor qilindi'), true; }
+    if (d[1] === 'x') { t.status = 'done'; t.champ = null; store.save(); G.tg('editMessageText', { chat_id: t.chat, message_id: t.msg, text: '❌ Kubok bekor qilindi.' }); return answer(q, 'Bekor qilindi'), true; }
     if (t.players.length < 2) return answer(q, 'Kamida 2 ta qatnashchi kerak'), true;
     t.status = 'run'; t.alive = t.players.map(p => p.uid); tourEdit(t);
-    answer(q, '▶ Turnir boshlandi!'); nextRound(t); return true;
+    answer(q, '▶ Kubok boshlandi!'); nextRound(t); return true;
   }
   return false;
 }

@@ -148,7 +148,7 @@ async function onMessage(msg) {
   const name = cmd[0].toLowerCase();
 
   if (name === "/top" || name === "/reyting") { await require("./grp.js").cmdTop(msg); return; }
-  if (name === "/turnir" || name === "/tournament") { await require("./grp.js").cmdTour(msg, text.split(/\s+/).slice(1).join(" ")); return; }
+  if (name === "/kubok") { await require("./grp.js").cmdTour(msg, text.split(/\s+/).slice(1).join(" ")); return; }
   if (name === "/new" || name === "/shashka") {
     const id = newRoomId();
     await api("sendMessage", {
@@ -208,7 +208,7 @@ async function start() {
   try { await api("deleteWebhook"); } catch (e) {}
   try {
     await api("setMyCommands", {
-      commands: [{ command: "new", description: "Yangi shashka xonasi" }, { command: "turnir", description: "🏆 Guruh turniri (masalan: /turnir 3+2)" }, { command: "top", description: "📊 Guruh reytingi" }]
+      commands: [{ command: "new", description: "Yangi shashka xonasi" }, { command: "kubok", description: "🏆 Guruh kubogi (masalan: /kubok 3+2)" }, { command: "top", description: "📊 Guruh reytingi" }]
     });
   } catch (e) {}
   console.log("[bot] ishga tushdi: @" + BOT);
