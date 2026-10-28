@@ -92,8 +92,7 @@
     TCS.forEach(function (t) { h += '<button class="op' + (CFG.tc === t.k ? ' on' : '') + '" data-t="' + t.k + '">' + T(t.t) + '</button>'; });
     h += '</div>';
     if (CFG.mode === 'friend') {
-      h += '<button class="go" data-go>👥 ' + T('O‘YIN YARATISH') + '</button>' +
-        '<div class="lb" style="text-align:center">' + T('yoki do‘stingiz kodi bilan kiring') + '</div><input data-code maxlength="6" placeholder="KOD"><button class="go g2" data-join>🔑 ' + T('Kirish') + '</button>';
+      h += '<button class="go" data-go>👥 ' + T('O‘YIN YARATISH') + '</button>';
     } else h += '<button class="go" data-go>▶ ' + T('O‘YNASH') + '</button>';
     ov.innerHTML = h;
     var q = function (s) { return ov.querySelector(s); };
@@ -106,7 +105,6 @@
     [].forEach.call(ov.querySelectorAll('[data-rule]'), function (b) { b.onclick = function () { var k = b.getAttribute('data-rule'); CFG.rules[k] = !CFG.rules[k]; saveCfg(); b.className = 'rl' + (CFG.rules[k] ? ' on' : ''); }; });
     q('[data-tour]').onclick = tourMenu;
     q('[data-go]').onclick = function () { if (CFG.mode === 'friend') netCreate(); else startBot(); };
-    if (q('[data-join]')) q('[data-join]').onclick = function () { var c = String(q('[data-code]').value || '').trim().toUpperCase(); if (c.length === 6) netJoin(c); };
   }
 
   // ---------------- doska chizish (umumiy)
@@ -332,21 +330,31 @@
     if (!ov || !NET) return;
     if (m.type === 'mmErr') { ov.innerHTML = '<div class="top"><button class="bk" data-x>‹</button><h2>Xotira</h2></div><div class="cd" style="text-align:center">⚠️ ' + esc(T(m.msg)) + '</div><button class="go g2" data-x2>☰ ' + T('Menyu') + '</button>'; ov.querySelector('[data-x]').onclick = menu; ov.querySelector('[data-x2]').onclick = menu; NET = null; return; }
     if (m.type === 'mmAgainAsk') { var mm = ov.querySelector('[data-rw]'); if (mm) mm.textContent = '🔁 ' + T('Do‘stingiz yana o‘ynashni xohlayapti'); return; }
+    if (m.type === 'mmPlayers') {   // zaldagi onlayn o'yinchilar
+      var pl = ov.querySelector('[data-pl]'); if (!pl) return;
+      if (!m.list.length) { pl.innerHTML = '<div class="cd" style="text-align:center">😔 ' + T('Hozir o‘yin zalida hech kim yo‘q. Guruhga yuboring!') + '</div>'; return; }
+      pl.innerHTML = '<div class="cd" style="padding:6px 10px">' + m.list.map(function (p) { return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.08)"><span style="flex:1;text-align:left">' + (p.busy ? '🎮 ' : '🟢 ') + esc(p.name) + (p.busy ? ' <small style="opacity:.6">' + T('o‘yinda') + '</small>' : '') + '</span><button class="op" data-inv="' + esc(p.uid) + '">' + T('Taklif') + '</button></div>'; }).join('') + '</div>';
+      [].forEach.call(pl.querySelectorAll('[data-inv]'), function (b) { b.onclick = function () { if (!NET || !NET.code) return; sendN({ type: 'mmInvite', code: NET.code, toUid: b.getAttribute('data-inv') }); b.textContent = '⏳'; b.disabled = true; }; });
+      return;
+    }
+    if (m.type === 'mmInviteRes') { var bi = ov.querySelector('[data-inv="' + m.toUid + '"]'); if (bi) bi.textContent = m.ok ? '✅ ' + T('Yuborildi') : '📴 ' + T('Chiqib ketgan'); return; }
+    if (m.type === 'mmDeclined') { var pl2 = ov.querySelector('[data-pl]'); if (pl2) pl2.insertAdjacentHTML('afterbegin', '<div class="cd" style="text-align:center">🙅 ' + esc(m.name) + ' ' + T('taklifni rad etdi') + '</div>'); return; }
     if (m.type !== 'mmState') return;
     NET.code = m.code; NET.st = m;
     var z = sizeOf(m.size), me = m.me, op = 1 - me;
     if (m.status === 'wait') {
       var link = shareLink(m.code);
       ov.innerHTML = '<div class="top"><button class="bk" data-x>‹</button><h2>👥 ' + T('Do‘st bilan') + '</h2></div>' +
-        '<div class="cd" style="text-align:center">' + T('O‘yin kodi') + '<div class="code">' + m.code + '</div>' + z.t + ' · ' + (m.tc > 0 ? '⏱ ' + m.tc + ' s' : m.tc < 0 ? '⚡ ' + (-m.tc / 60) + ' ' + T('daqiqa') : '∞') + rulesTxt(m.rules) + '<br><br>⏳ ' + T('Do‘stingiz kutilmoqda…') + '</div>' +
-        '<button class="go" data-sh>📤 ' + T('Do‘stga yuborish') + '</button><button class="go g2" data-cp>📋 ' + T('Havolani nusxalash') + '</button>';
+        '<div class="cd" style="text-align:center">🧠 <b>' + z.t + '</b> · ' + (m.tc > 0 ? '⏱ ' + m.tc + ' s' : m.tc < 0 ? '⚡ ' + (-m.tc / 60) + ' ' + T('daqiqa') : '∞') + rulesTxt(m.rules) + '<br><br>⏳ ' + T('Do‘stingiz kutilmoqda…') + '</div>' +
+        '<button class="go" data-hall>🎮 ' + T('O‘yin zalidagi o‘yinchini taklif qilish') + '</button><div data-pl></div>' +
+        '<button class="go g2" data-sh>📤 ' + T('Guruhga yoki do‘stga yuborish') + '</button>';
       ov.querySelector('[data-x]').onclick = menu;
       ov.querySelector('[data-sh]').onclick = function () {
-        var txt = '🧠 ' + T('Xotira o‘yinini o‘ynaymizmi? Kod:') + ' ' + m.code;
+        var txt = '🧠 ' + T('Xotira o‘yinini o‘ynaymizmi? Bosing va o‘yinga kiring!');
         var u = 'https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encodeURIComponent(txt);
         try { if (tg && tg.openTelegramLink) tg.openTelegramLink(u); else window.open(u, '_blank'); } catch (e) { window.open(u, '_blank'); }
       };
-      ov.querySelector('[data-cp]').onclick = function () { try { navigator.clipboard.writeText(link); this.textContent = '✅ ' + T('Nusxalandi'); } catch (e) {} };
+      ov.querySelector('[data-hall]').onclick = function () { var pl = ov.querySelector('[data-pl]'); if (pl) pl.innerHTML = '<div class="cd" style="text-align:center">⏳</div>'; sendN({ type: 'mmPlayers', init: (tg && tg.initData) || '' }); };
       return;
     }
     var cards = m.cards.map(function (c) { return c ? { s: c.s, up: !c.o, ok: !!c.o, bt: c.o && c.o - 1 !== me } : null; });

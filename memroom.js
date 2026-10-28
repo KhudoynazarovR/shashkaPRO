@@ -66,8 +66,21 @@ function deal(r) {
   arm(r);
 }
 
-function handle(c, m) {
+let CL = null;   // server.js dagi ulanishlar (o'yin zalidagilarni topish uchun)
+function lobbyConns(uid) { return CL ? [...CL.values()].filter(x => x && x.lb && !x.isBot && String(x.lb.uid) === String(uid)) : []; }
+function handle(c, m, clients) {
+  if (clients) CL = clients;
   if (!m || typeof m.type !== 'string' || !m.type.startsWith('mm')) return false;
+  if (m.type === 'mmPlayers') {   // o'yin zalidagi onlayn o'yinchilar (taklif uchun)
+    const u = who(m), seen = new Set(), list = [];
+    if (CL) for (const x of CL.values()) {
+      if (!x || !x.lb || x.isBot || x.hidden) continue;
+      const id = String(x.lb.uid); if (seen.has(id) || (u && id === u.uid)) continue; seen.add(id);
+      list.push({ uid: id, name: String(x.lb.name || 'O‘yinchi').slice(0, 24), busy: !!x.lb.inRoom });
+    }
+    send(c.ws, { type: 'mmPlayers', list: list.slice(0, 100) });
+    return true;
+  }
   if (m.type === 'mmCreate') {
     const u = who(m); if (!u) return send(c.ws, { type: 'mmErr', msg: 'Telegram orqali kiring' }), true;
     const size = SIZES[m.size] ? m.size : '4x6', tc = TCS.includes(+m.tc) ? +m.tc : 0;
@@ -92,6 +105,10 @@ function handle(c, m) {
     p.ws = c.ws; p.cid = c.id; p.offAt = 0; byConn.set(c.id, r.code);
     if (r.p.length === 2 && r.status === 'wait') deal(r);
     push(r);
+    return true;
+  }
+  if (m.type === 'mmDecline') {
+    const u = who(m); if (u && r.status === 'wait' && r.p[0]) send(r.p[0].ws, { type: 'mmDeclined', name: u.name });
     return true;
   }
   const me = r.p.findIndex(x => x.cid === c.id);
@@ -121,6 +138,15 @@ function handle(c, m) {
     r.again = r.again || {}; r.again[me] = 1;
     if (r.again[0] && r.again[1]) { r.again = {}; deal(r); push(r); return true; }
     const o = r.p[1 - me]; if (o) send(o.ws, { type: 'mmAgainAsk' });
+    return true;
+  }
+  if (m.type === 'mmInvite') {   // zaldagi o'yinchiga taklif (kodsiz)
+    if (r.status !== 'wait' || me !== 0) return true;
+    const to = String(m.toUid || ''), cs = lobbyConns(to);
+    if (!cs.length) return send(c.ws, { type: 'mmInviteRes', toUid: to, ok: false }), true;
+    r.inv = r.inv || {}; if (r.inv[to] && Date.now() - r.inv[to] < 15e3) return true; r.inv[to] = Date.now();
+    cs.forEach(x => send(x.ws, { type: 'mmInviteIn', code: r.code, fromName: r.p[0].name, size: r.size, tc: r.tc }));
+    send(c.ws, { type: 'mmInviteRes', toUid: to, ok: true });
     return true;
   }
   if (m.type === 'mmLeave') {

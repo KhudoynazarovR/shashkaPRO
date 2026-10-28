@@ -130,6 +130,11 @@
         shareLinkPlain("lbf_", "f", m.id, "♟ Keling, shashka o‘ynaymiz! — ShashkaPRO");
       } else if (m.type === "lbGo") {
         onGo(m);
+      } else if (m.type === "mmInviteIn") {   // 🧠 Xotira o'yiniga taklif
+        var _mc = m.code;
+        toast("🧠 <b>" + esc(m.fromName) + "</b> sizni <b>Xotira</b> o‘yiniga taklif qilyapti" + (m.size ? " (" + esc(m.size.replace("x", "×")) + ")" : ""),
+          [["▶ Qabul qilish", function () { var go = function () { window.spMemori({ join: _mc }); }; if (window.spMemori) go(); else { var sm = document.createElement("script"); sm.src = "/memori.js?v=4"; sm.onload = go; document.head.appendChild(sm); } }],
+           ["Rad etish", function () { sendMsg({ type: "mmDecline", code: _mc, init: (tg && tg.initData) || "" }); }, "no"]], 30000);
       } else if (m.type === "lbToast") {
         toast(esc(m.text), null, 7000);
       } else if (m.type === "error" && panelOpen) {

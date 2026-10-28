@@ -344,7 +344,7 @@ wss.on("connection", ws => {
     }
 
     // 🃏 Memori: do'st bilan (mm...)
-    if (require("./memroom.js").handle(c, m)) return;
+    if (require("./memroom.js").handle(c, m, clients)) return;
 
     // Zal va turnir (lb...) xabarlari
     if (lobbyApi.handle(c, m)) return;
