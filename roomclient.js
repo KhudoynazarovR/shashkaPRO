@@ -45,7 +45,7 @@
     var roomId = "";
     // ?room= (o'yinga o'tish) Telegram start_param dan ustun: aks holda eski havola/turnir havolasi o'yinni bosib ketadi
     if (q.get("room")) roomId = q.get("room");
-    else if (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param && !/^(ref_|pz_|pf_|go_|shop_|pb_|pzt_|ntf_)/.test(tg.initDataUnsafe.start_param)) roomId = String(tg.initDataUnsafe.start_param);
+    else if (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param && !/^(ref_|pz_|pf_|go_|shop_|pb_|pzt_|ntf_|mm_)/.test(tg.initDataUnsafe.start_param)) roomId = String(tg.initDataUnsafe.start_param);
     var _nb = function () { var bt = document.getElementById("rcBoot"); if (bt) bt.remove(); };
     if (/^lb[ts]_/.test(roomId)) return _nb(); // turnir/sians havolasi - xona emas
     if (!ROOM_RE.test(roomId)) return _nb(); // xona rejimi emas
