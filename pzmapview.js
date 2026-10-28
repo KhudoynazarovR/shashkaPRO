@@ -22,7 +22,7 @@
   function zonesOf(key) {
     var z = (MAPS[key] && MAPS[key].length) ? MAPS[key] : (MAPS[''] && MAPS[''].length ? MAPS[''] : null);
     if (!z) return DEF;
-    return z.map(function (x) { return { u: '/api/pzmap/img?id=' + encodeURIComponent(x.id), w: x.w || 768, h: x.h || 758, pts: x.pts && x.pts.length === PER ? x.pts : GEN }; });
+    return z.map(function (x) { return { u: x.u || ('/api/pzmap/img?id=' + encodeURIComponent(x.id)), w: x.w || 768, h: x.h || 758, pts: x.pts && x.pts.length === PER ? x.pts : GEN }; });
   }
   function load(cb) { api('/api/pzmap').then(function (d) { if (d && d.maps) MAPS = d.maps; if (cb) cb(); }); }
   function css() {
@@ -365,7 +365,9 @@
     fr.readAsDataURL(file);
   }
   function editor(key, done) {
-    var zones = (MAPS[key] || []).map(function (x) { return { id: x.id, w: x.w, h: x.h, pts: (x.pts || []).slice(), u: '/api/pzmap/img?id=' + encodeURIComponent(x.id) }; });
+    // joriy xarita (o'ziniki bo'lmasa — standart rasmlar) ro'yxatda turadi, yangi rasm ularning ustiga qo'shiladi
+    function defZones() { return DEF.map(function (d) { return { u: d.u, st: 1, w: d.w, h: d.h, pts: d.pts.slice() }; }); }
+    var zones = (MAPS[key] && MAPS[key].length) ? MAPS[key].map(function (x) { return { id: x.id, st: x.u ? 1 : 0, w: x.w, h: x.h, pts: (x.pts || []).slice(), u: x.u || ('/api/pzmap/img?id=' + encodeURIComponent(x.id)) }; }) : defZones();
     var ov = document.createElement('div');
     ov.style.cssText = 'position:fixed;inset:0;z-index:2147483100;background:#0b1026;color:#fff;overflow:auto;padding:14px;font:15px system-ui,sans-serif;box-sizing:border-box';
     document.body.appendChild(ov);
@@ -382,13 +384,13 @@
       ov.innerHTML = h;
       ov.querySelector('[data-x]').onclick = function () { ov.remove(); };
       ov.querySelector('[data-file]').onchange = function () { var f = this.files && this.files[0]; if (!f) return; shrink(f, function (r) { zones.push({ img: r.img, w: r.w, h: r.h, pts: [] }); draw(); }); };
-      ov.querySelector('[data-reset]').onclick = function () { zones = []; draw(); };
+      ov.querySelector('[data-reset]').onclick = function () { zones = defZones(); draw(); };
       [].forEach.call(ov.querySelectorAll('[data-del]'), function (b) { b.onclick = function () { zones.splice(+b.getAttribute('data-del'), 1); draw(); }; });
       [].forEach.call(ov.querySelectorAll('[data-up]'), function (b) { b.onclick = function () { var i = +b.getAttribute('data-up'); if (i > 0) { var t = zones[i - 1]; zones[i - 1] = zones[i]; zones[i] = t; } draw(); }; });
       [].forEach.call(ov.querySelectorAll('[data-pt]'), function (b) { b.onclick = function () { points(zones[+b.getAttribute('data-pt')], draw); }; });
       ov.querySelector('[data-save]').onclick = function () {
         var m = ov.querySelector('[data-msg]'); m.textContent = '⏳';
-        api('/api/pzmap/save', { key: key, zones: zones.map(function (z) { return { id: z.id, img: z.img, w: z.w, h: z.h, pts: z.pts }; }) }).then(function (d) {
+        api('/api/pzmap/save', { key: key, zones: zones.map(function (z) { return { id: z.id, img: z.img, u: z.st ? z.u : undefined, w: z.w, h: z.h, pts: z.pts }; }) }).then(function (d) {
           if (d && d.ok) { MAPS = d.maps || MAPS; ov.remove(); if (done) done(); } else m.textContent = '❌ ' + ((d && d.error) || 'xato');
         });
       };

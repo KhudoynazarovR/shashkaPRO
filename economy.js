@@ -354,7 +354,7 @@ function handle(req, res, url) {
   // 🗺 Masalalar xaritasi: papka bo'yicha manzara rasmlari va bekatlar joyi
   if (p === '/api/pzmap' && req.method === 'GET') {
     const M = store.db.pzMaps || {}, out = {};
-    Object.keys(M).forEach(k => { out[k] = (M[k] || []).map(z => ({ id: z.id, w: z.w, h: z.h, pts: z.pts })); });
+    Object.keys(M).forEach(k => { out[k] = (M[k] || []).map(z => ({ id: z.id, u: z.u, w: z.w, h: z.h, pts: z.pts })); });
     send(res, 200, { maps: out });
     return true;
   }
@@ -395,16 +395,20 @@ function handle(req, res, url) {
           if (!/^data:image\/(webp|jpeg|png);base64,/.test(z.img) || z.img.length > 1.5e6) return send(res, 400, { error: 'rasm katta yoki noto‘g‘ri' });
           id = require('crypto').createHash('sha1').update(z.img).digest('hex').slice(0, 16); I[id] = z.img;
         }
+        if (!z.img && /^\/img\/pzzone\d+\.webp(\?v=\d+)?$/.test(String(z.u || ''))) {   // standart rasm
+          const pts = Array.isArray(z.pts) && z.pts.length === 10 ? z.pts.map(q => [Math.max(0, Math.min(100, +q[0] || 0)), Math.max(0, Math.min(100, +q[1] || 0))]) : [];
+          zs.push({ u: String(z.u), w: Math.max(50, Math.min(4000, +z.w || 768)), h: Math.max(50, Math.min(8000, +z.h || 758)), pts }); continue;
+        }
         if (!I[id]) continue;
         const pts = Array.isArray(z.pts) && z.pts.length === 10 ? z.pts.map(q => [Math.max(0, Math.min(100, +q[0] || 0)), Math.max(0, Math.min(100, +q[1] || 0))]) : [];
         zs.push({ id, w: Math.max(50, Math.min(4000, +z.w || 768)), h: Math.max(50, Math.min(8000, +z.h || 758)), pts });
       }
       if (zs.length) M[key] = zs; else delete M[key];
       // ishlatilmayotgan rasmlarni o'chirish
-      const used = new Set(); Object.values(M).forEach(a => a.forEach(z => used.add(z.id)));
+      const used = new Set(); Object.values(M).forEach(a => a.forEach(z => { if (z.id) used.add(z.id); }));
       Object.keys(I).forEach(k => { if (!used.has(k)) delete I[k]; });
       store.save();
-      const out = {}; Object.keys(M).forEach(k => { out[k] = M[k].map(z => ({ id: z.id, w: z.w, h: z.h, pts: z.pts })); });
+      const out = {}; Object.keys(M).forEach(k => { out[k] = M[k].map(z => ({ id: z.id, u: z.u, w: z.w, h: z.h, pts: z.pts })); });
       send(res, 200, { ok: true, maps: out });
     });
     return true;
