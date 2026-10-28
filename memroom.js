@@ -11,6 +11,8 @@ const rooms = new Map();       // code -> room
 const byConn = new Map();      // conn id -> code
 const R = () => crypto.randomInt(1e9) / 1e9;
 
+const ANIMALS = Array.from('🐶🐱🐭🐹🐰🦊🐻🐼🐨🐯🦁🐮🐷🐸🐵🐔🐧🐦🦆🦉🐴🦄🐝🦋🐢🐍🐙🦀🐬🐳🦒🐘');
+function hook(r) { if (r.inline || r.gt) { try { require('./gcard.js').mmTouch(r); } catch (e) {} } }
 function code() { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s = ''; const b = crypto.randomBytes(6); for (let i = 0; i < 6; i++) s += a[b[i] % a.length]; return s; }
 function send(ws, o) { try { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); } catch (e) {} }
 function who(m) {
@@ -26,10 +28,12 @@ function view(r, uid) {
     type: 'mmState', code: r.code, size: r.size, theme: r.theme, tc: r.tc, rules: r.rules, cards,
     players: r.p.map((x, j) => ({ uid: x.uid, name: x.name, sc: S ? S.sc[j] : 0, on: !!x.ws })), me: r.p.findIndex(x => x.uid === uid),
     turn: S ? S.turn : 0, left: r.tc > 0 && r.deadline ? Math.max(0, r.deadline - now) : 0, blitz: r.tc < 0 && r.blitzEnd ? Math.max(0, r.blitzEnd - now) : 0,
+    canSit: !!(r.inline && r.p.length === 1 && r.status === 'wait'), host: r.p[0] ? r.p[0].name : '',
     status: r.status, winner: r.winner, quit: r.quit != null ? r.quit : null, gain: r.gain || null, ev: r.ev || null
   };
 }
 function push(r) {
+  hook(r);
   r.p.forEach(x => send(x.ws, view(r, x.uid)));
   if (r.watch && r.watch.size) { const v = Object.assign(view(r, ''), { watch: true, viewers: r.watch.size }); for (const [, ws] of r.watch) send(ws, v); }
   r.ev = null;
@@ -60,6 +64,7 @@ function finish(r, quit) {
       }
     } catch (e) { console.log('[xotira]', e.message); }
   }
+  try { require('./grp.js').mmFinished(r); } catch (e) { console.log('[grp]', e.message); }
   push(r);
 }
 function deal(r) {
@@ -115,13 +120,26 @@ function handle(c, m, clients) {
   if (m.type === 'mmJoin') {
     const u = who(m); if (!u) return send(c.ws, { type: 'mmErr', msg: 'Telegram orqali kiring' }), true;
     let p = r.p.find(x => x.uid === u.uid);
+    if (!p && r.inline && r.p.length < 2) {   // guruh kartasi: ochgan odam avval tomoshabin, "Qo'shilish" bilan raqib bo'ladi
+      r.watch = r.watch || new Map(); r.watch.set(c.id, c.ws); watching.set(c.id, r.code); push(r);
+      return true;
+    }
+    if (!p && (r.inline || r.gt) && r.p.length >= 2) { r.watch = r.watch || new Map(); r.watch.set(c.id, c.ws); watching.set(c.id, r.code); push(r); return true; }
     if (!p) {
       if (r.p.length >= 2) return send(c.ws, { type: 'mmErr', msg: r.inv && r.inv[u.uid] ? 'Kechikdingiz — boshqa o‘yinchi birinchi qabul qildi' : 'Bu o‘yinda allaqachon 2 kishi bor' }), true;
       p = { uid: u.uid, name: u.name }; r.p.push(p);
       invGone(r, u.uid);
     }
     p.ws = c.ws; p.cid = c.id; p.offAt = 0; byConn.set(c.id, r.code);
-    if (r.p.length === 2 && r.status === 'wait') deal(r);
+    if (r.p.length === 2 && r.status === 'wait' && (!(r.inline || r.gt) || r.p.every(x => x.ws))) deal(r);
+    push(r);
+    return true;
+  }
+  if (m.type === 'mmSit') {   // guruh kartasi: tomoshabin raqib bo'ladi
+    const u = who(m); if (!u || !r.inline || r.p.length !== 1 || r.status !== 'wait' || r.p[0].uid === u.uid) return true;
+    if (r.watch) r.watch.delete(c.id); watching.delete(c.id);
+    r.p.push({ uid: u.uid, name: u.name, ws: c.ws, cid: c.id, offAt: 0 }); byConn.set(c.id, r.code);
+    if (r.p[0].ws) deal(r);
     push(r);
     return true;
   }
@@ -208,8 +226,19 @@ setInterval(() => {
   for (const [k, r] of rooms) {
     const on = r.p.some(x => x.ws);
     if (r.status === 'play') { const off = r.p.findIndex(x => !x.ws && x.offAt && now - x.offAt > 60e3); if (off >= 0) finish(r, off); }
-    if ((!on && now - r.at > 10 * 60e3) || now - r.at > 6 * 3600e3) { clearTimeout(r.tmr); clearTimeout(r.btmr); rooms.delete(k); }
+    if ((!on && now - r.at > ((r.inline || r.gt) ? 90 : 10) * 60e3) || now - r.at > 6 * 3600e3) { clearTimeout(r.tmr); clearTimeout(r.btmr); rooms.delete(k); }
     else if (on) r.at = Math.max(r.at, now - 9 * 60e3);
   }
 }, 30e3).unref();
-module.exports = { handle, onClose };
+function newRoom(o) {
+  let k = code(); while (rooms.has(k)) k = code();
+  const size = SIZES[o.size] ? o.size : '4x6', tc = TCS.includes(+o.tc) ? +o.tc : 0;
+  const r = { code: k, size, tc, rules: { streak: false, shuffle: false, black: false }, theme: 'animals', symbols: ANIMALS, p: o.p, status: 'wait', at: Date.now(), S: null };
+  rooms.set(k, r); return r;
+}
+// guruh kartasi (inline): chaqiruvchi o'rni band
+function createInline(uid, name, size, tc) { const r = newRoom({ size, tc, p: [{ uid: String(uid), name: String(name || 'O‘yinchi').slice(0, 20), ws: null, offAt: 0 }] }); r.inline = true; return r; }
+// kubok: ikkala o'rin band, ikkalasi kirganda boshlanadi
+function createPair(a, b, size, tc) { return newRoom({ size, tc, p: [{ uid: a.uid, name: a.name, ws: null, offAt: 0 }, { uid: b.uid, name: b.name, ws: null, offAt: 0 }] }); }
+function again(r) { if (!r || r.status !== 'over' || r.p.length !== 2) return false; r.p.reverse(); r.again = {}; r.votes = {}; r.status = 'wait'; r.S = null; r.at = Date.now(); if (r.p.every(x => x.ws)) deal(r); push(r); return true; }
+module.exports = { handle, onClose, rooms, createInline, createPair, again, finish, push, SIZES };

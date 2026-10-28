@@ -439,6 +439,30 @@
       return;
     }
     if (NET.bg && m.status !== 'wait') { NET.bg = false; stopPoll(); hap('ok'); }
+    if (m.watch) {   // 📺 tomoshabin
+      if (m.status === 'wait') {   // guruh kartasi: raqib kutilmoqda — qo'shilish
+        ov.innerHTML = '<div class="top"><button class="bk" data-x>‹</button><h2>🧠 ' + T('Xotira') + '</h2></div>' +
+          '<div class="cd" style="text-align:center;line-height:1.5"><div style="font-size:42px">🧠</div><b>' + esc(m.host || '') + '</b> ' + T('raqib kutyapti') + '<div style="opacity:.7;font-size:13px;margin-top:6px">' + z.t + ' · ' + (m.tc > 0 ? '⏱ ' + m.tc + ' s' : m.tc < 0 ? '⚡ ' + (-m.tc / 60) + ' ' + T('daqiqa') : '∞') + '</div></div>' +
+          (m.canSit ? '<button class="go" data-sit>▶ ' + T('O‘yinga qo‘shilish') + '</button>' : '<div class="cd" style="text-align:center">' + T('Raqib topildi — o‘yin tez orada boshlanadi') + '</div>') +
+          '<div class="cd" style="text-align:center;opacity:.75;font-size:13px">' + T('yoki shunchaki tomosha qiling') + ' 👁</div>';
+        ov.querySelector('[data-x]').onclick = menu;
+        var bs = ov.querySelector('[data-sit]'); if (bs) bs.onclick = function () { sendN({ type: 'mmSit', code: m.code, init: (tg && tg.initData) || '' }); bs.disabled = true; bs.textContent = '⏳'; };
+        return;
+      }
+      var cw = m.cards.map(function (c) { return c ? { s: c.s, up: !c.o, ok: !!c.o, bt: c.o === 2 } : null; }), Pw = m.players;
+      var hw = '<div class="top"><button class="bk" data-x>‹</button><h2>📺 ' + T('Jonli efir') + ' · ' + z.t + '</h2><span style="opacity:.8">👁 ' + (m.viewers || 1) + '</span></div>' +
+        '<div class="hud"><span class="' + (m.turn === 0 && m.status === 'play' ? 'turn' : '') + '">🟢 ' + esc(Pw[0] ? Pw[0].name : '') + ': <b>' + (Pw[0] ? Pw[0].sc : 0) + '</b></span><span>' + (m.status === 'over' ? '🏁' : '⚔️') + '</span><span class="' + (m.turn === 1 && m.status === 'play' ? 'turn' : '') + '">🔴 ' + esc(Pw[1] ? Pw[1].name : '') + ': <b>' + (Pw[1] ? Pw[1].sc : 0) + '</b></span></div>' +
+        boardHtml(z, cw) + '<div class="msg">' + (m.status === 'over' ? '🏁 ' + (m.winner === -1 ? T('Durang!') : '🏆 ' + esc(Pw[m.winner] ? Pw[m.winner].name : '') + ' ' + T('yutdi!')) : '👉 ' + esc(Pw[m.turn] ? Pw[m.turn].name : '') + ' ' + T('yurmoqda…')) + '</div>' +
+        '<button class="go g2" data-back>☰ ' + T('Zalga qaytish') + '</button>';
+      ov.innerHTML = hw; ov.querySelector('[data-x]').onclick = menu; ov.querySelector('[data-back]').onclick = menu;
+      return;
+    }
+    if (m.status === 'wait' && m.players && m.players.length === 2) {   // ikkala o'rin band (guruh kubogi / revansh): ikkinchisi kutilmoqda
+      var oth = m.players[1 - me] || {};
+      ov.innerHTML = '<div class="top"><button class="bk" data-x>‹</button><h2>⏳ ' + T('Raqib kutilmoqda') + '</h2></div><div class="cd" style="text-align:center;line-height:1.5"><div style="font-size:42px">🧠</div><b>' + esc(oth.name || '') + '</b> ' + T('kirishi bilan o‘yin boshlanadi') + '</div><button class="go g2" data-x2>☰ ' + T('Menyu') + '</button>';
+      ov.querySelector('[data-x]').onclick = menu; ov.querySelector('[data-x2]').onclick = menu;
+      return;
+    }
     if (m.status === 'wait') {
       var link = shareLink(m.code), pd = NET.pend || {};
       if (!NET.sent) {   // yaratilgach: kutilgan amal (taklif / hammaga so'rov / ulashish)
@@ -469,15 +493,6 @@
         else if (nUp > NET.pUp) { snd('flip'); if (nUp >= 2) setTimeout(function () { snd('no'); }, 380); }
       }
       NET.pOk = nOk; NET.pUp = nUp; NET.pSt = m.status;
-    }
-    if (m.watch) {   // 📺 tomoshabin
-      var cw = m.cards.map(function (c) { return c ? { s: c.s, up: !c.o, ok: !!c.o, bt: c.o === 2 } : null; }), Pw = m.players;
-      var hw = '<div class="top"><button class="bk" data-x>‹</button><h2>📺 ' + T('Jonli efir') + ' · ' + z.t + '</h2><span style="opacity:.8">👁 ' + (m.viewers || 1) + '</span></div>' +
-        '<div class="hud"><span class="' + (m.turn === 0 && m.status === 'play' ? 'turn' : '') + '">🟢 ' + esc(Pw[0] ? Pw[0].name : '') + ': <b>' + (Pw[0] ? Pw[0].sc : 0) + '</b></span><span>' + (m.status === 'over' ? '🏁' : '⚔️') + '</span><span class="' + (m.turn === 1 && m.status === 'play' ? 'turn' : '') + '">🔴 ' + esc(Pw[1] ? Pw[1].name : '') + ': <b>' + (Pw[1] ? Pw[1].sc : 0) + '</b></span></div>' +
-        boardHtml(z, cw) + '<div class="msg">' + (m.status === 'over' ? '🏁 ' + (m.winner === -1 ? T('Durang!') : '🏆 ' + esc(Pw[m.winner] ? Pw[m.winner].name : '') + ' ' + T('yutdi!')) : '👉 ' + esc(Pw[m.turn] ? Pw[m.turn].name : '') + ' ' + T('yurmoqda…')) + '</div>' +
-        '<button class="go g2" data-back>☰ ' + T('Zalga qaytish') + '</button>';
-      ov.innerHTML = hw; ov.querySelector('[data-x]').onclick = menu; ov.querySelector('[data-back]').onclick = menu;
-      return;
     }
     var cards = m.cards.map(function (c) { return c ? { s: c.s, up: !c.o, ok: !!c.o, bt: c.o && c.o - 1 !== me } : null; });
     var P = m.players, myTurn = m.turn === me && m.status === 'play';

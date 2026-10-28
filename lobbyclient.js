@@ -136,7 +136,7 @@
         var _mc = m.code; window.__mmInvT = window.__mmInvT || {};
         if (window.__mmInvT[_mc] && window.__mmInvT[_mc].parentNode) window.__mmInvT[_mc].parentNode.removeChild(window.__mmInvT[_mc]);
         window.__mmInvT[_mc] = toast((m.all ? "🎲 <b>" + esc(m.fromName) + "</b> <b>Xotira</b> o‘yini uchun raqib qidiryapti — birinchi qabul qilgan o‘ynaydi!" : "🧠 <b>" + esc(m.fromName) + "</b> sizni <b>Xotira</b> o‘yiniga taklif qilyapti") + (m.size ? " (" + esc(m.size.replace("x", "×")) + ")" : ""),
-          [["▶ Qabul qilish", function () { var go = function () { window.spMemori({ join: _mc }); }; if (window.spMemori) go(); else { var sm = document.createElement("script"); sm.src = "/memori.js?v=7"; sm.onload = go; document.head.appendChild(sm); } }],
+          [["▶ Qabul qilish", function () { var go = function () { window.spMemori({ join: _mc }); }; if (window.spMemori) go(); else { var sm = document.createElement("script"); sm.src = "/memori.js?v=8"; sm.onload = go; document.head.appendChild(sm); } }],
            ["Rad etish", function () { sendMsg({ type: "mmDecline", code: _mc, init: (tg && tg.initData) || "" }); }, "no"]], 30000);
       } else if (m.type === "lbToast") {
         toast(esc(m.text), null, 7000);

@@ -20,16 +20,24 @@ function record(ci, room) {
   put(room.white, w); put(room.black, w === 'w' ? 'l' : w === 'l' ? 'w' : 'd');
   store.save();
 }
-function topText(ci, n) {
-  const t = (store.db.grpTop || {})[ci] || {};
+function recordM(ci, s) {   // 🧠 Xotira natijasi
+  if (!ci || !s || !s.a || !s.b) return;
+  const T = store.db.grpTopM = store.db.grpTopM || {}, t = T[ci] = T[ci] || {};
+  const put = (x, r) => { const o = t[x.uid] = t[x.uid] || { n: x.name, w: 0, d: 0, l: 0 }; o.n = x.name; o[r]++; };
+  put(s.a, s.win === 0 ? 'w' : s.win === 1 ? 'l' : 'd'); put(s.b, s.win === 1 ? 'w' : s.win === 0 ? 'l' : 'd');
+  store.save();
+}
+function topText(ci, n, mm) {
+  const t = ((mm ? store.db.grpTopM : store.db.grpTop) || {})[ci] || {};
   const a = Object.values(t).map(x => Object.assign({ p: x.w * 2 + x.d }, x)).sort((x, y) => y.p - x.p || y.w - x.w).slice(0, n || 10);
   if (!a.length) return '📊 Bu guruhda hali o‘yin natijasi yo‘q.\n@DraughtsPRObot orqali doska tashlab o‘ynang!';
-  return '📊 Guruh TOP\n' + a.map((x, i) => (['🥇', '🥈', '🥉'][i] || (i + 1) + '.') + ' ' + x.n + ' — ' + x.p + ' ochko (' + x.w + '/' + x.d + '/' + x.l + ')').join('\n');
+  return (mm ? '🧠 Xotira — guruh TOP\n' : '📊 Guruh TOP\n') + a.map((x, i) => (['🥇', '🥈', '🥉'][i] || (i + 1) + '.') + ' ' + x.n + ' — ' + x.p + ' ochko (' + x.w + '/' + x.d + '/' + x.l + ')').join('\n');
 }
 function learnCi(m, q) {
   if (!m || !q.chat_instance || m.ci) return;
   m.ci = q.chat_instance;
   if (m.result) { record(m.ci, m.result); m.result = null; }
+  if (m.mres) { recordM(m.ci, m.mres); m.mres = null; }
 }
 
 // ---------- o'yin tugadi (guruh kartasidagi o'yin)
@@ -42,11 +50,27 @@ function gameOver(room, m) {
   if (m.ci) record(m.ci, snap); else m.result = snap;
 }
 
+// ---------- 🧠 Xotira (guruh kartasi)
+function mmOver(r, m) {
+  if (r.votes && r.winner >= 0) { let ch = false; for (const [uid, v] of Object.entries(r.votes)) if (v === r.winner && coins(uid, 5)) ch = true; if (ch) store.save(); }
+  const s = { a: r.p[0] && { uid: r.p[0].uid, name: r.p[0].name }, b: r.p[1] && { uid: r.p[1].uid, name: r.p[1].name }, win: r.winner };
+  if (m.ci) recordM(m.ci, s); else m.mres = s;
+}
+function mmFinished(r) {   // kubok o'yini tugadi
+  if (!r || !r.gt) return;
+  const t = T(r.gt.chat); if (!t || t.status !== 'run') return;
+  const p = t.pairs.find(x => x.room === r.code); if (!p || p.win) return;
+  const ia = r.p.findIndex(x => x.uid === p.a), ib = 1 - ia;
+  if (r.winner === ia) p.win = p.a; else if (r.winner === ib) p.win = p.b; else { p.win = Math.random() < 0.5 ? p.a : p.b; p.coin = true; }
+  if (t.ci) recordM(t.ci, { a: { uid: p.a, name: r.p[ia].name }, b: { uid: p.b, name: r.p[ib].name }, win: p.win === p.a ? 0 : 1 });
+  store.save(); setTimeout(() => roundCheck(t), 0);
+}
+
 // ---------- 🏆 guruh turniri
 function T(chat) { const a = store.db.gtour = store.db.gtour || {}; return a[String(chat)]; }
 function tourText(t) {
   const st = t.status === 'reg' ? '📝 Ro‘yxatdan o‘tish' : t.status === 'run' ? '⚔️ ' + t.round + '-tur' : '🏁 Tugadi';
-  let s = '🏆 <b>Guruh kubogi</b> · ⏱ ' + esc(t.tc) + ' · olimpiya tizimi\n' + st + '\n\n👥 Qatnashchilar (' + t.players.length + '):\n' + (t.players.map((p, i) => (i + 1) + '. ' + esc(p.name)).join('\n') || '—');
+  let s = (t.game === 'mm' ? '🏆 <b>Xotira kubogi</b> · 🧠 ' + esc(t.size.replace('x', '×')) + ' · ⏱ ' + esc(mmTcTxt(t.tc)) : '🏆 <b>Guruh kubogi</b> · ⏱ ' + esc(t.tc)) + ' · olimpiya tizimi\n' + st + '\n\n👥 Qatnashchilar (' + t.players.length + '):\n' + (t.players.map((p, i) => (i + 1) + '. ' + esc(p.name)).join('\n') || '—');
   if (t.status === 'reg') s += '\n\n«✅ Qatnashaman» ni bosing. ' + esc(t.byName) + ' «▶ Boshlash» ni bosganda kubok boshlanadi.\n🥇 G‘olibga +50 💰';
   if (t.status === 'done' && t.champ) s += '\n\n🏆 <b>Chempion: ' + esc(t.champ) + '</b> (+50 💰)';
   return s;
@@ -60,12 +84,15 @@ async function cmdTour(msg, arg) {
   if (!msg.chat || msg.chat.type === 'private') return G.tg('sendMessage', { chat_id: msg.chat.id, text: '🏆 Kubok guruhda o‘tkaziladi: botni guruhga qo‘shib, u yerda /kubok yozing.' });
   const a = store.db.gtour = store.db.gtour || {}, old = a[String(msg.chat.id)];
   if (old && old.status !== 'done' && Date.now() - old.at < 6 * 3600e3) return G.tg('sendMessage', { chat_id: msg.chat.id, text: tourText(old), parse_mode: 'HTML', reply_markup: tourKb(old), reply_to_message_id: old.msg });
-  const m = /(\d{1,2})\s*\+\s*(\d{1,2})/.exec(arg || ''), tc = m ? m[1] + '+' + m[2] : '3+2';
-  const t = a[String(msg.chat.id)] = { chat: msg.chat.id, tc, by: String(msg.from.id), byName: nm(msg.from), players: [{ uid: String(msg.from.id), name: nm(msg.from) }], status: 'reg', round: 0, at: Date.now(), pairs: [] };
+  const mm = /xotira|memori|память/i.test(arg || '');
+  const m = /(\d{1,2})\s*\+\s*(\d{1,2})/.exec(arg || ''), tc = mm ? mmTc(arg) : m ? m[1] + '+' + m[2] : '3+2';
+  const t = a[String(msg.chat.id)] = { game: mm ? 'mm' : 'sh', size: /6\s*[x×х]\s*6/i.test(arg || '') ? '6x6' : '4x6', chat: msg.chat.id, tc, by: String(msg.from.id), byName: nm(msg.from), players: [{ uid: String(msg.from.id), name: nm(msg.from) }], status: 'reg', round: 0, at: Date.now(), pairs: [] };
   const r = await G.tg('sendMessage', { chat_id: msg.chat.id, text: tourText(t), parse_mode: 'HTML', reply_markup: tourKb(t) });
   if (r && r.result) t.msg = r.result.message_id;
   store.save();
 }
+function mmTc(s) { s = String(s || ''); return /\b20\s*s/i.test(s) ? 20 : /\b10\s*s/i.test(s) ? 10 : /2\s*(m|daq)|blitz|⚡/i.test(s) ? -120 : 0; }
+function mmTcTxt(tc) { return tc > 0 ? tc + ' s' : tc < 0 ? '⚡ 2 daq' : '∞'; }
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 async function nextRound(t) {
   const API = G.api();
@@ -78,16 +105,22 @@ async function nextRound(t) {
   t.round++; t.pairs = []; t.roundAt = Date.now();
   const al = shuffle(t.alive.slice()), P = uid => t.players.find(p => p.uid === uid);
   for (let i = 0; i + 1 < al.length; i += 2) {
-    const a = P(al[i]), b = P(al[i + 1]), id = rid();
+    const a = P(al[i]), b = P(al[i + 1]);
+    if (t.game === 'mm') {   // 🧠 Xotira juftligi
+      const r = require('./memroom.js').createPair(a, b, t.size, t.tc); r.gt = { chat: t.chat };
+      t.pairs.push({ room: r.code, a: a.uid, b: b.uid, win: null, mm: true });
+      continue;
+    }
+    const id = rid();
     const room = API && API.create(id, { tc: t.tc, white: { uid: a.uid, name: a.name }, black: { uid: b.uid, name: b.name } });
     if (room) { room.gt = { chat: t.chat }; room.casual = true; }
     t.pairs.push({ room: id, a: a.uid, b: b.uid, win: null });
   }
   if (al.length % 2) t.pairs.push({ room: null, a: al[al.length - 1], b: null, win: al[al.length - 1] });   // juft topilmadi — keyingi turga o'tadi
   store.save();
-  const rows = t.pairs.filter(p => p.room).map(p => [{ text: '⚔️ ' + P(p.a).name.slice(0, 12) + ' — ' + P(p.b).name.slice(0, 12), url: LINK(p.room) }]);
+  const rows = t.pairs.filter(p => p.room).map(p => [{ text: '⚔️ ' + P(p.a).name.slice(0, 12) + ' — ' + P(p.b).name.slice(0, 12), url: LINK(p.mm ? 'mm_' + p.room : p.room) }]);
   const bye = t.pairs.find(p => !p.room);
-  G.tg('sendMessage', { chat_id: t.chat, text: '⚔️ <b>' + t.round + '-tur</b> boshlandi (⏱ ' + esc(t.tc) + ')\nO‘yiningiz tugmasini bosing — o‘rningiz band qilingan.' + (bye ? '\n🎟 ' + esc(P(bye.a).name) + ' — juftsiz, keyingi turga o‘tdi.' : '') + '\n⌛ 10 daqiqada kirmagan o‘yinchi yutqazadi.', parse_mode: 'HTML', reply_markup: { inline_keyboard: rows } });
+  G.tg('sendMessage', { chat_id: t.chat, text: '⚔️ <b>' + t.round + '-tur</b> boshlandi (' + (t.game === 'mm' ? '🧠 Xotira · ⏱ ' + esc(mmTcTxt(t.tc)) : '⏱ ' + esc(t.tc)) + ')\nO‘yiningiz tugmasini bosing — o‘rningiz band qilingan.' + (bye ? '\n🎟 ' + esc(P(bye.a).name) + ' — juftsiz, keyingi turga o‘tdi.' : '') + '\n⌛ 10 daqiqada kirmagan o‘yinchi yutqazadi.', parse_mode: 'HTML', reply_markup: { inline_keyboard: rows } });
 }
 function roundCheck(t) {
   if (t.status !== 'run' || t.pairs.some(p => !p.win)) return;
@@ -112,6 +145,13 @@ setInterval(() => {
     let ch = false;
     for (const p of t.pairs) {
       if (p.win || !p.room) continue;
+      if (p.mm) {
+        const mr = require('./memroom.js').rooms.get(p.room); if (mr && mr.S) continue;
+        const on = uid => !!(mr && mr.p.find(x => x.uid === uid && x.ws)), aOn = on(p.a), bOn = on(p.b);
+        p.win = aOn && !bOn ? p.a : bOn && !aOn ? p.b : (Math.random() < 0.5 ? p.a : p.b); p.coin = aOn === bOn; ch = true;
+        if (mr) { mr.status = 'over'; mr.winner = mr.p.findIndex(x => x.uid === p.win); try { require('./memroom.js').push(mr); } catch (e) {} }
+        continue;
+      }
       const room = R && R.get(p.room);
       if (room && (room.moves || []).length) continue;
       const on = s => !!(s && s.clientId);
@@ -149,6 +189,22 @@ async function onCallback(q) {
     answer(q, '🔁 Revansh! Ranglar almashdi — «O‘yinga kirish» ni bosing');
     G.now(room); return true;
   }
+  if (d[1] === 'mv' || d[1] === 'mr' || d[1] === 'mt') {   // 🧠 Xotira kartasi
+    const MR = require('./memroom.js'), r = MR.rooms.get(d[2]), m = G.msgOf('mm:' + d[2]); learnCi(m, q);
+    if (d[1] === 'mt') return answer(q, topText(q.chat_instance, 5, true), true), true;
+    if (!r) return answer(q, 'Bu o‘yin eskirgan — yangi karta tashlang'), true;
+    if (d[1] === 'mv') {
+      if (r.status !== 'play') return answer(q, 'Ovoz berish yopilgan'), true;
+      if (r.S && Object.keys(r.S.done).length / 2 >= 3) return answer(q, '⌛ Ovoz berish 3 ta juftlik topilguncha edi'), true;
+      if (r.p.some(x => x.uid === uid)) return answer(q, 'O‘yinchilar ovoz bera olmaydi 🙂'), true;
+      if (!store.users()[uid]) return answer(q, 'Avval @DraughtsPRObot ni ochib ro‘yxatdan o‘ting — keyin ovoz bera olasiz', true), true;
+      r.votes = r.votes || {}; r.votes[uid] = d[3] === '1' ? 1 : 0;
+      answer(q, '✅ Ovozingiz: ' + (r.p[r.votes[uid]] ? r.p[r.votes[uid]].name : '') + '. Topsangiz +5 💰'); G.mmNow(r); return true;
+    }
+    if (!r.p.some(x => x.uid === uid)) return answer(q, 'Revansh — faqat o‘yinchilar uchun'), true;
+    if (!MR.again(r)) return answer(q, 'Hozir revansh qilib bo‘lmaydi'), true;
+    answer(q, '🔁 Revansh! Ikkalangiz «O‘yinga kirish» ni bosing'); G.mmNow(r); return true;
+  }
   if (d[1] === 't') {   // 📊 guruh TOP
     if (q.message) { // oddiy xabar (/top) — xabar o'zgaradi
       G.tg('editMessageText', { chat_id: q.message.chat.id, message_id: q.message.message_id, text: topText(q.chat_instance, 10), reply_markup: { inline_keyboard: [[{ text: '🔄 Yangilash', callback_data: 'g:t' }]] } });
@@ -178,4 +234,4 @@ async function onCallback(q) {
 async function cmdTop(msg) {
   return G.tg('sendMessage', { chat_id: msg.chat.id, text: '📊 Guruh reytingi — @DraughtsPRObot doskalarida o‘ynalgan o‘yinlar bo‘yicha.', reply_markup: { inline_keyboard: [[{ text: '📊 Ko‘rish', callback_data: 'g:t' }]] } });
 }
-module.exports = { setLink: f => { LINK = f; }, gameOver, roomFinished, onCallback, cmdTop, cmdTour, topText };
+module.exports = { mmOver, mmFinished, setLink: f => { LINK = f; }, gameOver, roomFinished, onCallback, cmdTop, cmdTour, topText };
