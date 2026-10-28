@@ -47,8 +47,8 @@ function T(chat) { const a = store.db.gtour = store.db.gtour || {}; return a[Str
 function tourText(t) {
   const st = t.status === 'reg' ? '📝 Ro‘yxatdan o‘tish' : t.status === 'run' ? '⚔️ ' + t.round + '-tur' : '🏁 Tugadi';
   let s = '🏆 <b>Guruh kubogi</b> · ⏱ ' + esc(t.tc) + ' · olimpiya tizimi\n' + st + '\n\n👥 Qatnashchilar (' + t.players.length + '):\n' + (t.players.map((p, i) => (i + 1) + '. ' + esc(p.name)).join('\n') || '—');
-  if (t.status === 'reg') s += '\n\n«✅ Qatnashaman» ni bosing. ' + esc(t.byName) + ' «▶ Boshlash» ni bosganda kubok boshlanadi.\n🥇 G‘olibga +50 🪙';
-  if (t.status === 'done' && t.champ) s += '\n\n🏆 <b>Chempion: ' + esc(t.champ) + '</b> (+50 🪙)';
+  if (t.status === 'reg') s += '\n\n«✅ Qatnashaman» ni bosing. ' + esc(t.byName) + ' «▶ Boshlash» ni bosganda kubok boshlanadi.\n🥇 G‘olibga +50 💰';
+  if (t.status === 'done' && t.champ) s += '\n\n🏆 <b>Chempion: ' + esc(t.champ) + '</b> (+50 💰)';
   return s;
 }
 function tourKb(t) {
@@ -73,7 +73,7 @@ async function nextRound(t) {
     t.status = 'done'; const c = t.players.find(p => p.uid === t.alive[0]);
     t.champ = c ? c.name : '—'; if (c) coins(c.uid, 50);
     store.save(); tourEdit(t);
-    return G.tg('sendMessage', { chat_id: t.chat, text: '🏆🎉 Kubok tugadi!\nChempion: <b>' + esc(t.champ) + '</b> — +50 🪙', parse_mode: 'HTML' });
+    return G.tg('sendMessage', { chat_id: t.chat, text: '🏆🎉 Kubok tugadi!\nChempion: <b>' + esc(t.champ) + '</b> — +50 💰', parse_mode: 'HTML' });
   }
   t.round++; t.pairs = []; t.roundAt = Date.now();
   const al = shuffle(t.alive.slice()), P = uid => t.players.find(p => p.uid === uid);
@@ -135,7 +135,7 @@ async function onCallback(q) {
     if (room.white.uid === uid || room.black.uid === uid) return answer(q, 'O‘yinchilar ovoz bera olmaydi 🙂'), true;
     if (!store.users()[uid]) return answer(q, 'Avval @DraughtsPRObot ni ochib ro‘yxatdan o‘ting — keyin ovoz bera olasiz', true), true;
     room.votes = room.votes || {}; room.votes[uid] = d[3] === 'b' ? 'b' : 'w';
-    answer(q, '✅ Ovozingiz: ' + (d[3] === 'b' ? '⚫ ' + room.black.name : '⚪ ' + room.white.name) + '. Topsangiz +5 🪙');
+    answer(q, '✅ Ovozingiz: ' + (d[3] === 'b' ? '⚫ ' + room.black.name : '⚪ ' + room.white.name) + '. Topsangiz +5 💰');
     G.now(room); return true;
   }
   if (d[1] === 'r') {   // 🔁 revansh

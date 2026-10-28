@@ -79,8 +79,8 @@ function caption(roomId, from) {
     const who = room && (room.white || room.black), side = room && room.white ? '⚫ qora' : '⚪ oq';
     return '♟ <b>' + esc(from || (who && who.name) || 'Kimdir') + '</b> shashka o‘ynashga chaqiryapti!' + tc + '\nBosing — ' + side + ' bilan raqib bo‘lasiz. Qolganlar tomosha qiladi 👁';
   }
-  if (I.st === 'live') return '🔴 <b>Jonli</b>: ⚪ ' + esc(I.w) + ' — ⚫ ' + esc(I.k) + ' · ' + I.n + '-yurish' + tc + (I.v ? ' · 👁 ' + I.v : '') + (vt.length ? '\n🗳 Kim yutadi? ⚪ ' + vw + ' · ⚫ ' + vb : '\n🗳 Kim yutadi? Ovoz bering — topganlarga +5 🪙');
-  return '🏁 O‘yin tugadi: ' + (I.win ? '🏆 G‘olib — <b>' + esc(I.win) + '</b>' : '🤝 durang') + '\n⚪ ' + esc(I.w) + ' — ⚫ ' + esc(I.k) + (vt.length ? '\n🗳 To‘g‘ri topganlar +5 🪙 oldi' : '');
+  if (I.st === 'live') return '🔴 <b>Jonli</b>: ⚪ ' + esc(I.w) + ' — ⚫ ' + esc(I.k) + ' · ' + I.n + '-yurish' + tc + (I.v ? ' · 👁 ' + I.v : '') + (vt.length ? '\n🗳 Kim yutadi? ⚪ ' + vw + ' · ⚫ ' + vb : '\n🗳 Kim yutadi? Ovoz bering — topganlarga +5 💰');
+  return '🏁 O‘yin tugadi: ' + (I.win ? '🏆 G‘olib — <b>' + esc(I.win) + '</b>' : '🤝 durang') + '\n⚪ ' + esc(I.w) + ' — ⚫ ' + esc(I.k) + (vt.length ? '\n🗳 To‘g‘ri topganlar +5 💰 oldi' : '');
 }
 function markup(link, roomId) {
   const room = ROOMS && ROOMS.get(roomId), I = info(room, '');
