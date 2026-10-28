@@ -133,6 +133,7 @@ function createRooms({ send, clients, onFinish }) {
   }
 
   function pushState(room) {
+    try { require('./gcard.js').touch(room); } catch (e) {}
     for (const id of room.members) {
       const cl = clients.get(id);
       if (cl) send(cl.ws, snapshot(room, colorOf(room, cl)));
@@ -278,7 +279,7 @@ function createRooms({ send, clients, onFinish }) {
         st.save();
       }
     } catch (e) { console.log('Arxiv xatosi:', e.message); }
-    broadcast(room, { type: "roomFinished", roomId: room.id, winner, reason: room.reason, clock: room.clock, text: room.drawText || undefined }); try { afterFinish(room, winner); } catch (e) { console.error("[afterFinish]", e); }
+    broadcast(room, { type: "roomFinished", roomId: room.id, winner, reason: room.reason, clock: room.clock, text: room.drawText || undefined }); try { require('./gcard.js').touch(room); } catch (e) {} try { afterFinish(room, winner); } catch (e) { console.error("[afterFinish]", e); }
     if (typeof onFinish === "function") {
       try { onFinish(room); } catch (e) { console.error("[onFinish]", e); }
     }
@@ -461,6 +462,7 @@ function createRooms({ send, clients, onFinish }) {
         room.drawText = dres.reason;
         finish(room, "draw", "rule");
       }
+      if (!m.keepTurn) { try { require('./gcard.js').touch(room); } catch (e) {} }
       return true;
   }
 

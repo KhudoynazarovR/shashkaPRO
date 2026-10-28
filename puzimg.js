@@ -60,3 +60,4 @@ module.exports = function sendPuzzle(pb, board, side) {
     return fetch(api + '/sendPhoto', { method: 'POST', body: fd }).then(r => r.json());
   }).then(d => (d && d.ok) ? d : fallback()).catch(() => fallback());
 };
+module.exports.svgBoard = svgBoard;

@@ -413,6 +413,7 @@ function handle(req, res, url) {
     });
     return true;
   }
+  if (p.startsWith('/api/gcard/') && req.method === 'GET') { if (require('./gcard.js').handleHttp(req, res, p)) return true; }
   if (p === '/api/puzzles/top' && req.method === 'GET') {
     const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!_tg) { send(res, 401, { error: 'auth' }); return true; }

@@ -183,22 +183,20 @@ async function onMessage(msg) {
 }
 
 async function onInline(q) {
-  const id = newRoomId();
-  await api("answerInlineQuery", {
-    inline_query_id: q.id,
-    cache_time: 0,
-    is_personal: true,
-    results: [
-      {
-        type: "article",
-        id: id,
-        title: "♟️ Shashka o‘ynash",
-        description: "Yangi xona ochish va havolani yuborish",
-        input_message_content: { message_text: TEXT },
-        reply_markup: playMarkup(id)
-      }
-    ]
+  const id = newRoomId(), G = require("./gcard.js"), from = String((q.from && (q.from.first_name || q.from.username)) || "").slice(0, 30);
+  const results = [];
+  const ph = G.url(id, from, 0);
+  if (ph) results.push({   // 🖼 doska kartasi: guruhga rasm + "O'yinga kirish" tugmasi, keyin jonli yangilanadi
+    type: "photo", id: "g_" + id, photo_url: ph, thumbnail_url: ph, photo_width: 1000, photo_height: 700,
+    title: "♟️ Shashka o‘ynash", description: "Doska bilan taklif — birinchi kirgan raqib bo‘ladi",
+    caption: G.caption(id, from), parse_mode: "HTML",
+    reply_markup: { inline_keyboard: [[{ text: "▶ O‘yinga kirish", url: roomLink(id) }]] }
   });
+  results.push({
+    type: "article", id: id, title: "♟️ Shashka — oddiy havola", description: "Yangi xona ochish va havolani yuborish",
+    input_message_content: { message_text: TEXT }, reply_markup: playMarkup(id)
+  });
+  await api("answerInlineQuery", { inline_query_id: q.id, cache_time: 0, is_personal: true, results });
 }
 
 async function start() {
@@ -252,7 +250,7 @@ async function start() {
       const r = await api("getUpdates", {
         offset: offset,
         timeout: 30,
-        allowed_updates: ["message", "inline_query", "pre_checkout_query", "callback_query", "my_chat_member"]
+        allowed_updates: ["message", "inline_query", "chosen_inline_result", "pre_checkout_query", "callback_query", "my_chat_member"]
       });
       if (!r.ok) throw new Error(r.description || "getUpdates xato");
       for (const u of r.result) {
@@ -262,6 +260,7 @@ async function start() {
           else if (u.message && u.message.successful_payment) await pay.onPayment(u.message);
           else if (u.message) await onMessage(u.message);
           else if (u.inline_query) await onInline(u.inline_query);
+          else if (u.chosen_inline_result) { try { const cr = u.chosen_inline_result, rid = String(cr.result_id || '').replace(/^g_/, ''); if (/^g_/.test(cr.result_id || '')) require('./gcard.js').chosen(rid, cr.inline_message_id, (cr.from && (cr.from.first_name || cr.from.username)) || '', roomLink(rid)); } catch (e) {} }
           else if (u.callback_query) await onCallback(u.callback_query);
           else if (u.my_chat_member) onMyChat(u.my_chat_member);
         } catch (e) {
