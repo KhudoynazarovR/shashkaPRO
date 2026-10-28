@@ -493,8 +493,11 @@
     sc.onload = function () { window.spPzMap.load(cb); }; sc.onerror = function () {}; document.head.appendChild(sc);
   }
   // umumiy xarita tartibi: papkalar ketma-ket (Kombinatsiyalar → …), keyin papkasizlar
+  // Bosh xarita — faqat Kombinatsiyalar (papkasiz, o'zi alohida turadi)
+  var MAINF = 'Kombinatsiyalar';
   function mainOrder() {
-    var o = [];
+    var o = S.list.filter(function (p) { return foOf(p) === MAINF; });
+    if (o.length) return o;
     (S.folders || []).forEach(function (f) { S.list.forEach(function (p) { if (foOf(p) === f) o.push(p); }); });
     S.list.forEach(function (p) { if (!foOf(p)) o.push(p); });
     return o;
@@ -536,7 +539,7 @@
     if (window.__pzPF) { var _pf = window.__pzPF; window.__pzPF = ''; if ((S.folders || []).indexOf(_pf) >= 0) { curFo = _pf; curLv = 0; } }
     if (curFo && (S.folders || []).indexOf(curFo) < 0) curFo = '';
     if (curLv || curFo) return items();
-    var fl = S.folders || [], h = head(view === 'custom' ? '🎨 Maxsus masalalar' : '🧩 Masalalar', topBtns()); if (view !== 'custom') h += pzMap(mainOrder(), '');
+    var fl = S.folders || [], h = head(view === 'custom' ? '🎨 Maxsus masalalar' : '🧩 Masalalar', topBtns()); if (view !== 'custom') h += '<div style="font-weight:800;font-size:18px;margin:2px 0 6px">🗺 ' + MAINF + '</div>' + pzMap(mainOrder(), '') + '<div style="font-weight:800;font-size:16px;margin:6px 0 10px;opacity:.85">📁 Boshqa bo‘limlar</div>';
     if (S.admin) h += '<div style="margin-bottom:10px"><button id="pzNF" style="' + BG + '">📁 Yangi papka</button></div>';
     if (!S.list.length && !fl.length) h += '<div style="padding:30px;opacity:.7">Hozircha masala yo‘q</div>';
     [1, 2, 3].forEach(function (lv) {
@@ -544,6 +547,7 @@
       h += '<div data-lv="' + lv + '" style="' + CARD + '">' + (S.admin && !arr.length ? '<button data-hl="' + lv + '" style="float:right;background:#262b5a;color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">🗑</button>' : '') + '<b style="font-size:17px">📁 ' + LV[lv] + '</b><div style="font-size:12px;opacity:.65;margin-top:4px">' + arr.length + ' ta masala · ✅ ' + nDone(arr) + '/' + arr.length + '</div></div>';
     });
     fl.forEach(function (f, i) {
+      if (f === MAINF && view !== 'custom' && !S.admin) return;   // Kombinatsiyalar — tepadagi xaritada
       var arr = S.list.filter(function (p) { return foOf(p) === f; });
       h += '<div data-fo="' + i + '" style="' + CARD + '">' + (S.admin ? '<span style="float:right"><button data-rf="' + i + '" style="background:#262b5a;color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">✏️</button> <button data-df="' + i + '" style="background:#262b5a;color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">🗑</button></span>' : '') + '<b style="font-size:17px">📁 ' + esc(f) + '</b><div style="font-size:12px;opacity:.65;margin-top:4px">' + arr.length + ' ta masala · ✅ ' + nDone(arr) + '/' + arr.length + '</div></div>';
     });
