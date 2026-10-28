@@ -17,8 +17,14 @@ const crypto = require('crypto');
 const BLOB = '@@blob:';
 const hashOf = new Map(); // string -> hash
 let lastMain = '', writing = false, lastVac = 0, writes = 0;
+// Postgres json turi yolg'iz surrogat (yarim emoji — masalan ism .slice() bilan kesilganda) va \u0000 ni qabul qilmaydi:
+// bitta shunday belgi butun yozuvni to'xtatardi ("invalid input syntax for type json"). Yozishdan oldin tozalaymiz.
+const BAD = /[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]|\u0000/g;
+function clean(s) { return BAD.test(s) ? (BAD.lastIndex = 0, s.replace(BAD, '')) : (BAD.lastIndex = 0, s); }
+function rep(k, v) { return typeof v === 'string' ? clean(v) : v; }
 function packJson(blobs) {
   return JSON.stringify(db, (k, v) => {
+    if (typeof v === 'string') v = clean(v);
     if (typeof v === 'string' && v.length > 1500 && v.startsWith('data:')) {
       let h = hashOf.get(v);
       if (!h) { h = crypto.createHash('sha1').update(v).digest('hex'); hashOf.set(v, h); }
@@ -65,7 +71,7 @@ async function writeDb(force) {
     const main = packJson(blobs);
     for (const [h, v] of blobs) {
       if (savedBlobs.has(h)) continue;
-      await pool.query("insert into kv(k, v) values($1, $2) on conflict (k) do nothing", ['blob:' + h, JSON.stringify(v)]);
+      await pool.query("insert into kv(k, v) values($1, $2) on conflict (k) do nothing", ['blob:' + h, JSON.stringify(v, rep)]);
       savedBlobs.add(h);
     }
     if (main !== lastMain || force) {
@@ -240,7 +246,7 @@ function kvGet(k) {
 }
 async function kvSet(k, v) {
   if (!pool || !ready) return false;
-  try { await pool.query("insert into kv(k, v) values($1, $2) on conflict (k) do update set v = excluded.v", ['x:' + k, JSON.stringify(v)]); return true; }
+  try { await pool.query("insert into kv(k, v) values($1, $2) on conflict (k) do update set v = excluded.v", ['x:' + k, JSON.stringify(v, rep)]); return true; }
   catch (e) { console.log('kv yozish xatosi:', e.message); return false; }
 }
 
