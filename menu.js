@@ -866,7 +866,7 @@
       } else
       h += '<div style="margin:4px 0 8px;opacity:.75">' + (_i + 1) + ' / ' + _a.length + '</div>';
       if (_i > 0) h += '<button id="pzPrev" style="' + BG + '">⬅️ Oldingi</button>';
-      if (_a.length > 1 && !(_day && _i >= _a.length - 1)) h += done ? ('<div style="text-align:center"><span class="pzWrap"><span class="pzO">' + [0,1,2,3,4,5,6,7].map(function (k) { return '<i style="animation-delay:-' + (k * 0.375) + 's"></i>'; }).join('') + '</span><button id="pzNext" class="pzBig" style="' + BS + '">➡️ Keyingi masala</button></span></div>') : '<button id="pzNext" style="' + BG + '">➡️ Keyingi</button>';
+      if (_a.length > 1 && !(_day && _i >= _a.length - 1) && window.__pzMapKey !== '') h += done ? ('<div style="text-align:center"><span class="pzWrap"><span class="pzO">' + [0,1,2,3,4,5,6,7].map(function (k) { return '<i style="animation-delay:-' + (k * 0.375) + 's"></i>'; }).join('') + '</span><button id="pzNext" class="pzBig" style="' + BS + '">➡️ Keyingi masala</button></span></div>') : '<button id="pzNext" style="' + BG + '">➡️ Keyingi</button>';
       h += '<button id="pzR" style="' + BG + '">🔄 Qayta</button><button id="pzH" style="' + BS + '">💡 Ko‘rsatma</button>';
       if (S.link) h += '<button id="pzS" style="' + BS + '">📤 Yuborish</button>'; if (S.admin) h += '<button id="pzE" style="' + BS + '">🛠 Tahrirlash</button>'; if (S.admin) h += '<button id="pzN" style="' + BG + '">✏️ Nomi</button>'; if (S.admin) h += '<button id="pzD" style="' + BG + '">🗑 O‘chirish</button>';
       ov.innerHTML = h;
@@ -918,10 +918,11 @@
         msg += ' · ⏱ ' + _el + ' s · xato: ' + _er;
         if (d && d.best) { S.best = S.best || {}; S.best[p.id] = d.best; msg += ' · 🏅 eng yaxshi: ' + d.best + ' s'; }
         if ((S.solved || []).indexOf(p.id) < 0) S.solved.push(p.id);
+        if (window.__pzMapKey === '' && !isDay()) msg += '<div style="margin-top:8px;font-size:14px;opacity:.85">🗺 Xaritaga qaytilmoqda — qahramon keyingi masalaga yo‘l oladi…</div>';
         draw();
         // 🗺 xaritaga chiqib, odamcha keyingi masalaga yurib boradi
         setTimeout(function () {
-          if (myT !== window.__pzTok || isDay() || window.__pzMapKey !== '' || !document.getElementById('pzNext')) return;   // faqat xaritadan ochilganda
+          if (myT !== window.__pzTok || isDay() || window.__pzMapKey !== '' || !ov || !document.body.contains(ov) || !done) return;   // faqat xaritadan ochilganda
           window.__pzTok = (window.__pzTok || 0) + 1;
           window.__pzAuto = 1; hub = 0; curLv = 0; curFo = window.__pzMapKey != null ? window.__pzMapKey : foOf(p); if (curFo === '' && window.__pzMapKey === '') view = 'map'; list();
         }, 2200);
