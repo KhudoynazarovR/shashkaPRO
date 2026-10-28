@@ -366,6 +366,19 @@ function handle(req, res, url) {
     res.end(Buffer.from(m[2], 'base64'));
     return true;
   }
+  if (p === '/api/pzmap/hero' && req.method === 'POST') {   // xarita qahramoni (odamcha) tanlovi
+    const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
+    if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
+    readBody(req, 2000, body => {
+      let j = {}; try { j = JSON.parse(body); } catch (e) {}
+      const NEED = { '🧑‍🎓': 0, '👦': 0, '👧': 0, '🐻': 15, '🦊': 30, '🐼': 50, '🐱': 75, '🥷': 100, '🧙': 150, '🧚': 200, '🦸': 300, '👸': 400, '🤴': 500, '🦄': 600, '🐉': 750, '🤖': 900, '👑': 1100 };
+      const av = String(j.av || ''), u = store.getOrCreate(_tg);
+      if (!(av in NEED)) return send(res, 400, { error: 'yo‘q' });
+      if ((u.solved || []).length < NEED[av]) return send(res, 403, { error: 'hali ochilmagan' });
+      u.pzHero = av; store.save(); send(res, 200, { ok: true });
+    });
+    return true;
+  }
   if (p === '/api/pzmap/save' && req.method === 'POST') {
     const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
@@ -438,7 +451,7 @@ function handle(req, res, url) {
     { let _mx = 0, _ch = false; const _a = store.db.puzzles; _a.forEach(x => { if (x.no) _mx = Math.max(_mx, x.no); }); _a.forEach(x => { if (!x.no) { x.no = ++_mx; _ch = true; } if (x.title === 'Masala') { x.title = 'Masala ' + x.no; _ch = true; } }); if (_ch) store.save(); } if (!store.db.pzNoV2) { const _c = {}; store.db.puzzles.slice().sort((p, q) => (p.at || 0) - (q.at || 0)).forEach(x => { const k = x.folder || ''; _c[k] = (_c[k] || 0) + 1; if (/^Masala \d+$/.test(x.title)) x.title = 'Masala ' + _c[k]; x.no = _c[k]; }); store.db.pzNoV2 = 1; store.save(); }
     const _u = store.users()[String(_tg.id)] || {};
     const _adm = (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(_tg.id));
-    send(res, 200, { folders: store.db.pzFolders || [], settings: store.db.pzSettings || {}, hideLv: store.db.pzHideLv || [], best: _u.pzBest || {}, inv: _u.pzInv || null, ranks: require('./pzranks.js').RANKS, topInv: (function () { const m = require('./pzranks.js'); m.watch(store); return m.top(store); })(), promo: Date.parse(process.env.PZ_PROMO_END || '2026-10-25T23:59:59+05:00'), admin: _adm, link: process.env.TG_APP_LINK || '', myId: String(_tg.id), solved: _u.solved || [], list: (() => { const _c = {}; Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { _c[i] = (_c[i] || 0) + 1; })); return store.db.puzzles.slice().sort((x, y) => (x.no || 0) - (y.no || 0)).map(x => Object.assign({}, x, { cnt: _c[x.id] || 0 })); })() });
+    send(res, 200, { folders: store.db.pzFolders || [], settings: store.db.pzSettings || {}, hideLv: store.db.pzHideLv || [], best: _u.pzBest || {}, inv: _u.pzInv || null, ranks: require('./pzranks.js').RANKS, topInv: (function () { const m = require('./pzranks.js'); m.watch(store); return m.top(store); })(), promo: Date.parse(process.env.PZ_PROMO_END || '2026-10-25T23:59:59+05:00'), admin: _adm, link: process.env.TG_APP_LINK || '', myId: String(_tg.id), solved: _u.solved || [], heroAv: _u.pzHero || '', list: (() => { const _c = {}; Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { _c[i] = (_c[i] || 0) + 1; })); return store.db.puzzles.slice().sort((x, y) => (x.no || 0) - (y.no || 0)).map(x => Object.assign({}, x, { cnt: _c[x.id] || 0 })); })() });
     return true;
   }
   if ((p === '/api/puzzle' || p === '/api/puzzle/del' || p === '/api/puzzle/solved' || p === '/api/puzzle/rename' || p === '/api/puzzle/folder' || p === '/api/puzzle/move' || p === '/api/puzzle/settings' || p === '/api/puzzle/order' || p === '/api/puzzle/edit' || p === '/api/puzzle/renum') && req.method === 'POST') {

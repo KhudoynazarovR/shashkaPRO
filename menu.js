@@ -489,7 +489,7 @@
   // 🗺 Sarguzasht xaritasi (pzmapview.js): har 10 masala — bitta manzara, odamcha yechilgan masaladan keyingisiga qadam bosadi
   function mapJs(cb) {
     if (window.spPzMap) return window.spPzMap.load(cb);
-    var sc = document.createElement('script'); sc.src = '/pzmapview.js?v=2';
+    var sc = document.createElement('script'); sc.src = '/pzmapview.js?v=3';
     sc.onload = function () { window.spPzMap.load(cb); }; sc.onerror = function () {}; document.head.appendChild(sc);
   }
   // umumiy xarita tartibi: papkalar ketma-ket (Kombinatsiyalar → …), keyin papkasizlar
@@ -499,19 +499,21 @@
     S.list.forEach(function (p) { if (!foOf(p)) o.push(p); });
     return o;
   }
+  function heroSet() { if (window.spPzMap && window.spPzMap.setHero) window.spPzMap.setHero(S.heroAv, (S.solved || []).length, function (av) { S.heroAv = av; api('/api/pzmap/hero', { av: av }); }); }
   function pzMap(arr, key) {
     var sv = S.solved || [], n = arr.length, d = 0;
     var it = arr.map(function (p) { var ok = sv.indexOf(p.id) >= 0; if (ok) d++; return { i: S.list.indexOf(p), done: ok }; });
     var pc = n ? Math.round(d / n * 100) : 0;
     var h = '<div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:24px">' + d + '<span style="font-size:13px;opacity:.6"> / ' + n + ' yechildi</span></b><span style="opacity:.7">' + pc + '%</span></div>';
     if (!n) return h;
+    heroSet();
     h += '<div id="pzMapBox">' + (window.spPzMap ? window.spPzMap.html(it, key, S.admin) : '<div style="height:min(66vh,620px);margin:10px 0;border-radius:18px;background:#0b1a33"></div>') + '</div>';
     if (!key) h += '<button id="pzGo" style="width:100%;padding:16px;border:0;border-radius:14px;background:#6fae3d;color:#fff;font-size:20px;font-weight:700;margin-bottom:14px;box-shadow:0 5px 0 #4b7f27">▶ Masalalar yechish</button>';
     var me = ov;
     setTimeout(function () {
       mapJs(function () {
         var bx = me.querySelector('#pzMapBox'); if (!bx || !document.body.contains(bx)) return;
-        bx.innerHTML = window.spPzMap.html(it, key, S.admin);
+        heroSet(); bx.innerHTML = window.spPzMap.html(it, key, S.admin);
         Array.prototype.forEach.call(bx.querySelectorAll('[data-pz]'), function (e) {
           e.onclick = function () {
             var i = Number(e.getAttribute('data-pz'));

@@ -34,12 +34,48 @@
       '.pzN small{font-size:.55em;line-height:1}.pzN.d{background:radial-gradient(circle at 35% 30%,#7ef07a,#1f9a2a 60%,#0f5e16)}' +
       '.pzN.c{background:radial-gradient(circle at 35% 30%,#ffe58a,#f5a623 60%,#b86a00);animation:pzPulse 1.4s ease-in-out infinite;box-shadow:0 5px 0 rgba(0,0,0,.35),0 0 22px #ffd54f}' +
       '.pzN.o{background:radial-gradient(circle at 35% 30%,#e7b678,#a8692c 60%,#6b3d12)}.pzN.l{background:radial-gradient(circle at 35% 30%,#e8eef1,#9fb2bb 60%,#6c7d86);color:#3b4a52;text-shadow:none}' +
-      '#pzHero{position:absolute;z-index:6;width:12%;transform:translate(-50%,-88%);transition:left .34s ease-in-out,top .34s ease-in-out;pointer-events:none;font-size:clamp(30px,10vw,46px);line-height:1;text-align:center;filter:drop-shadow(0 4px 3px rgba(0,0,0,.45))}' +
-      '#pzHero span{display:inline-block}@keyframes pzPulse{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.1)}}@keyframes pzHop{0%{transform:translateY(0)}45%{transform:translateY(-26px)}100%{transform:translateY(0)}}' +
-      '.pzMapEd{display:block;margin:8px 0 -2px auto;border:0;border-radius:10px;padding:7px 12px;background:#2b3270;color:#fff;font:700 13px system-ui}';
+      '#pzHero{position:absolute;z-index:6;width:14%;transform:translate(-50%,-88%);pointer-events:none;font-size:clamp(32px,11vw,50px);line-height:1;text-align:center;will-change:left,top}' +
+      '#pzHeroW{display:inline-block;transition:transform .15s}#pzHeroB{display:inline-block;transform-origin:50% 100%;filter:drop-shadow(0 4px 3px rgba(0,0,0,.45))}' +
+      '#pzHeroB.idle{animation:pzIdle 1.6s ease-in-out infinite}#pzHeroB.walk{animation:pzWalk .32s ease-in-out infinite}#pzHeroB.joy{animation:pzJoy .9s ease-out 2}' +
+      '.pzSh{position:absolute;left:50%;bottom:-4px;width:60%;height:12%;margin-left:-30%;border-radius:50%;background:rgba(0,0,0,.35);filter:blur(2px);animation:pzShI 1.6s ease-in-out infinite}' +
+      '@keyframes pzIdle{0%,100%{transform:translateY(0) scale(1,1)}50%{transform:translateY(-6%) scale(.97,1.04)}}' +
+      '@keyframes pzShI{0%,100%{transform:scaleX(1);opacity:.35}50%{transform:scaleX(.85);opacity:.25}}' +
+      '@keyframes pzWalk{0%,100%{transform:rotate(-9deg)}50%{transform:rotate(9deg)}}' +
+      '@keyframes pzJoy{0%{transform:translateY(0) scale(1)}20%{transform:translateY(0) scale(1.15,.85)}45%{transform:translateY(-45%) scale(.92,1.1) rotate(-8deg)}70%{transform:translateY(0) scale(1.12,.88)}100%{transform:translateY(0) scale(1)}}' +
+      '@keyframes pzPulse{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.1)}}' +
+      '.pzFx{position:absolute;z-index:7;pointer-events:none;transform:translate(-50%,-50%);font-size:clamp(14px,4.5vw,22px);animation:pzFx .8s ease-out forwards}' +
+      '@keyframes pzFx{0%{opacity:1;transform:translate(-50%,-50%) scale(.4)}100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1.2)}}' +
+      '.pzN.pop{animation:pzPop .5s ease-out}@keyframes pzPop{0%{transform:translate(-50%,-50%) scale(1)}40%{transform:translate(-50%,-50%) scale(1.35)}100%{transform:translate(-50%,-50%) scale(1)}}' +
+      '.pzBar{display:flex;justify-content:space-between;gap:8px;margin-top:8px}.pzHeroPick{margin:0;border:0;border-radius:10px;padding:6px 12px;background:#6b5cf0;color:#fff;font:700 14px system-ui}.pzMapEd{margin:0;border:0;border-radius:10px;padding:7px 12px;background:#2b3270;color:#fff;font:700 13px system-ui}';
     document.head.appendChild(s);
   }
   // items: [{i, done}] — tartibda; key: '' (umumiy) yoki papka nomi
+  // 🧑‍🎓 Qahramonlar: ko'proq masala yechgan sari yangilari ochiladi
+  var HEROES = [
+    ['🧑‍🎓', 'Talaba', 0], ['👦', 'Bola', 0], ['👧', 'Qizcha', 0], ['🐻', 'Ayiqcha', 15], ['🦊', 'Tulki', 30], ['🐼', 'Panda', 50],
+    ['🐱', 'Mushukcha', 75], ['🥷', 'Ninja', 100], ['🧙', 'Sehrgar', 150], ['🧚', 'Pari', 200], ['🦸', 'Qahramon', 300], ['👸', 'Qor malikasi', 400],
+    ['🤴', 'Shahzoda', 500], ['🦄', 'Yolqinli ot', 600], ['🐉', 'Ajdar', 750], ['🤖', 'Robot', 900], ['👑', 'Shashka qiroli', 1100]
+  ];
+  var HS = { av: '', n: 0, save: null };
+  function heroAv() { for (var i = 0; i < HEROES.length; i++) if (HEROES[i][0] === HS.av && HS.n >= HEROES[i][2]) return HS.av; return HEROES[0][0]; }
+  function setHero(av, n, save) { HS.av = av || ''; HS.n = n || 0; HS.save = save; }
+  function picker(onDone) {
+    var ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;z-index:2147483100;background:rgba(5,8,25,.96);color:#fff;overflow:auto;padding:16px;font:15px system-ui,sans-serif;box-sizing:border-box';
+    var cur = heroAv(), h = '<div style="display:flex;align-items:center;margin-bottom:6px"><b style="flex:1;font-size:19px">🧑‍🎓 Qahramon tanlang</b><button data-x style="border:0;border-radius:10px;padding:8px 12px;background:#2b3270;color:#fff;font-size:16px">✕</button></div>' +
+      '<div style="font-size:13px;opacity:.75;margin-bottom:12px">Siz yechgan masalalar: <b>' + HS.n + '</b>. Ko‘proq yeching — yangi qahramonlar ochiladi!</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">';
+    HEROES.forEach(function (x) {
+      var ok = HS.n >= x[2], on = x[0] === cur;
+      h += '<button data-av="' + x[0] + '" ' + (ok ? '' : 'disabled') + ' style="position:relative;border:' + (on ? '3px solid #ffd54f' : '2px solid #2b3270') + ';border-radius:16px;padding:10px 4px;background:' + (on ? '#3a3a10' : '#161c45') + ';color:#fff;opacity:' + (ok ? 1 : .55) + '">' +
+        '<div style="font-size:40px;line-height:1.2;' + (ok ? '' : 'filter:grayscale(1)') + '">' + x[0] + '</div><div style="font-size:12px;font-weight:700;margin-top:4px">' + x[1] + '</div>' +
+        '<div style="font-size:11px;opacity:.8;margin-top:2px">' + (on ? '✅ tanlangan' : ok ? 'Tanlash' : '🔒 ' + x[2] + ' ta masala') + '</div></button>';
+    });
+    ov.innerHTML = h + '</div>'; document.body.appendChild(ov);
+    ov.querySelector('[data-x]').onclick = function () { ov.remove(); };
+    [].forEach.call(ov.querySelectorAll('[data-av]'), function (b) {
+      b.onclick = function () { HS.av = b.getAttribute('data-av'); if (HS.save) HS.save(HS.av); ov.remove(); if (onDone) onDone(); };
+    });
+  }
   var ST = {};
   function html(items, key, admin) {
     css();
@@ -48,7 +84,7 @@
     var cur = Math.min(cu, n - 1), zc = Math.floor(cur / PER), Z = zonesOf(key), NZ = Math.ceil(n / PER);
     var z0 = Math.max(0, zc - 1), z1 = Math.min(NZ - 1, zc + 2);
     ST = { key: key, cu: cu, cur: cur, n: n, z0: z0, z1: z1 };
-    var h = (admin ? '<button class="pzMapEd" data-mapedit>🗺 Xaritani sozlash</button>' : '') + '<div id="pzScroll">';
+    var h = '<div class="pzBar"><button class="pzHeroPick" data-heropick>' + heroAv() + ' Qahramon</button>' + (admin ? '<button class="pzMapEd" data-mapedit>🗺 Xaritani sozlash</button>' : '') + '</div><div id="pzScroll">';
     for (var z = z1; z >= z0; z--) {
       var cfg = Z[z % Z.length];
       h += '<div class="pzZone" style="aspect-ratio:' + cfg.w + '/' + cfg.h + ';background-image:url(\'' + cfg.u + '\')"><span class="pzZt">' + (z + 1) + '/' + NZ + '-bosqich</span>';
@@ -61,11 +97,12 @@
       }
       h += '</div>';
     }
-    h += '<div id="pzHero"><span id="pzHeroB">🧑‍🎓</span></div></div>';
+    h += '<div id="pzHero"><i class="pzSh"></i><span id="pzHeroW"><span id="pzHeroB" class="idle">' + heroAv() + '</span></span></div></div>';
     return h;
   }
   function after(root, key, onEdit, onArrive) {
     var c = root.querySelector('#pzScroll'), hero = root.querySelector('#pzHero'), hb = root.querySelector('#pzHeroB'); if (!c || !hero) return;
+    var hp = root.querySelector('[data-heropick]'); if (hp) hp.onclick = function () { picker(function () { var a = heroAv(); hb.textContent = a; hp.textContent = a + ' Qahramon'; hb.className = 'joy'; setTimeout(function () { hb.className = 'idle'; }, 1800); }); };
     var ed = root.querySelector('[data-mapedit]'); if (ed) ed.onclick = function (e) { e.stopPropagation(); editor(key, onEdit); };
     function at(j) {
       var b = c.querySelector('[data-node="' + j + '"]'); if (!b) return null;
@@ -81,17 +118,53 @@
       if (smooth && c.scrollTo) c.scrollTo({ top: t, behavior: 'smooth' }); else c.scrollTop = t;
       return P;
     }
+    var hw = root.querySelector('#pzHeroW');
+    function fx(x, y, ch, n, spread) {   // effekt zarrachalari (chang, uchqun, konfetti)
+      for (var i = 0; i < n; i++) {
+        var e = document.createElement('span'), a = Math.random() * Math.PI * 2, r = spread * (0.5 + Math.random() * 0.6);
+        e.className = 'pzFx'; e.textContent = ch[i % ch.length];
+        e.style.left = x + 'px'; e.style.top = y + 'px';
+        e.style.setProperty('--dx', Math.round(Math.cos(a) * r) + 'px'); e.style.setProperty('--dy', Math.round(Math.sin(a) * r * 0.7 - spread * 0.3) + 'px');
+        e.style.animationDelay = (i * 0.03) + 's';
+        c.appendChild(e); setTimeout(function (el) { return function () { el.remove(); }; }(e), 1100);
+      }
+    }
+    function hop(A, B, dur, cb) {   // yoy bo'ylab sakrash (requestAnimationFrame)
+      var t0 = null, H = Math.max(28, Math.abs(B.x - A.x) * 0.35);
+      fx(A.x, A.y + 6, ['💨'], 2, 22);
+      (function fr(ts) {
+        if (!document.body.contains(hero)) return;
+        if (t0 === null) t0 = ts;
+        var t = Math.min(1, (ts - t0) / dur), e = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+        var x = A.x + (B.x - A.x) * e, y = A.y + (B.y - A.y) * e - Math.sin(Math.PI * t) * H;
+        hero.style.left = x + 'px'; hero.style.top = y + 'px';
+        var ct = y - c.clientHeight / 2; c.scrollTop += (ct - c.scrollTop) * 0.18;
+        if (t < 1) requestAnimationFrame(fr); else { fx(B.x, B.y + 10, ['✨', '⭐'], 4, 30); cb(); }
+      })(performance.now());
+      requestAnimationFrame(function () {});
+    }
     var go = function () {
-      hero.style.transition = 'none'; place(from, false); void hero.offsetWidth; hero.style.transition = '';
+      var P0 = at(from); if (!P0) return;
+      hero.style.left = P0.x + 'px'; hero.style.top = P0.y + 'px'; c.scrollTop = P0.y - c.clientHeight / 2;
       var k = from, cur = ST.cur;
+      if (k < cur) { hb.className = 'walk'; }
       (function step() {
         if (!document.body.contains(hero)) return;
-        if (k >= cur) { try { localStorage.setItem(sk, String(cur)); } catch (e) {} if (onArrive) setTimeout(function () { if (document.body.contains(hero)) onArrive(); }, 700); return; }
+        if (k >= cur) {
+          try { localStorage.setItem(sk, String(cur)); } catch (e) {}
+          var E = at(cur), nb = c.querySelector('[data-node="' + cur + '"]');
+          if (from < cur && E) {   // yetib keldi: quvonch + konfetti
+            hb.className = 'joy'; fx(E.x, E.y, ['🎉', '⭐', '✨', '🎊', '💛'], 12, 70);
+            if (nb) { nb.classList.add('pop'); }
+            setTimeout(function () { hb.className = 'idle'; }, 1800);
+          }
+          if (onArrive) setTimeout(function () { if (document.body.contains(hero)) onArrive(); }, from < cur ? 1500 : 700);
+          return;
+        }
         var A = at(k); k++; var B = at(k);
-        hb.style.animation = 'none'; void hb.offsetWidth; hb.style.animation = 'pzHop .34s ease-in-out';
-        if (A && B) hb.style.transform = B.x < A.x ? 'scaleX(-1)' : '';
-        place(k, true);
-        setTimeout(step, 400);
+        if (!A || !B) { step(); return; }
+        hw.style.transform = B.x < A.x ? 'scaleX(-1)' : '';
+        hop(A, B, 620, function () { setTimeout(step, 90); });
       })();
     };
     // rasmlar yuklanib, o'lcham aniq bo'lgach
@@ -161,5 +234,5 @@
     }
     draw();
   }
-  window.spPzMap = { load: load, html: html, after: after };
+  window.spPzMap = { load: load, html: html, after: after, setHero: setHero };
 })();
