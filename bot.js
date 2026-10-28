@@ -208,10 +208,7 @@ async function onInline(q) {
     reply_markup: { inline_keyboard: [[{ text: "▶ O‘yinga kirish", url: roomLink("mm_" + mcode) }]] }
   };
   if (mres) { if (/xotira|memori|памят|romant/i.test(mq)) results.unshift(mres); else results.push(mres); }
-  results.push({
-    type: "article", id: id, title: "♟️ Shashka — oddiy havola", description: "Yangi xona ochish va havolani yuborish",
-    input_message_content: { message_text: TEXT }, reply_markup: playMarkup(id)
-  });
+  if (!results.length) results.push({ type: "article", id: id, title: "♟️ Shashka o‘ynash", description: "Yangi xona ochish va havolani yuborish", input_message_content: { message_text: TEXT }, reply_markup: playMarkup(id) });   // zaxira: rasm manzili yo'q bo'lsa
   await api("answerInlineQuery", { inline_query_id: q.id, cache_time: 0, is_personal: true, results });
 }
 
