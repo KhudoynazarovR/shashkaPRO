@@ -371,7 +371,7 @@ function handle(req, res, url) {
     if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
     readBody(req, 2000, body => {
       let j = {}; try { j = JSON.parse(body); } catch (e) {}
-      const NEED = { '🧑‍🎓': 0, '👦': 0, '👧': 0, '🐻': 15, '🦊': 30, '🐼': 50, '🐱': 75, '🥷': 100, '🧙': 150, '🧚': 200, '🌸': 250, '🦸': 300, '🌙': 350, '👸': 400, '🤴': 500, '🦄': 600, '🐉': 750, '🤖': 900, '👑': 1100 };
+      const NEED = {}; [0, 50, 100, 150, 200, 250, 300, 350, 400, 450].forEach(n => { NEED['b' + n] = n; NEED['g' + n] = n; });
       const av = String(j.av || ''), u = store.getOrCreate(_tg);
       if (!(av in NEED)) return send(res, 400, { error: 'yo‘q' });
       if ((u.solved || []).length < NEED[av]) return send(res, 403, { error: 'hali ochilmagan' });
