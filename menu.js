@@ -491,7 +491,7 @@
   // 🗺 Sarguzasht xaritasi (pzmapview.js): har 10 masala — bitta manzara, odamcha yechilgan masaladan keyingisiga qadam bosadi
   function mapJs(cb) {
     if (window.spPzMap) return window.spPzMap.load(cb);
-    var sc = document.createElement('script'); sc.src = '/pzmapview.js?v=5';
+    var sc = document.createElement('script'); sc.src = '/pzmapview.js?v=6';
     sc.onload = function () { window.spPzMap.load(cb); }; sc.onerror = function () {}; document.head.appendChild(sc);
   }
   // umumiy xarita tartibi: papkalar ketma-ket (Kombinatsiyalar → …), keyin papkasizlar
