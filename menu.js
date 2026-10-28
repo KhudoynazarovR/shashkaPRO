@@ -465,11 +465,12 @@
         back: close, soon: hubSoon,
         daily: function () { var p = dailyPz(); if (!p) { hubSoon('Masalalar'); return; } hub = 0; view = ''; play(p); },
         custom: function () { hub = 0; view = 'custom'; list(); },
-        solve: function () { hub = 0; view = ''; list(); }
+        solve: function () { hub = 0; view = ''; list(); },
+        map: function () { hub = 0; view = 'map'; curFo = ''; curLv = 0; list(); }
       });
     };
     if (window.pzHub) go();
-    else { var sc = document.createElement('script'); sc.src = '/pzhub.js?v=16'; sc.onload = go; sc.onerror = function () { hub = 0; list(); }; document.head.appendChild(sc); }
+    else { var sc = document.createElement('script'); sc.src = '/pzhub.js?v=17'; sc.onload = go; sc.onerror = function () { hub = 0; list(); }; document.head.appendChild(sc); }
   }
   var CARD = 'text-align:left;background:#161a3a;border:1px solid #262b5a;border-radius:16px;padding:12px;margin-bottom:10px;cursor:pointer';
   function lvOf(p) { return [1, 2, 3].indexOf(p.level) >= 0 ? p.level : 1; }
@@ -539,8 +540,8 @@
     if (window.__pzPF) { var _pf = window.__pzPF; window.__pzPF = ''; if ((S.folders || []).indexOf(_pf) >= 0) { curFo = _pf; curLv = 0; } }
     if (curFo && (S.folders || []).indexOf(curFo) < 0) curFo = '';
     if (curLv || curFo) return items();
-    var fl = S.folders || [], h = head(view === 'custom' ? '🎨 Maxsus masalalar' : '🧩 Masalalar', topBtns()); if (view !== 'custom') h += '<div style="font-weight:800;font-size:18px;margin:2px 0 6px">🗺 ' + MAINF + '</div>' + pzMap(mainOrder(), '');
-    var _mapV = view !== 'custom';   // xarita sahifasida papkalar umuman ko'rinmaydi (ular 'Maxsus masalalar'da)
+    var fl = S.folders || [], h = head(view === 'custom' ? '🎨 Maxsus masalalar' : view === 'map' ? '🗺 Xarita' : '🧩 Masalalar', topBtns()); if (view === 'map') h += '<div style="font-weight:800;font-size:18px;margin:2px 0 6px">🗺 ' + MAINF + '</div>' + pzMap(mainOrder(), '');
+    var _mapV = view === 'map';   // xarita alohida sahifa: unda papkalar yo'q
     if (S.admin && !_mapV) h += '<div style="margin-bottom:10px"><button id="pzNF" style="' + BG + '">📁 Yangi papka</button></div>';
     if (!S.list.length && !fl.length) h += '<div style="padding:30px;opacity:.7">Hozircha masala yo‘q</div>';
     if (!_mapV) [1, 2, 3].forEach(function (lv) {
@@ -922,7 +923,7 @@
         setTimeout(function () {
           if (myT !== window.__pzTok || isDay() || view === 'custom' || !document.getElementById('pzNext')) return;
           window.__pzTok = (window.__pzTok || 0) + 1;
-          window.__pzAuto = 1; hub = 0; curLv = 0; curFo = window.__pzMapKey != null ? window.__pzMapKey : foOf(p); list();
+          window.__pzAuto = 1; hub = 0; curLv = 0; curFo = window.__pzMapKey != null ? window.__pzMapKey : foOf(p); if (curFo === '' && window.__pzMapKey === '') view = 'map'; list();
         }, 2200);
       });
     }
