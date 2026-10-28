@@ -91,6 +91,7 @@
       h += '</div></div>';
     }
     h += '<div class="row" style="margin-top:4px"><button class="go" data-rnd style="flex:1;margin-top:0">🎲 ' + T('Tasodifiy raqib') + '</button><button class="go g2" data-bot style="flex:1;margin-top:0;font-size:18px">🤖 ' + T('Bot bilan') + '</button></div>';
+    h += '<div data-hmsg></div>';
     h += '<div class="lb" style="display:flex;justify-content:space-between"><span>🟢 ' + T('O‘yin zali') + ' <span data-pn></span></span><span style="opacity:.7;font-size:12px">' + T('o‘yinchini taklif qiling') + '</span></div><div data-pl class="cd" style="padding:4px 10px;margin-top:0"><div style="text-align:center;padding:10px;opacity:.7">⏳</div></div>';
     h += '<button class="go g2" data-sh style="margin-top:4px">📤 ' + T('Guruhga yoki do‘stga yuborish') + '</button>';
     h += '<div class="lb">📺 ' + T('Jonli efir') + '</div><div data-live class="cd" style="padding:4px 10px;margin-top:0"><div style="text-align:center;padding:10px;opacity:.7">⏳</div></div>';
@@ -107,11 +108,16 @@
     [].forEach.call(ov.querySelectorAll('[data-rule]'), function (b) { b.onclick = function () { var k = b.getAttribute('data-rule'); CFG.rules[k] = !CFG.rules[k]; saveCfg(); menu(); }; });
     q('[data-tour]').onclick = function () { stopPoll(); tourMenu(); };
     q('[data-bot]').onclick = function () { stopPoll(); startBot(); };
-    q('[data-rnd]').onclick = function () { netCreate({ all: 1 }); };
-    q('[data-sh]').onclick = function () { netCreate({ share: 1 }); };
+    q('[data-rnd]').onclick = function () {   // qayta bosilsa — qidiruv bekor
+      if (NET && NET.bg && NET.pend.all) return bgCancel();
+      if (NET && NET.bg && NET.code) { NET.pend.all = 1; sendN({ type: 'mmInviteAll', code: NET.code }); bgUi(); return; }
+      bgCreate({ all: 1 });
+    };
+    q('[data-sh]').onclick = function () { if (NET && NET.bg && NET.code) shareNow(NET.code); else bgCreate({ share: 1 }); };
     // zal va jonli efirni har 4 soniyada yangilash
     HALL = true;
     var poll = function () { sendN({ type: 'mmPlayers', init: (tg && tg.initData) || '' }); sendN({ type: 'mmLive' }); };
+    bgUi();
     net(poll); PLT = setInterval(function () { if (!ov || !HALL) return stopPoll(); if (WS && WS.readyState === 1) poll(); else net(poll); }, 4000);
   }
   var HALL = false;
@@ -119,10 +125,11 @@
     var pl = ov && ov.querySelector('[data-pl]'); if (!pl) return;
     var pn = ov.querySelector('[data-pn]'); if (pn) pn.textContent = '· ' + m.list.length;
     if (!m.list.length) { pl.innerHTML = '<div style="text-align:center;padding:10px;opacity:.75">😔 ' + T('Hozir zalda hech kim yo‘q. Guruhga yuboring yoki bot bilan o‘ynang!') + '</div>'; return; }
-    pl.innerHTML = m.list.map(function (p) { return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.08)"><span style="flex:1;text-align:left">' + (p.busy ? '🎮 ' : '🟢 ') + esc(p.name) + (p.busy ? ' <small style="opacity:.6">' + T('o‘yinda') + '</small>' : '') + '</span><button class="op" style="flex:none;min-width:90px;padding:9px 10px" data-inv="' + esc(p.uid) + '" data-nm="' + esc(p.name) + '">' + T('Taklif') + '</button></div>'; }).join('');
+    pl.innerHTML = m.list.map(function (p) { return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.08)"><span style="flex:1;text-align:left">' + (p.busy ? '🎮 ' : '🟢 ') + esc(p.name) + (p.busy ? ' <small style="opacity:.6">' + T('o‘yinda') + '</small>' : '') + '</span><button class="op" style="flex:none;min-width:90px;padding:9px 10px" data-inv="' + esc(p.uid) + '" data-nm="' + esc(p.name) + '"' + (NET && NET.bg && NET.sentTo[p.uid] ? ' disabled>✅ ' + T('Yuborildi') : '>' + T('Taklif')) + '</button></div>'; }).join('');
     [].forEach.call(pl.querySelectorAll('[data-inv]'), function (b) { b.onclick = function () {
-      if (NET && NET.code && NET.st && NET.st.status === 'wait') { sendN({ type: 'mmInvite', code: NET.code, toUid: b.getAttribute('data-inv') }); b.textContent = '⏳'; b.disabled = true; }
-      else netCreate({ to: b.getAttribute('data-inv'), name: b.getAttribute('data-nm') });
+      var uid = b.getAttribute('data-inv');
+      if (NET && NET.bg && NET.code) { sendN({ type: 'mmInvite', code: NET.code, toUid: uid }); NET.sentTo[uid] = 1; b.textContent = '⏳'; b.disabled = true; }
+      else { bgCreate({ to: uid, name: b.getAttribute('data-nm') }); b.textContent = '⏳'; b.disabled = true; }
     }; });
   }
   function hallLive(m) {
@@ -343,6 +350,29 @@
     NET = { left: false, pend: pend || {} };
     net(function () { sendN({ type: 'mmCreate', init: (tg && tg.initData) || '', size: CFG.size, tc: CFG.tc, rules: CFG.rules, theme: CFG.theme, symbols: symbols(CFG.theme) }); });
   }
+  // zaldan chiqmasdan (fon rejimida) o'yin yaratish: taklif/so'rov yuboriladi, qabul qilinsa o'yin o'zi boshlanadi
+  function bgCreate(pend) {
+    NET = { left: false, bg: true, pend: pend || {}, sentTo: {} };
+    if (pend && pend.to) NET.sentTo[pend.to] = 1;
+    net(function () { sendN({ type: 'mmCreate', init: (tg && tg.initData) || '', size: CFG.size, tc: CFG.tc, rules: CFG.rules, theme: CFG.theme, symbols: symbols(CFG.theme) }); });
+    bgUi();
+  }
+  function bgCancel() { if (NET && NET.code) sendN({ type: 'mmLeave', code: NET.code }); NET = null; bgUi(); }
+  function shareNow(code) {
+    var u = 'https://t.me/share/url?url=' + encodeURIComponent(shareLink(code)) + '&text=' + encodeURIComponent('🧠 ' + T('Xotira o‘yinini o‘ynaymizmi? Bosing va o‘yinga kiring!'));
+    try { if (tg && tg.openTelegramLink) tg.openTelegramLink(u); else window.open(u, '_blank'); } catch (e) { window.open(u, '_blank'); }
+  }
+  function bgUi(extra) {   // zal ekranidagi holat qatori
+    if (!ov || !HALL) return;
+    var rb = ov.querySelector('[data-rnd]'), hm = ov.querySelector('[data-hmsg]');
+    if (rb) rb.innerHTML = NET && NET.bg && NET.pend.all ? '⏳ ' + T('Raqib qidirilmoqda…') + '<br><small style="font-size:12px;font-weight:600;opacity:.85">' + T('bekor qilish uchun bosing') + '</small>' : '🎲 ' + T('Tasodifiy raqib');
+    if (hm) {
+      var t = '';
+      if (NET && NET.bg) t = NET.pend.all ? '🎲 ' + T('Zaldagi hammaga so‘rov yuborildi — kim birinchi qabul qilsa, o‘yin o‘zi boshlanadi.') : NET.pend.share ? '🔗 ' + T('Havola yuborildi — do‘stingiz kirishi bilan o‘yin boshlanadi.') : '📨 ' + T('Taklif yuborildi — qabul qilinishi bilan o‘yin o‘zi boshlanadi.');
+      hm.innerHTML = (t ? '<div class="cd" style="display:flex;gap:8px;align-items:center;margin:8px 0 0;border:1px solid #ffd54f55"><span style="flex:1;font-size:14px;line-height:1.4">' + t + (extra ? '<br>' + extra : '') + '</span><button class="op" data-bgx style="flex:none;min-width:0;padding:8px 10px;background:#5b2330">✕</button></div>' : (extra ? '<div class="cd" style="margin:8px 0 0;font-size:14px">' + extra + '</div>' : ''));
+      var bx = hm.querySelector('[data-bgx]'); if (bx) bx.onclick = bgCancel;
+    }
+  }
   function netWatch(code) {
     stopPoll(); HALL = false;
     shell(); ov.innerHTML = '<div class="top"><button class="bk" data-x>‹</button><h2>📺 ' + T('Jonli efir') + '</h2></div><div class="cd" style="text-align:center">⏳ ' + T('Ulanmoqda…') + '</div>';
@@ -364,6 +394,7 @@
     if (ov && HALL && m.type === 'mmPlayers') return hallPlayers(m);
     if (ov && HALL && m.type === 'mmLive') return hallLive(m);
     if (!ov || !NET) return;
+    if (NET.bg && m.type === 'mmErr') { NET = null; bgUi('⚠️ ' + esc(T(m.msg))); return; }
     if (m.type === 'mmErr') { ov.innerHTML = '<div class="top"><button class="bk" data-x>‹</button><h2>Xotira</h2></div><div class="cd" style="text-align:center">⚠️ ' + esc(T(m.msg)) + '</div><button class="go g2" data-x2>☰ ' + T('Menyu') + '</button>'; ov.querySelector('[data-x]').onclick = menu; ov.querySelector('[data-x2]').onclick = menu; NET = null; return; }
     if (m.type === 'mmAgainAsk') { var mm = ov.querySelector('[data-rw]'); if (mm) mm.textContent = '🔁 ' + T('Do‘stingiz yana o‘ynashni xohlayapti'); return; }
     if (m.type === 'mmPlayers') {   // zaldagi onlayn o'yinchilar
@@ -373,12 +404,20 @@
       [].forEach.call(pl.querySelectorAll('[data-inv]'), function (b) { b.onclick = function () { if (!NET || !NET.code) return; sendN({ type: 'mmInvite', code: NET.code, toUid: b.getAttribute('data-inv') }); b.textContent = '⏳'; b.disabled = true; }; });
       return;
     }
+    if (NET.bg && m.type === 'mmInviteAllRes') { if (!m.n) bgUi('😔 ' + T('Zalda hozir bo‘sh o‘yinchi yo‘q. Guruhga yuboring yoki bot bilan o‘ynang!')); return; }
+    if (NET.bg && m.type === 'mmInviteRes') { var bb = ov.querySelector('[data-inv="' + m.toUid + '"]'); if (bb) bb.textContent = m.ok ? '✅ ' + T('Yuborildi') : '📴'; return; }
+    if (NET.bg && m.type === 'mmDeclined') { bgUi('🙅 ' + esc(m.name) + ' ' + T('taklifni rad etdi')); return; }
     if (m.type === 'mmInviteAllRes') { var an = ov.querySelector('[data-an]'); if (an) an.innerHTML = '<br><small>(' + m.n + ' ' + T('kishiga') + ')</small>'; if (!m.n) { var dc = ov.querySelector('[data-dec]'); if (dc) dc.innerHTML = '<div class="cd" style="text-align:center">😔 ' + T('Zalda hozir hech kim yo‘q. Guruhga yuboring!') + '</div>'; } return; }
     if (m.type === 'mmInviteRes') { var bi = ov.querySelector('[data-inv="' + m.toUid + '"]'); if (bi) bi.textContent = m.ok ? '✅ ' + T('Yuborildi') : '📴 ' + T('Chiqib ketgan'); return; }
     if (m.type === 'mmDeclined') { var pl2 = ov.querySelector('[data-dec]') || ov.querySelector('[data-pl]'); if (pl2) pl2.insertAdjacentHTML('afterbegin', '<div class="cd" style="text-align:center">🙅 ' + esc(m.name) + ' ' + T('taklifni rad etdi') + '</div>'); return; }
     if (m.type !== 'mmState') return;
     NET.code = m.code; NET.st = m;
     var z = sizeOf(m.size), me = m.me, op = 1 - me;
+    if (NET.bg && m.status === 'wait') {
+      if (!NET.sent) { NET.sent = 1; var pd0 = NET.pend; if (pd0.to) sendN({ type: 'mmInvite', code: m.code, toUid: pd0.to }); if (pd0.all) sendN({ type: 'mmInviteAll', code: m.code }); if (pd0.share) shareNow(m.code); }
+      return;
+    }
+    if (NET.bg && m.status !== 'wait') { NET.bg = false; stopPoll(); hap('ok'); }
     if (m.status === 'wait') {
       var link = shareLink(m.code), pd = NET.pend || {};
       if (!NET.sent) {   // yaratilgach: kutilgan amal (taklif / hammaga so'rov / ulashish)
