@@ -489,7 +489,7 @@
   // 🗺 Sarguzasht xaritasi (pzmapview.js): har 10 masala — bitta manzara, odamcha yechilgan masaladan keyingisiga qadam bosadi
   function mapJs(cb) {
     if (window.spPzMap) return window.spPzMap.load(cb);
-    var sc = document.createElement('script'); sc.src = '/pzmapview.js?v=1';
+    var sc = document.createElement('script'); sc.src = '/pzmapview.js?v=2';
     sc.onload = function () { window.spPzMap.load(cb); }; sc.onerror = function () {}; document.head.appendChild(sc);
   }
   function pzMap(arr, key) {
@@ -512,7 +512,12 @@
             if (c) c.click(); else if (S.list[i]) play(S.list[i]);
           };
         });
-        window.spPzMap.after(bx, key, function () { list(); });
+        window.spPzMap.after(bx, key, function () { list(); }, function () {
+          // masala yechilgandan keyin: odamcha yetib borgach keyingi masala o'zi ochiladi
+          if (!window.__pzAuto) return; window.__pzAuto = 0;
+          var nx = null; for (var q = 0; q < arr.length; q++) if (sv.indexOf(arr[q].id) < 0 && (S.solved || []).indexOf(arr[q].id) < 0) { nx = arr[q]; break; }
+          if (nx) play(nx);
+        });
       });
     }, 0);
     return h;
@@ -900,6 +905,12 @@
         if (d && d.best) { S.best = S.best || {}; S.best[p.id] = d.best; msg += ' · 🏅 eng yaxshi: ' + d.best + ' s'; }
         if ((S.solved || []).indexOf(p.id) < 0) S.solved.push(p.id);
         draw();
+        // 🗺 xaritaga chiqib, odamcha keyingi masalaga yurib boradi
+        setTimeout(function () {
+          if (myT !== window.__pzTok || isDay() || view === 'custom' || !document.getElementById('pzNext')) return;
+          window.__pzTok = (window.__pzTok || 0) + 1;
+          window.__pzAuto = 1; hub = 0; curLv = 0; curFo = foOf(p); list();
+        }, 2200);
       });
     }
     function next() {

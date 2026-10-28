@@ -64,7 +64,7 @@
     h += '<div id="pzHero"><span id="pzHeroB">🧑‍🎓</span></div></div>';
     return h;
   }
-  function after(root, key, onEdit) {
+  function after(root, key, onEdit, onArrive) {
     var c = root.querySelector('#pzScroll'), hero = root.querySelector('#pzHero'), hb = root.querySelector('#pzHeroB'); if (!c || !hero) return;
     var ed = root.querySelector('[data-mapedit]'); if (ed) ed.onclick = function (e) { e.stopPropagation(); editor(key, onEdit); };
     function at(j) {
@@ -85,7 +85,8 @@
       hero.style.transition = 'none'; place(from, false); void hero.offsetWidth; hero.style.transition = '';
       var k = from, cur = ST.cur;
       (function step() {
-        if (k >= cur || !document.body.contains(hero)) { try { localStorage.setItem(sk, String(cur)); } catch (e) {} return; }
+        if (!document.body.contains(hero)) return;
+        if (k >= cur) { try { localStorage.setItem(sk, String(cur)); } catch (e) {} if (onArrive) setTimeout(function () { if (document.body.contains(hero)) onArrive(); }, 700); return; }
         var A = at(k); k++; var B = at(k);
         hb.style.animation = 'none'; void hb.offsetWidth; hb.style.animation = 'pzHop .34s ease-in-out';
         if (A && B) hb.style.transform = B.x < A.x ? 'scaleX(-1)' : '';
