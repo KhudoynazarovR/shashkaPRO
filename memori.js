@@ -10,6 +10,26 @@
     return fetch(p, { method: body ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json', 'x-init-data': (tg && tg.initData) || '' }, body: body ? JSON.stringify(body) : undefined })
       .then(function (r) { return r.json(); }).catch(function () { return null; });
   }
+  // 🔊 ovozlar (WebAudio): karta ochilishi, to'g'ri juftlik, xato
+  var AC = null, SND = true;
+  try { SND = localStorage.getItem('spMemSnd') !== '0'; } catch (e) {}
+  function ac() { if (!AC) { var C = window.AudioContext || window.webkitAudioContext; if (!C) return null; AC = new C(); } if (AC.state === 'suspended') AC.resume(); return AC; }
+  document.addEventListener('pointerdown', function () { try { if (SND) ac(); } catch (e) {} }, true);
+  function tone(f, t, d, g, type, f2) {
+    var a = ac(); if (!a) return; var o = a.createOscillator(), v = a.createGain(), t0 = a.currentTime + t;
+    o.type = type || 'triangle'; o.frequency.setValueAtTime(f, t0); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t0 + d);
+    v.gain.setValueAtTime(0.0001, t0); v.gain.exponentialRampToValueAtTime(g, t0 + 0.01); v.gain.exponentialRampToValueAtTime(0.0001, t0 + d);
+    o.connect(v); v.connect(a.destination); o.start(t0); o.stop(t0 + d + 0.05);
+  }
+  function snd(k) {
+    if (!SND) return;
+    try {
+      if (k === 'flip') { tone(1400, 0, 0.05, 0.18, 'triangle', 700); tone(520, 0.02, 0.08, 0.12, 'sine', 380); }
+      else if (k === 'ok') { [659.25, 830.6, 987.8, 1318.5].forEach(function (f, i) { tone(f, 0.04 + i * 0.075, 0.28, 0.22); }); }
+      else if (k === 'no') { tone(330, 0, 0.16, 0.16, 'square', 250); tone(247, 0.17, 0.26, 0.16, 'square', 180); }
+      else if (k === 'win') { [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach(function (f, i) { tone(f, i * 0.12, 0.4, 0.22); }); }
+    } catch (e) {}
+  }
   function hap(k) { try { if (tg && tg.HapticFeedback) { if (k === 'ok') tg.HapticFeedback.notificationOccurred('success'); else if (k === 'no') tg.HapticFeedback.impactOccurred('light'); else tg.HapticFeedback.selectionChanged(); } } catch (e) {} }
   var THEMES = {
     shashka: { ic: '♟', t: 'Shashka', s: '♟️👑🏆🥇🥈🥉🎯⭐🔥💎🎲🧩📖⏱️🛡️⚔️🦁🐯🦅🐺🦍🤖👹🦾🎓🏅🎖️🪙💰🧠⚡🌙' },
@@ -74,7 +94,7 @@
   function menu() {
     shell(); stopAll(); netLeave(); stopPoll();
     var z = sizeOf(CFG.size), th = THEMES[CFG.theme] || THEMES.shashka, tcx = TCS.filter(function (t) { return t.k === CFG.tc; })[0] || TCS[0];
-    var h = '<div class="top"><button class="bk" data-x>‹</button><h2>🧠 ' + T('Xotira') + '</h2><button class="bk" data-set style="font-size:20px' + (SETO ? ';background:#3fa34d' : '') + '">⚙️</button></div>';
+    var h = '<div class="top"><button class="bk" data-x>‹</button><h2>🧠 ' + T('Xotira') + '</h2><button class="bk" data-snd style="font-size:20px">' + (SND ? '🔊' : '🔇') + '</button><button class="bk" data-set style="font-size:20px' + (SETO ? ';background:#3fa34d' : '') + '">⚙️</button></div>';
     // sozlamalar qisqacha (bosilsa ochiladi)
     h += '<div class="cd sum" data-set2 style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 12px"><span style="flex:1">📐 <b>' + z.t + '</b> · ' + th.ic + ' ' + T(th.t) + ' · ' + T(tcx.t) + rulesTxt(CFG.rules) + ' · 🤖 ' + T(LV[CFG.lv].t) + '</span><span style="opacity:.7">' + (SETO ? '▲' : '⚙️ ▼') + '</span></div>';
     if (SETO) {
@@ -100,6 +120,7 @@
     ov.innerHTML = h;
     var q = function (s) { return ov.querySelector(s); };
     q('[data-x]').onclick = close;
+    q('[data-snd]').onclick = function () { SND = !SND; try { localStorage.setItem('spMemSnd', SND ? '1' : '0'); } catch (e) {} this.textContent = SND ? '🔊' : '🔇'; if (SND) snd('ok'); };
     q('[data-set]').onclick = q('[data-set2]').onclick = function () { SETO = !SETO; menu(); };
     if (q('[data-th]')) q('[data-th]').onchange = function () { CFG.theme = this.value; saveCfg(); menu(); };
     [].forEach.call(ov.querySelectorAll('[data-s]'), function (b) { b.onclick = function () { CFG.size = b.getAttribute('data-s'); saveCfg(); menu(); }; });
@@ -214,14 +235,14 @@
   function flip(i) {
     var S = G.S, who = S.turn, pre = S.up.slice(), r = MemCore.flip(S, i);
     if (!r) return false;
-    var e = el(i); if (e) e.classList.add('up'); hap(); remember(i);
+    var e = el(i); if (e) e.classList.add('up'); hap(); snd('flip'); remember(i);
     if (r.match === true) {
       G.mv++; G.busy = true;
       var a = pre[0], b = i;
       delete G.mem[a]; delete G.mem[b];
-      setTimeout(function () { [a, b].forEach(function (x) { var e2 = el(x); if (e2) { e2.classList.add('ok'); if (who === 1) e2.classList.add('bt'); } }); G.busy = false; hap('ok'); if (r.ev.length) evShow(evText(r.ev.join(','), who === 0)); hud(); if (!check()) turnStart(); }, 380);
+      setTimeout(function () { [a, b].forEach(function (x) { var e2 = el(x); if (e2) { e2.classList.add('ok'); if (who === 1) e2.classList.add('bt'); } }); G.busy = false; hap('ok'); snd('ok'); if (r.ev.length) evShow(evText(r.ev.join(','), who === 0)); hud(); if (!check()) turnStart(); }, 380);
     } else if (r.match === false) {
-      G.mv++; G.busy = true; if (G.tm) clearInterval(G.tm);
+      G.mv++; G.busy = true; if (G.tm) clearInterval(G.tm); setTimeout(function () { snd('no'); }, 380);
       var up = S.up.slice();
       setTimeout(function () {
         up.forEach(function (x) { var e2 = el(x); if (e2) e2.classList.remove('up'); });
@@ -265,7 +286,7 @@
     }, 500);
     return true;
   }
-  function endCard(ic, title, sub, again) {
+  function endCard(ic, title, sub, again) { if (arguments[0] === '🏆') setTimeout(function () { snd('win'); }, 250);
     var m = ov && ov.querySelector('[data-msg]'); if (!m) return;
     m.innerHTML = '<div class="cd end"><div class="big">' + ic + '</div><b style="font-size:20px">' + title + '</b><div style="margin-top:6px;font-size:18px">' + sub + '</div><div data-rw style="margin-top:6px;color:#ffd54f"></div>' +
       '<button class="go" data-again>↻ ' + T('Yana o‘ynash') + '</button><button class="go g2" data-menu>☰ ' + T('Menyu') + '</button></div>';
@@ -315,13 +336,13 @@
     if (G.over || G.busy || G.done[i] || G.up.indexOf(i) >= 0 || G.up.length >= 2) return;
     if (!G.t0) { G.t0 = Date.now(); G.tm = setInterval(function () { var t = ov && ov.querySelector('[data-tm]'); if (t) t.textContent = fmtT(Date.now() - G.t0); }, 500); var m0 = ov.querySelector('[data-msg]'); if (m0) m0.textContent = ''; }
     G.up.push(i); if (G.up.length === 2) G.busy = true;
-    var e = el(i); if (e) e.classList.add('up'); hap();
+    var e = el(i); if (e) e.classList.add('up'); hap(); snd('flip');
     api('/api/memori/tour/flip', { id: G.tour, i: i }).then(function (r) {
       if (!ov || !r || r.error || r.bad) { G.up = G.up.filter(function (x) { return x !== i; }); if (e) e.classList.remove('up'); G.busy = false; return; }
       if (e) e.querySelector('u').textContent = r.s;
       if (r.mv) { G.mv = r.mv; var mv = ov.querySelector('[data-mv]'); if (mv) mv.textContent = r.mv; }
-      if (r.ok) { var pr = G.up.slice(); G.up = []; pr.forEach(function (x) { G.done[x] = 1; var e2 = el(x); if (e2) e2.classList.add('ok'); }); G.busy = false; hap('ok'); var p2 = ov.querySelector('[data-pr]'); if (p2) p2.textContent = Object.keys(G.done).length / 2; }
-      if (r.miss) { var pr2 = G.up.slice(); setTimeout(function () { pr2.forEach(function (x) { var e3 = el(x); if (e3) e3.classList.remove('up'); }); G.up = []; G.busy = false; hap('no'); }, 800); }
+      if (r.ok) { var pr = G.up.slice(); G.up = []; pr.forEach(function (x) { G.done[x] = 1; var e2 = el(x); if (e2) e2.classList.add('ok'); }); G.busy = false; hap('ok'); snd('ok'); var p2 = ov.querySelector('[data-pr]'); if (p2) p2.textContent = Object.keys(G.done).length / 2; }
+      if (r.miss) { var pr2 = G.up.slice(); setTimeout(function () { snd('no'); }, 300); setTimeout(function () { pr2.forEach(function (x) { var e3 = el(x); if (e3) e3.classList.remove('up'); }); G.up = []; G.busy = false; hap('no'); }, 800); }
       if (r.done) {
         G.over = true; clearInterval(G.tm);
         var m = ov.querySelector('[data-msg]');
@@ -440,6 +461,14 @@
       };
       ov.querySelector('[data-hall]').onclick = function () { var pl = ov.querySelector('[data-pl]'); if (pl) pl.innerHTML = '<div class="cd" style="text-align:center">⏳</div>'; sendN({ type: 'mmPlayers', init: (tg && tg.initData) || '' }); };
       return;
+    }
+    if (m.cards && m.status !== 'wait') {   // onlayn: o'zgarishga qarab ovoz
+      var nUp = 0, nOk = 0; m.cards.forEach(function (c) { if (c) { if (c.o) nOk++; else nUp++; } });
+      if (NET.pOk != null) {
+        if (nOk > NET.pOk) snd('ok');
+        else if (nUp > NET.pUp) { snd('flip'); if (nUp >= 2) setTimeout(function () { snd('no'); }, 380); }
+      }
+      NET.pOk = nOk; NET.pUp = nUp; NET.pSt = m.status;
     }
     if (m.watch) {   // 📺 tomoshabin
       var cw = m.cards.map(function (c) { return c ? { s: c.s, up: !c.o, ok: !!c.o, bt: c.o === 2 } : null; }), Pw = m.players;
