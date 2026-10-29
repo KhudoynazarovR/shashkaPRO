@@ -107,13 +107,13 @@ function move(j, cb) {
   if (!Array.isArray(b) || b.length !== 64 || !b.every(v => Number.isInteger(v) && v >= -2 && v <= 2)) return cb({ error: "bad", code: 400 });
   let secs = Math.min(30, Math.max(0.05, Number(j.time) || 1));
   // ♟ endshpil bazasi: kam dona qolganda kuchli botlar mukammal o'ynaydi (hisoblamasdan)
-  if (secs >= 2 && TBP && TBP.ready()) {
+  if ((secs >= 2 || j.tbAlways) && TBP && TBP.ready()) {
     try { const t = TBP.best(b, side); if (t) return cb({ from: t.from, to: t.to, jumps: 0, ev: t.res === 'win' ? 3000 - t.d : t.res === 'loss' ? -3000 + t.d : 0, ms: 0, tb: t.res }); } catch (e) { console.log('[TB]', e.message); }
   }
   try { const eb = require('./etudes.js').bookMove(b, side); if (eb) return cb({ from: eb.from, to: eb.to, jumps: 0, ev: null, ms: 0, book: 1, etude: 1 }); } catch (e) {}
   const bk = BOOK[b.join("") + side];
   if (bk && j.book) return cb({ from: bk.from, to: bk.to, jumps: 0, ev: null, ms: 0, book: 1 });
-  const cm = j.book && secs >= 2 && COLETTE[b.join("") + side];   // coletteBOT (2300) o'yin uslubi: u shu pozitsiyada qanday yurgan bo'lsa
+  const cm = j.book && (secs >= 2 || j.tbAlways) && COLETTE[b.join("") + side];   // coletteBOT (2300) o'yin uslubi: u shu pozitsiyada qanday yurgan bo'lsa
   if (cm) return cb({ from: cm[0], to: cm[1], jumps: 0, ev: null, ms: 0, book: 1, colette: 1 });
   const key = b.join(",") + "|" + side;
   if (j.room && secs >= 1) track(j.room, key);

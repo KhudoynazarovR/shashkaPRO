@@ -92,11 +92,11 @@ function position(fen, moves) {
   return { board, side, plies: toks.length };
 }
 function to64(b) { const o = []; for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) { const p = b[r][c]; o.push(p === 'w' ? 1 : p === 'W' ? 2 : p === 'b' ? -1 : p === 'B' ? -2 : 0); } return o; }
-function engine(board, side, secs, room, maxTime, maxWait) {
+function engine(board, side, secs, room, maxTime, maxWait, fast) {
   const until = Date.now() + (maxWait || 32000);   // dvigatel tayyor bo'lmasa — soatga qarab cheklangan kutish
   return new Promise(async res => {
     for (let i = 0; i < 40 && Date.now() < until; i++) {
-      const r = await new Promise(rs => K.move({ board: to64(board), side: side === R.WHITE ? 1 : -1, time: secs, book: true, room, maxTime }, rs));
+      const r = await new Promise(rs => K.move({ board: to64(board), side: side === R.WHITE ? 1 : -1, time: secs, book: true, room, maxTime, tbAlways: !!fast }, rs));
       if (r && !r.error) return res(r);
       if (r && (r.error === 'busy' || r.error === 'notready')) { await sleep(800); continue; }
       return res(null);
@@ -189,6 +189,17 @@ function playGame(id) {
       let mv = moves[0];
       const am = moves.length > 1 ? antiMove(G.opp, pos.board, pos.side, moves) : null;
       if (am) { mv = am; log('yurish (anti-kitob)', id, '#' + pos.plies, 'vs', G.opp); }
+      else if (moves.length > 1 && G.bullet) {
+        // ⚡ tez rejim (½+0, 1+0): har yurishga 0,05–0,4 s; kitob va endshpil bazasi — darhol; soat juda oz qolsa — dvigatelsiz xavfsiz yurish
+        const my = (G.color === R.WHITE ? state.wtime : state.btime) || 30000;
+        if (my < 2500) mv = safeMove(pos.board, pos.side, moves);
+        else {
+          const secs = Math.max(0.05, Math.min(0.4, my / 1000 / 45));
+          const r = await engine(pos.board, pos.side, secs, 'ld_' + id, secs, Math.min(4000, my * 0.2), true);
+          if (!r) mv = safeMove(pos.board, pos.side, moves);
+          else { const fr = r.from >> 3, fc = r.from & 7, tr = r.to >> 3, tc = r.to & 7; const c = moves.filter(m => m.from[0] === fr && m.from[1] === fc && m.to[0] === tr && m.to[1] === tc); mv = c.find(m => (m.captures || []).length === r.jumps) || c[0] || mv; }
+        }
+      }
       else if (moves.length > 1) {
         const my = (G.color === R.WHITE ? state.wtime : state.btime) || 180000, inc = (G.color === R.WHITE ? state.winc : state.binc) || 0;
         const exit = (G.outBook || 0) < 4 && my > 90000;   // kitobdan chiqqan dastlabki yurishlar — eng xavfli joy, ko'proq o'ylaymiz
@@ -208,7 +219,7 @@ function playGame(id) {
       for (let i = 1; i < pts.length; i++) {
         const part = two(rcToLoc(pts[i - 1][0], pts[i - 1][1])) + two(rcToLoc(pts[i][0], pts[i][1]));
         let x = await post('/api/bot/game/' + id + '/move/' + part);
-        for (let t = 0; t < 4 && (x.s === 0 || x.s >= 500 || x.s === 429); t++) { await sleep(1500 * (t + 1)); x = await post('/api/bot/game/' + id + '/move/' + part); }   // tarmoq uzilsa — qayta yuboramiz
+        for (let t = 0; t < 4 && (x.s === 0 || x.s >= 500 || x.s === 429); t++) { await sleep((G.bullet ? 250 : 1500) * (t + 1)); x = await post('/api/bot/game/' + id + '/move/' + part); }   // tarmoq uzilsa — qayta yuboramiz
         if (x.s !== 200) { log('yurish rad etildi', id, part, x.s, (x.t || '').slice(0, 120), '| fen:', String(G.fen).slice(0, 90), '| moves:', String(state.moves || '').slice(-80)); G.lastPlies = -1; break; }
       }
     } catch (e) { log('xato', e.message); }
@@ -228,6 +239,7 @@ function playGame(id) {
     if (o.type === 'gameFull') {
       G.color = o.white && ST.me && String(o.white.id).toLowerCase() === ST.me ? R.WHITE : R.BLACK;
       G.fen = o.initialFen || 'startpos';
+      { const ck = o.clock || {}; G.bullet = Number(ck.initial) > 0 && Number(ck.initial) <= 60000; if (G.bullet) log('⚡ tez rejim', id, Math.round(ck.initial / 1000) + 's+' + Math.round((ck.increment || 0) / 1000)); }
       log('fen:', String(G.fen).slice(0, 120), '| variant:', o.variant && (o.variant.key || o.variant.name));
       G.opp = (G.color === R.WHITE ? o.black : o.white) || {}; G.opp = G.opp.name || G.opp.id || '?';
       log('o‘yin boshlandi', id, G.color, 'vs', G.opp);
@@ -270,7 +282,10 @@ async function autoChallenge() {
     try { const st = await get('/api/users/status?ids=' + encodeURIComponent(targets.join(','))); if (st.s === 200 && Array.isArray(st.j)) online = targets.filter(t => st.j.some(u => String(u.id || u.name).toLowerCase() === t.toLowerCase() && u.online)); } catch (e) {}
     if (!online.length) { if (!(i++ % 6)) log('hech qaysi bot onlayn emas:', targets.join(', ')); continue; }
     const who = online[i++ % online.length];
-    const x = await post('/api/challenge/' + who, { rated: process.env.LIDRAUGHTS_RATED === '0' ? 'false' : 'true', 'clock.limit': String((lim || 3) * 60), 'clock.increment': String(inc || 0), variant: 'russian', color: 'random' });
+    // har bir raqib uchun alohida vaqt: LIDRAUGHTS_TC_COLETTEBOT=0.5+0 (coletteBOT uchun sukut bo'yicha ½+0 — u tez o'yinda vaqtini tejay olmaydi)
+    const tcs = process.env['LIDRAUGHTS_TC_' + who.toUpperCase()] || (who.toLowerCase() === 'colettebot' ? '0.5+0' : '');
+    const [l2, i2] = tcs ? tcs.split('+').map(Number) : [lim, inc];
+    const x = await post('/api/challenge/' + who, { rated: process.env.LIDRAUGHTS_RATED === '0' ? 'false' : 'true', 'clock.limit': String(Math.round((l2 || 3) * 60)), 'clock.increment': String(i2 || 0), variant: 'russian', color: 'random' });
     log('chaqiruv yuborildi →', who, x.s, x.s === 200 ? '' : (x.t || '').slice(0, 100));
   }
 }
