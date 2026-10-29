@@ -173,6 +173,42 @@ function antiMove(opp, board, side, moves) {
   return moves.find(m => m.from[0] * 8 + m.from[1] === hit[0] && m.to[0] * 8 + m.to[1] === hit[1]) || null;
 }
 
+// ⚡ tez o'yinda durangdan qochish: takrorlanadigan pozitsiyaga olib boradigan yurish o'rniga — xavfsiz boshqa yurish
+function histKeys(fen, moves) {
+  let { board, side } = parseFen(fen); const seen = {};
+  const add = () => { const k = to64(board).join('') + side; seen[k] = (seen[k] || 0) + 1; };
+  add();
+  for (const t of String(moves || '').trim().split(/\s+/).filter(Boolean)) {
+    const { wasCap, last } = applyToken(board, t); let more = false;
+    if (wasCap && last) { try { more = R.allCaptures(board, side).some(m => m.from[0] === last[0] && m.from[1] === last[1]); } catch (e) {} }
+    if (!more) { side = side === R.WHITE ? R.BLACK : R.WHITE; add(); }
+  }
+  return seen;
+}
+function tbFor(board, sideToMove, me) {   // endshpil bazasi bo'yicha natija "me" nuqtai nazaridan: 'win' | 'draw' | 'loss' | null
+  try { const TB = require('./tbprobe.js'); const v = TB.value(to64(board), sideToMove === R.WHITE ? 1 : -1); if (v == null || v === 255) return null;
+    const stmWins = v >= 1 && v <= 127, stmLoses = v >= 128 && v <= 254; if (!stmWins && !stmLoses) return 'draw';
+    return (sideToMove === me) === stmWins ? 'win' : 'loss'; } catch (e) { return null; }
+}
+function antiRepeat(G, state, board, side, moves, mv) {
+  const seen = histKeys(G.fen, state.moves), opp = side === R.WHITE ? R.BLACK : R.WHITE;
+  const keyOf = m => to64(R.applyMove(board, m)).join('') + opp;
+  if (!seen[keyOf(mv)]) return mv;   // takrorlanmaydi — o'zgartirmaymiz
+  const rank = { win: 3, draw: 2, loss: 0 };
+  const after = m => { const nb = R.applyMove(board, m), om = R.getAllMoves(nb, opp); return { nb, loss: om.reduce((a, x) => Math.max(a, (x.captures || []).length), 0), tb: tbFor(nb, opp, side) }; };
+  const base = after(mv);
+  let best = null, bs = -1e9;
+  for (const m of moves) {
+    if (m === mv || seen[keyOf(m)]) continue;
+    const a = after(m);
+    if (base.tb && a.tb && rank[a.tb] < rank[base.tb]) continue;   // bazaga ko'ra natijani yomonlashtirmaymiz
+    if (!base.tb && a.loss > base.loss) continue;                   // ko'proq dona bermaymiz
+    const sc = (m.captures || []).length * 3 - a.loss * 2 + (a.tb ? rank[a.tb] : 1) + Math.random() * 0.1;
+    if (sc > bs) { bs = sc; best = m; }
+  }
+  return best || mv;
+}
+
 // ---------- o'yin
 function playGame(id) {
   if (ST.games[id]) return;
@@ -199,6 +235,8 @@ function playGame(id) {
           if (!r) mv = safeMove(pos.board, pos.side, moves);
           else { const fr = r.from >> 3, fc = r.from & 7, tr = r.to >> 3, tc = r.to & 7; const c = moves.filter(m => m.from[0] === fr && m.from[1] === fc && m.to[0] === tr && m.to[1] === tc); mv = c.find(m => (m.captures || []).length === r.jumps) || c[0] || mv; }
         }
+        // durangdan qochamiz (o'yin cho'zilsa — raqibning vaqti tugaydi)
+        try { const m2 = antiRepeat(G, state, pos.board, pos.side, moves, mv); if (m2 !== mv) { mv = m2; log('⚡ takrordan qochildi', id, '#' + pos.plies); } } catch (e) {}
       }
       else if (moves.length > 1) {
         const my = (G.color === R.WHITE ? state.wtime : state.btime) || 180000, inc = (G.color === R.WHITE ? state.winc : state.binc) || 0;
@@ -319,4 +357,4 @@ async function challenge(user, tc, rated) {
   return post('/api/challenge/' + encodeURIComponent(user), { rated: rated ? 'true' : 'false', 'clock.limit': String((lim || 3) * 60), 'clock.increment': String(inc || 0), variant: 'russian', color: 'random' });
 }
 start();
-module.exports = { status, challenge, _t: { locToRC, rcToLoc, parseFen, position } };
+module.exports = { status, challenge, _t: { locToRC, rcToLoc, parseFen, position, antiRepeat, histKeys } };
