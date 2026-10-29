@@ -259,7 +259,9 @@ function playGame(id) {
         const my = (G.color === R.WHITE ? state.wtime : state.btime) || 30000;
         if (my < 2500) mv = safeMove(pos.board, pos.side, moves);
         else {
-          const secs = my > 8000 ? Math.max(0.2, Math.min(1.0, my / 1000 / 28)) : Math.max(0.05, my / 1000 / 40);   // taktik zarbani ko'rish uchun yetarli vaqt (0,05–0,4 s kam edi: 16-yurishdagi xato)
+          // vaqt taqsimoti: debyutda tez (kitob), o'rta o'yinda (10–17 dona) ko'proq — taktik zarbalar shu yerda; endshpilda yana tez (baza bor, o'yin uzoq cho'ziladi)
+          let pcs = 0; for (const row of pos.board) for (const q of row) if (q) pcs++;
+          const secs = my <= 8000 ? Math.max(0.05, my / 1000 / 40) : pcs >= 18 ? 0.3 : pcs >= 10 ? Math.max(0.3, Math.min(1.5, my / 1000 / 16)) : Math.max(0.1, Math.min(0.4, my / 1000 / 40));
           const r = await engine(pos.board, pos.side, secs, 'ld_' + id, secs, Math.min(4000, my * 0.2), true);
           G.lastEv = r && r.ev != null && !r.tb ? r.ev : null;
           if (!r) mv = safeMove(pos.board, pos.side, moves);
