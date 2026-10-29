@@ -827,6 +827,34 @@
     var alive = lines.map(function (_, i) { return i; });
     // ♔ etyud: har bir variant (qoraning har xil himoyasi) alohida yechiladi — hammasi tugagach "yechildi"
     var multi = !!p.et && lines.length > 1, doneL = {}, hist = [];
+    // kitobdan tashqari (lekin to'g'ri) yo'l: server baza/dvigatel bilan tekshiradi, qora javobini ham o'sha beradi
+    var free = false, fst = null, fn = 0;
+    function to64(b8) { var o = []; for (var r = 0; r < 8; r++) for (var c = 0; c < 8; c++) { var v = b8[r][c]; o.push(v === 1 ? 1 : v === 3 ? 2 : v === 2 ? -1 : v === 4 ? -2 : 0); } return o; }
+    function judgeMove() {
+      busy = true; sel = null; msg = '⏳ Tekshirilmoqda…'; draw();
+      var mt = myT, f0 = fst;
+      fetch('/api/etudes/judge', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-init-data': (tg && tg.initData) || '' }, body: JSON.stringify({ id: p.id, b: to64(f0.b), path: f0.path, n: fn }) })
+        .then(function (r) { return r.json(); }).catch(function () { return { keep: false, why: 'net' }; }).then(function (d) {
+          if (mt !== window.__pzTok) return;
+          fst = null;
+          if (!d || !d.keep) {
+            g = { b: f0.b, side: p.side, forced: null }; busy = false; errs++;
+            var why = d && d.why;
+            msg = (why === 'busy' || why === 'eng' || why === 'err' || why === 'net') ? '⏳ Tekshirib bo‘lmadi — qaytadan urinib ko‘ring' : '❌ Noto‘g‘ri' + (why === 'loss' ? ' — bu yurishdan keyin oq yutqazadi' : why === 'draw' ? ' — bu yurish faqat durangga olib keladi' : ', boshqa yurishni sinang') + ' (xato: ' + errs + ')';
+            draw(); return;
+          }
+          var was = free; free = true; fn++;
+          if (d.solved) { busy = false; return freeDone(); }
+          msg = was ? '✅ To‘g‘ri' : '✅ To‘g‘ri — kitobdagidan boshqa yo‘l, natija saqlanadi'; draw();
+          setTimeout(function () {
+            if (mt !== window.__pzTok) return;
+            var rp = d.reply || [];
+            for (var i = 1; i < rp.length; i++) { var a = rp[i - 1], z = rp[i], s3 = findStep(legal(g.b, g.side, g.forced), [a >> 3, a & 7], [z >> 3, z & 7]); if (!s3) break; g = adv(g, s3); }
+            busy = false; draw();
+          }, 450);
+        });
+    }
+    function freeDone() { if (alive.length) doneL[alive[0]] = 1; free = false; fn = 0; afterDone(); }
     function nDone() { return Object.keys(doneL).length; }
     p.sol = lines[0];
     var g = { b: copy(p.board), side: p.side, forced: null }, idx = 0, sel = null, msg = '', done = false, busy = false;
@@ -909,7 +937,7 @@
           draw();
         });
       });
-      on('#pzH', function () { if (!done && !busy && g.side === p.side && p.sol[idx]) { sel = [p.sol[idx][0], p.sol[idx][1]]; draw(); } });
+      on('#pzH', function () { if (free) { msg = '💡 Siz kitobdagidan boshqa yo‘ldasiz — o‘zingiz davom eting yoki «Qayta» bosing'; draw(); return; } if (!done && !busy && g.side === p.side && p.sol[idx]) { sel = [p.sol[idx][0], p.sol[idx][1]]; draw(); } });
       on('#pzD', function () {
         if (!confirm('Masala o‘chirilsinmi?')) return;
         api('/api/puzzle/del', { id: p.id }).then(function () { load(); });
@@ -950,6 +978,9 @@
     }
     function lineDone() {
       alive.forEach(function (i) { if (lines[i].length === idx) doneL[i] = 1; });
+      afterDone();
+    }
+    function afterDone() {
       var left = lines.map(function (_, i) { return i; }).filter(function (i) { return !doneL[i]; });
       if (!multi || !left.length) return solved();
       // keyingi variant: o'ynalgan yo'l bilan eng uzun umumiy boshlanishga qaytamiz (qora boshqacha javob beradigan joy)
@@ -982,16 +1013,17 @@
       if (sel) {
         var st = findStep(lg, sel, [r, c]);
         if (st) {
+          if (p.et && (free || fst)) { if (!fst) fst = { b: copy(g.b), path: [st.f[0] * 8 + st.f[1]] }; g = adv(g, st); fst.path.push(st.t[0] * 8 + st.t[1]); if (g.forced && g.side === p.side) { sel = [g.forced[0], g.forced[1]]; draw(); return; } return judgeMove(); }
           var w = pick(st);
+          if (p.et && !(w && w[0] === st.f[0] && w[1] === st.f[1] && w[2] === st.t[0] && w[3] === st.t[1])) { fst = { b: copy(g.b), path: [st.f[0] * 8 + st.f[1]] }; g = adv(g, st); fst.path.push(st.t[0] * 8 + st.t[1]); if (g.forced && g.side === p.side) { sel = [g.forced[0], g.forced[1]]; draw(); return; } return judgeMove(); }
           if (w && w[0] === st.f[0] && w[1] === st.f[1] && w[2] === st.t[0] && w[3] === st.t[1]) {
             g = adv(g, st); idx++; hist.push(w.slice(0, 4)); sel = (g.forced && g.side === p.side) ? [g.forced[0], g.forced[1]] : null; msg = '✅ To‘g‘ri';
             if (idx >= p.sol.length) return lineDone();
             draw(); next();
-          } else { sel = null; errs++; msg = '❌ Noto‘g‘ri (xato: ' + errs + '). kutilgan: ' + JSON.stringify(p.sol[idx]) + ' siz: ' + JSON.stringify([st.f[0], st.f[1], st.t[0], st.t[1]]); draw(); }
+          } else { sel = null; errs++; msg = '❌ Noto‘g‘ri, boshqa yurishni sinang (xato: ' + errs + ')'; draw(); }
           return;
         }
       }
-      if (sel) msg = 'ℹ️ yurish yo‘q: ' + JSON.stringify(sel) + '→' + r + ',' + c + ' mumkin: ' + JSON.stringify(lg.map(function (q) { return [q.f, q.t]; }));
       sel = (p0 && sideOf(p0) === g.side && lg.some(function (s) { return s.f[0] === r && s.f[1] === c; })) ? [r, c] : null;
       draw();
     }

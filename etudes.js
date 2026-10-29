@@ -74,7 +74,64 @@ function buildBook() {
 function bookMove(b, side) { if (side !== -1) return null; if (!EB) buildBook(); return EB.get(b.join('') + side) || null; }
 // HTTP: GET /api/etudes/list — ro'yxat (kesh bilan); GET /api/etudes/me — yechilganlar (x-init-data)
 let LISTJ = null;
+// ♔ kitobdagidan boshqa yurish: natija saqlansa (yutuq / durang) — qabul qilinadi, qora javobini baza yoki dvigatel beradi
+const cntP = b => b.filter(v => v).length;
+function tbRes(b, side) {   // oq nuqtai nazaridan
+  let v = null; try { v = require('./tbprobe.js').value(b, side); } catch (e) {}
+  if (v == null || v === 255) return null;
+  const w = v >= 1 && v <= 127, l = v >= 128 && v <= 254;
+  return side === 1 ? (w ? 'win' : l ? 'loss' : 'draw') : (l ? 'win' : w ? 'loss' : 'draw');
+}
+const engMove = (b, side, t) => new Promise(r => { try { require('./kestoai.js').move({ board: b, side, time: t, book: false }, r); } catch (e) { r({ error: 'eng' }); } });
+let JBUSY = 0;
+async function judge(e, b, path, n) {
+  const R = require('./kkrules.js'), goal = e.g === 'd' ? 'd' : 'w';
+  const m = R.moves(b, 1).find(x => x.from === path[0] && x.path.join() === path.slice(1).join());
+  if (!m) return { keep: false, why: 'illegal' };
+  const a = m.board, bm = R.moves(a, -1);
+  if (!a.some(v => v < 0) || !bm.length) return { keep: true, solved: true };
+  const pack = mm => [mm.from].concat(mm.path);
+  if (cntP(a) <= 4) {
+    const r = tbRes(a, -1);
+    if (r) {
+      const keep = goal === 'w' ? r === 'win' : r !== 'loss';
+      if (!keep) return { keep: false, why: r };
+      if (goal === 'd' || (n >= 40)) return { keep: true, solved: true };
+      const t = require('./tbprobe.js').best(a, -1), rm = t && bm.find(x => x.from === t.from && x.to === t.to);
+      return { keep: true, reply: pack(rm || bm[0]) };
+    }
+  }
+  // ko'p dona: dvigatel bilan solishtiramiz (foydalanuvchi yurishi kitobdagi / dvigatel yurishidan yomon bo'lmasligi kerak)
+  if (JBUSY >= 3) return { keep: false, why: 'busy' };
+  JBUSY++;
+  try {
+    const w0 = await engMove(b, 1, 1.2);
+    const bestM = w0 && !w0.error ? R.moves(b, 1).find(x => x.from === w0.from && x.to === w0.to) : null;
+    const rU = await engMove(a, -1, 1.2);
+    if (!rU || rU.error) return { keep: false, why: 'eng' };
+    let ok = bestM && bestM.from === m.from && bestM.to === m.to;
+    if (!ok && bestM) { const rB = await engMove(bestM.board, -1, 1.2); if (rB && !rB.error && rU.ev != null && rB.ev != null) ok = rU.ev <= rB.ev + 40 && (goal === 'd' ? rU.ev < 300 : rU.ev < -150); }
+    if (!ok) return { keep: false, why: 'worse' };
+    if (goal === 'd' && n >= 30) return { keep: true, solved: true };
+    const rm = bm.find(x => x.from === rU.from && x.to === rU.to) || bm[0];
+    if (!R.moves(rm.board, 1).length || !rm.board.some(v => v > 0)) return { keep: false, why: 'lost' };
+    return { keep: true, reply: pack(rm) };
+  } finally { JBUSY--; }
+}
 function handle(req, res, p, ctx) {
+  if (p === '/api/etudes/judge' && req.method === 'POST') {
+    const tg = ctx.verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
+    if (!tg) { ctx.send(res, 401, { error: 'auth' }); return true; }
+    let body = ''; req.on('data', d => { body += d; if (body.length > 5000) req.destroy(); });
+    req.on('end', () => {
+      let j = {}; try { j = JSON.parse(body); } catch (er) {}
+      const e = get(String(j.id || '').replace(/^et/, ''));
+      const b = j.b, path = j.path;
+      if (!e || !Array.isArray(b) || b.length !== 64 || !b.every(v => Number.isInteger(v) && v >= -2 && v <= 2) || !Array.isArray(path) || path.length < 2 || !path.every(v => Number.isInteger(v) && v >= 0 && v < 64)) return ctx.send(res, 400, { error: 'bad' });
+      judge(e, b, path, Number(j.n) || 0).then(r => ctx.send(res, 200, Object.assign({ ok: true }, r)), () => ctx.send(res, 200, { ok: true, keep: false, why: 'err' }));
+    });
+    return true;
+  }
   if (req.method !== 'GET') return false;
   if (p === '/api/etudes/list') {
     if (!LISTJ) { const d = load(); LISTJ = JSON.stringify({ ok: true, src: d.src || '', list: d.list.map(e => [e.id, e.n, e.part, e.a || '', e.g || 'w', e.b, e.sol ? 1 : 0]) }); }
