@@ -822,7 +822,12 @@
     }
     window.__pzLast = p && p.id; /*PZBACKPOS*/
     p = Object.assign({}, p);
-    var lines = ((p.sols && p.sols.length) ? p.sols : [p.sol]).map(function (l) { return l.slice(); }), alive = lines.map(function (_, i) { return i; });
+    var lines = ((p.sols && p.sols.length) ? p.sols : [p.sol]).map(function (l) { return l.slice(); });
+    if (p.et) { var _u = {}; lines = lines.filter(function (l) { var k = JSON.stringify(l); if (_u[k]) return false; _u[k] = 1; return true; }); }
+    var alive = lines.map(function (_, i) { return i; });
+    // ♔ etyud: har bir variant (qoraning har xil himoyasi) alohida yechiladi — hammasi tugagach "yechildi"
+    var multi = !!p.et && lines.length > 1, doneL = {}, hist = [];
+    function nDone() { return Object.keys(doneL).length; }
     p.sol = lines[0];
     var g = { b: copy(p.board), side: p.side, forced: null }, idx = 0, sel = null, msg = '', done = false, busy = false;
     var _fs = (S.settings || {})[foOf(p)] || {}, tLim = _fs.time || 0, t0 = Date.now(), errs = 0, tOut = false, fin = -1, myT = window.__pzTok = (window.__pzTok || 0) + 1;
@@ -859,6 +864,7 @@
     function oppPick() {
       var c = alive.filter(function (i) { return lines[i][idx]; });
       if (!c.length) return p.sol[idx];
+      if (multi) { var c2 = c.filter(function (i) { return !doneL[i]; }); if (c2.length) c = c2; }
       var x = lines[c[Math.floor(Math.random() * c.length)]][idx];
       alive = c.filter(function (j) { return same(lines[j][idx], x); });
       p.sol = lines[alive[0]];
@@ -869,7 +875,7 @@
       if (sel) tg2 = legal(g.b, g.side, g.forced).filter(function (s) { return s.f[0] === sel[0] && s.f[1] === sel[1]; }).map(function (s) { return s.t; });
       if (!document.getElementById('pzCss')) { var _st = document.createElement('style'); _st.id = 'pzCss'; _st.textContent = '.pzWrap{position:relative;display:inline-block;margin:18px 0 10px}.pzBig{position:relative;font-size:21px!important;padding:18px 38px!important;border-radius:18px!important;font-weight:700;animation:pzGlow 1.5s ease-in-out infinite}.pzO{position:absolute;left:0;right:0;top:0;bottom:0;pointer-events:none;transform:scaleY(.5)}.pzO i{position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:#ffd86b;box-shadow:0 0 8px #ffd86b;animation:pzOrb 3s linear infinite}@keyframes pzOrb{from{transform:rotate(0deg) translateX(125px)}to{transform:rotate(360deg) translateX(125px)}}@keyframes pzGlow{0%,100%{box-shadow:0 0 14px #6b5cf0}50%{box-shadow:0 0 34px #a99bff}}'; document.head.appendChild(_st); }
       var h = head('🧩 ' + esc(p.title));
-      h += '<div style="margin-bottom:8px">' + (p.side === 'w' ? '⚪ Oq yuradi' : '⚫ Qora yuradi') + ' · ' + LV[p.level] + '</div>' + '<div id="pzTm" style="font-size:20px;font-weight:bold;margin-bottom:6px">' + tmText() + '</div>';
+      h += '<div style="margin-bottom:8px">' + (p.side === 'w' ? '⚪ Oq yuradi' : '⚫ Qora yuradi') + ' · ' + LV[p.level] + (multi ? ' · 🔀 ' + nDone() + ' / ' + lines.length + ' variant' : '') + '</div>' + '<div id="pzTm" style="font-size:20px;font-weight:bold;margin-bottom:6px">' + tmText() + '</div>';
       h += boardHtml(g.b, { sel: sel, hl: tg2 });
       h += '<div style="min-height:28px;margin:10px 0;font-size:16px">' + msg + '</div>';
       var _a = sibs(), _i = _a.findIndex(function (x) { return x.id === p.id; }), _day = isDay();
@@ -942,14 +948,31 @@
         }, 2200);
       });
     }
+    function lineDone() {
+      alive.forEach(function (i) { if (lines[i].length === idx) doneL[i] = 1; });
+      var left = lines.map(function (_, i) { return i; }).filter(function (i) { return !doneL[i]; });
+      if (!multi || !left.length) return solved();
+      // keyingi variant: o'ynalgan yo'l bilan eng uzun umumiy boshlanishga qaytamiz (qora boshqacha javob beradigan joy)
+      var k = -1; left.forEach(function (i) { var j = 0; while (j < hist.length && j < lines[i].length && same(lines[i][j], hist[j])) j++; if (j > k) k = j; });
+      msg = '✅ Variant ' + nDone() + ' / ' + lines.length + ' yechildi! Endi qora boshqacha himoyalanadi…'; busy = true; sel = null; draw();
+      setTimeout(function () {
+        if (myT !== window.__pzTok || done) return;
+        var gg = { b: copy(p.board), side: p.side, forced: null };
+        for (var t = 0; t < k; t++) { var h = hist[t], s2 = findStep(legal(gg.b, gg.side, gg.forced), [h[0], h[1]], [h[2], h[3]]); if (!s2) break; gg = adv(gg, s2); }
+        g = gg; idx = k; hist = hist.slice(0, k);
+        alive = left.filter(function (i) { for (var t = 0; t < k; t++) if (!same(lines[i][t], hist[t])) return false; return true; });
+        if (!alive.length) alive = left;
+        p.sol = lines[alive[0]]; busy = false; msg = '🔀 Variant ' + (nDone() + 1) + ' / ' + lines.length; draw(); next();
+      }, 1600);
+    }
     function next() {
       if (g.side === p.side || idx >= p.sol.length) return;
       busy = true;
       setTimeout(function () {
         var w = oppPick(), st = findStep(legal(g.b, g.side, g.forced), [w[0], w[1]], [w[2], w[3]]);
         if (!st) { busy = false; msg = '⚠️ Masalada xato'; draw(); return; }
-        g = adv(g, st); idx++; busy = false;
-        if (idx >= p.sol.length) return solved();
+        g = adv(g, st); idx++; busy = false; hist.push(w.slice(0, 4));
+        if (idx >= p.sol.length) return lineDone();
         draw(); next();
       }, 500);
     }
@@ -961,8 +984,8 @@
         if (st) {
           var w = pick(st);
           if (w && w[0] === st.f[0] && w[1] === st.f[1] && w[2] === st.t[0] && w[3] === st.t[1]) {
-            g = adv(g, st); idx++; sel = (g.forced && g.side === p.side) ? [g.forced[0], g.forced[1]] : null; msg = '✅ To‘g‘ri';
-            if (idx >= p.sol.length) return solved();
+            g = adv(g, st); idx++; hist.push(w.slice(0, 4)); sel = (g.forced && g.side === p.side) ? [g.forced[0], g.forced[1]] : null; msg = '✅ To‘g‘ri';
+            if (idx >= p.sol.length) return lineDone();
             draw(); next();
           } else { sel = null; errs++; msg = '❌ Noto‘g‘ri (xato: ' + errs + '). kutilgan: ' + JSON.stringify(p.sol[idx]) + ' siz: ' + JSON.stringify([st.f[0], st.f[1], st.t[0], st.t[1]]); draw(); }
           return;
