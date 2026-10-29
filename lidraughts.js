@@ -259,7 +259,7 @@ function playGame(id) {
         const my = (G.color === R.WHITE ? state.wtime : state.btime) || 30000;
         if (my < 2500) mv = safeMove(pos.board, pos.side, moves);
         else {
-          const secs = Math.max(0.05, Math.min(0.4, my / 1000 / 45));
+          const secs = my > 8000 ? Math.max(0.2, Math.min(1.0, my / 1000 / 28)) : Math.max(0.05, my / 1000 / 40);   // taktik zarbani ko'rish uchun yetarli vaqt (0,05–0,4 s kam edi: 16-yurishdagi xato)
           const r = await engine(pos.board, pos.side, secs, 'ld_' + id, secs, Math.min(4000, my * 0.2), true);
           G.lastEv = r && r.ev != null && !r.tb ? r.ev : null;
           if (!r) mv = safeMove(pos.board, pos.side, moves);
