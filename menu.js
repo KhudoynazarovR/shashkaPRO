@@ -449,6 +449,7 @@
     on('#pzBack', close);
     api('/api/puzzles').then(function (d) {
       if (d.error) { ov.innerHTML = head('🧩 Masalalar') + '<div style="padding:30px">Telegram orqali kiring</div>'; on('#pzBack', close); return; }
+      if (d.etl) { d.etl.forEach(function (a) { var b = blank(), k = 0, r, c; for (r = 0; r < 8; r++) for (c = 0; c < 8; c++) { if ((r + c) % 2 !== 1) continue; var ch = a[3].charAt(k++); b[r][c] = ch === 'w' ? 1 : ch === 'b' ? 2 : ch === 'W' ? 3 : ch === 'B' ? 4 : 0; } d.list.push({ id: 'et' + a[0], no: a[1], level: a[2], side: 'w', board: b, title: 'Etyud ' + a[1] + (a[4] ? ' · ' + a[4] : ''), folder: 'Etyudlar · ' + a[0].split('-')[0] + '-kitob', et: 1, cnt: a[5] || 0 }); }); delete d.etl; }   // ♔ etyudlar (5 kitob)
       S = d; var _pid = pending; pending = null; var _pz = _pid && S.list.filter(function (x) { return x.id === _pid; })[0]; if (_pz) play(_pz); else list();
     }).catch(function () { ov.innerHTML = head('🧩 Masalalar') + '<div style="padding:30px">Server bilan aloqa yo‘q</div>'; on('#pzBack', close); });
   }
@@ -551,7 +552,7 @@
     });
     if (!_mapV) fl.forEach(function (f, i) {
       var arr = S.list.filter(function (p) { return foOf(p) === f; });
-      h += '<div data-fo="' + i + '" style="' + CARD + '">' + (S.admin ? '<span style="float:right"><button data-rf="' + i + '" style="background:#262b5a;color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">✏️</button> <button data-df="' + i + '" style="background:#262b5a;color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">🗑</button></span>' : '') + '<b style="font-size:17px">📁 ' + esc(f) + '</b><div style="font-size:12px;opacity:.65;margin-top:4px">' + arr.length + ' ta masala · ✅ ' + nDone(arr) + '/' + arr.length + '</div></div>';
+      h += '<div data-fo="' + i + '" style="' + CARD + '">' + (S.admin && f.indexOf('Etyudlar · ') !== 0 ? '<span style="float:right"><button data-rf="' + i + '" style="background:#262b5a;color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">✏️</button> <button data-df="' + i + '" style="background:#262b5a;color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">🗑</button></span>' : '') + '<b style="font-size:17px">📁 ' + esc(f) + '</b><div style="font-size:12px;opacity:.65;margin-top:4px">' + arr.length + ' ta masala · ✅ ' + nDone(arr) + '/' + arr.length + '</div></div>';
     });
     if (!S.admin) h += '<div style="font-size:11px;opacity:.4;margin-top:16px">ID: ' + esc(S.myId) + '</div>';
     ov.innerHTML = h;
@@ -806,6 +807,19 @@
     }).catch(function () { ov.innerHTML = head('🏆 TOP') + '<div style="padding:30px">Server bilan aloqa yo‘q</div>'; on('#pzBack', list); });
   }
   function play(p) {
+    // ♔ etyud: yechim yo'llari (A/B/C variantlar) birinchi ochilganda yuklanadi
+    if (p && p.et && !(p.sols && p.sols.length)) {
+      var _orig = S.list.filter(function (x) { return x.id === p.id; })[0];
+      if (_orig && _orig.sols) { p = _orig; } else {
+        ov.innerHTML = head('🧩 ' + esc(p.title)) + '<div style="padding:30px;opacity:.7">Yuklanmoqda…</div>'; on('#pzBack', list);
+        fetch('/api/etudes/pz/' + encodeURIComponent(p.id), { headers: { 'x-init-data': (tg && tg.initData) || '' } }).then(function (r) { return r.json(); }).then(function (d) {
+          if (!d || !d.sols || !d.sols.length) { ov.innerHTML = head('🧩 ' + esc(p.title)) + '<div style="padding:30px">Yuklab bo‘lmadi</div>'; on('#pzBack', list); return; }
+          if (_orig) { _orig.sols = d.sols; _orig.sol = d.sols[0]; }
+          play(Object.assign({}, p, { sols: d.sols, sol: d.sols[0] }));
+        }).catch(function () { ov.innerHTML = head('🧩 ' + esc(p.title)) + '<div style="padding:30px">Server bilan aloqa yo‘q</div>'; on('#pzBack', list); });
+        return;
+      }
+    }
     window.__pzLast = p && p.id; /*PZBACKPOS*/
     p = Object.assign({}, p);
     var lines = ((p.sols && p.sols.length) ? p.sols : [p.sol]).map(function (l) { return l.slice(); }), alive = lines.map(function (_, i) { return i; });
@@ -868,7 +882,7 @@
       if (_i > 0) h += '<button id="pzPrev" style="' + BG + '">⬅️ Oldingi</button>';
       if (_a.length > 1 && !(_day && _i >= _a.length - 1) && window.__pzMapKey !== '') h += done ? ('<div style="text-align:center"><span class="pzWrap"><span class="pzO">' + [0,1,2,3,4,5,6,7].map(function (k) { return '<i style="animation-delay:-' + (k * 0.375) + 's"></i>'; }).join('') + '</span><button id="pzNext" class="pzBig" style="' + BS + '">➡️ Keyingi masala</button></span></div>') : '<button id="pzNext" style="' + BG + '">➡️ Keyingi</button>';
       h += '<button id="pzR" style="' + BG + '">🔄 Qayta</button><button id="pzH" style="' + BS + '">💡 Ko‘rsatma</button>';
-      if (S.link) h += '<button id="pzS" style="' + BS + '">📤 Yuborish</button>'; if (S.admin) h += '<button id="pzE" style="' + BS + '">🛠 Tahrirlash</button>'; if (S.admin) h += '<button id="pzN" style="' + BG + '">✏️ Nomi</button>'; if (S.admin) h += '<button id="pzD" style="' + BG + '">🗑 O‘chirish</button>';
+      if (S.link) h += '<button id="pzS" style="' + BS + '">📤 Yuborish</button>'; if (S.admin && !p.et) h += '<button id="pzE" style="' + BS + '">🛠 Tahrirlash</button>'; if (S.admin && !p.et) h += '<button id="pzN" style="' + BG + '">✏️ Nomi</button>'; if (S.admin && !p.et) h += '<button id="pzD" style="' + BG + '">🗑 O‘chirish</button>';
       ov.innerHTML = h;
       on('#pzBack', function () { dayIds = null; list(); });
       on('#pzDayEnd', function () { dayIds = null; close(); if (window.dqOpen) window.dqOpen(); });

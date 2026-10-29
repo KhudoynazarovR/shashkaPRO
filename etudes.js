@@ -84,11 +84,31 @@ function handle(req, res, p, ctx) {
     const tg = ctx.verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     ctx.send(res, 200, { ok: true, s: tg ? solved(tg.id) : [] }); return true;
   }
+  if (p.startsWith('/api/etudes/pz/')) {   // masala formatidagi yechimlar
+    const sols = puzzleSols(decodeURIComponent(p.slice(15)));
+    ctx.send(res, sols ? 200 : 404, sols ? { ok: true, sols } : { ok: false }); return true;
+  }
   if (p.startsWith('/api/etudes/sol/')) {   // yechim yo'llari (bitta etyud)
     const e = get(decodeURIComponent(p.slice(16)));
     ctx.send(res, e ? 200 : 404, e ? { ok: true, sol: e.sol || null } : { ok: false }); return true;
   }
   return false;
 }
+// 🧩 Masalalar bo'limi uchun: har kitob — alohida papka ("Etyudlar · 1-kitob"), etyud — oddiy masala kabi yechiladi
+const FOLDER = part => 'Etyudlar · ' + part + '-kitob';
+const FOLDERS = [1, 2, 3, 4, 5].map(FOLDER);
+let PZL = null;
+function lvl(e) { const m = e.sol && e.sol[0] && e.sol[0].m || []; const w = Math.ceil(m.length / 2); return w <= 3 ? 1 : w <= 6 ? 2 : 3; }
+function puzzleList() {
+  if (PZL) return PZL;
+  PZL = load().list.filter(e => e.sol && e.sol.length).map(e => ({ id: 'et' + e.id, no: e.n, t: (e.a || '') + (e.g === 'd' ? ' (durang)' : ''), title: 'Etyud ' + e.n + (e.a ? ' · ' + e.a : '') + (e.g === 'd' ? ' (durang)' : ''), level: lvl(e), side: 'w', b32: e.b, et: 1, folder: FOLDER(e.part) }));
+  return PZL;
+}
+function asPuzzle(id) { id = String(id || ''); if (id.indexOf('et') !== 0) return null; const e = get(id.slice(2)); return e && e.sol ? { id, folder: FOLDER(e.part), title: 'Etyud ' + e.n, et: 1 } : null; }
+// yechim yo'llari masala formatida: [[r1,c1,r2,c2], ...] (har sakrash alohida)
+function puzzleSols(id) {
+  const e = get(String(id || '').replace(/^et/, '')); if (!e || !e.sol) return null;
+  return e.sol.map(l => { const out = []; (l.m || []).forEach(mv => { for (let i = 1; i < mv.length; i++) out.push([mv[i - 1] >> 3, mv[i - 1] & 7, mv[i] >> 3, mv[i] & 7]); }); return out; }).filter(x => x.length);
+}
 function solved(uid) { const u = require('./store.js').users()[String(uid)]; return (u && u.et && u.et.s) || []; }
-module.exports = { load, get, board64, check, done, solved, handle, bookMove };
+module.exports = { load, get, board64, check, done, solved, handle, bookMove, FOLDERS, puzzleList, asPuzzle, puzzleSols };

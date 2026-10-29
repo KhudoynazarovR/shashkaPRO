@@ -167,7 +167,6 @@
   var CARDS = [
     { k: 'daily', t: 'Kunlik masala', s: 'Har kuni yangi masala', r: '+10', c1: '#1f56c4', c2: '#0e2f7c', bd: '#74a8ff', sh: '#0a1f55' },
     { k: 'map', t: 'Kombinatsiyalar xaritasi', s: 'Sarguzasht yo‘li · qahramoning bilan yur!', r: '', c1: '#d97706', c2: '#7c2d12', bd: '#fcd34d', sh: '#451a03' },
-    { k: 'etude', t: 'Etyudlar', s: 'Vitoshkin antologiyasi · King Kongga qarshi', r: '+15', c1: '#a16207', c2: '#3f2a06', bd: '#facc15', sh: '#271a03' },
     { k: 'rush', t: 'Puzzle Rush', s: '3 daqiqa · 3 ta xato', r: '+15', c1: '#d2281c', c2: '#7a0f0c', bd: '#ff8a68', sh: '#4f0907' },
     { k: 'battle', t: 'Puzzle Battle', s: 'Boshqa o‘yinchilar bilan bellash!', r: '+20', c1: '#6f2fcc', c2: '#391280', bd: '#bb94ff', sh: '#240a54' },
     { k: 'pzt', t: 'Masala turniri', s: 'Hamma bir vaqtda · soniyagacha', r: 'Fond', c1: '#0f8a6c', c2: '#05463a', bd: '#5ee0b0', sh: '#032a22' },
