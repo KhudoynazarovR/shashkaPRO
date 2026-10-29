@@ -120,7 +120,7 @@ function move(j, cb) {
   const deep = secs >= 1 && DEEP.has(key);
   const dcap = secs >= 12 ? 30 : 18;   // King Kong saboq joylarida 30 s gacha o'ylaydi
   if (deep) secs = Math.min(dcap, secs * 2, Number(j.maxTime) > 0 ? Number(j.maxTime) : dcap);   // bu yerda avval yutqazgan — chuqurroq o'ylaymiz (vaqt imkon bergancha)
-  const hit = secs >= 1 && CACHE.get(key);
+  const hit = (secs >= 1 || j.tbAlways) && CACHE.get(key);   // tez o'yinda ham oldindan o'ylangan (ponder) javobdan foydalanamiz
   if (hit && hit.secs >= secs * 0.9) { cDirty = true; return cb(Object.assign({}, hit.r, { ms: 0, cached: 1 })); }
   // bitta dvigatel jarayoni: so'rovlar navbatga qo'yiladi (rad etilmaydi). Arena (bot va bot) faqat navbat bo'sh bo'lsa.
   if (j && j.arena ? (busy >= 1) : (queue.length >= 12)) return cb({ error: "busy", code: 429 });
@@ -145,7 +145,7 @@ let TBP = null; try { TBP = require("./tbprobe.js"); } catch (e) { console.log("
 let ponderTok = 0;
 const PONDER = { n: 0, hit: 0 };
 function engMove(v) { return { from: v[1] * 8 + (7 - v[0]), to: v[3] * 8 + (7 - v[2]), jumps: v[4], ev: v.length > 5 ? v[5] : null }; }
-function ponder(b, humanSide, kkSecs, room) {
+function ponder(b, humanSide, kkSecs, room, predict) {
   if (!ready || !RULES || !Array.isArray(b) || b.length !== 64) return;
   const tok = ++ponderTok;
   queue = queue.filter(q => !q.ponder);   // eski ponderlar bekor
@@ -165,7 +165,8 @@ function ponder(b, humanSide, kkSecs, room) {
     }, { ponder: true });
   };
   if (legal.length === 1) return go2(legal[0]);   // majburiy javob — taxmin shart emas
-  run(encode(b, humanSide, 0.5), 0.5, (err, v) => {
+  const ps = predict > 0 ? predict : 0.5;   // raqib javobini taxmin qilish vaqti (tez o'yinda qisqaroq)
+  run(encode(b, humanSide, ps), ps, (err, v) => {
     if (err || tok !== ponderTok) return;
     const r = engMove(v);
     go2(legal.find(m => m.from === r.from && m.to === r.to) || legal.find(m => m.to === r.to) || null);

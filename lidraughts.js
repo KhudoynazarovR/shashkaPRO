@@ -335,6 +335,8 @@ function playGame(id) {
         for (let t = 0; t < 4 && (x.s === 0 || x.s >= 500 || x.s === 429); t++) { await sleep((G.bullet ? 250 : 1500) * (t + 1)); x = await post('/api/bot/game/' + id + '/move/' + part); }   // tarmoq uzilsa — qayta yuboramiz
         if (x.s !== 200) { log('yurish rad etildi', id, part, x.s, (x.t || '').slice(0, 120), '| fen:', String(G.fen).slice(0, 90), '| moves:', String(state.moves || '').slice(-80)); G.lastPlies = -1; break; }
       }
+      // ⚡ tez o'yinda raqib o'ylayotganda biz ham o'ylaymiz: uning javobini taxmin qilib, o'z javobimizni oldindan hisoblab qo'yamiz
+      if (G.bullet && G.lastPlies !== -1) { try { const nb = R.applyMove(pos.board, mv); K.ponder(to64(nb), pos.side === R.WHITE ? -1 : 1, 0.3, 'ld_' + id, 0.1); } catch (e) {} }
     } catch (e) { log('xato', e.message); }
     G.busy = false;
     if (G.lastPlies === -1 && !G.done && G.last && (G.rej = (G.rej || 0) + 1) <= 5) setTimeout(() => think(G.last), 2000);
