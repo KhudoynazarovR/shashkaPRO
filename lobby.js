@@ -1040,6 +1040,22 @@ function createLobby({ send, clients, roomsApi }) {
         [...challenges.entries()].forEach(([cid, x]) => { if (x.fromUid === me.uid && x.toUid === tu) challenges.delete(cid); });
         push(); break;
       }
+      case 'lbEtude': {   // ♔ etyudni King Kongga qarshi yechish
+        const E = require('./etudes.js'), et = E.get(m.id);
+        if (!et) return err(c, 'Etyud topilmadi'), true;
+        const kk = BOTS.find(b => b.uid === 'bot_kingkong');
+        if (!kk) return err(c, 'King Kong topilmadi'), true;
+        queue.delete(me.uid);
+        const roomId = 'E' + hex(5), H = { uid: me.uid, name: me.name }, B = { uid: kk.uid, name: kk.name, clientId: 'ai_' + kk.uid };
+        roomsApi.create(roomId, {
+          tc: '∞', vsBot: true, opening: { id: 'et' + et.id, board: et.b, side: 'w' },
+          botCfg: { id: kk.uid, secs: 4, blunder: 0, ponder: true },
+          etude: { id: et.id, goal: et.g === 'd' ? 'draw' : 'win', title: '№' + et.n + ' · ' + (et.a || '') },
+          white: H, black: B
+        });
+        sendUid(me.uid, { type: 'lbGo', roomId, reason: 'challenge', color: 'white', opponent: kk.name, tc: '∞', series: null });
+        break;
+      }
       case 'lbChallenge': {
         const to = connsOf(String(m.toUid))[0];
         if (!to || to.lb.uid === me.uid) return err(c, 'O‘yinchi topilmadi'), true;

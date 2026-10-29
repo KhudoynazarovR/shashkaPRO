@@ -91,6 +91,8 @@
     function go(roomId) { location.href = location.pathname + "?room=" + encodeURIComponent(roomId); }
 
     // ---------- ulanish ----------
+    window.lbEtude = function (id) { sendMsg({ type: "lbEtude", id: String(id) }); };   // ♔ etyudni King Kongga qarshi yechish
+    try { if (!inRoom && localStorage.getItem("etOpen") === "1") { localStorage.removeItem("etOpen"); setTimeout(function () { var se = document.createElement("script"); se.src = "/etudeview.js?v=1"; se.onload = function () { window.spEtudes(); }; document.head.appendChild(se); }, 900); } } catch (e) {}
     function sendMsg(m) {
       var s = JSON.stringify(m);
       if (ws && ws.readyState === 1 && ready) ws.send(s); else outbox.push(s);

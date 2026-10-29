@@ -577,7 +577,7 @@
         line("🏁 Seriya " + (st.seriesDone ? "tugadi" : no + "/" + st.gamesTotal) + " · ⚪ " + sc.white + " – " + sc.black + " ⚫");
         if (st.finished && !st.seriesDone && st.nextIn) line("Keyingi o‘yin 5 soniyadan so‘ng, ranglar almashadi");
       }
-      if (!spec && (st.casual || st.vsBot) && st.finished && st.white && st.black && (!ser || st.seriesDone)) {
+      if (!spec && !st.etude && (st.casual || st.vsBot) && st.finished && st.white && st.black && (!ser || st.seriesDone)) {
         if (st.rematch === st.color) {
           line("⏳ Raqib javobi kutilmoqda…");
           btn("Bekor qilish", function () { send({ type: "roomRematchNo", roomId: roomId }); });
@@ -589,7 +589,7 @@
           btn("🔁 Qayta o‘ynash", function () { send({ type: "roomRematch", roomId: roomId }); });
         }
       }
-      if (!spec && st.finished && st.winner === st.color && window.spShareCard) btn("📸 G‘alabani ulashish", function () { var opp = st.color === "white" ? st.black : st.white; window.spShareCard({ theme: "win", title: "G‘ALABA!", big: "🏆", sub: "Raqib: " + (st.vsBot ? "🤖 " : "") + (opp || ""), sub2: (st.tc ? "⏱ " + st.tc : "") + (st.reason === "timeout" ? " · vaqt bo‘yicha" : ""), cap: "🏆 ShashkaPRO’da " + (opp || "raqib") + "ni yutdim!" }); });
+      if (!spec && !st.etude && st.finished && st.winner === st.color && window.spShareCard) btn("📸 G‘alabani ulashish", function () { var opp = st.color === "white" ? st.black : st.white; window.spShareCard({ theme: "win", title: "G‘ALABA!", big: "🏆", sub: "Raqib: " + (st.vsBot ? "🤖 " : "") + (opp || ""), sub2: (st.tc ? "⏱ " + st.tc : "") + (st.reason === "timeout" ? " · vaqt bo‘yicha" : ""), cap: "🏆 ShashkaPRO’da " + (opp || "raqib") + "ni yutdim!" }); });
       if (!spec && st.finished && st.vsBot && !st.opening && /Monster|Terminator|King ?Kong/i.test(String(st[st.botColor] || ""))) {
         var openRv = function () {
           var g0 = { moves: st.moves, me: st.color, white: nameLine("white"), black: nameLine("black"), winner: st.winner, bot: String(st[st.botColor] || "") };
@@ -867,18 +867,37 @@
       var t;
       if (!st.connected) t = "🔌 Ulanmoqda… (server uyg‘onishi 50 soniyagacha cho‘zilishi mumkin)";
       else if (!st.joined) t = "⏳ Xonaga kirilmoqda…";
+      else if (st.finished && st.etude) {   // ♔ etyud natijasi
+        var eok = st.winner === "white" || (st.etude.goal === "draw" && st.winner === "draw");
+        t = eok ? "🎉 Etyud yechildi! " + (st.etude.goal === "draw" ? "Durang ta’minlandi" : "Yutuq yo‘li topildi") : "😔 Etyud yechilmadi — qaytadan urinib ko‘ring";
+      }
       else if (st.finished) {
         var tm = st.reason === "timeout" ? "⏰ Vaqt tugadi · " : st.reason === "noshow" ? "⏳ Birinchi yurish qilinmadi · " : st.reason === "voice" ? "🎤 Noto‘g‘ri yurish aytildi" + (st.voiceSaid ? " («" + st.voiceSaid + "»)" : "") + " · " : "";
         if (st.winner === "draw") t = st.drawText ? "🤝 " + st.drawText : "🤝 Durang (kelishildi)";
         else if (st.color === "spectator") t = tm + "🏆 " + sideName(st.winner) + " g‘alaba qozondi";
         else t = tm + (st.winner === st.color ? "🏆 Siz g‘alaba qozondingiz!" : "😔 Siz yutqazdingiz");
       }
+      else if (st.etude && st.turn === st.color) t = "♔ " + st.etude.title + " · " + (st.etude.goal === "draw" ? "Oq yuradi va durang qiladi" : "Oq yuradi va yutadi");
+      else if (st.etude) t = "🦍 King Kong o‘ylamoqda…";
       else if (st.vsBot && !st.botStarted && st.color !== "spectator") t = "⚙️ Vaqt, rang va pozitsiyani tanlang, so‘ng ‘Boshlash’ ni bosing";
       else if (!bothIn()) t = "⏳ Raqib kutilmoqda…";
       else if (st.color === "spectator") t = "👁 Tomoshabin · navbat: " + sideName(st.turn);
       else if (st.turn === st.color) t = st.forced ? "🔴 Yana urish majburiy!" : "";
       else t = "⏳ Raqib yurishi kutilmoqda";
       elStatus.textContent = t;
+      // ♔ etyud tugadi: qayta urinish / ro'yxatga qaytish
+      var _eb = document.getElementById("rcEtB");
+      if (st.etude && st.finished) {
+        if (!_eb) {
+          _eb = document.createElement("div"); _eb.id = "rcEtB";
+          _eb.style.cssText = "display:flex;gap:8px;justify-content:center;margin:8px 0";
+          _eb.innerHTML = '<button style="border:0;border-radius:12px;padding:10px 14px;font:800 15px system-ui;background:linear-gradient(180deg,#ffd76a,#e09a12);color:#2a1700">🔁 Qayta urinish</button><button style="border:0;border-radius:12px;padding:10px 14px;font:700 15px system-ui;background:rgba(255,255,255,.14);color:#fff">♔ Etyudlar</button>';
+          var _bs = _eb.querySelectorAll("button");
+          _bs[0].onclick = function () { _bs[0].disabled = true; if (window.lbEtude) window.lbEtude(st.etude.id); };
+          _bs[1].onclick = function () { try { localStorage.setItem("etOpen", "1"); } catch (e) {} location.href = location.pathname; };
+          elStatus.parentNode.insertBefore(_eb, elStatus.nextSibling);
+        }
+      } else if (_eb) _eb.remove();
 
       // doska tepasida durang sanog'i (3 damka, 1 damka va boshqa holatlar)
       if (st.drawInfo && !st.finished && st.joined) {
@@ -917,7 +936,7 @@
           ? (st.spectators || st.color === "spectator" ? "\n" : "") + "⏱ " + st.tc + " (daqiqa + soniya)\n⏳ Birinchi yurish 15 soniya ichida qilinmasa, texnik mag‘lubiyat"
           : "");
       elInfo.style.whiteSpace = "pre-line"; document.body.classList.toggle("rcPlaying", st.color !== "spectator" && !st.finished && (st.moves || []).length > 0);
-      if (st.opening) elInfo.textContent = "📖 IDF " + st.opening.id + (elInfo.textContent ? "\n" + elInfo.textContent : "");
+      if (st.opening && !st.etude) elInfo.textContent = "📖 IDF " + st.opening.id + (elInfo.textContent ? "\n" + elInfo.textContent : "");
       if (false && st.vsBot && st.botNote) elInfo.textContent += (elInfo.textContent ? "\n" : "") + st.botNote;
     }
 
@@ -1260,7 +1279,7 @@
         st.spectators = m.spectators || 0;
         st.specNames = m.spectatorNames || [];
         st.gamesTotal = m.gamesTotal || 1; st.played = m.played || 0; st.seriesScore = m.seriesScore || null;
-        st.seriesDone = !!m.seriesDone; st.nextIn = !!m.nextIn; st.rematch = m.rematch || null; st.casual = !!m.casual; st.voice = !!m.voice; st.voiceSaid = m.voiceSaid || null; st.vsBot = !!m.vsBot; st.h2h = m.h2h || null; try { var _bk = "spBotRoom:" + roomId; if (st.vsBot) localStorage.setItem(_bk, "1"); else if (localStorage.getItem(_bk) === "1") { localStorage.removeItem(_bk); alert("Server qayta ishga tushdi, bot bilan o‘yin uzildi. Zalga qaytasiz."); location.href = location.pathname; return; } } catch (e) {} try { renderChat(); } catch (e) {} st.botStarted = !!m.botStarted; st.botColor = m.botColor || null; st.botSecs = Number(m.botSecs) > 0 ? Number(m.botSecs) : 1.2; st.botBlunder = Number(m.botBlunder) || 0;
+        st.seriesDone = !!m.seriesDone; st.nextIn = !!m.nextIn; st.rematch = m.rematch || null; st.casual = !!m.casual; st.voice = !!m.voice; st.voiceSaid = m.voiceSaid || null; st.vsBot = !!m.vsBot; st.etude = m.etude || null; st.h2h = m.h2h || null; try { var _bk = "spBotRoom:" + roomId; if (st.vsBot) localStorage.setItem(_bk, "1"); else if (localStorage.getItem(_bk) === "1") { localStorage.removeItem(_bk); alert("Server qayta ishga tushdi, bot bilan o‘yin uzildi. Zalga qaytasiz."); location.href = location.pathname; return; } } catch (e) {} try { renderChat(); } catch (e) {} st.botStarted = !!m.botStarted; st.botColor = m.botColor || null; st.botSecs = Number(m.botSecs) > 0 ? Number(m.botSecs) : 1.2; st.botBlunder = Number(m.botBlunder) || 0;
         var openNew = (m.opening ? m.opening.id : null) !== (st.opening ? st.opening.id : null);
         st.opening = m.opening || null;
         var same = !openNew && st.moves.length === (m.moves || []).length && st.turn === m.turn;

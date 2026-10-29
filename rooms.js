@@ -112,7 +112,7 @@ function createRooms({ send, clients, onFinish }) {
       incMs: room.incMs,
       tc: room.tc,
       tcs: room.vsBot ? BOT_TCS : Object.keys(TCS).filter(k => k !== "0.5+0" && k !== "7+5"),
-      vsBot: !!room.vsBot, botStarted: !!room.botStarted, botColor: botColorOf(room),
+      vsBot: !!room.vsBot, etude: room.etude || null, botStarted: !!room.botStarted, botColor: botColorOf(room),
       botSecs: room.botCfg ? room.botCfg.secs : 1.2, botBlunder: room.botCfg ? room.botCfg.blunder : 0,
       arena: !!room.arena, noBerserk: !!room.noBerserk, voice: !!room.voice, voiceSaid: room.voiceSaid || null,
       opening: room.opening,
@@ -234,14 +234,15 @@ function createRooms({ send, clients, onFinish }) {
     room.drawOffer = null;
     room.winner = winner;
     room.reason = reason || null;
-    try { botReward(room, winner); } catch (e) { console.log('botReward:', e.message); }
+    if (room.etude) { try { require('./etudes.js').done(room, winner); } catch (e) { console.log('etude:', e.message); } }
+    else try { botReward(room, winner); } catch (e) { console.log('botReward:', e.message); }
     try { h2hRecord(room, winner); } catch (e) { console.log('h2h:', e.message); }
     try { // bot yutqazsa — o'sha o'yindan saboq oladi (keyingi safar shu pozitsiyalarda chuqurroq o'ylaydi)
       const bc = botColorOf(room);
-      if (room.vsBot && bc && winner && winner !== 'draw' && winner !== bc) require('./kestoai.js').learn(room.id);
+      if (room.vsBot && !room.etude && bc && winner && winner !== 'draw' && winner !== bc) require('./kestoai.js').learn(room.id);
     } catch (e) {}
     try { // kunlik vazifalar: o'yin / g'alaba / botni yutish
-      if ((room.moves || []).length >= 8 && room.reason !== 'noshow') {
+      if (!room.etude && (room.moves || []).length >= 8 && room.reason !== 'noshow') {
         const q = require('./quests.js'), seats = { white: room.white && room.white.uid, black: room.black && room.black.uid };
         for (const c of ['white', 'black']) {
           const id = seats[c]; if (!id || isBotUid(id)) continue;
@@ -340,6 +341,7 @@ function createRooms({ send, clients, onFinish }) {
     room.vsBot = !!(opts && opts.vsBot);
     room.voice = !!(opts && opts.voice);   // 🎤 ovozli bellashuv: noto'g'ri yurish aytgan yutqazadi
     room.botCfg = (opts && opts.botCfg) || null;
+    room.etude = (opts && opts.etude) || null;   // ♔ etyud: { id, goal: 'win'|'draw', title } — King Kongga qarshi yechish
     room.botStarted = !!room.vsBot;   // bot bilan o'yin birdan boshlanadi
     if (room.vsBot && (opts.tc === "∞" || !tcParse(opts.tc))) { room.tc = "∞"; room.timeMs = BOT_INF_MS; room.incMs = 0; room.clock = { white: BOT_INF_MS, black: BOT_INF_MS }; }
     if (opts && opts.bonus && opts.bonus.ms > 0) {
@@ -463,6 +465,7 @@ function createRooms({ send, clients, onFinish }) {
         finish(room, "draw", "rule");
       }
       if (!m.keepTurn) { try { require('./gcard.js').touch(room); } catch (e) {} }
+      if (!m.keepTurn && room.etude && !room.finished) { try { const v = require('./etudes.js').check(room); if (v) finish(room, v.winner, v.reason); } catch (e) { console.log('etude check:', e.message); } }
       return true;
   }
 
