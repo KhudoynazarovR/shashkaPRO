@@ -92,11 +92,11 @@ function position(fen, moves) {
   return { board, side, plies: toks.length };
 }
 function to64(b) { const o = []; for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) { const p = b[r][c]; o.push(p === 'w' ? 1 : p === 'W' ? 2 : p === 'b' ? -1 : p === 'B' ? -2 : 0); } return o; }
-function engine(board, side, secs, room, maxTime, maxWait, fast) {
+function engine(board, side, secs, room, maxTime, maxWait, fast, noBook) {
   const until = Date.now() + (maxWait || 32000);   // dvigatel tayyor bo'lmasa — soatga qarab cheklangan kutish
   return new Promise(async res => {
     for (let i = 0; i < 40 && Date.now() < until; i++) {
-      const r = await new Promise(rs => K.move({ board: to64(board), side: side === R.WHITE ? 1 : -1, time: secs, book: true, room, maxTime, tbAlways: !!fast }, rs));
+      const r = await new Promise(rs => K.move({ board: to64(board), side: side === R.WHITE ? 1 : -1, time: secs, book: !noBook, room, maxTime, tbAlways: !!fast }, rs));
       if (r && !r.error) return res(r);
       if (r && (r.error === 'busy' || r.error === 'notready')) { await sleep(800); continue; }
       return res(null);
@@ -120,6 +120,13 @@ function safeMove(board, side, moves) {
 
 // ma'lum botlarga qarshi maxsus kitob: ularning o'yinlaridan yutuq/durang bilan tugagan yo'llar (bot bir xil pozitsiyada odatda bir xil yuradi)
 const ANTI = {};
+// ⚡ coletteBOT'ga qarshi tez o'yin daraxti: Colette'ning ma'lum javoblari bo'yicha har bir pozitsiyada dvigatel 2,5 s o'ylab topgan yurish (oldindan hisoblangan)
+let CTREE = {}; try { CTREE = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'partiyalar', 'colette_tree.json'), 'utf8')); log('Colette daraxti:', Object.keys(CTREE).length); } catch (e) {}
+function treeMove(opp, board, side, moves) {
+  if (String(opp || '').toLowerCase() !== 'colettebot') return null;
+  const hit = CTREE[to64(board).join('') + (side === R.WHITE ? 1 : -1)]; if (!hit) return null;
+  return moves.find(m => m.from[0] * 8 + m.from[1] === hit[0] && m.to[0] * 8 + m.to[1] === hit[1]) || null;
+}
 try { ANTI.colettebot = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'partiyalar', 'anti_colette.json'), 'utf8')); log('anti-kitob coletteBOT:', Object.keys(ANTI.colettebot).length); } catch (e) {}
 // istalgan bot uchun avtomatik: uning lidraughts'dagi o'yinlarini yuklab, raqiblari durang/yutuq qilgan yo'llardan kitob tuzamiz
 function fetchText(path, ms) {
@@ -161,10 +168,10 @@ function buildAnti(pdn, botName) {
   }
   // ⚡ "uzoq o'yin" kitobi (faqat tez o'yinlar uchun): raqib bot hech qachon yutmagan, o'yin eng uzun bo'lgan / u vaqtdan yutqazgan yo'llar
   const long = {};
-  for (const k in lst) { let best = null; for (const m in lst[k]) { const u = lst[k][m]; if (u.bad) continue; const sc = u.len / u.n + u.flag * 40 + Math.min(u.n, 5) * 3; if (!best || sc > best.sc) best = { m, sc }; } if (best) long[k] = best.m.split('-').map(Number); }
+  for (const k in lst) { let best = null; for (const m in lst[k]) { const u = lst[k][m]; if (u.bad || u.n < 2) continue; const sc = u.len / u.n + u.flag * 40 + Math.min(u.n, 5) * 3; if (!best || sc > best.sc) best = { m, sc }; } if (best) long[k] = best.m.split('-').map(Number); }
   LONG[me] = Object.assign({}, LONG[me] || {}, long);
   const book = {};
-  for (const k in st) { let best = null; for (const m in st[k]) { const [gd, ls] = st[k][m]; if (gd && (!best || gd > best.gd || (gd === best.gd && ls < best.ls))) best = { m, gd, ls }; } if (best) book[k] = best.m.split('-').map(Number); }
+  for (const k in st) { let best = null; for (const m in st[k]) { const [gd, ls] = st[k][m]; if (gd && gd >= ls && (!best || gd > best.gd || (gd === best.gd && ls < best.ls))) best = { m, gd, ls }; } if (best) book[k] = best.m.split('-').map(Number); }
   return book;
 }
 const LEARNED = {};
@@ -293,8 +300,9 @@ function playGame(id) {
     G.busy = true; G.lastPlies = pos.plies;
     try {
       let mv = moves[0];
-      const am = moves.length > 1 ? ((G.bullet && longMove(G.opp, pos.board, pos.side, moves)) || antiMove(G.opp, pos.board, pos.side, moves)) : null;
-      if (am) { mv = am; log('yurish (anti-kitob)', id, '#' + pos.plies, 'vs', G.opp); }
+      // tez o'yinda: umumiy kitob va anti-kitob ishlatilmaydi (ular sekin o'yinlardan — tez o'yinda bizni zaif tuzilmalarga olib kirdi); faqat oldindan hisoblangan daraxt va dvigatel
+      const am = moves.length > 1 ? (G.bullet ? (treeMove(G.opp, pos.board, pos.side, moves) || longMove(G.opp, pos.board, pos.side, moves)) : antiMove(G.opp, pos.board, pos.side, moves)) : null;
+      if (am) { mv = am; G.lastEv = null; log(G.bullet ? 'yurish (daraxt)' : 'yurish (anti-kitob)', id, '#' + pos.plies, 'vs', G.opp); if (G.bullet) { try { mv = await avoidCheck(pos.board, pos.side, moves, mv, id); } catch (e) {} } }
       else if (moves.length > 1 && G.bullet) {
         // ⚡ tez rejim (½+0, 1+0): har yurishga 0,05–0,4 s; kitob va endshpil bazasi — darhol; soat juda oz qolsa — dvigatelsiz xavfsiz yurish
         const my = (G.color === R.WHITE ? state.wtime : state.btime) || 30000;
@@ -302,8 +310,8 @@ function playGame(id) {
         else {
           // vaqt taqsimoti: debyutda tez (kitob), o'rta o'yinda (10–17 dona) ko'proq — taktik zarbalar shu yerda; endshpilda yana tez (baza bor, o'yin uzoq cho'ziladi)
           let pcs = 0; for (const row of pos.board) for (const q of row) if (q) pcs++;
-          const secs = my <= 8000 ? Math.max(0.05, my / 1000 / 40) : pcs >= 18 ? 0.3 : pcs >= 10 ? Math.max(0.3, Math.min(1.5, my / 1000 / 16)) : Math.max(0.1, Math.min(0.4, my / 1000 / 40));
-          const r = await engine(pos.board, pos.side, secs, 'ld_' + id, secs, Math.min(4000, my * 0.2), true);
+          const secs = my <= 8000 ? Math.max(0.05, my / 1000 / 40) : pcs >= 18 ? (my > 20000 ? 0.5 : 0.3) : pcs >= 10 ? Math.max(0.3, Math.min(1.5, my / 1000 / 16)) : Math.max(0.1, Math.min(0.4, my / 1000 / 40));
+          const r = await engine(pos.board, pos.side, secs, 'ld_' + id, secs, Math.min(4000, my * 0.2), true, true);
           G.lastEv = r && r.ev != null && !r.tb ? r.ev : null;
           if (!r) mv = safeMove(pos.board, pos.side, moves);
           else { const fr = r.from >> 3, fc = r.from & 7, tr = r.to >> 3, tc = r.to & 7; const c = moves.filter(m => m.from[0] === fr && m.from[1] === fc && m.to[0] === tr && m.to[1] === tc); mv = c.find(m => (m.captures || []).length === r.jumps) || c[0] || mv; }
@@ -434,4 +442,4 @@ async function challenge(user, tc, rated) {
   return post('/api/challenge/' + encodeURIComponent(user), { rated: rated ? 'true' : 'false', 'clock.limit': String((lim || 3) * 60), 'clock.increment': String(inc || 0), variant: 'russian', color: 'random' });
 }
 start();
-module.exports = { status, challenge, _t: { locToRC, rcToLoc, parseFen, position, antiRepeat, histKeys, buildAnti, LONG, noTrade, replayKeys, learnLoss, avoidCheck, AV: () => AVOID } };
+module.exports = { status, challenge, _t: { treeMove, CT: () => CTREE, locToRC, rcToLoc, parseFen, position, antiRepeat, histKeys, buildAnti, LONG, noTrade, replayKeys, learnLoss, avoidCheck, AV: () => AVOID } };

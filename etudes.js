@@ -28,7 +28,7 @@ function fromRoom(room) {
 // har yurishdan keyin: endshpil bazasiga tushdimi — natijani hal qilamiz
 function check(room) {
   const b = fromRoom(room); if (!b) return null;
-  const n = b.filter(v => v).length; if (n > 4) return null;
+  const n = b.filter(v => v).length; if (n > (require('./tbprobe.js').max() || 4)) return null;
   const side = room.turn === 'white' ? 1 : -1;
   let v = null; try { v = require('./tbprobe.js').value(b, side); } catch (e) {}
   if (v == null) return null;
@@ -91,7 +91,7 @@ async function judge(e, b, path, n) {
   const a = m.board, bm = R.moves(a, -1);
   if (!a.some(v => v < 0) || !bm.length) return { keep: true, solved: true };
   const pack = mm => [mm.from].concat(mm.path);
-  if (cntP(a) <= 4) {
+  if (cntP(a) <= (require('./tbprobe.js').max() || 4)) {
     const r = tbRes(a, -1);
     if (r) {
       const keep = goal === 'w' ? r === 'win' : r !== 'loss';
