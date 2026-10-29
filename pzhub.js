@@ -195,7 +195,7 @@
       h += '<button class="pzhCard" data-pzh="' + c.k + '" style="--c1:' + c.c1 + ';--c2:' + c.c2 + ';--bd:' + c.bd + ';--sh:' + c.sh + '">' +
         '<img alt="" src="' + IMG[c.k] + '">' +
         '<div class="pzhTx"><b>' + c.t + (c.soon ? '<span class="pzhSoon">TEZ ORADA</span>' : '') + '</b><span>' + c.s + '</span></div>' +
-        (c.k === 'deb' ? '<div class="pzhRw"><em>📖 37</em>Debyut</div>' : c.k === 'trap' ? '<div class="pzhRw"><em>🪤 208</em>Tuzoq</div>' : c.k === 'map' ? '<div class="pzhRw"><em>🗺 721</em>Bekat</div>' : c.k === 'etude' ? '<div class="pzhRw"><em>♔ ' + (window.__etN || '955') + '</em>Etyud</div>' : c.k === 'baza' ? '<div class="pzhRw"><em>📚 109K</em>Partiya</div>' : '<div class="pzhRw"><em>🪙 ' + c.r + '</em>Mukofot</div>') + '<span class="pzhCh">›</span>' +
+        (c.k === 'deb' ? '<div class="pzhRw"><em>📖 37</em>Debyut</div>' : c.k === 'trap' ? '<div class="pzhRw"><em>🪤 208</em>Tuzoq</div>' : c.k === 'map' ? '<div class="pzhRw"><em>🗺 721</em>Bekat</div>' : c.k === 'etude' ? '<div class="pzhRw"><em>♔ ' + (window.__etN || '4787') + '</em>Etyud</div>' : c.k === 'baza' ? '<div class="pzhRw"><em>📚 109K</em>Partiya</div>' : '<div class="pzhRw"><em>🪙 ' + c.r + '</em>Mukofot</div>') + '<span class="pzhCh">›</span>' +
         (c.k === 'daily' && ctx.dailyDone ? '<span class="pzhOk">✓</span>' : '') +
         '</button>';
     });
