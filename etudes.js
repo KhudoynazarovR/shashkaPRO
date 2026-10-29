@@ -153,11 +153,11 @@ function handle(req, res, p, ctx) {
 }
 // 🧩 Masalalar bo'limi uchun: har kitob — alohida papka ("Etyudlar · 1-kitob"), etyud — oddiy masala kabi yechiladi
 // kitoblar: 1–5 — Vitoshkin etyudlari, 6 — Ustyanov "Сокровища малого миттельшпиля", 7 — Ustyanov "Харьковская школа"
-const BOOKS = { 6: { f: 'Ustyanov · Kichik mittelshpil xazinalari', p: 'Masala' }, 7: { f: 'Ustyanov · Xarkov kompozitsiya maktabi', p: 'Masala' } };
+const BOOKS = { 6: { f: 'Ustyanov · Kichik mittelshpil xazinalari', p: 'Masala' }, 7: { f: 'Ustyanov · Xarkov kompozitsiya maktabi', p: 'Masala' }, 8: { f: 'Malamed, Barskiy · Endshpillar', p: 'Misol' } };
 const FOLDER = part => (BOOKS[part] && BOOKS[part].f) || 'Etyudlar · ' + part + '-kitob';
 const PRE = part => (BOOKS[part] && BOOKS[part].p) || 'Etyud';
-const FOLDERS = [6, 7, 1, 2, 3, 4, 5].map(FOLDER);
-const ETF = {}, ETP = {}; [1, 2, 3, 4, 5, 6, 7].forEach(k => { ETF[k] = FOLDER(k); ETP[k] = PRE(k); });
+const FOLDERS = [6, 7, 8, 1, 2, 3, 4, 5].map(FOLDER);
+const ETF = {}, ETP = {}; [1, 2, 3, 4, 5, 6, 7, 8].forEach(k => { ETF[k] = FOLDER(k); ETP[k] = PRE(k); });
 let PZL = null;
 function lvl(e) { const m = e.sol && e.sol[0] && e.sol[0].m || []; const w = Math.ceil(m.length / 2); return w <= 3 ? 1 : w <= 6 ? 2 : 3; }
 function puzzleList() {

@@ -552,7 +552,7 @@
     });
     if (!_mapV) fl.forEach(function (f, i) {
       var arr = S.list.filter(function (p) { return foOf(p) === f; });
-      h += '<div data-fo="' + i + '" style="' + CARD + '">' + (S.admin && f.indexOf('Etyudlar · ') !== 0 && f.indexOf('Ustyanov · ') !== 0 ? '<span style="float:right"><button data-rf="' + i + '" style="background:#262b5a;color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">✏️</button> <button data-df="' + i + '" style="background:#262b5a;color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">🗑</button></span>' : '') + '<b style="font-size:17px">📁 ' + esc(f) + '</b><div style="font-size:12px;opacity:.65;margin-top:4px">' + arr.length + ' ta masala · ✅ ' + nDone(arr) + '/' + arr.length + '</div></div>';
+      h += '<div data-fo="' + i + '" style="' + CARD + '">' + (S.admin && f.indexOf('Etyudlar · ') !== 0 && f.indexOf('Ustyanov · ') !== 0 && f.indexOf('Malamed') !== 0 ? '<span style="float:right"><button data-rf="' + i + '" style="background:#262b5a;color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">✏️</button> <button data-df="' + i + '" style="background:#262b5a;color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">🗑</button></span>' : '') + '<b style="font-size:17px">📁 ' + esc(f) + '</b><div style="font-size:12px;opacity:.65;margin-top:4px">' + arr.length + ' ta masala · ✅ ' + nDone(arr) + '/' + arr.length + '</div></div>';
     });
     if (!S.admin) h += '<div style="font-size:11px;opacity:.4;margin-top:16px">ID: ' + esc(S.myId) + '</div>';
     ov.innerHTML = h;
