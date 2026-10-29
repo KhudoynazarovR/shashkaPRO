@@ -238,6 +238,47 @@ function antiRepeat(G, state, board, side, moves, mv) {
   return best || mv;
 }
 
+// 🧠 mag'lubiyat kitobi: yurish bilan yutqazilgan o'yinlarda Monster qilgan yurishlar (10–60-yarim yurishlar) — keyingi safar o'sha pozitsiyada boshqa yurish tanlanadi
+// ma'lumotlar bazasida saqlanadi (Render qayta deploy qilinganda ham yo'qolmaydi)
+let AVOID = {}; function avStore() { try { const st = require('./store.js'); if (st.db) { st.db.ldAvoid = st.db.ldAvoid || {}; AVOID = st.db.ldAvoid; return st; } } catch (e) {} return null; }
+setTimeout(avStore, 5000);
+function replayKeys(fen, moves) {
+  let { board, side } = parseFen(fen); const out = []; let cur = { k: to64(board).join('') + side, side };
+  for (const t of String(moves || '').trim().split(/\s+/).filter(Boolean)) {
+    const { wasCap, last } = applyToken(board, t); let more = false;
+    if (wasCap && last) { try { more = R.allCaptures(board, side).some(m => m.from[0] === last[0] && m.from[1] === last[1]); } catch (e) {} }
+    if (!more) { side = side === R.WHITE ? R.BLACK : R.WHITE; const nk = to64(board).join('') + side; out.push({ before: cur.k, side: cur.side, after: nk }); cur = { k: nk, side }; }
+  }
+  return out;
+}
+function learnLoss(G, state) {
+  try { avStore();
+    const L = replayKeys(G.fen, state.moves); let n = 0;
+    L.forEach((x, i) => { if (x.side === G.color && i >= 10 && i <= 60) { const a = AVOID[x.before] || (AVOID[x.before] = []); if (!a.includes(x.after)) { a.push(x.after); n++; } } });
+    const st = avStore();
+    const ks = Object.keys(AVOID); if (ks.length > 4000) ks.slice(0, ks.length - 4000).forEach(k => delete AVOID[k]);
+    if (st) st.save();
+    log('🧠 mag‘lubiyatdan saboq:', n, 'ta yurish endi qilinmaydi');
+  } catch (e) { log('saboq xato', e.message); }
+}
+async function avoidCheck(board, side, moves, mv, id) {
+  avStore();
+  const opp = side === R.WHITE ? R.BLACK : R.WHITE, key = to64(board).join('') + side, A = AVOID[key];
+  if (!A || moves.length < 2) return mv;
+  const after = m => to64(R.applyMove(board, m)).join('') + opp;
+  if (!A.includes(after(mv))) return mv;
+  // boshqa yurishlarni tez baholaymiz (raqib nuqtai nazaridan baho — kichigi biz uchun yaxshi)
+  let best = null, bv = 1e9;
+  for (const m of moves) {
+    if (A.includes(after(m))) continue;
+    const r = await new Promise(rs => K.move({ board: to64(R.applyMove(board, m)), side: opp === R.WHITE ? 1 : -1, time: 0.15, book: false, maxTime: 0.15, tbAlways: true }, rs));
+    const v = r && r.ev != null ? r.ev : (r && r.tb ? (r.tb === 'win' ? 3000 : r.tb === 'loss' ? -3000 : 0) : 0);
+    if (v < bv) { bv = v; best = m; }
+  }
+  if (best) log('🧠 avvalgi mag‘lubiyat yo‘lidan qochildi', id);
+  return best || mv;
+}
+
 // ---------- o'yin
 function playGame(id) {
   if (ST.games[id]) return;
@@ -267,6 +308,7 @@ function playGame(id) {
           if (!r) mv = safeMove(pos.board, pos.side, moves);
           else { const fr = r.from >> 3, fc = r.from & 7, tr = r.to >> 3, tc = r.to & 7; const c = moves.filter(m => m.from[0] === fr && m.from[1] === fc && m.to[0] === tr && m.to[1] === tc); mv = c.find(m => (m.captures || []).length === r.jumps) || c[0] || mv; }
         }
+        try { mv = await avoidCheck(pos.board, pos.side, moves, mv, id); } catch (e) {}
         // almashinuvlardan qochamiz (donalar ko'p qolsin), keyin durangdan qochamiz (o'yin cho'zilsa — raqibning vaqti tugaydi)
         try { if (G.lastEv != null) { const m1 = noTrade(pos.board, pos.side, moves, mv, G.lastEv); if (m1 !== mv) { mv = m1; log('⚡ almashinuvdan qochildi', id, '#' + pos.plies); } } } catch (e) {}
         try { const m2 = antiRepeat(G, state, pos.board, pos.side, moves, mv); if (m2 !== mv) { mv = m2; log('⚡ takrordan qochildi', id, '#' + pos.plies); } } catch (e) {}
@@ -304,7 +346,7 @@ function playGame(id) {
     ST.results.unshift({ id, opp: G.opp, res, at: Date.now(), url: 'https://lidraughts.org/' + id });
     ST.results.length = Math.min(ST.results.length, 50);
     log('o‘yin tugadi', id, 'vs', G.opp, '→', res, '| sabab:', state && state.status, '| yurishlar:', String(state && state.moves || '').split(' ').filter(Boolean).length);
-    if (w && w !== G.color && !/outoftime|timeout|noStart|aborted/i.test(String(state && state.status))) { try { K.learn('ld_' + id); } catch (e) {} }   // yurish bilan yutqazdi — saboq oladi (vaqt bo'yicha emas)
+    if (w && w !== G.color && !/outoftime|timeout|noStart|aborted/i.test(String(state && state.status))) { try { K.learn('ld_' + id); } catch (e) {} learnLoss(G, state); }   // yurish bilan yutqazdi — saboq oladi (vaqt bo'yicha emas)
   };
   stream('/api/bot/game/stream/' + id, async o => {
     if (o.type === 'gameFull') {
@@ -390,4 +432,4 @@ async function challenge(user, tc, rated) {
   return post('/api/challenge/' + encodeURIComponent(user), { rated: rated ? 'true' : 'false', 'clock.limit': String((lim || 3) * 60), 'clock.increment': String(inc || 0), variant: 'russian', color: 'random' });
 }
 start();
-module.exports = { status, challenge, _t: { locToRC, rcToLoc, parseFen, position, antiRepeat, histKeys, buildAnti, LONG, noTrade } };
+module.exports = { status, challenge, _t: { locToRC, rcToLoc, parseFen, position, antiRepeat, histKeys, buildAnti, LONG, noTrade, replayKeys, learnLoss, avoidCheck, AV: () => AVOID } };
