@@ -152,20 +152,24 @@ function handle(req, res, p, ctx) {
   return false;
 }
 // 🧩 Masalalar bo'limi uchun: har kitob — alohida papka ("Etyudlar · 1-kitob"), etyud — oddiy masala kabi yechiladi
-const FOLDER = part => 'Etyudlar · ' + part + '-kitob';
-const FOLDERS = [1, 2, 3, 4, 5].map(FOLDER);
+// kitoblar: 1–5 — Vitoshkin etyudlari, 6 — Ustyanov "Сокровища малого миттельшпиля", 7 — Ustyanov "Харьковская школа"
+const BOOKS = { 6: { f: 'Ustyanov · Kichik mittelshpil xazinalari', p: 'Masala' }, 7: { f: 'Ustyanov · Xarkov kompozitsiya maktabi', p: 'Masala' } };
+const FOLDER = part => (BOOKS[part] && BOOKS[part].f) || 'Etyudlar · ' + part + '-kitob';
+const PRE = part => (BOOKS[part] && BOOKS[part].p) || 'Etyud';
+const FOLDERS = [6, 7, 1, 2, 3, 4, 5].map(FOLDER);
+const ETF = {}, ETP = {}; [1, 2, 3, 4, 5, 6, 7].forEach(k => { ETF[k] = FOLDER(k); ETP[k] = PRE(k); });
 let PZL = null;
 function lvl(e) { const m = e.sol && e.sol[0] && e.sol[0].m || []; const w = Math.ceil(m.length / 2); return w <= 3 ? 1 : w <= 6 ? 2 : 3; }
 function puzzleList() {
   if (PZL) return PZL;
-  PZL = load().list.filter(e => e.sol && e.sol.length).map(e => ({ id: 'et' + e.id, no: e.n, t: (e.a || '') + (e.g === 'd' ? ' (durang)' : ''), title: 'Etyud ' + e.n + (e.a ? ' · ' + e.a : '') + (e.g === 'd' ? ' (durang)' : ''), level: lvl(e), side: 'w', b32: e.b, et: 1, folder: FOLDER(e.part) }));
+  PZL = load().list.filter(e => e.sol && e.sol.length).map(e => ({ id: 'et' + e.id, no: e.n, t: (e.a || '') + (e.g === 'd' ? ' (durang)' : ''), title: PRE(e.part) + ' ' + e.n + (e.a ? ' · ' + e.a : '') + (e.g === 'd' ? ' (durang)' : ''), level: lvl(e), side: 'w', b32: e.b, et: 1, folder: FOLDER(e.part) }));
   return PZL;
 }
-function asPuzzle(id) { id = String(id || ''); if (id.indexOf('et') !== 0) return null; const e = get(id.slice(2)); return e && e.sol ? { id, folder: FOLDER(e.part), title: 'Etyud ' + e.n, et: 1 } : null; }
+function asPuzzle(id) { id = String(id || ''); if (id.indexOf('et') !== 0) return null; const e = get(id.slice(2)); return e && e.sol ? { id, folder: FOLDER(e.part), title: PRE(e.part) + ' ' + e.n, et: 1 } : null; }
 // yechim yo'llari masala formatida: [[r1,c1,r2,c2], ...] (har sakrash alohida)
 function puzzleSols(id) {
   const e = get(String(id || '').replace(/^et/, '')); if (!e || !e.sol) return null;
   return e.sol.map(l => { const out = []; (l.m || []).forEach(mv => { for (let i = 1; i < mv.length; i++) out.push([mv[i - 1] >> 3, mv[i - 1] & 7, mv[i] >> 3, mv[i] & 7]); }); return out; }).filter(x => x.length);
 }
 function solved(uid) { const u = require('./store.js').users()[String(uid)]; return (u && u.et && u.et.s) || []; }
-module.exports = { load, get, board64, check, done, solved, handle, bookMove, FOLDERS, puzzleList, asPuzzle, puzzleSols };
+module.exports = { load, get, board64, check, done, solved, handle, bookMove, FOLDERS, ETF, ETP, puzzleList, asPuzzle, puzzleSols };
