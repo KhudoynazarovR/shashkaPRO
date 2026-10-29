@@ -132,8 +132,9 @@ function fetchText(path, ms) {
   });
 }
 const sqA = s => [8 - +s[1], s.charCodeAt(0) - 97];
+const LONG = {};
 function buildAnti(pdn, botName) {
-  const me = String(botName).toLowerCase(), st = {};
+  const me = String(botName).toLowerCase(), st = {}, lst = {};
   for (const g of String(pdn).split(/\n(?=\[Event )/)) {
     if (!/\[GameType "25"\]/.test(g)) continue;
     const fen = (g.match(/\[FEN "([^"]*)"\]/) || [])[1];
@@ -141,8 +142,11 @@ function buildAnti(pdn, botName) {
     const w = String((g.match(/\[White "([^"]*)"\]/) || [])[1] || '').toLowerCase(), res = (g.match(/\[Result "([^"]*)"\]/) || [])[1];
     if (!res || res === '*') continue;
     const botWhite = w === me, good = res === '1-1' || ((res === '2-0') !== botWhite);   // raqib durang qildi yoki yutdi
+    const tc = (g.match(/\[TimeControl "(\d+)\+(\d+)"\]/) || []), fast = tc[1] && +tc[1] <= 60;
+    const flag = /Time forfeit/i.test(g) && good && res !== '1-1';   // bot vaqtdan yutqazgan
+    const plies = (g.split(/\n\n/).slice(1).join(' ').match(/[a-h][1-8](?:[-x][a-h][1-8])+/g) || []).length;
     const mv = g.split(/\n\n/).slice(1).join(' ').match(/[a-h][1-8](?:[-x][a-h][1-8])+/g) || [];
-    let b = R.startPosition(), side = R.WHITE;
+    let b = R.startPosition(), side = R.WHITE, pl = 0;
     for (const m of mv) {
       const ps = m.split(/[-x]/).map(sqA), f = ps[0], t = ps[ps.length - 1];
       const lm = R.getAllMoves(b, side).find(x => x.from[0] === f[0] && x.from[1] === f[1] && x.to[0] === t[0] && x.to[1] === t[1]);
@@ -150,10 +154,15 @@ function buildAnti(pdn, botName) {
       if ((side === R.WHITE) !== botWhite) {   // raqib yurishi
         const k = to64(b).join('') + (side === R.WHITE ? 1 : -1), mk = (lm.from[0] * 8 + lm.from[1]) + '-' + (lm.to[0] * 8 + lm.to[1]);
         const e = st[k] || (st[k] = {}), v = e[mk] || (e[mk] = [0, 0]); v[good ? 0 : 1]++;
+        if (fast && pl < 40) { const e2 = lst[k] || (lst[k] = {}), u = e2[mk] || (e2[mk] = { n: 0, bad: 0, len: 0, flag: 0 }); u.n++; if (!good) u.bad++; u.len += plies; if (flag) u.flag++; }
       }
-      b = R.applyMove(b, lm); side = side === R.WHITE ? R.BLACK : R.WHITE;
+      b = R.applyMove(b, lm); side = side === R.WHITE ? R.BLACK : R.WHITE; pl++;
     }
   }
+  // ⚡ "uzoq o'yin" kitobi (faqat tez o'yinlar uchun): raqib bot hech qachon yutmagan, o'yin eng uzun bo'lgan / u vaqtdan yutqazgan yo'llar
+  const long = {};
+  for (const k in lst) { let best = null; for (const m in lst[k]) { const u = lst[k][m]; if (u.bad) continue; const sc = u.len / u.n + u.flag * 40 + Math.min(u.n, 5) * 3; if (!best || sc > best.sc) best = { m, sc }; } if (best) long[k] = best.m.split('-').map(Number); }
+  LONG[me] = Object.assign({}, LONG[me] || {}, long);
   const book = {};
   for (const k in st) { let best = null; for (const m in st[k]) { const [gd, ls] = st[k][m]; if (gd && (!best || gd > best.gd || (gd === best.gd && ls < best.ls))) best = { m, gd, ls }; } if (best) book[k] = best.m.split('-').map(Number); }
   return book;
@@ -166,6 +175,26 @@ async function learnBot(name) {
   if (!pdn) { log('anti-kitob: o‘yinlar yuklanmadi', name); return; }
   const book = buildAnti(pdn, name), n = Object.keys(book).length;
   if (n) { ANTI[key] = Object.assign({}, ANTI[key] || {}, book); log('anti-kitob yangilandi:', name, n, 'pozitsiya'); }
+}
+function longMove(opp, board, side, moves) {
+  const A = LONG[String(opp || '').toLowerCase()]; if (!A) return null;
+  const hit = A[to64(board).join('') + (side === R.WHITE ? 1 : -1)]; if (!hit) return null;
+  return moves.find(m => m.from[0] * 8 + m.from[1] === hit[0] && m.to[0] * 8 + m.to[1] === hit[1]) || null;
+}
+// ⚡ almashinuvdan qochish (tez o'yin, teng pozitsiya, dona ko'p): raqibga urish imkonini bermaydigan boshqa xavfsiz yurish
+function noTrade(board, side, moves, mv, ev) {
+  if (ev == null || Math.abs(ev) > 20 || (mv.captures || []).length) return mv;
+  let pieces = 0; for (const row of board) for (const p of row) if (p) pieces++;
+  if (pieces < 12) return mv;
+  const opp = side === R.WHITE ? R.BLACK : R.WHITE;
+  const oppCaps = m => { const nb = R.applyMove(board, m); return R.getAllMoves(nb, opp).reduce((a, x) => Math.max(a, (x.captures || []).length), 0); };
+  if (!oppCaps(mv)) return mv;   // almashinuv taklif qilinmagan
+  const safe = moves.filter(m => m !== mv && !(m.captures || []).length && !oppCaps(m) && (() => {
+    // 2-qadam tekshiruvi: raqibning har qanday javobidan keyin ham biz dona yo'qotmaymiz
+    const nb = R.applyMove(board, m);
+    return R.getAllMoves(nb, opp).every(r => { const b2 = R.applyMove(nb, r); return R.getAllMoves(b2, side).every(x => { const b3 = R.applyMove(b2, x); return R.getAllMoves(b3, opp).reduce((a, y) => Math.max(a, (y.captures || []).length), 0) <= (x.captures || []).length; }); });
+  })());
+  return safe.length ? safe[Math.floor(Math.random() * safe.length)] : mv;
 }
 function antiMove(opp, board, side, moves) {
   const A = ANTI[String(opp || '').toLowerCase()]; if (!A) return null;
@@ -223,7 +252,7 @@ function playGame(id) {
     G.busy = true; G.lastPlies = pos.plies;
     try {
       let mv = moves[0];
-      const am = moves.length > 1 ? antiMove(G.opp, pos.board, pos.side, moves) : null;
+      const am = moves.length > 1 ? ((G.bullet && longMove(G.opp, pos.board, pos.side, moves)) || antiMove(G.opp, pos.board, pos.side, moves)) : null;
       if (am) { mv = am; log('yurish (anti-kitob)', id, '#' + pos.plies, 'vs', G.opp); }
       else if (moves.length > 1 && G.bullet) {
         // ⚡ tez rejim (½+0, 1+0): har yurishga 0,05–0,4 s; kitob va endshpil bazasi — darhol; soat juda oz qolsa — dvigatelsiz xavfsiz yurish
@@ -232,10 +261,12 @@ function playGame(id) {
         else {
           const secs = Math.max(0.05, Math.min(0.4, my / 1000 / 45));
           const r = await engine(pos.board, pos.side, secs, 'ld_' + id, secs, Math.min(4000, my * 0.2), true);
+          G.lastEv = r && r.ev != null && !r.tb ? r.ev : null;
           if (!r) mv = safeMove(pos.board, pos.side, moves);
           else { const fr = r.from >> 3, fc = r.from & 7, tr = r.to >> 3, tc = r.to & 7; const c = moves.filter(m => m.from[0] === fr && m.from[1] === fc && m.to[0] === tr && m.to[1] === tc); mv = c.find(m => (m.captures || []).length === r.jumps) || c[0] || mv; }
         }
-        // durangdan qochamiz (o'yin cho'zilsa — raqibning vaqti tugaydi)
+        // almashinuvlardan qochamiz (donalar ko'p qolsin), keyin durangdan qochamiz (o'yin cho'zilsa — raqibning vaqti tugaydi)
+        try { if (G.lastEv != null) { const m1 = noTrade(pos.board, pos.side, moves, mv, G.lastEv); if (m1 !== mv) { mv = m1; log('⚡ almashinuvdan qochildi', id, '#' + pos.plies); } } } catch (e) {}
         try { const m2 = antiRepeat(G, state, pos.board, pos.side, moves, mv); if (m2 !== mv) { mv = m2; log('⚡ takrordan qochildi', id, '#' + pos.plies); } } catch (e) {}
       }
       else if (moves.length > 1) {
@@ -357,4 +388,4 @@ async function challenge(user, tc, rated) {
   return post('/api/challenge/' + encodeURIComponent(user), { rated: rated ? 'true' : 'false', 'clock.limit': String((lim || 3) * 60), 'clock.increment': String(inc || 0), variant: 'russian', color: 'random' });
 }
 start();
-module.exports = { status, challenge, _t: { locToRC, rcToLoc, parseFen, position, antiRepeat, histKeys } };
+module.exports = { status, challenge, _t: { locToRC, rcToLoc, parseFen, position, antiRepeat, histKeys, buildAnti, LONG, noTrade } };
