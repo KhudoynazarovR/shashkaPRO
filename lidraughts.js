@@ -120,7 +120,7 @@ function safeMove(board, side, moves) {
 
 // ma'lum botlarga qarshi maxsus kitob: ularning o'yinlaridan yutuq/durang bilan tugagan yo'llar (bot bir xil pozitsiyada odatda bir xil yuradi)
 const ANTI = {};
-// ⚡ coletteBOT'ga qarshi tez o'yin daraxti: Colette'ning ma'lum javoblari bo'yicha har bir pozitsiyada dvigatel 2,5 s o'ylab topgan yurish (oldindan hisoblangan)
+// ⚡ coletteBOT'ga qarshi tez o'yin daraxti: Colette'ning tez o'yinlardagi haqiqiy javoblari bo'yicha — Marynenko (Colette'ni yutgan) va Monster yutqazmagan o'yinlardagi yurishlar, qolgan joyda dvigatel 5 s o'ylab topgan yurish (oldindan hisoblangan)
 let CTREE = {}; try { CTREE = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'partiyalar', 'colette_tree.json'), 'utf8')); log('Colette daraxti:', Object.keys(CTREE).length); } catch (e) {}
 function treeMove(opp, board, side, moves) {
   if (String(opp || '').toLowerCase() !== 'colettebot') return null;
@@ -261,7 +261,7 @@ function replayKeys(fen, moves) {
 function learnLoss(G, state) {
   try { avStore();
     const L = replayKeys(G.fen, state.moves); let n = 0;
-    L.forEach((x, i) => { if (x.side === G.color && i >= 10 && i <= 60) { const a = AVOID[x.before] || (AVOID[x.before] = []); if (!a.includes(x.after)) { a.push(x.after); n++; } } });
+    L.forEach((x, i) => { if (x.side === G.color && i >= 6 && i <= 90) { const a = AVOID[x.before] || (AVOID[x.before] = []); if (!a.includes(x.after)) { a.push(x.after); n++; } } });
     const st = avStore();
     const ks = Object.keys(AVOID); if (ks.length > 4000) ks.slice(0, ks.length - 4000).forEach(k => delete AVOID[k]);
     if (st) st.save();
@@ -352,7 +352,10 @@ function playGame(id) {
   };
   const onEnd = (state) => {
     if (G.done) return; G.done = true;
-    const w = state && state.winner, res = !w ? 'durang' : (w === G.color ? 'G‘ALABA' : 'mag‘lubiyat');
+    // lidraughts ba'zan g'olibni (winner) yubormaydi — yurish qolmagan bo'lsa, navbatdagi tomon yutqazgan
+    let w = state && state.winner;
+    if (!w && state && /mate|nomoves|stalemate/i.test(String(state.status))) { try { const p = position(G.fen, state.moves); if (!R.getAllMoves(p.board, p.side).length) w = p.side === R.WHITE ? R.BLACK : R.WHITE; } catch (e) {} }
+    const res = !w ? 'durang' : (w === G.color ? 'G‘ALABA' : 'mag‘lubiyat');
     ST.results.unshift({ id, opp: G.opp, res, at: Date.now(), url: 'https://lidraughts.org/' + id });
     ST.results.length = Math.min(ST.results.length, 50);
     log('o‘yin tugadi', id, 'vs', G.opp, '→', res, '| sabab:', state && state.status, '| yurishlar:', String(state && state.moves || '').split(' ').filter(Boolean).length);
