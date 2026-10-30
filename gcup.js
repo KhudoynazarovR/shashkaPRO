@@ -102,7 +102,25 @@ async function announce(chat, title, o, by, byName, startAt) {
 async function cmdTour(msg, arg) {
   if (!msg.chat || msg.chat.type === 'private') return G.tg('sendMessage', { chat_id: msg.chat.id, text: '🏆 Kubok guruhda o‘tkaziladi: botni guruhga qo‘shib, u yerda /kubok yozing.\nMasalan: /kubok 3+2 20:00 yoki /kubok 3+2 20:00 har kuni' });
   const chat = msg.chat.id, uid = String(msg.from.id);
-  if (/to.?xtat|stop|bekor/i.test(arg || '')) {
+  const cur = T(chat);
+  // ro'yxat ochiq kubok bor: uni ochgan odam yoki admin vaqt/nazoratni o'zgartiradi yoki bekor qiladi
+  if (cur && cur.v === 2 && cur.status === 'reg' && (arg || '').trim()) {
+    const can = uid === cur.by || await isChatAdmin(chat, uid);
+    if (/bekor|cancel|отмен/i.test(arg)) {
+      if (!can) return G.tg('sendMessage', { chat_id: chat, text: 'Kubokni faqat ' + cur.byName + ' yoki guruh admini bekor qila oladi.' });
+      cur.status = 'done'; cur.champ = null; store.save();
+      if (cur.msg) { G.tg('editMessageText', { chat_id: chat, message_id: cur.msg, text: '❌ Kubok bekor qilindi.' }); G.tg('unpinChatMessage', { chat_id: chat, message_id: cur.msg }); }
+      return G.tg('sendMessage', { chat_id: chat, text: '❌ Kubok bekor qilindi.' });
+    }
+    const o = parseArg(arg), ch = [];
+    if (can && (o.h != null || /\d\s*\+\s*\d/.test(arg))) {
+      if (o.h != null) { cur.startAt = nextAt(o.h, o.m, null); cur.rem = {}; cur.postponed = 0; ch.push('🕗 boshlanish: ' + dateTxt(cur.startAt) + ' ' + hm(cur.startAt)); }
+      if (/\d\s*\+\s*\d/.test(arg) && cur.game === 'sh' && o.tc !== cur.tc) { cur.tc = o.tc; ch.push('⏱ ' + tcTxt(cur.tc)); }
+      store.save(); tourEdit(cur);
+      return G.tg('sendMessage', { chat_id: chat, text: '✅ Kubok yangilandi: ' + (ch.join(', ') || 'o‘zgarish yo‘q'), reply_to_message_id: cur.msg });
+    }
+  }
+  if (/to.?xtat|stop/i.test(arg || '')) {
     const C = store.db.gcron = store.db.gcron || {};
     if (!C[String(chat)]) return G.tg('sendMessage', { chat_id: chat, text: 'Bu guruhda takrorlanadigan kubok yo‘q.' });
     if (!(await isChatAdmin(chat, uid))) return G.tg('sendMessage', { chat_id: chat, text: 'Takrorlanadigan kubokni faqat guruh admini o‘chira oladi.' });
