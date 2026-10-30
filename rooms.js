@@ -69,6 +69,7 @@ function createRooms({ send, clients, onFinish }) {
   // Soat: har ikki tomonning birinchi yurishi bepul, undan keyin navbatdagi o'yinchi vaqti ketadi.
   function clockRunning(room) {
     if (room.vsBot && room.tc === "∞") return false;   // bot bilan vaqtsiz o'yin
+    if (room.gt) return !!(room.white && room.black && !room.finished && room.turnStartedAt > 0);   // 🏆 guruh kubogi: soat o'yin boshlanishi bilan yuradi (kelmagan vaqtdan yutqazadi)
     return !!(room.white && room.black && !room.finished && room.plies >= 2);
   }
 
@@ -794,6 +795,7 @@ function createRooms({ send, clients, onFinish }) {
     const now = Date.now();
     for (const [rid, room] of rooms) {
       if (!global.__spFM) global.__spFM = setInterval(() => { const t0 = Date.now(); for (const rm of rooms.values()) { try {
+        if (rm.gt) continue;   // 🏆 guruh kubogi — bu qoida yo'q, soat o'zi hal qiladi
         if (rm.finished || rm.vsBot || rm.simul || /^S/.test(String(rm.id || "")) || !rm.white || !rm.black || rm.plies >= 2) { if (rm.finished || rm.plies >= 2) rm.waitSince = 0; continue; }
         // 15 soniya har bir birinchi yurish uchun alohida, va faqat navbatdagi o'yinchi xonaga kirgandan keyin sanaladi
         if (rm._fmP !== rm.plies) { rm._fmP = rm.plies; rm.waitSince = 0; }
@@ -868,7 +870,19 @@ function createRooms({ send, clients, onFinish }) {
     setTimeout(() => process.exit(0), 3000);
   });
 
-  return { handle, onClose, rooms, results, create, forfeit, restore, get: id => rooms.get(id) };
+  // 🏆 guruh kubogi uchun: soatni ishga tushirish va durangdan keyin shu stolda tay-brek (ranglar almashadi, vaqt qisqaradi)
+  function startClock(roomId) { const room = rooms.get(roomId); if (!room || room.finished) return false; room.turnStartedAt = Date.now(); pushState(room); return true; }
+  function notice(roomId, text) { const room = rooms.get(roomId); if (!room) return; const msg = { name: "🏆 Kubok", color: "spectator", text: String(text).slice(0, CHAT_MAX), at: Date.now() }; room.chat.push(msg); if (room.chat.length > CHAT_KEEP) room.chat.shift(); broadcast(room, { type: "roomChat", roomId, msg }); }
+  function tieBreak(roomId, tcKey, delayMs) {
+    const room = rooms.get(roomId), t = tcParse(tcKey); if (!room || !t) return false;
+    room.tc = tcKey; room.timeMs = t[0] * 1000; room.incMs = t[1] * 1000;
+    startNextGame(room, true, false);
+    room.turnStartedAt = 0;
+    const g = room.moves;
+    setTimeout(() => { if (rooms.get(roomId) === room && !room.finished && room.moves === g && !room.turnStartedAt) startClock(roomId); }, delayMs || 10000);
+    return true;
+  }
+  return { handle, onClose, rooms, results, create, forfeit, restore, get: id => rooms.get(id), startClock, notice, tieBreak };
 }
 
 module.exports = { createRooms, verifyInitData };

@@ -56,112 +56,11 @@ function mmOver(r, m) {
   const s = { a: r.p[0] && { uid: r.p[0].uid, name: r.p[0].name }, b: r.p[1] && { uid: r.p[1].uid, name: r.p[1].name }, win: r.winner };
   if (m.ci) recordM(m.ci, s); else m.mres = s;
 }
-function mmFinished(r) {   // kubok o'yini tugadi
-  if (!r || !r.gt) return;
-  const t = T(r.gt.chat); if (!t || t.status !== 'run') return;
-  const p = t.pairs.find(x => x.room === r.code); if (!p || p.win) return;
-  const ia = r.p.findIndex(x => x.uid === p.a), ib = 1 - ia;
-  if (r.winner === ia) p.win = p.a; else if (r.winner === ib) p.win = p.b; else { p.win = Math.random() < 0.5 ? p.a : p.b; p.coin = true; }
-  if (t.ci) recordM(t.ci, { a: { uid: p.a, name: r.p[ia].name }, b: { uid: p.b, name: r.p[ib].name }, win: p.win === p.a ? 0 : 1 });
-  store.save(); setTimeout(() => roundCheck(t), 0);
-}
+function mmFinished(r) { return require('./gcup.js').mmFinished(r); }   // kubok o'yini tugadi
 
-// ---------- 🏆 guruh turniri
-function T(chat) { const a = store.db.gtour = store.db.gtour || {}; return a[String(chat)]; }
-function tourText(t) {
-  const st = t.status === 'reg' ? '📝 Ro‘yxatdan o‘tish' : t.status === 'run' ? '⚔️ ' + t.round + '-tur' : '🏁 Tugadi';
-  let s = (t.game === 'mm' ? '🏆 <b>Xotira kubogi</b> · 🧠 ' + esc(t.size.replace('x', '×')) + ' · ⏱ ' + esc(mmTcTxt(t.tc)) : '🏆 <b>Guruh kubogi</b> · ⏱ ' + esc(t.tc)) + ' · olimpiya tizimi\n' + st + '\n\n👥 Qatnashchilar (' + t.players.length + '):\n' + (t.players.map((p, i) => (i + 1) + '. ' + esc(p.name)).join('\n') || '—');
-  if (t.status === 'reg') s += '\n\n«✅ Qatnashaman» ni bosing. ' + esc(t.byName) + ' «▶ Boshlash» ni bosganda kubok boshlanadi.\n🥇 G‘olibga +50 💰';
-  if (t.status === 'done' && t.champ) s += '\n\n🏆 <b>Chempion: ' + esc(t.champ) + '</b> (+50 💰)';
-  return s;
-}
-function tourKb(t) {
-  if (t.status !== 'reg') return { inline_keyboard: [] };
-  return { inline_keyboard: [[{ text: '✅ Qatnashaman', callback_data: 'g:j:' + t.chat }], [{ text: '▶ Boshlash', callback_data: 'g:s:' + t.chat }, { text: '❌ Bekor', callback_data: 'g:x:' + t.chat }]] };
-}
-function tourEdit(t) { if (t.msg) G.tg('editMessageText', { chat_id: t.chat, message_id: t.msg, text: tourText(t), parse_mode: 'HTML', reply_markup: tourKb(t) }); }
-async function cmdTour(msg, arg) {
-  if (!msg.chat || msg.chat.type === 'private') return G.tg('sendMessage', { chat_id: msg.chat.id, text: '🏆 Kubok guruhda o‘tkaziladi: botni guruhga qo‘shib, u yerda /kubok yozing.' });
-  const a = store.db.gtour = store.db.gtour || {}, old = a[String(msg.chat.id)];
-  if (old && old.status !== 'done' && Date.now() - old.at < 6 * 3600e3) return G.tg('sendMessage', { chat_id: msg.chat.id, text: tourText(old), parse_mode: 'HTML', reply_markup: tourKb(old), reply_to_message_id: old.msg });
-  const mm = /xotira|memori|память/i.test(arg || '');
-  const m = /(\d{1,2})\s*\+\s*(\d{1,2})/.exec(arg || ''), tc = mm ? mmTc(arg) : m ? m[1] + '+' + m[2] : '3+2';
-  const t = a[String(msg.chat.id)] = { theme: /romant|sevgi|yurak|роман/i.test(arg || '') ? 'romantic' : 'animals', game: mm ? 'mm' : 'sh', size: /6\s*[x×х]\s*6/i.test(arg || '') ? '6x6' : '4x6', chat: msg.chat.id, tc, by: String(msg.from.id), byName: nm(msg.from), players: [{ uid: String(msg.from.id), name: nm(msg.from) }], status: 'reg', round: 0, at: Date.now(), pairs: [] };
-  const r = await G.tg('sendMessage', { chat_id: msg.chat.id, text: tourText(t), parse_mode: 'HTML', reply_markup: tourKb(t) });
-  if (r && r.result) t.msg = r.result.message_id;
-  store.save();
-}
-function mmTc(s) { s = String(s || ''); return /\b20\s*s/i.test(s) ? 20 : /\b10\s*s/i.test(s) ? 10 : /2\s*(m|daq)|blitz|⚡/i.test(s) ? -120 : 0; }
-function mmTcTxt(tc) { return tc > 0 ? tc + ' s' : tc < 0 ? '⚡ 2 daq' : '∞'; }
-function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-async function nextRound(t) {
-  const API = G.api();
-  if (t.alive.length <= 1) {
-    t.status = 'done'; const c = t.players.find(p => p.uid === t.alive[0]);
-    t.champ = c ? c.name : '—'; if (c) coins(c.uid, 50);
-    store.save(); tourEdit(t);
-    return G.tg('sendMessage', { chat_id: t.chat, text: '🏆🎉 Kubok tugadi!\nChempion: <b>' + esc(t.champ) + '</b> — +50 💰', parse_mode: 'HTML' });
-  }
-  t.round++; t.pairs = []; t.roundAt = Date.now();
-  const al = shuffle(t.alive.slice()), P = uid => t.players.find(p => p.uid === uid);
-  for (let i = 0; i + 1 < al.length; i += 2) {
-    const a = P(al[i]), b = P(al[i + 1]);
-    if (t.game === 'mm') {   // 🧠 Xotira juftligi
-      const r = require('./memroom.js').createPair(a, b, t.size, t.tc, t.theme); r.gt = { chat: t.chat };
-      t.pairs.push({ room: r.code, a: a.uid, b: b.uid, win: null, mm: true });
-      continue;
-    }
-    const id = rid();
-    const room = API && API.create(id, { tc: t.tc, white: { uid: a.uid, name: a.name }, black: { uid: b.uid, name: b.name } });
-    if (room) { room.gt = { chat: t.chat }; room.casual = true; }
-    t.pairs.push({ room: id, a: a.uid, b: b.uid, win: null });
-  }
-  if (al.length % 2) t.pairs.push({ room: null, a: al[al.length - 1], b: null, win: al[al.length - 1] });   // juft topilmadi — keyingi turga o'tadi
-  store.save();
-  const rows = t.pairs.filter(p => p.room).map(p => [{ text: '⚔️ ' + P(p.a).name.slice(0, 12) + ' — ' + P(p.b).name.slice(0, 12), url: LINK(p.mm ? 'mm_' + p.room : p.room) }]);
-  const bye = t.pairs.find(p => !p.room);
-  G.tg('sendMessage', { chat_id: t.chat, text: '⚔️ <b>' + t.round + '-tur</b> boshlandi (' + (t.game === 'mm' ? '🧠 Xotira · ⏱ ' + esc(mmTcTxt(t.tc)) : '⏱ ' + esc(t.tc)) + ')\nO‘yiningiz tugmasini bosing — o‘rningiz band qilingan.' + (bye ? '\n🎟 ' + esc(P(bye.a).name) + ' — juftsiz, keyingi turga o‘tdi.' : '') + '\n⌛ 10 daqiqada kirmagan o‘yinchi yutqazadi.', parse_mode: 'HTML', reply_markup: { inline_keyboard: rows } });
-}
-function roundCheck(t) {
-  if (t.status !== 'run' || t.pairs.some(p => !p.win)) return;
-  t.alive = t.pairs.map(p => p.win);
-  const P = uid => t.players.find(p => p.uid === uid);
-  G.tg('sendMessage', { chat_id: t.chat, text: '✅ ' + t.round + '-tur natijalari:\n' + t.pairs.filter(p => p.room).map(p => '• ' + esc(P(p.a).name) + ' — ' + esc(P(p.b).name) + ': 🏆 ' + esc(P(p.win).name) + (p.coin ? ' (durang, qur‘a)' : '')).join('\n'), parse_mode: 'HTML' });
-  nextRound(t);
-}
-function roomFinished(room) {
-  if (!room || !room.gt) return;
-  const t = T(room.gt.chat); if (!t || t.status !== 'run') return;
-  const p = t.pairs.find(x => x.room === room.id); if (!p || p.win) return;
-  if (room.winner === 'white') p.win = p.a; else if (room.winner === 'black') p.win = p.b; else { p.win = Math.random() < 0.5 ? p.a : p.b; p.coin = true; }
-  if (t.ci) record(t.ci, room);
-  store.save(); roundCheck(t);
-}
-// kelmaganlar: 10 daqiqada yurish bo'lmasa — kirgan yutadi (ikkalasi ham kirmasa — qur'a)
-setInterval(() => {
-  const a = store.db.gtour || {}, R = G.rooms();
-  for (const t of Object.values(a)) {
-    if (t.status !== 'run' || Date.now() - (t.roundAt || 0) < 10 * 60e3) continue;
-    let ch = false;
-    for (const p of t.pairs) {
-      if (p.win || !p.room) continue;
-      if (p.mm) {
-        const mr = require('./memroom.js').rooms.get(p.room); if (mr && mr.S) continue;
-        const on = uid => !!(mr && mr.p.find(x => x.uid === uid && x.ws)), aOn = on(p.a), bOn = on(p.b);
-        p.win = aOn && !bOn ? p.a : bOn && !aOn ? p.b : (Math.random() < 0.5 ? p.a : p.b); p.coin = aOn === bOn; ch = true;
-        if (mr) { mr.status = 'over'; mr.winner = mr.p.findIndex(x => x.uid === p.win); try { require('./memroom.js').push(mr); } catch (e) {} }
-        continue;
-      }
-      const room = R && R.get(p.room);
-      if (room && (room.moves || []).length) continue;
-      const on = s => !!(s && s.clientId);
-      const wOn = room && on(room.white), bOn = room && on(room.black);
-      p.win = wOn && !bOn ? p.a : bOn && !wOn ? p.b : (Math.random() < 0.5 ? p.a : p.b); p.coin = !(wOn !== bOn); ch = true;
-      if (room && !room.finished) { try { G.api().forfeit(p.room, p.win === p.a ? 'white' : 'black', 'noshow'); } catch (e) {} }
-    }
-    if (ch) { store.save(); roundCheck(t); }
-  }
-}, 60e3).unref();
+// ---------- 🏆 guruh kubogi — gcup.js da
+function cmdTour(msg, arg) { return require('./gcup.js').cmdTour(msg, arg); }
+function roomFinished(room) { try { require('./gcup.js').roomFinished(room); } catch (e) { console.log('[gcup]', e.message); } }
 
 // ---------- tugmalar
 async function onCallback(q) {
@@ -213,25 +112,10 @@ async function onCallback(q) {
     for (const id of [d[2]]) { const m = id && G.msgOf(id); learnCi(m, q); }
     return answer(q, topText(q.chat_instance, 5), true), true;
   }
-  if (d[1] === 'j' || d[1] === 's' || d[1] === 'x') {   // 🏆 turnir
-    const t = T(d[2]); if (!t) return answer(q, 'Kubok topilmadi'), true;
-    if (q.chat_instance) t.ci = q.chat_instance;
-    if (t.status !== 'reg') return answer(q, 'Ro‘yxat yopilgan'), true;
-    if (d[1] === 'j') {
-      if (t.players.some(p => p.uid === uid)) return answer(q, 'Siz allaqachon ro‘yxatdasiz ✅'), true;
-      if (t.players.length >= 32) return answer(q, 'Joy qolmadi (32)'), true;
-      t.players.push({ uid, name: nm(q.from) }); store.save(); tourEdit(t);
-      return answer(q, '✅ Ro‘yxatga qo‘shildingiz!'), true;
-    }
-    if (uid !== t.by && !ADM().includes(uid)) return answer(q, 'Faqat ' + t.byName + ' boshqaradi'), true;
-    if (d[1] === 'x') { t.status = 'done'; t.champ = null; store.save(); G.tg('editMessageText', { chat_id: t.chat, message_id: t.msg, text: '❌ Kubok bekor qilindi.' }); return answer(q, 'Bekor qilindi'), true; }
-    if (t.players.length < 2) return answer(q, 'Kamida 2 ta qatnashchi kerak'), true;
-    t.status = 'run'; t.alive = t.players.map(p => p.uid); tourEdit(t);
-    answer(q, '▶ Kubok boshlandi!'); nextRound(t); return true;
-  }
+  if (d[1] === 'j' || d[1] === 's' || d[1] === 'x' || d[1] === 'l') return require('./gcup.js').onCallback(q, d, uid);   // 🏆 kubok
   return false;
 }
 async function cmdTop(msg) {
   return G.tg('sendMessage', { chat_id: msg.chat.id, text: '📊 Guruh reytingi — @DraughtsPRObot doskalarida o‘ynalgan o‘yinlar bo‘yicha.', reply_markup: { inline_keyboard: [[{ text: '📊 Ko‘rish', callback_data: 'g:t' }]] } });
 }
-module.exports = { mmOver, mmFinished, setLink: f => { LINK = f; }, gameOver, roomFinished, onCallback, cmdTop, cmdTour, topText };
+module.exports = { record, recordM, mmOver, mmFinished, setLink: f => { LINK = f; try { require('./gcup.js').setLink(f); } catch (e) {} }, gameOver, roomFinished, onCallback, cmdTop, cmdTour, topText };

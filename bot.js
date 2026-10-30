@@ -216,7 +216,7 @@ async function start() {
   try { await api("deleteWebhook"); } catch (e) {}
   try {
     await api("setMyCommands", {
-      commands: [{ command: "new", description: "Yangi shashka xonasi" }, { command: "kubok", description: "🏆 Guruh kubogi (masalan: /kubok 3+2)" }, { command: "top", description: "📊 Guruh reytingi" }]
+      commands: [{ command: "new", description: "Yangi shashka xonasi" }, { command: "kubok", description: "🏆 Guruh kubogi (masalan: /kubok 3+2 20:00)" }, { command: "top", description: "📊 Guruh reytingi" }]
     });
   } catch (e) {}
   console.log("[bot] ishga tushdi: @" + BOT);
