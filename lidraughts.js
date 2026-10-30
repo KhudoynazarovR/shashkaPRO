@@ -122,9 +122,34 @@ function safeMove(board, side, moves) {
 const ANTI = {};
 // ⚡ coletteBOT'ga qarshi tez o'yin daraxti: Colette'ning tez o'yinlardagi haqiqiy javoblari bo'yicha — Marynenko (Colette'ni yutgan) va Monster yutqazmagan o'yinlardagi yurishlar, qolgan joyda dvigatel 5 s o'ylab topgan yurish (oldindan hisoblangan)
 let CTREE = {}; try { CTREE = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'partiyalar', 'colette_tree.json'), 'utf8')); log('Colette daraxti:', Object.keys(CTREE).length); } catch (e) {}
-function treeMove(opp, board, side, moves) {
+// 🎯 debyut repertuari (Colette'ga qarshi): har o'yinda boshqa debyut — natijasi yaxshilari ko'proq tanlanadi, yutqazilgani ketma-ket takrorlanmaydi
+let OPEN = { w: [], b: [] }; try { OPEN = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'partiyalar', 'colette_open.json'), 'utf8')); log('debyut repertuari: oq', OPEN.w.length, '· qora', OPEN.b.length); } catch (e) {}
+function opStats(opp) { try { const st = require('./store.js'); if (!st.db) return null; const a = st.db.ldOpen = st.db.ldOpen || {}; return a[String(opp).toLowerCase()] = a[String(opp).toLowerCase()] || { s: {}, last: {} }; } catch (e) { return null; } }
+function pickOpening(opp, color) {
+  const list = OPEN[color === R.WHITE ? 'w' : 'b'] || []; if (!list.length) return null;
+  const S = opStats(opp) || { s: {}, last: {} }, ck = color === R.WHITE ? 'w' : 'b', last = S.last[ck];
+  let cand = list.filter(v => !(last && last.res === 'l' && last.id === v.id)); if (!cand.length) cand = list;
+  const N = cand.reduce((a, v) => { const x = S.s[v.id] || {}; return a + (x.w || 0) + (x.d || 0) + (x.l || 0); }, 0);
+  let best = null, bs = -1e9;
+  for (const v of cand) {
+    const x = S.s[v.id] || {}, n = (x.w || 0) + (x.d || 0) + (x.l || 0);
+    const sc = ((x.w || 0) + 0.5 * (x.d || 0) + 0.5) / (n + 1) + 0.6 * Math.sqrt(Math.log(N + 2) / (n + 1)) + Math.random() * 0.01;
+    if (sc > bs) { bs = sc; best = v; }
+  }
+  return best;
+}
+function opResult(G, res) {
+  if (!G.op) return;
+  try { const S = opStats(G.opp); if (!S) return; const x = S.s[G.op] = S.s[G.op] || { w: 0, d: 0, l: 0 }; x[res]++; S.last[G.color === R.WHITE ? 'w' : 'b'] = { id: G.op, res, at: Date.now() }; require('./store.js').save(); log('🎯 debyut natijasi', G.op, res, JSON.stringify(x)); } catch (e) {}
+}
+function treeMove(opp, board, side, moves, G) {
   if (String(opp || '').toLowerCase() !== 'colettebot') return null;
-  const hit = CTREE[to64(board).join('') + (side === R.WHITE ? 1 : -1)]; if (!hit) return null;
+  const key = to64(board).join('') + (side === R.WHITE ? 1 : -1);
+  const fx = FIXES()[key];   // 🧠 avvalgi mag'lubiyatdagi xato o'rniga topilgan to'g'ri yurish
+  if (fx) { const m = moves.find(m => m.from[0] * 8 + m.from[1] === fx[0] && m.to[0] * 8 + m.to[1] === fx[1]); if (m) return m; }
+  const v = G && G.op && (OPEN[side === R.WHITE ? 'w' : 'b'] || []).find(x => x.id === G.op);
+  const ph = v && v.pre[key];
+  const hit = ph || CTREE[key]; if (!hit) return null;
   return moves.find(m => m.from[0] * 8 + m.from[1] === hit[0] && m.to[0] * 8 + m.to[1] === hit[1]) || null;
 }
 try { ANTI.colettebot = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'partiyalar', 'anti_colette.json'), 'utf8')); log('anti-kitob coletteBOT:', Object.keys(ANTI.colettebot).length); } catch (e) {}
@@ -258,6 +283,59 @@ function replayKeys(fen, moves) {
   }
   return out;
 }
+// 🧠 mag'lubiyat tahlili: har bir o'z yurishimizdan oldingi pozitsiya baholanadi (1 s), baho birinchi keskin tushgan joy — haqiqiy xato;
+// o'sha pozitsiyada chuqurroq (3 s) eng yaxshi yurish topilib, keyingi o'yinlarda o'sha ishlatiladi. Debyutdagi yaxshi yurishlarga tegilmaydi.
+function FIXES() { try { const st = require('./store.js'); if (st.db) return st.db.ldFix = st.db.ldFix || {}; } catch (e) {} return {}; }
+function fixMove(board, side, moves) {
+  const fx = FIXES()[to64(board).join('') + (side === R.WHITE ? 1 : -1)]; if (!fx) return null;
+  return moves.find(m => m.from[0] * 8 + m.from[1] === fx[0] && m.to[0] * 8 + m.to[1] === fx[1]) || null;
+}
+function evalPos(b64, side, secs) {
+  return new Promise(async res => {
+    for (let i = 0; i < 60; i++) {
+      const r = await new Promise(rs => K.move({ board: b64, side, time: secs, book: false, maxTime: secs, tbAlways: true }, rs));
+      if (r && (r.error === 'busy' || r.error === 'notready')) { await sleep(1000); continue; }
+      if (!r || r.error) return res(null);
+      return res({ from: r.from, to: r.to, ev: r.ev != null ? r.ev : r.tb === 'win' ? 3000 : r.tb === 'loss' ? -3000 : 0 });
+    }
+    res(null);
+  });
+}
+async function analyzeLoss(G, state, id) {
+  if (ST.analyzing) return; ST.analyzing = true;
+  try {
+    // o'yinni qayta o'ynab, bizning navbatimizdagi pozitsiyalar va qilingan yurishlar
+    let { board, side } = parseFen(G.fen); const ours = [];
+    let start = { b: board.map(r => r.slice()), side };
+    for (const t of String(state.moves || '').trim().split(/\s+/).filter(Boolean)) {
+      const { wasCap, last } = applyToken(board, t); let more = false;
+      if (wasCap && last) { try { more = R.allCaptures(board, side).some(m => m.from[0] === last[0] && m.from[1] === last[1]); } catch (e) {} }
+      if (!more) {
+        const nside = side === R.WHITE ? R.BLACK : R.WHITE;
+        if (start.side === G.color) { const ms = R.getAllMoves(start.b, start.side), after = to64(board).join(''); const m = ms.find(x => to64(R.applyMove(start.b, x)).join('') === after); if (m && ms.length > 1) ours.push({ b: start.b, side: start.side, m }); }
+        side = nside; start = { b: board.map(r => r.slice()), side };
+      }
+    }
+    const S = s => s === R.WHITE ? 1 : -1;
+    const ev = [];
+    for (const p of ours) { const r = await evalPos(to64(p.b), S(p.side), 1); ev.push(r); }
+    let fixed = 0;
+    for (let i = 3; i + 1 < ours.length && fixed < 1; i++) {
+      if (!ev[i] || !ev[i + 1]) continue;
+      const drop = ev[i].ev - ev[i + 1].ev;
+      if (!(drop >= 60 && ev[i + 1].ev <= 30)) continue;
+      const p = ours[i], deep = await evalPos(to64(p.b), S(p.side), 3); if (!deep) continue;
+      const played = p.m.from[0] * 8 + p.m.from[1] === deep.from && p.m.to[0] * 8 + p.m.to[1] === deep.to;
+      if (played) continue;   // dvigatel ham shu yurishni tanlaydi — xato bu yerda emas
+      const F = FIXES(); F[to64(p.b).join('') + S(p.side)] = [deep.from, deep.to];
+      const ks = Object.keys(F); if (ks.length > 3000) ks.slice(0, ks.length - 3000).forEach(k => delete F[k]);
+      require('./store.js').save(); fixed++;
+      log('🧠 xato topildi', id, (i + 1) + '-yurishimiz: baho', ev[i].ev, '→', ev[i + 1].ev, '| to‘g‘ri yurish saqlandi');
+    }
+    if (!fixed) log('🧠 tahlil:', id, 'aniq xato topilmadi (' + ours.length + ' yurish)');
+  } catch (e) { log('tahlil xato', e.message); }
+  ST.analyzing = false;
+}
 function learnLoss(G, state) {
   try { avStore();
     const L = replayKeys(G.fen, state.moves); let n = 0;
@@ -301,8 +379,8 @@ function playGame(id) {
     try {
       let mv = moves[0];
       // tez o'yinda: umumiy kitob va anti-kitob ishlatilmaydi (ular sekin o'yinlardan — tez o'yinda bizni zaif tuzilmalarga olib kirdi); faqat oldindan hisoblangan daraxt va dvigatel
-      const am = moves.length > 1 ? (G.bullet ? (treeMove(G.opp, pos.board, pos.side, moves) || longMove(G.opp, pos.board, pos.side, moves)) : antiMove(G.opp, pos.board, pos.side, moves)) : null;
-      if (am) { mv = am; G.lastEv = null; log(G.bullet ? 'yurish (daraxt)' : 'yurish (anti-kitob)', id, '#' + pos.plies, 'vs', G.opp); if (G.bullet) { try { mv = await avoidCheck(pos.board, pos.side, moves, mv, id, G.bullet); } catch (e) {} } }
+      const am = moves.length > 1 ? (G.bullet ? (treeMove(G.opp, pos.board, pos.side, moves, G) || longMove(G.opp, pos.board, pos.side, moves)) : antiMove(G.opp, pos.board, pos.side, moves)) : null;
+      if (am) { mv = am; G.lastEv = null; log(G.bullet ? 'yurish (daraxt)' : 'yurish (anti-kitob)', id, '#' + pos.plies, 'vs', G.opp); }
       else if (moves.length > 1 && G.bullet) {
         // ⚡ tez rejim (½+0, 1+0): har yurishga 0,05–0,4 s; kitob va endshpil bazasi — darhol; soat juda oz qolsa — dvigatelsiz xavfsiz yurish
         const my = (G.color === R.WHITE ? state.wtime : state.btime) || 30000;
@@ -317,7 +395,7 @@ function playGame(id) {
           if (!r) mv = safeMove(pos.board, pos.side, moves);
           else { const fr = r.from >> 3, fc = r.from & 7, tr = r.to >> 3, tc = r.to & 7; const c = moves.filter(m => m.from[0] === fr && m.from[1] === fc && m.to[0] === tr && m.to[1] === tc); mv = c.find(m => (m.captures || []).length === r.jumps) || c[0] || mv; }
         }
-        try { mv = await avoidCheck(pos.board, pos.side, moves, mv, id, G.bullet); } catch (e) {}
+        try { const fx = fixMove(pos.board, pos.side, moves); if (fx) { mv = fx; log('🧠 avvalgi xato tuzatildi', id, '#' + pos.plies); } } catch (e) {}
         // almashinuvlardan qochamiz (donalar ko'p qolsin), keyin durangdan qochamiz (o'yin cho'zilsa — raqibning vaqti tugaydi)
         try { if (G.lastEv != null) { const m1 = noTrade(pos.board, pos.side, moves, mv, G.lastEv); if (m1 !== mv) { mv = m1; log('⚡ almashinuvdan qochildi', id, '#' + pos.plies); } } } catch (e) {}
         try { const m2 = antiRepeat(G, state, pos.board, pos.side, moves, mv); if (m2 !== mv) { mv = m2; log('⚡ takrordan qochildi', id, '#' + pos.plies); } } catch (e) {}
@@ -360,7 +438,8 @@ function playGame(id) {
     ST.results.unshift({ id, opp: G.opp, res, at: Date.now(), url: 'https://lidraughts.org/' + id });
     ST.results.length = Math.min(ST.results.length, 50);
     log('o‘yin tugadi', id, 'vs', G.opp, '→', res, '| sabab:', state && state.status, '| yurishlar:', String(state && state.moves || '').split(' ').filter(Boolean).length);
-    if (w && w !== G.color && !/noStart|aborted/i.test(String(state && state.status)) && (G.bullet || !/outoftime|timeout/i.test(String(state && state.status)))) { try { K.learn('ld_' + id); } catch (e) {} learnLoss(G, state); }   // yutqazdi — saboq oladi (tez o'yinda vaqt bo'yicha yutqazsa ham: aks holda bir xil o'yin takrorlanaveradi)
+    if (w && w !== G.color && !/noStart|aborted/i.test(String(state && state.status)) && (G.bullet || !/outoftime|timeout/i.test(String(state && state.status)))) { try { K.learn('ld_' + id); } catch (e) {} if (!/outoftime|timeout/i.test(String(state && state.status)) || G.bullet) analyzeLoss(G, state, id); }   // yutqazdi — o'yinni chuqur tahlil qilib, haqiqiy xatoni topadi va faqat o'shani tuzatadi
+    if (!/aborted|noStart/i.test(String(state && state.status))) opResult(G, !w ? 'd' : w === G.color ? 'w' : 'l');
   };
   stream('/api/bot/game/stream/' + id, async o => {
     if (o.type === 'gameFull') {
@@ -370,6 +449,7 @@ function playGame(id) {
       log('fen:', String(G.fen).slice(0, 120), '| variant:', o.variant && (o.variant.key || o.variant.name));
       G.opp = (G.color === R.WHITE ? o.black : o.white) || {}; G.opp = G.opp.name || G.opp.id || '?';
       log('o‘yin boshlandi', id, G.color, 'vs', G.opp);
+      if (G.bullet && !G.op && String(G.opp).toLowerCase() === 'colettebot' && !(o.state && o.state.moves)) { const v = pickOpening(G.opp, G.color); if (v) { G.op = v.id; log('🎯 debyut tanlandi:', v.name); } }
       const ob = G.color === R.WHITE ? o.black : o.white; if (ob && /BOT/i.test(ob.title || '')) learnBot(G.opp);
       if (!greeted) { greeted = true; post('/api/bot/game/' + id + '/chat', { room: 'player', text: '👹 ShashkaPRO Monster — omad! Rus shashkasi: t.me/DraughtsPRObot' }); }
       if (o.state) { if (o.state.status && o.state.status !== 'started' && o.state.status !== 'created') onEnd(o.state); else think(o.state); }
@@ -403,7 +483,7 @@ async function autoChallenge() {
   let i = 0;
   for (;;) {
     await sleep(4 * 60 * 1000);
-    if (Object.keys(ST.games).length) continue;
+    if (Object.keys(ST.games).length || ST.analyzing) continue;
     // faqat hozir onlayn bo'lgan botlarni chaqiramiz
     let online = targets;
     try { const st = await get('/api/users/status?ids=' + encodeURIComponent(targets.join(','))); if (st.s === 200 && Array.isArray(st.j)) online = targets.filter(t => st.j.some(u => String(u.id || u.name).toLowerCase() === t.toLowerCase() && u.online)); } catch (e) {}
@@ -446,4 +526,4 @@ async function challenge(user, tc, rated) {
   return post('/api/challenge/' + encodeURIComponent(user), { rated: rated ? 'true' : 'false', 'clock.limit': String((lim || 3) * 60), 'clock.increment': String(inc || 0), variant: 'russian', color: 'random' });
 }
 start();
-module.exports = { status, challenge, _t: { treeMove, CT: () => CTREE, locToRC, rcToLoc, parseFen, position, antiRepeat, histKeys, buildAnti, LONG, noTrade, replayKeys, learnLoss, avoidCheck, AV: () => AVOID } };
+module.exports = { status, challenge, _t: { pickOpening, opResult, analyzeLoss, fixMove, FIXES, OPEN: () => OPEN, treeMove, CT: () => CTREE, locToRC, rcToLoc, parseFen, position, antiRepeat, histKeys, buildAnti, LONG, noTrade, replayKeys, learnLoss, avoidCheck, AV: () => AVOID } };
