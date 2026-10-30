@@ -268,7 +268,7 @@ function learnLoss(G, state) {
     log('🧠 mag‘lubiyatdan saboq:', n, 'ta yurish endi qilinmaydi');
   } catch (e) { log('saboq xato', e.message); }
 }
-async function avoidCheck(board, side, moves, mv, id) {
+async function avoidCheck(board, side, moves, mv, id, fast) {
   avStore();
   const opp = side === R.WHITE ? R.BLACK : R.WHITE, key = to64(board).join('') + side, A = AVOID[key];
   if (!A || moves.length < 2) return mv;
@@ -278,7 +278,7 @@ async function avoidCheck(board, side, moves, mv, id) {
   let best = null, bv = 1e9;
   for (const m of moves) {
     if (A.includes(after(m))) continue;
-    const r = await new Promise(rs => K.move({ board: to64(R.applyMove(board, m)), side: opp === R.WHITE ? 1 : -1, time: 0.15, book: false, maxTime: 0.15, tbAlways: true }, rs));
+    const r = await new Promise(rs => K.move({ board: to64(R.applyMove(board, m)), side: opp === R.WHITE ? 1 : -1, time: fast ? 0.05 : 0.15, book: false, maxTime: fast ? 0.05 : 0.15, tbAlways: true }, rs));
     const v = r && r.ev != null ? r.ev : (r && r.tb ? (r.tb === 'win' ? 3000 : r.tb === 'loss' ? -3000 : 0) : 0);
     if (v < bv) { bv = v; best = m; }
   }
@@ -302,7 +302,7 @@ function playGame(id) {
       let mv = moves[0];
       // tez o'yinda: umumiy kitob va anti-kitob ishlatilmaydi (ular sekin o'yinlardan — tez o'yinda bizni zaif tuzilmalarga olib kirdi); faqat oldindan hisoblangan daraxt va dvigatel
       const am = moves.length > 1 ? (G.bullet ? (treeMove(G.opp, pos.board, pos.side, moves) || longMove(G.opp, pos.board, pos.side, moves)) : antiMove(G.opp, pos.board, pos.side, moves)) : null;
-      if (am) { mv = am; G.lastEv = null; log(G.bullet ? 'yurish (daraxt)' : 'yurish (anti-kitob)', id, '#' + pos.plies, 'vs', G.opp); if (G.bullet) { try { mv = await avoidCheck(pos.board, pos.side, moves, mv, id); } catch (e) {} } }
+      if (am) { mv = am; G.lastEv = null; log(G.bullet ? 'yurish (daraxt)' : 'yurish (anti-kitob)', id, '#' + pos.plies, 'vs', G.opp); if (G.bullet) { try { mv = await avoidCheck(pos.board, pos.side, moves, mv, id, G.bullet); } catch (e) {} } }
       else if (moves.length > 1 && G.bullet) {
         // ⚡ tez rejim (½+0, 1+0): har yurishga 0,05–0,4 s; kitob va endshpil bazasi — darhol; soat juda oz qolsa — dvigatelsiz xavfsiz yurish
         const my = (G.color === R.WHITE ? state.wtime : state.btime) || 30000;
@@ -310,13 +310,14 @@ function playGame(id) {
         else {
           // vaqt taqsimoti: debyutda tez (kitob), o'rta o'yinda (10–17 dona) ko'proq — taktik zarbalar shu yerda; endshpilda yana tez (baza bor, o'yin uzoq cho'ziladi)
           let pcs = 0; for (const row of pos.board) for (const q of row) if (q) pcs++;
-          const secs = my <= 8000 ? Math.max(0.05, my / 1000 / 40) : pcs >= 18 ? (my > 20000 ? 0.5 : 0.3) : pcs >= 10 ? Math.max(0.3, Math.min(1.5, my / 1000 / 16)) : Math.max(0.1, Math.min(0.4, my / 1000 / 40));
+          // o'yinlar uzun (70+ yurish) — Colette'dan tezroq o'ynashimiz kerak: o'rtacha ~0,4 s, o'rta o'yinda ko'pi bilan 0,8 s
+          const secs = my <= 8000 ? Math.max(0.05, my / 1000 / 60) : pcs >= 18 ? 0.3 : pcs >= 10 ? Math.max(0.2, Math.min(0.8, my / 1000 / 35)) : Math.max(0.08, Math.min(0.3, my / 1000 / 50));
           const r = await engine(pos.board, pos.side, secs, 'ld_' + id, secs, Math.min(4000, my * 0.2), true, true);
           G.lastEv = r && r.ev != null && !r.tb ? r.ev : null;
           if (!r) mv = safeMove(pos.board, pos.side, moves);
           else { const fr = r.from >> 3, fc = r.from & 7, tr = r.to >> 3, tc = r.to & 7; const c = moves.filter(m => m.from[0] === fr && m.from[1] === fc && m.to[0] === tr && m.to[1] === tc); mv = c.find(m => (m.captures || []).length === r.jumps) || c[0] || mv; }
         }
-        try { mv = await avoidCheck(pos.board, pos.side, moves, mv, id); } catch (e) {}
+        try { mv = await avoidCheck(pos.board, pos.side, moves, mv, id, G.bullet); } catch (e) {}
         // almashinuvlardan qochamiz (donalar ko'p qolsin), keyin durangdan qochamiz (o'yin cho'zilsa — raqibning vaqti tugaydi)
         try { if (G.lastEv != null) { const m1 = noTrade(pos.board, pos.side, moves, mv, G.lastEv); if (m1 !== mv) { mv = m1; log('⚡ almashinuvdan qochildi', id, '#' + pos.plies); } } } catch (e) {}
         try { const m2 = antiRepeat(G, state, pos.board, pos.side, moves, mv); if (m2 !== mv) { mv = m2; log('⚡ takrordan qochildi', id, '#' + pos.plies); } } catch (e) {}
@@ -344,7 +345,7 @@ function playGame(id) {
         if (x.s !== 200) { log('yurish rad etildi', id, part, x.s, (x.t || '').slice(0, 120), '| fen:', String(G.fen).slice(0, 90), '| moves:', String(state.moves || '').slice(-80)); G.lastPlies = -1; break; }
       }
       // ⚡ tez o'yinda raqib o'ylayotganda biz ham o'ylaymiz: uning javobini taxmin qilib, o'z javobimizni oldindan hisoblab qo'yamiz
-      if (G.bullet && G.lastPlies !== -1) { try { const nb = R.applyMove(pos.board, mv); K.ponder(to64(nb), pos.side === R.WHITE ? -1 : 1, 0.3, 'ld_' + id, 0.1); } catch (e) {} }
+      if (G.bullet && G.lastPlies !== -1 && ((G.color === R.WHITE ? state.wtime : state.btime) || 0) > 12000) { try { const nb = R.applyMove(pos.board, mv); K.ponder(to64(nb), pos.side === R.WHITE ? -1 : 1, 0.15, 'ld_' + id, 0.1); } catch (e) {} }   // ponder qisqa: dvigatel bitta — uzun ponder bizning navbatdagi yurishimizni kechiktiradi
     } catch (e) { log('xato', e.message); }
     G.busy = false;
     if (G.lastPlies === -1 && !G.done && G.last && (G.rej = (G.rej || 0) + 1) <= 5) setTimeout(() => think(G.last), 2000);
@@ -359,7 +360,7 @@ function playGame(id) {
     ST.results.unshift({ id, opp: G.opp, res, at: Date.now(), url: 'https://lidraughts.org/' + id });
     ST.results.length = Math.min(ST.results.length, 50);
     log('o‘yin tugadi', id, 'vs', G.opp, '→', res, '| sabab:', state && state.status, '| yurishlar:', String(state && state.moves || '').split(' ').filter(Boolean).length);
-    if (w && w !== G.color && !/outoftime|timeout|noStart|aborted/i.test(String(state && state.status))) { try { K.learn('ld_' + id); } catch (e) {} learnLoss(G, state); }   // yurish bilan yutqazdi — saboq oladi (vaqt bo'yicha emas)
+    if (w && w !== G.color && !/noStart|aborted/i.test(String(state && state.status)) && (G.bullet || !/outoftime|timeout/i.test(String(state && state.status)))) { try { K.learn('ld_' + id); } catch (e) {} learnLoss(G, state); }   // yutqazdi — saboq oladi (tez o'yinda vaqt bo'yicha yutqazsa ham: aks holda bir xil o'yin takrorlanaveradi)
   };
   stream('/api/bot/game/stream/' + id, async o => {
     if (o.type === 'gameFull') {
