@@ -145,7 +145,7 @@ function opResult(G, res) {
 function treeMove(opp, board, side, moves, G) {
   if (String(opp || '').toLowerCase() !== 'colettebot') return null;
   const key = to64(board).join('') + (side === R.WHITE ? 1 : -1);
-  const fx = FIXES()[key];   // 🧠 avvalgi mag'lubiyatdagi xato o'rniga topilgan to'g'ri yurish
+  const fx = fixGet(key);   // 🧠 avvalgi mag'lubiyatdagi xato o'rniga topilgan to'g'ri yurish
   if (fx) { const m = moves.find(m => m.from[0] * 8 + m.from[1] === fx[0] && m.to[0] * 8 + m.to[1] === fx[1]); if (m) return m; }
   const v = G && G.op && (OPEN[side === R.WHITE ? 'w' : 'b'] || []).find(x => x.id === G.op);
   const ph = v && v.pre[key];
@@ -285,9 +285,12 @@ function replayKeys(fen, moves) {
 }
 // 🧠 mag'lubiyat tahlili: har bir o'z yurishimizdan oldingi pozitsiya baholanadi (1 s), baho birinchi keskin tushgan joy — haqiqiy xato;
 // o'sha pozitsiyada chuqurroq (3 s) eng yaxshi yurish topilib, keyingi o'yinlarda o'sha ishlatiladi. Debyutdagi yaxshi yurishlarga tegilmaydi.
+// KestoG o'ziga qarshi sekin o'yinlaridan topilgan xatolar va to'g'ri yurishlar (oldindan hisoblangan)
+let EFIX = {}; try { EFIX = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'partiyalar', 'engine_fix.json'), 'utf8')); log('dvigatel saboqlari:', Object.keys(EFIX).length); } catch (e) {}
+function fixGet(key) { return FIXES()[key] || EFIX[key] || null; }
 function FIXES() { try { const st = require('./store.js'); if (st.db) return st.db.ldFix = st.db.ldFix || {}; } catch (e) {} return {}; }
 function fixMove(board, side, moves) {
-  const fx = FIXES()[to64(board).join('') + (side === R.WHITE ? 1 : -1)]; if (!fx) return null;
+  const fx = fixGet(to64(board).join('') + (side === R.WHITE ? 1 : -1)); if (!fx) return null;
   return moves.find(m => m.from[0] * 8 + m.from[1] === fx[0] && m.to[0] * 8 + m.to[1] === fx[1]) || null;
 }
 function evalPos(b64, side, secs) {
