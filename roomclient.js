@@ -203,7 +203,7 @@
     var elInput = root.querySelector("#rcInput");
 
     window.addEventListener("error", function (e) {
-      elInfo.textContent = "⚠️ JS xato: " + (e && e.message);
+      if (!e || !e.message || e.message === "Script error.") return; elInfo.textContent = "⚠️ JS xato: " + e.message + " (" + String(e.filename || "").split("/").pop() + ":" + e.lineno + ")";
     });
 
     root.querySelector("#rcClose").onclick = function () {
