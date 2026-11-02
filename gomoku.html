@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="uz"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gomoku 5 talik</title>
+<style>
+:root{--bg:#f2f0ea;--fg:#222;--panel:#fff;--bd:#d8d4c8;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root{--bg:#161512;--fg:#ddd;--panel:#262421;--bd:#3a3834}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px}
+#st{font-weight:600;font-size:17px;min-height:24px}
+canvas{width:min(96vw,560px);aspect-ratio:1;border:2px solid var(--bd);border-radius:6px;touch-action:manipulation}
+.row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+button{padding:10px 14px;border:1px solid var(--bd);background:var(--panel);color:var(--fg);border-radius:8px;font-size:14px}
+</style></head><body>
+<div id="st"></div><canvas id="cv"></canvas>
+<div class="row"><button id="new">Yangi o'yin</button><button id="undo">Qaytarish</button><button id="mode">Bot: yoqiq</button><button id="side">Men: qora</button></div>
+<script>
+(function(){
+var N=15,b,turn,hist,over,win,bot=true,mine=1,cv=document.getElementById('cv'),cx=cv.getContext('2d'),st=document.getElementById('st'),S,P;
+var DR=[[1,0],[0,1],[1,1],[1,-1]];
+function init(){b=new Array(N*N).fill(0);turn=1;hist=[];over=false;win=null;st.textContent='Qora yuradi';draw();if(bot&&mine===2)setTimeout(botPlay,300)}
+function g(x,y){return x<0||y<0||x>=N||y>=N?-1:b[y*N+x]}
+function line(x,y,p){for(var d=0;d<4;d++){var dx=DR[d][0],dy=DR[d][1],c=[[x,y]],k;
+ for(k=1;g(x+dx*k,y+dy*k)===p;k++)c.push([x+dx*k,y+dy*k]);
+ for(k=1;g(x-dx*k,y-dy*k)===p;k++)c.push([x-dx*k,y-dy*k]);
+ if(c.length>=5)return c}return null}
+function sc(x,y,p){var t=0;for(var d=0;d<4;d++){var dx=DR[d][0],dy=DR[d][1],c=1,o=0,k;
+ for(k=1;g(x+dx*k,y+dy*k)===p;k++)c++;if(g(x+dx*k,y+dy*k)===0)o++;
+ for(k=1;g(x-dx*k,y-dy*k)===p;k++)c++;if(g(x-dx*k,y-dy*k)===0)o++;
+ if(c>=5)t+=1e5;else if(c===4)t+=o===2?1e4:o?1e3:0;else if(c===3)t+=o===2?1e3:o?100:0;else if(c===2)t+=o===2?100:o?10:0;else t+=o}return t}
+function botPlay(){if(over)return;var me=turn,op=me===1?2:1,best=-1,pick=null,any=false,x,y,i,j;
+ for(y=0;y<N;y++)for(x=0;x<N;x++){if(b[y*N+x])continue;var near=false;
+  for(j=-2;j<=2&&!near;j++)for(i=-2;i<=2;i++)if(g(x+i,y+j)>0){near=true;break}
+  if(!near)continue;any=true;var v=sc(x,y,me)*1.1+sc(x,y,op)+Math.random();if(v>best){best=v;pick=[x,y]}}
+ if(!any)pick=[7,7];place(pick[0],pick[1])}
+function place(x,y){if(over||b[y*N+x])return;b[y*N+x]=turn;hist.push([x,y]);var w=line(x,y,turn);
+ if(w){over=true;win=w;st.textContent=(turn===1?'Qora':'Oq')+' yutdi! 🎉'}
+ else if(hist.length===N*N){over=true;st.textContent='Durang'}
+ else{turn=turn===1?2:1;st.textContent=(turn===1?'Qora':'Oq')+' yuradi'}
+ draw();if(!over&&bot&&turn!==mine)setTimeout(botPlay,350)}
+cv.onclick=function(e){if(over||(bot&&turn!==mine))return;var r=cv.getBoundingClientRect();
+ var x=Math.floor((e.clientX-r.left)/r.width*N),y=Math.floor((e.clientY-r.top)/r.height*N);
+ if(x<0||y<0||x>=N||y>=N)return;place(x,y)};
+function draw(){P=window.devicePixelRatio||1;var w=Math.min(innerWidth*.96,560);cv.width=cv.height=Math.round(w*P);S=cv.width/N;
+ cx.fillStyle='#dcb35c';cx.fillRect(0,0,cv.width,cv.height);cx.strokeStyle='#5a4320';cx.lineWidth=1*P;
+ for(var i=0;i<N;i++){var a=S*(i+.5);cx.beginPath();cx.moveTo(S*.5,a);cx.lineTo(S*(N-.5),a);cx.moveTo(a,S*.5);cx.lineTo(a,S*(N-.5));cx.stroke()}
+ [[3,3],[11,3],[7,7],[3,11],[11,11]].forEach(function(p){cx.fillStyle='#5a4320';cx.beginPath();cx.arc(S*(p[0]+.5),S*(p[1]+.5),S*.08,0,7);cx.fill()});
+ for(var y=0;y<N;y++)for(var x=0;x<N;x++){var v=b[y*N+x];if(!v)continue;var X=S*(x+.5),Y=S*(y+.5),gr=cx.createRadialGradient(X-S*.12,Y-S*.12,S*.04,X,Y,S*.44);
+  if(v===1){gr.addColorStop(0,'#777');gr.addColorStop(1,'#000')}else{gr.addColorStop(0,'#fff');gr.addColorStop(1,'#bbb')}
+  cx.fillStyle=gr;cx.beginPath();cx.arc(X,Y,S*.43,0,7);cx.fill();cx.strokeStyle='#0006';cx.stroke()}
+ var l=hist[hist.length-1];if(l){cx.fillStyle='#e22';cx.beginPath();cx.arc(S*(l[0]+.5),S*(l[1]+.5),S*.1,0,7);cx.fill()}
+ if(win)win.forEach(function(p){cx.strokeStyle='#2c2';cx.lineWidth=3*P;cx.beginPath();cx.arc(S*(p[0]+.5),S*(p[1]+.5),S*.46,0,7);cx.stroke()})}
+document.getElementById('new').onclick=init;
+document.getElementById('undo').onclick=function(){if(!hist.length)return;var n=(bot&&turn===mine&&hist.length>1)?2:1;
+ for(;n>0&&hist.length;n--){var m=hist.pop();b[m[1]*N+m[0]]=0}turn=hist.length%2?2:1;over=false;win=null;st.textContent=(turn===1?'Qora':'Oq')+' yuradi';draw()};
+document.getElementById('mode').onclick=function(){bot=!bot;this.textContent='Bot: '+(bot?'yoqiq':'o\'chiq');init()};
+document.getElementById('side').onclick=function(){mine=mine===1?2:1;this.textContent='Men: '+(mine===1?'qora':'oq');init()};
+addEventListener('resize',draw);init();
+})();
+</script></body></html>
