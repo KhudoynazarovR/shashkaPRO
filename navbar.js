@@ -482,7 +482,7 @@
   setInterval(function () {
     var hero = $('hzHero');
     if (!hero) { sheet.style.display = sheet.style.display === 'flex' && window.nvK !== 'pl' ? 'none' : sheet.style.display; return; }
-    if (!$('nvKK')) {   // 🦍 King Kong — tez kunda (premyera e'loni)
+    if (false && !$('nvKK')) {   // 🦍 King Kong — tez kunda (premyera e'loni)
       if (!$('nvKKcss')) { var kc = document.createElement('style'); kc.id = 'nvKKcss'; kc.textContent =
         '#nvKK{order:-1;position:relative;overflow:hidden;display:flex;align-items:center;gap:12px;margin:0 0 12px;padding:14px;border-radius:18px;color:#fff;cursor:pointer;' +
         'background:linear-gradient(120deg,#1a0d05,#5a2a0c 45%,#8a3f10 70%,#1a0d05);box-shadow:inset 0 0 0 1.5px #ffb347,0 0 22px rgba(255,140,40,.35)}' +
