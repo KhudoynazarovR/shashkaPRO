@@ -246,6 +246,7 @@
         ["Qizil", "#F1D5CC", "#B5685D", 1], ["Binafsha", "#E3DAEE", "#8B72B5", 1],
         ["Feruza", "#D5F0EC", "#4A9A93", 1], ["Tungi", "#9AA5B8", "#3E4A5E", 1]
       ];
+      window.addEventListener("spEq", function () { try { render(); } catch (e) {} });
       var rcm = { night: false, sound: true, flat: false, board: -1, pieces: -1, auto: false, autoPro: false, chat: true };
       try { var rcmSv = JSON.parse(localStorage.getItem(RCM_KEY) || "{}"); for (var rcmK in rcmSv) rcm[rcmK] = rcmSv[rcmK]; } catch (e) {}
       function rcmSave() { try { localStorage.setItem(RCM_KEY, JSON.stringify(rcm)); } catch (e) {} }
