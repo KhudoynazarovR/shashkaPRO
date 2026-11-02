@@ -223,11 +223,12 @@ async function gifRender(id) {
   if (gifCache.has(id)) return gifCache.get(id);
   const sharp = require('sharp'), { GIFEncoder, quantize, applyPalette } = require('gifenc');
   let ln; for (let i = 0; i < 10; i++) { ln = require('./gifopen').line(6); if (ln.moves.length >= 4) break; }
-  const gif = GIFEncoder(), Z = 400, n = ln.frames.length;
+  const IM = await require('./puzimg.js').pcImgs(sharp);
+  const gif = GIFEncoder(), Z = 560, n = ln.frames.length;
   for (let i = 0; i < n; i++) {
     const bd = ln.frames[i].map(r => r.map(x => NUM[x] || 0));
-    const { data } = await sharp(Buffer.from(svgBoard(bd, 'w', null))).resize(Z, Z).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-    const pal = quantize(data, 64);
+    const { data } = await sharp(Buffer.from(svgBoard(bd, 'w', IM))).resize(Z, Z).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    const pal = quantize(data, 256);
     gif.writeFrame(applyPalette(data, pal), Z, Z, { palette: pal, delay: i === n - 1 ? 1800 : 900 });
   }
   gif.finish();

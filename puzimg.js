@@ -61,3 +61,5 @@ module.exports = function sendPuzzle(pb, board, side) {
   }).then(d => (d && d.ok) ? d : fallback()).catch(() => fallback());
 };
 module.exports.svgBoard = svgBoard;
+
+module.exports.pcImgs = pcImgs;
