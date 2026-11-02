@@ -93,28 +93,21 @@
   var SETO = false, SETO2 = false, PLT = null;
   function stopPoll() { if (PLT) clearInterval(PLT); PLT = null; HALL = false; }
   function menu() {
-    shell(); stopAll(); netLeave(); stopPoll();
+    shell(); stopAll(); netLeave(); stopPoll(); CFG.rules = {};
     var z = sizeOf(CFG.size), th = THEMES[CFG.theme] || THEMES.shashka, tcx = TCS.filter(function (t) { return t.k === CFG.tc; })[0] || TCS[0];
     var h = '<div class="top"><button class="bk" data-x>‹</button><h2>🧠 ' + T('Xotira') + '</h2><button class="bk" data-snd style="font-size:20px">' + (SND ? '🔊' : '🔇') + '</button><button class="bk" data-set style="font-size:20px' + (SETO ? ';background:#3fa34d' : '') + '">⚙️</button></div>';
     // sozlamalar qisqacha (bosilsa ochiladi)
-    h += '<div class="cd sum" data-set2 style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 12px"><span style="flex:1">📐 <b>' + z.t + '</b> · ' + th.ic + ' ' + T(th.t) + ' · ' + T(tcx.t) + rulesTxt(CFG.rules) + ' · 🤖 ' + T(LV[CFG.lv].t) + '</span><span style="opacity:.7">' + (SETO ? '▲' : '⚙️ ▼') + '</span></div>';
+    h += '<div class="cd sum" data-set2 style="display:none;align-items:center;gap:8px;cursor:pointer;padding:10px 12px"><span style="flex:1">📐 <b>' + z.t + '</b> · ' + th.ic + ' ' + T(th.t) + ' · ' + T(tcx.t) + rulesTxt(CFG.rules) + ' · 🤖 ' + T(LV[CFG.lv].t) + '</span><span style="opacity:.7">' + (SETO ? '▲' : '⚙️ ▼') + '</span></div>';
     if (SETO) {
       h += '<div class="cd" style="margin-top:-4px"><div class="lb" style="margin-top:0">📐 ' + T('Doska') + '</div><div class="row">';
       SIZES.forEach(function (zz) { h += '<button class="op' + (CFG.size === zz.k ? ' on' : '') + '" data-s="' + zz.k + '">' + zz.t + '<small>' + zz.p + ' ' + T('juftlik') + ' · 🪙' + zz.r + '</small></button>'; });
-      h += '</div>';
-h += '<div class="lb">🤖 ' + T('Bot xotirasi') + '</div><div class="row">';
+      h += '</div><div class="lb">🤖 ' + T('Bot xotirasi') + '</div><div class="row">';
       LV.forEach(function (l) { h += '<button class="op' + (CFG.lv === l.k ? ' on' : '') + '" data-l="' + l.k + '">' + T(l.t) + '</button>'; });
-      h += '</div>';
-h += '<div data-more style="margin-top:12px;padding:12px;border-radius:12px;background:rgba(255,255,255,.08);display:flex;align-items:center;gap:8px;cursor:pointer"><div style="flex:1"><b>⚙️ Qo‘shimcha sozlamalar</b><br><small style="opacity:.7">Rasmlar · Vaqt · Qoidalar</small></div><span style="opacity:.7">' + (SETO2 ? '▲' : '▼') + '</span></div>';
-if (SETO2) {
-h += '<div class="lb">🎨 ' + T('Rasmlar') + '</div><select data-th>';
-      for (var k in THEMES) h += '<option value="' + k + '"' + (CFG.theme === k ? ' selected' : '') + '>' + THEMES[k].ic + '  ' + T(THEMES[k].t) + '</option>';
-      h += '</select><div class="lb">⏱ ' + T('Vaqt') + '</div><div class="row">';
+      h += '</div><div class="lb">⏱ ' + T('Vaqt') + '</div><div class="row">';
       TCS.forEach(function (t) { h += '<button class="op' + (CFG.tc === t.k ? ' on' : '') + '" data-t="' + t.k + '">' + T(t.t) + '</button>'; });
-      h += '</div><div class="lb">📜 ' + T('Qo‘shimcha qoidalar') + '</div>';
-      RULES.forEach(function (r) { h += '<div class="rl' + (CFG.rules[r.k] ? ' on' : '') + '" data-rule="' + r.k + '"><div><b>' + T(r.t) + '</b><small>' + T(r.d) + '</small></div><span class="sw"></span></div>'; });
-      }
-h += '</div></div>';
+      h += '</div><div class="lb">🎨 ' + T('Rasmlar') + '</div><select data-th>';
+      for (var k in THEMES) h += '<option value="' + k + '"' + (CFG.theme === k ? ' selected' : '') + '>' + THEMES[k].ic + '  ' + T(THEMES[k].t) + '</option>';
+      h += '</select></div>';
     }
     h += '<div class="row" style="margin-top:4px"><button class="go" data-rnd style="flex:1;margin-top:0">🎲 ' + T('Tasodifiy raqib') + '</button><button class="go g2" data-bot style="flex:1;margin-top:0;font-size:18px">🤖 ' + T('Bot bilan') + '</button></div>';
     h += '<div data-hmsg></div>';
