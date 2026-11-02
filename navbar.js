@@ -19,10 +19,10 @@
   document.head.appendChild(css);
   var bar = document.createElement('div');
   bar.id = 'nvBar';
-  var items = [['pl', '🏠', 'Bosh'], ['puz', '🧩', 'Masalalar'], ['rk', '📊', 'Reyting'], ['mn', '☰', 'Menyu']];
+  var items = [['pl', '🏠', 'Bosh'], ['puz', '🧩', 'Masalalar'], ['t', '🏆', 'Turnir'], ['rk', '📊', 'Reyting'], ['mn', '☰', 'Menyu']];
   bar.innerHTML = items.map(function (i) {
     return '<button data-k="' + i[0] + '"><span>' + i[1] + '</span>' + i[2] + '</button>';
-  }).join('') + '<button data-k="pf" style="display:none"><span>👤</span>Profil</button><button data-k="t" style="display:none"><span>🏆</span>Turnir</button>';
+  }).join('') + '<button data-k="pf" style="display:none"><span>👤</span>Profil</button>';
   document.body.appendChild(bar);
   var pg = document.createElement('div');
   pg.id = 'nvPg';
