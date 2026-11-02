@@ -90,7 +90,7 @@
   function shell() { css(); if (!ov) { ov = document.createElement('div'); ov.id = 'spMem'; document.body.appendChild(ov); } }
 
   // ---------------- menyu = 🎮 Xotira o'yin zali: sozlamalar tepada, zaldagi o'yinchilar, tasodifiy raqib, jonli efir
-  var SETO = false, PLT = null;
+  var SETO = false, SETO2 = false, PLT = null;
   function stopPoll() { if (PLT) clearInterval(PLT); PLT = null; HALL = false; }
   function menu() {
     shell(); stopAll(); netLeave(); stopPoll();
@@ -101,15 +101,20 @@
     if (SETO) {
       h += '<div class="cd" style="margin-top:-4px"><div class="lb" style="margin-top:0">📐 ' + T('Doska') + '</div><div class="row">';
       SIZES.forEach(function (zz) { h += '<button class="op' + (CFG.size === zz.k ? ' on' : '') + '" data-s="' + zz.k + '">' + zz.t + '<small>' + zz.p + ' ' + T('juftlik') + ' · 🪙' + zz.r + '</small></button>'; });
-      h += '</div><div class="lb">🎨 ' + T('Rasmlar') + '</div><select data-th>';
+      h += '</div>';
+h += '<div class="lb">🤖 ' + T('Bot xotirasi') + '</div><div class="row">';
+      LV.forEach(function (l) { h += '<button class="op' + (CFG.lv === l.k ? ' on' : '') + '" data-l="' + l.k + '">' + T(l.t) + '</button>'; });
+      h += '</div>';
+h += '<div data-more style="margin-top:12px;padding:12px;border-radius:12px;background:rgba(255,255,255,.08);display:flex;align-items:center;gap:8px;cursor:pointer"><div style="flex:1"><b>⚙️ Qo‘shimcha sozlamalar</b><br><small style="opacity:.7">Rasmlar · Vaqt · Qoidalar</small></div><span style="opacity:.7">' + (SETO2 ? '▲' : '▼') + '</span></div>';
+if (SETO2) {
+h += '<div class="lb">🎨 ' + T('Rasmlar') + '</div><select data-th>';
       for (var k in THEMES) h += '<option value="' + k + '"' + (CFG.theme === k ? ' selected' : '') + '>' + THEMES[k].ic + '  ' + T(THEMES[k].t) + '</option>';
       h += '</select><div class="lb">⏱ ' + T('Vaqt') + '</div><div class="row">';
       TCS.forEach(function (t) { h += '<button class="op' + (CFG.tc === t.k ? ' on' : '') + '" data-t="' + t.k + '">' + T(t.t) + '</button>'; });
       h += '</div><div class="lb">📜 ' + T('Qo‘shimcha qoidalar') + '</div>';
       RULES.forEach(function (r) { h += '<div class="rl' + (CFG.rules[r.k] ? ' on' : '') + '" data-rule="' + r.k + '"><div><b>' + T(r.t) + '</b><small>' + T(r.d) + '</small></div><span class="sw"></span></div>'; });
-      h += '<div class="lb">🤖 ' + T('Bot xotirasi') + '</div><div class="row">';
-      LV.forEach(function (l) { h += '<button class="op' + (CFG.lv === l.k ? ' on' : '') + '" data-l="' + l.k + '">' + T(l.t) + '</button>'; });
-      h += '</div></div>';
+      }
+h += '</div></div>';
     }
     h += '<div class="row" style="margin-top:4px"><button class="go" data-rnd style="flex:1;margin-top:0">🎲 ' + T('Tasodifiy raqib') + '</button><button class="go g2" data-bot style="flex:1;margin-top:0;font-size:18px">🤖 ' + T('Bot bilan') + '</button></div>';
     h += '<div data-hmsg></div>';
@@ -123,6 +128,7 @@
     q('[data-x]').onclick = close;
     q('[data-snd]').onclick = function () { SND = !SND; try { localStorage.setItem('spMemSnd', SND ? '1' : '0'); } catch (e) {} this.textContent = SND ? '🔊' : '🔇'; if (SND) snd('ok'); };
     q('[data-set]').onclick = q('[data-set2]').onclick = function () { SETO = !SETO; menu(); };
+    if (q('[data-more]')) q('[data-more]').onclick = function () { SETO2 = !SETO2; menu(); };
     if (q('[data-th]')) q('[data-th]').onchange = function () { CFG.theme = this.value; saveCfg(); menu(); };
     [].forEach.call(ov.querySelectorAll('[data-s]'), function (b) { b.onclick = function () { CFG.size = b.getAttribute('data-s'); saveCfg(); menu(); }; });
     [].forEach.call(ov.querySelectorAll('[data-l]'), function (b) { b.onclick = function () { CFG.lv = +b.getAttribute('data-l'); saveCfg(); menu(); }; });
