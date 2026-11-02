@@ -277,7 +277,30 @@
     if (best) { try { best.e.click(); } catch (x) {} }
   }
   function ldJs(src, cb) { var sc = document.createElement('script'); sc.src = src; sc.onload = cb; document.head.appendChild(sc); }
-  pb.onclick = function () { drawPlay(); po.style.display = 'block'; };
+  var mb = document.createElement('button');
+  mb.id = 'nvMore'; mb.textContent = '👥'; mb.setAttribute('aria-label', 'Do‘st bilan o‘ynash'); document.body.appendChild(mb);
+  var cssQ = document.createElement('style');
+  cssQ.textContent = '#nvPlayBtn{right:160px!important}#nvTcChip{width:84px!important;right:16px!important;font-size:14px!important;padding:0!important}#nvMore{position:fixed;right:108px;width:44px;bottom:calc(68px + env(safe-area-inset-bottom));height:54px;border:0;border-radius:14px;background:#1f2147;color:#fff;font:800 22px system-ui,sans-serif;box-shadow:0 5px 0 #0e0f2a;display:flex;align-items:center;justify-content:center}';
+  document.head.appendChild(cssQ);
+  mb.onclick = function () { friendSheet(); };
+  function pbDraw() {
+    var s = st() || {}, q = !!s.inQueue;
+    var t = q ? '⏳ Qidirilmoqda… (bekor)' : '▶ O‘ynash';
+    if (pb.textContent !== t) pb.textContent = t;
+    pb.style.background = q ? 'linear-gradient(#f5a524,#e07b00)' : '';
+    pb.style.boxShadow = q ? '0 5px 0 #9a5300' : '';
+    pb.style.fontSize = q ? '15px' : '';
+    var cs = getComputedStyle(pb);
+    mb.style.zIndex = cs.zIndex;
+    mb.style.display = (cs.display === 'none' || cs.visibility === 'hidden') ? 'none' : 'flex';
+  }
+  setInterval(pbDraw, 400);
+  pb.onclick = function () {
+    if (!window.lbPlay) { drawPlay(); po.style.display = 'block'; return; }
+    var s = st() || {};
+    if (s.inQueue) window.lbPlay.cancel(); else window.lbPlay.quick(TC);
+    setTimeout(pbDraw, 300);
+  };
   setInterval(function () { if (po.style.display === 'block') drawPlay(); }, 1500);
   po.onclick = function (e) {
     var b = e.target.closest('.it'); if (!b) return;
