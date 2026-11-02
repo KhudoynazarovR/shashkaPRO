@@ -605,8 +605,6 @@
     var L = [
       ['🧠', 'Xotira', 'Juftliklarni toping · bot yoki do‘st bilan', '#0f6fb0,#0a3b6b', 'mem'],
       ['⚫', 'Gomoku', '5 talik · bot yoki do‘st bilan', '#475569,#64748b', '/gomoku.html'],
-      ['♛', '100 katakli', 'Xalqaro shashka 10×10 · bot bilan', '#b45309,#f59e0b', '/draughts100.html'],
-      ['🔬', 'Tahlil 100', 'Lidraughts tahlil taxtasi (10×10)', '#0f766e,#14b8a6', 'lid']
     ];
     var h = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><button id="nvMiniX" style="width:44px;height:44px;border:0;border-radius:12px;background:rgba(255,255,255,.1);color:#fff;font-size:22px">‹</button><b style="font-size:22px">🎮 Mini o‘yinlar</b></div>';
     L.forEach(function (r, i) {
@@ -631,7 +629,7 @@
     var m = document.getElementById('nvMemRow');
     if (!m || m.dataset.mini) return;
     m.dataset.mini = '1';
-    m.innerHTML = '<span style="font-size:26px;flex:none">🎮</span><div><b style="display:block;font-size:15px">Mini o‘yinlar</b><div style="opacity:.8;font-size:12px">Xotira · Gomoku · 100</div></div>';
+    m.innerHTML = '<span style="font-size:26px;flex:none">🎮</span><div><b style="display:block;font-size:15px">Mini o‘yinlar</b><div style="opacity:.8;font-size:12px">Xotira · Gomoku</div></div>';
     m.style.background = 'linear-gradient(110deg,#4c1d95,#7c3aed)';
     m.style.borderColor = '#a78bfa';
     m.onclick = hub;
