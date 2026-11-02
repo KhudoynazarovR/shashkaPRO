@@ -584,3 +584,56 @@
     var s = b.querySelector('small'); if (s) s.textContent = '8 ta bot';
   }, 700);
 })();
+
+/* nvMini: Mini o'yinlar markazi (Xotira, Gomoku, 100 katakli, Tahlil 100) */
+(function () {
+  function fr(url) {
+    var o = document.createElement('div');
+    o.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#161512';
+    o.innerHTML = '<iframe src="' + url + '" style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe><button style="position:absolute;top:8px;right:8px;z-index:2;width:40px;height:40px;border:0;border-radius:50%;background:#000a;color:#fff;font-size:20px">✕</button>';
+    o.querySelector('button').onclick = function () { o.remove(); };
+    document.body.appendChild(o);
+  }
+  function mem() {
+    if (window.spMemori) window.spMemori();
+    else { var sm = document.createElement('script'); sm.src = '/memori.js?v=9'; sm.onload = function () { window.spMemori(); }; document.head.appendChild(sm); }
+  }
+  function hub() {
+    if (document.getElementById('nvMiniHub')) return;
+    var o = document.createElement('div'); o.id = 'nvMiniHub';
+    o.style.cssText = 'position:fixed;inset:0;z-index:99998;background:radial-gradient(circle at 50% 0,#1a1450 0,#0b0e1a 60%);color:#fff;overflow:auto;padding:calc(14px + env(safe-area-inset-top,0px)) 14px calc(24px + env(safe-area-inset-bottom,0px))';
+    var L = [
+      ['🧠', 'Xotira', 'Juftliklarni toping · bot yoki do‘st bilan', '#0f6fb0,#0a3b6b', 'mem'],
+      ['⚫', 'Gomoku', '5 talik · bot yoki do‘st bilan', '#475569,#64748b', '/gomoku.html'],
+      ['♛', '100 katakli', 'Xalqaro shashka 10×10 · bot bilan', '#b45309,#f59e0b', '/draughts100.html'],
+      ['🔬', 'Tahlil 100', 'Lidraughts tahlil taxtasi (10×10)', '#0f766e,#14b8a6', 'lid']
+    ];
+    var h = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><button id="nvMiniX" style="width:44px;height:44px;border:0;border-radius:12px;background:rgba(255,255,255,.1);color:#fff;font-size:22px">‹</button><b style="font-size:22px">🎮 Mini o‘yinlar</b></div>';
+    L.forEach(function (r, i) {
+      var c = r[3].split(',');
+      h += '<div data-i="' + i + '" style="display:flex;align-items:center;gap:12px;padding:14px;margin-bottom:10px;border-radius:16px;background:linear-gradient(135deg,' + c[0] + '55,' + c[1] + '22);border:1px solid ' + c[0] + 'aa;cursor:pointer"><span style="font-size:34px;flex:none">' + r[0] + '</span><div style="flex:1;min-width:0"><b style="display:block;font-size:17px">' + r[1] + '</b><small style="opacity:.75;font-size:13px">' + r[2] + '</small></div><span style="font-size:26px;opacity:.7">›</span></div>';
+    });
+    o.innerHTML = h;
+    document.body.appendChild(o);
+    o.querySelector('#nvMiniX').onclick = function () { o.remove(); };
+    [].forEach.call(o.querySelectorAll('[data-i]'), function (el) {
+      el.onclick = function () {
+        var r = L[+el.getAttribute('data-i')];
+        if (r[4] === 'mem') { o.remove(); mem(); }
+        else if (r[4] === 'lid') {
+          var u = 'https://lidraughts.org/analysis';
+          if (window.Telegram && Telegram.WebApp && Telegram.WebApp.openLink) Telegram.WebApp.openLink(u); else window.open(u, '_blank');
+        } else fr(r[4]);
+      };
+    });
+  }
+  setInterval(function () {
+    var m = document.getElementById('nvMemRow');
+    if (!m || m.dataset.mini) return;
+    m.dataset.mini = '1';
+    m.innerHTML = '<span style="font-size:26px;flex:none">🎮</span><div><b style="display:block;font-size:15px">Mini o‘yinlar</b><div style="opacity:.8;font-size:12px">Xotira · Gomoku · 100</div></div>';
+    m.style.background = 'linear-gradient(110deg,#4c1d95,#7c3aed)';
+    m.style.borderColor = '#a78bfa';
+    m.onclick = hub;
+  }, 700);
+})();

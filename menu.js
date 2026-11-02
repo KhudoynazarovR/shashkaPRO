@@ -72,10 +72,6 @@
       ["🧩", "Masalalar", "Shashka masalalarini yeching", "@puz", "#f5873b,#f7c02d"],
       ["📖", "Debyutlar", "Mashhur ochilishlar va yod olish", "@deb", "#0ea5e9,#6366f1"],
       ["🪙", "Tosh do‘koni", "Donalar va o‘z donangiz", "@shop", "#7b3ff2,#d62f8f"]]],
-    ["QO‘SHIMCHA O‘YINLAR", [
-      ["⚫", "Gomoku", "5 talik · bot yoki do‘st bilan", "@gomoku", "#334155,#64748b"],
-      ["♛", "100 katakli", "Xalqaro shashka 10×10", "@d100", "#b45309,#f59e0b"],
-      ["🔬", "Tahlil 100", "Lidraughts tahlil taxtasi (10×10)", "@d100a", "#0f766e,#14b8a6"]]],
     ["ILOVA", [
       ["⚙️", "Sozlamalar", "Ovoz, fon va boshqalar", "@set", "#6b7bff,#8fa0ff"],
       ["❓", "Yordam", "Bo‘limlar haqida", "@help", "#17b2f7,#17e3ff"],
@@ -105,9 +101,9 @@
     var h = "<div class='mqT'><div class='mqL'><b>Shashka<i>PRO</i> 👑</b><small>Yaxshiroq o‘yinchilar uchun!</small></div><div class='mqR'><span class='mqC'>🪙 " + (bal == null ? "—" : bal) + "</span><button class='mnd' onclick=\"mnA('@daily')\"" + (canDaily ? "" : " disabled") + ">" + (canDaily ? "🎁 Bonus" : "✅ Olingan") + "</button></div></div>";
     h += "<div class='mnm' id='mnMsg'></div>";
     SEC.forEach(function (s, i) {
-      h += "<div class='mqS'><span>" + (i === 0 ? "🎮" : i === 1 ? "🎯" : "⚙️") + "</span>" + s[0] + "</div><div class='mqGr'>" + s[1].map(cardHtml).join("") + "</div>";
-      if (i === 2 && open === "help") h += "<div class='mnx mqX'>📱 <b>Pastki menyu:</b><br>👤 Profil: ma‘lumotlaringiz va balans<br>🎮 O‘yin: onlayn raqiblar va tezkor o‘yin<br>🏆 Turnir: turnirlar va klublar<br>📊 Reyting: eng kuchli o‘yinchilar<br>☰ Menyu: AI o‘yin, muharrir va sozlamalar</div>";
-      if (i === 2 && open === "fb") h += "<div class='mnx mqX'><textarea id='mnFbT' maxlength='1000' placeholder='Taklif yoki shikoyatingizni yozing…'></textarea><button id='mnFbB' onclick='mnSend()'>Yuborish</button><div id='mnFbM' class='mnm' style='margin:8px 0 0'></div></div>";
+      h += "<div class='mqS'><span>" + (i === 0 ? "🎮" : "⚙️") + "</span>" + s[0] + "</div><div class='mqGr'>" + s[1].map(cardHtml).join("") + "</div>";
+      if (i === 1 && open === "help") h += "<div class='mnx mqX'>📱 <b>Pastki menyu:</b><br>👤 Profil: ma‘lumotlaringiz va balans<br>🎮 O‘yin: onlayn raqiblar va tezkor o‘yin<br>🏆 Turnir: turnirlar va klublar<br>📊 Reyting: eng kuchli o‘yinchilar<br>☰ Menyu: AI o‘yin, muharrir va sozlamalar</div>";
+      if (i === 1 && open === "fb") h += "<div class='mnx mqX'><textarea id='mnFbT' maxlength='1000' placeholder='Taklif yoki shikoyatingizni yozing…'></textarea><button id='mnFbB' onclick='mnSend()'>Yuborish</button><div id='mnFbM' class='mnm' style='margin:8px 0 0'></div></div>";
     });
     if (window.__isAdmin) h += "<div class='mqS'><span>🛡</span>ADMIN</div><div class='mqGr'>" + cardHtml(["📊", "Statistika", "Faollik, qaytish, eslatmalar", "@stats", "#0ea5e9,#22c55e"]) + "</div>";
     h += "<div class='mqB'><span>🏆</span><div><b>ShashkaPRO — Doim siz bilan!</b><small>O‘yin, do‘stlar, turnirlar va yanada ko‘p imkoniyatlar!</small></div></div>";
