@@ -71,7 +71,9 @@
       ["🔬", "Tahlil taxtasi", "KestoG bilan pozitsiya tahlili", "@board", "#3b82f6,#06b6d4"],
       ["🧩", "Masalalar", "Shashka masalalarini yeching", "@puz", "#f5873b,#f7c02d"],
       ["📖", "Debyutlar", "Mashhur ochilishlar va yod olish", "@deb", "#0ea5e9,#6366f1"],
-      ["🪙", "Tosh do‘koni", "Donalar va o‘z donangiz", "@shop", "#7b3ff2,#d62f8f"]]],
+      ["🪙", "Tosh do‘koni", "Donalar va o‘z donangiz", "@shop", "#7b3ff2,#d62f8f"],
+      ["♛", "100 katakli", "Xalqaro shashka 10×10", "@d100", "#b45309,#f59e0b"],
+      ["🔬", "Tahlil 100", "Lidraughts tahlil taxtasi (10×10)", "@d100a", "#0f766e,#14b8a6"]]],
     ["ILOVA", [
       ["⚙️", "Sozlamalar", "Ovoz, fon va boshqalar", "@set", "#6b7bff,#8fa0ff"],
       ["❓", "Yordam", "Bo‘limlar haqida", "@help", "#17b2f7,#17e3ff"],
@@ -133,7 +135,7 @@
   }
   function close() { if (panel) panel.style.display = "none"; }
   window.mnA = function (a) {
-    if (a === "@set") { close(); if (window.spSettings) window.spSettings(); return; } if (a.indexOf("@ai:") === 0) { close(); if (window.aiShow) window.aiShow(a.slice(4)); return; }
+    if (a === "@d100") { close(); var _o = document.createElement("div"); _o.style.cssText = "position:fixed;inset:0;z-index:99999;background:#161512"; _o.innerHTML = "<iframe src='/draughts100.html' style='position:absolute;inset:0;width:100%;height:100%;border:0'></iframe><button style='position:absolute;top:8px;right:8px;z-index:2;width:40px;height:40px;border:0;border-radius:50%;background:#000a;color:#fff;font-size:20px'>✕</button>"; _o.querySelector("button").onclick = function () { _o.remove(); }; document.body.appendChild(_o); return; } if (a === "@d100a") { close(); var _u = "https://lidraughts.org/analysis"; if (window.Telegram && Telegram.WebApp && Telegram.WebApp.openLink) Telegram.WebApp.openLink(_u); else window.open(_u, "_blank"); return; } if (a === "@set") { close(); if (window.spSettings) window.spSettings(); return; } if (a.indexOf("@ai:") === 0) { close(); if (window.aiShow) window.aiShow(a.slice(4)); return; }
     if (a === "@live") { close(); liveOpen(); return; }
     if (a === "@deb") { close(); if (window.spDebut) window.spDebut(); else { var _d = document.createElement('script'); _d.src = '/debyut.js?v=2'; _d.onload = function () { window.spDebut(); }; document.head.appendChild(_d); } return; }
     if (a === "@stats") { close(); if (window.spStats) window.spStats(); else { var _s = document.createElement('script'); _s.src = '/statsview.js?v=1'; _s.onload = function () { window.spStats(); }; document.head.appendChild(_s); } return; }
