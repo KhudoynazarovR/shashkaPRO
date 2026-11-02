@@ -218,13 +218,33 @@ function mmTouch(r) {
   m.tmr = setTimeout(() => { m.tmr = null; mmEdit(r, m); }, Math.max(0, 3000 - (Date.now() - m.last)));
 }
 function mmNow(r) { const m = r && msgs.get('mm:' + r.code); if (m) { if (m.tmr) { clearTimeout(m.tmr); m.tmr = null; } mmEdit(r, m); } }
+const gifCache = new Map();
+async function gifRender(id) {
+  if (gifCache.has(id)) return gifCache.get(id);
+  const sharp = require('sharp'), { GIFEncoder, quantize, applyPalette } = require('gifenc');
+  let ln; for (let i = 0; i < 10; i++) { ln = require('./gifopen').line(6); if (ln.moves.length >= 4) break; }
+  const gif = GIFEncoder(), Z = 400, n = ln.frames.length;
+  for (let i = 0; i < n; i++) {
+    const bd = ln.frames[i].map(r => r.map(x => NUM[x] || 0));
+    const { data } = await sharp(Buffer.from(svgBoard(bd, 'w', null))).resize(Z, Z).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    const pal = quantize(data, 64);
+    gif.writeFrame(applyPalette(data, pal), Z, Z, { palette: pal, delay: i === n - 1 ? 1800 : 900 });
+  }
+  gif.finish();
+  const buf = Buffer.from(gif.bytes());
+  gifCache.set(id, buf); if (gifCache.size > 20) gifCache.delete(gifCache.keys().next().value);
+  return buf;
+}
+function gifUrl(roomId) { const b = BASE(); return b ? b + '/api/gcard/' + roomId + '.gif' : ''; }
 function handleHttp(req, res, p) {
   const mx = /^\/api\/mcard\/([A-Z0-9]{6})\.jpg$/.exec(p);
   if (mx) { mmRender(mx[1], String(new URL(req.url, 'http://x').searchParams.get('f') || '').slice(0, 30), new URL(req.url, 'http://x').searchParams.get('r') === '1').then(buf => { res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=60' }); res.end(buf); }).catch(e => { console.log('[mcard]', e.message); res.writeHead(500); res.end(); }); return true; }
+  const mg = /^\/api\/gcard\/([a-z0-9]{4,16})\.gif$/.exec(p);
+  if (mg) { gifRender(mg[1]).then(buf => { res.writeHead(200, { 'Content-Type': 'image/gif', 'Content-Length': buf.length, 'Cache-Control': 'public, max-age=600' }); res.end(buf); }).catch(e => { console.log('[gcard gif]', e.message); res.writeHead(500); res.end(); }); return true; }
   const mm = /^\/api\/gcard\/([a-z0-9]{4,16})\.jpg$/.exec(p); if (!mm) return false;
   const q = new URL(req.url, 'http://x').searchParams;
   render(mm[1], String(q.get('f') || '').slice(0, 30)).then(buf => { res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=60' }); res.end(buf); })
     .catch(e => { console.log('[gcard]', e.message); res.writeHead(500); res.end(); });
   return true;
 }
-module.exports = { MM_CAP, mmUrl, mmCaption, mmMarkup, mmChosen, mmTouch, mmNow, mmRender, setRooms: r => { ROOMS = r; }, setApi: a => { API = a; }, api: () => API, rooms: () => ROOMS, url, caption, markup, chosen, touch, now, msgOf, move, parseOpt, handleHttp, render, tg };
+module.exports = { MM_CAP, mmUrl, mmCaption, mmMarkup, mmChosen, mmTouch, mmNow, mmRender, setRooms: r => { ROOMS = r; }, setApi: a => { API = a; }, api: () => API, rooms: () => ROOMS, url, gifUrl, caption, markup, chosen, touch, now, msgOf, move, parseOpt, handleHttp, render, tg };
