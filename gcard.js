@@ -120,6 +120,7 @@ function edit(room, m) {
 }
 function touch(room) {   // rooms.js dan: xonada o'zgarish bo'ldi
   const m = room && msgs.get(room.id); if (!m || m.done) return;
+  if (!room.finished && !(room.white && room.black) && !(room.moves && room.moves.length)) return;
   if (room.finished && !m.fin) { m.fin = true; try { require('./grp.js').gameOver(room, m); } catch (e) { console.log('[grp]', e.message); } }
   if (m.tmr) return;
   const wait = Math.max(0, 3000 - (Date.now() - m.last));
@@ -219,13 +220,13 @@ function mmTouch(r) {
 }
 function mmNow(r) { const m = r && msgs.get('mm:' + r.code); if (m) { if (m.tmr) { clearTimeout(m.tmr); m.tmr = null; } mmEdit(r, m); } }
 const gifCache = new Map();
-async function gifRender(id, from, tc) {
+async function gifBuild(id, from, tc) {
   const ck = id + '|' + from + '|' + tc;
   if (gifCache.has(ck)) return gifCache.get(ck);
   const sharp = require('sharp'), { GIFEncoder, quantize, applyPalette } = require('gifenc');
   const IM = await require('./puzimg.js').pcImgs(sharp);
   let ln; for (let i = 0; i < 10; i++) { ln = require('./gifopen').line(6); if (ln.moves.length >= 4) break; }
-  const gif = GIFEncoder(), W = 800, H = 560, n = ln.frames.length, F = 'DejaVu Sans,sans-serif';
+  const gif = GIFEncoder(), W = 640, H = 448, n = ln.frames.length, F = 'DejaVu Sans,sans-serif';
   const pl = (y, nm, col) => '<g transform="translate(730 ' + y + ')"><rect width="250" height="96" rx="18" fill="#1c2547" stroke="#33406e" stroke-width="3"/><circle cx="46" cy="48" r="26" fill="url(#' + col + ')" stroke="#000" stroke-width="2"/><text x="86" y="56" font-size="' + (String(nm).length > 9 ? 21 : 26) + '" font-weight="700" fill="#fff" font-family="' + F + '">' + esc(String(nm).slice(0, 16)) + '</text></g>';
   const panel = '<text x="855" y="70" font-size="34" font-weight="800" fill="#ffd54f" text-anchor="middle" font-family="' + F + '">ShashkaPRO</text>' +
     '<text x="855" y="104" font-size="20" fill="#cbd5f5" text-anchor="middle" font-family="' + F + '">Rus shashkasi' + (tc ? ' · ' + esc(tc) : '') + '</text>' +
@@ -247,7 +248,15 @@ async function gifRender(id, from, tc) {
   gifCache.set(ck, buf); if (gifCache.size > 20) gifCache.delete(gifCache.keys().next().value);
   return buf;
 }
-function gifUrl(roomId, from, tc) { const b = BASE(); return b ? b + '/api/gcard/' + roomId + '.gif?f=' + encodeURIComponent(from || '') + '&t=' + encodeURIComponent(tc || '') : ''; }
+const gifPend = new Map();
+function gifRender(id, from, tc) {
+  const ck = id + '|' + from + '|' + tc;
+  if (gifCache.has(ck)) return Promise.resolve(gifCache.get(ck));
+  if (gifPend.has(ck)) return gifPend.get(ck);
+  const p = gifBuild(id, from, tc).finally(() => gifPend.delete(ck));
+  gifPend.set(ck, p); return p;
+}
+function gifUrl(roomId, from, tc) { const b = BASE(); return b ? b + '/api/gcard/pool' + Math.floor(Math.random() * 5) + '.gif?f=' + encodeURIComponent(from || '') + '&t=' + encodeURIComponent(tc || '') : ''; }
 function handleHttp(req, res, p) {
   const mx = /^\/api\/mcard\/([A-Z0-9]{6})\.jpg$/.exec(p);
   if (mx) { mmRender(mx[1], String(new URL(req.url, 'http://x').searchParams.get('f') || '').slice(0, 30), new URL(req.url, 'http://x').searchParams.get('r') === '1').then(buf => { res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=60' }); res.end(buf); }).catch(e => { console.log('[mcard]', e.message); res.writeHead(500); res.end(); }); return true; }

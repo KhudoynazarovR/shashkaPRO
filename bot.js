@@ -192,7 +192,7 @@ async function onInline(q) {
   const ph = G.url(id, from, 0);
   const side = o.col === "b" ? "⚪ oq" : o.col === "r" ? "tasodifiy rang" : "⚫ qora", mine = o.col === "b" ? "⚫ qora" : o.col === "r" ? "🎲 tasodifiy" : "⚪ oq";
   if (ph) results.push({   // 🖼 doska kartasi: guruhga rasm + "O'yinga kirish" tugmasi, keyin jonli yangilanadi
-    type: "gif", id: "g_" + id + "_" + (tcC || "0") + "_" + o.col, gif_url: G.gifUrl(id, from, o.tc), thumbnail_url: ph, thumbnail_mime_type: "image/jpeg", gif_width: 800, gif_height: 560,
+    type: "gif", id: "g_" + id + "_" + (tcC || "0") + "_" + o.col, gif_url: G.gifUrl(id, from, o.tc), thumbnail_url: ph, thumbnail_mime_type: "image/jpeg", gif_width: 640, gif_height: 448,
     title: "🎮 Shashka o‘ynash" + (o.tc ? " · " + o.tc : ""), description: "Siz: " + mine + " · birinchi kirgan raqib bo‘ladi. Masalan: 3+2 qora",
     reply_markup: { inline_keyboard: [[{ text: "▶ O‘yinga kirish", url: roomLink(id) }]] }
   });
