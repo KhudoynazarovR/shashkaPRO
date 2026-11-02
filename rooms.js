@@ -546,7 +546,12 @@ function createRooms({ send, clients, onFinish }) {
       c.roomUser = { id: user.id, name: user.name };
       if (room.white && room.white.uid === user.id) room.white = seat;
       else if (room.black && room.black.uid === user.id) room.black = seat;
-      else if (room.inline) {}   // guruhdagi doska: chaqiruvchi o'z joyida, qolganlar "Qo'shilish" tugmasini bosguncha tomoshabin
+      else if (room.inline) {
+        const own = room.white || room.black;
+        if (own && !(room.white && room.black) && !room.finished && own.uid !== user.id) {
+          if (room.white) room.black = seat; else room.white = seat;
+        }
+      }   // guruhdagi doska: chaqiruvchi o'z joyida, qolganlar "Qo'shilish" tugmasini bosguncha tomoshabin
       else if (!room.white) room.white = seat;
       else if (!room.black) room.black = seat;
 
