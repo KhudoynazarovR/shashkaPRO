@@ -22,3 +22,5 @@ node_modules/
 engine/bridge-local.bin
 gcup.js.bak
 patch_mirror.js
+gcup.js.bak2
+patch_mirror2.js
