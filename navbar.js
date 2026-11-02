@@ -141,7 +141,7 @@
   document.head.appendChild(cssC);
   chip.onclick = function () { tcSheet(); };
   function chipDraw() {
-    var t = '⏱ ' + tcLabel(TC); if (chip.textContent !== t) chip.textContent = t;
+    var t = '<span style="text-align:center;line-height:1.2">⏱ ' + tcLabel(TC) + (POS === 'idf' ? '<br><small style="font-size:11px;opacity:.8">IDF 780</small>' : '') + '</span>'; if (chip._h !== t) { chip._h = t; chip.innerHTML = t; }
     var cs = getComputedStyle(pb); chip.style.zIndex = cs.zIndex;
     chip.style.display = (cs.display === 'none' || cs.visibility === 'hidden') ? 'none' : 'flex';
   }
@@ -158,6 +158,8 @@
   function tcName(tc) { var a = +String(tc).split('+')[0]; return a < 3 ? '⚡ Bullet' : a < 10 ? '🔥 Blits' : '⏱ Rapid'; }
   function tcLabel(tc) { var p = String(tc).split('+'); return p[1] === '0' ? p[0] + ' daq' : p[0] + ' + ' + p[1]; }
   var TC = '3+2'; try { var _s = localStorage.getItem('nvTc'); if (/^\d{1,2}\+\d{1,2}$/.test(_s || '')) TC = _s; } catch (x) {}
+  var POS = 'std'; try { var _p = localStorage.getItem('nvPos'); if (_p === 'idf') POS = 'idf'; } catch (x) {} window.nvPos = POS;
+  function setPos(p) { POS = p === 'idf' ? 'idf' : 'std'; window.nvPos = POS; try { localStorage.setItem('nvPos', POS); } catch (x) {} try { chipDraw(); } catch (x) {} }
   function setTc(t) { TC = t; try { chipDraw(); } catch (x) {} try { localStorage.setItem('nvTc', t); } catch (x) {} drawPlay(); }
   var css3 = document.createElement('style');
   css3.textContent =
@@ -207,7 +209,7 @@
   function tcSheet() {
     var old = $('nvTcS'); if (old) old.remove();
     var d = document.createElement('div'); d.id = 'nvTcS';
-    var p = TC.split('+'), h = '<div class="hd"><button data-x="1">←</button>Vaqt</div>';
+    var p = TC.split('+'), h = '<div class="hd"><button data-x="1">←</button>Vaqt</div>' + '<h4>♟ Pozitsiya</h4><div class="gr" style="grid-template-columns:repeat(2,minmax(0,1fr))"><button data-p="std"' + (POS === 'std' ? ' class="on"' : '') + '>Standart</button><button data-p="idf"' + (POS === 'idf' ? ' class="on"' : '') + '>IDF 780</button></div>';
     TCG.forEach(function (g) {
       h += '<h4>' + g[0] + ' ' + g[1] + '</h4><div class="gr">' + g[2].map(function (t) { return '<button data-t="' + t + '"' + (t === TC ? ' class="on"' : '') + '>' + tcLabel(t) + '</button>'; }).join('') + '</div>';
     });
@@ -216,6 +218,7 @@
       '<label>Har yurishga qo‘shimcha: <b id="nvCuS">' + p[1] + '</b> soniya</label><input type="range" id="nvCuB" min="0" max="30" value="' + p[1] + '">' +
       '<button id="nvCuOk">Tanlash</button></div>';
     d.innerHTML = h; document.body.appendChild(d);
+    d.addEventListener('click', function (e) { var pb2 = e.target.closest('[data-p]'); if (!pb2) return; setPos(pb2.getAttribute('data-p')); [].forEach.call(d.querySelectorAll('[data-p]'), function (x) { x.className = x.getAttribute('data-p') === POS ? 'on' : ''; }); });
     var A = d.querySelector('#nvCuA'), B = d.querySelector('#nvCuB');
     A.oninput = function () { d.querySelector('#nvCuM').textContent = A.value; };
     B.oninput = function () { d.querySelector('#nvCuS').textContent = B.value; };
