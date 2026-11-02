@@ -559,3 +559,28 @@
     else if (!open && window.nvK === 'puz' && Date.now() - (window.nvPzAt || 0) > 3500 && pg.style.display !== 'block') { window.nvK = 'pl'; mark('pl'); }
   }, 400);
 })();
+
+/* nvDuo: Xotira + Botlar bir qatorda */
+(function () {
+  var st = document.createElement('style');
+  st.textContent = '#nvDuo{display:flex;gap:8px;margin:0 0 10px;align-items:stretch}' +
+    '#nvDuo>div{margin:0!important;min-width:0;box-sizing:border-box;flex-direction:column!important;align-items:flex-start!important;justify-content:center;gap:4px!important;padding:10px 12px!important;min-height:0!important;height:auto!important;order:0!important}' +
+    '#nvDuo #nvMemRow{flex:0 0 34%}#nvDuo #nvBotRow{flex:1}' +
+    '#nvDuo #nvMemRow small,#nvDuo #nvMemRow>span:last-child,#nvDuo #nvBotRow .ar{display:none!important}' +
+    '#nvDuo #nvMemRow>span:first-child{font-size:26px!important}' +
+    '#nvDuo #nvMemRow b{font-size:15px!important}' +
+    '#nvDuo #nvBotRow .st{display:flex!important;margin:0!important}' +
+    '#nvDuo #nvBotRow .st>*:nth-child(n+4){display:none!important}' +
+    '#nvDuo #nvBotRow .st img,#nvDuo #nvBotRow .st i{width:34px!important;height:34px!important;font-size:24px!important;margin:0 -6px 0 0!important}' +
+    '#nvDuo #nvBotRow b{font-size:15px!important}#nvDuo #nvBotRow small{font-size:12px!important}';
+  document.head.appendChild(st);
+  setInterval(function () {
+    var m = document.getElementById('nvMemRow'), b = document.getElementById('nvBotRow');
+    if (!m || !b || document.getElementById('nvDuo') || m.parentNode !== b.parentNode) return;
+    var w = document.createElement('div'); w.id = 'nvDuo';
+    w.style.order = getComputedStyle(b).order || '1';
+    b.parentNode.insertBefore(w, b);
+    w.appendChild(m); w.appendChild(b);
+    var s = b.querySelector('small'); if (s) s.textContent = '8 ta bot';
+  }, 700);
+})();
