@@ -593,3 +593,8 @@ server.listen(PORT, HOST, () => {
   console.log("WebSocket: ws://" + HOST + ":" + PORT);
   console.log("================================");
 });
+
+setInterval(() => {
+  const m = process.memoryUsage();
+  console.log(`RAM: rss=${(m.rss/1048576)|0}MB heap=${(m.heapUsed/1048576)|0}MB`);
+}, 60000);
