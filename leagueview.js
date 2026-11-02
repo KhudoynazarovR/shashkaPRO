@@ -40,7 +40,7 @@
     '#lgPop button{display:block;width:100%;border:0;border-radius:14px;padding:13px;margin-top:10px;font:900 16px system-ui;color:#fff;background:#352d86}#lgPop button.p{background:linear-gradient(90deg,#f58529,#dd2a7b,#8134af)}';
   document.head.appendChild(st);
   var st2 = document.createElement('style');
-  st2.textContent = '#lgCard{position:absolute!important;top:74px!important;right:48px!important;left:auto!important;width:auto!important;padding:6px 12px!important;gap:6px!important;border-radius:14px!important;z-index:5}#lgCard .f{font-size:18px!important}#lgCard b{display:inline!important;font-size:15px!important}#lgCard small{font-size:13px!important;font-weight:800!important}';
+  st2.textContent = '#lgCard{position:absolute!important;top:42px!important;right:14px!important;left:auto!important;width:auto!important;padding:3px 10px!important;gap:5px!important;border-radius:12px!important;z-index:5}#lgCard .f{font-size:16px!important}#lgCard b{display:inline!important;font-size:14px!important}#lgCard small{font-size:12px!important;font-weight:800!important}';
   document.head.appendChild(st2);
 
   // ---------- bosh sahifa kartasi

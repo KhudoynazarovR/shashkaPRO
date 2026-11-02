@@ -58,7 +58,7 @@
     '#dqCard .a{font-size:26px;flex:none}#dqCard .dot{position:absolute;top:-4px;right:-4px;min-width:22px;height:22px;border-radius:11px;background:#e11d48;color:#fff;font:900 13px/22px system-ui;text-align:center;padding:0 5px;box-shadow:0 0 0 2px #1a1650}';
   document.head.appendChild(st);
   var st2 = document.createElement('style');
-  st2.textContent = '#dqCard{position:absolute!important;top:38px!important;right:48px!important;left:auto!important;width:auto!important;padding:6px 12px!important;gap:6px!important;border-radius:14px!important;z-index:5}#dqCard .f{font-size:18px!important}#dqCard b{display:inline!important;font-size:16px!important}#dqCard small{font-size:13px!important;font-weight:800!important}';
+  st2.textContent = '#dqCard{position:absolute!important;top:8px!important;right:14px!important;left:auto!important;width:auto!important;padding:3px 10px!important;gap:5px!important;border-radius:12px!important;z-index:5}#dqCard .f{font-size:16px!important}#dqCard b{display:inline!important;font-size:14px!important}#dqCard small{font-size:12px!important;font-weight:800!important}';
   document.head.appendChild(st2);
 
   function ready() { if (!S) return 0; var n = S.streak.claimed ? 0 : 1; S.quests.forEach(function (q) { if (q.done && !q.claimed) n++; }); if (S.bonus.ready && !S.bonus.claimed) n++; return n; }
