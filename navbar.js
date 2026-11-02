@@ -298,7 +298,7 @@
   pb.onclick = function () {
     if (!window.lbPlay) { drawPlay(); po.style.display = 'block'; return; }
     var s = st() || {};
-    if (s.inQueue) window.lbPlay.cancel(); else window.lbPlay.quick(TC);
+    if (s.inQueue) window.lbPlay.cancel(); else { window.lbPlay.quick(TC); if (window.lbPlay.bcast) window.lbPlay.bcast(TC); }
     setTimeout(pbDraw, 300);
   };
   setInterval(function () { if (po.style.display === 'block') drawPlay(); }, 1500);

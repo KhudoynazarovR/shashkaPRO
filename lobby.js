@@ -1034,7 +1034,7 @@ function createLobby({ send, clients, roomsApi }) {
         } else { queue.set(me.uid, { uid: me.uid, tc, pos: o.pos, games: o.games, voice: o.voice }); push(); }
         break;
       }
-      case 'lbQuickCancel': queue.delete(me.uid); push(); break;
+      case 'lbQuickCancel': queue.delete(me.uid); for (const [cid, x] of challenges) if (x.fromUid === me.uid && x.grp) challenges.delete(cid); push(); break;
       case 'lbCancelTo': {
         const tu = String(m.toUid);
         [...challenges.entries()].forEach(([cid, x]) => { if (x.fromUid === me.uid && x.toUid === tu) challenges.delete(cid); });
@@ -1054,6 +1054,32 @@ function createLobby({ send, clients, roomsApi }) {
           white: H, black: B
         });
         sendUid(me.uid, { type: 'lbGo', roomId, reason: 'challenge', color: 'white', opponent: kk.name, tc: '∞', series: null });
+        break;
+      }
+      case 'lbBroadcast': {
+        if (Date.now() - (me._bAt || 0) < 3000) break;
+        me._bAt = Date.now();
+        const tcv = tcOf(m.tc);
+        for (const [cid, x] of challenges) if (x.fromUid === me.uid && x.grp) challenges.delete(cid);
+        if (challenges.size > 400) return err(c, 'Hozir band, keyinroq urinib ko‘ring'), true;
+        const inTour = new Set();
+        for (const t of tournaments.values()) if (t.status === 'reg' || t.status === 'running') for (const p of t.players.values()) if (!p.withdrawn) inTour.add(p.uid);
+        const grp = 'g' + hex(4);
+        let n = 0;
+        for (const p of playersList()) {
+          if (p.uid === me.uid || p.busy || inTour.has(p.uid) || botByUid(p.uid) || /^bot/.test(String(p.uid))) continue;
+          const ch = { id: 'c' + hex(4), grp, fromUid: me.uid, fromName: me.name, toUid: p.uid, tc: tcv, ...cleanOpts(m), at: Date.now() };
+          challenges.set(ch.id, ch);
+          sendUid(ch.toUid, { type: 'lbChallengeIn', id: ch.id, fromName: ch.fromName, tc: ch.tc + describeOpts(ch) });
+          n++;
+        }
+        toast(me.uid, n ? n + ' ta o‘yinchiga taklif yuborildi' : 'Hozir zalda bo‘sh o‘yinchi yo‘q');
+        setTimeout(() => {
+          for (const [id, x] of challenges) if (x.grp === grp) challenges.delete(id);
+          if (queue.has(me.uid)) { queue.delete(me.uid); toast(me.uid, 'Hech kim qabul qilmadi. Botga qarshi o‘ynab ko‘ring'); }
+          push();
+        }, 30000);
+        push();
         break;
       }
       case 'lbChallenge': {
@@ -1076,15 +1102,16 @@ function createLobby({ send, clients, roomsApi }) {
       }
       case 'lbRespond': {
         const ch = challenges.get(String(m.id));
-        if (!ch) break;
+        if (!ch) { if (m.accept) toast(me.uid, 'Bu taklif allaqachon yopilgan'); break; }
         const mine = ch.toUid === me.uid, own = ch.fromUid === me.uid;
         if (!mine && !(own && !m.accept)) break;
         challenges.delete(ch.id);
+        if (mine && m.accept && ch.grp) { for (const [oid, ox] of challenges) if (ox.grp === ch.grp) challenges.delete(oid); }
         if (mine && m.accept) {
           queue.delete(ch.fromUid); queue.delete(ch.toUid);
           if (connsOf(ch.fromUid).length) makeMatch({ uid: ch.fromUid, name: ch.fromName }, { uid: me.uid, name: me.name }, ch.tc, 'challenge', ch);
           else toast(me.uid, 'Chaqiruvchi chiqib ketgan');
-        } else if (mine) toast(ch.fromUid, me.name + ' chaqiruvni rad etdi');
+        } else if (mine && !ch.grp) toast(ch.fromUid, me.name + ' chaqiruvni rad etdi');
         push();
         break;
       }

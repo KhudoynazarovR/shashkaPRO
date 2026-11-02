@@ -226,7 +226,7 @@
         if (shownIncoming[c.id]) return;
         shownIncoming[c.id] = 1;
         try { if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred("success"); else if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch (e) {}
-        if (panelOpen && curTab === "pl") return;
+        if (panelOpen && curTab === "pl" && !c.grp) return;
         toast("⚔️ <b>" + esc(c.fromName) + "</b> sizni o‘yinga chaqirdi (" + esc(c.tc) + ")", [
           ["Qabul", function () { sendMsg({ type: "lbRespond", id: c.id, accept: true }); }],
           ["Rad etish", function () { sendMsg({ type: "lbRespond", id: c.id, accept: false }); }, "no"]
@@ -1067,6 +1067,7 @@
     })();
     // O'ynash sahifasi (navbar.js) uchun: tanlangan vaqt bilan raqib qidirish / do'stga havola
     window.lbPlay = {
+      bcast: function (tc) { sendMsg({ type: "lbBroadcast", tc: tc }); },
       quick: function (tc, voice) { if (S.inQueue) sendMsg({ type: "lbQuickCancel" }); sendMsg({ type: "lbQuick", tc: tc, pos: ($("lbPos") || {}).value || "std", games: 1, voice: !!voice }); },
       cancel: function () { sendMsg({ type: "lbQuickCancel" }); },
       friend: function (tc, voice) { sendMsg({ type: "lbFriendNew", tc: tc, pos: ($("lbPos") || {}).value || "std", games: 1, voice: !!voice }); toast("🔗 Havola tayyorlanmoqda…", null, 2000); },
