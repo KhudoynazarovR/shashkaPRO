@@ -133,6 +133,19 @@
   var pb = document.createElement('button');
   pb.id = 'nvPlayBtn'; pb.textContent = '▶ O‘ynash';
   document.body.appendChild(pb);
+  var chip = document.createElement('button');
+  chip.id = 'nvTcChip';
+  document.body.appendChild(chip);
+  var cssC = document.createElement('style');
+  cssC.textContent = '#nvPlayBtn{right:116px!important}#nvTcChip{position:fixed;right:16px;width:92px;bottom:calc(68px + env(safe-area-inset-bottom));height:54px;border:0;border-radius:14px;background:#1f2147;color:#fff;font:800 16px system-ui,sans-serif;box-shadow:0 5px 0 #0e0f2a;display:flex;align-items:center;justify-content:center}';
+  document.head.appendChild(cssC);
+  chip.onclick = function () { tcSheet(); };
+  function chipDraw() {
+    var t = '⏱ ' + tcLabel(TC); if (chip.textContent !== t) chip.textContent = t;
+    var cs = getComputedStyle(pb); chip.style.zIndex = cs.zIndex;
+    chip.style.display = (cs.display === 'none' || cs.visibility === 'hidden') ? 'none' : 'flex';
+  }
+  setInterval(chipDraw, 400); setTimeout(chipDraw, 0);
   var po = document.createElement('div');
   po.id = 'nvPlay';
   document.body.appendChild(po);
@@ -145,7 +158,7 @@
   function tcName(tc) { var a = +String(tc).split('+')[0]; return a < 3 ? '⚡ Bullet' : a < 10 ? '🔥 Blits' : '⏱ Rapid'; }
   function tcLabel(tc) { var p = String(tc).split('+'); return p[1] === '0' ? p[0] + ' daq' : p[0] + ' + ' + p[1]; }
   var TC = '3+2'; try { var _s = localStorage.getItem('nvTc'); if (/^\d{1,2}\+\d{1,2}$/.test(_s || '')) TC = _s; } catch (x) {}
-  function setTc(t) { TC = t; try { localStorage.setItem('nvTc', t); } catch (x) {} drawPlay(); }
+  function setTc(t) { TC = t; try { chipDraw(); } catch (x) {} try { localStorage.setItem('nvTc', t); } catch (x) {} drawPlay(); }
   var css3 = document.createElement('style');
   css3.textContent =
     '#nvPlay .tcb{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;box-sizing:border-box;margin-bottom:12px;padding:16px;border:0;border-radius:14px;background:#1f2147;color:#fff;font:800 20px system-ui,sans-serif}' +
