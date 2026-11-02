@@ -20,3 +20,5 @@ users.json
 node_modules/
 *.bin
 engine/bridge-local.bin
+gcup.js.bak
+patch_mirror.js

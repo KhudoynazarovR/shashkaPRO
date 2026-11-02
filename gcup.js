@@ -34,6 +34,16 @@ function mmTc(s) { s = String(s || ''); return /\b20\s*s/i.test(s) ? 20 : /\b10\
 function mmTcTxt(tc) { return tc > 0 ? tc + ' s' : tc < 0 ? '⚡ 2 daq' : '∞'; }
 const tcTxt = tc => String(tc).replace('0.5+0', '0:30');
 
+function mirror(t, method, p) {
+  const main = G.tg(method, p);
+  for (const [cid, mid] of Object.entries(t.mir || {})) {
+    const q = Object.assign({}, p, { chat_id: cid });
+    delete q.reply_to_message_id;
+    if (q.message_id) q.message_id = mid;
+    try { Promise.resolve(G.tg(method, q)).catch(() => {}); } catch (e) {}
+  }
+  return main;
+}
 function T(chat) { const a = store.db.gtour = store.db.gtour || {}; return a[String(chat)]; }
 const P = (t, uid) => t.players.find(p => p.uid === uid) || { uid, name: '?' };
 const API = () => G.api();
@@ -83,7 +93,7 @@ function tourKb(t) {
   if (t.status !== 'reg') return { inline_keyboard: [] };
   return { inline_keyboard: [[{ text: '✅ Qatnashaman', callback_data: 'g:j:' + t.chat }, { text: '🚪 Chiqish', callback_data: 'g:l:' + t.chat }], [{ text: '▶ Boshlash', callback_data: 'g:s:' + t.chat }, { text: '❌ Bekor', callback_data: 'g:x:' + t.chat }]] };
 }
-function tourEdit(t) { if (t.msg) G.tg('editMessageText', { chat_id: t.chat, message_id: t.msg, text: tourText(t), parse_mode: 'HTML', reply_markup: tourKb(t) }); }
+function tourEdit(t) { if (t.msg) mirror(t, 'editMessageText', { chat_id: t.chat, message_id: t.msg, text: tourText(t), parse_mode: 'HTML', reply_markup: tourKb(t) }); }
 function prizeUsed(chat, at) { const d = (store.db.gprizeDay || {})[String(chat)]; return d === dayKey(at || Date.now()); }
 
 async function isChatAdmin(chat, uid) {
@@ -103,6 +113,18 @@ async function cmdTour(msg, arg) {
   if (!msg.chat || msg.chat.type === 'private') return G.tg('sendMessage', { chat_id: msg.chat.id, text: '🏆 Kubok guruhda o‘tkaziladi: botni guruhga qo‘shib, u yerda /kubok yozing.\nMasalan: /kubok 3+2 20:00 yoki /kubok 3+2 20:00 har kuni' });
   const chat = msg.chat.id, uid = String(msg.from.id);
   const cur = T(chat);
+  if (/^\s*id\s*$/i.test(arg || '')) return G.tg('sendMessage', { chat_id: chat, text: 'Guruh ID: ' + chat });
+  const lm = /^\s*ulash\s+(-?\d+)/i.exec(arg || '');
+  if (lm) {
+    if (!(await isChatAdmin(chat, uid))) return G.tg('sendMessage', { chat_id: chat, text: 'Ulashni faqat guruh admini qila oladi.' });
+    const tt = T(lm[1]);
+    if (!tt || tt.v !== 2 || tt.status !== 'reg') return G.tg('sendMessage', { chat_id: chat, text: 'Ro‘yxati ochiq kubok topilmadi. Avval birinchi guruhda /kubok yozing.' });
+    tt.mir = tt.mir || {};
+    const rr = await G.tg('sendMessage', { chat_id: chat, text: tourText(tt), parse_mode: 'HTML', reply_markup: tourKb(tt) });
+    if (rr && rr.result) { tt.mir[String(chat)] = rr.result.message_id; G.tg('pinChatMessage', { chat_id: chat, message_id: rr.result.message_id, disable_notification: true }); }
+    store.save(); tourEdit(tt);
+    return;
+  }
   // ro'yxat ochiq kubok bor: uni ochgan odam yoki admin vaqt/nazoratni o'zgartiradi yoki bekor qiladi
   if (cur && cur.v === 2 && cur.status === 'reg' && (arg || '').trim()) {
     const can = uid === cur.by || await isChatAdmin(chat, uid);
@@ -215,7 +237,7 @@ function dm(uid, text, link) { if (!uid) return; G.tg('sendMessage', { chat_id: 
 async function sendBracket(t, caption, rows) {
   let ok = null;
   try { ok = await require('./podium.js').sendBracket(t.chat, bracketData(t), caption, rows && rows.length ? { inline_keyboard: rows } : undefined); } catch (e) { console.log('[gcup] jadval', e.message); }
-  if (!ok || !ok.ok) G.tg('sendMessage', { chat_id: t.chat, text: caption, parse_mode: 'HTML', reply_markup: rows && rows.length ? { inline_keyboard: rows } : undefined });
+  if (!ok || !ok.ok) mirror(t, 'sendMessage', { chat_id: t.chat, text: caption, parse_mode: 'HTML', reply_markup: rows && rows.length ? { inline_keyboard: rows } : undefined });
 }
 function bracketData(t) {
   const nmOf = u => u === '' ? '—' : u == null ? '?' : P(t, u).name;
@@ -237,9 +259,9 @@ function check(t) {
   if (list.some(m => m.win == null)) return;
   store.save();
   const res = list.filter(m => m.room).map(m => (m.third ? '🥉 ' : '• ') + esc(P(t, m.a).name) + ' — ' + esc(P(t, m.b).name) + ': ' + (m.empty ? '❌ ikkalasi ham kelmadi' : '🏆 ' + esc(P(t, m.win).name) + (m.ns ? ' (raqib kelmadi)' : m.coin ? ' (qur‘a)' : m.tb ? ' (tay-brek)' : '')));
-  if (isFinalRound(t, r)) { G.tg('sendMessage', { chat_id: t.chat, text: '✅ Final natijalari:\n' + res.join('\n'), parse_mode: 'HTML' }); return finishTour(t); }
+  if (isFinalRound(t, r)) { mirror(t, 'sendMessage', { chat_id: t.chat, text: '✅ Final natijalari:\n' + res.join('\n'), parse_mode: 'HTML' }); return finishTour(t); }
   t.status = 'brk'; t.breakUntil = Date.now() + BREAK_MS; store.save();
-  G.tg('sendMessage', { chat_id: t.chat, text: '✅ ' + (r + 1) + '-tur (' + roundName(t, r) + ') natijalari:\n' + res.join('\n') + '\n\n☕ 2 daqiqa tanaffus · ' + (r + 2) + '-tur soat <b>' + hm(t.breakUntil) + '</b> da boshlanadi.', parse_mode: 'HTML' });
+  mirror(t, 'sendMessage', { chat_id: t.chat, text: '✅ ' + (r + 1) + '-tur (' + roundName(t, r) + ') natijalari:\n' + res.join('\n') + '\n\n☕ 2 daqiqa tanaffus · ' + (r + 2) + '-tur soat <b>' + hm(t.breakUntil) + '</b> da boshlanadi.', parse_mode: 'HTML' });
 }
 const findMatch = (t, room) => { for (const R of t.rounds) for (const m of R) if (m.room === room) return m; return t.third && t.third.room === room ? t.third : null; };
 
@@ -260,7 +282,7 @@ function roomFinished(room) {
     const txt = '🤝 Durang! Stoldan chiqmang — 10 soniyadan keyin tay-brek №' + m.tb + ' (' + tcTxt(tc) + '), ranglar almashadi.';
     setTimeout(() => { try { A.tieBreak(room.id, tc, 10000); A.notice(room.id, txt); } catch (e) { console.log('[gcup] tay-brek', e.message); } }, 1500);
     for (const u of [m.a, m.b]) dm(u, txt, LINK(room.id));
-    G.tg('sendMessage', { chat_id: t.chat, text: '🤝 ' + esc(P(t, m.a).name) + ' — ' + esc(P(t, m.b).name) + ': durang, tay-brek ' + tcTxt(tc), parse_mode: 'HTML' });
+    mirror(t, 'sendMessage', { chat_id: t.chat, text: '🤝 ' + esc(P(t, m.a).name) + ' — ' + esc(P(t, m.b).name) + ': durang, tay-brek ' + tcTxt(tc), parse_mode: 'HTML' });
     return;
   }
   const win = room.winner === 'white' ? wu : bu, los = win === wu ? bu : wu;
@@ -288,7 +310,7 @@ function begin(t) {
   if (t.prize) { store.db.gprizeDay = store.db.gprizeDay || {}; store.db.gprizeDay[String(t.chat)] = dayKey(Date.now()); }
   t.mult = t.players.length >= 8 ? 1 : 0.5;
   buildBracket(t); t.status = 'run'; tourEdit(t);
-  if (t.msg) G.tg('unpinChatMessage', { chat_id: t.chat, message_id: t.msg });
+  if (t.msg) mirror(t, 'unpinChatMessage', { chat_id: t.chat, message_id: t.msg });
   startRound(t);
   return true;
 }
@@ -310,7 +332,7 @@ function finishTour(t) {
   t.champ = champ ? P(t, champ).name : null; t.podium = top.map(u => u ? P(t, u).name : null);
   store.save(); tourEdit(t);
   sendBracket(t, '🏁 Kubok jadvali — yakuniy', null);
-  if (!champ) return G.tg('sendMessage', { chat_id: t.chat, text: '🏁 Kubok tugadi — g‘olib aniqlanmadi.' });
+  if (!champ) return mirror(t, 'sendMessage', { chat_id: t.chat, text: '🏁 Kubok tugadi — g‘olib aniqlanmadi.' });
   // chempion yo'li
   const path = [];
   for (const R of t.rounds) { const m = R.find(x => x.a === champ || x.b === champ); if (!m || m.bye) continue; const op = m.a === champ ? m.b : m.a; path.push(op ? esc(P(t, op).name) + (m.ns ? ' (kelmadi)' : m.tb ? ' (tay-brek)' : '') : '—'); }
@@ -351,7 +373,7 @@ async function onCallback(q, d, uid) {
     t.players.splice(i, 1); store.save(); tourEdit(t); return answer(q, 'Ro‘yxatdan chiqdingiz'), true;
   }
   if (uid !== t.by && !ADM().includes(uid) && !(await isChatAdmin(t.chat, uid))) return answer(q, 'Faqat ' + t.byName + ' yoki guruh admini boshqaradi'), true;
-  if (d[1] === 'x') { t.status = 'done'; t.champ = null; store.save(); G.tg('editMessageText', { chat_id: t.chat, message_id: t.msg, text: '❌ Kubok bekor qilindi.' }); if (t.msg) G.tg('unpinChatMessage', { chat_id: t.chat, message_id: t.msg }); return answer(q, 'Bekor qilindi'), true; }
+  if (d[1] === 'x') { t.status = 'done'; t.champ = null; store.save(); mirror(t, 'editMessageText', { chat_id: t.chat, message_id: t.msg, text: '❌ Kubok bekor qilindi.' }); if (t.msg) mirror(t, 'unpinChatMessage', { chat_id: t.chat, message_id: t.msg }); return answer(q, 'Bekor qilindi'), true; }
   if (t.players.length < MIN_PLAYERS) return answer(q, 'Kamida ' + MIN_PLAYERS + ' ta qatnashchi kerak', true), true;
   answer(q, '▶ Kubok boshlandi!'); begin(t); return true;
 }
@@ -364,13 +386,13 @@ function tick() {
     try {
       if (t.status === 'reg' && t.startAt) {
         const left = t.startAt - now; t.rem = t.rem || {};
-        if (left <= 3600e3 && left > 3300e3 && !t.rem.h) { t.rem.h = 1; G.tg('sendMessage', { chat_id: t.chat, text: '⏰ Kubokka 1 soat qoldi (' + hm(t.startAt) + ')! Ro‘yxatdan o‘ting: ' + t.players.length + ' kishi', reply_to_message_id: t.msg }); }
-        if (left <= 15 * 60e3 && left > 10 * 60e3 && !t.rem.q) { t.rem.q = 1; G.tg('sendMessage', { chat_id: t.chat, text: '⏰ Kubokka 15 daqiqa qoldi!\n👥 ' + t.players.map(p => esc(p.name)).join(', '), parse_mode: 'HTML', reply_to_message_id: t.msg }); }
+        if (left <= 3600e3 && left > 3300e3 && !t.rem.h) { t.rem.h = 1; mirror(t, 'sendMessage', { chat_id: t.chat, text: '⏰ Kubokka 1 soat qoldi (' + hm(t.startAt) + ')! Ro‘yxatdan o‘ting: ' + t.players.length + ' kishi', reply_to_message_id: t.msg }); }
+        if (left <= 15 * 60e3 && left > 10 * 60e3 && !t.rem.q) { t.rem.q = 1; mirror(t, 'sendMessage', { chat_id: t.chat, text: '⏰ Kubokka 15 daqiqa qoldi!\n👥 ' + t.players.map(p => esc(p.name)).join(', '), parse_mode: 'HTML', reply_to_message_id: t.msg }); }
         if (left <= 5 * 60e3 && left > 0 && !t.rem.f) { t.rem.f = 1; for (const p of t.players) dm(p.uid, '⏰ Guruh kubogi 5 daqiqadan keyin boshlanadi (' + hm(t.startAt) + '). Telefoningizni yaqin tuting — tur boshlanishi bilan soat yuradi!'); }
         if (left <= 0) {
           if (t.players.length >= MIN_PLAYERS) begin(t);
-          else if (!t.postponed) { t.postponed = 1; t.startAt = now + POSTPONE_MS; t.rem = { h: 1, q: 0, f: 0 }; store.save(); tourEdit(t); G.tg('sendMessage', { chat_id: t.chat, text: '⏳ Qatnashchilar yetarli emas (' + t.players.length + '/' + MIN_PLAYERS + '). Kubok 30 daqiqaga surildi — ' + hm(t.startAt) + ' da. Do‘stlaringizni chaqiring!', reply_to_message_id: t.msg }); }
-          else { t.status = 'done'; t.champ = null; store.save(); G.tg('editMessageText', { chat_id: t.chat, message_id: t.msg, text: '❌ Kubok bekor qilindi — qatnashchilar yetarli emas (' + t.players.length + '/' + MIN_PLAYERS + ').' }); if (t.msg) G.tg('unpinChatMessage', { chat_id: t.chat, message_id: t.msg }); }
+          else if (!t.postponed) { t.postponed = 1; t.startAt = now + POSTPONE_MS; t.rem = { h: 1, q: 0, f: 0 }; store.save(); tourEdit(t); mirror(t, 'sendMessage', { chat_id: t.chat, text: '⏳ Qatnashchilar yetarli emas (' + t.players.length + '/' + MIN_PLAYERS + '). Kubok 30 daqiqaga surildi — ' + hm(t.startAt) + ' da. Do‘stlaringizni chaqiring!', reply_to_message_id: t.msg }); }
+          else { t.status = 'done'; t.champ = null; store.save(); mirror(t, 'editMessageText', { chat_id: t.chat, message_id: t.msg, text: '❌ Kubok bekor qilindi — qatnashchilar yetarli emas (' + t.players.length + '/' + MIN_PLAYERS + ').' }); if (t.msg) mirror(t, 'unpinChatMessage', { chat_id: t.chat, message_id: t.msg }); }
         }
       }
       if (t.status === 'brk' && now >= t.breakUntil) startRound(t);
@@ -410,6 +432,6 @@ function tick() {
 }
 setInterval(tick, 15e3).unref();
 // eski (v1) kubok yangilanishda davom etayotgan bo'lsa — to'xtatamiz
-setTimeout(() => { const a = store.db.gtour || {}; for (const t of Object.values(a)) if (t && t.v !== 2 && t.status !== 'done') { t.status = 'done'; if (Date.now() - (t.at || 0) < 6 * 3600e3) G.tg('sendMessage', { chat_id: t.chat, text: '⚠️ Bot yangilandi — davom etayotgan kubok to‘xtatildi. Iltimos, /kubok bilan qaytadan boshlang.' }); } }, 20e3).unref();
+setTimeout(() => { const a = store.db.gtour || {}; for (const t of Object.values(a)) if (t && t.v !== 2 && t.status !== 'done') { t.status = 'done'; if (Date.now() - (t.at || 0) < 6 * 3600e3) mirror(t, 'sendMessage', { chat_id: t.chat, text: '⚠️ Bot yangilandi — davom etayotgan kubok to‘xtatildi. Iltimos, /kubok bilan qaytadan boshlang.' }); } }, 20e3).unref();
 
 module.exports = { cmdTour, onCallback, roomFinished, mmFinished, setLink: f => { LINK = f; }, T, _t: { parseArg, nextAt, buildBracket, bracketData, startRound, check, begin, finishTour, tick } };
