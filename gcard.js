@@ -227,7 +227,7 @@ async function gifRender(id) {
   const gif = GIFEncoder(), Z = 560, n = ln.frames.length;
   for (let i = 0; i < n; i++) {
     const bd = ln.frames[i].map(r => r.map(x => NUM[x] || 0));
-    const { data } = await sharp(Buffer.from(svgBoard(bd, 'w', IM))).resize(Z, Z).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    const { data } = await sharp(Buffer.from(svgBoard(bd, 'w', IM, 'teal'))).resize(Z, Z).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
     const pal = quantize(data, 256);
     gif.writeFrame(applyPalette(data, pal), Z, Z, { palette: pal, delay: i === n - 1 ? 1800 : 900 });
   }
