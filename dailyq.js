@@ -57,6 +57,9 @@
     '#dqCard .f{font-size:30px;flex:none}#dqCard .t{flex:1;min-width:0}#dqCard .t b{display:block;font-size:16px;font-weight:900}#dqCard .t small{font-size:13px;font-weight:700;opacity:.95}' +
     '#dqCard .a{font-size:26px;flex:none}#dqCard .dot{position:absolute;top:-4px;right:-4px;min-width:22px;height:22px;border-radius:11px;background:#e11d48;color:#fff;font:900 13px/22px system-ui;text-align:center;padding:0 5px;box-shadow:0 0 0 2px #1a1650}';
   document.head.appendChild(st);
+  var st2 = document.createElement('style');
+  st2.textContent = '#dqCard{position:absolute!important;top:38px!important;right:48px!important;left:auto!important;width:auto!important;padding:6px 12px!important;gap:6px!important;border-radius:14px!important;z-index:5}#dqCard .f{font-size:18px!important}#dqCard b{display:inline!important;font-size:16px!important}#dqCard small{font-size:13px!important;font-weight:800!important}';
+  document.head.appendChild(st2);
 
   function ready() { if (!S) return 0; var n = S.streak.claimed ? 0 : 1; S.quests.forEach(function (q) { if (q.done && !q.claimed) n++; }); if (S.bonus.ready && !S.bonus.claimed) n++; return n; }
   function doneN() { return S ? S.quests.filter(function (q) { return q.claimed; }).length : 0; }
@@ -68,7 +71,7 @@
     if (!c) { c = document.createElement('div'); c.id = 'dqCard'; c.onclick = function () { show(); }; hero.appendChild(c); }
     c.style.setProperty('order', '0', 'important'); c.style.setProperty('flex', '1 1 100%', 'important'); c.style.setProperty('margin', '0', 'important');
     var sn = S.streak.claimed ? S.streak.n : S.streak.n, n = ready();
-    var h = '<span class="f">🔥</span><div class="t"><b>' + (sn ? sn + ' kunlik seriya' : 'Kunlik vazifalar') + '</b><small>📋 Vazifalar ' + doneN() + '/' + S.quests.length + (S.streak.claimed ? '' : ' · 🎁 Bugungi sovg‘a kutyapti') + '</small></div><span class="a">›</span>' + (n ? '<span class="dot">' + n + '</span>' : '');
+    var h = '<span class="f">🔥</span><b>' + (sn || 0) + '</b><small>📋 ' + doneN() + '/' + S.quests.length + '</small>' + (n ? '<span class="dot">' + n + '</span>' : '');
     if (c._h !== h) { c._h = h; c.innerHTML = h; }
   }
 
