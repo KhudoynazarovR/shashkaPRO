@@ -87,7 +87,7 @@
   var ov = null, opts = {}, G = {}, WS = null, NET = null;
   function stopAll() { G.over = true; if (G.tm) clearInterval(G.tm); if (G.tt) clearTimeout(G.tt); if (G.bt) clearInterval(G.bt); }
   function close() { stopAll(); netLeave(); if (ov) ov.remove(); ov = null; }
-  function shell() { css(); if (!ov) { ov = document.createElement('div'); ov.id = 'spMem'; document.body.appendChild(ov); } }
+  function shell() { css(); if (!document.getElementById('spMemTidy')) { var _s = document.createElement('style'); _s.id = 'spMemTidy'; _s.textContent = "#spMem .top{margin-bottom:6px!important}#spMem .top h2{font-size:20px!important}#spMem .bk{width:38px!important;height:38px!important;font-size:18px!important}#spMem .sum{padding:6px 10px!important;font-size:12px!important}#spMem .go{padding:10px 6px!important;font-size:14px!important;min-height:0!important;border-radius:12px!important}#spMem .cd{padding:8px 10px!important}#spMem .lb{font-size:13px!important;margin:8px 0 4px!important}#spMem [data-pl]{min-height:44vh!important;padding:6px 10px!important}#spMem [data-live]{min-height:0!important}#spMem [data-sh]{padding:9px!important;font-size:13px!important}"; document.head.appendChild(_s); } if (!ov) { ov = document.createElement('div'); ov.id = 'spMem'; document.body.appendChild(ov); } }
 
   // ---------------- menyu = 🎮 Xotira o'yin zali: sozlamalar tepada, zaldagi o'yinchilar, tasodifiy raqib, jonli efir
   var SETO = false, SETO2 = false, PLT = null;
@@ -121,8 +121,8 @@ h += '</div></div>';
     h += '<div class="lb" style="display:flex;justify-content:space-between"><span>🟢 ' + T('O‘yin zali') + ' <span data-pn></span></span><span style="opacity:.7;font-size:12px">' + T('o‘yinchini taklif qiling') + '</span></div><div data-pl class="cd" style="padding:4px 10px;margin-top:0"><div style="text-align:center;padding:10px;opacity:.7">⏳</div></div>';
     h += '<button class="go g2" data-sh style="margin-top:4px">📤 ' + T('Guruhga yoki do‘stga yuborish') + '</button>';
     h += '<div class="lb">📺 ' + T('Jonli efir') + '</div><div data-live class="cd" style="padding:4px 10px;margin-top:0"><div style="text-align:center;padding:10px;opacity:.7">⏳</div></div>';
-    h += '<div class="tour" data-tour style="margin-top:14px"><span style="font-size:30px">🏆</span><div><b>' + T('Kunlik turnir') + '</b><small>' + T('6×6 · kam yurish yutadi · top-3 ga 100/60/30 🪙') + '</small></div><span style="margin-left:auto;font-size:24px">›</span></div>';
-    h += '<div class="cd" style="font-size:13px;line-height:1.4;opacity:.85">' + T('Kartalarni ochib, bir xil juftliklarni toping. Juftlik topsangiz — yana yurasiz. Ko‘p juftlik yig‘gan yutadi!') + '</div>';
+    h += '<div class="tour" data-tour style="display:none"><span style="font-size:30px">🏆</span><div><b>' + T('Kunlik turnir') + '</b><small>' + T('6×6 · kam yurish yutadi · top-3 ga 100/60/30 🪙') + '</small></div><span style="margin-left:auto;font-size:24px">›</span></div>';
+    h += '<div class="cd" style="display:none">' + T('Kartalarni ochib, bir xil juftliklarni toping. Juftlik topsangiz — yana yurasiz. Ko‘p juftlik yig‘gan yutadi!') + '</div>';
     ov.innerHTML = h;
     var q = function (s) { return ov.querySelector(s); };
     q('[data-x]').onclick = close;
