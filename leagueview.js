@@ -39,6 +39,9 @@
     '#lgPop h2{margin:8px 0 4px;font-size:22px}#lgPop p{margin:4px 0;color:#d6d3ff;font-size:15px}#lgPop .rw{display:inline-block;margin-top:10px;background:#ffcf3f;color:#2a1600;font-weight:900;border-radius:20px;padding:6px 16px;font-size:18px}' +
     '#lgPop button{display:block;width:100%;border:0;border-radius:14px;padding:13px;margin-top:10px;font:900 16px system-ui;color:#fff;background:#352d86}#lgPop button.p{background:linear-gradient(90deg,#f58529,#dd2a7b,#8134af)}';
   document.head.appendChild(st);
+  var st2 = document.createElement('style');
+  st2.textContent = '#lgCard{position:absolute!important;top:74px!important;right:48px!important;left:auto!important;width:auto!important;padding:6px 12px!important;gap:6px!important;border-radius:14px!important;z-index:5}#lgCard .f{font-size:18px!important}#lgCard b{display:inline!important;font-size:15px!important}#lgCard small{font-size:13px!important;font-weight:800!important}';
+  document.head.appendChild(st2);
 
   // ---------- bosh sahifa kartasi
   function card() {
@@ -47,7 +50,7 @@
     if (!c) { c = document.createElement('div'); c.id = 'lgCard'; c.onclick = function () { show('lg'); }; hero.appendChild(c); }
     var dq = $('dqCard'); if (dq && dq.parentNode === hero && dq.nextSibling !== c) hero.insertBefore(c, dq.nextSibling);
     c.style.setProperty('order', '0', 'important'); c.style.setProperty('flex', '1 1 100%', 'important'); c.style.setProperty('margin', '0', 'important');
-    var t = T(D.tier), tb = D.table, h = '<span class="f">' + t.ic + '</span><div class="t"><b>' + t.n + ' liga' + (tb.rank ? ' · ' + tb.rank + '-o‘rin' : '') + '</b><small>⭐ ' + D.xp + ' XP · 🎖 ' + D.got + '/' + D.ach.length + ' yutuq · ⏳ ' + left(D.ends - Date.now()) + '</small></div><span class="a">›</span>';
+    var t = T(D.tier), tb = D.table, h = '<span class="f">' + t.ic + '</span><b>' + (tb.rank ? tb.rank + '-o‘rin' : t.n) + '</b><small>⭐ ' + D.xp + '</small>';
     if (c._h !== h) { c._h = h; c.innerHTML = h; }
   }
 
