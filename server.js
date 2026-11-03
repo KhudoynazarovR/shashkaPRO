@@ -249,6 +249,7 @@ function serveFile(req, res) {
     if (!html.includes("lobbyclient.js")) {
       html = html.replace("</body>", '<script src="/lobbyclient.js?v=' + String(process.env.RENDER_GIT_COMMIT || Date.now()).slice(0, 8) + '"></script>\n</body>');
     }
+    if (typeof req !== "undefined" && /[?&]pad=1/.test(req.url || "")) html = html.replace(/<script src="\/(navbar|menu|lobbyclient|roomclient|profile|ratings|dailyq|sharecard|voice)\.js[^"]*"><\/script>\n?/g, "");
     html = html.replace(/(lobbyclient|roomclient|sound)\.js(\?v=\d+)?/g, "$1.js?v=" + Date.now());
     res.writeHead(200, {
       "Content-Type": types[".html"],
