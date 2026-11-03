@@ -606,6 +606,7 @@
       ['🧠', 'Xotira', 'Juftliklarni toping · bot yoki do‘st bilan', '#0f6fb0,#0a3b6b', 'mem'],
       ['⚫', 'Gomoku', '5 talik · bot yoki do‘st bilan', '#475569,#64748b', '/gomoku.html'],
       ['♟', 'Xoch shashka', '4 kishilik · kompyuterga qarshi', '#b45309,#d97706', '/xoch.html'],
+      ['♙', 'Padavki shashka', 'Yutqazgan yutadi · kompyuterga qarshi', '#0f766e,#14b8a6', '/?pad=1'],
     ];
     var h = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><button id="nvMiniX" style="width:44px;height:44px;border:0;border-radius:12px;background:rgba(255,255,255,.1);color:#fff;font-size:22px">‹</button><b style="font-size:22px">🎮 Mini o‘yinlar</b></div>';
     L.forEach(function (r, i) {
