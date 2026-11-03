@@ -273,6 +273,16 @@ const server = http.createServer((req, res) => {
 
   if (require("./economy.js").handle(req, res, url)) return;
 
+  // 📱 Google Play ilovasi (TWA): sayt va ilova bir-biriga tegishli ekanini tasdiqlash — brauzer satri ko'rinmaydi.
+  // Render → Environment: ANDROID_PACKAGE=uz.shashkapro.app, ANDROID_SHA256=AA:BB:...(bir nechta bo'lsa vergul bilan)
+  if (url.pathname === "/.well-known/assetlinks.json") {
+    const pkg = String(process.env.ANDROID_PACKAGE || "").trim();
+    const fps = String(process.env.ANDROID_SHA256 || "").split(",").map(s => s.trim().toUpperCase()).filter(s => /^([0-9A-F]{2}:){31}[0-9A-F]{2}$/.test(s));
+    if (!pkg || !fps.length) { res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" }); return res.end("Not found"); }
+    res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "public, max-age=3600" });
+    return res.end(JSON.stringify([{ relation: ["delegate_permission/common.handle_all_urls"], target: { namespace: "android_app", package_name: pkg, sha256_cert_fingerprints: fps } }]));
+  }
+
   if (url.pathname === "/health") {
     res.writeHead(200, {
       "Content-Type": "application/json; charset=utf-8"
