@@ -157,7 +157,7 @@
         (function () {
           var stt = window.lbFriendState ? window.lbFriendState(d.id) : "ok";
           if ((stt !== "ok" && stt !== "friend") || !window.lbFriendAdd) return;
-          var fb = document.createElement("button");
+          var fb = document.createElement("button"); fb.setAttribute("data-fb", "1");
           fb.style.cssText = "width:100%;border:0;border-radius:14px;padding:12px;font-size:15px;color:#fff;margin-bottom:8px;background:" + (stt === "friend" ? "#3a3f6b" : "#2e7d32");
           fb.textContent = stt === "friend" ? "✓ Do‘stsiz" : "➕ Do‘st bo‘lish";
           if (stt === "friend") {
@@ -169,6 +169,22 @@
           }
           else fb.onclick = function () { window.lbFriendAdd(d.id); fb.textContent = "✓ Yuborildi"; fb.disabled = true; fb.style.background = "#3a3f6b"; };
           box.insertBefore(fb, box.lastElementChild);
+        })();
+        (function () {   // 🚫 bitta tugma: bloklash / blokdan chiqarish
+          var stt = window.lbFriendState ? window.lbFriendState(d.id) : "ok";
+          if (stt === "me" || stt === "bot" || !window.lbBlock) return;
+          var on = stt === "blocked", bb = document.createElement("button");
+          function paint() {
+            bb.textContent = on ? "✅ Blokdan chiqarish" : "🚫 Bloklash";
+            bb.style.cssText = "width:100%;border-radius:14px;padding:12px;font-size:15px;margin-bottom:8px;background:transparent;border:1px solid " + (on ? "#2e7d32;color:#7ee08a" : "#5a2a35;color:#ff6b7f");
+          }
+          paint();
+          bb.onclick = function () {
+            if (!on && !confirm("“" + d.name + "” ni bloklaysizmi? U sizga do‘stlik va o‘yin taklifi yubora olmaydi.")) return;
+            on = !on; window.lbBlock(d.id, on); paint();
+            var f = box.querySelector("[data-fb]"); if (f && on) f.remove();
+          };
+          box.insertBefore(bb, box.lastElementChild);
         })();
       })
       .catch(function () { box.innerHTML = "<div style=\"padding:30px\">Server bilan aloqa yo‘q</div>"; });

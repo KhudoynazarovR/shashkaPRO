@@ -231,7 +231,8 @@ function createLobby({ send, clients, roomsApi }) {
     const on = new Set(lbClients().map(x => String(x.lb.uid)));
     return {
       friends: (u.friends || []).map(id => { const f = us[id] || {}; return { uid: id, name: f.name || '?', elo: f.elo || 1000, gems: f.diamonds || 0, hasAv: !!f.avatar, online: on.has(id) }; }),
-      freqIn: (u.fReq || []).map(id => { const f = us[id] || {}; return { uid: id, name: f.name || '?', hasAv: !!f.avatar }; })
+      freqIn: (u.fReq || []).map(id => { const f = us[id] || {}; return { uid: id, name: f.name || '?', hasAv: !!f.avatar }; }),
+      blocked: (u.blocked || []).slice()
     };
   }
 
@@ -973,6 +974,20 @@ function createLobby({ send, clients, roomsApi }) {
     const me = c.lb;
 
     switch (m.type) {
+      case 'lbBlock': {   // 🚫 bloklash / blokdan chiqarish (bitta tugma)
+        const st = require('./store'), us = st.users();
+        const to = String(m.uid), mine = String(me.uid);
+        const uu = us[mine], ut = us[to];
+        if (!uu || to === mine || /^bot(_|$)/.test(to)) break;
+        uu.blocked = (uu.blocked || []).filter(x => x !== to);
+        if (m.on) {
+          uu.blocked.push(to); if (uu.blocked.length > 500) uu.blocked.shift();
+          uu.friends = (uu.friends || []).filter(x => x !== to); uu.fReq = (uu.fReq || []).filter(x => x !== to);
+          if (ut) { ut.friends = (ut.friends || []).filter(x => x !== mine); ut.fReq = (ut.fReq || []).filter(x => x !== mine); }
+          for (const [k, x] of challenges) if ((x.fromUid === mine && x.toUid === to) || (x.fromUid === to && x.toUid === mine)) challenges.delete(k);
+        }
+        st.save(); push(); break;
+      }
       case 'lbFriendRemove': {
         const st = require('./store'), us = st.users();
         const to = String(m.uid), mine = String(me.uid);
@@ -987,6 +1002,8 @@ function createLobby({ send, clients, roomsApi }) {
         const to = String(m.uid), mine = String(me.uid);
         const ut = us[to], uu = us[mine];
         if (!ut || !uu || to === mine) break;
+        if ((uu.blocked || []).includes(to)) { err(c, 'Avval blokdan chiqaring'); break; }
+        if ((ut.blocked || []).includes(mine)) break;   // u sizni bloklagan — taklif yetib bormaydi
         uu.friends = uu.friends || []; ut.friends = ut.friends || [];
         ut.fReq = ut.fReq || []; uu.fReq = uu.fReq || [];
         if (uu.friends.includes(to)) break;
@@ -1085,6 +1102,9 @@ function createLobby({ send, clients, roomsApi }) {
       case 'lbChallenge': {
         const to = connsOf(String(m.toUid))[0];
         if (!to || to.lb.uid === me.uid) return err(c, 'O‘yinchi topilmadi'), true;
+        try { const us = require('./store').users(), a = us[String(me.uid)] || {}, b = us[String(to.lb.uid)] || {};
+          if ((a.blocked || []).includes(String(to.lb.uid))) return err(c, 'Avval blokdan chiqaring'), true;
+          if ((b.blocked || []).includes(String(me.uid))) return err(c, 'Bu o‘yinchi takliflarni qabul qilmaydi'), true; } catch (e) {}
         if ([...challenges.values()].some(x => x.fromUid === me.uid && x.toUid === to.lb.uid)) return err(c, 'Chaqiruv allaqachon yuborilgan'), true;
         if (challenges.size > 500) return err(c, 'Hozir band, keyinroq urinib ko‘ring'), true;
         const ch = { id: 'c' + hex(4), fromUid: me.uid, fromName: me.name, toUid: to.lb.uid, tc: tcOf(m.tc), ...cleanOpts(m), at: Date.now() };

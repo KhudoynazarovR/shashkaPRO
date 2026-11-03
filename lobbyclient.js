@@ -473,7 +473,8 @@
       var me = S.me ? S.me.uid : "";
       window.lbFriendAdd = function (u) { sendMsg({ type: "lbFriendReq", uid: String(u) }); };
       window.lbFriendRemove = function (u) { sendMsg({ type: "lbFriendRemove", uid: String(u) }); };
-      window.lbFriendState = function (u) { try { u = String(u); if (u === String(me)) return "me"; if (/^bot(_|$)/.test(u)) return "bot"; return (S.friends || []).some(function (f) { return String(f.uid) === u; }) ? "friend" : "ok"; } catch (e) { return "ok"; } };
+      window.lbBlock = function (u, on) { u = String(u); S.blocked = (S.blocked || []).filter(function (x) { return String(x) !== u; }); if (on) { S.blocked.push(u); S.friends = (S.friends || []).filter(function (f) { return String(f.uid) !== u; }); } sendMsg({ type: "lbBlock", uid: u, on: !!on }); };
+      window.lbFriendState = function (u) { try { u = String(u); if (u === String(me)) return "me"; if (/^bot(_|$)/.test(u)) return "bot"; if ((S.blocked || []).some(function (x) { return String(x) === u; })) return "blocked"; return (S.friends || []).some(function (f) { return String(f.uid) === u; }) ? "friend" : "ok"; } catch (e) { return "ok"; } };
       var out = (S.outgoing || []).reduce(function (a, o) { a[o.toUid] = 1; return a; }, {});
 
       if (!document.getElementById("lbTickCss")) {
