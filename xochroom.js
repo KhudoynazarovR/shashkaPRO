@@ -79,14 +79,15 @@ function genCode() { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s = ''; c
 function who(m) {
   const t = verifyInitData(String(m.init || ''), process.env.BOT_TOKEN);
   if (!t) return null;
-  return { uid: String(t.id), name: String(t.first_name || t.username || 'Oyinchi').slice(0, 20) };
+  const ph = /^https:\/\/(t\.me|cdn[0-9]*\.telegram-cdn\.org)\//.test(String(t.photo_url || '')) ? String(t.photo_url) : '';
+  return { uid: String(t.id), name: String(t.first_name || t.username || 'Oyinchi').slice(0, 20), photo: ph };
 }
 function view(r, cid) {
   return {
     type: 'xcState', code: r.code, status: r.status, me: r.p.findIndex(x => x && x.cid === cid), host: r.p[r.host] ? r.p[r.host].cid === cid : false,
     board: r.B ? r.B.map(row => row.map(x => x ? { p: x.p, k: x.k } : null)) : null,
     turn: r.turn, alive: r.alive, last: r.last, rank: r.rank || null,
-    players: r.p.map(x => x ? { name: x.name, bot: !!x.bot } : null),
+    players: r.p.map(x => x ? { name: x.name, bot: !!x.bot, photo: x.photo || '' } : null),
     left: r.deadline ? Math.max(0, r.deadline - Date.now()) : 0
   };
 }
@@ -160,7 +161,7 @@ function handle(c, m) {
     const u = who(m); if (!u) { err('Telegram ichida oching'); return true; }
     let code; do { code = genCode(); } while (rooms.has(code));
     const r = { code, p: [null, null, null, null], B: null, status: 'wait', turn: 0, alive: [true, true, true, true], order: [], quiet: 0, last: null, host: 0, cur: [] };
-    r.p[0] = { uid: u.uid, name: u.name, hname: u.name, ws, cid: c.id };
+    r.p[0] = { uid: u.uid, name: u.name, hname: u.name, photo: u.photo, ws, cid: c.id };
     rooms.set(code, r); byConn.set(c.id, code); push(r); return true;
   }
   if (m.type === 'xcJoin') {
@@ -179,7 +180,7 @@ function handle(c, m) {
     if (r.status !== 'wait') { err('Oyin boshlangan'); return true; }
     const idx = r.p.findIndex(x => !x);
     if (idx < 0) { err('Xona toliq'); return true; }
-    r.p[idx] = { uid: u.uid, name: u.name, hname: u.name, ws, cid: c.id };
+    r.p[idx] = { uid: u.uid, name: u.name, hname: u.name, photo: u.photo, ws, cid: c.id };
     byConn.set(c.id, code); push(r); return true;
   }
   if (m.type === 'xcLeave') { leave(c, true); return true; }
