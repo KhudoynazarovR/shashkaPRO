@@ -588,6 +588,7 @@
 /* nvMini: Mini o'yinlar markazi (Xotira, Gomoku, 100 katakli, Tahlil 100) */
 (function () {
   function fr(url) {
+    if (/[?&]pad=1/.test(url)) { location.href = url; return; }
     var o = document.createElement('div');
     o.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#161512';
     o.innerHTML = '<iframe src="' + url + '" style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe><button style="position:absolute;top:8px;right:8px;z-index:2;width:40px;height:40px;border:0;border-radius:50%;background:#000a;color:#fff;font-size:20px">✕</button>';
