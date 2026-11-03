@@ -73,6 +73,7 @@
       ["📖", "Debyutlar", "Mashhur ochilishlar va yod olish", "@deb", "#0ea5e9,#6366f1"],
       ["🪙", "Tosh do‘koni", "Donalar va o‘z donangiz", "@shop", "#7b3ff2,#d62f8f"]]],
     ["ILOVA", [
+      ["👥", "Do‘stlarni taklif qilish", "Har do‘st uchun 300 🪙 gacha", "@ref", "#2fd27f,#f5b72b"],
       ["⚙️", "Sozlamalar", "Ovoz, fon va boshqalar", "@set", "#6b7bff,#8fa0ff"],
       ["❓", "Yordam", "Bo‘limlar haqida", "@help", "#17b2f7,#17e3ff"],
       ["💬", "Taklif va shikoyatlar", "Fikringizni yozib qoldiring", "@fb", "#f5873b,#f7c02d"]]]
@@ -132,7 +133,9 @@
     }).catch(function () { msgSet("Server bilan aloqa yo‘q"); });
   }
   function close() { if (panel) panel.style.display = "none"; }
+  window.refGo = window.refGo || function () { if (window.refOpen) return window.refOpen(); var s = document.createElement("script"); s.src = "/refpanel.js?v=" + Date.now(); s.onload = function () { window.refOpen(); }; document.head.appendChild(s); };
   window.mnA = function (a) {
+    if (a === "@ref") { close(); window.refGo(); return; }
     if (a === "@gomoku") { close(); var _o = document.createElement("div"); _o.style.cssText = "position:fixed;inset:0;z-index:99999;background:#161512"; _o.innerHTML = "<iframe src='/gomoku.html' style='position:absolute;inset:0;width:100%;height:100%;border:0'></iframe><button style='position:absolute;top:8px;right:8px;z-index:2;width:40px;height:40px;border:0;border-radius:50%;background:#000a;color:#fff;font-size:20px'>✕</button>"; _o.querySelector("button").onclick = function () { _o.remove(); }; document.body.appendChild(_o); return; } if (a === "@set") { close(); if (window.spSettings) window.spSettings(); return; } if (a.indexOf("@ai:") === 0) { close(); if (window.aiShow) window.aiShow(a.slice(4)); return; }
     if (a === "@live") { close(); liveOpen(); return; }
     if (a === "@deb") { close(); if (window.spDebut) window.spDebut(); else { var _d = document.createElement('script'); _d.src = '/debyut.js?v=2'; _d.onload = function () { window.spDebut(); }; document.head.appendChild(_d); } return; }

@@ -1305,16 +1305,8 @@ function createLobby({ send, clients, roomsApi }) {
       }
       case 'lbRef': {
         if (!c.lb || !c.lb.tg) break;
-        const st = require('./store'), us = st.users();
-        const rid = String(m.ref || '').replace(/^ref_/, '').replace(/[^0-9]/g, '');
-        const u = us[String(me.uid)], inv = us[rid];
-        if (!u || !inv || rid === String(me.uid) || u.refBy || !promoInfo().on) break;
-        if (Date.now() - (u.created || 0) > 3600000) break;
-        if ((inv.refCount || 0) >= 50) break;
-        u.refBy = rid; inv.refCount = (inv.refCount || 0) + 1; st.save();
-        economy.add(rid, 200, 'referral');
-        toast(rid, '🎉 Do‘stingiz ' + u.name + ' qo‘shildi: +200 🪙');
-        push();
+        const r = require('./ref.js').join(me.uid, m.ref);   // 👥 bonus endi o'yinlar soniga qarab (ref.js)
+        if (r) { toast(r.inviter, '👋 Do‘stingiz ' + r.name + ' qo‘shildi! 3 ta o‘yin o‘ynasa +100 🪙'); push(); }
         break;
       }
       case 'lbFriendNew': {

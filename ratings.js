@@ -177,7 +177,7 @@
         var pct = d.games ? Math.round(d.wins * 100 / d.games) : 0;
         function cell(ic, v, l) { return "<div style=\"background:#161a3a;border:1px solid #262b5a;border-radius:16px;padding:10px 2px\"><div style=\"font-size:18px\">" + ic + "</div><div style=\"font-size:19px;font-weight:700\">" + v + "</div><div style=\"font-size:11px;color:#8a8db8\">" + l + "</div></div>"; }
         var av = d.hasAv ? "<img src=\"/api/av/" + encodeURIComponent(d.id) + "\" style=\"width:96px;height:96px;border-radius:50%;object-fit:cover;border:4px solid #f5b72b\">" : "<div style=\"width:96px;height:96px;border-radius:50%;background:#1a00a8;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:44px;border:4px solid #f5b72b\">👤</div>";
-        box.innerHTML = av + "<div style=\"font-size:21px;font-weight:700;margin-top:10px\">" + esc(d.name) + (d.premium ? " 👑" : "") + "</div>" +
+        box.innerHTML = av + "<div style=\"font-size:21px;font-weight:700;margin-top:10px\">" + esc(d.name) + (d.premium ? " 👑" : "") + "</div>" + (d.elchi ? "<div style=\"font-size:12px;color:#f5b72b;margin-top:2px\">🏅 Elchi</div>" : "") +
           (d.bio ? "<div style=\"font-size:13px;color:#a9b0ff;margin-top:6px\">" + esc(d.bio) + "</div>" : "") +
           "<div style=\"display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0\">" +
           cell("📈", d.elo, "ELO") + cell("🪙", d.diamonds, "Tanga") + cell("🏆", d.wins, "G‘alaba") +

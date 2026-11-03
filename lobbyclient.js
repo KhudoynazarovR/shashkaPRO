@@ -794,7 +794,7 @@
           }
         } catch (e) {}
         var p = S.promo, el = document.getElementById("promoBar");
-        if (!p || !p.on || hid || !S.me) { if (el) el.remove(); return; }
+        if (true) { if (el) el.remove(); return; }   // 👥 taklif endi doimiy — menyu va lobbidagi kartada
         var left = Math.max(0, p.end - Date.now()), d = Math.floor(left / 86400000), h = Math.floor(left % 86400000 / 3600000), m = Math.floor(left % 3600000 / 60000);
         var html = "🔥 Shoshiling! Do‘stingni taklif qil — +200 🪙<small>Aksiya tugashiga: " + d + " kun " + h + " soat " + m + " daq · bosib ulashing</small><span id=\"promoX\">✕</span>";
         if (!el) {
@@ -829,17 +829,13 @@
         var top = document.getElementById("lbTop");
         if (!top) { top = document.createElement("div"); top.id = "lbTop"; f.parentNode.insertBefore(top, f); top.appendChild(f); }
         var sm = f.querySelector("small"); if (sm && !sm.getAttribute("data-hy")) { sm.setAttribute("data-hy", "1"); sm.textContent = "Havola yuboring"; }
-        var p = S.promo, el = document.getElementById("lbPromoC");
-        if (!p || !p.on || !S.me) { if (el) el.remove(); return; }
-        var left = Math.max(0, p.end - Date.now()), d = Math.floor(left / 86400000), h = Math.floor(left % 86400000 / 3600000), m = Math.floor(left % 3600000 / 60000);
-        var html = "🔥 Shoshiling!<br>Do‘stingni taklif qil: +200 🪙<small>" + d + " kun " + h + " soat " + m + " daq qoldi</small>";
+        var el = document.getElementById("lbPromoC");
+        if (!S.me || !/^\d+$/.test(String(S.me.uid))) { if (el) el.remove(); return; }
+        var html = "👥 Do‘stingni taklif qil<br>300 🪙 gacha<small>har bir faol do‘st uchun</small>";
         if (!el) {
           el = document.createElement("div"); el.id = "lbPromoC"; top.appendChild(el);
-          el.onclick = function () {
-            var link = (window.TG_APP_LINK || "https://t.me/DraughtsPRObot/play") + "?startapp=ref_" + S.me.uid;
-            var u = "https://t.me/share/url?url=" + encodeURIComponent(link) + "&text=" + encodeURIComponent("Shashka PRO — kel, 500 🪙 sovg‘a!");
-            if (tg && tg.openTelegramLink) tg.openTelegramLink(u); else window.open(u, "_blank");
-          };
+          window.refGo = window.refGo || function () { if (window.refOpen) return window.refOpen(); var s = document.createElement("script"); s.src = "/refpanel.js?v=" + Date.now(); s.onload = function () { window.refOpen(); }; document.head.appendChild(s); };
+          el.onclick = function () { window.refGo(); };
         }
         if (el.dataset.t !== html) { el.dataset.t = html; el.innerHTML = html; }
       }, 1000);

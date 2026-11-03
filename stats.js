@@ -27,6 +27,7 @@ function record(whiteId, blackId, winner) {
   b.elo = Math.max(100, Math.round((b.elo || 1000) + K * ((1 - sw) - (1 - ew))));
   apply(w, sw, b.name);
   apply(b, 1 - sw, w.name);
+  try { require('./ref.js').onGame(String(whiteId), String(blackId)); } catch (e) { console.log('[ref]', e.message); }
   store.save();
 }
 

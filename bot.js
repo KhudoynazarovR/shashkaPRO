@@ -230,6 +230,7 @@ async function start() {
       const s = require('./store');
       s.db.groups = s.db.groups || [];
       const id = String(ch.id), i = s.db.groups.findIndex(x => String(x) === id);
+      if (adm) require('./ref.js').onGroupAdmin(m).catch(e => console.log('[ref] guruh:', e.message));
       if (adm && i < 0) { s.db.groups.push(ch.id); console.log('[bot] guruh qo‘shildi:', ch.title, id); s.save(); }
       else if (!adm && i >= 0) { s.db.groups.splice(i, 1); console.log('[bot] guruh o‘chirildi:', ch.title, id); s.save(); }
     } catch (e) { console.log('[bot] my_chat_member xato:', e.message); }
