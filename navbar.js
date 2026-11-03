@@ -654,3 +654,9 @@
     '#nvDuo #nvBotRow small{font-size:11px!important}';
   document.head.appendChild(st);
 })();
+
+/* nvMiniNav: pastki menyu bosilsa Mini o'yinlar oynasi yopiladi */
+document.addEventListener('click', function (e) {
+  var t = e.target;
+  if (t && t.closest && t.closest('#nvBar')) { var h = document.getElementById('nvMiniHub'); if (h) h.remove(); }
+}, true);
