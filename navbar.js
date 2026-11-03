@@ -636,3 +636,19 @@
     m.onclick = hub;
   }, 700);
 })();
+
+/* nvCompact: Mini oyinlar + Botlar ixcham bir qator */
+(function () {
+  var st = document.createElement('style');
+  st.textContent = '#nvDuo{display:flex!important;flex-direction:row!important;gap:8px!important;align-items:stretch!important;margin:0 0 8px!important}' +
+    '#nvDuo #nvMemRow{flex:0 0 36%!important;min-width:0!important;margin:0!important;padding:8px 10px!important;gap:6px!important;flex-direction:column!important;align-items:flex-start!important;justify-content:center!important}' +
+    '#nvDuo #nvMemRow>span:first-child{font-size:22px!important}' +
+    '#nvDuo #nvMemRow b{font-size:14px!important}' +
+    '#nvDuo #nvMemRow div div{display:none!important}' +
+    '#nvDuo #nvBotRow{flex:1!important;min-width:0!important;margin:0!important;padding:8px 10px!important;gap:6px!important;flex-direction:column!important;align-items:flex-start!important;justify-content:center!important}' +
+    '#nvDuo #nvBotRow .st img{width:22px!important;height:22px!important}' +
+    '#nvDuo #nvBotRow .st i{font-size:18px!important}' +
+    '#nvDuo #nvBotRow b{font-size:14px!important}' +
+    '#nvDuo #nvBotRow small{font-size:11px!important}';
+  document.head.appendChild(st);
+})();
