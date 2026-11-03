@@ -17,17 +17,20 @@ h1{font-size:20px;font-weight:600;margin:0 0 10px}
 .ch{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 .ch span{background:var(--card);border:1px solid var(--bd);border-radius:20px;padding:3px 10px;font-size:13px;display:flex;align-items:center;gap:6px}
 .ch .dot{width:10px;height:10px}
+input{font:inherit;padding:9px 12px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--fg);width:120px;text-transform:uppercase}
 button{font:inherit;background:var(--fg);color:var(--bg);border:0;border-radius:10px;padding:10px 18px;cursor:pointer}
 </style></head><body><div class="w">
 <h1>Xoch shashka · 4 kishilik</h1>
 <div class="st"><span class="dot" id="dt"></span><div><div id="msg"></div><div class="sub" id="sb"></div></div></div>
+<div class="ch" id="bx"><button id="b1">Onlayn: 4 kishi</button><input id="ci" placeholder="Xona kodi" maxlength="6" autocapitalize="characters"><button id="b2">Kirish</button></div>
+<div class="st" id="ox" style="display:none;flex-direction:column;align-items:stretch;gap:8px;margin-top:12px"><div id="oc" style="font-weight:600"></div><div id="op" class="sub" style="white-space:pre-line"></div><div class="ch" style="margin:0"><button id="o1">Boshlash</button><button id="o2">Kodni ulashish</button><button id="o3">Chiqish</button></div></div>
 <svg id="bd" viewBox="0 0 430 430" role="img" aria-label="12×12 shashka doskasi"></svg>
 <div class="ch" id="ch"></div>
 <button id="nw">Yangi oʻyin</button>
 <p class="sub">Siz qizil donalarsiz (pastki oʻng burchak). Yeyish majburiy, dona orqaga ham yeydi. Qarshi tomondagi chetga yetgan dona damkaga aylanadi. Yura olmay qolgan oʻyinchi chiqib ketadi.</p>
 </div>
 <script>
-const N=10,S=43,ME=2,COL=["#3b82c4","#e0a020","#c8402f","#3f9a4a"],NAME=["Koʻk","Sariq","Qizil","Yashil"];
+let ME=2,ON=false,RC="",WS=null,ST=null,T0=0;const N=10,S=43,COL=["#3b82c4","#e0a020","#c8402f","#3f9a4a"],NAME=["Koʻk","Sariq","Qizil","Yashil"];
 const D=[[1,1],[1,-1],[-1,1],[-1,-1]];
 const FW=[[[1,1],[1,-1],[-1,1]],[[1,-1],[1,1],[-1,-1]],[[-1,-1],[-1,1],[1,-1]],[[-1,1],[-1,-1],[1,1]]];const CR=[[0,0],[0,9],[9,9],[9,0]];
 const ok=(r,c)=>r>=0&&c>=0&&r<N&&c<N;
@@ -125,7 +128,7 @@ function click(r,c){
   if(!f.length){if(n==1){pre=[];cand=[];render()}return}
   pre.push([r,c]);cand=f;
   const done=f.find(m=>m.path.length==pre.length);
-  if(done)apply(done);else render();
+  if(done){if(ON)xs({type:"xcMove",code:RC,path:done.path});else apply(done)}else render();
 }
 function render(){
   let h="";
@@ -162,6 +165,57 @@ document.getElementById("bd").addEventListener("click",e=>{
   const c=Math.floor((e.clientX-b.left)/b.width*N),r=Math.floor((e.clientY-b.top)/b.height*N);
   if(ok(r,c))click(r,c);
 });
-document.getElementById("nw").onclick=init;
+document.getElementById("nw").onclick=()=>{if(!ON)init()};
 init();
+function startB(){const b=Array.from({length:N},()=>Array(N).fill(null));for(let r=0;r<N;r++)for(let c=0;c<N;c++){if((r+c)%2!=1)continue;const p=r<4&&c<4?0:r<4&&c>=6?1:r>=6&&c>=6?2:r>=6&&c<4?3:-1;if(p>=0)b[r][c]={p,k:false}}return b}
+function tgw(){try{if(window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initData)return Telegram.WebApp;if(window.parent!==window&&parent.Telegram&&parent.Telegram.WebApp)return parent.Telegram.WebApp}catch(e){}return null}
+function initData(){const w=tgw();return w?w.initData:""}
+function xs(o){if(WS&&WS.readyState==1)WS.send(JSON.stringify(o))}
+function conn(cb){
+  if(!initData()){alert("Oʻyinni Telegram ichida (ShashkaPRObot orqali) oching");return}
+  if(WS&&WS.readyState==1){cb();return}
+  WS=new WebSocket((location.protocol=="https:"?"wss://":"ws://")+location.host);
+  WS.onopen=cb;
+  WS.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(x){return}
+    if(m.type=="xcState")onState(m);
+    else if(m.type=="xcError")alert(m.message);
+    else if(m.type=="xcClosed"){leaveOn();alert("Xona yopildi")}};
+  WS.onclose=()=>{if(ON){document.getElementById("sb").textContent="Aloqa uzildi. Sahifani qayta oching"}};
+}
+function leaveOn(){ON=false;ST=null;RC="";ME=2;document.getElementById("ox").style.display="none";document.getElementById("bx").style.display="flex";init()}
+function sbText(){
+  if(!ST)return"";
+  if(ST.status=="wait")return"Xona kodi: "+ST.code;
+  let t="Siz: "+NAME[ME];
+  if(ST.status=="play"&&turn==ME&&cur.length&&cur[0].cap.length)t+=" · yeyish majburiy";
+  if(ST.status=="play"&&T0){const l=Math.max(0,Math.ceil((T0-Date.now())/1000));t+=" · "+l+" s"}
+  return t;
+}
+function onState(s){
+  ON=true;RC=s.code;ST=s;ME=s.me>=0?s.me:2;
+  document.getElementById("bx").style.display="none";document.getElementById("ox").style.display="flex";
+  const nm=i=>s.players[i]?s.players[i].name:NAME[i];
+  pre=[];cand=[];quiet=0;msg2="";
+  if(s.status=="wait"){B=startB();alive=[true,true,true,true];turn=0;over=false;last=null;cur=[];T0=0}
+  else{B=s.board;alive=s.alive;turn=s.turn;over=s.status=="done";last=s.last;T0=s.left?Date.now()+s.left:0;cur=(!over&&turn==ME)?moves(turn):[]}
+  render();
+  const m=document.getElementById("msg");
+  if(s.status=="wait")m.textContent="Oʻyinchilar kutilmoqda…";
+  else if(over)m.textContent=s.rank[0]==ME?"Siz gʻalaba qozondingiz!":nm(s.rank[0])+" gʻalaba qozondi";
+  else m.textContent=turn==ME?"Sizning navbatingiz":nm(turn)+" oʻylayapti…";
+  document.getElementById("sb").textContent=sbText();
+  document.getElementById("oc").textContent="Xona: "+s.code;
+  document.getElementById("op").textContent=s.players.map((x,i)=>NAME[i]+": "+(x?x.name:"boʻsh")).join("\n")+(s.status=="done"?"\n\nOʻrinlar: "+s.rank.map((i,j)=>(j+1)+"-"+nm(i)).join(", "):"");
+  document.getElementById("o1").style.display=(s.status=="wait"&&s.host)?"":"none";
+  document.getElementById("o2").style.display=s.status=="wait"?"":"none";
+  document.getElementById("o3").textContent=s.status=="done"?"Yopish":"Chiqish";
+}
+setInterval(()=>{if(ON&&ST&&ST.status=="play")document.getElementById("sb").textContent=sbText()},500);
+document.getElementById("b1").onclick=()=>conn(()=>xs({type:"xcCreate",init:initData()}));
+document.getElementById("b2").onclick=()=>{const c=document.getElementById("ci").value.trim().toUpperCase();if(c.length<4)return;conn(()=>xs({type:"xcJoin",code:c,init:initData()}))};
+document.getElementById("o1").onclick=()=>xs({type:"xcStart",code:RC});
+document.getElementById("o2").onclick=()=>{const t="Xoch shashka, 4 kishilik! Xona kodi: "+RC+". ShashkaPRObot → Mini oʻyinlar → Xoch shashka → kodni kiriting.";const w=tgw();if(w&&w.openTelegramLink)w.openTelegramLink("https://t.me/share/url?url="+encodeURIComponent("https://t.me/ShashkaPRObot")+"&text="+encodeURIComponent(t));else if(navigator.clipboard)navigator.clipboard.writeText(t)};
+document.getElementById("o3").onclick=()=>{xs({type:"xcLeave"});leaveOn()};
+const qr=new URLSearchParams(location.search).get("room");
+if(qr){document.getElementById("ci").value=qr.toUpperCase();conn(()=>xs({type:"xcJoin",code:qr.toUpperCase(),init:initData()}))}
 </script></body></html>

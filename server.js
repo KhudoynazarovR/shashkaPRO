@@ -348,6 +348,7 @@ wss.on("connection", ws => {
 
     // 🃏 Memori: do'st bilan (mm...)
     if (require("./memroom.js").handle(c, m, clients)) return;
+    if (require("./xochroom.js").handle(c, m, clients)) return;
 
     // Zal va turnir (lb...) xabarlari
     if (lobbyApi.handle(c, m)) return;
@@ -576,6 +577,7 @@ wss.on("connection", ws => {
 
   ws.on("close", () => {
     try { require("./memroom.js").onClose(c); } catch (e) {}
+    try { require("./xochroom.js").onClose(c); } catch (e) {}
     leaveClient(c);
     roomsApi.onClose(c);
     lobbyApi.onClose(c);
