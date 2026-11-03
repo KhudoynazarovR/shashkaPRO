@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="uz"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Xoch shashka</title>
+<style>
+:root{--bg:#f6f1e7;--fg:#2b2118;--mut:#7a6a58;--card:#fffaf0;--bd:#d9ccb4;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1d1813;--fg:#f1e8d8;--mut:#a89883;--card:#2a231b;--bd:#443a2d}}
+:root[data-theme="dark"]{--bg:#1d1813;--fg:#f1e8d8;--mut:#a89883;--card:#2a231b;--bd:#443a2d}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,-apple-system,sans-serif}
+.w{max-width:460px;margin:0 auto;padding:14px}
+h1{font-size:20px;font-weight:600;margin:0 0 10px}
+.st{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px;min-height:24px}
+.dot{width:14px;height:14px;border-radius:50%;flex:none}
+.sub{font-size:13px;color:var(--mut)}
+#bd{display:block;width:100%;margin:12px 0;touch-action:manipulation}
+.ch{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.ch span{background:var(--card);border:1px solid var(--bd);border-radius:20px;padding:3px 10px;font-size:13px;display:flex;align-items:center;gap:6px}
+.ch .dot{width:10px;height:10px}
+button{font:inherit;background:var(--fg);color:var(--bg);border:0;border-radius:10px;padding:10px 18px;cursor:pointer}
+</style></head><body><div class="w">
+<h1>Xoch shashka · 4 kishilik</h1>
+<div class="st"><span class="dot" id="dt"></span><div><div id="msg"></div><div class="sub" id="sb"></div></div></div>
+<svg id="bd" viewBox="0 0 430 430" role="img" aria-label="12×12 shashka doskasi"></svg>
+<div class="ch" id="ch"></div>
+<button id="nw">Yangi oʻyin</button>
+<p class="sub">Siz qizil donalarsiz (pastki oʻng burchak). Yeyish majburiy, dona orqaga ham yeydi. Qarshi tomondagi chetga yetgan dona damkaga aylanadi. Yura olmay qolgan oʻyinchi chiqib ketadi.</p>
+</div>
+<script>
+const N=10,S=43,ME=2,COL=["#3b82c4","#e0a020","#c8402f","#3f9a4a"],NAME=["Koʻk","Sariq","Qizil","Yashil"];
+const D=[[1,1],[1,-1],[-1,1],[-1,-1]];
+const FW=[[[1,1],[1,-1],[-1,1]],[[1,-1],[1,1],[-1,-1]],[[-1,-1],[-1,1],[1,-1]],[[-1,1],[-1,-1],[1,1]]];const CR=[[0,0],[0,9],[9,9],[9,0]];
+const ok=(r,c)=>r>=0&&c>=0&&r<N&&c<N;
+const promo=(p,r,c)=>p==0?(r==9||c==9):p==1?(r==9||c==0):p==2?(r==0||c==0):(r==0||c==9);
+let B,turn,alive,cur,pre,cand,over,quiet,last,msg2;
+function init(){
+  B=Array.from({length:N},()=>Array(N).fill(null));
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+    if(!ok(r,c)||(r+c)%2!=1)continue;
+    const p=r<4&&c<4?0:r<4&&c>=6?1:r>=6&&c>=6?2:r>=6&&c<4?3:-1;
+    if(p>=0)B[r][c]={p,k:false};
+  }
+  alive=[true,true,true,true];turn=ME;over=false;quiet=0;last=null;msg2="";pre=[];cand=[];
+  cur=moves(turn);render();
+}
+function chain(p,r,c,k,path,cap,out){
+  let any=false;
+  for(const [dr,dc] of D){
+    let a=r+dr,b=c+dc;
+    if(k)while(ok(a,b)&&!B[a][b]){a+=dr;b+=dc}
+    if(!ok(a,b))continue;
+    const t=B[a][b];
+    if(!t||t.p==p||cap.has(a*N+b))continue;
+    const lands=[];let l=a+dr,m=b+dc;
+    while(ok(l,m)&&!B[l][m]){lands.push([l,m]);if(!k)break;l+=dr;m+=dc}
+    if(!lands.length)continue;
+    cap.add(a*N+b);
+    for(const [x,y] of lands){any=true;chain(p,x,y,k||promo(p,x,y),path.concat([[x,y]]),cap,out)}
+    cap.delete(a*N+b);
+  }
+  if(!any&&path.length>1)out.push({path,cap:[...cap]});
+}
+function moves(p){
+  const caps=[],quiet=[];
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+    const x=B[r][c];if(!x||x.p!=p)continue;
+    B[r][c]=null;chain(p,r,c,x.k,[[r,c]],new Set(),caps);B[r][c]=x;
+  }
+  if(caps.length)return caps;
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+    const x=B[r][c];if(!x||x.p!=p)continue;
+    for(const [dr,dc] of (x.k?D:FW[p])){
+      let a=r+dr,b=c+dc;
+      while(ok(a,b)&&!B[a][b]){quiet.push({path:[[r,c],[a,b]],cap:[]});if(!x.k)break;a+=dr;b+=dc}
+    }
+  }
+  return quiet;
+}
+function apply(mv){
+  const [fr,fc]=mv.path[0],[tr,tc]=mv.path[mv.path.length-1],x=B[fr][fc];
+  B[fr][fc]=null;mv.cap.forEach(k=>B[Math.floor(k/N)][k%N]=null);
+  B[tr][tc]=x;if(promo(x.p,tr,tc))x.k=true;
+  quiet=(mv.cap.length||!x.k)?0:quiet+1;
+  last=mv.path;pre=[];cand=[];
+  adv();
+}
+function wipe(p){for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(B[r][c]&&B[r][c].p==p)B[r][c]=null}
+const cnt=p=>B.flat().filter(x=>x&&x.p==p).length;
+function adv(){
+  msg2="";
+  for(let i=0;i<4;i++){
+    turn=(turn+1)%4;if(!alive[turn])continue;
+    cur=moves(turn);if(cur.length)break;
+    alive[turn]=false;wipe(turn);msg2=NAME[turn]+" chiqib ketdi";
+  }
+  const left=alive.map((a,i)=>a?i:-1).filter(i=>i>=0);
+  if(left.length<2||quiet>=80){over=true;if(left.length>1){turn=left.sort((a,b)=>cnt(b)-cnt(a))[0]}else turn=left[0]}
+  render();
+  if(!over&&turn!=ME)setTimeout(bot,550);
+}
+function bot(){
+  if(over||turn==ME)return;
+  const mx=Math.max(...cur.map(m=>m.cap.length));
+  const best=cur.filter(m=>m.cap.length==mx);
+  let pick,bs=-1e9;
+  for(const m of best){
+    const [fr,fc]=m.path[0],[tr,tc]=m.path[m.path.length-1];
+    const pc=B[fr][fc],p=pc.p;
+    const prog=Math.abs(tr-CR[p][0])+Math.abs(tc-CR[p][1])-Math.abs(fr-CR[p][0])-Math.abs(fc-CR[p][1]);
+    const edge=Math.abs(tr-4.5)+Math.abs(tc-4.5);
+    const s=(mx?0:prog*2+(pc.k?-1:1))+Math.random()*3-(mx?0:edge*0.05);
+    if(s>bs){bs=s;pick=m}
+  }
+  apply(pick);
+}
+function click(r,c){
+  if(over||turn!=ME)return;
+  const mine=B[r][c]&&B[r][c].p==ME;
+  if(pre.length<=1&&mine){
+    const cs=cur.filter(m=>m.path[0][0]==r&&m.path[0][1]==c);
+    if(cs.length){pre=[[r,c]];cand=cs;render();return}
+  }
+  if(!pre.length)return;
+  const n=pre.length,f=cand.filter(m=>m.path[n]&&m.path[n][0]==r&&m.path[n][1]==c);
+  if(!f.length){if(n==1){pre=[];cand=[];render()}return}
+  pre.push([r,c]);cand=f;
+  const done=f.find(m=>m.path.length==pre.length);
+  if(done)apply(done);else render();
+}
+function render(){
+  let h="";
+  const hot=new Set(),dest=new Set();
+  if(!over&&turn==ME){
+    if(!pre.length)cur.forEach(m=>hot.add(m.path[0][0]*N+m.path[0][1]));
+    else cand.forEach(m=>{const q=m.path[pre.length];dest.add(q[0]*N+q[1])});
+  }
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+    if(!ok(r,c))continue;
+    const k=r*N+c,dk=(r+c)%2==1;
+    h+=`<rect x="${c*S}" y="${r*S}" width="${S}" height="${S}" fill="${dk?"#b8743a":"#f0d8b0"}"/>`;
+    if(last&&last.some(q=>q[0]==r&&q[1]==c))h+=`<rect x="${c*S}" y="${r*S}" width="${S}" height="${S}" fill="rgba(255,230,80,.4)"/>`;
+    const x=B[r][c],cx=c*S+S/2,cy=r*S+S/2;
+    if(x){
+      const sl=pre.length&&pre[0][0]==r&&pre[0][1]==c;
+      h+=`<circle cx="${cx}" cy="${cy+3}" r="${S*.4}" fill="rgba(0,0,0,.45)"/><circle cx="${cx}" cy="${cy}" r="${S*.4}" fill="${COL[x.p]}" stroke="${sl?"#ffd84a":"rgba(0,0,0,.45)"}" stroke-width="${sl?3:1}"/>`;
+      h+=`<circle cx="${cx}" cy="${cy}" r="${S*.26}" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="1.5"/>`;
+      if(x.k)h+=`<text x="${cx}" y="${cy+1}" text-anchor="middle" dominant-baseline="central" font-size="${S*.42}" fill="#fff">♛</text>`;
+      if(hot.has(k))h+=`<circle cx="${cx}" cy="${cy}" r="${S*.46}" fill="none" stroke="#2fb35a" stroke-width="2"/>`;
+    }
+    if(dest.has(k))h+=`<circle cx="${cx}" cy="${cy}" r="${S*.16}" fill="rgba(40,170,80,.9)"/>`;
+  }
+  document.getElementById("bd").innerHTML=h;
+  const m=document.getElementById("msg"),sb=document.getElementById("sb");
+  document.getElementById("dt").style.background=COL[turn];
+  if(over)m.textContent=turn==ME?"Siz gʻalaba qozondingiz!":NAME[turn]+" gʻalaba qozondi";
+  else m.textContent=turn==ME?"Sizning navbatingiz":NAME[turn]+" oʻylayapti…";
+  sb.textContent=msg2||(!over&&turn==ME&&cur.length&&cur[0].cap.length?"Yeyish majburiy":"");
+  document.getElementById("ch").innerHTML=[0,1,2,3].map(p=>`<span style="${alive[p]?"":"opacity:.4"}"><i class="dot" style="background:${COL[p]}"></i>${NAME[p]}: ${cnt(p)}</span>`).join("");
+}
+document.getElementById("bd").addEventListener("click",e=>{
+  const b=e.currentTarget.getBoundingClientRect();
+  const c=Math.floor((e.clientX-b.left)/b.width*N),r=Math.floor((e.clientY-b.top)/b.height*N);
+  if(ok(r,c))click(r,c);
+});
+document.getElementById("nw").onclick=init;
+init();
+</script></body></html>
