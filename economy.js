@@ -139,6 +139,7 @@ function handle(req, res, url) {
       if (_sg) { const _su = store.users()[String(_sg.id)]; if (_su && Date.now() - (_su.lastSeen || 0) > 60000) _su.lastSeen = Date.now(); }
     }
   } catch (e) {}
+  if (p === '/api/report' || p === '/api/mod') { if (require('./mod.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }
   if (p.startsWith('/api/auth/')) { if (require('./weblogin.js').handle(req, res, p, { send, readBody })) return true; }
   if (p.startsWith('/api/pzt/')) { if (require('./pztour.js').handle(req, res, p, { store, verifyInitData, send, readBody })) return true; }
   if (p.startsWith('/api/battle/')) { if (require('./pzbattle.js').handle(req, res, p, { store, verifyInitData, send, readBody })) return true; }
@@ -254,7 +255,8 @@ function handle(req, res, url) {
       id: _id, name: _u.name || 'Oyinchi', elo: _u.elo || 1000, diamonds: _u.diamonds || 0,
       wins: _u.wins || 0, losses: _u.losses || 0, draws: _u.draws || 0, games: _u.games || 0,
       bestStreak: _u.bestStreak || 0, tournWins: _u.tournWins || 0,
-      bio: _u.bio || '', hasAv: !!_u.avatar, premium: !!store.isPremium(_u), lastSeen: _u.lastSeen || 0
+      bio: _u.bio || '', hasAv: !!_u.avatar, premium: !!store.isPremium(_u), lastSeen: _u.lastSeen || 0,
+      ...(isAdmin(_tg.id) ? { adm: true, sanc: require('./mod.js').info(_id) } : {})
     });
     return true;
   }

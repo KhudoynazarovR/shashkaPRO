@@ -130,6 +130,36 @@
   window.rkClose = function () { if (panel) panel.style.display = "none"; };
   window.rkIsOpen = function () { return !!panel && panel.style.display !== "none"; };
 
+  window.spReport = function (d, btn) {
+    var tg = window.Telegram && window.Telegram.WebApp;
+    var R = [["insult", "Haqorat / so‘kinish"], ["cheat", "Chiterlik"], ["scam", "Aldash / firibgarlik"], ["spam", "Spam"], ["name", "Nomaqbul ism yoki rasm"], ["other", "Boshqa"]];
+    var ov = document.createElement("div"); ov.id = "spRep";
+    ov.style.cssText = "position:fixed;left:0;right:0;top:0;bottom:0;z-index:100001;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:16px";
+    ov.onclick = function (e) { if (e.target === ov) ov.remove(); };
+    var b = document.createElement("div");
+    b.style.cssText = "width:100%;max-width:360px;background:#0b0e1a;color:#fff;border:1px solid #262b5a;border-radius:22px;padding:18px 14px;font-family:inherit";
+    b.innerHTML = "<div style=\"font-size:17px;font-weight:700;margin-bottom:10px;text-align:center\">⚠️ “" + esc(d.name) + "” ustidan shikoyat</div>" +
+      R.map(function (r) { return "<label style=\"display:flex;gap:10px;align-items:center;padding:9px 6px;font-size:15px;border-bottom:1px solid #1c2147\"><input type=\"radio\" name=\"spR\" value=\"" + r[0] + "\" style=\"width:18px;height:18px\">" + r[1] + "</label>"; }).join("") +
+      "<textarea id=\"spRn\" maxlength=\"200\" placeholder=\"Izoh (ixtiyoriy)\" style=\"width:100%;box-sizing:border-box;margin-top:10px;height:64px;border-radius:12px;border:1px solid #262b5a;background:#161a3a;color:#fff;padding:8px;font:inherit;font-size:14px\"></textarea>" +
+      "<div id=\"spRe\" style=\"color:#ff6b7f;font-size:13px;min-height:18px;margin:6px 0\"></div>" +
+      "<div style=\"display:flex;gap:8px\"><button id=\"spRc\" style=\"flex:1;border:0;border-radius:14px;padding:12px;font-size:15px;color:#fff;background:#3a3f6b\">Bekor</button><button id=\"spRs\" style=\"flex:1;border:0;border-radius:14px;padding:12px;font-size:15px;color:#fff;background:#c0392b\">Yuborish</button></div>";
+    ov.appendChild(b); document.body.appendChild(ov);
+    b.querySelector("#spRc").onclick = function () { ov.remove(); };
+    b.querySelector("#spRs").onclick = function () {
+      var sel = b.querySelector("input[name=spR]:checked"), e = b.querySelector("#spRe");
+      if (!sel) { e.textContent = "Sababni tanlang"; return; }
+      var sb = this; sb.disabled = true;
+      fetch("/api/report", { method: "POST", headers: { "Content-Type": "application/json", "x-init-data": (tg && tg.initData) || "" }, body: JSON.stringify({ uid: d.id, reason: sel.value, note: b.querySelector("#spRn").value }) })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (j.error) { e.textContent = j.error; sb.disabled = false; return; }
+          ov.remove();
+          if (btn) { btn.textContent = "✓ Shikoyat yuborildi"; btn.disabled = true; }
+        })
+        .catch(function () { e.textContent = "Server bilan aloqa yo‘q"; sb.disabled = false; });
+    };
+  };
+
   window.spUser = function (id) {
     var tg = window.Telegram && window.Telegram.WebApp;
     var old = document.getElementById("spUo"); if (old) old.remove();
@@ -185,6 +215,40 @@
             var f = box.querySelector("[data-fb]"); if (f && on) f.remove();
           };
           box.insertBefore(bb, box.lastElementChild);
+        })();
+        (function () {   // ⚠️ shikoyat
+          var stt = window.lbFriendState ? window.lbFriendState(d.id) : "ok";
+          if (stt === "me" || stt === "bot") return;
+          var rb = document.createElement("button");
+          rb.textContent = "⚠️ Shikoyat qilish";
+          rb.style.cssText = "width:100%;border-radius:14px;padding:12px;font-size:15px;margin-bottom:8px;background:transparent;border:1px solid #6b5a2a;color:#f5b72b";
+          rb.onclick = function () { spReport(d, rb); };
+          box.insertBefore(rb, box.lastElementChild);
+        })();
+        if (d.adm) (function () {   // 🛡 admin: jazo tugmalari
+          var w = document.createElement("div");
+          w.style.cssText = "border:1px dashed #5a2a35;border-radius:16px;padding:10px;margin-bottom:8px;text-align:left";
+          function dt(t) { var x = new Date(t); return ("0" + x.getDate()).slice(-2) + "." + ("0" + (x.getMonth() + 1)).slice(-2) + " " + ("0" + x.getHours()).slice(-2) + ":" + ("0" + x.getMinutes()).slice(-2); }
+          function line(k, ic, nm) { var z = (d.sanc && d.sanc[k]) || { n: 0, until: 0 }; return "<div style=\"font-size:13px;margin:3px 0\">" + ic + " " + nm + ": " + (z.until ? "<b style=\"color:#ff6b7f\">" + dt(z.until) + " gacha</b> (" + esc(z.reason) + ")" : "ochiq") + " · " + z.n + " marta</div>"; }
+          function act(a, lab, bg) { return "<button data-ma=\"" + a + "\" style=\"flex:1;border:0;border-radius:12px;padding:10px 4px;font-size:13px;color:#fff;background:" + bg + "\">" + lab + "</button>"; }
+          function paint() {
+            w.innerHTML = "<div style=\"font-size:13px;color:#ff9aa8;font-weight:700;margin-bottom:4px\">🛡 Admin</div>" + line("chat", "💬", "Chat") + line("play", "🎮", "O‘yin") +
+              "<div style=\"display:flex;gap:6px;margin-top:8px\">" + act("chat", "💬 Chat ⛔", "#8a5a00") + act("play", "🎮 O‘yin ⛔", "#a3263a") + act("undo", "↩️ Bekor", "#3a3f6b") + "</div>";
+            [].forEach.call(w.querySelectorAll("[data-ma]"), function (b) {
+              b.onclick = function () {
+                var a = b.getAttribute("data-ma"), reason = "";
+                if (a !== "undo") { reason = prompt("Sabab (masalan: so‘kinish, chiterlik):", a === "play" ? "Chiterlik" : "Haqorat / so‘kinish"); if (reason === null) return; }
+                else if (!confirm("“" + d.name + "” dan barcha faol jazolar olib tashlansinmi?")) return;
+                b.disabled = true;
+                fetch("/api/mod", { method: "POST", headers: { "Content-Type": "application/json", "x-init-data": (tg && tg.initData) || "" }, body: JSON.stringify({ uid: d.id, act: a, reason: reason }) })
+                  .then(function (r) { return r.json(); })
+                  .then(function (j) { if (j.error) { alert(j.error); b.disabled = false; return; } d.sanc = j.sanc; paint(); })
+                  .catch(function () { alert("Server bilan aloqa yo‘q"); b.disabled = false; });
+              };
+            });
+          }
+          paint();
+          box.insertBefore(w, box.lastElementChild);
         })();
       })
       .catch(function () { box.innerHTML = "<div style=\"padding:30px\">Server bilan aloqa yo‘q</div>"; });

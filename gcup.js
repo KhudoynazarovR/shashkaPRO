@@ -380,6 +380,7 @@ async function onCallback(q, d, uid) {
   if (t.status !== 'reg') return answer(q, 'Ro‘yxat yopilgan'), true;
   if (d[1] === 'j') {
     if (t.players.some(p => p.uid === uid)) return answer(q, 'Siz allaqachon ro‘yxatdasiz ✅'), true;
+    { const _pb = require('./mod.js').playText(uid); if (_pb) return answer(q, _pb, true), true; }
     if (t.players.length >= MAX_PLAYERS) return answer(q, 'Joy qolmadi (' + MAX_PLAYERS + ')'), true;
     t.players.push({ uid, name: nm(q.from) }); store.save(); tourEdit(t);
     return answer(q, '✅ Ro‘yxatga qo‘shildingiz!' + (t.startAt ? ' Boshlanish: ' + hm(t.startAt) : '')), true;

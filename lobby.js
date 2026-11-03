@@ -972,6 +972,10 @@ function createLobby({ send, clients, roomsApi }) {
     if (m.type === 'lbHello') { hello(c, m); return true; }
     if (!c.lb) { err(c, 'Avval kirish kerak'); return true; }
     const me = c.lb;
+    {   // ⛔ o'yin taqiqi: odamlar bilan o'yin, turnir, simul yopiq (botlar va masalalar ochiq)
+      const PB = ['lbQuick', 'lbChallenge', 'lbFriendNew', 'lbFriendJoin', 'lbTJoin', 'lbTCreate', 'lbSJoin', 'lbSCreate'];
+      if ((PB.includes(m.type) || (m.type === 'lbRespond' && m.accept)) ) { const _pb = require('./mod.js').playText(me.uid); if (_pb) return err(c, _pb), true; }
+    }
 
     switch (m.type) {
       case 'lbBlock': {   // 🚫 bloklash / blokdan chiqarish (bitta tugma)

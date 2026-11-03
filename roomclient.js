@@ -540,6 +540,7 @@
     elInput.addEventListener("keydown", function (e) { if (e.key === "Enter") sendChat(); });
 
     function addMsg(msg) {
+      if (msg.uid && window.lbFriendState && window.lbFriendState(msg.uid) === "blocked") return;   // 🚫 bloklaganim yozganlari ko'rinmaydi
       var row = document.createElement("div");
       var who = document.createElement("b");
       who.textContent = (msg.color === "white" ? "⚪ " : msg.color === "black" ? "⚫ " : "👁 ") + msg.name + ": ";
@@ -1337,9 +1338,10 @@
       } else if (m.type === "roomChat" && m.roomId === roomId) {
         st.chat.push(m.msg);
         if (st.chat.length > 50) st.chat.shift();
+        var _blk = m.msg && m.msg.uid && window.lbFriendState && window.lbFriendState(m.msg.uid) === "blocked";
         addMsg(m.msg);
         if (st.chatOpen) elMsgs.scrollTop = elMsgs.scrollHeight;
-        else { st.unread++; renderChat(); }
+        else if (!_blk) { st.unread++; renderChat(); }
       } else if (m.type === "botCoins" && m.roomId === roomId) { try { window.__coinFx(m.n); } catch (e) {}
       } else if (m.type === "roomFinished" && m.roomId === roomId) {
         autoZalStart();

@@ -235,6 +235,7 @@ async function start() {
     } catch (e) { console.log('[bot] my_chat_member xato:', e.message); }
   }
   async function onCallback(q) {
+    try { if (q.data && q.data.indexOf('md:') === 0 && await require('./mod.js').onCallback(q)) return; } catch (e) { console.log('[mod]', e.message); }
     try { if (q.data && q.data.indexOf('g:') === 0 && await require('./grp.js').onCallback(q)) return; } catch (e) { console.log('[grp]', e.message); }
     if (q.data && (q.data.indexOf('lg:') === 0 || q.data.indexOf('lgno:') === 0)) {
       const yes = q.data.indexOf('lg:') === 0, code = q.data.slice(yes ? 3 : 5);

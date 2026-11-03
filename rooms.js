@@ -544,8 +544,10 @@ function createRooms({ send, clients, onFinish }) {
 
       const seat = { uid: user.id, name: user.name, clientId: c.id };
       c.roomUser = { id: user.id, name: user.name };
+      const _pb = !room.vsBot && require("./mod.js").playText(user.id);   // ⛔ o'yin taqiqi — faqat tomoshabin
       if (room.white && room.white.uid === user.id) room.white = seat;
       else if (room.black && room.black.uid === user.id) room.black = seat;
+      else if (_pb) { if (!room.finished && !(room.white && room.black)) err(c, _pb); }
       else if (room.inline) {
         const own = room.white || room.black;
         if (own && !(room.white && room.black) && !room.finished && own.uid !== user.id) {
@@ -571,6 +573,7 @@ function createRooms({ send, clients, onFinish }) {
       const u = c.roomUser;
       if (!room.inline || room.finished || !u || (!!room.white === !!room.black)) return true;
       const own = room.white || room.black; if (own.uid === u.id) return true;
+      { const _pb = require("./mod.js").playText(u.id); if (_pb) return err(c, _pb), true; }
       const s = { uid: u.id, name: u.name, clientId: c.id };
       if (room.white) room.black = s; else room.white = s;
       pushState(room);
@@ -750,8 +753,10 @@ function createRooms({ send, clients, onFinish }) {
       if (!text) return true;
       const now = Date.now();
       if (c.lastChat && now - c.lastChat < 700) return err(c, "Juda tez yozyapsiz"), true;
+      const _M = require("./mod.js"), _cu = c.roomUser && c.roomUser.id;
+      if (_cu && _M.isMuted(_cu)) return err(c, "🔇 " + _M.muteText(_cu)), true;
       c.lastChat = now;
-      const msg = { name: room.names.get(c.id) || "Mehmon", color: col || "spectator", text, at: now };
+      const msg = { uid: _cu || "", name: room.names.get(c.id) || "Mehmon", color: col || "spectator", text: _M.censor(text), at: now };
       room.chat.push(msg);
       if (room.chat.length > CHAT_KEEP) room.chat.shift();
       broadcast(room, { type: "roomChat", roomId, msg });
