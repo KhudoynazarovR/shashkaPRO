@@ -591,12 +591,12 @@ function pushMove(m){const side=sideAt(G.cur),b=G.pos[G.cur];
  if(!atEnd()){G.pos.length=G.cur+1;G.mv.length=G.cur;G.over=false;G.res=null}
  G.mv.push({...m,n:fmt(m),man:Math.abs(b[m.path[0]])===1});G.pos.push(apply(b,m));G.cur++;G.sel=null;G.hint=null}
 function newGame(){G.tok++;const[a,b]=String(S.tc).split('+').map(Number);
- G.pos=[init()];G.mv=[];G.cur=0;G.s0=1;G.over=false;G.res=null;G.edit=false;G.mode=S.mode;
+ G.pos=[init()];G.mv=[];G.cur=0;G.s0=1;G.over=false;G.res=null;G.edit=false;G.mode=S.mode;G.pad=!!window.PAD;
  G.me=S.col==='r'?(Math.random()<.5?1:-1):S.col==='w'?1:-1;G.flip=G.mode==='ai'&&G.me===-1;
  G.opn=null;if(S.open&&S.open!=='std'&&S.open!=='i780'){let e=null;
  if(S.mm&&MM.e&&MM.e.k===S.open){e=MM.e;G.me=-MM.me;MM={}}else{const L=dtList(S.open);if(L.length)e=L[Math.random()*L.length|0];else toast('Ro\'yxat bo\'sh')}
  if(e){if(playOpen(e))G.opn={...e,k:S.open};else{G.pos=[init()];G.mv=[];G.cur=0;toast('✗ '+e.n)}}}
- if(S.open==='i780'&&window.IDF780){const P=pickI780();if(P){G.pos=[P.b];G.mv=[];G.cur=0;G.s0=P.s;G.opn=null;G.i780=P.id}else G.i780=null}else G.i780=null;G.flip=G.mode==='ai'&&G.me===-1;G.tc=a>0;G.t=[a*1000,a*1000];G.inc=(b||0)*1000;G.last=Date.now();G.sel=null;G.hint=null;TT.clear();$('an').textContent=G.i780?'IDF '+G.i780:G.opn?G.opn.n+': '+G.opn.mv.join(' '):'';tab('play');render();kick()}
+ if(S.open==='i780'&&window.IDF780&&!G.pad){const P=pickI780();if(P){G.pos=[P.b];G.mv=[];G.cur=0;G.s0=P.s;G.opn=null;G.i780=P.id}else G.i780=null}else G.i780=null;G.flip=G.mode==='ai'&&G.me===-1;G.tc=a>0;G.t=[a*1000,a*1000];G.inc=(b||0)*1000;G.last=Date.now();G.sel=null;G.hint=null;TT.clear();$('an').textContent=G.i780?'IDF '+G.i780:G.opn?G.opn.n+': '+G.opn.mv.join(' '):'';tab('play');render();kick()}
 function kick(){if(!G.over&&!G.edit&&G.mode==='ai'&&sideAt(G.cur)!==G.me&&atEnd())aiMove()}
 function doMove(m){const side=sideAt(G.cur);tick();pushMove(m);hap(m.caps.length?'medium':'light');if(G.tc)G.t[side>0?0:1]+=G.inc;beep(m.caps.length?330:200,.1);checkEnd();render();kick()}
 async function kestoMove(b,side){window.__kOk=false;
@@ -615,16 +615,21 @@ async function kestoMove(b,side){window.__kOk=false;
     window.__kOk=true;return ms.find(m=>m.caps.length===j.jumps)||ms[0];
   }catch(e){window.__kWhy='err '+e;return null}finally{clearTimeout(to)}
 }
-function aiMove(){const tok=++G.tok,side=sideAt(G.cur);G.busy=true;render();const b0=G.pos[G.cur].slice();
+window.PAD=/[?&]pad=1/.test(location.search);
+function padEv(b,bot){let a=0,o=0;for(let i=0;i<64;i++){const v=b[i];if(!v)continue;const w=Math.abs(v)===2?1.5:1;if(v*bot>0)a+=w;else o+=w}return o-a}
+function padSearch(b,side,bot,d,al,be){const ms=legal(b,side);if(!ms.length)return side===bot?10000+d:-10000-d;if(d===0)return padEv(b,bot);let v=side===bot?-1e9:1e9;for(const m of ms){const x=padSearch(apply(b,m),-side,bot,d-1,al,be);if(side===bot){if(x>v)v=x;if(v>al)al=v}else{if(x<v)v=x;if(v<be)be=v}if(al>=be)break}return v}
+function padMove(b,side){const ms=legal(b,side);if(!ms.length)return null;let best=null,bs=-1e9;for(const m of ms){const x=padSearch(apply(b,m),-side,side,3,-1e9,1e9)+Math.random()*.4;if(x>bs){bs=x;best=m}}return best}
+if(window.PAD){document.title='Padavki shashka';const run=()=>setTimeout(()=>{try{newGame();tab('play');render();kick()}catch(e){}},700);document.readyState==='complete'?run():window.addEventListener('load',run)}
+function aiMove(){const tok=++G.tok,side=sideAt(G.cur);G.busy=true;render();const b0=G.pos[G.cur].slice();if(G.pad){setTimeout(()=>{if(tok!==G.tok||G.over){G.busy=false;return}const m=padMove(G.pos[G.cur],side);G.busy=false;if(m)doMove(m)},350);return}
 const local=()=>setTimeout(()=>{if(tok!==G.tok||G.over){G.busy=false;return}const r=bestMove(G.pos[G.cur],side,+S.lvl);G.busy=false;if(!r)return;$('an').textContent=`[${window.__kWhy||'?'}] d${r.d} · ${nodes} nodes · ${(r.v/100).toFixed(2)}`;doMove(r.m)},40);
 kestoMove(b0,side).then(m=>{if(tok!==G.tok||G.over){G.busy=false;return}if(m){G.busy=false;$('an').textContent='KestoG '+(window.__kMs||'?')+'ms';doMove(m)}else{$('an').textContent='local: '+(window.__kWhy||'?');local()}}).catch(local)}
 function checkEnd(){if(!atEnd())return;const b=G.pos[G.cur],side=sideAt(G.cur);
- if(!legal(b,side).length)return end(side>0?'b':'w');
+ if(!legal(b,side).length)return end(G.pad?(side>0?'w':'b'):(side>0?'b':'w'));
  let n=0;for(let i=G.mv.length-1;i>=0;i--){if(G.mv[i].caps.length||G.mv[i].man)break;n++}
  let rep=0;const k=side+b.join('');for(let i=G.cur;i>=0;i-=2)if(sideAt(i)+G.pos[i].join('')===k)rep++;
  if(n>=30)end('d');else if(rep>=3)end('d')}
 function end(res){if(G.over)return;G.over=true;G.res=res;if(S.mm&&G.opn)MM={e:G.opn,me:G.me};beep(res==='d'?300:520,.4,'sine');
- if(G.mode==='ai'){const w=res==='d'?'d':(res==='w')===(G.me===1)?'w':'l';ST[w]++;svs()}render()}
+ if(G.mode==='ai'&&!G.pad){const w=res==='d'?'d':(res==='w')===(G.me===1)?'w':'l';ST[w]++;svs()}render()}
 function tick(){const now=Date.now();if(G.over||G.edit||!G.tc||!atEnd()){G.last=now;return}
  const i=sideAt(G.cur)>0?0:1;G.t[i]-=now-G.last;G.last=now;if(G.t[i]<=0){G.t[i]=0;end(i?'w':'b')}}
 setInterval(()=>{tick();clk()},200);
@@ -634,7 +639,7 @@ function redo(){let t=G.cur+1;while(t<G.pos.length-1&&G.mode==='ai'&&sideAt(t)!=
 function resign(){if(G.over||G.edit)return;if(Date.now()-G.tapR>2500){G.tapR=Date.now();return toast(T('tap'))}end(G.mode==='ai'?(G.me>0?'b':'w'):(sideAt(G.cur)>0?'b':'w'))}
 function offerDraw(){if(G.over||G.edit)return;if(G.mode==='local'){toast(T('ok'));return end('d')}
  const r=bestMove(G.pos[G.cur],-G.me,2,300);const aiScore=r?r.v*-G.me:0;if(aiScore<=30){toast(T('ok'));end('d')}else toast(T('no'))}
-function hint(){if(G.over||G.edit||!myTurn())return;const r=bestMove(G.pos[G.cur],sideAt(G.cur),3,1200);if(r){G.hint=[r.m.path[0],r.m.path[r.m.path.length-1]];render()}}
+function hint(){if(G.over||G.edit||G.pad||!myTurn())return;const r=bestMove(G.pos[G.cur],sideAt(G.cur),3,1200);if(r){G.hint=[r.m.path[0],r.m.path[r.m.path.length-1]];render()}}
 function analyze(){if(+S.lvl>=5)return analyze6();const b=G.pos[G.cur],s=sideAt(G.cur);$('an').textContent='…';setTimeout(()=>{const r=bestMove(b,s,4,2500);
  if(!r){$('an').textContent='—';return}G.hint=[r.m.path[0],r.m.path[r.m.path.length-1]];$('an').textContent=`${(r.v/100).toFixed(2)} · d${r.d} · ${nodes} nodes · ${fmt(r.m)}`;render()},30)}
 function clearStats(){ST={w:0,l:0,d:0};svs();render()}
