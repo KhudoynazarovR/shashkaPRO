@@ -90,7 +90,7 @@
       ["📁", "Arxiv", "O‘tgan o‘yinlar tarixi", "@arch", "#2fd27f,#1ea36a"],
       ["🔬", "Tahlil taxtasi", "KestoG bilan pozitsiya tahlili", "@board", "#3b82f6,#06b6d4"],
       ["🧩", "Masalalar", "Shashka masalalarini yeching", "@puz", "#f5873b,#f7c02d"],
-      ["🎲", "Stollar", "Stol oching yoki o‘tiring — tanga tikib o‘ynash", "@stake", "#f59e0b,#ea580c"],
+      ["", "Stollar", "Stol oching yoki o‘tiring — tanga tikib o‘ynash", "@stake", "#f59e0b,#ea580c"],
       ["📮", "Yozishma o‘yinlari", "Har yurishga 1 kun — bot navbatingizni aytadi", "@corr", "#7c3aed,#0ea5e9"],
       ["🎓", "Endshpil maktabi", "Bazada tekshirilgan mashqlar — King Kongga qarshi", "@eg", "#0f766e,#22c55e"],
       ["📖", "Debyutlar", "Mashhur ochilishlar va yod olish", "@deb", "#0ea5e9,#6366f1"],
@@ -115,7 +115,7 @@
   var pst = null;
   function cardHtml(r) {
     var cs = r[4].split(","), c1 = cs[0], c2 = cs[1] || cs[0];
-    return "<div class='mqK' data-a='" + r[3] + "' onclick='mnA(this.dataset.a)' style='background:linear-gradient(135deg," + c1 + "33," + c2 + "14);border:1px solid " + c1 + "99;box-shadow:0 0 12px " + c1 + "40'><em>›</em><div class='ic' style='background:linear-gradient(135deg," + r[4] + ")'>" + r[0] + "</div><b>" + r[1] + "</b><small>" + r[2] + "</small></div>";
+    return "<div class='mqK' data-a='" + r[3] + "' onclick='mnA(this.dataset.a)' style='background:linear-gradient(135deg," + c1 + "33," + c2 + "14);border:1px solid " + c1 + "99;box-shadow:0 0 12px " + c1 + "40'><em>›</em>" + (r[0] ? "<div class='ic' style='background:linear-gradient(135deg," + r[4] + ")'>" + r[0] + "</div>" : "") + "<b>" + r[1] + "</b><small>" + r[2] + "</small></div>";
   }
   function render() {
     if (!panel) return;

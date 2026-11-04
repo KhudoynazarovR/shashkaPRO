@@ -1173,7 +1173,7 @@ function createLobby({ send, clients, roomsApi }) {
         const el = eloOf(me.uid); if (t.minElo && el < t.minElo) return tr('Bu stol ' + t.minElo + '+ reyting uchun (sizda ' + el + ')');
         if (t.stake) { const e = require('./wager.js').can(me.uid, t.stake); if (e) return tr(e); }
         t.guest = { uid: me.uid, name: me.name, elo: el }; t.ready = {}; t.at = Date.now();
-        toast(t.host.uid, '🎲 ' + me.name + ' (' + el + ') stolingizga o‘tirdi — «🎲 Stollar»da ✅ Tayyor bosing');
+        toast(t.host.uid, me.name + ' (' + el + ') stolingizga o‘tirdi — «Stollar»da ✅ Tayyor bosing');
         push(); break;
       }
       case 'lbTblReady': {
