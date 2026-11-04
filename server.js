@@ -1,5 +1,5 @@
 require("./bot.js");
-try { require("./premium.js"); } catch (e) { console.log("[prem]", e.message); }   // 👑 eslatmalar va bir martalik sovg'a
+try { require("./premium.js"); require("./season.js"); } catch (e) { console.log("[prem]", e.message); }   // 👑 eslatmalar va bir martalik sovg'a
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
@@ -169,7 +169,7 @@ function leaveClient(c) {
 
 const BLOCKED = new Set([
   "quests.js", "leagues.js", "weblogin.js",
-  "server.js", "rooms.js", "mod.js", "ref.js", "premium.js", "gift.js", "region.js", "ach.js", "economy.js", "store.js", "payments.js", "etudes.js", "pzrush.js", "pzbattle.js", "pztour.js", "draw-rules.js", "lobby.js", "users.json", "package.json", "package-lock.json"
+  "server.js", "rooms.js", "mod.js", "ref.js", "premium.js", "gift.js", "region.js", "ach.js", "season.js", "economy.js", "store.js", "payments.js", "etudes.js", "pzrush.js", "pzbattle.js", "pztour.js", "draw-rules.js", "lobby.js", "users.json", "package.json", "package-lock.json"
 ]);
 
 function serveFile(req, res) {

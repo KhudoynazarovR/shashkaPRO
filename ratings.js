@@ -126,7 +126,28 @@
     css();
     if (!panel) { panel = document.createElement("div"); panel.id = "rkPanel"; document.body.appendChild(panel); }
     panel.style.display = "block"; render(); load();
+    seasonBar();
   };
+  function seasonBar() {   // 🏆 oylik mavsum banneri
+    var tg = window.Telegram && window.Telegram.WebApp;
+    fetch("/api/season", { headers: { "x-init-data": (tg && tg.initData) || "" } }).then(function (r) { return r.json(); }).then(function (d) {
+      if (!d || d.error || !panel) return;
+      var MN = ["", "Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun", "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr"], mn = MN[+d.m.slice(5, 7)];
+      var el = document.getElementById("rkSeason"); if (!el) { el = document.createElement("div"); el.id = "rkSeason"; panel.insertBefore(el, panel.firstChild.nextSibling); }
+      el.style.cssText = "margin:10px 12px;padding:12px;border-radius:16px;background:linear-gradient(135deg,#3a2a00,#1d1f45);border:1px solid #f5b72b;color:#fff;cursor:pointer;font-size:14px";
+      el.innerHTML = "🏆 <b>" + mn + " mavsumi</b> — oy oxirida ELO TOP-10 ga sovrin<div style='font-size:12px;opacity:.8;margin-top:4px'>🥇 2000 🪙 + 30 kun 👑 · 🥈 1000 🪙 + 7 kun · 🥉 500 🪙 + 7 kun · 4–10: 200 🪙<br>Shart: oyda kamida " + d.min + " ta o‘yin · siz: <b>" + Math.min(d.myGames, d.min) + "/" + d.min + "</b> · batafsil ›</div>";
+      el.onclick = function () {
+        var ov = document.createElement("div"); ov.style.cssText = "position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:16px";
+        ov.onclick = function (e) { if (e.target === ov) ov.remove(); };
+        var h = "<div style='width:100%;max-width:380px;max-height:85%;overflow-y:auto;background:#0b0e1a;color:#fff;border:1px solid #f5b72b;border-radius:22px;padding:16px'><b style='font-size:18px'>🏆 " + mn + " mavsumi — joriy TOP-10</b><div style='font-size:12px;opacity:.7;margin:4px 0 10px'>Faqat shu oyda " + d.min + "+ o‘yin o‘ynaganlar</div>";
+        if (!d.top.length) h += "<div style='opacity:.7;padding:10px 0'>Hali hech kim shartni bajarmagan — birinchi bo‘ling!</div>";
+        d.top.forEach(function (x, i) { h += "<div style='display:flex;justify-content:space-between;padding:6px 2px;border-bottom:1px solid #1c2147'><span>" + (["🥇", "🥈", "🥉"][i] || (i + 1) + ".") + " " + esc(x.name) + "</span><b>" + x.elo + "</b></div>"; });
+        if (d.last && d.last.top && d.last.top.length) h += "<div style='font-size:12px;opacity:.7;margin-top:10px'>O‘tgan mavsum chempioni: <b>" + esc(d.last.top[0].name) + "</b> (" + d.last.top[0].elo + ")</div>";
+        h += "<button style='width:100%;margin-top:12px;border:0;border-radius:14px;padding:12px;font-size:15px;color:#fff;background:#6b5cf0'>Yopish</button></div>";
+        ov.innerHTML = h; ov.querySelector("button").onclick = function () { ov.remove(); }; document.body.appendChild(ov);
+      };
+    }).catch(function () {});
+  }
   window.rkClose = function () { if (panel) panel.style.display = "none"; };
   window.rkIsOpen = function () { return !!panel && panel.style.display !== "none"; };
 
@@ -179,7 +200,7 @@
         if (!document.getElementById("spPrRingCss")) { var _rs = document.createElement("style"); _rs.id = "spPrRingCss"; _rs.textContent = "@keyframes spPrSpin{to{transform:rotate(360deg)}}.spPrRing{position:relative;width:110px;height:110px;margin:0 auto;display:flex;align-items:center;justify-content:center}.spPrRing::before{content:'';position:absolute;inset:0;border-radius:50%;background:conic-gradient(#ffd54a,#b8860b,#fff3b0,#c98a00,#ffd54a);animation:spPrSpin 3s linear infinite;box-shadow:0 0 18px #f5b72b99}.spPrRing>*{position:relative;z-index:1}.spPrRing>b{position:absolute;top:-14px;left:50%;transform:translateX(-50%) rotate(-8deg);font-size:26px;z-index:2}"; document.head.appendChild(_rs); }
         var av = d.hasAv ? "<img src=\"/api/av/" + encodeURIComponent(d.id) + "\" style=\"width:96px;height:96px;border-radius:50%;object-fit:cover;border:4px solid " + (d.premium ? "#0b0e1a" : "#f5b72b") + "\">" : "<div style=\"width:96px;height:96px;border-radius:50%;background:#1a00a8;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:44px;border:4px solid " + (d.premium ? "#0b0e1a" : "#f5b72b") + "\">👤</div>";
         if (d.premium) av = "<div class=\"spPrRing\"><b>👑</b>" + av.replace("margin:0 auto;", "") + "</div>";
-        box.innerHTML = av + "<div style=\"font-size:21px;font-weight:700;margin-top:10px\">" + esc(d.name) + (d.premium ? " 👑" : "") + "</div>" + (d.elchi ? "<div style=\"font-size:12px;color:#f5b72b;margin-top:2px\">🏅 Elchi</div>" : "") + (d.region ? "<div style=\"font-size:12px;color:#7ee08a;margin-top:2px\">📍 " + esc(d.region) + "</div>" : "") +
+        box.innerHTML = av + "<div style=\"font-size:21px;font-weight:700;margin-top:10px\">" + esc(d.name) + (d.premium ? " 👑" : "") + "</div>" + (d.elchi ? "<div style=\"font-size:12px;color:#f5b72b;margin-top:2px\">🏅 Elchi</div>" : "") + (d.region ? "<div style=\"font-size:12px;color:#7ee08a;margin-top:2px\">📍 " + esc(d.region) + "</div>" : "") + (d.titles && d.titles.length ? "<div style=\"font-size:12px;color:#ffd54a;margin-top:4px\">" + d.titles.map(esc).join("<br>") + "</div>" : "") +
           (d.bio ? "<div style=\"font-size:13px;color:#a9b0ff;margin-top:6px\">" + esc(d.bio) + "</div>" : "") +
           "<div style=\"display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0\">" +
           cell("📈", d.elo, "ELO") + cell("🪙", d.diamonds, "Tanga") + cell("🏆", d.wins, "G‘alaba") +

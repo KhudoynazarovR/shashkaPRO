@@ -171,6 +171,19 @@ function adminStats() {
   return { today, total: all.length, dau: days[0].dau, wau: within(7), mau: within(30), days, lead, ntfOff: all.filter(u => u.ntfOff || u.ntfOn === false).length, since };
 }
 
+// 👋 qaytaruvchi xabar: har safar boshqacha va ilovadagi yangiliklar bilan
+function backText(u) {
+  const k = (u.ntf && u.ntf.backN) || 0; if (u.ntf) u.ntf.backN = k + 1;
+  let reg = '';
+  try { if (u.region) { const v = require('./region.js').view(Object.keys(users()).find(id => users()[id] === u) || ''); const i = v.table.findIndex(x => x.r === u.region); if (i >= 0) reg = '🗺 ' + u.region + ' viloyatlar jangida ' + (i + 1) + '-o‘rinda — ochko kerak!'; } } catch (e) {}
+  const V = [
+    '👋 Sizni sog‘indik!\n\n🌙 Har kuni soat 20:00 da Kunlik arena — 1000 🪙 sovrin va g‘olibga 👑 Premium.\n📗 Bugungi masalalar va 🎁 kunlik sovg‘a ham kutyapti.',
+    '♟ Doska sizni kutyapti!\n\n' + (reg || '🤖 Monster va Terminator botlari yangi raqib izlayapti.') + '\n🏅 Yangi yutuqlarni ochib, tanga yig‘ing.',
+    '🎁 Bir partiya o‘ynaymizmi?\n\n🔥 Har kuni kirsangiz — kunlik sovg‘a ortib boradi.\n👥 Do‘stingizni taklif qiling — 300 🪙 gacha.'
+  ];
+  return V[k % V.length];
+}
+
 // ---------- bot eslatmalari (kuniga ko'pi bilan 1 ta xabar)
 let NT = null;
 function tzHour() { return new Date(Date.now() + 5 * 3600e3).getUTCHours(); }
@@ -192,7 +205,7 @@ function notifyTick(hh) {
     const [uid, u, type] = out[i++], s = u.strk || { n: 0 }, si = streakInfo(u);
     const text = type === 'streak'
       ? '🔥 ' + s.n + ' kunlik seriyangiz bugun uziladi!\n\nKirib bugungi sovg‘ani oling: +' + si.reward + ' 🪙\n📗 Kunlik 5 ta masala ham kutyapti.'
-      : '👋 Sizni sog‘indik!\n\n📗 Bugungi 5 ta masala va 🎁 kunlik sovg‘a sizni kutyapti. Bir partiya o‘ynaymizmi?';
+      : backText(u);
     const body = { chat_id: Number(uid), text, reply_markup: { inline_keyboard: [[{ text: type === 'streak' ? '🔥 Seriyani saqlash' : '🎮 O‘ynash', url: process.env.TG_APP_LINK + '?startapp=ntf_' + type }]] } };
     u.ntf.d = today; if (type === 'back') u.ntf.back = Date.now();
     if (process.env.NOTIFY_DRY === '1') { console.log('[notify dry]', uid, type); stat('ntf_' + type); return setTimeout(next, 10); }
