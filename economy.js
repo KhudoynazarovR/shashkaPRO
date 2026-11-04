@@ -177,7 +177,7 @@ function handle(req, res, url) {
   }
   if (p.startsWith('/api/av/') && req.method === 'GET') {
     const _u = store.users()[decodeURIComponent(p.slice(8))];
-    const _m = /^data:image\/jpeg;base64,(.+)$/.exec((_u && _u.avatar) || '');
+    const _m = /^data:image\/jpeg;base64,(.+)$/.exec(store.avOf(_u));
     if (!_m) { res.writeHead(404); res.end(); return true; }
     res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=300' });
     res.end(Buffer.from(_m[1], 'base64'));
@@ -192,6 +192,7 @@ function handle(req, res, url) {
       try { j = JSON.parse(body); } catch (e) {}
       if (p === '/api/avatar') {
         const a = String(j.img || '');
+        if (!store.isPremium(u)) return send(res, 403, { error: 'premium' });   // 🖼 faqat Premium
         if (!/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(a) || a.length > 150000) return send(res, 400, { error: 'bad_image' });
         u.avatar = a;
       } else {
@@ -236,8 +237,8 @@ function handle(req, res, url) {
         id, name: u.name || 'Oyinchi', elo: u.elo || 1000, diamonds: u.diamonds || 0,
         games: g, wins: w, losses: u.losses || 0, draws: u.draws || 0,
         best: u.bestStreak || 0, tw: u.tournWins || 0, pct: g >= 20 ? Math.round(w * 100 / g) : 0,
-        av: (u.avatar && u.avatar.length < 500) ? u.avatar : '',
-        hasAv: !!u.avatar, premium: !!store.isPremium(u)
+        av: (store.avOf(u) && u.avatar.length < 500) ? u.avatar : '',
+        hasAv: !!store.avOf(u), premium: !!store.isPremium(u)
       };
     });
     const top = (key, minGames) => all.filter(x => x.games >= (minGames || 0) && x[key] > 0)
@@ -260,7 +261,7 @@ function handle(req, res, url) {
       id: _id, name: _u.name || 'Oyinchi', elo: _u.elo || 1000, diamonds: _u.diamonds || 0,
       wins: _u.wins || 0, losses: _u.losses || 0, draws: _u.draws || 0, games: _u.games || 0,
       bestStreak: _u.bestStreak || 0, tournWins: _u.tournWins || 0,
-      bio: _u.bio || '', hasAv: !!_u.avatar, premium: !!store.isPremium(_u), lastSeen: _u.lastSeen || 0, elchi: require('./ref.js').elchi(_u),
+      bio: _u.bio || '', hasAv: !!store.avOf(_u), premium: !!store.isPremium(_u), lastSeen: _u.lastSeen || 0, elchi: require('./ref.js').elchi(_u),
       ...(isAdmin(_tg.id) ? { adm: true, sanc: require('./mod.js').info(_id) } : {})
     });
     return true;
@@ -705,7 +706,7 @@ function handle(req, res, url) {
       name: u.name, elo: u.elo || 1000, diamonds: u.diamonds || 0,
       wins: u.wins || 0, losses: u.losses || 0, draws: u.draws || 0, games: u.games || 0,
       streak: u.streak || 0, bestStreak: u.bestStreak || 0, hist: u.hist || [],
-      created: u.created || 0, avatar: u.avatar || '', bio: u.bio || '', log: (u.log || []).slice(-10).reverse(), premium: store.isPremium(u)
+      created: u.created || 0, avatar: store.avOf(u), bio: u.bio || '', log: (u.log || []).slice(-10).reverse(), premium: store.isPremium(u)
     });
     return true;
   }

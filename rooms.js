@@ -86,7 +86,7 @@ function createRooms({ send, clients, onFinish }) {
       if (!seat || !seat.uid) return null;
       if (isBotUid(seat.uid)) return { uid: seat.uid, elo: 0, av: false, bot: true };
       var u = require("./store.js").users()[String(seat.uid)] || {};
-      return { uid: String(seat.uid), elo: u.elo || 1000, av: !!u.avatar };
+      return { uid: String(seat.uid), elo: u.elo || 1000, av: !!require("./store").avOf(u) };
     } catch (e) { return null; }
   }
   function snapshot(room, color) {

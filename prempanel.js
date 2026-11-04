@@ -5,6 +5,7 @@
   var CARD = "background:#161a3a;border:1px solid #262b5a;border-radius:16px;padding:12px;margin-bottom:10px;text-align:left";
   var BTN = "border:0;border-radius:12px;padding:10px 6px;font-size:14px;font-weight:700;color:#fff;font-family:inherit;cursor:pointer";
   var PERKS = [
+    ["🖼", "Profil rasmi", "o‘z rasmingizni qo‘yasiz — hamma ko‘radi"],
     ["🤖", "Eng kuchli botlar", "Legend, Monster, Terminator va King Kong bilan o‘ynash"],
     ["👑", "Toj belgisi va oltin ism", "reytingda, profilda va chatda"],
     ["🪙", "G‘alabadan 2× tanga", "kunlik limit ham 2 barobar"],

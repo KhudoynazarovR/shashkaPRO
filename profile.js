@@ -104,10 +104,13 @@
       }
       
       var bt = document.createElement('button');
-      bt.id = 'pfUp'; bt.textContent = '📷 Rasm qo‘yish';
+      bt.id = 'pfUp'; bt.textContent = d.premium ? '📷 Rasm qo‘yish' : '📷 Rasm qo‘yish 👑';
       bt.style.cssText = 'display:block;margin:10px auto 0;border:0;border-radius:14px;padding:8px 16px;background:#ffffff33;color:#fff;font-size:13px';
       var fi = document.createElement('input'); fi.type = 'file'; fi.accept = 'image/*'; fi.style.display = 'none';
-      bt.onclick = function () { fi.click(); };
+      bt.onclick = function () {   // 🖼 profil rasmi — faqat Premium
+        if (!d.premium) { bt.textContent = '👑 Rasm qo‘yish Premium uchun'; if (window.premGo) window.premGo(); setTimeout(function () { bt.textContent = '📷 Rasm qo‘yish 👑'; }, 2500); return; }
+        fi.click();
+      };
       fi.onchange = function () {
         var f = fi.files && fi.files[0]; if (!f) return;
         bt.textContent = 'Yuklanmoqda…'; bt.disabled = true;
@@ -124,7 +127,7 @@
               .then(function (j) {
                 bt.disabled = false;
                 if (j && j.ok) { setAv(url); bt.textContent = '✅ Saqlandi'; setTimeout(function () { bt.textContent = '📷 Rasm qo‘yish'; }, 2000); }
-                else bt.textContent = '⚠️ Xatolik, qayta urinib ko‘ring';
+                else bt.textContent = j && j.error === 'premium' ? '👑 Rasm qo‘yish Premium uchun' : '⚠️ Xatolik, qayta urinib ko‘ring';
               })
               .catch(function () { bt.disabled = false; bt.textContent = '⚠️ Server bilan aloqa yo‘q'; });
           };

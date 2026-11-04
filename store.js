@@ -219,6 +219,8 @@ function getOrCreate(tg) {
 }
 
 function isPremium(u) { return u.premiumUntil > Date.now(); }
+// 🖼 profil rasmi faqat Premium faol bo'lsa ko'rinadi (rasm o'chirilmaydi — Premium yangilansa qaytadi)
+function avOf(u) { return u && u.avatar && isPremium(u) ? u.avatar : ''; }
 
 async function backups() {
   if (!pool || !ready) return [];
@@ -250,4 +252,4 @@ async function kvSet(k, v) {
   catch (e) { console.log('kv yozish xatosi:', e.message); return false; }
 }
 
-module.exports = { kvGet, kvSet, backups, restoreDay, tgBackup, restore, db, getOrCreate, save, isPremium, users: () => db.users };
+module.exports = { kvGet, kvSet, backups, restoreDay, tgBackup, restore, db, getOrCreate, save, isPremium, avOf, users: () => db.users };
