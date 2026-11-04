@@ -142,6 +142,7 @@ function handle(req, res, url) {
       if (_sg) { const _su = store.users()[String(_sg.id)]; if (_su && Date.now() - (_su.lastSeen || 0) > 60000) _su.lastSeen = Date.now(); }
     }
   } catch (e) {}
+  if (p === '/api/region') { if (require('./region.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }
   if (p.startsWith('/api/gift/')) { if (require('./gift.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }
   if (p.startsWith('/api/premium')) { if (require('./premium.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }
   if (p === '/api/ref') { if (require('./ref.js').handle(req, res, p, { verifyInitData, send })) return true; }
@@ -262,7 +263,7 @@ function handle(req, res, url) {
       id: _id, name: _u.name || 'Oyinchi', elo: _u.elo || 1000, diamonds: _u.diamonds || 0,
       wins: _u.wins || 0, losses: _u.losses || 0, draws: _u.draws || 0, games: _u.games || 0,
       bestStreak: _u.bestStreak || 0, tournWins: _u.tournWins || 0,
-      bio: _u.bio || '', hasAv: !!store.avOf(_u), premium: !!store.isPremium(_u), lastSeen: _u.lastSeen || 0, elchi: require('./ref.js').elchi(_u),
+      bio: _u.bio || '', hasAv: !!store.avOf(_u), premium: !!store.isPremium(_u), lastSeen: _u.lastSeen || 0, elchi: require('./ref.js').elchi(_u), region: _u.region || '',
       stones: (() => { const S = store.db.shop || [], eq = _u.equipped === '-' ? '' : (_u.equipped || ((S.find(x => x.def) || {}).id) || ''); return S.filter(x => x.def || (_u.owned || []).includes(x.id)).slice(0, 24).map(x => ({ id: x.id, name: x.name, eq: x.id === eq })); })(),
       myDiamonds: ((store.users()[String(_tg.id)] || {}).diamonds) || 0, giftFee: [require('./gift.js').FEE_PCT, require('./gift.js').FEE_MIN],
       ...(isAdmin(_tg.id) ? { adm: true, sanc: require('./mod.js').info(_id) } : {})
