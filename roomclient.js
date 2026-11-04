@@ -1279,6 +1279,13 @@
       if (botBusy) return;
       if (!st.vsBot || !st.botStarted || !st.joined || st.finished || st.color === "spectator") return;
       if (!st.botColor || st.turn !== st.botColor || !bothIn()) return;
+      if (st.srvBot && !st.sbFb) {   // 🦍 King Kong yurishini server o'zi qiladi — ilova faqat zaxira (server kechiksa)
+        var nW = st.moves.length;
+        if (st.sbWait === nW) return; st.sbWait = nW;
+        var rmS = remaining(st.botColor) / 1000, wt = Math.max(1500, Math.min(6000, rmS * 1000 * 0.35));
+        setTimeout(function () { if (st.moves.length === nW && st.turn === st.botColor && !st.finished) { st.sbFb = true; try { botKick(); } finally { st.sbFb = false; } } }, wt);
+        return;
+      }
       botBusy = true;
       var n0 = st.moves.length, g0 = botGen;
       botThink(function (steps) {
@@ -1336,7 +1343,7 @@
         st.spectators = m.spectators || 0;
         st.specNames = m.spectatorNames || [];
         st.gamesTotal = m.gamesTotal || 1; st.played = m.played || 0; st.seriesScore = m.seriesScore || null;
-        st.seriesDone = !!m.seriesDone; st.nextIn = !!m.nextIn; st.rematch = m.rematch || null; st.casual = !!m.casual; st.voice = !!m.voice; st.voiceSaid = m.voiceSaid || null; st.vsBot = !!m.vsBot; st.etude = m.etude || null; st.h2h = m.h2h || null; try { var _bk = "spBotRoom:" + roomId; if (st.vsBot) localStorage.setItem(_bk, "1"); else if (localStorage.getItem(_bk) === "1") { localStorage.removeItem(_bk); alert("Server qayta ishga tushdi, bot bilan o‘yin uzildi. Zalga qaytasiz."); location.href = location.pathname; return; } } catch (e) {} try { renderChat(); } catch (e) {} st.botStarted = !!m.botStarted; st.botColor = m.botColor || null; st.botSecs = Number(m.botSecs) > 0 ? Number(m.botSecs) : 1.2; st.botBlunder = Number(m.botBlunder) || 0;
+        st.seriesDone = !!m.seriesDone; st.nextIn = !!m.nextIn; st.rematch = m.rematch || null; st.casual = !!m.casual; st.voice = !!m.voice; st.voiceSaid = m.voiceSaid || null; st.vsBot = !!m.vsBot; st.etude = m.etude || null; st.h2h = m.h2h || null; try { var _bk = "spBotRoom:" + roomId; if (st.vsBot) localStorage.setItem(_bk, "1"); else if (localStorage.getItem(_bk) === "1") { localStorage.removeItem(_bk); alert("Server qayta ishga tushdi, bot bilan o‘yin uzildi. Zalga qaytasiz."); location.href = location.pathname; return; } } catch (e) {} try { renderChat(); } catch (e) {} st.botStarted = !!m.botStarted; st.srvBot = !!m.srvBot; st.botColor = m.botColor || null; st.botSecs = Number(m.botSecs) > 0 ? Number(m.botSecs) : 1.2; st.botBlunder = Number(m.botBlunder) || 0;
         var openNew = (m.opening ? m.opening.id : null) !== (st.opening ? st.opening.id : null);
         st.opening = m.opening || null;
         var same = !openNew && st.moves.length === (m.moves || []).length && st.turn === m.turn;

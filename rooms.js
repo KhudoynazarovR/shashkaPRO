@@ -134,7 +134,7 @@ function createRooms({ send, clients, onFinish }) {
       tc: room.tc,
       tcs: room.vsBot ? BOT_TCS : Object.keys(TCS).filter(k => k !== "0.5+0" && k !== "7+5"),
       vsBot: !!room.vsBot, etude: room.etude || null, botStarted: !!room.botStarted, botColor: botColorOf(room),
-      botSecs: room.botCfg ? room.botCfg.secs : 1.2, botBlunder: room.botCfg ? room.botCfg.blunder : 0,
+      srvBot: srvBotOn(room), botSecs: room.botCfg ? room.botCfg.secs : 1.2, botBlunder: room.botCfg ? room.botCfg.blunder : 0,
       arena: !!room.arena, noBerserk: !!room.noBerserk, voice: !!room.voice, voiceSaid: room.voiceSaid || null,
       opening: room.opening,
       berserk: room.berserk,
@@ -155,6 +155,7 @@ function createRooms({ send, clients, onFinish }) {
 
   function pushState(room) {
     try { require('./gcard.js').touch(room); } catch (e) {}
+    if (srvBotOn(room)) setImmediate(() => srvBotKick(room));
     for (const id of room.members) {
       const cl = clients.get(id);
       if (cl) send(cl.ws, snapshot(room, colorOf(room, cl)));
@@ -366,6 +367,7 @@ function createRooms({ send, clients, onFinish }) {
     room.botCfg = (opts && opts.botCfg) || null;
     room.etude = (opts && opts.etude) || null;   // ♔ etyud: { id, goal: 'win'|'draw', title } — King Kongga qarshi yechish
     room.botStarted = !!room.vsBot;   // bot bilan o'yin birdan boshlanadi
+    if (srvBotOn(room)) setTimeout(() => srvBotKick(room), 1500);   // 🦍 King Kong oq bo'lsa — birinchi yurish
     if (room.vsBot && (opts.tc === "∞" || !tcParse(opts.tc))) { room.tc = "∞"; room.timeMs = BOT_INF_MS; room.incMs = 0; room.clock = { white: BOT_INF_MS, black: BOT_INF_MS }; }
     if (opts && opts.bonus && opts.bonus.ms > 0) {
       const bc = opts.bonus.color === "black" ? "black" : "white";
@@ -390,7 +392,54 @@ function createRooms({ send, clients, onFinish }) {
   }
 
   function err(c, message) {
-    send(c.ws, { type: "error", message });
+    if (c && c.ws) send(c.ws, { type: "error", message });
+  }
+
+  // 🦍 King Kong (vaqtli o'yin): yurishni server o'zi hisoblab, darhol qo'yadi — telefon orqali borib-kelish yo'q.
+  // Yagona yurish yoki urish zanjiri — o'ylamasdan (avtohod). Server javob bermasa, odamning ilovasi zaxira sifatida yuradi.
+  const SBC = { id: "srvbot", ws: null };
+  const srvBotOn = room => !!(room && room.vsBot && room.botCfg && room.botCfg.id === "bot_kingkong" && room.tc && room.tc !== "∞");
+  function kkSteps(b, m) {   // kkrules yurishi → xona qadamlari (har sakrashda urilgan dona)
+    const pts = [m.from].concat(m.path && m.path.length ? m.path : [m.to]), out = [];
+    for (let i = 1; i < pts.length; i++) {
+      const a = pts[i - 1], z = pts[i], ar = a >> 3, ac = a & 7, zr = z >> 3, zc = z & 7, dr = Math.sign(zr - ar), dc = Math.sign(zc - ac);
+      let cap = [];
+      if (m.caps && m.caps.length) for (let r = ar + dr, c = ac + dc; r !== zr; r += dr, c += dc) if (b[r * 8 + c] && !out.some(s => s.captures.some(x => x.r === r && x.c === c))) { cap = [{ r, c }]; break; }
+      out.push({ from: { r: ar, c: ac }, to: { r: zr, c: zc }, captures: cap });
+    }
+    return out;
+  }
+  function srvBotKick(room) {
+    try {
+      if (!srvBotOn(room) || !room.botStarted || room.finished || !room.white || !room.black || room._sbBusy) return;
+      const bc = botColorOf(room); if (!bc || room.turn !== bc) return;
+      const vs = require("./vrules.js").stateOf(room); if (!vs || vs.turn !== bc || vs.forced) return;
+      const b = []; for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) { const p = vs.b[r][c]; b.push(p === 1 ? 1 : p === 2 ? -1 : p === 3 ? 2 : p === 4 ? -2 : 0); }
+      const side = bc === "white" ? 1 : -1, L = require("./kkrules.js").moves(b, side);
+      if (!L.length) return;
+      const n0 = room.moves.length, g0 = room.moves; room._sbBusy = 1;
+      let done = false;
+      const play = (m, why) => {
+        if (done) return; done = true; clearTimeout(tm); room._sbBusy = 0;
+        if (room.finished || room.moves !== g0 || room.moves.length !== n0 || room.turn !== bc) return;
+        const st = kkSteps(b, m);
+        for (let i = 0; i < st.length && !room.finished; i++) applyMove(SBC, room, room.id, bc, { move: st[i], keepTurn: i < st.length - 1 });
+      };
+      let tm = null;
+      if (L.length === 1) return setImmediate(() => play(L[0], "only"));
+      const rem = Math.max(0, currentClock(room)[bc] / 1000), inc = (room.incMs || 0) / 1000, base = (room.timeMs || 0) / 1000;
+      let secs = Math.max(rem < 4 ? 0.05 : 0.1, Math.min(room.botCfg.secs || 4, rem / 60 + inc * 0.6, rem / 12));
+      if (base <= 30 || rem < 3) secs = 0.05;   // juda qisqa o'yin: tayyor bilim (kitob, Colette, xotira, baza) yoki eng qisqa hisob
+      const fb = () => play(L[Math.floor(Math.random() * L.length)], "fallback");
+      tm = setTimeout(fb, Math.max(600, Math.min(secs * 1000 + 2500, rem * 1000 * 0.3)));
+      const ask = (k) => require("./kestoai.js").move({ board: b, side, time: secs, maxTime: secs, kk: true, book: true, tbAlways: true, room: room.id, rem: Math.max(0.1, rem) }, r => {
+        if (done) return;
+        if (r && typeof r.from === "number") return play(L.find(x => x.from === r.from && x.to === r.to) || L[0], "engine");
+        if (r && (r.code === 429 || r.code === 503) && k < 6) return setTimeout(() => ask(k + 1), 120);
+        fb();
+      });
+      ask(0);
+    } catch (e) { room._sbBusy = 0; console.log("[srvbot]", e.message); }
   }
 
   // ---- Durang qoidalari: server doskani yuritib boradi ----
@@ -494,6 +543,7 @@ function createRooms({ send, clients, onFinish }) {
       }
       if (!m.keepTurn) { try { require('./gcard.js').touch(room); } catch (e) {} }
       if (!m.keepTurn && room.etude && !room.finished) { try { const v = require('./etudes.js').check(room); if (v) finish(room, v.winner, v.reason); } catch (e) { console.log('etude check:', e.message); } }
+      if (!m.keepTurn && !room.finished && srvBotOn(room)) setImmediate(() => srvBotKick(room));
       return true;
   }
 
