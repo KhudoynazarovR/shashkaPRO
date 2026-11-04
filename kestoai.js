@@ -38,16 +38,23 @@ function finish(err, val) {
 function next() {
   if (cur || !queue.length) return;
   cur = queue.shift();
+  if (cur.mk) {   // o'ylash vaqti navbatdan chiqqanda hisoblanadi: kutilgan vaqt soatdan ayiriladi
+    let s = cur.secs;
+    if (cur.due) s = Math.min(s, Math.max(0.08, (cur.due - Date.now()) / 1000));
+    cur.secs = s; cur.input = cur.mk(s);
+  }
   if (!child) spawnEngine();
   cur.tm = setTimeout(() => finish("timeout"), (cur.secs + 8) * 1000);
   child.stdin.write(cur.input);
 }
 let LOWFLAG = false;
+// navbat tartibi (pri — kichigi oldin): ⏱ vaqtli King Kong — javob kerak bo'lgan vaqt (due) bo'yicha, eng shoshilinchi birinchi;
+// oddiy so'rovlar; vaqtsiz King Kong; fon ishlari (arena, ponder) — eng oxirida
 function run(input, secs, cb, opt) {
-  const pon = !!(opt && opt.ponder);
-  const it = { input: input, secs: secs, cb: cb, low: LOWFLAG || pon, ponder: pon };
-  if (opt && opt.first) queue.unshift(it);   // 🦍 King Kong — navbatning boshiga (soati yuradi, kutib qolmasin)
-  else if (!it.low) { const i = queue.findIndex(q => q.low); if (i < 0) queue.push(it); else queue.splice(i, 0, it); } else queue.push(it);
+  const pon = !!(opt && opt.ponder), now = Date.now(), low = (opt && opt.low) || LOWFLAG || pon;
+  const it = { input: input, secs: secs, cb: cb, low, ponder: pon, mk: opt && opt.mk, due: opt && opt.due, slow: !!(opt && opt.slow) };
+  it.pri = it.due ? it.due : low ? now + 1e12 : it.slow ? now + 60e3 : now + 3e3;
+  const i = queue.findIndex(q => q.pri > it.pri); if (i < 0) queue.push(it); else queue.splice(i, 0, it);
   // haqiqiy so'rov kelsa — oldindan o'ylash (ponder) darhol to'xtatiladi
   if (!pon && cur && cur.ponder) finish("preempt");
   next();
@@ -130,15 +137,25 @@ function move(j, cb) {
   // bitta dvigatel jarayoni: so'rovlar navbatga qo'yiladi (rad etilmaydi). Arena (bot va bot) faqat navbat bo'sh bo'lsa.
   if (j && j.arena ? (busy >= 1) : (queue.length >= 12)) return cb({ error: "busy", code: 429 });
   busy++; const t0 = Date.now();
-  run((newGame(b) ? "9 0\n" : "") + encode(b, side, secs), secs, (err, v) => {
-    busy--;   // (oxirgi argument: King Kong so'rovi navbat boshiga)
+  const due = j.kk && Number(j.rem) > 0 ? t0 + Math.round(secs * 1000) : 0;   // ⏱ vaqtli King Kong: shu vaqtgacha javob berilishi shart (navbat kutish ham shunga kiradi)
+  const ng = newGame(b), mk = s => (ng ? "9 0\n" : "") + encode(b, side, s);
+  let used = secs, capped = false;
+  // uzoq o'ylash (vaqtsiz o'yin) 1 s lik bo'laklarga bo'linadi: oraliqda vaqtli o'yinlar navbatsiz o'tib ketadi,
+  // dvigatel xesh-jadvali saqlangani uchun keyingi bo'lak oldingisidan davom etadi
+  const CH = 1.0, lowNow = LOWFLAG;
+  const go = (left, cb2) => {
+    if (due || left <= CH + 0.3) return run(mk(left), left, cb2, { mk: s => { used = s; capped = s < left - 0.01; return mk(s); }, due, slow: !!(j.kk && !due), low: lowNow });
+    run(mk(CH), CH, (err, v) => { if (err) return cb2(err, v); go(left - CH, (e2, v2) => cb2(null, e2 ? v : v2)); }, { slow: true, low: lowNow });
+  };
+  go(secs, (err, v) => {
+    busy--;
     if (err) { console.log('[KestoG] xato:', err, '| kirish:', JSON.stringify(encode(b, side, secs))); return cb({ error: err, code: 500 }); }
     const from = v[1] * 8 + (7 - v[0]), to = v[3] * 8 + (7 - v[2]);
     if (!(from >= 0 && from < 64 && to >= 0 && to < 64) || from === to) return cb({ error: "nomove", code: 500 });
     if (process.env.KDEBUG) console.log('[KestoG] vaqt', secs, 'sek soralgan,', Date.now() - t0, 'ms'); const res = { bk: bk ? { from: bk.from, to: bk.to } : null, from: from, to: to, jumps: v[4], ev: (v.length > 5 ? v[5] : null) };
-    if (secs >= 1 && !newGame(b)) remember(key, secs, res);
+    if (!ng && (capped ? used : secs) >= 1) remember(key, capped ? used : secs, res);
     cb(Object.assign({ ms: Date.now() - t0, deep: deep ? 1 : 0 }, res));
-  }, { first: !!(j && j.kk) });
+  });
 }
 
 // ---------- 🦍 King Kong: raqib o'ylayotganda o'ylash (ponder)
