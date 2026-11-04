@@ -148,7 +148,6 @@ function createLobby({ send, clients, roomsApi }) {
 
   // ---------- holat ----------
   function botX(u) { try { const d = require('./store').db; return { n: (d.botNames || {})[u], a: !!(d.botAv || {})[u] }; } catch (e) { return {}; } }
-  function botElo(u) { try { const m = require('./store').db.botElo; return (m && m[u] && m[u].elo) || 0; } catch (e) { return 0; } }
   function playersList() {
     const seen = new Map();
     for (const c of lbClients()) {

@@ -773,7 +773,7 @@
       var els = root.querySelectorAll("[data-clock]");
       for (var i = 0; i < els.length; i++) {
         var color = els[i].getAttribute("data-clock"), ms = remaining(color);
-        if (st.vsBot && st.botColor === color && /King ?Kong/i.test(String(st[color] || "")) && st.tc && st.tc !== "∞") { els[i].textContent = "∞"; els[i].style.background = "#1c2733"; els[i].style.color = "#fff"; continue; }   // 🦍 soatsiz
+        if (st.vsBot && st.botColor === color && /King ?Kong/i.test(String(st[color] || "")) && false) { els[i].textContent = "∞"; els[i].style.background = "#1c2733"; els[i].style.color = "#fff"; continue; }   // 🦍 soatsiz
         els[i].textContent = fmt(ms);
         var active = st.clockRunning && !st.finished && st.turn === color;
         els[i].style.background = active ? (ms < 30000 ? "#7a1f1f" : "#2b4a1f") : "#1c2733";
