@@ -143,6 +143,7 @@ function handle(req, res, url) {
     }
   } catch (e) {}
   if (p === '/api/season' && req.method === 'GET') { const _t = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN); if (!_t) { send(res, 401, { error: 'auth' }); return true; } send(res, 200, require('./season.js').view(_t.id)); return true; }
+  if (p.startsWith('/api/corr')) { if (require('./corr.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }
   if (p === '/api/endgame') { if (require('./endgame.js').handle(req, res, p, { verifyInitData, send })) return true; }
   if (p === '/api/region') { if (require('./region.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }
   if (p.startsWith('/api/gift/')) { if (require('./gift.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }

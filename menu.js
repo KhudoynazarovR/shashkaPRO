@@ -70,6 +70,7 @@
       ["📁", "Arxiv", "O‘tgan o‘yinlar tarixi", "@arch", "#2fd27f,#1ea36a"],
       ["🔬", "Tahlil taxtasi", "KestoG bilan pozitsiya tahlili", "@board", "#3b82f6,#06b6d4"],
       ["🧩", "Masalalar", "Shashka masalalarini yeching", "@puz", "#f5873b,#f7c02d"],
+      ["📮", "Yozishma o‘yinlari", "Har yurishga 1 kun — bot navbatingizni aytadi", "@corr", "#7c3aed,#0ea5e9"],
       ["🎓", "Endshpil maktabi", "Bazada tekshirilgan mashqlar — King Kongga qarshi", "@eg", "#0f766e,#22c55e"],
       ["📖", "Debyutlar", "Mashhur ochilishlar va yod olish", "@deb", "#0ea5e9,#6366f1"],
       ["🪙", "Tosh do‘koni", "Donalar va o‘z donangiz", "@shop", "#7b3ff2,#d62f8f"]]],
@@ -143,6 +144,7 @@
     try {
       var _tw = window.Telegram && Telegram.WebApp, _id = _tw && _tw.initData; if (!_id) return;
       if ((_tw.initDataUnsafe || {}).start_param === "prem") window.premGo();
+      var _cs = /^corr_(\w*)$/.exec((_tw.initDataUnsafe || {}).start_param || ""); if (_cs) window.corrGo(_cs[1] || undefined);
       fetch("/api/premium", { headers: { "x-init-data": _id } }).then(function (r) { return r.json(); }).then(function (d) {
         if (d && !d.error) { window.__prem = !!d.premium; try { window.dispatchEvent(new Event("spPrem")); } catch (e) {} }
         if (!d || !d.trialShow) return;
@@ -159,7 +161,9 @@
       }).catch(function () {});
     } catch (e) {}
   }, 2500);
+  window.corrGo = window.corrGo || function (id) { if (window.corrOpen) return window.corrOpen(id); var s = document.createElement("script"); s.src = "/corrpanel.js?v=" + Date.now(); s.onload = function () { window.corrOpen(id); }; document.head.appendChild(s); };
   window.mnA = function (a) {
+    if (a === "@corr") { close(); window.corrGo(); return; }
     if (a === "@prem") { close(); window.premGo(); return; }
     if (a === "@eg") { close(); if (window.egOpen) window.egOpen(); else { var _eg = document.createElement("script"); _eg.src = "/egpanel.js?v=" + Date.now(); _eg.onload = function () { window.egOpen(); }; document.head.appendChild(_eg); } return; }
     if (a === "@reg") { close(); if (window.regOpen) window.regOpen(); else { var _rg = document.createElement("script"); _rg.src = "/regionpanel.js?v=" + Date.now(); _rg.onload = function () { window.regOpen(); }; document.head.appendChild(_rg); } return; }

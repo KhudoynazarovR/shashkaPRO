@@ -263,6 +263,16 @@
               window.lbChallengeUid(d.id); cb.innerHTML = "✓ Taklif yuborildi"; cb.disabled = true; cb.style.background = "#3a3f6b";
             });
           }
+          mk("📮 Yozishma o‘yiniga taklif", "linear-gradient(90deg,#7c3aed,#0ea5e9)", function () {
+            var m = modal("<b style='font-size:18px'>📮 Yozishma o‘yini</b><div style='opacity:.75;font-size:13px;margin:6px 0 12px'>" + esc(d.name) + " ga taklif. Har yurishga qancha vaqt?</div><div style='display:flex;gap:6px'>" +
+              [[12, "12 soat"], [24, "1 kun"], [72, "3 kun"]].map(function (x) { return "<button data-cp='" + x[0] + "' style='flex:1;border:0;border-radius:12px;padding:12px 0;font-size:15px;font-weight:700;color:#fff;background:" + (x[0] === 24 ? "#2e7d32" : "#262b66") + "'>" + x[1] + "</button>"; }).join("") + "</div><div id='cpE' style='font-size:13px;min-height:18px;margin-top:8px'></div>");
+            [].forEach.call(m.querySelectorAll("[data-cp]"), function (b) {
+              b.onclick = function () {
+                var go = function () { window.corrInvite(d.id, +b.getAttribute("data-cp")).then(function (r) { var e = m.querySelector("#cpE"); if (r.error) { e.style.color = "#ff6b7f"; e.textContent = r.error; return; } e.style.color = "#7ee08a"; e.textContent = "✓ Taklif yuborildi — bot " + d.name + " ga xabar beradi"; setTimeout(function () { m.remove(); }, 1600); }); };
+                if (window.corrInvite) go(); else { var s = document.createElement("script"); s.src = "/corrpanel.js?v=" + Date.now(); s.onload = go; document.head.appendChild(s); }
+              };
+            });
+          });
           mk("🎁 Tanga sovg‘a qilish", "linear-gradient(90deg,#e0446a,#d62f4f)", function () {
             var m = modal("<b style='font-size:19px'>🎁 Tanga sovg‘a qilish</b><div style='opacity:.7;font-size:13px;margin:4px 0 12px'>Sizda: <b>" + my + " 🪙</b></div>" +
               "<div style='display:flex;gap:6px'>" + [10, 50, 100, 500].map(function (v) { return "<button data-v='" + v + "' style='flex:1;border:2px solid #f59e0b;background:transparent;color:#f5b72b;border-radius:12px;padding:9px 0;font-size:15px;font-weight:700'>" + v + "</button>"; }).join("") + "</div>" +
