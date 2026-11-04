@@ -166,6 +166,35 @@
       tblCss(); var ov = $("tblOv"); if (!ov) { ov = document.createElement("div"); ov.id = "tblOv"; document.body.appendChild(ov); }
       renderTables();
     };
+    // 💰 aniq o'yinchiga taklif: vaqt + tikish bitta oynada (profil va onlayn ro'yxatdan)
+    window.lbStakeInvite = function (uid, name, stake0) {
+      uid = String(uid); var old = $("lbSiOv"); if (old) old.remove();
+      var tc = "3+2", stake = stake0 == null ? 50 : +stake0;
+      try { tc = localStorage.getItem("siTc") || tc; } catch (e) {}
+      var ov = document.createElement("div"); ov.id = "lbSiOv";
+      ov.style.cssText = "position:fixed;inset:0;z-index:100060;background:rgba(5,4,20,.72);display:flex;align-items:flex-end;justify-content:center";
+      var bx = document.createElement("div");
+      bx.style.cssText = "width:100%;max-width:480px;background:#16123f;border:1px solid #f59e0b;border-bottom:0;border-radius:22px 22px 0 0;padding:16px 16px calc(18px + env(safe-area-inset-bottom,0px));color:#fff;font-family:system-ui,Roboto,sans-serif;box-sizing:border-box";
+      ov.appendChild(bx); document.body.appendChild(ov);
+      ov.onclick = function (e) { if (e.target === ov) ov.remove(); };
+      function chip(k, v, lab, on) { return "<button data-" + k + "='" + v + "' style='flex:1;border:2px solid " + (on ? "#f59e0b" : "#3d3590") + ";background:" + (on ? "#3a2a05" : "#0f0c2e") + ";color:" + (on ? "#ffd54a" : "#fff") + ";border-radius:12px;padding:11px 0;font-size:15px;font-weight:800'>" + lab + "</button>"; }
+      function draw() {
+        bx.innerHTML = "<div style='display:flex;align-items:center;margin-bottom:10px'><b style='flex:1;font-size:19px'>🎮 " + esc(name || "O‘yinchi") + " bilan o‘ynash</b><button id='siX' style='border:0;background:#2b2475;color:#fff;border-radius:10px;width:36px;height:36px;font-size:16px'>✕</button></div>" +
+          "<div style='font-size:12px;opacity:.7;margin:4px 0 6px'>⏱ VAQT</div><div style='display:flex;gap:6px'>" + ["1+1", "2+2", "3+2", "5+3"].map(function (v) { return chip("t", v, v, v === tc); }).join("") + "</div>" +
+          "<div style='font-size:12px;opacity:.7;margin:12px 0 6px'>💰 TIKISH</div><div style='display:flex;gap:6px'>" + [0, 10, 50, 100, 500].map(function (v) { return chip("s", v, v ? v : "yo‘q", v === stake); }).join("") + "</div>" +
+          "<div style='text-align:center;margin:12px 0;font-size:14px;min-height:20px'>" + (stake ? "G‘olibga: <b style='color:#ffd54a'>" + Math.floor(stake * 1.8) + " 🪙</b> · durangda tanga qaytadi" : "Oddiy o‘yin, tangasiz") + "</div>" +
+          "<button id='siGo' style='width:100%;border:0;border-radius:14px;padding:14px;font-size:16px;font-weight:800;color:#fff;background:" + (stake ? "linear-gradient(90deg,#f59e0b,#ea580c)" : "linear-gradient(90deg,#5b6cf0,#7c4dce)") + "'>" + (stake ? "💰 " + stake + " 🪙 tikib taklif yuborish" : "🎮 Taklif yuborish") + "</button>";
+        bx.querySelector("#siX").onclick = function () { ov.remove(); };
+        [].forEach.call(bx.querySelectorAll("[data-t]"), function (b) { b.onclick = function () { tc = b.getAttribute("data-t"); draw(); }; });
+        [].forEach.call(bx.querySelectorAll("[data-s]"), function (b) { b.onclick = function () { stake = +b.getAttribute("data-s"); draw(); }; });
+        bx.querySelector("#siGo").onclick = function () {
+          try { localStorage.setItem("siTc", tc); } catch (e) {}
+          window.__siAt = Date.now(); sendMsg({ type: "lbChallenge", toUid: uid, tc: tc, stake: stake, pos: "std", games: 1 });
+          ov.remove(); toast(stake ? "💰 " + esc(name || "") + "ga " + stake + " 🪙 tikib taklif yuborildi (" + tc + ")" : "🎮 Taklif yuborildi (" + tc + ")", null, 3500);
+        };
+      }
+      draw();
+    };
     window.lbStakeRematch = function (rid) { sendMsg({ type: "lbStakeRematch", roomId: String(rid) }); };   // 🔁 2× tikish revansh
     window.lbEtude = function (id) { sendMsg({ type: "lbEtude", id: String(id) }); };   // ♔ etyudni King Kongga qarshi yechish
     try { if (!inRoom && localStorage.getItem("etOpen") === "1") { localStorage.removeItem("etOpen"); setTimeout(function () { var se = document.createElement("script"); se.src = "/etudeview.js?v=1"; se.onload = function () { window.spEtudes(); }; document.head.appendChild(se); }, 900); } } catch (e) {}
@@ -219,7 +248,7 @@
            ["Rad etish", function () { sendMsg({ type: "mmDecline", code: _mc, init: (tg && tg.initData) || "" }); }, "no"]], 30000);
       } else if (m.type === "lbToast") {
         toast(esc(m.text), null, 7000);
-      } else if (m.type === "error" && panelOpen) {
+      } else if (m.type === "error" && (panelOpen || Date.now() - (window.__siAt || 0) < 5000)) {
         toast("⚠️ " + esc(m.message), null, 5000);
       }
     }
@@ -491,6 +520,7 @@
         var t = e.target; if (!t || !t.getAttribute) return;
         var act = t.getAttribute("data-a"), id = t.getAttribute("data-id");
         if (!act) return;
+        if (act === "stk") { var _r2 = t.closest(".lbp"), _n2 = _r2 && _r2.querySelector(".lbinf b"); window.lbStakeInvite(id, _n2 ? _n2.textContent.replace(/\s+/g, " ").trim() : "", 50); return; }
         if (act === "ch" && /^bot_(champ|monster|terminator|kingkong)$/.test(id) && !(S.me && S.me.prem)) { toast("👑 Bu bot faqat Premium uchun", null, 2500); if (window.premGo) window.premGo(); return; }
         if (act === "ch" && /^bot/.test(id) && !window.__botTc && window.spBotSetup) { var _row = t.closest(".lbp"), _nm = _row && _row.querySelector(".lbinf b"); window.spBotSetup({ uid: id, name: _nm ? _nm.textContent.replace(/\s+/g, " ").trim() : id }); }
         else if (act === "ch") { var _bt = /^bot/.test(id) && window.__botTc ? window.__botTc : null; sendMsg({ type: "lbChallenge", toUid: id, tc: _bt || $("lbTc").value, color: _bt ? (window.__botColor || "white") : undefined, pos: _bt && window.__botPos ? window.__botPos : $("lbPos").value, games: _bt ? 1 : Number($("lbGm").value) }); window.__botTc = null; } else if (act === "cx") sendMsg({ type: "lbCancelTo", toUid: id });
@@ -626,7 +656,7 @@
       list.forEach(function (p) {
         h += "<div class=\"lbp\">" + avh(p.uid, p.hasAv, p.name, p.prem) +
           "<div class=\"lbinf\"><b>" + (p.bot ? esc(p.name).replace(/BOT\s*$/, "<span style=\"color:#ff2b2b;text-shadow:0 0 8px #ff0000\">BOT</span>") : esc(p.name)) + (p.prem || (p.bot && /^bot_(champ|monster|terminator|kingkong)$/.test(p.uid)) ? " <span style=\"color:#f5b82e\">👑</span>" : "") + (p.busy ? " 🟡" : "") + "</b><small>ELO " + (p.elo || 1000) + " · 🪙 " + (p.gems || 0) + (p.busy ? " · o‘ynayapti" : "") + "</small></div>" +
-          (p.uid === me ? "<i class='muted'>Bu siz</i>" : p.offline ? "<span class='muted'>oflayn</span>" : (fset[p.uid] || /^bot(_|$)/.test(String(p.uid))) ? "" : "") + (p.uid === me || p.offline ? "" : out[p.uid] ? "<button class=\"lbinv\" style=\"background:#8a2b2b\" data-a=\"cx\" data-id=\"" + esc(p.uid) + "\">✕ Bekor</button>" : (p.busy ? "" : "<button class=\"lbinv\" data-a=\"ch\" data-id=\"" + esc(p.uid) + "\">O‘yinga taklif</button>")) + "</div>";
+          (p.uid === me ? "<i class='muted'>Bu siz</i>" : p.offline ? "<span class='muted'>oflayn</span>" : (fset[p.uid] || /^bot(_|$)/.test(String(p.uid))) ? "" : "") + (p.uid === me || p.offline ? "" : out[p.uid] ? "<button class=\"lbinv\" style=\"background:#8a2b2b\" data-a=\"cx\" data-id=\"" + esc(p.uid) + "\">✕ Bekor</button>" : (p.busy ? "" : (/^bot(_|$)/.test(String(p.uid)) || !/^\d+$/.test(String(p.uid)) ? "" : "<button class=\"lbinv\" style=\"background:linear-gradient(90deg,#f59e0b,#ea580c);margin-right:6px;padding-left:10px;padding-right:10px\" data-a=\"stk\" data-id=\"" + esc(p.uid) + "\">💰</button>") + "<button class=\"lbinv\" data-a=\"ch\" data-id=\"" + esc(p.uid) + "\">O‘yinga taklif</button>")) + "</div>";
       });
       $("lbPl").innerHTML = h;
     Array.prototype.forEach.call($("lbPl").querySelectorAll('[data-t]'), function (b) {
