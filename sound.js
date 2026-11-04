@@ -3,7 +3,7 @@
 (function () {
   "use strict";
   var KEY = "sp_snd3";
-  var DEF = { on: true, vol: 0.6, move: true, capture: true, king: true, low: true, count: true, speech: true };
+  var DEF = { on: true, vol: 0.6, move: true, capture: true, king: true, low: true, count: true, speech: true, btn: true };
 
   function load() {
     var cfg = {}, k, x = null;
@@ -123,10 +123,11 @@
     },
     low: function (a, t) { tone(a, t, 1000, 0.09, "sine", 0.5); tone(a, t + 0.14, 1000, 0.09, "sine", 0.5); tone(a, t + 0.28, 1000, 0.09, "sine", 0.5); },
     tick: function (a, t) { tone(a, t, 820, 0.045, "sine", 0.28); },
+    click: function (a, t) { tone(a, t, 1250, 0.03, "triangle", 0.16, 900); },
     beep: function (a, t) { tone(a, t, 900, 0.09, "sine", 0.35); },
     go: function (a, t) { tone(a, t, 1250, 0.35, "sine", 0.45); }
   };
-  var FLAG = { move: "move", capture: "capture", king: "king", low: "low", tick: "low" };
+  var FLAG = { move: "move", capture: "capture", king: "king", low: "low", tick: "low", click: "btn" };
 
   function play(name, force) {
     if (!force) {
@@ -179,7 +180,8 @@
     ["king", "Damkaga chiqish", "king"],
     ["low", "Vaqt kam qolganda signal (oxirgi 10 soniya)", "low"],
     ["count", "Turnir boshlanishidan oldin sanash (10 → 1)", "count"],
-    ["speech", "Sanashni inglizcha ovozda aytish", null]
+    ["speech", "Sanashni inglizcha ovozda aytish", null],
+    ["btn", "Tugma bosilganda ovoz", "click"]
   ];
   var overlay = null;
 
@@ -257,5 +259,18 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", addButton);
   else addButton();
 
+  // 🔘 tugma ovozi: hamma tugma va kartalar (doska kataklari va yozish maydonlaridan tashqari)
+  var lastClick = 0;
+  var BTN_SEL = "button,a[href],select,summary,[onclick],[role=button],[data-a],[data-g],[data-st],[data-s],[data-t],[data-f],.mqK,.lbinv,.lbc,#nvBar button,#nvStolRow,#nvBotRow,#nvMemRow";
+  document.addEventListener("click", function (e) {
+    try {
+      if (!cfg.on || !cfg.btn) return;
+      var t = e.target; if (!t || !t.closest) return;
+      if (t.closest("#rcBoard,#board,[data-r][data-c],input,textarea,[contenteditable]")) return;
+      var b = t.closest(BTN_SEL); if (!b || b.disabled) return;
+      var now = Date.now(); if (now - lastClick < 60) return; lastClick = now;
+      play("click");
+    } catch (er) {}
+  }, true);
   window.SPSound = { play: play, count: count, openSettings: openSettings, cfg: cfg };
 })();
