@@ -652,6 +652,27 @@
     function sideName(color) { return color === "white" ? "Oq" : "Qora"; }
     function flipped() { return st.color === "black"; }
     function bothIn() { return !!(st.white && st.black); }
+    // 🚪 raqib chiqib ketdi: 15 soniya kutish, keyin «Kutish» yoki «G'alabani olish»
+    var claimHide = 0;
+    setInterval(function () {
+      var bar = document.getElementById("rcClaim");
+      var me = st.color, opp = me === "white" ? "black" : me === "black" ? "white" : null;
+      var off = opp && st.offAt && st.offAt[opp];
+      if (!opp || st.finished || st.vsBot || !off || st[opp + "Online"] || (st.moves || []).length < 2 || Date.now() < claimHide) { if (bar) bar.remove(); return; }
+      if (!bar) {
+        bar = document.createElement("div"); bar.id = "rcClaim";
+        bar.style.cssText = "position:fixed;left:10px;right:10px;bottom:18px;z-index:2147483000;background:#1b1f45;border:1px solid #f59e0b;border-radius:18px;padding:12px;color:#fff;font:600 15px system-ui,sans-serif;text-align:center;box-shadow:0 6px 24px #0009";
+        document.body.appendChild(bar);
+      }
+      var left = Math.ceil(((st.claimMs || 15000) - (Date.now() - off)) / 1000), nm = st[opp] || "Raqib", k = left > 0 ? "w" + left : "btn";
+      if (bar.getAttribute("data-k") === k) return; bar.setAttribute("data-k", k);
+      if (left > 0) bar.innerHTML = "⚠️ " + String(nm).replace(/[<>&]/g, "") + " o‘yindan chiqib ketdi<div style='font-weight:400;font-size:13px;opacity:.8;margin-top:4px'>Qaytishini kutyapmiz… <b>" + left + "</b> s</div>";
+      else {
+        bar.innerHTML = "⚠️ " + String(nm).replace(/[<>&]/g, "") + " qaytmadi<div style='display:flex;gap:8px;margin-top:10px'><button id='rcClW' style='flex:1;border:1px solid #3a3f6b;background:transparent;color:#fff;border-radius:12px;padding:11px;font-size:15px'>⏳ Kutish</button><button id='rcClY' style='flex:1;border:0;background:linear-gradient(90deg,#22c55e,#10b981);color:#fff;border-radius:12px;padding:11px;font-size:15px;font-weight:700'>🏆 G‘alabani olish</button></div>";
+        bar.querySelector("#rcClW").onclick = function () { claimHide = Date.now() + 30000; bar.remove(); };
+        bar.querySelector("#rcClY").onclick = function () { send({ type: "roomClaimWin", roomId: roomId }); bar.remove(); claimHide = Date.now() + 3000; };
+      }
+    }, 500);
 
     function computeForced(step) {
       // yurishdan keyin shu dona yana urishi kerakmi
@@ -875,7 +896,7 @@
         t = eok ? "🎉 Etyud yechildi! " + (st.etude.goal === "draw" ? "Durang ta’minlandi" : "Yutuq yo‘li topildi") : "😔 Etyud yechilmadi — qaytadan urinib ko‘ring";
       }
       else if (st.finished) {
-        var tm = st.reason === "timeout" ? "⏰ Vaqt tugadi · " : st.reason === "noshow" ? "⏳ Birinchi yurish qilinmadi · " : st.reason === "voice" ? "🎤 Noto‘g‘ri yurish aytildi" + (st.voiceSaid ? " («" + st.voiceSaid + "»)" : "") + " · " : "";
+        var tm = st.reason === "abandon" ? "🚪 Raqib o‘yindan chiqib ketdi · " : st.reason === "timeout" ? "⏰ Vaqt tugadi · " : st.reason === "noshow" ? "⏳ Birinchi yurish qilinmadi · " : st.reason === "voice" ? "🎤 Noto‘g‘ri yurish aytildi" + (st.voiceSaid ? " («" + st.voiceSaid + "»)" : "") + " · " : "";
         if (st.winner === "draw") t = st.drawText ? "🤝 " + st.drawText : "🤝 Durang (kelishildi)";
         else if (st.color === "spectator") t = tm + "🏆 " + sideName(st.winner) + " g‘alaba qozondi";
         else t = tm + (st.winner === st.color ? "🏆 Siz g‘alaba qozondingiz!" : "😔 Siz yutqazdingiz");
@@ -1290,6 +1311,7 @@
         try { sitBar(m); } catch (e) {}
         st.white = m.white; st.black = m.black; st.wInfo = m.wInfo || null; st.bInfo = m.bInfo || null;
         st.whiteOnline = m.whiteOnline; st.blackOnline = m.blackOnline;
+        st.offAt = { white: m.whiteOff ? Date.now() - (m.srvNow - m.whiteOff) : 0, black: m.blackOff ? Date.now() - (m.srvNow - m.blackOff) : 0 }; st.claimMs = m.claimMs || 15000;
         st.spectators = m.spectators || 0;
         st.specNames = m.spectatorNames || [];
         st.gamesTotal = m.gamesTotal || 1; st.played = m.played || 0; st.seriesScore = m.seriesScore || null;

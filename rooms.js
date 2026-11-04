@@ -65,6 +65,22 @@ function createRooms({ send, clients, onFinish }) {
   function isOnline(seat) {
     return !!(seat && clients.get(seat.clientId));
   }
+  // 🚪 raqib o'yindan chiqib ketsa: 15 soniyadan keyin qolgan o'yinchi g'alabani olishi mumkin
+  const CLAIM_MS = 15000;
+  const claimable = room => !!(room && room.white && room.black && !room.finished && !room.vsBot && !room.simul && !/^S/.test(String(room.id || '')) && (room.plies || 0) >= 2);
+  setInterval(() => {
+    const now = Date.now();
+    for (const room of rooms.values()) {
+      if (!claimable(room)) continue;
+      let ch = false;
+      for (const s of [room.white, room.black]) {
+        const on = isOnline(s);
+        if (!on && !s.offSince) { s.offSince = now; ch = true; }
+        else if (on && s.offSince) { s.offSince = 0; ch = true; }
+      }
+      if (ch) pushState(room);
+    }
+  }, 1000).unref();
 
   // Soat: har ikki tomonning birinchi yurishi bepul, undan keyin navbatdagi o'yinchi vaqti ketadi.
   function clockRunning(room) {
@@ -100,6 +116,7 @@ function createRooms({ send, clients, onFinish }) {
       black: room.black ? room.black.name : null,
       whiteOnline: isOnline(room.white), canSit: !!(room.inline && !room.finished && (!!room.white !== !!room.black)), sitColor: room.white ? 'black' : 'white',
       blackOnline: isOnline(room.black),
+      whiteOff: (room.white && room.white.offSince) || 0, blackOff: (room.black && room.black.offSince) || 0, srvNow: Date.now(), claimMs: CLAIM_MS,
       spectators: [...room.members].filter(id => !colorOf(room, clients.get(id) || {})).length,
       spectatorNames: [...room.members].filter(id => !colorOf(room, clients.get(id) || {})).map(id => room.names.get(id) || "Mehmon").slice(0, 8),
       moves: room.moves,
@@ -737,6 +754,14 @@ function createRooms({ send, clients, onFinish }) {
       if (!room.drawOffer || room.drawOffer === col) return true;
       room.drawOffer = null;
       finish(room, "draw", "agreed");
+      return true;
+    }
+
+    if (m.type === "roomClaimWin") {   // 🏆 raqib chiqib ketdi — g'alabani olish
+      if (!col || !claimable(room)) return true;
+      const opp = room[other(col)];
+      if (!opp || isOnline(opp) || !opp.offSince || Date.now() - opp.offSince < CLAIM_MS) return err(c, "Raqib hali qaytishi mumkin — biroz kuting"), true;
+      finish(room, col, "abandon");
       return true;
     }
 
