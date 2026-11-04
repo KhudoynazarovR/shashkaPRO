@@ -425,6 +425,35 @@
         return kkPost('/api/kkbook/add', body).then(function (r) { KK.busy = false; KK.msg = r.error ? '⚠️ ' + r.error : '✅ O‘rgatildi: ' + r.n + ' (jami ' + r.total + ')'; draw(); });
       }).catch(function () { KK.busy = false; KK.msg = '⚠️ Server bilan aloqa yo‘q'; draw(); });
     }
+    // 🦍 doskadagi partiyani (yoki tanlangan yurishgacha) bir bosishda o'rgatish
+    function kkGameMoves() {
+      var L = [];
+      for (var i = 1; i <= cur; i++) {
+        var h0 = hist[i - 1], m = hist[i].m; if (!m) continue;
+        if (KK.sides === 'w' ? h0.t <= 0 : KK.sides === 'b' ? h0.t >= 0 : false) continue;
+        var f = m.path[0], e = m.path[m.path.length - 1];
+        L.push({ board: toEng(h0.b), side: h0.t, from: f[0] * 8 + f[1], to: e[0] * 8 + e[1], nm: note(m), no: Math.ceil(i / 2) });
+      }
+      return L;
+    }
+    function kkGame() {
+      if (KK.busy) return;
+      var L = kkGameMoves(); if (!L.length) { KK.msg = 'Doskada ' + (KK.sides === 'w' ? 'oq' : KK.sides === 'b' ? 'qora' : '') + ' yurish yo‘q — avval o‘ynang'; draw(); return; }
+      var body = L.map(function (x) { return { board: x.board, side: x.side, from: x.from, to: x.to }; });
+      KK.busy = true; KK.pend = null; KK.msg = '⏳ KestoG ' + L.length + ' ta yurishni tekshiryapti… (~' + Math.max(2, Math.round(L.length * 0.7)) + ' s)'; draw();
+      kkPost('/api/kkbook/game', { moves: body }).then(function (c) {
+        KK.busy = false;
+        if (c.error) { KK.msg = '⚠️ ' + c.error; draw(); return; }
+        if (!c.bad.length) return kkGameGo(body, []);
+        c.bad.forEach(function (b) { b.no = L[b.i].no; });
+        KK.pend = { body: body, bad: c.bad }; KK.msg = ''; draw();
+      }).catch(function () { KK.busy = false; KK.msg = '⚠️ Server bilan aloqa yo‘q'; draw(); });
+    }
+    function kkGameGo(body, skip) {
+      KK.busy = true; KK.pend = null; KK.msg = '⏳ O‘rgatilmoqda…'; draw();
+      kkPost('/api/kkbook/game', { moves: body, go: 1, skip: skip }).then(function (r) { KK.busy = false; KK.msg = r.error ? '⚠️ ' + r.error : '✅ ' + r.added + ' ta yurish King Kongga o‘rgatildi (jami ' + r.total + ')'; draw(); })
+        .catch(function () { KK.busy = false; KK.msg = '⚠️ Server bilan aloqa yo‘q'; draw(); });
+    }
     function kkList() {
       var o = document.createElement('div'); o.style.cssText = 'position:fixed;inset:0;z-index:2147483600;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;padding:10px';
       var bx = document.createElement('div'); bx.style.cssText = 'width:100%;max-width:440px;max-height:92%;overflow-y:auto;background:#0b0e1a;color:#fff;border:1px solid #5a3a10;border-radius:18px;padding:14px;font:14px system-ui,sans-serif';
@@ -445,8 +474,12 @@
       }).catch(function () { bx.textContent = 'Server bilan aloqa yo‘q'; });
     }
     var A = {
-      kk: function () { panel = 'kk'; KK.msg = ''; },
+      kk: function () { panel = 'kk'; KK.msg = ''; KK.pend = null; },
       kkteach: function () { kkTeach(); },
+      kkgame: function () { kkGame(); },
+      kkall: function () { if (KK.pend) kkGameGo(KK.pend.body, []); },
+      kkgood: function () { if (KK.pend) kkGameGo(KK.pend.body, KK.pend.bad.map(function (b) { return b.i; })); },
+      kkno: function () { KK.pend = null; KK.msg = 'Bekor qilindi'; },
       kklist: function () { kkList(); },
       kkpdn: function () { panel = 'kkpdn'; KK.msg = ''; },
       kkpdngo: function () {
@@ -546,6 +579,15 @@
           s += '<div style="text-align:center;margin-top:6px"><button id="bdA" style="' + sm + ';background:#2e9d6b">📊 Hammasini baholash' + (prog ? ' ' + prog : '') + '</button><button id="bdN" style="' + sm + ';background:#8a2b3a">🗑 Yangi o‘yin</button></div>';
         } else if (panel === 'kk') {
           s += '<div style="font-size:15px;font-weight:700;margin-bottom:6px">🦍 King Kong ustaxonasi</div>';
+          var _gn = kkGameMoves().length;
+          s += '<div style="background:#1d2a14;border-radius:12px;padding:10px;margin-bottom:10px"><div style="font-size:14px;margin-bottom:6px">Doskadagi partiya' + (cur < hist.length - 1 ? ' (tanlangan yurishgacha)' : '') + ' — qaysi tomon?</div><div>' +
+            [['w', '⚪ Oq'], ['b', '⚫ Qora'], ['both', 'Ikkalasi']].map(function (x) { return '<button data-a="kks:' + x[0] + '" style="' + sm + ';background:' + (KK.sides === x[0] ? '#6aa22a' : '#262b66') + '">' + x[1] + '</button>'; }).join('') + '</div>';
+          if (KK.pend) {
+            s += '<div style="margin-top:8px;font-size:14px">⚠️ KestoG ' + KK.pend.bad.length + ' ta yurishni xato deb hisoblaydi:</div><div style="font-size:13px;margin:4px 0 6px;line-height:1.6">' +
+              KK.pend.bad.map(function (b) { return b.no + '. <b>' + b.n + '</b> (' + evFmt(b.evMove) + ') → yaxshisi <b>' + b.best + '</b> (' + evFmt(b.evBest) + ')'; }).join('<br>') + '</div>' +
+              '<button data-a="kkgood" style="' + sm + ';background:#2e9d6b">⏭ Xatolarsiz o‘rgatish</button><button data-a="kkall" style="' + sm + ';background:#b45309">Hammasini</button><button data-a="kkno" style="' + sm + ';background:#5a2a35">Bekor</button>';
+          } else s += '<button data-a="kkgame" style="' + sm + ';background:#b45309;margin-top:6px"' + (KK.busy || !_gn ? ' disabled' : '') + '>🦍 Partiyani o‘rgatish (' + _gn + ' yurish)</button>';
+          s += '</div><div style="font-size:13px;opacity:.75;margin-bottom:4px">Yoki faqat oxirgi yurish:</div>';
           if (cur >= 1 && hist[cur].m) s += '<div style="font-size:14px;margin-bottom:8px">Oxirgi yurish: <b>' + note(hist[cur].m) + '</b> (' + (hist[cur - 1].t > 0 ? '⚪ oq' : '⚫ qora') + ')<br><span style="opacity:.7;font-size:12px">King Kong shu pozitsiyaga tushsa, aynan shu yurishni qiladi (Colette va kitobdan oldin).</span></div><button data-a="kkteach" style="' + sm + ';background:#b45309">🦍 Shu yurishni o‘rgatish</button>';
           else s += '<div style="font-size:14px;opacity:.8;margin-bottom:8px">Doskada kerakli yurishni qiling — keyin shu yerda uni King Kongga o‘rgatasiz.</div>';
           s += '<div style="margin-top:6px"><button data-a="kkpdn" style="' + sm + '">📋 Partiyani kiritish</button><button data-a="kklist" style="' + sm + '">📚 O‘rgatilganlar</button><button data-a="menu" style="' + sm + '">Orqaga</button></div>';

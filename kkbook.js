@@ -68,6 +68,9 @@ function add(b, side, from, to, by) {
   return B()[k];
 }
 const okBoard = b => Array.isArray(b) && b.length === 64 && b.every(v => Number.isInteger(v) && v >= -2 && v <= 2);
+// past navbat (o'yinlarni sekinlashtirmaydi): botlar band bo'lsa kutadi
+const evl1 = (b, side, secs) => new Promise(res => { try { require('./kestoai.js').move({ board: b, side, time: secs, maxTime: secs, book: false, arena: true }, r => res(r)); } catch (e) { res(null); } });
+async function evl(b, side, secs) { for (let t = 0; t < 20; t++) { const r = await evl1(b, side, secs); if (!(r && r.error === 'busy')) return r; await new Promise(z => setTimeout(z, 1500)); } return null; }
 const evq = (b, side, secs) => new Promise(res => { try { require('./kestoai.js').move({ board: b, side, time: secs, maxTime: secs, book: false }, r => res(r)); } catch (e) { res(null); } });
 
 // HTTP: /api/kkbook (faqat admin)
@@ -93,6 +96,25 @@ function handle(req, res, p, h) {
       if (!okBoard(j.board)) return h.send(res, 400, { error: 'Pozitsiya noto‘g‘ri' });
       const x = add(j.board, side, +j.from, +j.to, t.id); if (!x) return h.send(res, 400, { error: 'Noto‘g‘ri yurish' });
       store.save(); return h.send(res, 200, { ok: true, n: x.n, total: Object.keys(B()).length });
+    }
+    if (p === '/api/kkbook/game') {   // 🦍 doskadagi partiya: { moves:[{board,side,from,to}], go } — go yo'q bo'lsa faqat KestoG tekshiruvi
+      const L = (Array.isArray(j.moves) ? j.moves : []).slice(0, 80).filter(x => okBoard(x.board) && legal(x.board, x.side > 0 ? 1 : -1, +x.from, +x.to));
+      if (!L.length) return h.send(res, 400, { error: 'O‘rgatiladigan yurish yo‘q' });
+      if (j.go) {
+        let n = 0; const skip = new Set((j.skip || []).map(Number));
+        L.forEach((x, i) => { if (!skip.has(i) && add(x.board, x.side > 0 ? 1 : -1, +x.from, +x.to, t.id)) n++; });
+        if (n) store.save();
+        return h.send(res, 200, { ok: true, added: n, total: Object.keys(B()).length });
+      }
+      const bad = [];
+      for (let i = 0; i < L.length; i++) {
+        const x = L[i], sd = x.side > 0 ? 1 : -1, ms = R.moves(x.board, sd); if (ms.length < 2) continue;   // majburiy yurish — tekshirmaymiz
+        const best = await evl(x.board, sd, 0.5); if (!best || best.from == null || (best.from === +x.from && best.to === +x.to)) continue;
+        const m = legal(x.board, sd, +x.from, +x.to), after = R.moves(m.board, -sd).length ? await evl(m.board, -sd, 0.5) : { ev: -3000 };
+        const eb = best.ev != null ? best.ev / 200 : null, em = after && after.ev != null ? -after.ev / 200 : null;
+        if (eb != null && em != null && eb - em > 0.5) bad.push({ i, n: [m.from].concat(m.path || [m.to]).map(SQ).join(m.caps.length ? ':' : '-'), best: SQ(best.from) + '-' + SQ(best.to), evBest: eb, evMove: em });
+      }
+      return h.send(res, 200, { ok: true, n: L.length, bad });
     }
     if (p === '/api/kkbook/del') { delete B()[String(j.k)]; store.save(); return h.send(res, 200, { ok: true }); }
     if (p === '/api/kkbook/pdn') {
