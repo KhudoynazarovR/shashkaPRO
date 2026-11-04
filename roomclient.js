@@ -1121,10 +1121,10 @@
       } catch (e) { return shuffled; }
     }
     // zaxira "miya": AI javob bermasa, tasodifiy emas — material bo'yicha alfa-beta qidiruv (bir necha yurish oldinga)
-    function localBest(legal, side) {
+    function localBest(legal, side, lim) {
       try {
         var AM = window.allMoves, AP = window.applyMoveFull; if (!AM || !AP) return null;
-        var me = codeOf(side), op = codeOf(side === "white" ? "black" : "white"), t0 = Date.now(), LIM = 900;
+        var me = codeOf(side), op = codeOf(side === "white" ? "black" : "white"), t0 = Date.now(), LIM = lim || 900;
         function ev(b) {
           var s = 0;
           for (var r = 0; r < 8; r++) for (var c = 0; c < 8; c++) {
@@ -1168,43 +1168,53 @@
       if (!legal.length) return cb(null);
       var t0 = Date.now(), done = false;
       var timed = st.tc && st.tc !== "∞", rem = remaining(side) / 1000, inc = (st.incMs || 0) / 1000;
-      var secs = timed ? Math.max(0.05, Math.min(st.botSecs, rem / 22 + inc * 0.8, rem / 3)) : Math.max(0.05, Math.min(st.botSecs, rem / 15));
+      // ⏱ vaqtli o'yinda bot soatini tejaydi: server bilan aloqa vaqti (lat) ham hisoblanadi, tez o'yinda bezak kechikishlar yo'q
+      var lat = st.botLat || 0.5, fast = timed && rem < 90;
+      var budget = rem / 28 + inc * 0.8;
+      var secs = timed ? Math.max(0.05, Math.min(st.botSecs, budget - lat, rem / 5)) : Math.max(0.05, Math.min(st.botSecs, rem / 15));
+      st.botFast = fast;
       if (legal.length === 1) {   // yagona yurish (majburiy urish) — o'ylab o'tirmaymiz
         var only = stepsOf(legal[0]); st.botNote = "🤖 majburiy yurish";
-        if (only) return setTimeout(function () { cb(only); }, 350);
+        if (only) return setTimeout(function () { cb(only); }, fast ? 0 : 350);
+      }
+      if (timed && (rem < 2.5 || budget - lat < 0.12)) {   // vaqt juda kam — serverga bormay, shu yerning o'zida tez hisoblaymiz
+        var qb = localBest(legal, side, Math.max(40, Math.min(250, rem * 1000 / 20))), qs = qb ? stepsOf(qb) : null;
+        if (!qs) { var qp = safePool(legal, side); for (var qi = 0; qi < qp.length && !qs; qi++) qs = stepsOf(qp[qi]); }
+        if (qs) { st.botNote = "🤖 tezkor yurish ⏱"; return cb(qs); }
       }
       if (st.botBlunder > 0 && legal.length > 1 && Math.random() < st.botBlunder) {   // yengil botlar ba'zan tasodifiy yuradi
         done = true;
         var pool0 = safePool(legal, side), st0 = null;
         for (var i0 = 0; i0 < pool0.length && !st0; i0++) st0 = stepsOf(pool0[i0]);
         st.botNote = "🤖 tasodifiy yurish";
-        return setTimeout(function () { cb(st0); }, 450);
+        return setTimeout(function () { cb(st0); }, fast ? 0 : 450);
       }
       function finishWith(mv, note) {
         if (done) return; done = true;
         var steps = mv ? stepsOf(mv) : null;
         if (!steps) {   // zaxira: o'zimizning qidiruv, bo'lmasa xavfsiz yurish
-          var lb = localBest(legal, side); if (lb) steps = stepsOf(lb);
+          var lb = localBest(legal, side, fast ? Math.max(40, Math.min(300, remaining(side) / 20)) : 900); if (lb) steps = stepsOf(lb);
           if (!steps) { var pool = safePool(legal, side); for (var i = 0; i < pool.length && !steps; i++) steps = stepsOf(pool[i]); }
           note = (note || "🤖 zaxira yurish") + "";
         }
         st.botNote = note || "";
-        setTimeout(function () { cb(steps); }, Math.max(0, 450 - (Date.now() - t0)));
+        setTimeout(function () { cb(steps); }, fast ? 0 : Math.max(0, 450 - (Date.now() - t0)));
       }
       var ctl = window.AbortController ? new AbortController() : null;
       // kuchli botlar (Sulton, Legend, Monster) zaif zaxira "miya"ga hech qachon o'tmaydi — dvigatel javob berguncha kutadi
       var strong = st.botSecs >= 2 && !timed;   // vaqtli o'yinda kuchli bot ham soatni o'ylaydi
-      var deadline = strong ? Infinity : timed ? t0 + Math.max(800, Math.min((secs * 2 + 6) * 1000, rem * 1000 * 0.4)) : t0 + (secs * 3 + 25) * 1000;   // dvigatel band bo'lsa navbat kutiladi
+      var deadline = strong ? Infinity : timed ? t0 + Math.max(fast ? 400 : 800, Math.min((secs * 2 + lat * 2 + (fast ? 0.5 : 6)) * 1000, rem * 1000 * (fast ? 0.12 : 0.4))) : t0 + (secs * 3 + 25) * 1000;   // dvigatel band bo'lsa navbat kutiladi
       var to = strong ? null : setTimeout(function () { try { if (ctl) ctl.abort(); } catch (e) {} finishWith(null, "🤖 zaxira yurish (AI kechikdi)"); }, deadline - t0);
       var waitT = strong || /King ?Kong/i.test(String(st[st.botColor] || "")) ? setTimeout(function () { if (!done) botWait(true); }, /King ?Kong/i.test(String(st[st.botColor] || "")) ? 1200 : Math.max(4000, secs * 1000 + 3000)) : null;
       var _fw = finishWith; finishWith = function (mv, note) { clearTimeout(waitT); botWait(false); _fw(mv, note); };
       function ask() {
         if (done) return;
+        var tAsk = Date.now();
         try {
           fetch("/api/ai/move", {
             method: "POST",
             headers: { "Content-Type": "application/json", "x-init-data": (tg && tg.initData) || "" },
-            body: JSON.stringify({ board: flatBoard(st.board), side: side === "white" ? 1 : -1, time: secs, book: secs >= 1, room: roomId }),
+            body: JSON.stringify({ board: flatBoard(st.board), side: side === "white" ? 1 : -1, time: secs, maxTime: timed ? secs : undefined, book: secs >= 1 || (fast && st.botSecs >= 1), tbAlways: fast && st.botSecs >= 2 || undefined, room: roomId }),
             signal: ctl ? ctl.signal : undefined
           }).then(function (r) {
             if (r.status === 429 || r.status === 503) return { retry: 1 };
@@ -1213,6 +1223,7 @@
             if (done) return;
             if (j && j.retry && Date.now() + 1500 < deadline) return setTimeout(ask, strong ? 2000 : 900);   // band yoki hali tayyor emas — kutib qayta so'raymiz
             if (strong && !(j && typeof j.from === "number")) return setTimeout(ask, 3000);   // xato javob — kuchli bot zaxiraga o'tmaydi, qayta so'raydi
+            if (j && typeof j.from === "number") { var _l = (Date.now() - tAsk) / 1000 - Math.min(secs, (j.ms || secs * 1000) / 1000); st.botLat = Math.max(0.1, Math.min(3, (st.botLat || 0.5) * 0.7 + Math.max(0, _l) * 0.3)); }   // aloqa kechikishini o'rganamiz
             clearTimeout(to);
             var mv = null;
             if (j && typeof j.from === "number" && typeof j.to === "number") mv = pickLegal(legal, j, false) || pickLegal(legal, j, true);
@@ -1236,7 +1247,7 @@
           if (st.finished) { botBusy = false; return; }
           var s = steps[i++], more = i < steps.length;
           send({ type: "roomBotMove", roomId: roomId, move: s, keepTurn: more });
-          if (more) setTimeout(next, 700); else { botBusy = false; try { render(); } catch (e) {} }
+          if (more) setTimeout(next, st.botFast ? 60 : 700); else { botBusy = false; try { render(); } catch (e) {} }
         })();
       });
     }
