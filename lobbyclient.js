@@ -474,6 +474,8 @@
       }
       var me = S.me ? S.me.uid : "";
       window.lbFriendAdd = function (u) { sendMsg({ type: "lbFriendReq", uid: String(u) }); };
+      window.lbIsOnline = function (u) { u = String(u); return (S.players || []).some(function (p) { return String(p.uid) === u && !p.offline; }); };
+      window.lbChallengeUid = function (u) { var tc = ($("lbTc") && $("lbTc").value) || "3+2"; sendMsg({ type: "lbChallenge", toUid: String(u), tc: tc }); };
       window.lbFriendRemove = function (u) { sendMsg({ type: "lbFriendRemove", uid: String(u) }); };
       window.lbBlock = function (u, on) { u = String(u); S.blocked = (S.blocked || []).filter(function (x) { return String(x) !== u; }); if (on) { S.blocked.push(u); S.friends = (S.friends || []).filter(function (f) { return String(f.uid) !== u; }); } sendMsg({ type: "lbBlock", uid: u, on: !!on }); };
       window.lbFriendState = function (u) { try { u = String(u); if (u === String(me)) return "me"; if (/^bot(_|$)/.test(u)) return "bot"; if ((S.blocked || []).some(function (x) { return String(x) === u; })) return "blocked"; return (S.friends || []).some(function (f) { return String(f.uid) === u; }) ? "friend" : "ok"; } catch (e) { return "ok"; } };

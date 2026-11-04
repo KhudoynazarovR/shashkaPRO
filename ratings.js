@@ -200,10 +200,86 @@
           else fb.onclick = function () { window.lbFriendAdd(d.id); fb.textContent = "✓ Yuborildi"; fb.disabled = true; fb.style.background = "#3a3f6b"; };
           box.insertBefore(fb, box.lastElementChild);
         })();
+        (function () {   // 📊 g'alaba foizi chizig'i + 🪨 toshlar to'plami
+          var grid = box.querySelector("div[style*='grid-template-columns']"); if (!grid) return;
+          var w = document.createElement("div");
+          var h = "<div style='background:#161a3a;border:1px solid #262b5a;border-radius:16px;padding:12px;margin-bottom:10px;text-align:left'><div style='display:flex;justify-content:space-between;font-size:14px'><span>📈 G‘alaba foizi</span><b style='color:#7ee08a'>" + pct + "%</b></div>" +
+            "<div style='height:8px;background:#262b5a;border-radius:5px;margin-top:8px'><div style='height:8px;width:" + pct + "%;background:linear-gradient(90deg,#22c55e,#10b981);border-radius:5px'></div></div></div>";
+          if (d.stones && d.stones.length) {
+            h += "<div style='background:#161a3a;border:1px solid #262b5a;border-radius:16px;padding:12px;margin-bottom:10px;text-align:left'><div style='display:flex;justify-content:space-between;font-size:14px;margin-bottom:8px'><span>🪨 Toshlar to‘plami</span><span style='opacity:.7'>" + d.stones.length + " ta</span></div><div style='display:flex;gap:12px;overflow-x:auto;padding-bottom:4px'>" +
+              d.stones.map(function (s) { return "<div style='flex:none;width:62px;text-align:center;position:relative'><img src='/api/shop/img?id=" + encodeURIComponent(s.id) + "&k=w' style='width:52px;height:52px;border-radius:50%;object-fit:cover;background:#0b0e1a;border:2px solid " + (s.eq ? "#22c55e" : "#262b5a") + "' onerror=\"this.style.visibility='hidden'\">" + (s.eq ? "<span style='position:absolute;top:-4px;right:2px;font-size:14px'>✅</span>" : "") + "<div style='font-size:11px;opacity:.75;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis'>" + esc(s.name) + "</div></div>"; }).join("") + "</div></div>";
+          }
+          w.innerHTML = h; grid.parentNode.insertBefore(w, grid.nextSibling);
+        })();
+        (function () {   // 🎮 o'yinga taklif · 🎁 tanga sovg'a · 👑 Premium sovg'a
+          var stt = window.lbFriendState ? window.lbFriendState(d.id) : "ok";
+          if (stt === "me" || stt === "bot" || stt === "blocked" || !/^\d+$/.test(String(d.id))) return;
+          var BS = "width:100%;border:0;border-radius:14px;padding:12px;font-size:15px;font-weight:700;color:#fff;margin-bottom:8px;";
+          function mk(txt, bg, fn) { var b = document.createElement("button"); b.style.cssText = BS + "background:" + bg; b.innerHTML = txt; b.onclick = fn; box.insertBefore(b, box.lastElementChild); return b; }
+          function post(u, body) { return fetch(u, { method: "POST", headers: { "Content-Type": "application/json", "x-init-data": (tg && tg.initData) || "" }, body: JSON.stringify(body) }).then(function (r) { return r.json(); }); }
+          function modal(html) {
+            var m = document.createElement("div"); m.style.cssText = "position:fixed;inset:0;z-index:100002;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:16px";
+            m.onclick = function (e) { if (e.target === m) m.remove(); };
+            m.innerHTML = "<div style='width:100%;max-width:360px;background:#141833;color:#fff;border:1px solid #2c3270;border-radius:22px;padding:18px 16px;text-align:center;font-family:inherit'>" + html + "</div>";
+            document.body.appendChild(m); return m;
+          }
+          var my = d.myDiamonds || 0, F = d.giftFee || [0.05, 5];
+          function fee(n) { return Math.max(F[1], Math.ceil(n * F[0])); }
+          if (window.lbChallengeUid) {
+            var on = window.lbIsOnline ? window.lbIsOnline(d.id) : true;
+            var cb = mk(on ? "🎮 O‘yinga taklif" : "🎮 O‘yinga taklif <span style='font-weight:400;font-size:12px;opacity:.75'>· oflayn</span>", on ? "linear-gradient(90deg,#5b6cf0,#7c4dce)" : "#2a2f5c", function () {
+              if (!(window.lbIsOnline && window.lbIsOnline(d.id))) { cb.innerHTML = "😴 " + esc(d.name) + " hozir oflayn"; return; }
+              window.lbChallengeUid(d.id); cb.innerHTML = "✓ Taklif yuborildi"; cb.disabled = true; cb.style.background = "#3a3f6b";
+            });
+          }
+          mk("🎁 Tanga sovg‘a qilish", "linear-gradient(90deg,#e0446a,#d62f4f)", function () {
+            var m = modal("<b style='font-size:19px'>🎁 Tanga sovg‘a qilish</b><div style='opacity:.7;font-size:13px;margin:4px 0 12px'>Sizda: <b>" + my + " 🪙</b></div>" +
+              "<div style='display:flex;gap:6px'>" + [10, 50, 100, 500].map(function (v) { return "<button data-v='" + v + "' style='flex:1;border:2px solid #f59e0b;background:transparent;color:#f5b72b;border-radius:12px;padding:9px 0;font-size:15px;font-weight:700'>" + v + "</button>"; }).join("") + "</div>" +
+              "<input id='gfN' type='number' inputmode='numeric' min='1' placeholder='Miqdor kiriting' style='width:100%;box-sizing:border-box;margin-top:10px;border-radius:12px;border:1px solid #2c3270;background:#1c2150;color:#fff;padding:12px;font-size:16px;font-family:inherit'>" +
+              "<div id='gfI' style='font-size:13px;opacity:.8;min-height:20px;margin:8px 0'></div><div id='gfE' style='font-size:13px;color:#ff6b7f;min-height:18px'></div>" +
+              "<div style='display:flex;gap:8px;margin-top:6px'><button id='gfC' style='flex:1;border:1px solid #2c3270;background:transparent;color:#fff;border-radius:14px;padding:12px;font-size:15px'>Bekor</button><button id='gfS' style='flex:2;border:0;background:linear-gradient(90deg,#f59e0b,#f97316);color:#fff;border-radius:14px;padding:12px;font-size:15px;font-weight:700'>Yuborish 🎁</button></div>");
+            var inp = m.querySelector("#gfN"), info = m.querySelector("#gfI"), er = m.querySelector("#gfE");
+            function upd() { var n = Math.floor(+inp.value || 0); info.innerHTML = n > 0 ? "Miqdor: " + n + " 🪙 + xizmat haqi: " + fee(n) + " 🪙 = <b>" + (n + fee(n)) + " 🪙</b>" : ""; }
+            inp.oninput = upd;
+            [].forEach.call(m.querySelectorAll("[data-v]"), function (b) { b.onclick = function () { inp.value = b.getAttribute("data-v"); upd(); }; });
+            m.querySelector("#gfC").onclick = function () { m.remove(); };
+            m.querySelector("#gfS").onclick = function () {
+              var n = Math.floor(+inp.value || 0), sb = this; if (n < 1) { er.textContent = "Miqdorni kiriting"; return; }
+              sb.disabled = true;
+              post("/api/gift/coins", { uid: d.id, amount: n }).then(function (r) {
+                if (r.error) { er.textContent = r.error; sb.disabled = false; return; }
+                my = r.diamonds; m.innerHTML = "<div style='width:100%;max-width:360px;background:#141833;color:#fff;border-radius:22px;padding:26px 16px;text-align:center'><div style='font-size:52px'>🎁</div><b style='font-size:18px'>" + n + " 🪙 yuborildi!</b><div style='opacity:.75;font-size:13px;margin-top:6px'>" + esc(d.name) + " ga xabar boradi</div></div>";
+                setTimeout(function () { m.remove(); }, 1800);
+              }).catch(function () { er.textContent = "Server bilan aloqa yo‘q"; sb.disabled = false; });
+            };
+          });
+          mk("👑 Premium sovg‘a qilish", "linear-gradient(90deg,#9b4dff,#d97a6c)", function () {
+            var plan = "m";
+            var m = modal("<b style='font-size:19px'>👑 Premium sovg‘a</b><div style='opacity:.7;font-size:13px;margin:4px 0 12px'>Sizda: <b>" + my + " 🪙</b></div>" +
+              "<div style='display:flex;gap:8px'><button data-p='w' style='flex:1;border-radius:12px;padding:10px 0;font-size:14px;font-weight:700'>1 hafta<br><span style='font-weight:400'>300 🪙</span></button><button data-p='m' style='flex:1;border-radius:12px;padding:10px 0;font-size:14px;font-weight:700'>1 oy<br><span style='font-weight:400'>800 🪙</span></button></div>" +
+              "<div id='pgT' style='background:#fff3c4;color:#5a3b00;border:2px solid #f5b72b;border-radius:14px;padding:12px;margin:12px 0 6px;text-align:left;font-size:14px;line-height:1.5'></div><div id='pgE' style='font-size:13px;color:#ff6b7f;min-height:18px'></div>" +
+              "<div style='display:flex;gap:8px;margin-top:6px'><button id='pgC' style='flex:1;border:1px solid #2c3270;background:transparent;color:#fff;border-radius:14px;padding:12px;font-size:15px'>Bekor</button><button id='pgS' style='flex:2;border:0;background:linear-gradient(90deg,#7c3aed,#a855f7);color:#fff;border-radius:14px;padding:12px;font-size:15px;font-weight:700'>👑 Sovg‘a qilish</button></div>");
+            function paint() {
+              [].forEach.call(m.querySelectorAll("[data-p]"), function (b) { var on = b.getAttribute("data-p") === plan; b.style.border = "2px solid " + (on ? "#a855f7" : "#2c3270"); b.style.background = on ? "#2a1f5c" : "transparent"; b.style.color = "#fff"; });
+              m.querySelector("#pgT").innerHTML = "<b>" + esc(d.name) + "</b> ga " + (plan === "m" ? "1 oylik" : "1 haftalik") + " Premium sovg‘a qilmoqchimisiz?<br>Sizdan <b>" + (plan === "m" ? 800 : 300) + " 🪙</b> yechiladi.";
+            }
+            paint();
+            [].forEach.call(m.querySelectorAll("[data-p]"), function (b) { b.onclick = function () { plan = b.getAttribute("data-p"); paint(); }; });
+            m.querySelector("#pgC").onclick = function () { m.remove(); };
+            m.querySelector("#pgS").onclick = function () {
+              var sb = this; sb.disabled = true;
+              post("/api/gift/premium", { uid: d.id, plan: plan }).then(function (r) {
+                if (r.error) { m.querySelector("#pgE").textContent = r.error; sb.disabled = false; return; }
+                my = r.diamonds; m.innerHTML = "<div style='width:100%;max-width:360px;background:#141833;color:#fff;border-radius:22px;padding:26px 16px;text-align:center'><div style='font-size:52px'>👑</div><b style='font-size:18px'>Premium sovg‘a qilindi!</b><div style='opacity:.75;font-size:13px;margin-top:6px'>" + esc(d.name) + " ga xabar boradi</div></div>";
+                setTimeout(function () { m.remove(); }, 1800);
+              }).catch(function () { m.querySelector("#pgE").textContent = "Server bilan aloqa yo‘q"; sb.disabled = false; });
+            };
+          });
+        })();
         (function () {   // 🚫 bitta tugma: bloklash / blokdan chiqarish
           var stt = window.lbFriendState ? window.lbFriendState(d.id) : "ok";
           if (stt === "me" || stt === "bot" || !window.lbBlock) return;
-          var on = stt === "blocked", bb = document.createElement("button");
+          var on = stt === "blocked", bb = document.createElement("button"); bb.setAttribute("data-bb", "1");
           function paint() {
             bb.textContent = on ? "✅ Blokdan chiqarish" : "🚫 Bloklash";
             bb.style.cssText = "width:100%;border-radius:14px;padding:12px;font-size:15px;margin-bottom:8px;background:transparent;border:1px solid " + (on ? "#2e7d32;color:#7ee08a" : "#5a2a35;color:#ff6b7f");
@@ -223,7 +299,8 @@
           rb.textContent = "⚠️ Shikoyat qilish";
           rb.style.cssText = "width:100%;border-radius:14px;padding:12px;font-size:15px;margin-bottom:8px;background:transparent;border:1px solid #6b5a2a;color:#f5b72b";
           rb.onclick = function () { spReport(d, rb); };
-          box.insertBefore(rb, box.lastElementChild);
+          var _bb = box.querySelector("[data-bb]");
+          box.insertBefore(rb, _bb || box.lastElementChild);
         })();
         if (d.adm) (function () {   // 🛡 admin: jazo tugmalari
           var w = document.createElement("div");
