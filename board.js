@@ -285,15 +285,31 @@
   function pvBox(k) {
     var r = PVC[k];
     if (!r || r.err) return '';
-    if (!r.pv || !r.d) return '<div style="font-size:12px;opacity:.7;margin-top:6px">⏳ Chuqur tahlil...</div>';
+    if (!r.pv || !r.d) return '<div style="font-size:12px;opacity:.7;margin-top:6px">⏳ KestoG tahlil qilyapti...</div>';
     return '<div style="margin-top:8px;text-align:left;background:#1d1f3a;border-radius:12px;padding:8px 10px">' +
-      '<div style="font-size:12px;opacity:.75">Chuqurlik: ' + r.d + '/' + r.maxd + ' yarim yurish · baho ' + r.sc + (r.done ? '' : ' · ⏳') + ' · ' + Math.round(r.nodes / 1000) + 'k</div>' +
+      '<div style="font-size:12px;opacity:.75">🧠 KestoG · ' + r.d + ' yarim yurish' + (r.sc != null ? ' · baho ' + r.sc : '') + '</div>' +
       '<div style="font-size:14px;line-height:1.6;margin-top:4px">' + pvLine(r.pv, r.side) + '</div></div>';
   }
   function pvStart(h, k) {
     if (PVW) { try { PVW.terminate(); } catch (e) {} PVW = null; }
     PVK = k; PVC[k] = { d: 0, done: false };
     var tok = ++PVT;
+    setTimeout(function () {   // 🧠 telefon dvigateli o'rniga — serverdagi KestoG
+      if (tok !== PVT) return;
+      fetch('/api/ai/pv', { method: 'POST', headers: hd(), body: JSON.stringify({ board: toEng(h.b), side: h.t, time: Math.min(2, S.t || 1), plies: 10 }) })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (!document.getElementById('spBd')) return;
+          if (!j || j.error || !j.pv) { PVC[k] = { err: 1, done: true }; }
+          else PVC[k] = { pv: j.pv, d: j.d, done: true, side: h.t, sc: j.ev == null ? null : evFmt(j.ev) };
+          var el = document.getElementById('spPV');
+          if (el && el.getAttribute('data-k') === k) el.innerHTML = pvBox(k);
+          if (PVREDRAW) PVREDRAW();
+        }).catch(function () { PVC[k] = { err: 1, done: true }; });
+    }, 250);
+  }
+  function pvStartWorker(h, k) {   // eski telefon dvigateli — endi ishlatilmaydi
+    var tok = PVT;
     setTimeout(function () {
       if (tok !== PVT) return;
       try {

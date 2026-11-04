@@ -363,6 +363,18 @@ function handle(req, res, url) {
     });
     return true;
   }
+  if (p === '/api/ai/pv' && req.method === 'POST') {   // 🔬 tahlil taxtasi: KestoG eng yaxshi davomi
+    const _tk = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
+    if (!_tk) { send(res, 401, { error: 'auth' }); return true; }
+    readBody(req, 4000, body => {
+      let j = {}; try { j = JSON.parse(body); } catch (e) {}
+      const b = j.board, side = j.side > 0 ? 1 : -1;
+      if (!Array.isArray(b) || b.length !== 64 || !b.every(v => Number.isInteger(v) && v >= -2 && v <= 2)) return send(res, 400, { error: 'bad' });
+      const secs = Math.min(2, Math.max(0.2, Number(j.time) || 1)), plies = Math.min(12, Math.max(2, Number(j.plies) || 10));
+      require('./kestoai.js').pv(b, side, secs, plies, r => send(res, r.error ? 503 : 200, r));
+    });
+    return true;
+  }
   if (p === '/api/ai/move' && req.method === 'POST') {
     const _tk = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!_tk) { send(res, 401, { error: 'auth' }); return true; }

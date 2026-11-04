@@ -271,4 +271,27 @@ function peek(b, side) {
   if (DEEP.has(key)) o.deep = 1;
   return o;
 }
-module.exports = { peek, clearDeep, move, learn, ponder, review, ponderStat: () => PONDER, load: () => busy, mem: () => ({ cache: CACHE.size, deep: DEEP.size }) };
+// 🔬 tahlil taxtasi uchun KestoG varianti: eng yaxshi yurish + davomi (n yarim yurish)
+const PVCACHE = new Map();
+function pv(b, side, secs, plies, cb) {
+  const key = b.join('') + side + '|' + secs + '|' + plies, c = PVCACHE.get(key); if (c) return cb(c);
+  if (!RULES) return cb({ error: 'norules' });
+  const line = []; let ev = null, cur = b.slice(), s = side, i = 0, tries = 0;
+  (function step() {
+    const L = RULES.moves(cur, s);
+    if (!L.length || i >= plies) {
+      const out = { pv: line, ev, d: line.length };
+      if (line.length) { PVCACHE.set(key, out); if (PVCACHE.size > 3000) PVCACHE.delete(PVCACHE.keys().next().value); }
+      return cb(out);
+    }
+    if (L.length === 1) { const m = L[0]; line.push({ path: [m.from].concat(m.path || [m.to]), caps: m.caps.length }); cur = m.board; s = -s; i++; return setImmediate(step); }
+    move({ board: cur, side: s, time: i === 0 ? secs : 0.3, maxTime: i === 0 ? secs : 0.3, book: false, tbAlways: true }, r => {
+      if (r && r.error === 'busy' && tries++ < 8) return setTimeout(step, 700);
+      if (!r || r.from == null) return cb(line.length ? { pv: line, ev, d: line.length } : { error: (r && r.error) || 'x' });
+      const m = L.find(x => x.from === r.from && x.to === r.to); if (!m) return cb({ pv: line, ev, d: line.length });
+      if (i === 0 && typeof r.ev === 'number') ev = side * r.ev / 200;   // oq nuqtai nazaridan
+      line.push({ path: [m.from].concat(m.path || [m.to]), caps: m.caps.length }); cur = m.board; s = -s; i++; step();
+    });
+  })();
+}
+module.exports = { pv, peek, clearDeep, move, learn, ponder, review, ponderStat: () => PONDER, load: () => busy, mem: () => ({ cache: CACHE.size, deep: DEEP.size }) };
