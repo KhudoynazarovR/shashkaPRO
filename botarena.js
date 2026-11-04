@@ -221,3 +221,6 @@ setInterval(function () {
 if (process.env.ARENA !== '0') setTimeout(loop, BOOT_DELAY);
 
 module.exports = { state, control, test, bots: () => BOTS };
+
+// 🦍 reyting migratsiyasi arenadan mustaqil: store yuklangach bir marta ishlaydi
+(function (n) { const t = setInterval(function () { try { if (store && store.db && typeof store.db === 'object') { clearInterval(t); D(); console.log('[botElo] King Kong:', store.db.botElo.bot_kingkong.elo); } else if (++n > 60) clearInterval(t); } catch (e) {} }, 2000); if (t.unref) t.unref(); })(0);
