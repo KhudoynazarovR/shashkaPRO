@@ -32,6 +32,7 @@ const BOTS = [
   { uid: 'bot_terminator', name: 'Terminator BOT', secs: 10, blunder: 0 },
   { uid: 'bot_kingkong', name: 'King Kong BOT', secs: 15, blunder: 0, ponder: true, soon: process.env.KINGKONG_OPEN !== '1' }   // 🦍 eng kuchli: raqib o'ylayotganda ham o'ylaydi, saboqlar bazada saqlanadi
 ];
+const PREM_BOTS = new Set(['bot_champ', 'bot_monster', 'bot_terminator', 'bot_kingkong']);   // 👑 faqat Premium bilan
 const botByUid = uid => BOTS.find(b => b.uid === uid && !b.soon) || null;   // 'soon' — hali e'lon qilingan, o'ynab bo'lmaydi
 const BOT_TCS = ['1+1', '2+2', '3+2', '5+3'];
 // bot bilan: '∞' (vaqtsiz) yoki 'daqiqa+soniya' (¼ daqiqadan 180 gacha, 0–60 s qo'shimcha)
@@ -240,7 +241,7 @@ function createLobby({ send, clients, roomsApi }) {
     const uid = c.lb.uid;
     return {
       type: 'lbState', now: Date.now(),
-      me: { uid, name: c.lb.name }, ...friendState(uid),
+      me: { uid, name: c.lb.name, prem: (() => { try { const st = require('./store'); return !!st.isPremium(st.users()[String(uid)] || {}); } catch (e) { return false; } })() }, ...friendState(uid),
       players: playersList(),
       inQueue: queue.has(uid), myQueueTc: (queue.get(uid) || {}).tc || null,
       seekers: [...queue.values()].reduce((o, x) => { if (x.uid !== uid && connsOf(x.uid).length) { const k = x.tc + (x.voice ? 'v' : ''); o[k] = (o[k] || 0) + 1; } return o; }, {}),
@@ -976,7 +977,7 @@ function createLobby({ send, clients, roomsApi }) {
     const me = c.lb;
     {   // ⛔ o'yin taqiqi: odamlar bilan o'yin, turnir, simul yopiq (botlar va masalalar ochiq)
       const PB = ['lbQuick', 'lbChallenge', 'lbFriendNew', 'lbFriendJoin', 'lbTJoin', 'lbTCreate', 'lbSJoin', 'lbSCreate'];
-      if ((PB.includes(m.type) || (m.type === 'lbRespond' && m.accept)) ) { const _pb = require('./mod.js').playText(me.uid); if (_pb) return err(c, _pb), true; }
+      if ((PB.includes(m.type) || (m.type === 'lbRespond' && m.accept)) && !(m.type === 'lbChallenge' && /^bot(_|$)/.test(String(m.toUid)))) { const _pb = require('./mod.js').playText(me.uid); if (_pb) return err(c, _pb), true; }
     }
 
     switch (m.type) {
@@ -1115,6 +1116,7 @@ function createLobby({ send, clients, roomsApi }) {
         if (challenges.size > 500) return err(c, 'Hozir band, keyinroq urinib ko‘ring'), true;
         const ch = { id: 'c' + hex(4), fromUid: me.uid, fromName: me.name, toUid: to.lb.uid, tc: tcOf(m.tc), ...cleanOpts(m), at: Date.now() };
         if (botByUid(ch.toUid)) {   // bot taklifni darhol qabul qiladi
+          if (PREM_BOTS.has(ch.toUid)) { const st = require('./store'); if (!st.isPremium(st.users()[String(me.uid)] || {})) { send(c.ws, { type: 'lbNeedPrem', bot: botByUid(ch.toUid).name }); return err(c, '👑 ' + botByUid(ch.toUid).name + ' bilan faqat Premium foydalanuvchilar o‘ynay oladi'), true; } }
           queue.delete(me.uid);
           ch.tc = botTcOk(m.tc) ? String(m.tc) : '∞'; ch.color = ['white', 'black', 'random'].includes(m.color) ? m.color : 'white';
           startBotGame({ uid: me.uid, name: me.name }, ch, botByUid(ch.toUid));

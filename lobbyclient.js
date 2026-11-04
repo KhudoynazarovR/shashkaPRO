@@ -130,6 +130,7 @@
         }
       } else if (m.type === "lbFriendLink") {
         shareLinkPlain("lbf_", "f", m.id, "♟ Keling, shashka o‘ynaymiz! — ShashkaPRO");
+      } else if (m.type === "lbNeedPrem") { if (window.premGo) window.premGo();
       } else if (m.type === "lbGo") {
         onGo(m);
       } else if (m.type === "mmInviteGone") {   // taklif endi yo'q (boshqasi qabul qildi yoki bekor qilindi)
@@ -414,6 +415,7 @@
         var t = e.target; if (!t || !t.getAttribute) return;
         var act = t.getAttribute("data-a"), id = t.getAttribute("data-id");
         if (!act) return;
+        if (act === "ch" && /^bot_(champ|monster|terminator|kingkong)$/.test(id) && !(S.me && S.me.prem)) { toast("👑 Bu bot faqat Premium uchun", null, 2500); if (window.premGo) window.premGo(); return; }
         if (act === "ch" && /^bot/.test(id) && !window.__botTc && window.spBotSetup) { var _row = t.closest(".lbp"), _nm = _row && _row.querySelector(".lbinf b"); window.spBotSetup({ uid: id, name: _nm ? _nm.textContent.replace(/\s+/g, " ").trim() : id }); }
         else if (act === "ch") { var _bt = /^bot/.test(id) && window.__botTc ? window.__botTc : null; sendMsg({ type: "lbChallenge", toUid: id, tc: _bt || $("lbTc").value, color: _bt ? (window.__botColor || "white") : undefined, pos: _bt && window.__botPos ? window.__botPos : $("lbPos").value, games: _bt ? 1 : Number($("lbGm").value) }); window.__botTc = null; } else if (act === "cx") sendMsg({ type: "lbCancelTo", toUid: id });
         else if (act === "tj") sendMsg({ type: "lbTJoin", tid: id });
@@ -513,7 +515,7 @@
       if (!list.length) h += "<div class=\"card muted\">Hozircha boshqa o‘yinchi yo‘q. “Tasodifiy o‘yin” ▶ ni bosib raqib kutishingiz mumkin.</div>";
       list.forEach(function (p) {
         h += "<div class=\"lbp\">" + avh(p.uid, p.hasAv, p.name, p.prem) +
-          "<div class=\"lbinf\"><b>" + (p.bot ? esc(p.name).replace(/BOT\s*$/, "<span style=\"color:#ff2b2b;text-shadow:0 0 8px #ff0000\">BOT</span>") : esc(p.name)) + (p.prem ? " <span style=\"color:#f5b82e\">👑</span>" : "") + (p.busy ? " 🟡" : "") + "</b><small>ELO " + (p.elo || 1000) + " · 🪙 " + (p.gems || 0) + (p.busy ? " · o‘ynayapti" : "") + "</small></div>" +
+          "<div class=\"lbinf\"><b>" + (p.bot ? esc(p.name).replace(/BOT\s*$/, "<span style=\"color:#ff2b2b;text-shadow:0 0 8px #ff0000\">BOT</span>") : esc(p.name)) + (p.prem || (p.bot && /^bot_(champ|monster|terminator|kingkong)$/.test(p.uid)) ? " <span style=\"color:#f5b82e\">👑</span>" : "") + (p.busy ? " 🟡" : "") + "</b><small>ELO " + (p.elo || 1000) + " · 🪙 " + (p.gems || 0) + (p.busy ? " · o‘ynayapti" : "") + "</small></div>" +
           (p.uid === me ? "<i class='muted'>Bu siz</i>" : p.offline ? "<span class='muted'>oflayn</span>" : (fset[p.uid] || /^bot(_|$)/.test(String(p.uid))) ? "" : "") + (p.uid === me || p.offline ? "" : out[p.uid] ? "<button class=\"lbinv\" style=\"background:#8a2b2b\" data-a=\"cx\" data-id=\"" + esc(p.uid) + "\">✕ Bekor</button>" : (p.busy ? "" : "<button class=\"lbinv\" data-a=\"ch\" data-id=\"" + esc(p.uid) + "\">O‘yinga taklif</button>")) + "</div>";
       });
       $("lbPl").innerHTML = h;
