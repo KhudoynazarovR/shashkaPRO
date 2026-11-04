@@ -1202,7 +1202,6 @@
       var timed = st.tc && st.tc !== "∞", rem = remaining(side) / 1000, inc = (st.incMs || 0) / 1000;
       // ⏱ vaqtli o'yinda bot soatini tejaydi: server bilan aloqa vaqti (lat) ham hisoblanadi, tez o'yinda bezak kechikishlar yo'q
       var isKK = /King ?Kong/i.test(String(st[st.botColor] || "")) || st.botSecs >= 15;   // 🦍 soati yurmaydi — har doim to'liq kuch
-      if (isKK) timed = false;
       var lat = st.botLat || 0.5, fast = timed && rem < 90;
       var budget = rem / 28 + inc * 0.8;
       var secs = timed ? Math.max(0.05, Math.min(st.botSecs, budget - lat, rem / 5)) : Math.max(0.05, Math.min(st.botSecs, rem / 15));
