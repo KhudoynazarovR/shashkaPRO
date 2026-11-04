@@ -543,8 +543,8 @@
       if (msg.uid && window.lbFriendState && window.lbFriendState(msg.uid) === "blocked") return;   // 🚫 bloklaganim yozganlari ko'rinmaydi
       var row = document.createElement("div");
       var who = document.createElement("b");
-      who.textContent = (msg.color === "white" ? "⚪ " : msg.color === "black" ? "⚫ " : "👁 ") + msg.name + ": ";
-      who.style.color = msg.color === "spectator" ? "#8aa" : "#e3b746";
+      who.textContent = (msg.color === "white" ? "⚪ " : msg.color === "black" ? "⚫ " : "👁 ") + (msg.prem ? "👑 " : "") + msg.name + ": ";
+      who.style.color = msg.prem ? "#ffd54a" : msg.color === "spectator" ? "#8aa" : "#e3b746";
       var tx = document.createElement("span");
       tx.textContent = msg.text;
       row.appendChild(who); row.appendChild(tx);

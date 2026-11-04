@@ -72,6 +72,12 @@ function handle(req, res, url) {
 async function onPreCheckout(q) {
   const parts = String(q.invoice_payload || '').split(':');
   const pack = PACKS[parts[1]];
+  const _pr = require('./premium.js').checkPay(q.invoice_payload, q.total_amount);   // 👑 Premium
+  if (_pr !== null) {
+    const ok2 = q.currency === 'XTR' && _pr && String(q.from.id) === _pr.uid;
+    await tg('answerPreCheckoutQuery', ok2 ? { pre_checkout_query_id: q.id, ok: true } : { pre_checkout_query_id: q.id, ok: false, error_message: 'To‘lovni tekshirib bo‘lmadi, qayta urinib ko‘ring.' });
+    return;
+  }
   const ok = q.currency === 'XTR' && pack && String(q.from.id) === parts[0] && q.total_amount === pack.stars;
   await tg('answerPreCheckoutQuery', ok
     ? { pre_checkout_query_id: q.id, ok: true }
@@ -84,6 +90,13 @@ async function onPayment(msg) {
   const charge = p.telegram_payment_charge_id;
   const parts = String(p.invoice_payload || '').split(':');
   const pack = PACKS[parts[1]];
+  const _pr = require('./premium.js').checkPay(p.invoice_payload, p.total_amount);   // 👑 Premium
+  if (_pr !== null) {
+    console.log('[pay] premium: user=' + (msg.from && msg.from.id) + ' ' + p.invoice_payload + ' stars=' + p.total_amount + ' charge=' + charge);
+    if (p.currency === 'XTR' && _pr && msg.from && String(msg.from.id) === _pr.uid) require('./premium.js').onPaid(msg, _pr);
+    else console.log('[pay] SHUBHALI premium to\'lov, qo\'lda tekshiring:', charge);
+    return;
+  }
 
   console.log('[pay] to\'lov: user=' + (msg.from && msg.from.id) + ' pack=' + parts[1] + ' stars=' + p.total_amount + ' charge=' + charge);
 
@@ -98,7 +111,9 @@ async function onPayment(msg) {
   u.charges.push(charge);
   if (u.charges.length > 50) u.charges.shift();
   u.diamonds = (u.diamonds || 0) + pack.diamonds;
+  u.payLog = u.payLog || []; u.payLog.push({ c: charge, k: parts[1], s: p.total_amount, t: Date.now() }); if (u.payLog.length > 30) u.payLog.shift();
   store.save();
+  for (const a of String(process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean)) tg('sendMessage', { chat_id: a, text: '💰 ' + (u.name || parts[0]) + ' (' + parts[0] + '): ' + pack.diamonds + ' tanga — ' + p.total_amount + ' ⭐\n' + charge }).catch(() => {});
 
   await tg('sendMessage', {
     chat_id: msg.chat.id,

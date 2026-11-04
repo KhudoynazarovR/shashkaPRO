@@ -80,7 +80,7 @@
       el.innerHTML = rest.map(function (p) {
         var sub = p.puz ? "✅ " + p.n + " masala yechgan" : p.games ? "🏆 " + p.wins + " g‘alaba · 🎮 " + p.games + " o‘yin" : "";
         return "<div class='rkr' style='cursor:pointer' onclick=\"spUser('" + esc(p.id) + "')\"><div class='rkm'>" + (full.indexOf(p) + 1) + "</div>" + avatar(p) +
-          "<div class='rkw'>" + esc(p.name) + (p.premium ? " ⭐" : "") + (sub ? "<small>" + sub + "</small>" : "") + "</div><div class='rkv'>" + ico() + " " + fmt(p[key]) + suf + "</div>" + dl(p) + "</div>";
+          "<div class='rkw'" + (p.premium ? " style='color:#ffd54a'" : "") + ">" + esc(p.name) + (p.premium ? " 👑" : "") + (sub ? "<small>" + sub + "</small>" : "") + "</div><div class='rkv'>" + ico() + " " + fmt(p[key]) + suf + "</div>" + dl(p) + "</div>";
       }).join("");
     }
     var id = myId(), mi = -1;

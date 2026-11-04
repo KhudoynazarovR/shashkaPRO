@@ -147,6 +147,23 @@ async function onMessage(msg) {
   if (cmd[1] && cmd[1].toLowerCase() !== BOT.toLowerCase()) return; // boshqa botga
   const name = cmd[0].toLowerCase();
 
+  if (name === "/paysupport") {   // 💳 Telegram talabi: to'lov bo'yicha yordam
+    const t = text.split(/\s+/).slice(1).join(" ").trim();
+    if (!t) { await api("sendMessage", { chat_id: msg.chat.id, text: "💳 To‘lov bo‘yicha yordam\n\nMuammoni bitta xabarda shunday yozing:\n/paysupport nima sotib oldingiz, qachon va nima bo‘ldi\n\nAdminlar ko‘rib chiqib javob berishadi. Noto‘g‘ri yechilgan Stars qaytariladi." }); return; }
+    for (const a of (process.env.ADMIN_IDS || "").split(",").map(s => s.trim()).filter(Boolean)) {
+      const u = require("./store.js").users()[String(msg.from.id)] || {};
+      await api("sendMessage", { chat_id: a, text: "💳 /paysupport — " + (msg.from.first_name || "") + " (" + msg.from.id + ")\n" + t.slice(0, 900) + "\n\nOxirgi to‘lovlar:\n" + ((u.payLog || []).slice(-5).map(x => x.k + " " + x.s + "⭐ " + new Date(x.t).toISOString().slice(0, 10) + (x.ref ? " (qaytarilgan)" : "") + "\n" + x.c).join("\n") || "yo‘q") + "\n\nQaytarish: /refund " + msg.from.id + " <charge_id>" });
+    }
+    await api("sendMessage", { chat_id: msg.chat.id, text: "✅ Xabaringiz adminlarga yuborildi. Tez orada javob beriladi." });
+    return;
+  }
+  if (name === "/refund") {   // faqat admin: /refund <uid> <charge_id>
+    if (!(process.env.ADMIN_IDS || "").split(",").map(s => s.trim()).includes(String(msg.from.id))) return;
+    const a = text.split(/\s+/);
+    if (!a[1] || !a[2]) { await api("sendMessage", { chat_id: msg.chat.id, text: "Foydalanish: /refund <uid> <charge_id>" }); return; }
+    await api("sendMessage", { chat_id: msg.chat.id, text: await require("./premium.js").refund(a[1], a[2]) });
+    return;
+  }
   if (name === "/top" || name === "/reyting") { await require("./grp.js").cmdTop(msg); return; }
   if (name === "/kubok") { await require("./grp.js").cmdTour(msg, text.split(/\s+/).slice(1).join(" ")); return; }
   if (name === "/new" || name === "/shashka") {

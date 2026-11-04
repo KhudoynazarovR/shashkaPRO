@@ -89,6 +89,14 @@
       if (d.error) { $('pfBody').innerHTML = '<div class="pf-box">Yuklab bo‘lmadi</div>'; return; }
       var pct = d.games ? Math.round(d.wins * 100 / d.games) : 0;
       $('pfRank').textContent = rank(d.wins) + (d.premium ? ' · 👑 Premium' : '');
+      (function () {   // 👑 Premium tugmasi
+        var pb = document.createElement('button'); pb.id = 'pfPrem';
+        pb.textContent = d.premium ? '👑 Premium faol' : '👑 Premium olish';
+        pb.style.cssText = 'display:block;margin:10px auto 0;border:0;border-radius:14px;padding:8px 18px;font-size:13px;font-weight:700;color:#2a1600;background:linear-gradient(135deg,#ffd54a,#b8860b)';
+        pb.onclick = function () { if (window.premGo) window.premGo(); };
+        var o = document.getElementById('pfPrem'); if (o) o.remove();
+        $('pfRank').parentNode.appendChild(pb);
+      })();
       function setAv(src) {
         var old = document.querySelector('.pf-av'); if (!old) return;
         var im = document.createElement('img'); im.className = 'pf-av'; im.src = src;

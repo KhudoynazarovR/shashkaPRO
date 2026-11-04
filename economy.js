@@ -68,28 +68,31 @@ function rewardWin(winnerId, loserId, tournamentId) {
   const u = user(winnerId);
   if (!u || String(winnerId) === String(loserId)) return 0;
   const e = dayState(u);
+  const X = store.isPremium(u) ? 2 : 1;   // 👑 Premium: 2× tanga, kunlik limit ham 2×
   if (tournamentId) {
     const k = String(tournamentId);
     if ((e.tw[k] || 0) >= CFG.TOURNAMENT_WINS_CAP) return 0;
     e.tw[k] = (e.tw[k] || 0) + 1;
-    add(winnerId, CFG.WIN_TOURNAMENT, 'tournament_win');
-    return CFG.WIN_TOURNAMENT;
+    add(winnerId, CFG.WIN_TOURNAMENT * X, 'tournament_win');
+    return CFG.WIN_TOURNAMENT * X;
   }
   const o = String(loserId);
-  if (e.wins >= CFG.CASUAL_WINS_PER_DAY) return 0;
+  if (e.wins >= CFG.CASUAL_WINS_PER_DAY * X) return 0;
   if ((e.opp[o] || 0) >= CFG.SAME_OPPONENT_PER_DAY) return 0;
   e.wins++;
   e.opp[o] = (e.opp[o] || 0) + 1;
-  add(winnerId, CFG.WIN_CASUAL, 'win');
-  return CFG.WIN_CASUAL;
+  add(winnerId, CFG.WIN_CASUAL * X, 'win');
+  return CFG.WIN_CASUAL * X;
 }
 
 // Turnir yaratish / qatnashish to'lovi. { ok:false, error:'no_diamonds' } qaytarishi mumkin.
 function chargeCreate(id) {
   return spend(id, CFG.CREATE_COST, 'tournament_create') ? { ok: true } : { ok: false, error: 'no_diamonds', need: CFG.CREATE_COST };
 }
+function joinFee(id) { return store.isPremium(user(id) || {}) ? Math.ceil(CFG.JOIN_FEE / 2) : CFG.JOIN_FEE; }   // 👑 50% chegirma
 function chargeJoin(id) {
-  return spend(id, CFG.JOIN_FEE, 'tournament_join') ? { ok: true } : { ok: false, error: 'no_diamonds', need: CFG.JOIN_FEE };
+  const f = joinFee(id);
+  return spend(id, f, 'tournament_join') ? { ok: true, fee: f } : { ok: false, error: 'no_diamonds', need: f };
 }
 function refund(id, n, why) { return add(id, n, why || 'refund'); }
 
@@ -139,6 +142,7 @@ function handle(req, res, url) {
       if (_sg) { const _su = store.users()[String(_sg.id)]; if (_su && Date.now() - (_su.lastSeen || 0) > 60000) _su.lastSeen = Date.now(); }
     }
   } catch (e) {}
+  if (p.startsWith('/api/premium')) { if (require('./premium.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }
   if (p === '/api/ref') { if (require('./ref.js').handle(req, res, p, { verifyInitData, send })) return true; }
   if (p === '/api/report' || p === '/api/mod') { if (require('./mod.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }
   if (p.startsWith('/api/auth/')) { if (require('./weblogin.js').handle(req, res, p, { send, readBody })) return true; }
@@ -716,4 +720,4 @@ function handle(req, res, url) {
   return false;
 }
 
-module.exports = { CFG, balance, add, spend, claimDaily, rewardWin, chargeCreate, chargeJoin, refund, finishTournament, hostBonus, isAdmin, handle };
+module.exports = { CFG, balance, add, spend, claimDaily, rewardWin, chargeCreate, chargeJoin, joinFee, refund, finishTournament, hostBonus, isAdmin, handle };

@@ -66,6 +66,7 @@
   function kf(h) { return toEng(h.b).join('') + h.t; }
   function evFmt(x) { if (x == null) return '–'; x = Math.max(-9.9, Math.min(9.9, x)); return (x > 0 ? '+' : '') + x.toFixed(1); }
   function note(m) { return m.path.map(function (x) { return sq(x[0], x[1]); }).join(m.caps.length ? ':' : '-'); }
+  try { fetch('/api/balance', { headers: { 'x-init-data': (window.Telegram && Telegram.WebApp && Telegram.WebApp.initData) || '' } }).then(function (r) { return r.json(); }).then(function (d) { window.__prem = !!(d && d.premium); }).catch(function () {}); } catch (e) {}
   function hd() { return { 'Content-Type': 'application/json', 'x-init-data': (window.Telegram && Telegram.WebApp && Telegram.WebApp.initData) || '' }; }
   var S = { t: 2, arrow: true, bar: true, engine: true };
   try { var _s = JSON.parse(localStorage.getItem('spBdS') || '{}'); for (var _k in _s) if (_k !== "t") S[_k] = _s[_k]; } catch (e) {}
@@ -432,7 +433,7 @@
     function act(a) {
       var p = a.split(':'), n = p[0], v = p[1], r;
       if (n === 'tool') { E.tool = +v; }
-      else if (n === 'st') { S.t = +v; sv(); }
+      else if (n === 'st') { if (+v > 2 && !window.__prem) { if (window.premGo) window.premGo(); return; } S.t = +v; sv(); }
       else if (n === 'tog') { S[v] = !S[v]; sv(); }
       else if (n === 'me') {
         PL = { me: +v, th: false, err: false }; panel = null;
@@ -513,6 +514,8 @@
         } else if (panel === 'set') {
           s += '<div style="margin-bottom:6px">Dvigatel vaqti (soniya):</div><div>';
           [0.2, 0.3, 0.5, 1, 2].forEach(function (v) { s += '<button data-a="st:' + v + '" style="' + sm + ';background:' + (S.t === v ? '#6aa22a' : '#262b66') + '">' + v + '</button>'; });
+          [5, 10].forEach(function (v) { s += '<button data-a="st:' + v + '" style="' + sm + ';background:' + (S.t === v ? '#6aa22a' : window.__prem ? '#5a4a00' : '#262b66') + ';opacity:' + (window.__prem ? 1 : 0.55) + '">👑 ' + v + '</button>'; });
+          if (!window.__prem) s += '<div style="font-size:12px;color:#ffd54a;margin-top:4px">👑 5 va 10 soniya — faqat Premium uchun</div>';
           s += '</div><div style="margin-top:6px"><button data-a="tog:arrow" style="' + sm + ';background:' + (S.arrow ? '#6aa22a' : '#262b66') + '">Strelka: ' + (S.arrow ? 'yoniq' : 'o‘chiq') + '</button><button data-a="tog:bar" style="' + sm + ';background:' + (S.bar ? '#6aa22a' : '#262b66') + '">Baho chizig‘i: ' + (S.bar ? 'yoniq' : 'o‘chiq') + '</button></div>';
           s += '<div style="font-size:12px;opacity:.7;margin-top:4px">Vaqt oshsa, baho aniqroq, lekin sekinroq.</div><div style="text-align:center;margin-top:8px"><button data-a="menu" style="' + sm + '">Orqaga</button></div>';
         }

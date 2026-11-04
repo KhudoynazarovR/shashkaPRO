@@ -95,11 +95,12 @@ function claimStreak(u) {
   const i = streakInfo(u);
   if (i.claimed) return { error: 'Bugun olingan' };
   u.strk = { n: i.day, d: dayKey(), best: Math.max(i.day, (u.strk && u.strk.best) || 0) };
-  u.diamonds = (u.diamonds || 0) + i.reward;
+  const _x = require('./store').isPremium(u) ? 2 : 1;   // 👑 Premium: seriya bonusi 2×
+  u.diamonds = (u.diamonds || 0) + i.reward * _x;
   stat('streak_claim'); try { require('./leagues.js').event((Object.entries(users()).find(([, v]) => v === u) || [])[0], 'streak_claim'); } catch (e) {}
   u.lastDaily = new Date().toISOString().slice(0, 10); // eski "kunlik bonus" bilan ikki marta olinmasin
   store.save();
-  return { ok: true, amount: i.reward, day: i.day };
+  return { ok: true, amount: i.reward * _x, day: i.day, prem: _x > 1 };
 }
 
 function view(u) {

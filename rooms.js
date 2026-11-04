@@ -756,7 +756,7 @@ function createRooms({ send, clients, onFinish }) {
       const _M = require("./mod.js"), _cu = c.roomUser && c.roomUser.id;
       if (_cu && _M.isMuted(_cu)) return err(c, "🔇 " + _M.muteText(_cu)), true;
       c.lastChat = now;
-      const msg = { uid: _cu || "", name: room.names.get(c.id) || "Mehmon", color: col || "spectator", text: _M.censor(text), at: now };
+      const msg = { uid: _cu || "", prem: !!(_cu && require("./store").isPremium(require("./store").users()[String(_cu)] || {})) || undefined, name: room.names.get(c.id) || "Mehmon", color: col || "spectator", text: _M.censor(text), at: now };
       room.chat.push(msg);
       if (room.chat.length > CHAT_KEEP) room.chat.shift();
       broadcast(room, { type: "roomChat", roomId, msg });
