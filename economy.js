@@ -143,6 +143,7 @@ function handle(req, res, url) {
     }
   } catch (e) {}
   if (p === '/api/season' && req.method === 'GET') { const _t = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN); if (!_t) { send(res, 401, { error: 'auth' }); return true; } send(res, 200, require('./season.js').view(_t.id)); return true; }
+  if (p === '/api/wager' && req.method === 'GET') { const W = require('./wager.js'); send(res, 200, { stakes: W.STAKES, fee: W.FEE, top: W.top() }); return true; }
   if (p.startsWith('/api/kkbook')) { if (require('./kkbook.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }
   if (p === '/api/notify') { if (require('./notify.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }
   if (p === '/api/gif') { if (require('./gif.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }

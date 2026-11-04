@@ -244,7 +244,8 @@ function createLobby({ send, clients, roomsApi }) {
       me: { uid, name: c.lb.name, prem: (() => { try { const st = require('./store'); return !!st.isPremium(st.users()[String(uid)] || {}); } catch (e) { return false; } })() }, ...friendState(uid),
       players: playersList(),
       inQueue: queue.has(uid), myQueueTc: (queue.get(uid) || {}).tc || null,
-      seekers: [...queue.values()].reduce((o, x) => { if (x.uid !== uid && connsOf(x.uid).length) { const k = x.tc + (x.voice ? 'v' : ''); o[k] = (o[k] || 0) + 1; } return o; }, {}),
+      seekers: [...queue.values()].reduce((o, x) => { if (x.uid !== uid && connsOf(x.uid).length) { const k = x.tc + (x.voice ? 'v' : '') + (x.stake ? 's' + x.stake : ''); o[k] = (o[k] || 0) + 1; } return o; }, {}),
+      myStake: (queue.get(uid) || {}).stake || 0,
       incoming: [...challenges.values()].filter(x => x.toUid === uid)
         .map(x => ({ id: x.id, fromName: x.fromName, tc: x.tc + describeOpts(x) })),
       outgoing: [...challenges.values()].filter(x => x.fromUid === uid)
@@ -270,10 +271,11 @@ function createLobby({ send, clients, roomsApi }) {
   }
 
   function cleanOpts(m) {
-    return { pos: m && m.pos === 'idf' ? 'idf' : 'std', games: GAMES_OPTS.includes(Number(m && m.games)) ? Number(m.games) : 1, voice: !!(m && m.voice) };
+    const stake = require('./wager.js').STAKES.includes(Number(m && m.stake)) ? Number(m.stake) : 0;   // 💰 tikish
+    return { pos: m && m.pos === 'idf' ? 'idf' : 'std', games: stake ? 1 : (GAMES_OPTS.includes(Number(m && m.games)) ? Number(m.games) : 1), voice: !!(m && m.voice), stake };
   }
   function describeOpts(o) {
-    return (o.pos === 'idf' ? ' · IDF 780' : '') + (o.games > 1 ? ' · ' + o.games + ' o‘yin' : '') + (o.voice ? ' · 🎤 ovozli' : '');
+    return (o.stake ? ' · 💰 ' + o.stake + ' 🪙' : '') + (o.pos === 'idf' ? ' · IDF 780' : '') + (o.games > 1 ? ' · ' + o.games + ' o‘yin' : '') + (o.voice ? ' · 🎤 ovozli' : '');
   }
   const fmtPts = x => String(x);
   function seriesScore(s) {
@@ -300,7 +302,10 @@ function createLobby({ send, clients, roomsApi }) {
   function makeMatch(a, b, tc, reason, o) {
     o = o || { pos: 'std', games: 1 };
     const first = Math.random() < 0.5 ? a : b;
-    const s = { id: hex(4), p: [first, first === a ? b : a], tc, pos: o.pos, total: o.games, voice: !!o.voice, played: 0, pts: {}, opening: null, reason };
+    if (o.stake) {   // 💰 ikkala tomon tangasi muzlatiladi
+      if (!require('./wager.js').lock(a.uid, b.uid, o.stake)) { toast(a.uid, '💰 Tikib o‘ynash boshlanmadi: tanga yetmadi'); toast(b.uid, '💰 Tikib o‘ynash boshlanmadi: tanga yetmadi'); push(); return; }
+    }
+    const s = { id: hex(4), p: [first, first === a ? b : a], tc, pos: o.pos, total: o.games, voice: !!o.voice, played: 0, pts: {}, opening: null, reason, stake: o.stake || 0 };
     s.pts[a.uid] = 0; s.pts[b.uid] = 0;
     startSeriesGame(s);
     push();
@@ -313,6 +318,7 @@ function createLobby({ send, clients, roomsApi }) {
     const k = g % 2 === 0 ? s.p[1] : s.p[0];             // matchning 2-o'yinida ranglar almashadi
     const roomId = 'L' + hex(5);
     openRoom(roomId, s.tc, w, k, false, s.opening, false, s.voice);
+    if (s.stake) { const _r = roomsApi.get(roomId); if (_r) _r.stake = s.stake; }
     roomToSeries.set(roomId, { s, w: w.uid, k: k.uid });
     const series = s.total > 1 ? { game: g + 1, total: s.total, score: seriesScore(s) } : null;
     const reason = g === 0 ? s.reason : 'series';
@@ -327,6 +333,7 @@ function createLobby({ send, clients, roomsApi }) {
     else if (room.winner === 'black') s.pts[k] += 1;
     else { s.pts[w] += 0.5; s.pts[k] += 0.5; }
     const [A, B] = s.p;
+    if (s.stake && !s.settled) { s.settled = true; try { const o = require('./wager.js').settle(room, w, k, s.stake); for (const u in o) toast(u, o[u]); } catch (e) { console.log('[wager]', e.message); } }
     payWin(room, w, k, null); if (s.total <= 1) return;
     if (s.played >= s.total) {
       const sa = s.pts[A.uid], sb = s.pts[B.uid];
@@ -1055,11 +1062,12 @@ function createLobby({ send, clients, roomsApi }) {
       case 'lbQuick': {
         const tc = tcOf(m.tc);
         const o = cleanOpts(m);
-        const other = [...queue.values()].find(x => x.uid !== me.uid && x.tc === tc && x.pos === o.pos && x.games === o.games && !!x.voice === o.voice && connsOf(x.uid).length);
+        if (o.stake) { const e = require('./wager.js').can(me.uid, o.stake); if (e) return err(c, e), true; }
+        const other = [...queue.values()].find(x => x.uid !== me.uid && x.tc === tc && x.pos === o.pos && x.games === o.games && !!x.voice === o.voice && (x.stake || 0) === o.stake && connsOf(x.uid).length);
         if (other) {
           queue.delete(other.uid); queue.delete(me.uid);
           makeMatch({ uid: other.uid, name: connsOf(other.uid)[0].lb.name }, { uid: me.uid, name: me.name }, tc, 'quick', o);
-        } else { queue.set(me.uid, { uid: me.uid, tc, pos: o.pos, games: o.games, voice: o.voice }); push(); }
+        } else { queue.set(me.uid, { uid: me.uid, tc, pos: o.pos, games: o.games, voice: o.voice, stake: o.stake }); push(); }
         break;
       }
       case 'lbQuickCancel': queue.delete(me.uid); for (const [cid, x] of challenges) if (x.fromUid === me.uid && x.grp) challenges.delete(cid); push(); break;
@@ -1119,6 +1127,8 @@ function createLobby({ send, clients, roomsApi }) {
         if ([...challenges.values()].some(x => x.fromUid === me.uid && x.toUid === to.lb.uid)) return err(c, 'Chaqiruv allaqachon yuborilgan'), true;
         if (challenges.size > 500) return err(c, 'Hozir band, keyinroq urinib ko‘ring'), true;
         const ch = { id: 'c' + hex(4), fromUid: me.uid, fromName: me.name, toUid: to.lb.uid, tc: tcOf(m.tc), ...cleanOpts(m), at: Date.now() };
+        if (botByUid(ch.toUid)) ch.stake = 0;   // botga tikib bo'lmaydi
+        if (ch.stake) { const e = require('./wager.js').can(me.uid, ch.stake); if (e) return err(c, e), true; }
         if (botByUid(ch.toUid)) {   // bot taklifni darhol qabul qiladi
           if (PREM_BOTS.has(ch.toUid)) { const st = require('./store'); if (!st.isPremium(st.users()[String(me.uid)] || {})) { send(c.ws, { type: 'lbNeedPrem', bot: botByUid(ch.toUid).name }); return err(c, '👑 ' + botByUid(ch.toUid).name + ' bilan faqat Premium foydalanuvchilar o‘ynay oladi'), true; } }
           queue.delete(me.uid);
@@ -1139,6 +1149,7 @@ function createLobby({ send, clients, roomsApi }) {
         if (!mine && !(own && !m.accept)) break;
         challenges.delete(ch.id);
         if (mine && m.accept && ch.grp) { for (const [oid, ox] of challenges) if (ox.grp === ch.grp) challenges.delete(oid); }
+        if (mine && m.accept && ch.stake) { const e = require('./wager.js').can(me.uid, ch.stake); if (e) { toast(me.uid, e); toast(ch.fromUid, '💰 ' + me.name + ' tikishni qabul qila olmadi'); push(); break; } }
         if (mine && m.accept) {
           queue.delete(ch.fromUid); queue.delete(ch.toUid);
           if (connsOf(ch.fromUid).length) makeMatch({ uid: ch.fromUid, name: ch.fromName }, { uid: me.uid, name: me.name }, ch.tc, 'challenge', ch);

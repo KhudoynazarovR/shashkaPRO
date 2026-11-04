@@ -118,6 +118,7 @@ function createRooms({ send, clients, onFinish }) {
       black: room.black ? room.black.name : null,
       whiteOnline: isOnline(room.white), canSit: !!(room.inline && !room.finished && (!!room.white !== !!room.black)), sitColor: room.white ? 'black' : 'white',
       blackOnline: isOnline(room.black),
+      stake: room.stake || 0,
       whiteOff: (room.white && room.white.offSince) || 0, blackOff: (room.black && room.black.offSince) || 0, srvNow: Date.now(), claimMs: CLAIM_MS,
       spectators: [...room.members].filter(id => !colorOf(room, clients.get(id) || {})).length,
       spectatorNames: [...room.members].filter(id => !colorOf(room, clients.get(id) || {})).map(id => room.names.get(id) || "Mehmon").slice(0, 8),

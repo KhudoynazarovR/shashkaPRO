@@ -131,7 +131,7 @@
       } else if (m.type === "lbFriendLink") {
         shareLinkPlain("lbf_", "f", m.id, "♟ Keling, shashka o‘ynaymiz! — ShashkaPRO");
       } else if (m.type === "lbNeedPrem") { if (window.premGo) window.premGo();
-      } else if (m.type === "lbGo") {
+      } else if (m.type === "lbGo") { try { var _so = document.getElementById("lbStakeOv"); if (_so) _so.remove(); } catch (e) {}
         onGo(m);
       } else if (m.type === "mmInviteGone") {   // taklif endi yo'q (boshqasi qabul qildi yoki bekor qilindi)
         var _gt = (window.__mmInvT || {})[m.code]; if (_gt && _gt.parentNode) _gt.parentNode.removeChild(_gt);
@@ -228,7 +228,7 @@
         shownIncoming[c.id] = 1;
         try { if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred("success"); else if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch (e) {}
         if (panelOpen && curTab === "pl" && !c.grp) return;
-        toast("⚔️ <b>" + esc(c.fromName) + "</b> sizni o‘yinga chaqirdi (" + esc(c.tc) + ")", [
+        toast("⚔️ <b>" + esc(c.fromName) + "</b> sizni o‘yinga chaqirdi (" + esc(c.tc) + ")" + (c.stake ? "<br>💰 Tikish: <b>" + c.stake + " 🪙</b> · g‘olibga " + Math.floor(c.stake * 1.8) + " 🪙" : ""), [
           ["Qabul", function () { sendMsg({ type: "lbRespond", id: c.id, accept: true }); }],
           ["Rad etish", function () { sendMsg({ type: "lbRespond", id: c.id, accept: false }); }, "no"]
         ], 55000);
@@ -475,7 +475,39 @@
       var me = S.me ? S.me.uid : "";
       window.lbFriendAdd = function (u) { sendMsg({ type: "lbFriendReq", uid: String(u) }); };
       window.lbIsOnline = function (u) { u = String(u); return (S.players || []).some(function (p) { return String(p.uid) === u && !p.offline; }); };
-      window.lbChallengeUid = function (u) { var tc = ($("lbTc") && $("lbTc").value) || "3+2"; sendMsg({ type: "lbChallenge", toUid: String(u), tc: tc }); };
+      window.lbChallengeUid = function (u, stake) { var tc = ($("lbTc") && $("lbTc").value) || "3+2"; sendMsg({ type: "lbChallenge", toUid: String(u), tc: tc, stake: stake || 0 }); };
+      // 💰 tikib o'ynash: tasodifiy raqib (bir xil vaqt va tikish)
+      window.lbStakeOpen = function () {
+        var TC = ["1+1", "2+2", "3+2", "5+3"], tc = ($("lbTc") && $("lbTc").value) || "3+2", stake = 50;
+        var _old = document.getElementById("lbStakeOv"); if (_old) _old.remove();
+        var ov = document.createElement("div"); ov.id = "lbStakeOv"; ov.style.cssText = "position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:14px";
+        var bx = document.createElement("div"); bx.style.cssText = "width:100%;max-width:400px;max-height:92%;overflow-y:auto;background:#0b0e1a;color:#fff;border:1px solid #b45309;border-radius:22px;padding:16px;font-family:inherit";
+        ov.appendChild(bx); document.body.appendChild(ov); ov.onclick = function (e) { if (e.target === ov) ov.remove(); };
+        var top = [];
+        fetch("/api/wager").then(function (r) { return r.json(); }).then(function (d) { top = d.top || []; draw(); }).catch(function () {});
+        function chip(v, on, k) { return "<button data-" + k + "='" + v + "' style='flex:1;border:2px solid " + (on ? "#f59e0b" : "#2c3270") + ";background:" + (on ? "#3a2a00" : "transparent") + ";color:#fff;border-radius:12px;padding:10px 0;font-size:15px;font-weight:700'>" + v + "</button>"; }
+        function draw() {
+          var sk = S.seekers || {}, n = sk[tc + "s" + stake] || 0, q = S.inQueue && S.myStake;
+          var h = "<div style='display:flex;align-items:center;margin-bottom:6px'><b style='font-size:19px'>💰 Tikib o‘ynash</b><span data-x style='margin-left:auto;font-size:24px;padding:2px 8px;cursor:pointer'>✕</span></div>" +
+            "<div style='font-size:13px;opacity:.8;margin-bottom:10px;line-height:1.5'>Ikkalangiz bir xil tanga tikasiz. G‘olib bankni oladi (10% komissiya), durangda tanga qaytadi.</div>" +
+            "<div style='font-size:12px;opacity:.65;margin-bottom:6px'>⏱ VAQT</div><div style='display:flex;gap:6px;margin-bottom:10px'>" + TC.map(function (t) { return chip(t, t === tc, "tc"); }).join("") + "</div>" +
+            "<div style='font-size:12px;opacity:.65;margin-bottom:6px'>💰 TIKISH</div><div style='display:flex;gap:6px'>" + [10, 50, 100, 500].map(function (v) { return chip(v, v === stake, "st"); }).join("") + "</div>" +
+            "<div style='text-align:center;margin:12px 0;font-size:14px'>G‘olibga: <b style='color:#ffd54a'>" + Math.floor(stake * 1.8) + " 🪙</b>" + (n ? " · 🟢 " + n + " kishi kutyapti" : "") + "</div>" +
+            "<button data-go style='width:100%;border:0;border-radius:14px;padding:14px;font-size:16px;font-weight:800;color:#fff;background:" + (q ? "#5a2a35" : "linear-gradient(90deg,#f59e0b,#ea580c)") + "'>" + (q ? "⏳ Raqib kutilmoqda… (bekor qilish)" : "▶ " + stake + " 🪙 tikib o‘ynash") + "</button>";
+          if (top.length) h += "<div style='margin-top:14px;font-size:12px;opacity:.65'>🏆 ENG KO‘P YUTGANLAR</div>" + top.map(function (x, i) { return "<div style='display:flex;justify-content:space-between;font-size:14px;padding:4px 0'><span>" + (i + 1) + ". " + esc(x.name) + "</span><b style='color:" + (x.net >= 0 ? "#7ee08a" : "#ff6b7f") + "'>" + (x.net >= 0 ? "+" : "") + x.net + " 🪙</b></div>"; }).join("");
+          bx.innerHTML = h;
+          bx.querySelector("[data-x]").onclick = function () { ov.remove(); };
+          [].forEach.call(bx.querySelectorAll("[data-tc]"), function (b) { b.onclick = function () { tc = b.getAttribute("data-tc"); draw(); }; });
+          [].forEach.call(bx.querySelectorAll("[data-st]"), function (b) { b.onclick = function () { stake = +b.getAttribute("data-st"); draw(); }; });
+          bx.querySelector("[data-go]").onclick = function () {
+            if (S.inQueue) sendMsg({ type: "lbQuickCancel" });
+            else sendMsg({ type: "lbQuick", tc: tc, pos: "std", games: 1, stake: stake });
+            setTimeout(draw, 500);
+          };
+        }
+        draw();
+        var iv = setInterval(function () { if (!document.body.contains(ov)) return clearInterval(iv); draw(); }, 3000);
+      };
       window.lbFriendRemove = function (u) { sendMsg({ type: "lbFriendRemove", uid: String(u) }); };
       window.lbBlock = function (u, on) { u = String(u); S.blocked = (S.blocked || []).filter(function (x) { return String(x) !== u; }); if (on) { S.blocked.push(u); S.friends = (S.friends || []).filter(function (f) { return String(f.uid) !== u; }); } sendMsg({ type: "lbBlock", uid: u, on: !!on }); };
       window.lbFriendState = function (u) { try { u = String(u); if (u === String(me)) return "me"; if (/^bot(_|$)/.test(u)) return "bot"; if ((S.blocked || []).some(function (x) { return String(x) === u; })) return "blocked"; return (S.friends || []).some(function (f) { return String(f.uid) === u; }) ? "friend" : "ok"; } catch (e) { return "ok"; } };
@@ -511,7 +543,7 @@
       var h = "<div class=\"tabs\"><button class=\"lbtb" + (showF ? "" : " on") + "\" data-t=\"pl\">🌐 Online o‘yinchilar " + all.length + "</button><button class=\"lbtb" + (showF ? " on" : "") + "\" data-t=\"f\">👥 Do‘stlar " + fl.length + (fin.length ? " 🔴" : "") + "</button></div>";
     fin.forEach(function (r) { h += '<div class="lbp lbin">' + avh(r.uid, r.hasAv, r.name, false) + '<div class="lbinf"><b>' + esc(r.name) + '</b><small>do‘st bo‘lishni taklif qildi</small></div><button class="lbacc" data-f="acc" data-id="' + esc(r.uid) + '">Qabul</button><button class="lbrej" data-f="rej" data-id="' + esc(r.uid) + '">Rad</button></div>'; });
       (S.incoming || []).forEach(function (c) {
-        h += "<div class=\"lbp lbin\"><div class=\"lbav\">" + esc((c.fromName || "?").charAt(0).toUpperCase()) + "</div><div class=\"lbinf\"><b>" + esc(c.fromName) + "</b><small>sizni o‘yinga taklif qildi · " + esc(c.tc) + "</small></div>" +
+        h += "<div class=\"lbp lbin\"><div class=\"lbav\">" + esc((c.fromName || "?").charAt(0).toUpperCase()) + "</div><div class=\"lbinf\"><b>" + esc(c.fromName) + "</b><small>sizni o‘yinga taklif qildi · " + esc(c.tc) + (c.stake ? " · 💰 " + c.stake + " 🪙" : "") + "</small></div>" +
           "<button class=\"lbacc\" data-a=\"acc\" data-id=\"" + esc(c.id) + "\">Qabul</button><button class=\"lbrej\" data-a=\"rej\" data-id=\"" + esc(c.id) + "\">Rad</button></div>";
       });
       if (!list.length) h += "<div class=\"card muted\">Hozircha boshqa o‘yinchi yo‘q. “Tasodifiy o‘yin” ▶ ni bosib raqib kutishingiz mumkin.</div>";

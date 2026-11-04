@@ -971,6 +971,7 @@
           ? (st.spectators || st.color === "spectator" ? "\n" : "") + "⏱ " + st.tc + " (daqiqa + soniya)\n⏳ Birinchi yurish 15 soniya ichida qilinmasa, texnik mag‘lubiyat"
           : "");
       elInfo.style.whiteSpace = "pre-line"; document.body.classList.toggle("rcPlaying", st.color !== "spectator" && !st.finished && (st.moves || []).length > 0);
+ if (st.stake && !st.finished) elInfo.textContent = "💰 Bank: " + (st.stake * 2) + " 🪙 · g‘olibga " + Math.floor(st.stake * 1.8) + (elInfo.textContent ? "\n" + elInfo.textContent : "");
       if (st.opening && !st.etude) elInfo.textContent = "📖 IDF " + st.opening.id + (elInfo.textContent ? "\n" + elInfo.textContent : "");
       if (false && st.vsBot && st.botNote) elInfo.textContent += (elInfo.textContent ? "\n" : "") + st.botNote;
     }
@@ -1324,7 +1325,7 @@
         st.color = m.color;
         try { sitBar(m); } catch (e) {}
         st.white = m.white; st.black = m.black; st.wInfo = m.wInfo || null; st.bInfo = m.bInfo || null;
-        st.whiteOnline = m.whiteOnline; st.blackOnline = m.blackOnline;
+        st.whiteOnline = m.whiteOnline; st.blackOnline = m.blackOnline; st.stake = m.stake || 0;
         st.offAt = { white: m.whiteOff ? Date.now() - (m.srvNow - m.whiteOff) : 0, black: m.blackOff ? Date.now() - (m.srvNow - m.blackOff) : 0 }; st.claimMs = m.claimMs || 15000;
         st.spectators = m.spectators || 0;
         st.specNames = m.spectatorNames || [];

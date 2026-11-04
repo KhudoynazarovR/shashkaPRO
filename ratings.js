@@ -260,7 +260,13 @@
             var on = window.lbIsOnline ? window.lbIsOnline(d.id) : true;
             var cb = mk(on ? "🎮 O‘yinga taklif" : "🎮 O‘yinga taklif <span style='font-weight:400;font-size:12px;opacity:.75'>· oflayn</span>", on ? "linear-gradient(90deg,#5b6cf0,#7c4dce)" : "#2a2f5c", function () {
               if (!(window.lbIsOnline && window.lbIsOnline(d.id))) { cb.innerHTML = "😴 " + esc(d.name) + " hozir oflayn"; return; }
-              window.lbChallengeUid(d.id); cb.innerHTML = "✓ Taklif yuborildi"; cb.disabled = true; cb.style.background = "#3a3f6b";
+              var m = modal("<b style='font-size:18px'>🎮 O‘yinga taklif</b><div style='opacity:.75;font-size:13px;margin:6px 0 12px'>" + esc(d.name) + " bilan qanday o‘ynaysiz?</div>" +
+                "<button data-st='0' style='width:100%;border:0;border-radius:12px;padding:12px;font-size:15px;font-weight:700;color:#fff;background:#5b6cf0;margin-bottom:8px'>🎮 Oddiy o‘yin</button>" +
+                "<div style='font-size:12px;opacity:.65;margin:4px 0 6px'>💰 TANGA TIKIB (g‘olib bankni oladi, 10% komissiya)</div><div style='display:flex;gap:6px'>" +
+                [10, 50, 100, 500].map(function (v) { return "<button data-st='" + v + "' style='flex:1;border:2px solid #f59e0b;background:transparent;color:#f5b72b;border-radius:12px;padding:10px 0;font-size:15px;font-weight:700'>" + v + "</button>"; }).join("") + "</div>");
+              [].forEach.call(m.querySelectorAll("[data-st]"), function (b) {
+                b.onclick = function () { var st = +b.getAttribute("data-st"); window.lbChallengeUid(d.id, st); m.remove(); cb.innerHTML = st ? "✓ " + st + " 🪙 tikib taklif yuborildi" : "✓ Taklif yuborildi"; cb.disabled = true; cb.style.background = "#3a3f6b"; };
+              });
             });
           }
           mk("📮 Yozishma o‘yiniga taklif", "linear-gradient(90deg,#7c3aed,#0ea5e9)", function () {
