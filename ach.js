@@ -20,7 +20,7 @@ const A = [
   ['legend', '🦁', 'Legendni yutdi', 'Legend BOT ni yuting', 100, u => !!(u.botWins && u.botWins.bot_champ)],
   ['monster', '👹', 'Monsterni yutdi', 'Monster BOT ni yuting', 200, u => !!(u.botWins && u.botWins.bot_monster)],
   ['terminator', '🦾', 'Terminatorni yutdi', 'Terminator BOT ni yuting', 400, u => !!(u.botWins && u.botWins.bot_terminator)],
-  ['kingkong', '🦍', 'King Kongni yutdi', 'King Kong BOT ni yuting', 1000, u => !!(u.botWins && u.botWins.bot_kingkong)],
+  ['kingkong', '🦍', 'King Kongni yutdi', 'King Kong BOT ni yuting', 800, u => !!(u.botWins && u.botWins.bot_kingkong)],
   ['daily7', '📅', 'Sodiq o‘yinchi', '7 kun ketma-ket kiring', 50, u => ((u.strk && u.strk.best) || 0) >= 7],
   ['daily30', '🗓', 'Har kuni shu yerda', '30 kun ketma-ket kiring', 300, u => ((u.strk && u.strk.best) || 0) >= 30],
   ['friends5', '🤝', 'Do‘stona', '5 ta do‘st', 30, u => (u.friends || []).length >= 5],

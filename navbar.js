@@ -533,7 +533,7 @@
         document.head.appendChild(kc); }
       var kk = document.createElement('div'); kk.id = 'nvKK';
       kk.innerHTML = '<span class="kf">🦍</span><div><small>TEZ KUNDA</small><b>King Kong BOT</b><p>Eng kuchli bot keladi: Monster va Terminatordan ham kuchli. Siz o‘ylayotganda ham o‘ylaydi!</p></div>';
-      kk.onclick = function () { var t = window.Telegram && window.Telegram.WebApp; var m = '🦍 King Kong BOT tez kunda! Uni birinchilardan bo‘lib sinab ko‘ring — yutganlarga 5000 🪙.'; try { if (t && t.showAlert) t.showAlert(m); else alert(m); } catch (e) { alert(m); } };
+      kk.onclick = function () { var t = window.Telegram && window.Telegram.WebApp; var m = '🦍 King Kong BOT tez kunda! Uni birinchilardan bo‘lib sinab ko‘ring — birinchi yutganga 800 🪙, har g‘alabaga 65 🪙.'; try { if (t && t.showAlert) t.showAlert(m); else alert(m); } catch (e) { alert(m); } };
       hero.insertBefore(kk, hero.firstChild);
     }
     if (!window.__mmSP) { window.__mmSP = 1; try { var _sp = window.Telegram && Telegram.WebApp && Telegram.WebApp.initDataUnsafe && Telegram.WebApp.initDataUnsafe.start_param; if (/^mm_/i.test(_sp || '') && !window.spMemori) { var _ms = document.createElement('script'); _ms.src = '/memori.js?v=9'; document.head.appendChild(_ms); } } catch (e) {} }
