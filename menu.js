@@ -135,12 +135,14 @@
   }
   function close() { if (panel) panel.style.display = "none"; }
   window.refGo = window.refGo || function () { if (window.refOpen) return window.refOpen(); var s = document.createElement("script"); s.src = "/refpanel.js?v=" + Date.now(); s.onload = function () { window.refOpen(); }; document.head.appendChild(s); };
+  window.rcIsPremium = window.rcIsPremium || function () { return window.__prem !== false; };   // noma'lum bo'lsa — cheklamaymiz
   window.premGo = window.premGo || function () { if (window.premOpen) return window.premOpen(); var s = document.createElement("script"); s.src = "/prempanel.js?v=" + Date.now(); s.onload = function () { window.premOpen(); }; document.head.appendChild(s); };
   setTimeout(function () {   // 🎁 sovg'a Premium oynasi + startapp=prem (bot eslatmasidagi tugma)
     try {
       var _tw = window.Telegram && Telegram.WebApp, _id = _tw && _tw.initData; if (!_id) return;
-      if ((_tw.initDataUnsafe || {}).start_param === "prem") return window.premGo();
+      if ((_tw.initDataUnsafe || {}).start_param === "prem") window.premGo();
       fetch("/api/premium", { headers: { "x-init-data": _id } }).then(function (r) { return r.json(); }).then(function (d) {
+        if (d && !d.error) { window.__prem = !!d.premium; try { window.dispatchEvent(new Event("spPrem")); } catch (e) {} }
         if (!d || !d.trialShow) return;
         fetch("/api/premium/seen", { method: "POST", headers: { "x-init-data": _id, "Content-Type": "application/json" }, body: "{}" });
         var ov = document.createElement("div");

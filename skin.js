@@ -10,10 +10,13 @@
     ['Yog‘och', '#EFD9B1', '#B58863', 0], ['Ko‘k-kul', '#DEE3E6', '#8CA2AD', 0],
     ['Yashil', '#FFFFDD', '#86A666', 0], ['Kulrang', '#DDDDDD', '#A0A0A0', 0],
     ['Qizil', '#F1D5CC', '#B5685D', 1], ['Binafsha', '#E3DAEE', '#8B72B5', 1],
-    ['Feruza', '#D5F0EC', '#4A9A93', 1], ['Tungi', '#9AA5B8', '#3E4A5E', 1]
+    ['Feruza', '#D5F0EC', '#4A9A93', 1], ['Tungi', '#9AA5B8', '#3E4A5E', 1],
+        ['Oltin', '#F7E7B4', 'linear-gradient(135deg,#C9A227,#8A6508)', 1, '#F7E7B4', '#A07A10'], ['Marmar', 'linear-gradient(135deg,#FAFAFA,#E3E3E0 55%,#F5F5F3)', 'linear-gradient(135deg,#4B5563,#1F2937)', 1, '#EEEEEC', '#374151'],
+        ['Malaxit', '#D9F2E3', 'linear-gradient(135deg,#0F766E,#064E3B)', 1, '#D9F2E3', '#0B5F55'], ['Neon', '#1E1B4B', 'linear-gradient(135deg,#7C3AED,#DB2777)', 1, '#1E1B4B', '#A633B5']
   ];
   // masalalar bo'limidagi doskalar
   var SEL = ['#rsB', '#ptB', '#btB', '#spDeb .bd', '#spTrap .bd', '#bzBoard'];
+  window.addEventListener('spPrem', function () { try { css(); } catch (e) {} });
   function rd() { try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { return {}; } }
   function wr(k, v) { var o = rd(); o[k] = v; try { localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) {} }
   function board() { var b = rd().board; return typeof b === 'number' && BOARDS[b] ? b : -1; }
@@ -28,6 +31,7 @@
     var t = '.spImgPc{background-color:transparent!important;background-position:center!important;background-size:contain!important;background-repeat:no-repeat!important;border:0!important;box-shadow:none!important;font-size:0!important;color:transparent!important;filter:drop-shadow(0 2px 2px #0007)}' +
       '.spImgPc::before,.spImgPc::after{content:none!important;display:none!important}';
     var b = board();
+    if (b >= 0 && BOARDS[b][3] && window.rcIsPremium && !window.rcIsPremium()) b = -1;   // Premium tugagan
     if (b >= 0) {
       var B = BOARDS[b];
       SEL.forEach(function (s) {
@@ -83,7 +87,7 @@
         '<div style="margin:6px 0 8px">Doska rangi</div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">';
       BOARDS.forEach(function (B, i) {
         h += '<div data-b="' + i + '" title="' + B[0] + '" style="aspect-ratio:1;border-radius:10px;position:relative;cursor:pointer;border:3px solid ' + (i === b ? '#4c8dff' : 'transparent') +
-          ';background:conic-gradient(' + B[2] + ' 25%,' + B[1] + ' 0 50%,' + B[2] + ' 0 75%,' + B[1] + ' 0)">' + (B[3] ? '<span style="position:absolute;top:-8px;right:-4px;font-size:14px">👑</span>' : '') + '</div>';
+          ';background:conic-gradient(' + (B[5] || B[2]) + ' 25%,' + (B[4] || B[1]) + ' 0 50%,' + (B[5] || B[2]) + ' 0 75%,' + (B[4] || B[1]) + ' 0)">' + (B[3] ? '<span style="position:absolute;top:-8px;right:-4px;font-size:14px">👑</span>' : '') + '</div>';
       });
       h += '</div><div data-r="1" style="margin:10px 0 0;font-size:13px;opacity:.75;text-decoration:underline;cursor:pointer">↺ Standart doska</div>' +
         '<div style="margin:18px 0 8px">♟ Toshlar</div><div id="spSkShop" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px"><div style="grid-column:1/-1;opacity:.6;font-size:13px">Yuklanmoqda…</div></div>' +
@@ -93,7 +97,7 @@
       Array.prototype.forEach.call(box.querySelectorAll('[data-b]'), function (el) {
         el.onclick = function () {
           var i = +el.getAttribute('data-b');
-          if (BOARDS[i][3] && window.rcIsPremium && !window.rcIsPremium()) { alert('👑 Bu doska premium. Tosh do‘konidan oching.'); return; }
+          if (BOARDS[i][3] && window.rcIsPremium && !window.rcIsPremium()) { if (window.premGo) window.premGo(); else alert('👑 Bu doska faqat Premium uchun'); return; }
           wr('board', i); changed(); build();
         };
       });

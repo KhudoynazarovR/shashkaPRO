@@ -5,6 +5,7 @@
   var CARD = "background:#161a3a;border:1px solid #262b5a;border-radius:16px;padding:12px;margin-bottom:10px;text-align:left";
   var BTN = "border:0;border-radius:12px;padding:10px 6px;font-size:14px;font-weight:700;color:#fff;font-family:inherit;cursor:pointer";
   var PERKS = [
+    ["🎨", "Maxsus doskalar va oltin ramka", "Oltin, Marmar, Malaxit, Neon va boshqa doskalar"],
     ["🖼", "Profil rasmi", "o‘z rasmingizni qo‘yasiz — hamma ko‘radi"],
     ["🤖", "Eng kuchli botlar", "Legend, Monster, Terminator va King Kong bilan o‘ynash"],
     ["👑", "Toj belgisi va oltin ism", "reytingda, profilda va chatda"],
@@ -38,7 +39,7 @@
     }
     function render(d) {
       if (d.error) { box.innerHTML = "<div style='padding:30px'>Premium faqat Telegram orqali kirganda ishlaydi</div><button style='" + BTN + ";width:100%;background:#3a3f6b' onclick=\"document.getElementById('premOv').remove()\">Yopish</button>"; return; }
-      window.__prem = !!d.premium;
+      window.__prem = !!d.premium; try { window.dispatchEvent(new Event('spPrem')); } catch (e) {}
       var h = "<div style='display:flex;align-items:center;margin-bottom:6px'><b style='font-size:21px;color:#ffd54a'>👑 Premium</b><span id='prX' style='margin-left:auto;font-size:24px;padding:2px 8px;cursor:pointer'>✕</span></div>";
       h += d.premium
         ? "<div style='" + CARD + ";background:linear-gradient(135deg,#4a3a00,#161a3a);text-align:center'><b style='font-size:16px'>✅ Premium faol</b><div style='font-size:13px;margin-top:4px'>" + dmy(d.until) + " gacha" + (d.sub ? " · 🔄 oylik obuna avtomatik yangilanadi" : "") + "</div><div style='font-size:12px;opacity:.7;margin-top:4px'>Yana sotib olsangiz, muddat qo‘shiladi</div></div>"

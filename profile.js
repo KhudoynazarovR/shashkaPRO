@@ -25,6 +25,7 @@
   rc.textContent =
     '.pf-ring{position:relative;width:118px;height:118px;margin:0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center}' +
     '.pf-ring::before,.pf-ring::after{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(#f5b72b,#ff4fd8,#22c1ff,#34f5c5,#f5b72b);animation:pfSpin 3s linear infinite}' +
+    '.pf-ring.np::before,.pf-ring.np::after{background:#3a3f6b;animation:none;filter:none;opacity:1}.pf-ring.pr::before,.pf-ring.pr::after{background:conic-gradient(#ffd54a,#b8860b,#fff3b0,#c98a00,#ffd54a)}.pf-crown{position:absolute;top:-16px;left:50%;transform:translateX(-50%) rotate(-8deg);font-size:30px;z-index:2;filter:drop-shadow(0 2px 4px #000a)}' +
     '.pf-ring::after{inset:-6px;filter:blur(12px);opacity:.8;animation:pfSpin 3s linear infinite,pfGlow 1.8s ease-in-out infinite alternate}' +
     '.pf-ring .pf-av{position:relative;z-index:1;box-sizing:border-box;width:104px;height:104px;margin:0;border:4px solid #1a0b3d;box-shadow:none}' +
     '@keyframes pfSpin{to{transform:rotate(360deg)}}' +
@@ -89,6 +90,7 @@
       if (d.error) { $('pfBody').innerHTML = '<div class="pf-box">Yuklab bo‘lmadi</div>'; return; }
       var pct = d.games ? Math.round(d.wins * 100 / d.games) : 0;
       $('pfRank').textContent = rank(d.wins) + (d.premium ? ' · 👑 Premium' : '');
+      (function () { var rg = document.querySelector('.pf-ring'); if (!rg) return; rg.classList.add(d.premium ? 'pr' : 'np'); if (d.premium && !rg.querySelector('.pf-crown')) { var cr = document.createElement('span'); cr.className = 'pf-crown'; cr.textContent = '👑'; rg.appendChild(cr); } })();   // 👑 Premium ramka
       (function () {   // 👑 Premium tugmasi
         var pb = document.createElement('button'); pb.id = 'pfPrem';
         pb.textContent = d.premium ? '👑 Premium faol' : '👑 Premium olish';
