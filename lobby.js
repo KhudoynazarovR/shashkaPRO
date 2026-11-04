@@ -641,6 +641,10 @@ function createLobby({ send, clients, roomsApi }) {
         (t.awards = t.awards || []).push({ uid: el[i].uid, name: el[i].name, place: i + 1, amt: amt }); if (amt > 0 && economy.add(el[i].uid, amt, 'tournament_prize_' + (i + 1))) toast(el[i].uid, '🏆 ' + (i + 1) + '-o‘rin mukofoti: +' + amt + ' 🪙');
       });
       if (!sh.length && t.prizePaid) economy.refund(t.creatorUid, t.prizePaid, 'refund_prize');
+      if (t.daily && el[0]) {   // 🌙 kunlik arena g'olibiga 7 kunlik Premium
+        try { const _st = require('./store'), _u = _st.users()[String(el[0].uid)]; if (_u) { require('./premium.js').grant(_u, 7, 'daily_arena'); toast(el[0].uid, '👑 Kunlik arena g‘olibi: +7 kunlik Premium!'); } } catch (e) {}
+      }
+      if (t.daily) { const _st = require('./store'); _st.db.dailyFans = _st.db.dailyFans || {}; for (const p of t.players.values()) if (/^\d+$/.test(String(p.uid))) _st.db.dailyFans[p.uid] = Date.now(); _st.save(); }
     }
     const top = st[0] ? st[0].name : '-';
     if (t.clubIds && t.clubIds.length) { const cs = clubStandings(t); if (cs.length > 1) { clubsApi.award(cs); if (cs[0]) for (const p of t.players.values()) toast(p.uid, '🏅 Klublar hisobida g‘olib: ' + cs[0].name + ' (' + cs[0].score + ')'); } }
@@ -1462,6 +1466,37 @@ function createLobby({ send, clients, roomsApi }) {
       console.log('[turnir] 15 daqiqa eslatmasi:', t.name);
     }
   }
+  // 🌙 Kunlik arena: har kuni 19:00 da e'lon qilinadi, 20:00 da boshlanadi (Toshkent), 30 daqiqa, 3+2.
+  // Sovrin fondi 1000 🪙 (TOP-3: 50/30/20%), 1-o'ringa qo'shimcha 7 kunlik 👑 Premium.
+  const DAILY = { hour: 20, announce: 60, dur: 30, tc: '3+2', prize: 1000 };
+  function dailyArenaTick() {
+    const st = require('./store'), now = Date.now(), tz = new Date(now + 5 * 3600e3), dk = tz.toISOString().slice(0, 10);
+    const startAt = Date.UTC(tz.getUTCFullYear(), tz.getUTCMonth(), tz.getUTCDate(), DAILY.hour - 5, 0, 0);
+    if (now < startAt - DAILY.announce * 60000 || now >= startAt - 60000) return;
+    const D = st.db.dailyArena || {};
+    if (D.d === dk && tournaments.has(D.id)) return;
+    if (D.d === dk && D.made) return;   // bugun yaratilgan va allaqachon tugagan/o'chgan
+    const t = {
+      id: hex(3), type: 'arena', name: '🌙 Kunlik arena', tc: DAILY.tc,
+      creatorUid: 'sys', creatorName: 'ShashkaPRO', status: 'reg', created: now,
+      players: new Map(), round: 0, rounds: 0, cur: [], curBye: null, nextAt: 0,
+      durationMin: DAILY.dur, startAt, endAt: startAt + DAILY.dur * 60000, gameNo: 0, ending: false,
+      pos: 'std', berserk: true, prize: DAILY.prize, prizePaid: 0, places: 3, daily: true
+    };
+    tournaments.set(t.id, t);
+    st.db.dailyArena = { d: dk, id: t.id, made: now }; st.save();
+    console.log('[arena] kunlik arena e\'lon qilindi:', t.id);
+    // oldingi kunlik arenalarda qatnashganlarga taklif
+    const appLink = (process.env.TG_APP_LINK || process.env.APP_LINK || '').replace(/\/$/, '');
+    const fans = Object.keys(st.db.dailyFans || {}).filter(u => now - st.db.dailyFans[u] < 14 * 86400e3);
+    fans.forEach((u, i) => setTimeout(() => {
+      const msg = { chat_id: Number(u), parse_mode: 'HTML', text: '🌙 <b>Bugun soat 20:00 da — Kunlik arena!</b>\n\n⏱ 3+2 · 30 daqiqa\n💰 Sovrin fondi: <b>' + DAILY.prize + ' 🪙</b>\n🥇 G‘olibga qo‘shimcha <b>7 kunlik 👑 Premium</b>\n\nOldindan ro‘yxatdan o‘ting 👇' };
+      if (appLink) msg.reply_markup = { inline_keyboard: [[{ text: '⚔️ Arenaga yozilish', url: appLink + '?startapp=lbt_' + t.id }]] };
+      tgCall('sendMessage', msg).catch(() => {});
+    }, i * 120));
+    push();
+  }
+  setInterval(() => { try { dailyArenaTick(); } catch (e) { console.log('[arena] kunlik xato:', e.message); } }, 30000).unref();
   setInterval(remindTick, 5000).unref();
   setInterval(arenaTick, 2000).unref();
 
