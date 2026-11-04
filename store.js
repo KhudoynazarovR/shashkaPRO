@@ -56,6 +56,31 @@ function alertAdmin(kind, text) {
 }
 
 let loadedUsers = 0, lastBk = 0, failN = 0;
+// ---- 🧩 bo'lak-bo'lak saqlash (v2): butun baza bitta katta qator emas —
+// har bir bo'lim "s:<kalit>" qatorida, o'yinchilar UB ta "u:<n>" qatorida; faqat o'zgargan qator yoziladi (sha1 bilan solishtiriladi).
+// "meta" qatori: qaysi bo'limlar bor va nechta o'yinchi/masala. Eski "players" qatori tegilmaydi (7 kun zaxira, keyin o'chiriladi).
+const UB = 16;
+const bucketOf = id => { let h = 0; const s = String(id); for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h % UB; };
+const lastHash = new Map();   // qator -> oxirgi yozilgan sha1
+let v2 = false, v2Since = 0;
+function packVal(val, blobs) {
+  return JSON.stringify(val, (k, v) => {
+    if (typeof v === 'string') v = clean(v);
+    if (typeof v === 'string' && v.length > 1500 && v.startsWith('data:')) {
+      let h = hashOf.get(v);
+      if (!h) { h = crypto.createHash('sha1').update(v).digest('hex'); hashOf.set(v, h); }
+      blobs.set(h, v);
+      return BLOB + h;
+    }
+    return v;
+  });
+}
+async function putRow(k, str) {
+  const h = crypto.createHash('sha1').update(str).digest('hex');
+  if (lastHash.get(k) === h) return false;
+  await pool.query("insert into kv(k, v) values($1, $2) on conflict (k) do update set v = excluded.v", [k, str]);
+  lastHash.set(k, h); return true;
+}
 async function writeDb(force) {
   if (!pool || !ready) return;
   if (writing) { setTimeout(writeDb, 3000); return; }
@@ -67,29 +92,36 @@ async function writeDb(force) {
   }
   writing = true;
   try {
-    const blobs = new Map();
-    const main = packJson(blobs);
-    for (const [h, v] of blobs) {
+    if (force) lastHash.clear();
+    const blobs = new Map(), rows = [];
+    const keys = Object.keys(db).filter(k => k !== 'users' && db[k] !== undefined);
+    for (const k of keys) rows.push(['s:' + k, packVal(db[k], blobs)]);
+    const ub = Array.from({ length: UB }, () => ({}));
+    for (const id of Object.keys(db.users)) ub[bucketOf(id)][id] = db.users[id];
+    for (let i = 0; i < UB; i++) rows.push(['u:' + i, packVal(ub[i], blobs)]);
+    for (const [h, v] of blobs) {   // rasmlar — bir marta
       if (savedBlobs.has(h)) continue;
       await pool.query("insert into kv(k, v) values($1, $2) on conflict (k) do nothing", ['blob:' + h, JSON.stringify(v, rep)]);
       savedBlobs.add(h);
     }
-    if (main !== lastMain || force) {
-      await pool.query(
-        "insert into kv(k, v) values('players', $1) on conflict (k) do update set v = excluded.v",
-        [main]
-      );
-      lastMain = main; writes++;
+    let n = 0;
+    for (const [k, str] of rows) if (await putRow(k, str)) n++;
+    if (n || !v2) {
+      if (!v2Since) v2Since = Date.now();
+      await putRow('meta', JSON.stringify({ v: 2, since: v2Since, keys, ub: UB, users: nUsers, puzzles: (db.puzzles || []).length }));
+      v2 = true; writes++;
       if (nUsers > loadedUsers) loadedUsers = nUsers;
     }
-    // kunlik zaxira nusxa bazaning o'zida (oxirgi 7 kun)
+    // kunlik zaxira nusxa bazaning o'zida (oxirgi 7 kun, to'liq)
     if (Date.now() - lastBk > 24 * 3600e3) {
       lastBk = Date.now();
-      const day = new Date().toISOString().slice(0, 10);
-      await pool.query("insert into kv(k, v) values($1, $2) on conflict (k) do update set v = excluded.v", ['backup:' + day, main]);
+      const day = new Date().toISOString().slice(0, 10), bl = new Map();
+      await pool.query("insert into kv(k, v) values($1, $2) on conflict (k) do update set v = excluded.v", ['backup:' + day, packVal(db, bl)]);
       await pool.query("delete from kv where k like 'backup:%' and k not in (select k from kv where k like 'backup:%' order by k desc limit 7)");
+      // eski bitta-qator "players" — yangi tuzilish 7 kun ishlagach o'chiriladi
+      if (v2Since && Date.now() - v2Since > 7 * 24 * 3600e3) await pool.query("delete from kv where k = 'players'");
+      await pool.query('vacuum kv');
     }
-    if (Date.now() - lastVac > 3600e3) { lastVac = Date.now(); await pool.query('vacuum kv'); }
     if (failN) { failN = 0; alertAdmin('ok', '✅ bazaga yozish yana ishlayapti.'); }
   } catch (e) {
     console.log('DB yozish xatosi:', e.message);
@@ -123,13 +155,13 @@ async function tgBackup(chatId) {
 async function restore(obj) {
   if (!obj || typeof obj !== 'object' || !obj.users || typeof obj.users !== 'object') throw new Error('fayl noto‘g‘ri');
   if (pool && ready) {
-    await pool.query("insert into kv(k, v) select 'backup:pre-restore', v from kv where k = 'players' on conflict (k) do update set v = excluded.v");
+    await pool.query("insert into kv(k, v) values('backup:pre-restore', $1) on conflict (k) do update set v = excluded.v", [packVal(db, new Map())]);
   }
   for (const k of Object.keys(db)) if (k !== 'users') delete db[k];
   for (const id of Object.keys(db.users)) delete db.users[id];
   for (const k of Object.keys(obj)) if (k !== 'users') db[k] = obj[k];
   Object.assign(db.users, obj.users);
-  loadedUsers = 0; lastMain = '';
+  loadedUsers = 0; lastMain = ''; lastHash.clear();
   writeFile();
   await writeDb(true);
   setTimeout(() => process.exit(0), 1500);
@@ -153,27 +185,47 @@ if (URL_) {
   const init = async () => {
     try {
       await pool.query('create table if not exists kv (k text primary key, v jsonb not null)');
-      // eski shishgan jadvalni siqish (joyni diskka qaytaradi)
-      try { await pool.query('vacuum full kv'); console.log('DB: vacuum full bajarildi'); } catch (e) { console.log('DB vacuum xato:', e.message); }
-      const r = await pool.query("select v from kv where k = 'players'");
-      if (r.rows.length) {
-        const bl = new Map();
-        const br = await pool.query("select k, v from kv where k like 'blob:%'");
-        for (const row of br.rows) { const h = row.k.slice(5); bl.set(h, row.v); savedBlobs.add(h); }
-        unpack(r.rows[0].v, bl);
-        const remote = (r.rows[0].v && r.rows[0].v.users) || {};
-        if (r.rows[0].v && Array.isArray(r.rows[0].v.puzzles)) db.puzzles = r.rows[0].v.puzzles;
-        if (r.rows[0].v && Array.isArray(r.rows[0].v.shop)) db.shop = r.rows[0].v.shop;
-        if (r.rows[0].v && Array.isArray(r.rows[0].v.groups)) db.groups = r.rows[0].v.groups;
-        if (r.rows[0].v && r.rows[0].v.pzDay && typeof r.rows[0].v.pzDay === 'object') db.pzDay = r.rows[0].v.pzDay;
-        Object.keys(r.rows[0].v || {}).forEach(k => { if (k !== 'users') db[k] = r.rows[0].v[k]; });
+      const bl = new Map();
+      const br = await pool.query("select k, v from kv where k like 'blob:%'");
+      for (const row of br.rows) { const h = row.k.slice(5); bl.set(h, row.v); savedBlobs.add(h); }
+      // 1) yangi tuzilish (meta + bo'limlar), 2) bo'lmasa yoki shubhali bo'lsa — eski "players" qatori
+      let src = null, how = '';
+      const mr = await pool.query("select v from kv where k = 'meta'");
+      const oldR = await pool.query("select v from kv where k = 'players'");
+      const old = oldR.rows.length ? oldR.rows[0].v : null;
+      if (mr.rows.length && mr.rows[0].v && mr.rows[0].v.v === 2) {
+        const meta = mr.rows[0].v, o = { users: {} };
+        const sr = await pool.query("select k, v from kv where k like 's:%' or k like 'u:%'");
+        const got = new Map(sr.rows.map(r => [r.k, r.v]));
+        for (const k of meta.keys || []) if (got.has('s:' + k)) o[k] = got.get('s:' + k);
+        for (let i = 0; i < (meta.ub || UB); i++) Object.assign(o.users, got.get('u:' + i) || {});
+        const nu = Object.keys(o.users).length, nOld = old && old.users ? Object.keys(old.users).length : 0;
+        const okU = nu >= (meta.users || 0) * 0.98 && nu >= nOld * 0.95, okP = !meta.puzzles || (Array.isArray(o.puzzles) && o.puzzles.length >= meta.puzzles * 0.98);
+        if (okU && okP) { src = o; how = 'v2'; v2 = true; v2Since = meta.since || Date.now(); }
+        else if (old) {   // bo'limlardan biri yo'qolgan: eski qator ustiga yangi bo'limlar qo'yiladi (bori — yangiroq)
+          console.log('DB: yangi tuzilish to‘liq emas', nu, '/', meta.users, nOld, '— eski qator bilan birlashtirildi');
+          alertAdmin('v2bad', 'yangi tuzilishdagi baza to‘liq emas (' + nu + ' o‘yinchi, kutilgan ' + (meta.users || nOld) + ') — eski «players» qatori bilan birlashtirib yuklandi.');
+          src = Object.assign({}, old, o, { users: Object.assign({}, old.users || {}, o.users) });
+          if (!okP && Array.isArray(old.puzzles)) src.puzzles = old.puzzles;
+          how = 'v2+players'; v2Since = meta.since || Date.now();
+        } else { src = o; how = 'v2 (to‘liq emas)'; v2 = true; v2Since = meta.since || Date.now(); alertAdmin('v2bad', 'bazada ' + nu + ' o‘yinchi topildi, kutilgan ' + meta.users + '. Admin tekshirsin.'); }
+      }
+      if (!src && old) { src = old; how = 'players'; }
+      const wasV2 = v2 || how === 'v2+players';
+      if (src) {
+        unpack(src, bl);
+        const remote = src.users || {};
+        Object.keys(src).forEach(k => { if (k !== 'users') db[k] = src[k]; });
         { const _fs = new Set(Array.isArray(db.pzFolders) ? db.pzFolders : []); (db.puzzles || []).forEach(x => { if (x.folder) _fs.add(x.folder); }); if (_fs.size) db.pzFolders = [..._fs]; }
         for (const id of Object.keys(db.users)) if (!remote[id]) remote[id] = db.users[id];
         for (const id of Object.keys(db.users)) delete db.users[id];
         Object.assign(db.users, remote);
-        console.log('DB dan yuklandi, foydalanuvchilar:', Object.keys(db.users).length);
+        console.log('DB dan yuklandi (' + how + '), foydalanuvchilar:', Object.keys(db.users).length, 'masalalar:', (db.puzzles || []).length);
       } else {
         console.log('DB bo‘sh, mavjud ma‘lumot ko‘chirilmoqda:', Object.keys(db.users).length);
+      }
+      if (!wasV2 && src) {   // birinchi marta yangi tuzilishga o'tish: avval Telegramga to'liq zaxira
+        try { const ok = await tgBackup(); console.log('DB: o‘tishdan oldin Telegram zaxira:', ok ? 'yuborildi' : 'yuborilmadi'); } catch (e) { console.log('zaxira xato:', e.message); }
       }
       loadedUsers = Object.keys(db.users).length;
       try { const bk = await pool.query("select k from kv where k like 'backup:2%' order by k desc limit 1"); if (bk.rows.length && bk.rows[0].k.slice(7) === new Date().toISOString().slice(0, 10)) lastBk = Date.now(); } catch (e) {}
