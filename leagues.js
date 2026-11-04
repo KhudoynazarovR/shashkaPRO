@@ -94,7 +94,7 @@ function achVal(u, a) {
 }
 function achNeed(a) { return a.k === '$petrova' ? Math.max(1, petrovaTotal()) : a.n; }
 function checkAch(u) { // yangi ochilganlarni qaytaradi (tangasi beriladi)
-  u.ach = u.ach || { got: {}, c: {}, fresh: [] };
+  u.ach = u.ach || { got: {}, c: {}, fresh: [] }; if (!u.ach.got) u.ach.got = {}; if (!u.ach.c) u.ach.c = {};
   const fresh = [];
   for (const a of ACH) {
     if (u.ach.got[a.id]) continue;
@@ -112,7 +112,7 @@ function event(uid, kind, n) {
     rollover();
     const x = XP[kind] || 0;
     if (x) { const L = lg(u); L.xp += x * (n || 1); L.at = Date.now(); }
-    u.ach = u.ach || { got: {}, c: {}, fresh: [] };
+    u.ach = u.ach || { got: {}, c: {}, fresh: [] }; if (!u.ach.c) u.ach.c = {}; if (!u.ach.got) u.ach.got = {};
     u.ach.c[kind] = (u.ach.c[kind] || 0) + (n || 1);
     checkAch(u);
     store.save();

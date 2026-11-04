@@ -28,22 +28,35 @@ const A = [
   ['region', '🗺', 'Vatanparvar', 'Viloyatingizni tanlang', 10, u => !!u.region],
   ['avatar', '🖼', 'Yuzim bor', 'Profil rasmini qo‘ying', 10, u => !!u.avatar],
 ];
+// 🩹 tuzatish: avvalgi versiya yutuqlarni ligalar (leagues.js) ishlatadigan u.ach ga yozib qo'ygan edi — ajratib olamiz
+setTimeout(() => {
+  try {
+    const ids = new Set(A.map(x => x[0])); let ch = 0;
+    for (const u of Object.values(store.users())) {
+      const a = u.ach; if (!a || typeof a !== 'object') continue;
+      for (const k of Object.keys(a)) if (ids.has(k)) { u.ach2 = u.ach2 || {}; if (!u.ach2[k]) u.ach2[k] = a[k]; delete a[k]; ch++; }
+      if (!a.got) { a.got = {}; ch++; } if (!a.c) a.c = {}; if (!a.fresh) a.fresh = [];
+      if (u.achInit) { u.ach2Init = u.ach2Init || u.achInit; delete u.achInit; ch++; }
+    }
+    if (ch) { store.save(); console.log('[ach] u.ach tuzatildi:', ch); }
+  } catch (e) { console.log('[ach] tuzatish xato:', e.message); }
+}, 1000);
 function tg(method, params) { try { return require('./gcard.js').tg(method, params); } catch (e) { return Promise.resolve(null); } }
 
 // yangi ochilganlarini belgilaydi, tanga beradi; ochilganlar ro'yxatini qaytaradi
 function sync(uid, opts) {
   const u = store.users()[String(uid)]; if (!u || !/^\d+$/.test(String(uid))) return [];
-  u.ach = u.ach || {};
-  const first = !u.achInit;   // birinchi tekshiruv: eski yutuqlar jim va tangasiz ochiladi
+  u.ach2 = u.ach2 || {};
+  const first = !u.ach2Init;   // birinchi tekshiruv: eski yutuqlar jim va tangasiz ochiladi
   const fresh = [];
   for (const [id, ic, name, , coins, ok] of A) {
-    if (u.ach[id]) continue;
+    if (u.ach2[id]) continue;
     let y = false; try { y = ok(u); } catch (e) {}
     if (!y) continue;
-    u.ach[id] = Date.now(); fresh.push({ id, ic, name, coins: first ? 0 : coins });
+    u.ach2[id] = Date.now(); fresh.push({ id, ic, name, coins: first ? 0 : coins });
     if (!first) u.diamonds = (u.diamonds || 0) + coins;   // eski (oldin bajarilgan) yutuqlar tangasiz ochiladi — iqtisod buzilmasin
   }
-  if (first) u.achInit = Date.now();
+  if (first) u.ach2Init = Date.now();
   if (fresh.length) {
     store.save();
     if (!first && !(opts && opts.quiet)) {
@@ -54,7 +67,7 @@ function sync(uid, opts) {
   return fresh;
 }
 function list(uid, own) {
-  const u = store.users()[String(uid)] || {}, got = u.ach || {};
+  const u = store.users()[String(uid)] || {}, got = u.ach2 || {};
   const all = A.map(([id, ic, name, cond, coins]) => ({ id, ic, name, cond, coins, at: got[id] || 0 }));
   return { n: all.filter(x => x.at).length, total: A.length, list: own ? all : all.filter(x => x.at) };
 }
