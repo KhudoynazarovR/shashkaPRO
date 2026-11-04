@@ -617,5 +617,6 @@ server.listen(PORT, HOST, () => {
 
 setInterval(() => {
   const m = process.memoryUsage();
-  console.log(`RAM: rss=${(m.rss/1048576)|0}MB heap=${(m.heapUsed/1048576)|0}MB`);
+  var _t = 0, _e = 0; try { var _f = require('fs'); _f.readdirSync('/proc').forEach(function (d) { if (!/^\d+$/.test(d)) return; try { var r = +_f.readFileSync('/proc/' + d + '/statm', 'utf8').split(' ')[1] * 4096; _t += r; if (/bridge|Kesto/i.test(_f.readFileSync('/proc/' + d + '/cmdline', 'utf8'))) _e += r; } catch (e) {} }); } catch (e) {}
+  console.log('RAM: rss=' + ((m.rss / 1048576) | 0) + 'MB heap=' + ((m.heapUsed / 1048576) | 0) + 'MB ext=' + ((m.external / 1048576) | 0) + 'MB ab=' + ((m.arrayBuffers / 1048576) | 0) + 'MB jami=' + ((_t / 1048576) | 0) + 'MB dvigatel=' + ((_e / 1048576) | 0) + 'MB');
 }, 60000);
