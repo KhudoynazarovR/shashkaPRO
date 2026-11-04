@@ -94,7 +94,7 @@ function handle(req, res, p, h) {
     h.send(res, 200, {
       premium: isPrem(u), until: u.premiumUntil || 0, sub: !!(u.premSub && u.premSub > Date.now()), diamonds: u.diamonds || 0,
       plans: Object.entries(PLANS).map(([k, x]) => ({ id: k, name: x.name, days: x.days, coins: x.coins, stars: x.stars, sub: !!x.sub })),
-      packs: Object.entries(packs).map(([k, x]) => ({ id: k, stars: x.stars, diamonds: x.diamonds }))
+      packs: Object.entries(packs).map(([k, x]) => ({ id: k, stars: x.stars, diamonds: x.diamonds, bonus: x.bonus || 0 }))
     });
     return true;
   }

@@ -56,7 +56,7 @@
       h += "<div style='font-size:13px;margin:4px 0 10px'>Balansingiz: <b>" + (d.diamonds || 0).toLocaleString("ru") + " 🪙</b></div>";
       if (canStars() && d.packs && d.packs.length) {
         h += "<div style='" + CARD + "'><div style='font-size:12px;opacity:.65;margin-bottom:8px'>🪙 TANGA SOTIB OLISH</div><div style='display:flex;gap:8px'>" +
-          d.packs.map(function (k) { return "<button data-k='" + k.id + "' style='" + BTN + ";flex:1;background:#262b66;font-size:13px'>" + k.diamonds + " 🪙<div style='font-weight:400;font-size:12px;margin-top:2px'>⭐ " + k.stars + "</div></button>"; }).join("") + "</div></div>";
+          d.packs.map(function (k) { return "<button data-k='" + k.id + "' style='" + BTN + ";flex:1;background:#262b66;font-size:13px'>" + k.diamonds.toLocaleString("ru") + " 🪙" + (k.bonus ? "<div style='font-size:11px;color:#7ee08a;margin-top:2px'>+" + k.bonus + " bonus</div>" : "") + "<div style='font-weight:400;font-size:12px;margin-top:2px'>⭐ " + k.stars + "</div></button>"; }).join("") + "</div></div>";
       }
       if (canStars()) h += "<div style='font-size:11px;opacity:.55;margin-bottom:10px'>To‘lov bo‘yicha muammo bo‘lsa: botga /paysupport yozing</div>";
       h += "<button style='" + BTN + ";width:100%;padding:12px;background:#6b5cf0' onclick=\"document.getElementById('premOv').remove()\">Yopish</button>";

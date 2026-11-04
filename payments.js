@@ -3,9 +3,10 @@ const store = require('./store');
 const { verifyInitData } = require('./auth');
 
 const PACKS = {
-  d60:  { stars: 50,  diamonds: 60 },
-  d350: { stars: 250, diamonds: 350 },
-  d800: { stars: 500, diamonds: 800 },
+  // 50 ⭐ = 300 🪙 (haftalik Premium bilan teng); kattaroq paketda bonus. Kalitlar eski invoyslar uchun o'zgarmaydi.
+  d60:  { stars: 50,  diamonds: 300 },
+  d350: { stars: 250, diamonds: 1600, bonus: 100 },
+  d800: { stars: 500, diamonds: 3500, bonus: 500 },
 };
 
 function tg(method, params) {
