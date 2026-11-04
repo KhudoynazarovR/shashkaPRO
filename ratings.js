@@ -341,6 +341,7 @@
           function act(a, lab, bg) { return "<button data-ma=\"" + a + "\" style=\"flex:1;border:0;border-radius:12px;padding:10px 4px;font-size:13px;color:#fff;background:" + bg + "\">" + lab + "</button>"; }
           function paint() {
             w.innerHTML = "<div style=\"font-size:13px;color:#ff9aa8;font-weight:700;margin-bottom:4px\">🛡 Admin</div>" + line("chat", "💬", "Chat") + line("play", "🎮", "O‘yin") +
+              (d.cheat ? "<div style=\"font-size:13px;margin:3px 0\">🕵️ KestoG bilan moslik: <b style=\"color:" + (d.cheat.avg >= 80 ? "#ff6b7f" : "#7ee08a") + "\">" + d.cheat.avg + "%</b> (" + d.cheat.n + " ta g‘alaba tahlili)</div>" : "") +
               "<div style=\"display:flex;gap:6px;margin-top:8px\">" + act("chat", "💬 Chat ⛔", "#8a5a00") + act("play", "🎮 O‘yin ⛔", "#a3263a") + act("undo", "↩️ Bekor", "#3a3f6b") + "</div>";
             [].forEach.call(w.querySelectorAll("[data-ma]"), function (b) {
               b.onclick = function () {

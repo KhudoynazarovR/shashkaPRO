@@ -115,6 +115,16 @@ async function onCallback(q) {
   const d = String(q.data || '').split(':'), uid = String(q.from.id);
   const answer = (text, alert) => tg('answerCallbackQuery', { callback_query_id: q.id, text: String(text || '').slice(0, 195), show_alert: !!alert });
   if (!isAdmin(uid)) return answer('Faqat adminlar uchun'), true;
+  if (d[1] === 'cp' || d[1] === 'cx') {   // 🕵️ avtomatik aniqlangan shubhali o'yinchi
+    const who = String(q.from.first_name || 'Admin').slice(0, 20), tu = store.users()[d[2]];
+    if (!tu) return answer('Foydalanuvchi topilmadi'), true;
+    let res;
+    if (d[1] === 'cp') { const p = punish(d[2], 'play', 'Chiterlik', uid); res = '🎮 O‘yin ' + p.days + ' kunga yopildi — ' + who; }
+    else { tu.cheat = tu.cheat || { g: [] }; tu.cheat.clean = Date.now(); store.save(); res = '✅ Toza deb belgilandi — ' + who; }
+    if (q.message) tg('editMessageReplyMarkup', { chat_id: q.message.chat.id, message_id: q.message.message_id, reply_markup: { inline_keyboard: [[{ text: res, callback_data: 'md:noop' }]] } });
+    return answer(res), true;
+  }
+  if (d[1] === 'noop') return answer(''), true;
   const r = (store.db.reports || {})[d[2]];
   if (!r) return answer('Shikoyat topilmadi (eskirgan)'), true;
   if (r.st) return answer('Allaqachon ko‘rib chiqilgan'), true;
