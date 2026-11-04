@@ -249,4 +249,23 @@ function build() {
   })(0);
 }
 build();
-module.exports = { move, learn, ponder, review, ponderStat: () => PONDER, load: () => busy, mem: () => ({ cache: CACHE.size, deep: DEEP.size }) };
+// 🦍 King Kong shu pozitsiyada nima qiladi (dvigatelni ishga tushirmasdan): manba va yurish
+function peek(b, side) {
+  const k = b.join('') + side, key = b.join(',') + '|' + side, o = { src: 'engine' };
+  try { const cm = COLETTE[k]; if (cm) o.colette = { from: cm[0], to: cm[1] }; } catch (e) {}
+  try { const bk = BOOK[k]; if (bk) o.book = { from: bk.from, to: bk.to }; } catch (e) {}
+  let ad = null; try { ad = require('./kkbook.js').peek(b, side); } catch (e) {}
+  if (ad) o.admin = { from: ad.f, to: ad.t };
+  let tb = null; try { if (TBP && TBP.ready()) tb = TBP.best(b, side); } catch (e) {}
+  let et = null; try { et = require('./etudes.js').bookMove(b, side); } catch (e) {}
+  const hit = CACHE.get(key);
+  if (tb) Object.assign(o, { src: 'tb', from: tb.from, to: tb.to, res: tb.res });
+  else if (ad) Object.assign(o, { src: 'admin', from: ad.f, to: ad.t });
+  else if (et) Object.assign(o, { src: 'etude', from: et.from, to: et.to });
+  else if (o.colette && !DEEP.has(key)) Object.assign(o, { src: 'colette' }, o.colette);
+  else if (o.book) Object.assign(o, { src: 'book' }, o.book);
+  else if (hit && hit.r && hit.r.from != null) Object.assign(o, { src: 'cache', from: hit.r.from, to: hit.r.to });
+  if (DEEP.has(key)) o.deep = 1;
+  return o;
+}
+module.exports = { peek, move, learn, ponder, review, ponderStat: () => PONDER, load: () => busy, mem: () => ({ cache: CACHE.size, deep: DEEP.size }) };

@@ -433,6 +433,30 @@
       }, 0, AU.t);
     }
     var KK = { msg: '', sides: 'w', busy: false };
+    // 🦍 King Kong ko'rinishi: har pozitsiyada u nima o'ynaydi va qayerdan (TB / siz / etyud / Colette / kitob / dvigatel)
+    var KKP = {}, KKSRC = { tb: '🏁 endshpil bazasi', admin: '🎓 siz o‘rgatgansiz', etude: '🧩 etyud', colette: '📗 Colette', book: '📖 kitob', cache: '🧠 oldindan hisoblangan', engine: '🧠 o‘zi o‘ylaydi (dvigatel)', over: '🏁 o‘yin tugagan' };
+    function kkPeekLoad() {
+      var need = [], keys = [];
+      hist.forEach(function (h) { var k = kf(h); if (KKP[k] === undefined && keys.indexOf(k) < 0) { keys.push(k); need.push({ board: toEng(h.b), side: h.t }); } });
+      if (!need.length) return;
+      keys.forEach(function (k) { KKP[k] = 0; });
+      kkPost('/api/kkbook/peek', { list: need }).then(function (r) { (r.list || []).forEach(function (x, i) { KKP[keys[i]] = x || null; }); if (alive()) draw(); })
+        .catch(function () { keys.forEach(function (k) { delete KKP[k]; }); });
+    }
+    function kkLine(P) {
+      if (P === 0 || P === undefined) return '🦍 King Kong: ⏳';
+      if (!P) return '';
+      var s = '🦍 King Kong bu yerda: ' + (P.n ? '<b>' + P.n + '</b> · ' : '') + (KKSRC[P.src] || P.src) + (P.res ? ' (' + (P.res === 'win' ? 'yutadi' : P.res === 'loss' ? 'yutqazadi' : 'durang') + ')' : '') + (P.forced ? ' · majburiy' : '');
+      if (P.src === 'admin' && P.col && P.col !== P.n) s += '<br><span style="font-size:12px;opacity:.75">Colette: ' + P.col + ' edi</span>';
+      else if (P.src !== 'colette' && P.src !== 'admin' && P.col && P.col !== P.n) s += '<br><span style="font-size:12px;opacity:.75">Colette: ' + P.col + '</span>';
+      if (P.deep) s += '<br><span style="font-size:12px;opacity:.75">⚠️ Bu yerda avval yutqazgan — chuqurroq o‘ylaydi</span>';
+      return s;
+    }
+    function kkDiff(i) {   // hist[i] dan qilingan yurish King Kongnikidan farq qiladimi
+      var P = KKP[kf(hist[i])], m = hist[i + 1] && hist[i + 1].m; if (!P || P.f == null || !m) return '';
+      var f = m.path[0], e = m.path[m.path.length - 1];
+      return (P.f === f[0] * 8 + f[1] && P.t === e[0] * 8 + e[1]) ? '' : P.n;
+    }
     function kkPost(u, body) { return fetch(u, { method: 'POST', headers: hd(), body: JSON.stringify(body) }).then(function (r) { return r.json(); }); }
     function kkFromEng(a, s) { var b = [], r, c, v; for (r = 0; r < 8; r++) { b.push([]); for (c = 0; c < 8; c++) { v = +a[r * 8 + c]; b[r].push(v === 1 ? 1 : v === -1 ? 2 : v === 2 ? 3 : v === -2 ? 4 : 0); } } return b; }
     function kkTeach() {
@@ -606,6 +630,8 @@
           s += '<div style="text-align:center;margin-top:6px"><button id="bdA" style="' + sm + ';background:#2e9d6b">📊 Hammasini baholash' + (prog ? ' ' + prog : '') + '</button><button id="bdN" style="' + sm + ';background:#8a2b3a">🗑 Yangi o‘yin</button></div>';
         } else if (panel === 'kk') {
           s += '<div style="font-size:15px;font-weight:700;margin-bottom:6px">🦍 King Kong ustaxonasi</div>';
+          kkPeekLoad();
+          s += '<div style="background:#3a2a10;border-radius:12px;padding:10px;margin-bottom:10px;font-size:14px;line-height:1.5">' + kkLine(KKP[kf(hist[cur])]) + (hist.length > 1 ? '<div style="font-size:12px;opacity:.7;margin-top:4px">Pastdagi ro‘yxatda 🦍 — King Kong o‘sha joyda boshqa yurish qilardi</div>' : '') + '</div>';
           var _gn = kkGameMoves().length;
           s += '<div style="background:#1d2a14;border-radius:12px;padding:10px;margin-bottom:10px"><div style="font-size:14px;margin-bottom:6px">Doskadagi partiya' + (cur < hist.length - 1 ? ' (tanlangan yurishgacha)' : '') + ' — qaysi tomon?</div><div>' +
             [['w', '⚪ Oq'], ['b', '⚫ Qora'], ['both', 'Ikkalasi']].map(function (x) { return '<button data-a="kks:' + x[0] + '" style="' + sm + ';background:' + (KK.sides === x[0] ? '#6aa22a' : '#262b66') + '">' + x[1] + '</button>'; }).join('') + '</div>';
@@ -661,7 +687,8 @@
       for (var i = 0; i < hist.length - 1; i++) {
         if (i % 2 === 0) s += '<span style="opacity:.6;margin-left:6px">' + (i / 2 + 1) + '.</span> ';
         var mk = (S.engine && !PL) ? mark(i) : '', bad = mk === '??' ? '#ff6b6b' : mk ? '#ffb347' : '#fff';
-        s += '<span data-g="' + (i + 1) + '" style="display:inline-block;padding:2px 8px;margin:2px;border-radius:8px;background:' + (cur === i + 1 ? '#6b5cf0' : '#262b66') + ';color:' + bad + '">' + hist[i + 1].n + mk + ((S.engine && !PL) ? ' <small style="opacity:.7;color:#fff">' + evFmt(evOf(i + 1)) + '</small>' : '') + '</span>';
+        var kd = (panel === 'kk' || panel === 'kkpdn') ? kkDiff(i) : '';
+        s += '<span data-g="' + (i + 1) + '" style="display:inline-block;padding:2px 8px;margin:2px;border-radius:8px;background:' + (cur === i + 1 ? '#6b5cf0' : '#262b66') + ';color:' + bad + '">' + hist[i + 1].n + mk + ((S.engine && !PL) ? ' <small style="opacity:.7;color:#fff">' + evFmt(evOf(i + 1)) + '</small>' : '') + (kd ? ' <small style="color:#ffb347">🦍' + kd + '</small>' : '') + '</span>';
       }
       s += '</div>';
       ov.innerHTML = s;

@@ -20,6 +20,8 @@ function get(b, side, roomId) {
   if (roomId) { if (!used.has(roomId)) used.set(roomId, new Set()); used.get(roomId).add(k); if (used.size > 500) used.delete(used.keys().next().value); }
   return x;
 }
+// ustaxona ko'rinishi uchun (statistikani o'zgartirmaydi)
+function peek(b, side) { return B()[b.join('') + side] || null; }
 // rooms.finish dan: King Kong o'yini tugadi
 function result(room, winner) {
   try {
@@ -97,6 +99,16 @@ function handle(req, res, p, h) {
       const x = add(j.board, side, +j.from, +j.to, t.id); if (!x) return h.send(res, 400, { error: 'Noto‘g‘ri yurish' });
       store.save(); return h.send(res, 200, { ok: true, n: x.n, total: Object.keys(B()).length });
     }
+    if (p === '/api/kkbook/peek') {   // 🦍 King Kong ko'rinishi: [{board, side}] → har pozitsiyada uning yurishi va manbasi
+      const K = require('./kestoai.js'), mv = x => x && x.from != null ? SQ(x.from) + '-' + SQ(x.to) : null;
+      const out = (Array.isArray(j.list) ? j.list : []).slice(0, 200).map(x => {
+        if (!okBoard(x.board)) return null;
+        const sd = x.side > 0 ? 1 : -1, o = K.peek(x.board, sd), L = R.moves(x.board, sd);
+        const nm = m => { if (!m || m.from == null) return null; const z = L.find(y => y.from === m.from && y.to === m.to); return z ? [z.from].concat(z.path || [z.to]).map(SQ).join(z.caps.length ? ':' : '-') : mv(m); };
+        return { src: L.length ? o.src : 'over', n: nm(o), f: o.from, t: o.to, col: nm(o.colette), adm: nm(o.admin), bk: nm(o.book), res: o.res || null, deep: o.deep || 0, forced: L.length === 1 ? 1 : 0 };
+      });
+      return h.send(res, 200, { list: out });
+    }
     if (p === '/api/kkbook/game') {   // 🦍 doskadagi partiya: { moves:[{board,side,from,to}], go } — go yo'q bo'lsa faqat KestoG tekshiruvi
       const L = (Array.isArray(j.moves) ? j.moves : []).slice(0, 80).filter(x => okBoard(x.board) && legal(x.board, x.side > 0 ? 1 : -1, +x.from, +x.to));
       if (!L.length) return h.send(res, 400, { error: 'O‘rgatiladigan yurish yo‘q' });
@@ -127,4 +139,4 @@ function handle(req, res, p, h) {
   });
   return true;
 }
-module.exports = { get, result, handle, parse, notation, isAdmin };
+module.exports = { peek, get, result, handle, parse, notation, isAdmin };
