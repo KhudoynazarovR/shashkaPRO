@@ -469,6 +469,7 @@
           if (!st || !st.joined || st.finished || st.color === "spectator" || st.pending) return;
           if (st.vsBot && !st.botStarted) return;
           if (!bothIn() || st.turn !== st.color) return;
+          if (st.optN > 0) return;   // oldingi qadamga server javobi kelmaguncha kutamiz (takroriy qadam bo'lmasin)
           var now = Date.now(); if (now - rcmLast < (st.forced ? 1200 : 600)) return;
           var chain = !!st.forced;
           var steps = chain ? captureSteps(st.board, st.forced.r, st.forced.c) : allMoves(st.board, codeOf(st.color));
@@ -1062,7 +1063,7 @@
     };
 
     // ---------- 🤖 ShashkaBot: yurishni shu telefon hisoblaydi (AI so'rovi), server faqat uzatadi ----------
-    var botBusy = false;
+    var botBusy = false, botGen = 0;
 
     function renderBotSetup() {
       if (st.color === "spectator" || st.botStarted || st.finished) { elTc.style.display = "none"; return; }
@@ -1279,12 +1280,13 @@
       if (!st.vsBot || !st.botStarted || !st.joined || st.finished || st.color === "spectator") return;
       if (!st.botColor || st.turn !== st.botColor || !bothIn()) return;
       botBusy = true;
-      var n0 = st.moves.length;
+      var n0 = st.moves.length, g0 = botGen;
       botThink(function (steps) {
+        if (g0 !== botGen) return;
         if (!steps || !steps.length || st.finished || st.moves.length !== n0 || st.turn !== st.botColor) { botBusy = false; return; }
         var i = 0;
         (function next() {
-          if (st.finished) { botBusy = false; return; }
+          if (st.finished || g0 !== botGen) { if (g0 === botGen) botBusy = false; return; }
           var s = steps[i++], more = i < steps.length;
           send({ type: "roomBotMove", roomId: roomId, move: s, keepTurn: more });
           if (more) setTimeout(next, st.botFast ? 60 : 700); else { botBusy = false; try { render(); } catch (e) {} }
@@ -1320,7 +1322,7 @@
       }, 1000);
     }
     function onMessage(m) {
-      if (m.type === "error" && st.optim) { st.optim = false; st.optN = 0; st.pending = false; st.forced = null; send({ type: "roomSync", roomId: roomId }); }
+      if (m.type === "error" && (st.optim || m.resync)) { st.optim = false; st.optN = 0; st.pending = false; st.forced = null; if (m.resync) { st.needRebuild = true; botGen++; botBusy = false; } send({ type: "roomSync", roomId: roomId }); }
       if (m.type === "roomState" && m.roomId === roomId && !m.finished) { try { window.__coinClear(); } catch (e) {} }
       if (m.type === "roomState" && m.roomId === roomId) {
         setTimeout(function () { var bt = document.getElementById("rcBoot"); if (bt) bt.remove(); }, 250);
@@ -1354,7 +1356,7 @@
         st.noBerserk = !!m.noBerserk;
         if (m.chat) { st.chat = m.chat; rebuildChat(); }
         setClock(m.clock, m.clockRunning);
-        if (!same) rebuild();   // yurishlar o'zgarmagan bo'lsa, tanlov saqlanadi
+        if (!same || st.needRebuild) { st.needRebuild = false; rebuild(); }   // yurishlar o'zgarmagan bo'lsa, tanlov saqlanadi
         render();
         botKick();
       } else if (m.type === "roomMove" && m.roomId === roomId) {

@@ -451,6 +451,10 @@ function createRooms({ send, clients, onFinish }) {
       if (!room.white || !room.black) return err(c, "Raqib hali qo‘shilmagan"), true;
       if (col !== room.turn) return err(c, "Hozir navbat sizniki emas"), true;
       if (room.moves.length >= MAX_MOVES) return err(c, "Yurishlar limiti"), true;
+      // 🛡 qadam qoida bo'yicha tekshiriladi (qoidaga zid yoki takroriy qadam — rad etiladi, ilova doskani serverdan qayta oladi)
+      const _vr = require("./vrules.js").check(room, col, m);
+      if (_vr.error) { if (c && c.ws) send(c.ws, { type: "error", message: _vr.error, resync: 1 }); return true; }
+      if (_vr.ok) m.keepTurn = _vr.keep;
       const now = Date.now();
       const wasRunning = clockRunning(room);
       if (wasRunning) {
@@ -463,6 +467,7 @@ function createRooms({ send, clients, onFinish }) {
       }
       if (wasRunning && !m.keepTurn && !room.berserk[col] && !kkFrozen(room, col)) room.clock[col] += room.incMs; // inkrement (berserkda yo'q)
       room.moves.push(m.move);
+      require("./vrules.js").commit(room, _vr);
       if (room.drawOffer) {
         room.drawOffer = null; // yurish bilan taklif rad etiladi
         broadcast(room, { type: "roomDraw", roomId, offer: null });
