@@ -82,7 +82,8 @@ function handle(req, res, p, h) {
   if (!t || !isAdmin(t.id)) { h.send(res, 403, { error: 'Faqat admin uchun' }); return true; }
   if (req.method === 'GET') {
     const list = Object.entries(B()).map(([k, x]) => ({ k, n: x.n, b: x.b, s: x.s, at: x.at, used: x.used || 0, w: x.w || 0, l: x.l || 0, d: x.d || 0 })).sort((a, b) => b.at - a.at).slice(0, 300);
-    h.send(res, 200, { list, total: Object.keys(B()).length }); return true;
+    let deep = 0; try { deep = require('./kestoai.js').mem().deep; } catch (e) {}
+    h.send(res, 200, { list, total: Object.keys(B()).length, deep }); return true;
   }
   h.readBody(req, 20000, async body => {
     let j = {}; try { j = JSON.parse(body); } catch (e) {}
@@ -99,6 +100,7 @@ function handle(req, res, p, h) {
       const x = add(j.board, side, +j.from, +j.to, t.id); if (!x) return h.send(res, 400, { error: 'Noto‘g‘ri yurish' });
       store.save(); return h.send(res, 200, { ok: true, n: x.n, total: Object.keys(B()).length });
     }
+    if (p === '/api/kkbook/deepclear') { let n = 0; try { n = require('./kestoai.js').clearDeep(); } catch (e) {} return h.send(res, 200, { ok: true, n }); }
     if (p === '/api/kkbook/peek') {   // 🦍 King Kong ko'rinishi: [{board, side}] → har pozitsiyada uning yurishi va manbasi
       const K = require('./kestoai.js'), mv = x => x && x.from != null ? SQ(x.from) + '-' + SQ(x.to) : null;
       const out = (Array.isArray(j.list) ? j.list : []).slice(0, 200).map(x => {

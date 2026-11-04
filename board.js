@@ -507,7 +507,7 @@
       bx.innerHTML = 'Yuklanmoqda…';
       fetch('/api/kkbook', { headers: hd() }).then(function (r) { return r.json(); }).then(function (d) {
         if (d.error) { bx.textContent = d.error; return; }
-        var s = '<div style="display:flex;align-items:center;margin-bottom:8px"><b style="font-size:17px">🦍 O‘rgatilgan yurishlar (' + d.total + ')</b><span data-x style="margin-left:auto;font-size:22px;padding:2px 8px;cursor:pointer">✕</span></div>';
+        var s = '<div style="display:flex;align-items:center;margin-bottom:8px"><b style="font-size:17px">🦍 O‘rgatilgan yurishlar (' + d.total + ')</b>' + (d.deep != null ? '<span style="font-size:12px;opacity:.7;margin-left:8px">saboq: ' + d.deep + '</span>' : '') + '<span data-x style="margin-left:auto;font-size:22px;padding:2px 8px;cursor:pointer">✕</span></div>';
         if (!d.list.length) s += '<div style="opacity:.7">Hali hech narsa o‘rgatilmagan</div>';
         d.list.forEach(function (x) {
           s += '<div style="display:flex;align-items:center;gap:8px;padding:8px 2px;border-bottom:1px solid #1c2147"><div style="flex:1"><b>' + (x.s > 0 ? '⚪ ' : '⚫ ') + x.n + '</b><div style="font-size:12px;opacity:.7">' + new Date(x.at).toLocaleDateString('ru') + ' · ishlatildi ' + x.used + ' · KK: ' + x.w + 'G ' + x.d + 'D ' + x.l + 'M</div></div>' +
@@ -527,6 +527,11 @@
       auoff: function () { auStop('⏸ To‘xtatildi — istalgan yurishga qaytib, o‘zingiz davom ettirishingiz mumkin'); return 1; },
       aunew: function () { newPos(start(), 1); panel = 'auto'; AU.run = true; setTimeout(auStep, 30); },
       kkgame: function () { kkGame(); },
+      kkdeep: function () {
+        if (!confirm('King Kong yutqazgan o‘yinlardan olgan hamma «saboq»larni o‘chiramizmi?\n\nBu joylarda u yana odatdagidek (Colette, kitob, oddiy vaqt) o‘ynaydi. O‘zingiz o‘rgatgan yurishlar o‘chmaydi.')) return;
+        KK.msg = '⏳ Tozalanmoqda…';
+        kkPost('/api/kkbook/deepclear', {}).then(function (r) { KK.msg = '✅ ' + (r.n || 0) + ' ta saboq o‘chirildi'; KKP = {}; draw(); }).catch(function () { KK.msg = '⚠️ Server bilan aloqa yo‘q'; draw(); });
+      },
       kkall: function () { if (KK.pend) kkGameGo(KK.pend.body, []); },
       kkgood: function () { if (KK.pend) kkGameGo(KK.pend.body, KK.pend.bad.map(function (b) { return b.i; })); },
       kkno: function () { KK.pend = null; KK.msg = 'Bekor qilindi'; },
@@ -643,7 +648,7 @@
           s += '</div><div style="font-size:13px;opacity:.75;margin-bottom:4px">Yoki faqat oxirgi yurish:</div>';
           if (cur >= 1 && hist[cur].m) s += '<div style="font-size:14px;margin-bottom:8px">Oxirgi yurish: <b>' + note(hist[cur].m) + '</b> (' + (hist[cur - 1].t > 0 ? '⚪ oq' : '⚫ qora') + ')<br><span style="opacity:.7;font-size:12px">King Kong shu pozitsiyaga tushsa, aynan shu yurishni qiladi (Colette va kitobdan oldin).</span></div><button data-a="kkteach" style="' + sm + ';background:#b45309">🦍 Shu yurishni o‘rgatish</button>';
           else s += '<div style="font-size:14px;opacity:.8;margin-bottom:8px">Doskada kerakli yurishni qiling — keyin shu yerda uni King Kongga o‘rgatasiz.</div>';
-          s += '<div style="margin-top:6px"><button data-a="kkpdn" style="' + sm + '">📋 Partiyani kiritish</button><button data-a="kklist" style="' + sm + '">📚 O‘rgatilganlar</button><button data-a="menu" style="' + sm + '">Orqaga</button></div>';
+          s += '<div style="margin-top:6px"><button data-a="kkpdn" style="' + sm + '">📋 Partiyani kiritish</button><button data-a="kklist" style="' + sm + '">📚 O‘rgatilganlar</button><button data-a="kkdeep" style="' + sm + ';background:#5a2a35">🧹 Saboqlarni tozalash</button><button data-a="menu" style="' + sm + '">Orqaga</button></div>';
           if (KK.msg) s += '<div style="margin-top:8px;font-size:14px">' + KK.msg + '</div>';
         } else if (panel === 'auto') {
           s += '<div style="font-size:15px;font-weight:700;margin-bottom:4px">🤖 Kompyuter vs Kompyuter</div><div style="font-size:12px;opacity:.75;margin-bottom:8px">Dvigatel o‘zi bilan o‘ynaydi. Har yurish baholanadi — xatolar pastdagi ro‘yxatda ?!, ?, ?? bilan ajraladi.</div>' +

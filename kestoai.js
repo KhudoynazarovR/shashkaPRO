@@ -87,12 +87,15 @@ function remember(key, secs, r) {
 function learn(roomId) {
   const ks = ROOMK.get(String(roomId)); ROOMK.delete(String(roomId));
   if (!ks || !ks.length) return 0;
-  ks.forEach(k => { CACHE.delete(k); DEEP.add(k); });
+  const last = ks.slice(-LEARN_LAST);   // xato odatda yutqazishdan oldingi oxirgi yurishlarda — butun partiyani emas
+  last.forEach(k => { CACHE.delete(k); DEEP.add(k); });
   while (DEEP.size > 20000) DEEP.delete(DEEP.values().next().value);
   cDirty = true;
-  console.log('[KestoG] saboq olindi:', roomId, ks.length, 'pozitsiya');
-  return ks.length;
+  console.log('[KestoG] saboq olindi:', roomId, last.length, 'pozitsiya');
+  return last.length;
 }
+const LEARN_LAST = 10;
+function clearDeep() { const n = DEEP.size; DEEP.clear(); cDirty = true; return n; }   // 🧹 ustaxonadan: hamma saboqlarni o'chirish
 function track(roomId, key) {
   if (!roomId) return;
   const id = String(roomId).slice(0, 40); let a = ROOMK.get(id);
@@ -114,7 +117,7 @@ function move(j, cb) {
   if (j.kk) { try { const ab = require('./kkbook.js').get(b, side, j.room); if (ab) return cb({ from: ab.f, to: ab.t, jumps: 0, ev: null, ms: 0, book: 1, admin: 1 }); } catch (e) {} }   // 🦍 admin o'rgatgan yurish — birinchi
   try { const eb = require('./etudes.js').bookMove(b, side); if (eb) return cb({ from: eb.from, to: eb.to, jumps: 0, ev: null, ms: 0, book: 1, etude: 1 }); } catch (e) {}
   const bk = BOOK[b.join("") + side];
-  const cm = j.book && (secs >= 2 || j.tbAlways) && COLETTE[b.join("") + side] && !DEEP.has(b.join(",") + "|" + side);   // coletteBOT (2300) o'yin uslubi: u shu pozitsiyada qanday yurgan bo'lsa
+  const cm = j.book && (secs >= 2 || j.tbAlways) && COLETTE[b.join("") + side];   // coletteBOT (2300) o'yin uslubi — saboq (DEEP) uni chetga surmaydi
   if (cm) return cb({ from: cm[0], to: cm[1], jumps: 0, ev: null, ms: 0, book: 1, colette: 1 });
   if (bk && j.book) return cb({ from: bk.from, to: bk.to, jumps: 0, ev: null, ms: 0, book: 1 });
   const key = b.join(",") + "|" + side;
@@ -262,10 +265,10 @@ function peek(b, side) {
   if (tb) Object.assign(o, { src: 'tb', from: tb.from, to: tb.to, res: tb.res });
   else if (ad) Object.assign(o, { src: 'admin', from: ad.f, to: ad.t });
   else if (et) Object.assign(o, { src: 'etude', from: et.from, to: et.to });
-  else if (o.colette && !DEEP.has(key)) Object.assign(o, { src: 'colette' }, o.colette);
+  else if (o.colette) Object.assign(o, { src: 'colette' }, o.colette);
   else if (o.book) Object.assign(o, { src: 'book' }, o.book);
   else if (hit && hit.r && hit.r.from != null) Object.assign(o, { src: 'cache', from: hit.r.from, to: hit.r.to });
   if (DEEP.has(key)) o.deep = 1;
   return o;
 }
-module.exports = { peek, move, learn, ponder, review, ponderStat: () => PONDER, load: () => busy, mem: () => ({ cache: CACHE.size, deep: DEEP.size }) };
+module.exports = { peek, clearDeep, move, learn, ponder, review, ponderStat: () => PONDER, load: () => busy, mem: () => ({ cache: CACHE.size, deep: DEEP.size }) };
