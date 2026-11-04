@@ -90,7 +90,7 @@ function createRooms({ send, clients, onFinish }) {
   }
 
   // 🦍 King Kong har qanday vaqt nazoratida to'liq kuch bilan o'ynaydi: uning soati yurmaydi (faqat odamniki yuradi)
-  function kkFrozen(room, col) { return !!(room && room.vsBot && room.botCfg && room.botCfg.id === 'bot_kingkong' && col && col === botColorOf(room)); }
+  function kkFrozen(room, col) { return false; }   // King Kong soati endi yuradi
   function currentClock(room) {
     const c = { white: room.clock.white, black: room.clock.black };
     if (clockRunning(room) && !kkFrozen(room, room.turn)) {

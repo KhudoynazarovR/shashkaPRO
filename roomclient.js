@@ -1206,7 +1206,7 @@
       var lat = st.botLat || 0.5, fast = timed && rem < 90;
       var budget = rem / 28 + inc * 0.8;
       var secs = timed ? Math.max(0.05, Math.min(st.botSecs, budget - lat, rem / 5)) : Math.max(0.05, Math.min(st.botSecs, rem / 15));
-      if (isKK) secs = st.botSecs;
+      if (isKK && !timed) secs = st.botSecs;
       st.botFast = fast;
       if (legal.length === 1) {   // yagona yurish (majburiy urish) — o'ylab o'tirmaymiz
         var only = stepsOf(legal[0]); st.botNote = "🤖 majburiy yurish";
