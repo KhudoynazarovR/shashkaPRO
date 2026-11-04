@@ -70,6 +70,7 @@
       ["📁", "Arxiv", "O‘tgan o‘yinlar tarixi", "@arch", "#2fd27f,#1ea36a"],
       ["🔬", "Tahlil taxtasi", "KestoG bilan pozitsiya tahlili", "@board", "#3b82f6,#06b6d4"],
       ["🧩", "Masalalar", "Shashka masalalarini yeching", "@puz", "#f5873b,#f7c02d"],
+      ["🎓", "Endshpil maktabi", "Bazada tekshirilgan mashqlar — King Kongga qarshi", "@eg", "#0f766e,#22c55e"],
       ["📖", "Debyutlar", "Mashhur ochilishlar va yod olish", "@deb", "#0ea5e9,#6366f1"],
       ["🪙", "Tosh do‘koni", "Donalar va o‘z donangiz", "@shop", "#7b3ff2,#d62f8f"]]],
     ["ILOVA", [
@@ -160,6 +161,7 @@
   }, 2500);
   window.mnA = function (a) {
     if (a === "@prem") { close(); window.premGo(); return; }
+    if (a === "@eg") { close(); if (window.egOpen) window.egOpen(); else { var _eg = document.createElement("script"); _eg.src = "/egpanel.js?v=" + Date.now(); _eg.onload = function () { window.egOpen(); }; document.head.appendChild(_eg); } return; }
     if (a === "@reg") { close(); if (window.regOpen) window.regOpen(); else { var _rg = document.createElement("script"); _rg.src = "/regionpanel.js?v=" + Date.now(); _rg.onload = function () { window.regOpen(); }; document.head.appendChild(_rg); } return; }
     if (a === "@ref") { close(); window.refGo(); return; }
     if (a === "@gomoku") { close(); var _o = document.createElement("div"); _o.style.cssText = "position:fixed;inset:0;z-index:99999;background:#161512"; _o.innerHTML = "<iframe src='/gomoku.html' style='position:absolute;inset:0;width:100%;height:100%;border:0'></iframe><button style='position:absolute;top:8px;right:8px;z-index:2;width:40px;height:40px;border:0;border-radius:50%;background:#000a;color:#fff;font-size:20px'>✕</button>"; _o.querySelector("button").onclick = function () { _o.remove(); }; document.body.appendChild(_o); return; } if (a === "@set") { close(); if (window.spSettings) window.spSettings(); return; } if (a.indexOf("@ai:") === 0) { close(); if (window.aiShow) window.aiShow(a.slice(4)); return; }
