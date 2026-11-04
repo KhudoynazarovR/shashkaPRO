@@ -1,3 +1,4 @@
+try { require("./alert.js").install(); } catch (e) {}   // 🚨 xatolar adminga
 require("./bot.js");
 try { require("./premium.js"); require("./season.js"); require("./ach.js"); } catch (e) { console.log("[prem]", e.message); }   // 👑 eslatmalar va bir martalik sovg'a
 const http = require("http");
@@ -169,7 +170,7 @@ function leaveClient(c) {
 
 const BLOCKED = new Set([
   "quests.js", "leagues.js", "weblogin.js",
-  "server.js", "rooms.js", "mod.js", "ref.js", "premium.js", "gift.js", "region.js", "ach.js", "season.js", "cheat.js", "endgame.js", "corr.js", "gif.js", "economy.js", "store.js", "payments.js", "etudes.js", "pzrush.js", "pzbattle.js", "pztour.js", "draw-rules.js", "lobby.js", "users.json", "package.json", "package-lock.json"
+  "server.js", "rooms.js", "mod.js", "ref.js", "premium.js", "gift.js", "region.js", "ach.js", "season.js", "cheat.js", "endgame.js", "corr.js", "gif.js", "alert.js", "notify.js", "economy.js", "store.js", "payments.js", "etudes.js", "pzrush.js", "pzbattle.js", "pztour.js", "draw-rules.js", "lobby.js", "users.json", "package.json", "package-lock.json"
 ]);
 
 function serveFile(req, res) {
@@ -268,6 +269,12 @@ function serveFile(req, res) {
 }
 
 const server = http.createServer((req, res) => {
+  try { handleReq(req, res); } catch (e) {   // 🚨 bitta so'rovdagi xato butun serverni yiqitmasin
+    try { require("./alert.js").report(e, req.method + " " + String(req.url || "").split("?")[0].slice(0, 60)); } catch (er) {}
+    try { if (!res.headersSent) { res.writeHead(500, { "Content-Type": "application/json" }); } res.end('{"error":"server"}'); } catch (er) {}
+  }
+});
+function handleReq(req, res) {
   const url = new URL(req.url, "http://localhost");
 
   if (require("./payments.js").handle(req, res, url)) return;
@@ -322,7 +329,7 @@ const server = http.createServer((req, res) => {
   }
 
   serveFile(req, res);
-});
+}
 
 const wss = new WebSocketServer({ server });
 

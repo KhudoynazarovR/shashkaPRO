@@ -1459,6 +1459,7 @@ function createLobby({ send, clients, roomsApi }) {
       const url = appLink ? appLink + '?startapp=lbt_' + t.id : '';
       for (const p of t.players.values()) {
         if (p.withdrawn || !/^\d+$/.test(String(p.uid))) continue;
+        try { if (!require('./notify.js').allowed(p.uid, 'arena')) continue; } catch (e) {}
         const msg = { chat_id: Number(p.uid), text: '⏰ ' + title + '\n' + mins + ' daqiqadan keyin boshlanadi!\n⏱ ' + t.tc + (t.prize ? ' · 💰 ' + t.prize : '') + ' · 👥 ' + t.players.size + '\nTayyor turing 💪' };
         if (url) msg.reply_markup = { inline_keyboard: [[{ text: '▶ Turnirga kirish', url }]] };
         tgCall('sendMessage', msg).catch(() => {});
@@ -1490,6 +1491,7 @@ function createLobby({ send, clients, roomsApi }) {
     const appLink = (process.env.TG_APP_LINK || process.env.APP_LINK || '').replace(/\/$/, '');
     const fans = Object.keys(st.db.dailyFans || {}).filter(u => now - st.db.dailyFans[u] < 14 * 86400e3);
     fans.forEach((u, i) => setTimeout(() => {
+      try { if (!require('./notify.js').allowed(u, 'arena')) return; } catch (e) {}
       const msg = { chat_id: Number(u), parse_mode: 'HTML', text: '🌙 <b>Bugun soat 20:00 da — Kunlik arena!</b>\n\n⏱ 3+2 · 30 daqiqa\n💰 Sovrin fondi: <b>' + DAILY.prize + ' 🪙</b>\n🥇 G‘olibga qo‘shimcha <b>7 kunlik 👑 Premium</b>\n\nOldindan ro‘yxatdan o‘ting 👇' };
       if (appLink) msg.reply_markup = { inline_keyboard: [[{ text: '⚔️ Arenaga yozilish', url: appLink + '?startapp=lbt_' + t.id }]] };
       tgCall('sendMessage', msg).catch(() => {});

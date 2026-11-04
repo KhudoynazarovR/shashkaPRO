@@ -10,6 +10,7 @@ let ROOMS = null;
 
 function tg(method, params) {
   const T = process.env.BOT_TOKEN; if (!T) return Promise.resolve(null);
+  if (params && params._cat) { try { if (!require('./notify.js').decorate(params)) return Promise.resolve(null); } catch (e) { delete params._cat; } }   // 🔔 xabar turlari
   return fetch('https://api.telegram.org/bot' + T + '/' + method, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(params) }).then(r => r.json()).catch(() => null);
 }
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])); }

@@ -1,5 +1,24 @@
 ;(function () {
   if (window.spSettings) return;
+  window.spNotify = function () {   // 🔔 bot xabarlari turlari
+    var tw = window.Telegram && Telegram.WebApp, id = (tw && tw.initData) || "";
+    var ov = document.createElement("div"); ov.style.cssText = "position:fixed;inset:0;z-index:100002;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center";
+    ov.onclick = function (e) { if (e.target === ov) ov.remove(); };
+    var bx = document.createElement("div"); bx.style.cssText = "width:100%;max-width:520px;background:#141040;color:#fff;border-radius:20px 20px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom));box-sizing:border-box;font-family:system-ui,sans-serif";
+    ov.appendChild(bx); document.body.appendChild(ov);
+    function draw(d) {
+      if (!d || d.error) { bx.innerHTML = "<div style='padding:20px;text-align:center'>Faqat Telegram orqali kirganda ishlaydi</div>"; return; }
+      var h = "<div style='display:flex;align-items:center;margin-bottom:6px'><b style='font-size:20px'>🔔 Bot xabarlari</b><span data-x style='margin-left:auto;font-size:24px;padding:4px 8px;cursor:pointer'>✕</span></div><div style='font-size:13px;opacity:.7;margin-bottom:8px'>To‘lov va xarid tasdiqlari har doim keladi.</div>";
+      d.cats.forEach(function (c) { h += "<label style='display:flex;align-items:center;gap:12px;padding:13px 2px;border-bottom:1px solid #26305a;cursor:pointer'><span style='flex:1;font-size:15px'>" + c.n + "</span><input type='checkbox' data-k='" + c.k + "'" + (c.on ? " checked" : "") + " style='width:24px;height:24px'></label>"; });
+      bx.innerHTML = h;
+      bx.querySelector("[data-x]").onclick = function () { ov.remove(); };
+      [].forEach.call(bx.querySelectorAll("[data-k]"), function (inp) {
+        inp.onchange = function () { fetch("/api/notify", { method: "POST", headers: { "Content-Type": "application/json", "x-init-data": id }, body: JSON.stringify({ cat: inp.getAttribute("data-k"), on: inp.checked }) }).then(function (r) { return r.json(); }).then(draw); };
+      });
+    }
+    bx.innerHTML = "<div style='padding:20px;opacity:.7;text-align:center'>Yuklanmoqda…</div>";
+    fetch("/api/notify", { headers: { "x-init-data": id } }).then(function (r) { return r.json(); }).then(draw).catch(function () { draw(null); });
+  };
   window.spSettings = function () {
     var old = document.getElementById("spSetSheet"); if (old) old.remove();
     var ov = document.createElement("div"); ov.id = "spSetSheet";
@@ -9,6 +28,7 @@
       ["🔊", "Ovoz", "Ovoz balandligi, yurish va olish ovozlari", function () { if (window.SPSound && SPSound.openSettings) SPSound.openSettings(); }],
       ["🎤", "Ovozli boshqaruv", (function () { var off = false; try { off = localStorage.getItem("spMicOff") !== "0"; } catch (e) {} return !(window.spVoice && window.spVoice.supported()) ? "Bu brauzerda ishlamaydi (Chrome yoki ilovada ishlaydi)" : off ? "O‘chirilgan — yoqish uchun bosing" : "Yoqilgan — o‘chirish uchun bosing"; })(), function () { try { localStorage.setItem("spMicOff", localStorage.getItem("spMicOff") === "0" ? "1" : "0"); } catch (e) {} }],
       ["🎨", "Fon", "Kunduzgi, kechki va boshqa fonlar", function () { if (window.spBgPicker) window.spBgPicker(); }],
+      ["🔔", "Bot xabarlari", "Qaysi xabarlar kelishini tanlang", function () { window.spNotify(); }],
       ["🤖", "AI o‘yin sozlamalari", "Doska, vaqt va AI bilan o‘yin sozlamalari", function () { if (window.aiShow) window.aiShow("set"); }]
     ];
     if (window.hzIsAdmin && window.hzIsAdmin()) R.push(["🛠", "Bosh sahifani tahrirlash", "Admin: tugmalar tartibi va ko‘rinishi", function () { var b = document.querySelector('#nvBar button[data-k="pl"]'); if (b) b.click(); setTimeout(function () { if (window.hzEdit) window.hzEdit(); }, 300); }]);

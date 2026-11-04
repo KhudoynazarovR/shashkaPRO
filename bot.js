@@ -157,6 +157,11 @@ async function onMessage(msg) {
     await api("sendMessage", { chat_id: msg.chat.id, text: "✅ Xabaringiz adminlarga yuborildi. Tez orada javob beriladi." });
     return;
   }
+  if (name === "/xatolar") {   // faqat admin: oxirgi server xatolari
+    if (!(process.env.ADMIN_IDS || "").split(",").map(s => s.trim()).includes(String(msg.from.id))) return;
+    await api("sendMessage", { chat_id: msg.chat.id, text: require("./alert.js").list(), parse_mode: "HTML" });
+    return;
+  }
   if (name === "/refund") {   // faqat admin: /refund <uid> <charge_id>
     if (!(process.env.ADMIN_IDS || "").split(",").map(s => s.trim()).includes(String(msg.from.id))) return;
     const a = text.split(/\s+/);
@@ -253,6 +258,7 @@ async function start() {
     } catch (e) { console.log('[bot] my_chat_member xato:', e.message); }
   }
   async function onCallback(q) {
+    try { if (q.data && q.data.indexOf('nf:') === 0 && await require('./notify.js').onCallback(q)) return; } catch (e) { console.log('[nf]', e.message); }
     try { if (q.data && q.data.indexOf('md:') === 0 && await require('./mod.js').onCallback(q)) return; } catch (e) { console.log('[mod]', e.message); }
     try { if (q.data && q.data.indexOf('g:') === 0 && await require('./grp.js').onCallback(q)) return; } catch (e) { console.log('[grp]', e.message); }
     if (q.data && (q.data.indexOf('lg:') === 0 || q.data.indexOf('lgno:') === 0)) {

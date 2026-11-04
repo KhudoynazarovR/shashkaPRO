@@ -33,7 +33,7 @@ function tick() {
     u.titles = u.titles || [];
     u.titles.push({ t: (i === 0 ? '🏆 ' + title + ' chempioni' : (i < 3 ? ['', '🥈', '🥉'][i] : '🎖') + ' ' + title + ' TOP-' + (i < 3 ? i + 1 : 10)), m: old });
     if (u.titles.length > 12) u.titles.shift();
-    setTimeout(() => tg('sendMessage', { chat_id: x.uid, parse_mode: 'HTML', text: (i === 0 ? '🏆' : i === 1 ? '🥈' : i === 2 ? '🥉' : '🎖') + ' <b>' + title + ' mavsumi yakunlandi!</b>\n\nSiz reytingda <b>' + (i + 1) + '-o‘rin</b>ni egalladingiz (ELO ' + x.elo + ').\n\nMukofot: <b>+' + c + ' 🪙</b>' + (d ? ' va <b>' + d + ' kunlik 👑 Premium</b>' : '') + '\nProfilingizga belgi qo‘shildi 🎉' }), i * 150);
+    setTimeout(() => tg('sendMessage', { _cat: 'ach', chat_id: x.uid, parse_mode: 'HTML', text: (i === 0 ? '🏆' : i === 1 ? '🥈' : i === 2 ? '🥉' : '🎖') + ' <b>' + title + ' mavsumi yakunlandi!</b>\n\nSiz reytingda <b>' + (i + 1) + '-o‘rin</b>ni egalladingiz (ELO ' + x.elo + ').\n\nMukofot: <b>+' + c + ' 🪙</b>' + (d ? ' va <b>' + d + ' kunlik 👑 Premium</b>' : '') + '\nProfilingizga belgi qo‘shildi 🎉' }), i * 150);
   });
   store.save();
   console.log('[season]', old, 'yakunlandi, TOP:', top.length);

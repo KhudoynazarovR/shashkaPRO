@@ -9,7 +9,7 @@ const users = () => store.users();
 const month = () => new Date(Date.now() + 5 * 3600e3).toISOString().slice(0, 7);
 const MN = ['', 'yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avgust', 'sentabr', 'oktabr', 'noyabr', 'dekabr'];
 function tg(method, params) { try { return require('./gcard.js').tg(method, params); } catch (e) { return Promise.resolve(null); } }
-const dm = (uid, text) => /^\d+$/.test(String(uid)) && tg('sendMessage', { chat_id: String(uid), text, parse_mode: 'HTML' });
+const dm = (uid, text) => /^\d+$/.test(String(uid)) && tg('sendMessage', { _cat: 'ach', chat_id: String(uid), text, parse_mode: 'HTML' });
 
 function mon() {
   const db = store.db, m = month();

@@ -11,7 +11,7 @@ const GRP_MAX = 1000;
 const users = () => store.users();
 const nm = u => String((u && u.name) || 'O‘yinchi').slice(0, 20);
 function tg(method, params) { try { return require('./gcard.js').tg(method, params); } catch (e) { return Promise.resolve(null); } }
-const dm = (uid, text) => /^\d+$/.test(String(uid)) && tg('sendMessage', { chat_id: String(uid), text });
+const dm = (uid, text) => /^\d+$/.test(String(uid)) && tg('sendMessage', { _cat: 'ach', chat_id: String(uid), text });
 const add = (uid, n, why) => require('./economy.js').add(uid, n, why);
 const month = (t) => new Date((t || Date.now()) + 5 * 3600e3).toISOString().slice(0, 7);   // Toshkent vaqti
 

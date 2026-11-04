@@ -61,7 +61,7 @@ function sync(uid, opts) {
     store.save();
     if (!first && !(opts && opts.quiet)) {
       const sum = fresh.reduce((s, x) => s + x.coins, 0);
-      tg('sendMessage', { chat_id: String(uid), parse_mode: 'HTML', text: '🏅 <b>Yangi yutuq' + (fresh.length > 1 ? 'lar' : '') + '!</b>\n\n' + fresh.map(x => x.ic + ' <b>' + x.name + '</b> — +' + x.coins + ' 🪙').join('\n') + (fresh.length > 1 ? '\n\nJami: +' + sum + ' 🪙' : '') });
+      tg('sendMessage', { _cat: 'ach', chat_id: String(uid), parse_mode: 'HTML', text: '🏅 <b>Yangi yutuq' + (fresh.length > 1 ? 'lar' : '') + '!</b>\n\n' + fresh.map(x => x.ic + ' <b>' + x.name + '</b> — +' + x.coins + ' 🪙').join('\n') + (fresh.length > 1 ? '\n\nJami: +' + sum + ' 🪙' : '') });
     }
   }
   return fresh;

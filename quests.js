@@ -191,7 +191,7 @@ function notifyTick(hh) {
   if (process.env.NOTIFY_OFF === '1' || !process.env.BOT_TOKEN || !process.env.TG_APP_LINK || !store) return;
   const h = hh == null ? tzHour() : hh, today = dayKey(), now = Date.now(), y = prevDay(today), out = [];
   for (const [uid, u] of Object.entries(users())) {
-    if (!/^\d+$/.test(uid) || u.ntfOff || u.ntfOn === false) continue;
+    if (!/^\d+$/.test(uid) || u.ntfOff || u.ntfOn === false || (u.nf && u.nf.promo === false)) continue;
     const n = u.ntf = u.ntf || {};
     if (n.d === today) continue;
     const s = u.strk;

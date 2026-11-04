@@ -13,7 +13,7 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>]/g, c => ({ '&': '&amp
 const hex = n => require('crypto').randomBytes(n).toString('hex');
 function tg(method, params) { try { return require('./gcard.js').tg(method, params); } catch (e) { return Promise.resolve(null); } }
 const appLink = () => (process.env.TG_APP_LINK || process.env.APP_LINK || 'https://t.me/DraughtsPRObot/play').replace(/\/$/, '');
-const dm = (uid, text, gid) => /^\d+$/.test(String(uid)) && tg('sendMessage', { chat_id: String(uid), text, parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '♟ O‘yinni ochish', url: appLink() + '?startapp=corr_' + (gid || '') }]] } });
+const dm = (uid, text, gid) => /^\d+$/.test(String(uid)) && tg('sendMessage', { _cat: 'game', chat_id: String(uid), text, parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '♟ O‘yinni ochish', url: appLink() + '?startapp=corr_' + (gid || '') }]] } });
 const left = ms => { const h = Math.max(0, Math.floor(ms / 3600e3)), m = Math.max(0, Math.floor(ms % 3600e3 / 60000)); return h >= 1 ? h + ' soat' : m + ' daqiqa'; };
 const init = () => { const b = Array(64).fill(0); for (let i = 0; i < 64; i++) { const r = i >> 3, c = i & 7; if ((r + c) % 2 !== 1) continue; if (r < 3) b[i] = -1; if (r > 4) b[i] = 1; } return b; };
 const active = uid => Object.values(db().g).filter(g => !g.res && (g.w === uid || g.b === uid)).length;

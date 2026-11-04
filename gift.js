@@ -11,7 +11,7 @@ const fee = n => Math.max(FEE_MIN, Math.ceil(n * FEE_PCT));
 const dayKey = () => new Date(Date.now() + 5 * 3600e3).toISOString().slice(0, 10);
 function tg(method, params) { try { return require('./gcard.js').tg(method, params); } catch (e) { return Promise.resolve(null); } }
 const appLink = () => (process.env.TG_APP_LINK || process.env.APP_LINK || 'https://t.me/DraughtsPRObot/play').replace(/\/$/, '');
-const dm = (uid, text) => /^\d+$/.test(String(uid)) && tg('sendMessage', { chat_id: String(uid), text, parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '🎮 Ilovani ochish', url: appLink() }]] } });
+const dm = (uid, text) => /^\d+$/.test(String(uid)) && tg('sendMessage', { _cat: 'game', chat_id: String(uid), text, parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '🎮 Ilovani ochish', url: appLink() }]] } });
 
 function check(me, to) {
   const us = users(), a = us[me], b = us[to];

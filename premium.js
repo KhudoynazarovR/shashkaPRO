@@ -14,6 +14,7 @@ const users = () => store.users();
 const isPrem = u => !!(u && u.premiumUntil > Date.now());
 function tg(method, params) {
   const T = process.env.BOT_TOKEN; if (!T) return Promise.resolve(null);
+  if (params && params._cat) { try { if (!require('./notify.js').decorate(params)) return Promise.resolve(null); } catch (e) { delete params._cat; } }   // 🔔 xabar turlari
   return fetch('https://api.telegram.org/bot' + T + '/' + method, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(params) }).then(r => r.json()).catch(() => null);
 }
 const ADM = () => (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean);
@@ -72,7 +73,7 @@ function onPaid(msg, x) {   // payments.js dan, to'lov tekshirilgandan keyin
 const TRIAL_DAYS = 7;
 const appLink = () => (process.env.TG_APP_LINK || process.env.APP_LINK || 'https://t.me/DraughtsPRObot/play').replace(/\/$/, '');
 const kb = (bt, sp) => ({ inline_keyboard: [[{ text: bt || '👑 Faollashtirish', url: appLink() + '?startapp=' + (sp || 'prem') }]] });
-const dmK = (uid, text, bt, sp) => /^\d+$/.test(String(uid)) && tg('sendMessage', { chat_id: String(uid), text, parse_mode: 'HTML', link_preview_options: { is_disabled: true }, reply_markup: kb(bt, sp) });
+const dmK = (uid, text, bt, sp) => /^\d+$/.test(String(uid)) && tg('sendMessage', { _cat: 'prem', chat_id: String(uid), text, parse_mode: 'HTML', link_preview_options: { is_disabled: true }, reply_markup: kb(bt, sp) });
 // 📩 xabar matnlari (HTML)
 const PERKS_TXT = '👑 Toj va oltin ism\n🤖 Legend, Monster, Terminator, King Kong\n🪙 G‘alabadan 2× tanga\n🔥 Kunlik bonus 2×\n🖼 Profil rasmi\n🏆 Turnirga kirish −50%';
 const bar = n => '▰'.repeat(Math.max(0, Math.min(7, n))) + '▱'.repeat(7 - Math.max(0, Math.min(7, n)));
