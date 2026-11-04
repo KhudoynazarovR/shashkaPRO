@@ -3,7 +3,7 @@
 // G'alaba +3, durang +1 (o'z viloyati hisobiga). Oy oxirida: g'olib viloyatning ≥10 ochko yig'gan o'yinchilariga 300 🪙,
 // har bir viloyatning eng faol o'yinchisiga (viloyat qahramoni) — g'olib viloyatda 7 kunlik 👑 Premium.
 const store = require('./store.js');
-const REGIONS = ['Toshkent sh.', 'Toshkent vil.', 'Andijon', 'Farg‘ona', 'Namangan', 'Samarqand', 'Buxoro', 'Navoiy', 'Qashqadaryo', 'Surxondaryo', 'Jizzax', 'Sirdaryo', 'Xorazm', 'Qoraqalpog‘iston', 'Chet el'];
+const REGIONS = ['Toshkent', 'Andijon', 'Farg‘ona', 'Namangan', 'Samarqand', 'Buxoro', 'Navoiy', 'Qashqadaryo', 'Surxondaryo', 'Jizzax', 'Sirdaryo', 'Xorazm', 'Qoraqalpog‘iston', 'Chet el'];
 const WIN = 3, DRAW = 1, MIN_PTS = 10, REWARD = 300, CHANGE_DAYS = 30;
 const users = () => store.users();
 const month = () => new Date(Date.now() + 5 * 3600e3).toISOString().slice(0, 7);
