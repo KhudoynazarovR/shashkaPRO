@@ -90,9 +90,9 @@
     var pz = S && S.pz, q0 = S && S.quests && S.quests[0], solved = pz && pz.done;
     var h = '<div class="ban">' + board(pz) + '<div class="gt"><small class="hi">Salom' + (nm ? ', ' + esc(nm) : '') + '! 👋</small><b>📗 Kunning masalalari</b>';
     if (!S) h += '<small>⏳ Yuklanmoqda…</small>';
-    else if (!pz) h += '<small>Petrova papkasi topilmadi</small>';
+    else if (!pz) h += '<small>Kunlik masalalar papkasi topilmadi</small>';
     else {
-      h += '<small class="mt">Petrova · №' + pz.no + ' · ' + (pz.side === 'b' ? '⚫ Qoralar' : '⚪ Oqlar') + ' yuradi</small>';
+      h += '<small class="mt">' + esc(pz.folder || 'Petrova') + ' · №' + pz.no + ' · ' + (pz.side === 'b' ? '⚫ Qoralar' : '⚪ Oqlar') + ' yuradi</small>';
       h += solved ? '<button class="pzb dn" disabled>✅ Bugungi ' + pz.set.length + ' ta yechildi</button>' : '<button class="pzb" id="dqPz">▶ Yechish · ' + pz.setDone + '/' + pz.set.length + '</button>';
       h += '<small class="mt">Bugun ' + (pz.set ? pz.set.length : 5) + ' ta masala · +' + (q0 ? q0.r : 50) + ' 🪙 · kitobdan ' + pz.solvedN + '/' + pz.total + '</small>';
     }
@@ -142,7 +142,7 @@
   function goTo(q) {
     hide();
     var t = q.t;
-    if (/Petrova/.test(t) && S && S.pz && window.spPuzzleDaily) { if (!S.pz.done) window.spPuzzleDaily(S.pz.set, S.pz.id); return; }
+    if ((q.k === 'petrova' || /Petrova/.test(t)) && S && S.pz && window.spPuzzleDaily) { if (!S.pz.done) window.spPuzzleDaily(S.pz.set, S.pz.id); return; }
     if (/masala|Rush|jang/i.test(t)) { if (window.mnA) window.mnA('@puz'); return; }
     if (/Bot/i.test(t)) { var b = document.getElementById('nvBotRow'); if (b) { b.click(); return; } }
     if (/ulash/i.test(t)) { try { tg.showAlert('O‘yin, Rush, masala jangi yoki turnirdan keyin “📸 Ulashish” tugmasini bosing'); } catch (e) {} return; }

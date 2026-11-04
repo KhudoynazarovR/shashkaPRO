@@ -19,7 +19,8 @@ module.exports = function (store) {
   data.forEach((d, i) => {
     const board = toBoard(d[3]), k = JSON.stringify(board) + 'w'; if (seen.has(k)) return; seen.add(k);
     const folder = d[2] === 'd' ? F.d : F[d[1]] || F[2], sol = toSol(d[4]);
-    arr.push({ id: 'dk' + d[0].toString(36), no: (no[folder] = (no[folder] || 0) + 1), title: (d[2] === 'd' ? '🤝 Durang · ' : '') + 'Damki #' + d[0] + (d[5] ? ' · ' + d[5] : ''),
+    no[folder] = (no[folder] || 0) + 1;
+    arr.push({ id: 'dk' + d[0].toString(36), no: no[folder], title: 'Damki ' + no[folder],
       level: d[1], side: 'w', board, sol, sols: [sol], at: t0 + i, folder, src: '64.damki.net', author: d[5] || '', goal: d[2] === 'd' ? 'draw' : 'win' });
     add++;
   });

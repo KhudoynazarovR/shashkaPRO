@@ -118,7 +118,7 @@ function pzRenum(arr, folder, level) {
   sib.forEach((x, i) => {
     const n = i + 1;
     if (x.no !== n) { x.no = n; ch++; }
-    const m = /^(.*\S)\s+\d+$/.exec(String(x.title || ''));
+    const m = /^(.*\S)\s+\d+$/.exec(String(x.title || '')) || /^(.*?\S)\s*#\d+(?:\s*·.*)?$/.exec(String(x.title || ''));   // "Masala 12" yoki "Damki #326 · muallif"
     if (m && x.title !== m[1] + ' ' + n) { x.title = m[1] + ' ' + n; ch++; }
   });
   return ch;
@@ -497,15 +497,18 @@ function handle(req, res, url) {
     if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
     store.db.puzzles = store.db.puzzles || []; try { require('./pzimport.js')(store); require('./pzimport2.js')(store); require('./pzimport3.js')(store); require('./pzimport4.js')(store); require('./pzimport5.js')(store); require('./pzimport6.js')(store); try { if (!store.db.pzTitleNumV1) { const _a = store.db.puzzles || [], _fs = new Set(); _a.forEach(x => { const t = String(x.title || '').trim(); if (t && !/\d$/.test(t) && x.no) { x.title = t + ' ' + x.no; _fs.add(x.folder || ''); } }); _fs.forEach(f => { if (f) pzRenum(_a, f, 1); }); store.db.pzTitleNumV1 = 1; if (_fs.size) store.db.pzVer = (store.db.pzVer || 0) + 1; store.save(); console.log('[pz] raqamsiz nomlar tuzatildi, papkalar:', _fs.size); } } catch (e) { console.log('[pz] raqam', e.message); } require('./pzfix.js')(store); require('./pzrenum.js')(store); } catch (e) { console.log('[Import] xato', e.message); }
     { let _mx = 0, _ch = false; const _a = store.db.puzzles; _a.forEach(x => { if (x.no) _mx = Math.max(_mx, x.no); }); _a.forEach(x => { if (!x.no) { x.no = ++_mx; _ch = true; } if (x.title === 'Masala') { x.title = 'Masala ' + x.no; _ch = true; } }); if (_ch) store.save(); } if (!store.db.pzNoV2) { const _c = {}; store.db.puzzles.slice().sort((p, q) => (p.at || 0) - (q.at || 0)).forEach(x => { const k = x.folder || ''; _c[k] = (_c[k] || 0) + 1; if (/^Masala \d+$/.test(x.title)) x.title = 'Masala ' + _c[k]; x.no = _c[k]; }); store.db.pzNoV2 = 1; store.save(); }
+    if (!store.db.pzRenumV4) { try {   // "Damki #326 · muallif" → "Damki 1" (muallif alohida), keyin hamma papka 1, 2, 3…
+      let _m4 = 0; (store.db.puzzles || []).forEach(x => { const t = String(x.title || ''), h = /^(?:🤝 Durang · )?(.*?\S)\s*#\d+(?:\s*·\s*(.+))?$/.exec(t); if (!h) return; if (h[2] && !x.author) x.author = h[2].trim().slice(0, 40); x.title = h[1] + ' ' + (x.no || 1); _m4++; });
+      const _rc4 = pzRenumAll(store.db.puzzles, store.db.pzFolders); store.db.pzRenumV4 = 1; store.db.pzVer = (store.db.pzVer || 0) + 1; store.save(); console.log('[pz] nomlar raqamlandi:', _m4, '·', _rc4); } catch (e) { console.log('[pz] renum4', e.message); } }
     if (!store.db.pzRenumV3) { try { const _rc = pzRenumAll(store.db.puzzles, store.db.pzFolders); store.db.pzRenumV3 = 1; if (_rc) store.db.pzVer = (store.db.pzVer || 0) + 1; store.save(); console.log('[pz] barcha papkalar qayta raqamlandi:', _rc); } catch (e) { console.log('[pz] renum', e.message); } }
     const _u = store.users()[String(_tg.id)] || {};
     const _adm = (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(_tg.id));
     let _etF = [], _etL = [], _etN = {}, _etP = {}; try { const _E = require('./etudes.js'); _etL = _E.puzzleList(); _etF = _E.FOLDERS.filter(f => _etL.some(x => x.folder === f)); _etN = _E.ETF; _etP = _E.ETP; } catch (e) {}
     const _fo = (store.db.pzFolders || []).slice(); { const _ki = _fo.indexOf('Kombinatsiyalar'); _fo.splice(_ki >= 0 ? _ki + 1 : 0, 0, ..._etF); }
-    send(res, 200, { etf: _etN, etp: _etP, folders: _fo, settings: store.db.pzSettings || {}, hideLv: store.db.pzHideLv || [], best: _u.pzBest || {}, inv: _u.pzInv || null, ranks: require('./pzranks.js').RANKS, topInv: (function () { const m = require('./pzranks.js'); m.watch(store); return m.top(store); })(), promo: Date.parse(process.env.PZ_PROMO_END || '2026-10-25T23:59:59+05:00'), admin: _adm, link: process.env.TG_APP_LINK || '', myId: String(_tg.id), solved: _u.solved || [], heroAv: _u.pzHero || '', list: (() => { const _c = {}; Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { _c[i] = (_c[i] || 0) + 1; })); return store.db.puzzles.slice().sort((x, y) => (x.no || 0) - (y.no || 0)).map(x => Object.assign({}, x, { cnt: _c[x.id] || 0 })); })(), etl: (() => { const _c = {}; Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { if (i[0] === 'e') _c[i] = (_c[i] || 0) + 1; })); return _etL.map(x => [x.id.slice(2), x.no, x.level, x.b32, x.t, _c[x.id] || 0]); })() });
+    send(res, 200, { etf: _etN, etp: _etP, folders: _fo, settings: store.db.pzSettings || {}, dayFolder: (function () { try { return require('./quests.js').dayFolder(); } catch (e) { return ''; } })(), hideLv: store.db.pzHideLv || [], best: _u.pzBest || {}, inv: _u.pzInv || null, ranks: require('./pzranks.js').RANKS, topInv: (function () { const m = require('./pzranks.js'); m.watch(store); return m.top(store); })(), promo: Date.parse(process.env.PZ_PROMO_END || '2026-10-25T23:59:59+05:00'), admin: _adm, link: process.env.TG_APP_LINK || '', myId: String(_tg.id), solved: _u.solved || [], heroAv: _u.pzHero || '', list: (() => { const _c = {}; Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { _c[i] = (_c[i] || 0) + 1; })); return store.db.puzzles.slice().sort((x, y) => (x.no || 0) - (y.no || 0)).map(x => Object.assign({}, x, { cnt: _c[x.id] || 0 })); })(), etl: (() => { const _c = {}; Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { if (i[0] === 'e') _c[i] = (_c[i] || 0) + 1; })); return _etL.map(x => [x.id.slice(2), x.no, x.level, x.b32, x.t, _c[x.id] || 0]); })() });
     return true;
   }
-  if ((p === '/api/puzzle' || p === '/api/puzzle/del' || p === '/api/puzzle/solved' || p === '/api/puzzle/rename' || p === '/api/puzzle/folder' || p === '/api/puzzle/move' || p === '/api/puzzle/settings' || p === '/api/puzzle/order' || p === '/api/puzzle/edit' || p === '/api/puzzle/renum' || p === '/api/puzzle/merge') && req.method === 'POST') {
+  if ((p === '/api/puzzle' || p === '/api/puzzle/del' || p === '/api/puzzle/solved' || p === '/api/puzzle/rename' || p === '/api/puzzle/folder' || p === '/api/puzzle/move' || p === '/api/puzzle/settings' || p === '/api/puzzle/order' || p === '/api/puzzle/edit' || p === '/api/puzzle/renum' || p === '/api/puzzle/merge' || p === '/api/puzzle/dayfolder') && req.method === 'POST') {
     const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
     readBody(req, 100000, body => {
@@ -518,14 +521,20 @@ function handle(req, res, url) {
         const u = store.getOrCreate(_tg);
         u.solved = u.solved || [];
         let gain = 0;
-        if (u.solved.includes(pz.id)) { try { if (/^Petrova/.test(pz.folder || '')) require('./quests.js').bump(_tg.id, 'petrova', 1, pz.id); } catch (e) {} }
+        if (u.solved.includes(pz.id)) { try { if (require('./quests.js').isDay(pz)) require('./quests.js').bump(_tg.id, 'petrova', 1, pz.id); } catch (e) {} }
         if (!u.solved.includes(pz.id)) { const _fast = Date.now() - (u.lastSolve || 0) < 3000; u.lastSolve = Date.now();
           try { const _rf = String(j.ref || ''); if (/^\d{3,15}$/.test(_rf) && _rf !== String(_tg.id) && !u.pzRef && !(u.solved || []).length && Date.now() <= Date.parse(process.env.PZ_PROMO_END || '2026-10-25T23:59:59+05:00')) { const _iv = store.users()[_rf]; if (_iv) { const _day = new Date().toISOString().slice(0, 10); _iv.pzInv = _iv.pzInv || { d: '', n: 0, total: 0 }; if (_iv.pzInv.d !== _day) { _iv.pzInv.d = _day; _iv.pzInv.n = 0; } if (_iv.pzInv.n < 30) { u.pzRef = _rf; _iv.pzInv.n++; _iv.pzInv.total++; _iv.diamonds = (_iv.diamonds || 0) + 100; try { require('./pzranks.js').onInvite(_iv, _rf); } catch (e) {} if (process.env.BOT_TOKEN) fetch('https://api.telegram.org/bot' + process.env.BOT_TOKEN + '/sendMessage', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ chat_id: _rf, text: '🎉 ' + (u.name || 'Yangi o‘yinchi') + ' havolangiz orqali masala yechdi! +100 🪙' }) }).catch(() => {}); } } } } catch (e) {}
-          u.solved.push(pz.id); try { const _q = require('./quests.js'); _q.bump(_tg.id, 'puzzle'); if (/^Petrova/.test(pz.folder || '')) _q.bump(_tg.id, 'petrova', 1, pz.id); } catch (e) {} gain = _fast ? 0 : 5; try { gain += require('./pzranks.js').folderBonus(store, u, pz, _tg.id); } catch (e) {} u.diamonds = (u.diamonds || 0) + gain; pz.sv = (pz.sv || []).concat([u.name || 'Foydalanuvchi']).slice(-200); try { const _dk = new Date(Date.now() + 5 * 3600e3).toISOString().slice(0, 10); if (!store.db.pzDay || store.db.pzDay.d !== _dk) store.db.pzDay = { d: _dk, c: {} }; const _us = store.users(), _uk = Object.keys(_us).find(k => _us[k] === u); if (_uk) store.db.pzDay.c[_uk] = (store.db.pzDay.c[_uk] || 0) + 1; } catch (e) {} store.save(); try { require('./grpupd.js')(pz, () => Object.values(store.users()).filter(v => (v.solved || []).includes(pz.id)).length); } catch (e) {} }
+          u.solved.push(pz.id); try { const _q = require('./quests.js'); _q.bump(_tg.id, 'puzzle'); if (require('./quests.js').isDay(pz)) _q.bump(_tg.id, 'petrova', 1, pz.id); } catch (e) {} gain = _fast ? 0 : 5; try { gain += require('./pzranks.js').folderBonus(store, u, pz, _tg.id); } catch (e) {} u.diamonds = (u.diamonds || 0) + gain; pz.sv = (pz.sv || []).concat([u.name || 'Foydalanuvchi']).slice(-200); try { const _dk = new Date(Date.now() + 5 * 3600e3).toISOString().slice(0, 10); if (!store.db.pzDay || store.db.pzDay.d !== _dk) store.db.pzDay = { d: _dk, c: {} }; const _us = store.users(), _uk = Object.keys(_us).find(k => _us[k] === u); if (_uk) store.db.pzDay.c[_uk] = (store.db.pzDay.c[_uk] || 0) + 1; } catch (e) {} store.save(); try { require('./grpupd.js')(pz, () => Object.values(store.users()).filter(v => (v.solved || []).includes(pz.id)).length); } catch (e) {} }
         const _tm = Math.round(Number(j.time)); if (_tm > 0 && _tm < 36000) { u.pzBest = u.pzBest || {}; if (!u.pzBest[pz.id] || _tm < u.pzBest[pz.id]) { u.pzBest[pz.id] = _tm; store.save(); } } return send(res, 200, { ok: true, gain, best: (u.pzBest || {})[pz.id] || 0 });
       }
       const adm = (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(_tg.id));
       if (!adm) return send(res, 403, { error: 'admin emassiz' });
+      if (p === '/api/puzzle/dayfolder') {   // 📅 kunlik 5 ta masala qaysi papkadan
+        const _df = String(j.folder || '');
+        if (_df && !arr.some(x => x.folder === _df)) return send(res, 400, { error: 'Bu papkada masala yo‘q' });
+        store.db.pzDayFolder = _df; store.save();
+        return send(res, 200, { ok: true, dayFolder: require('./quests.js').dayFolder() });
+      }
       if (p === '/api/puzzle/settings') {
         const _fl0 = store.db.pzFolders || [], _nm0 = String(j.folder || '');
         if (!_fl0.includes(_nm0)) return send(res, 400, { error: 'papka yo‘q' });
@@ -567,7 +576,7 @@ function handle(req, res, url) {
       if (j.ren !== undefined) {
         const _nn = String(j.ren || '').replace(/[<>]/g, ' ').trim().slice(0, 30), _k = _fl.indexOf(_nm);
         if (!_nn || _k < 0 || (_nn !== _nm && _fl.includes(_nn))) return send(res, 400, { error: 'invalid' });
-        _fl[_k] = _nn; arr.forEach(x => { if (x.folder === _nm) x.folder = _nn; });
+        _fl[_k] = _nn; arr.forEach(x => { if (x.folder === _nm) x.folder = _nn; }); if (store.db.pzDayFolder === _nm) store.db.pzDayFolder = _nn;
         const _st = store.db.pzSettings; if (_st && _st[_nm] !== undefined) { _st[_nn] = _st[_nm]; delete _st[_nm]; }
         store.save(); return send(res, 200, { ok: true, folders: _fl });
       } }
@@ -597,6 +606,7 @@ function handle(req, res, url) {
           arr.filter(x => x.folder === f).sort((a, b) => (a.no || 0) - (b.no || 0) || (a.at || 0) - (b.at || 0)).forEach(x => { x.no = ++no; if (x.folder !== to) moved++; x.folder = to; });
         });
         pzRenum(arr, to);
+        if (src.includes(store.db.pzDayFolder)) store.db.pzDayFolder = to;   // 📅 kunlik papka birlashtirilsa — yangi papkadan davom etadi
         src.filter(f => f !== to).forEach(f => { const k = fl.indexOf(f); if (k >= 0) fl.splice(k, 1); if (store.db.pzSettings) delete store.db.pzSettings[f]; });
         store.db.pzVer = (store.db.pzVer || 0) + 1; store.save();
         return send(res, 200, { ok: true, to, total: no, moved, folders: fl });

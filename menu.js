@@ -622,7 +622,7 @@
     });
     if (!_mapV) fl.forEach(function (f, i) {
       var arr = S.list.filter(function (p) { return foOf(p) === f; });
-      h += '<div data-fo="' + i + '" style="' + CARD + '">' + (S.admin && f.indexOf('Etyudlar · ') !== 0 && f.indexOf('Ustyanov · ') !== 0 && f.indexOf('Malamed') !== 0 ? '<span style="float:right"><button data-rf="' + i + '" style="background:#262b5a;color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">✏️</button> <button data-df="' + i + '" style="background:#262b5a;color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">🗑</button></span>' : '') + '<b style="font-size:17px">📁 ' + esc(f) + '</b><div style="font-size:12px;opacity:.65;margin-top:4px">' + arr.length + ' ta masala · ✅ ' + nDone(arr) + '/' + arr.length + '</div></div>';
+      h += '<div data-fo="' + i + '" style="' + CARD + '">' + (S.admin && f.indexOf('Etyudlar · ') !== 0 && f.indexOf('Ustyanov · ') !== 0 && f.indexOf('Malamed') !== 0 ? '<span style="float:right"><button data-dy="' + i + '" title="Kunlik 5 ta masala shu papkadan" style="background:' + (S.dayFolder === f ? '#16a34a' : '#262b5a') + ';color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">📅</button> <button data-rf="' + i + '" style="background:#262b5a;color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">✏️</button> <button data-df="' + i + '" style="background:#262b5a;color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">🗑</button></span>' : '') + '<b style="font-size:17px">📁 ' + esc(f) + '</b>' + (S.dayFolder === f ? ' <span style="font-size:12px;background:#16a34a;border-radius:8px;padding:2px 7px;vertical-align:middle">📅 Kunlik</span>' : '') + '<div style="font-size:12px;opacity:.65;margin-top:4px">' + arr.length + ' ta masala · ✅ ' + nDone(arr) + '/' + arr.length + '</div></div>';
     });
     if (!S.admin) h += '<div style="font-size:11px;opacity:.4;margin-top:16px">ID: ' + esc(S.myId) + '</div>';
     ov.innerHTML = h;
@@ -638,6 +638,11 @@
     });
     Array.prototype.forEach.call(ov.querySelectorAll('[data-hl]'), function (e) {
       e.onclick = function (ev) { ev.stopPropagation(); var lv = Number(e.getAttribute('data-hl')); if (!confirm('"' + LV[lv] + '" papkasi yashirilsinmi? (Unga masala qo‘shsangiz qayta chiqadi)')) return; api('/api/puzzle/folder', { name: 'x', hideLv: lv }).then(function () { load(); }); };
+    });
+    Array.prototype.forEach.call(ov.querySelectorAll('[data-dy]'), function (e) {
+      e.onclick = function (ev) { ev.stopPropagation(); var f = fl[Number(e.getAttribute('data-dy'))], off = S.dayFolder === f;
+        if (!confirm(off ? '«' + f + '» kunlik masalalar papkasi bo‘lmay qolsinmi? (Petrova papkasiga qaytadi)' : 'Kunlik 5 ta masala endi «' + f + '» papkasidan kelsinmi?')) return;
+        api('/api/puzzle/dayfolder', { folder: off ? '' : f }).then(function (d) { if (d && d.error) { alert(d.error); return; } load(); }); };
     });
     Array.prototype.forEach.call(ov.querySelectorAll('[data-rf]'), function (e) {
       e.onclick = function (ev) { ev.stopPropagation(); var f = (S.folders || [])[Number(e.getAttribute('data-rf'))]; var n = cleanName(prompt('Papkaning yangi nomi:', f)); if (!n || n === f) return; api('/api/puzzle/folder', { name: f, ren: n }).then(function () { load(); }); };
@@ -767,7 +772,7 @@
       if (curLv ? (lvOf(p) !== curLv || foOf(p)) : foOf(p) !== curFo) return;
       shown++;
       var ok = (S.solved || []).indexOf(p.id) >= 0;
-      h += '<div data-i="' + i + '" style="' + CARD + '">' + (S.admin ? '<button data-mv="' + i + '" style="float:right;background:#262b5a;color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">📁</button>' : '') + '<b>' + (ok ? '✅ ' : '') + esc(p.title) + '</b><div style="font-size:12px;opacity:.65;margin-top:4px">' + LV[lvOf(p)] + ' · 👥 ' + (p.cnt || 0) + ' · ' + (p.side === 'w' ? '⚪ Oq yuradi' : '⚫ Qora yuradi') + '</div></div>';
+      h += '<div data-i="' + i + '" style="' + CARD + '">' + (S.admin ? '<button data-mv="' + i + '" style="float:right;background:#262b5a;color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">📁</button>' : '') + '<b>' + (ok ? '✅ ' : '') + esc(p.title) + '</b><div style="font-size:12px;opacity:.65;margin-top:4px">' + LV[lvOf(p)] + ' · 👥 ' + (p.cnt || 0) + ' · ' + (p.side === 'w' ? '⚪ Oq yuradi' : '⚫ Qora yuradi') + (p.author ? ' · ✍️ ' + esc(p.author) : '') + '</div></div>';
     });
     if (!shown) h += '<div style="padding:24px;opacity:.7">Bu papkada masala yo‘q</div>';
     if (curFo && !curLv) { var _stz = ''; for (var _q = 0; _q < 22; _q++) _stz += '<i style="left:' + Math.round(Math.random() * 96) + '%;top:' + Math.round(Math.random() * 92) + '%;animation-delay:' + (Math.random() * 3).toFixed(2) + 's;animation-duration:' + (2.4 + Math.random() * 2).toFixed(2) + 's"></i>'; h += '<div class="pzStars">' + _stz + '</div>';

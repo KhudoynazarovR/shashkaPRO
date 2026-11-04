@@ -38,8 +38,11 @@ function todays(d) {
   return out;
 }
 
-function qlist(d) { return [FIXED].concat(todays(d).slice(0, 2).map(i => POOL[i])); }
-function petrovaAll() { return ((store && store.db.puzzles) || []).filter(x => /^Petrova/.test(x.folder || '')).sort((a, b) => (a.no || 0) - (b.no || 0)); }
+function qlist(d) { const f = dayFolder(), fx = f ? Object.assign({}, FIXED, { t: '📅 «' + f + '» papkasidan 5 ta masala yeching', ic: '📅' }) : FIXED; return [fx].concat(todays(d).slice(0, 2).map(i => POOL[i])); }
+// 📅 kunlik 5 ta masala papkasi: admin tanlagani (masalasi bo'lsa), aks holda Petrova
+function dayFolder() { if (!store) { try { store = require('./store'); } catch (e) {} } const f = store && store.db.pzDayFolder; return f && ((store.db.puzzles) || []).some(x => x.folder === f) ? f : ''; }
+function isDay(pz) { const f = dayFolder(); return !!pz && (f ? pz.folder === f : /^Petrova/.test(pz.folder || '')); }
+function petrovaAll() { return ((store && store.db.puzzles) || []).filter(isDay).sort((a, b) => (a.no || 0) - (b.no || 0)); }
 // Bugungi 5 ta masala: kun boshida kitob tartibida keyingi yechilmaganlar (kun davomida o'zgarmaydi)
 function daySet(u) {
   const q = qstate(u), all = petrovaAll(); if (!all.length) return [];
@@ -58,7 +61,7 @@ function nextPetrova(u) {
   const byId = id => all.find(x => x.id === id);
   const left = set.filter(id => !dn.has(id) && !sv.has(id));
   const p = byId(left[0] || set[set.length - 1]);
-  return { id: p.id, board: p.board, side: p.side, no: p.no || 0, title: p.title || '', level: p.level || 1, total: all.length, set: set, setDone: set.filter(id => dn.has(id) || sv.has(id)).length, done: !left.length, solvedN: all.filter(x => sv.has(x.id)).length };
+  return { id: p.id, board: p.board, side: p.side, no: p.no || 0, title: p.title || '', folder: p.folder || '', level: p.level || 1, total: all.length, set: set, setDone: set.filter(id => dn.has(id) || sv.has(id)).length, done: !left.length, solvedN: all.filter(x => sv.has(x.id)).length };
 }
 function users() { return store ? store.users() : {}; }
 function qstate(u) {
@@ -107,7 +110,7 @@ function view(u) {
   const q = qstate(u), list = qlist(q.d);
   return {
     pz: nextPetrova(u),
-    quests: list.map((x, j) => { return { i: j, ic: x.ic, t: x.t, n: x.n, r: x.r, p: Math.min(x.n, q.p[x.k] || 0), done: (q.p[x.k] || 0) >= x.n, claimed: !!q.c[j] }; }),
+    quests: list.map((x, j) => { return { i: j, k: x.k, ic: x.ic, t: x.t, n: x.n, r: x.r, p: Math.min(x.n, q.p[x.k] || 0), done: (q.p[x.k] || 0) >= x.n, claimed: !!q.c[j] }; }),
     bonus: { r: BONUS, claimed: !!q.b, ready: list.every((_, j) => q.c[j]) },
     streak: Object.assign(streakInfo(u), { list: STREAK, best: (u.strk && u.strk.best) || 0 }),
     reset: nextReset(), coins: u.diamonds || 0, day: q.d,
@@ -298,4 +301,4 @@ function handle(req, res, p, ctx) {
 }
 
 const isAdmin = id => (process.env.ADMIN_IDS || '').split(',').map(x => x.trim()).filter(Boolean).includes(String(id));
-module.exports = { handle, bump, view, init, stat, _t: { adminStats, notifyTick, touch, todays, qlist, nextPetrova, POOL, streakInfo, claimStreak, dayKey, IMG } };
+module.exports = { handle, bump, view, init, stat, dayFolder, isDay, _t: { adminStats, notifyTick, touch, todays, qlist, nextPetrova, POOL, streakInfo, claimStreak, dayKey, IMG } };
