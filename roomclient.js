@@ -758,7 +758,8 @@
 
     function remaining(color) {
       var ms = st.clock[color] || 0;
-      if (st.clockRunning && !st.finished && st.turn === color) ms -= performance.now() - st.clockAt;
+      var kkSide = st.vsBot && st.botColor === color && /King ?Kong/i.test(String(st[color] || ""));   // 🦍 soati yurmaydi
+      if (st.clockRunning && !st.finished && st.turn === color && !kkSide) ms -= performance.now() - st.clockAt;
       return Math.max(0, ms);
     }
 
@@ -772,6 +773,7 @@
       var els = root.querySelectorAll("[data-clock]");
       for (var i = 0; i < els.length; i++) {
         var color = els[i].getAttribute("data-clock"), ms = remaining(color);
+        if (st.vsBot && st.botColor === color && /King ?Kong/i.test(String(st[color] || "")) && st.tc && st.tc !== "∞") { els[i].textContent = "∞"; els[i].style.background = "#1c2733"; els[i].style.color = "#fff"; continue; }   // 🦍 soatsiz
         els[i].textContent = fmt(ms);
         var active = st.clockRunning && !st.finished && st.turn === color;
         els[i].style.background = active ? (ms < 30000 ? "#7a1f1f" : "#2b4a1f") : "#1c2733";
@@ -1199,9 +1201,12 @@
       var t0 = Date.now(), done = false;
       var timed = st.tc && st.tc !== "∞", rem = remaining(side) / 1000, inc = (st.incMs || 0) / 1000;
       // ⏱ vaqtli o'yinda bot soatini tejaydi: server bilan aloqa vaqti (lat) ham hisoblanadi, tez o'yinda bezak kechikishlar yo'q
+      var isKK = /King ?Kong/i.test(String(st[st.botColor] || "")) || st.botSecs >= 15;   // 🦍 soati yurmaydi — har doim to'liq kuch
+      if (isKK) timed = false;
       var lat = st.botLat || 0.5, fast = timed && rem < 90;
       var budget = rem / 28 + inc * 0.8;
       var secs = timed ? Math.max(0.05, Math.min(st.botSecs, budget - lat, rem / 5)) : Math.max(0.05, Math.min(st.botSecs, rem / 15));
+      if (isKK) secs = st.botSecs;
       st.botFast = fast;
       if (legal.length === 1) {   // yagona yurish (majburiy urish) — o'ylab o'tirmaymiz
         var only = stepsOf(legal[0]); st.botNote = "🤖 majburiy yurish";

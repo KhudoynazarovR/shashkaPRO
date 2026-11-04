@@ -14,6 +14,23 @@
     n[m.to.r][m.to.c] = p; return n;
   }
   function sq(p) { return 'abcdefgh'[p.c] + (8 - p.r); }
+  function unsq(s) { s = String(s || ''); return s.length === 2 ? { r: 8 - (+s[1]), c: 'abcdefgh'.indexOf(s[0]) } : null; }
+  // 🦍 kichik doska: xatodan oldingi pozitsiya, qizil — siz qilgan yurish, yashil — eng yaxshisi
+  function mini(b, played, bestNote, flip) {
+    var S = 18, W0 = S * 8, h = '<svg viewBox="0 0 ' + W0 + ' ' + W0 + '" width="140" height="140" style="flex:none;border-radius:8px;box-shadow:0 3px 10px #0007;cursor:pointer"><defs>' +
+      '<marker id="mr" markerWidth="4" markerHeight="4" refX="2" refY="2" orient="auto"><path d="M0,0 L4,2 L0,4 z" fill="#ff4d4d"/></marker>' +
+      '<marker id="mg" markerWidth="4" markerHeight="4" refX="2" refY="2" orient="auto"><path d="M0,0 L4,2 L0,4 z" fill="#2ee86f"/></marker></defs>';
+    function xy(p) { var r = flip ? 7 - p.r : p.r, c = flip ? 7 - p.c : p.c; return [c * S + S / 2, r * S + S / 2]; }
+    for (var r = 0; r < 8; r++) for (var c = 0; c < 8; c++) {
+      var rr = flip ? 7 - r : r, cc = flip ? 7 - c : c, v = b[rr][cc];
+      h += '<rect x="' + c * S + '" y="' + r * S + '" width="' + S + '" height="' + S + '" fill="' + ((rr + cc) % 2 ? '#8b5a2b' : '#f0d9b5') + '"/>';
+      if (v) h += '<circle cx="' + (c * S + S / 2) + '" cy="' + (r * S + S / 2) + '" r="7" fill="' + (v === 1 || v === 3 ? '#f4f0e6' : '#1e1e1e') + '" stroke="' + (v > 2 ? '#f5b72b' : (v === 1 ? '#999' : '#000')) + '" stroke-width="' + (v > 2 ? 2 : 1) + '"/>';
+    }
+    function arrow(f, t, col, mk) { if (!f || !t) return ''; var a = xy(f), z = xy(t), dx = z[0] - a[0], dy = z[1] - a[1], L = Math.sqrt(dx * dx + dy * dy) || 1, k = (L - 6) / L; return '<line x1="' + a[0] + '" y1="' + a[1] + '" x2="' + (a[0] + dx * k) + '" y2="' + (a[1] + dy * k) + '" stroke="' + col + '" stroke-width="3" stroke-linecap="round" opacity=".9" marker-end="url(#' + mk + ')"/>'; }
+    var bp = String(bestNote || '').split(/[-:x]/);
+    h += arrow(played.from, played.to, '#ff4d4d', 'mr') + arrow(unsq(bp[0]), unsq(bp[bp.length - 1]), '#2ee86f', 'mg');
+    return h + '</svg>';
+  }
   function toEng(b) { var a = [], r, c, p; for (r = 0; r < 8; r++) for (c = 0; c < 8; c++) { p = b[r][c]; a.push(p === 1 ? 1 : p === 2 ? -1 : p === 3 ? 2 : p === 4 ? -2 : 0); } return a; }
   // yurish qadamlari (ketma-ket urish alohida qadam) → to'liq yurishlar
   function group(steps) {
@@ -111,6 +128,13 @@
         h += '<button class="bt g" data-p="' + worst.k + '" style="width:100%;font-size:16px;padding:14px;margin:4px 0 6px">🔁 ' + T('Eng katta xatodan qayta o‘ynash') + ' (' + mv[worst.k].n + ')</button>';
         errs.forEach(function (e) {
           var q = ['?!', '?', '??'][e.lv], mn = Math.floor(e.k / 2) + 1;
+          if (KK) {   // 🦍 King Kong tahlilida: kichik doska + matn yonma-yon
+            h += '<div class="cd"><div style="display:flex;gap:10px;align-items:flex-start"><div data-v="' + e.k + '">' + mini(bs[e.k], mv[e.k], BEST[e.k], me < 0) + '</div><div style="flex:1;min-width:0"><div><span class="q q' + e.lv + '">' + q + '</span><b>' + mn + '-' + T('yurish') + '</b></div>' +
+              '<div style="margin-top:6px">🔴 ' + T('Siz') + ': <b>' + mv[e.k].n + '</b> <span style="opacity:.7">(−' + e.loss.toFixed(1) + ')</span></div>' +
+              '<div style="margin-top:4px">🟢 ' + T('Yaxshisi:') + ' <b style="color:#7ee081">' + esc(BEST[e.k]) + '</b></div></div></div>' +
+              '<button class="bt" data-v="' + e.k + '">👁 ' + T('Ko‘rish') + '</button><button class="bt g" data-p="' + e.k + '">🔁 ' + T('Shu joydan qayta o‘ynash') + '</button></div>';
+            return;
+          }
           h += '<div class="cd"><div><span class="q q' + e.lv + '">' + q + '</span><b>' + mn + '-' + T('yurish') + ':</b> ' + T('Siz') + ' <b>' + mv[e.k].n + '</b> <span style="opacity:.7">(−' + e.loss.toFixed(1) + ')</span></div>' +
             '<div style="margin-top:6px">✅ ' + T('Yaxshisi:') + ' <b style="color:#7ee081">' + esc(BEST[e.k]) + '</b></div>' +
             '<button class="bt" data-v="' + e.k + '">👁 ' + T('Ko‘rish') + '</button><button class="bt g" data-p="' + e.k + '">🔁 ' + T('Shu joydan qayta o‘ynash') + '</button></div>';

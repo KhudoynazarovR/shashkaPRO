@@ -25,6 +25,7 @@ function D() {
   if (!d.botElo.bot_monster) { d.botElo.bot_monster = { elo: 2300, w: 0, l: 0, dr: 0 }; dirty = true; }
   if (!d.botElo.bot_kingkong) { d.botElo.bot_kingkong = { elo: 2700, w: 0, l: 0, dr: 0 }; dirty = true; }
   if (!d.botElo.bot_terminator) { d.botElo.bot_terminator = { elo: 2500, w: 0, l: 0, dr: 0 }; dirty = true; }
+  if (!d.botEloKK2500) { d.botEloKK2500 = true; d.botElo.bot_kingkong.elo = 2500; d.botElo.bot_terminator.elo = 2400; dirty = true; }   // 🦍 King Kong 2500, Terminator 2400 (bir martalik)
   if (!d.botMem) d.botMem = {};
   if (!Array.isArray(d.arenaLog)) d.arenaLog = [];
   return d;

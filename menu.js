@@ -174,7 +174,7 @@
             var go = function () { if (window.regOpen) window.regOpen(true); else { var s = document.createElement("script"); s.src = "/regionpanel.js?v=" + Date.now(); s.onload = function () { window.regOpen(true); }; document.head.appendChild(s); } };
             var tries = 0, wt = setInterval(function () {   // kunlik vazifalar va boshqa oynalar yopilgach ko'rsatamiz
               if (++tries > 240) return clearInterval(wt);
-              if (document.getElementById("dqOv") || (document.getElementById("rcMenuBtn") && document.getElementById("rcMenuBtn").offsetParent)) return;   // o'yin paytida emas
+              if (document.getElementById("dqOv") || document.getElementById("spRv") || [].some.call(document.querySelectorAll("[id$='Ov'],#spUo,#spRv"), function (x) { return x.offsetParent !== null || getComputedStyle(x).position === "fixed" && getComputedStyle(x).display !== "none"; }) || (document.getElementById("rcMenuBtn") && document.getElementById("rcMenuBtn").offsetParent)) return;   // boshqa oyna ochiq — kutamiz   // o'yin paytida emas
               clearInterval(wt); go();
             }, 1000);
           }).catch(function () {});

@@ -89,9 +89,11 @@ function createRooms({ send, clients, onFinish }) {
     return !!(room.white && room.black && !room.finished && room.plies >= 2);
   }
 
+  // 🦍 King Kong har qanday vaqt nazoratida to'liq kuch bilan o'ynaydi: uning soati yurmaydi (faqat odamniki yuradi)
+  function kkFrozen(room, col) { return !!(room && room.vsBot && room.botCfg && room.botCfg.id === 'bot_kingkong' && col && col === botColorOf(room)); }
   function currentClock(room) {
     const c = { white: room.clock.white, black: room.clock.black };
-    if (clockRunning(room)) {
+    if (clockRunning(room) && !kkFrozen(room, room.turn)) {
       c[room.turn] = Math.max(0, c[room.turn] - (Date.now() - room.turnStartedAt));
     }
     return c;
@@ -450,14 +452,14 @@ function createRooms({ send, clients, onFinish }) {
       const now = Date.now();
       const wasRunning = clockRunning(room);
       if (wasRunning) {
-        room.clock[col] -= now - room.turnStartedAt;
+        if (!kkFrozen(room, col)) room.clock[col] -= now - room.turnStartedAt;
         if (room.clock[col] <= 0) {
           room.clock[col] = 0;
           finish(room, other(col), "timeout");
           return true;
         }
       }
-      if (wasRunning && !m.keepTurn && !room.berserk[col]) room.clock[col] += room.incMs; // inkrement (berserkda yo'q)
+      if (wasRunning && !m.keepTurn && !room.berserk[col] && !kkFrozen(room, col)) room.clock[col] += room.incMs; // inkrement (berserkda yo'q)
       room.moves.push(m.move);
       if (room.drawOffer) {
         room.drawOffer = null; // yurish bilan taklif rad etiladi
@@ -821,7 +823,7 @@ function createRooms({ send, clients, onFinish }) {
         else if (now - room._fmSince >= 30000) { finish(room, other(room.turn), "timeout"); continue; }
       }
       if (!clockRunning(room)) continue;
-      if (room.clock[room.turn] - (now - room.turnStartedAt) <= 0) {
+      if (!kkFrozen(room, room.turn) && room.clock[room.turn] - (now - room.turnStartedAt) <= 0) {
         finish(room, other(room.turn), "timeout");
       }
     }
