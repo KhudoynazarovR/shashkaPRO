@@ -86,7 +86,7 @@ function view(r, cid) {
   return {
     type: 'xcState', code: r.code, status: r.status, me: r.p.findIndex(x => x && x.cid === cid), host: r.p[r.host] ? r.p[r.host].cid === cid : false,
     board: r.B ? r.B.map(row => row.map(x => x ? { p: x.p, k: x.k } : null)) : null,
-    turn: r.turn, alive: r.alive, last: r.last, rank: r.rank || null,
+    turn: r.turn, alive: r.alive, last: r.last, rank: r.rank || null, tms: r.tms || TURN_MS,
     players: r.p.map(x => x ? { name: x.name, bot: !!x.bot, photo: x.photo || '' } : null),
     left: r.deadline ? Math.max(0, r.deadline - Date.now()) : 0
   };
@@ -132,8 +132,8 @@ function arm(r) {
   if (r.status !== 'play') return;
   const s = r.p[r.turn];
   if (s.bot || !s.ws) { r.tmr = setTimeout(() => auto(r, false), s.bot ? BOT_MS : BOT_MS + 600); return; }
-  r.deadline = Date.now() + TURN_MS;
-  r.tmr = setTimeout(() => auto(r, true), TURN_MS + 200);
+  r.deadline = Date.now() + (r.tms || TURN_MS);
+  r.tmr = setTimeout(() => auto(r, true), (r.tms || TURN_MS) + 200);
 }
 function roomOf(c) { const code = byConn.get(c.id); return code ? rooms.get(code) : null; }
 function leave(c, hard) {
@@ -160,7 +160,7 @@ function handle(c, m) {
     leave(c, true);
     const u = who(m); if (!u) { err('Telegram ichida oching'); return true; }
     let code; do { code = genCode(); } while (rooms.has(code));
-    const r = { code, p: [null, null, null, null], B: null, status: 'wait', turn: 0, alive: [true, true, true, true], order: [], quiet: 0, last: null, host: 0, cur: [] };
+    const r = { code, p: [null, null, null, null], B: null, status: 'wait', turn: 0, alive: [true, true, true, true], order: [], quiet: 0, last: null, host: 0, cur: [], tms: [10, 30, 60].includes(+m.turn) ? +m.turn * 1000 : TURN_MS };
     r.p[0] = { uid: u.uid, name: u.name, hname: u.name, photo: u.photo, ws, cid: c.id };
     rooms.set(code, r); byConn.set(c.id, code); push(r); return true;
   }
@@ -199,6 +199,15 @@ function handle(c, m) {
     const mv = r.cur.find(x => JSON.stringify(x.path) === JSON.stringify(path));
     if (!mv) { err('Yurish notogri'); send(ws, view(r, c.id)); return true; }
     r.p[idx].miss = 0; play(r, mv); return true;
+  }
+  if (m.type === 'xcTime') { const t = +m.turn; if (idx === r.host && r.status === 'wait' && [10, 30, 60].includes(t)) { r.tms = t * 1000; push(r); } return true; }
+  if (m.type === 'xcChat') {
+    const s = r.p[idx]; if (!s || idx < 0) return true;
+    const now = Date.now(); if (s.cat && now - s.cat < 700) return true; s.cat = now;
+    const e = String(m.e || '').slice(0, 8), t = String(m.t || '').slice(0, 40);
+    if (!e && !t) return true;
+    r.p.forEach(x => { if (x && x.ws) send(x.ws, { type: 'xcChat', from: idx, e, t }); });
+    return true;
   }
   if (m.type === 'xcState') { send(ws, view(r, c.id)); return true; }
   return true;
