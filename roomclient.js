@@ -1206,12 +1206,13 @@
       var budget = rem / 28 + inc * 0.8;
       var secs = timed ? Math.max(0.05, Math.min(st.botSecs, budget - lat, rem / 5)) : Math.max(0.05, Math.min(st.botSecs, rem / 15));
       if (isKK && !timed) secs = st.botSecs;
+      if (isKK && timed) secs = Math.max(0.25, Math.min(st.botSecs, budget - lat * 0.5, rem / 4));   // 🦍 tez o'yinda ham dvigatel (Colette, baza) bilan
       st.botFast = fast;
       if (legal.length === 1) {   // yagona yurish (majburiy urish) — o'ylab o'tirmaymiz
         var only = stepsOf(legal[0]); st.botNote = "🤖 majburiy yurish";
         if (only) return setTimeout(function () { cb(only); }, fast ? 0 : 350);
       }
-      if (timed && (rem < 2.5 || budget - lat < 0.12)) {   // vaqt juda kam — serverga bormay, shu yerning o'zida tez hisoblaymiz
+      if (timed && (isKK ? rem < 1.2 : (rem < 2.5 || budget - lat < 0.12))) {   // vaqt juda kam — serverga bormay, shu yerning o'zida tez hisoblaymiz
         var qb = localBest(legal, side, Math.max(40, Math.min(250, rem * 1000 / 20))), qs = qb ? stepsOf(qb) : null;
         if (!qs) { var qp = safePool(legal, side); for (var qi = 0; qi < qp.length && !qs; qi++) qs = stepsOf(qp[qi]); }
         if (qs) { st.botNote = "🤖 tezkor yurish ⏱"; return cb(qs); }
@@ -1237,7 +1238,7 @@
       var ctl = window.AbortController ? new AbortController() : null;
       // kuchli botlar (Sulton, Legend, Monster) zaif zaxira "miya"ga hech qachon o'tmaydi — dvigatel javob berguncha kutadi
       var strong = st.botSecs >= 2 && !timed;   // vaqtli o'yinda kuchli bot ham soatni o'ylaydi
-      var deadline = strong ? Infinity : timed ? t0 + Math.max(fast ? 400 : 800, Math.min((secs * 2 + lat * 2 + (fast ? 0.5 : 6)) * 1000, rem * 1000 * (fast ? 0.12 : 0.4))) : t0 + (secs * 3 + 25) * 1000;   // dvigatel band bo'lsa navbat kutiladi
+      var deadline = strong ? Infinity : isKK && timed ? t0 + Math.max(1500, rem * 1000 * 0.6) : timed ? t0 + Math.max(fast ? 400 : 800, Math.min((secs * 2 + lat * 2 + (fast ? 0.5 : 6)) * 1000, rem * 1000 * (fast ? 0.12 : 0.4))) : t0 + (secs * 3 + 25) * 1000;   // dvigatel band bo'lsa navbat kutiladi
       var to = strong ? null : setTimeout(function () { try { if (ctl) ctl.abort(); } catch (e) {} finishWith(null, "🤖 zaxira yurish (AI kechikdi)"); }, deadline - t0);
       var waitT = strong || /King ?Kong/i.test(String(st[st.botColor] || "")) ? setTimeout(function () { if (!done) botWait(true); }, /King ?Kong/i.test(String(st[st.botColor] || "")) ? 1200 : Math.max(4000, secs * 1000 + 3000)) : null;
       var _fw = finishWith; finishWith = function (mv, note) { clearTimeout(waitT); botWait(false); _fw(mv, note); };
@@ -1248,7 +1249,7 @@
           fetch("/api/ai/move", {
             method: "POST",
             headers: { "Content-Type": "application/json", "x-init-data": (tg && tg.initData) || "" },
-            body: JSON.stringify({ board: flatBoard(st.board), side: side === "white" ? 1 : -1, time: secs, maxTime: timed ? secs : undefined, book: secs >= 1 || (fast && st.botSecs >= 1), tbAlways: fast && st.botSecs >= 2 || undefined, room: roomId }),
+            body: JSON.stringify({ board: flatBoard(st.board), side: side === "white" ? 1 : -1, time: secs, maxTime: timed ? secs : undefined, kk: isKK || undefined, book: isKK || secs >= 1 || (fast && st.botSecs >= 1), tbAlways: isKK || fast && st.botSecs >= 2 || undefined, room: roomId }),
             signal: ctl ? ctl.signal : undefined
           }).then(function (r) {
             if (r.status === 429 || r.status === 503) return { retry: 1 };

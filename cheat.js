@@ -27,7 +27,9 @@ function replay(steps) {
   }
   return out;
 }
-const ask = (b, side) => new Promise(res => { try { require('./kestoai.js').move({ board: b, side, time: SECS, maxTime: SECS, book: false }, r => res(r)); } catch (e) { res(null); } });
+// past navbat (arena kabi): botlar band bo'lsa kutadi — o'yinlarni sekinlashtirmaydi
+const ask1 = (b, side) => new Promise(res => { try { require('./kestoai.js').move({ board: b, side, time: SECS, maxTime: SECS, book: false, arena: true }, r => res(r)); } catch (e) { res(null); } });
+async function ask(b, side) { for (let t = 0; t < 30; t++) { const r = await ask1(b, side); if (!(r && r.error === 'busy')) return r; await new Promise(z => setTimeout(z, 2000)); } return null; }
 
 const Q = []; let busy = false;
 function onFinish(room) {

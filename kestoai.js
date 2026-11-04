@@ -46,7 +46,8 @@ let LOWFLAG = false;
 function run(input, secs, cb, opt) {
   const pon = !!(opt && opt.ponder);
   const it = { input: input, secs: secs, cb: cb, low: LOWFLAG || pon, ponder: pon };
-  if (!it.low) { const i = queue.findIndex(q => q.low); if (i < 0) queue.push(it); else queue.splice(i, 0, it); } else queue.push(it);
+  if (opt && opt.first) queue.unshift(it);   // 🦍 King Kong — navbatning boshiga (soati yuradi, kutib qolmasin)
+  else if (!it.low) { const i = queue.findIndex(q => q.low); if (i < 0) queue.push(it); else queue.splice(i, 0, it); } else queue.push(it);
   // haqiqiy so'rov kelsa — oldindan o'ylash (ponder) darhol to'xtatiladi
   if (!pon && cur && cur.ponder) finish("preempt");
   next();
@@ -126,14 +127,14 @@ function move(j, cb) {
   if (j && j.arena ? (busy >= 1) : (queue.length >= 12)) return cb({ error: "busy", code: 429 });
   busy++; const t0 = Date.now();
   run((newGame(b) ? "9 0\n" : "") + encode(b, side, secs), secs, (err, v) => {
-    busy--;
+    busy--;   // (oxirgi argument: King Kong so'rovi navbat boshiga)
     if (err) { console.log('[KestoG] xato:', err, '| kirish:', JSON.stringify(encode(b, side, secs))); return cb({ error: err, code: 500 }); }
     const from = v[1] * 8 + (7 - v[0]), to = v[3] * 8 + (7 - v[2]);
     if (!(from >= 0 && from < 64 && to >= 0 && to < 64) || from === to) return cb({ error: "nomove", code: 500 });
     if (process.env.KDEBUG) console.log('[KestoG] vaqt', secs, 'sek soralgan,', Date.now() - t0, 'ms'); const res = { bk: bk ? { from: bk.from, to: bk.to } : null, from: from, to: to, jumps: v[4], ev: (v.length > 5 ? v[5] : null) };
     if (secs >= 1 && !newGame(b)) remember(key, secs, res);
     cb(Object.assign({ ms: Date.now() - t0, deep: deep ? 1 : 0 }, res));
-  });
+  }, { first: !!(j && j.kk) });
 }
 
 // ---------- 🦍 King Kong: raqib o'ylayotganda o'ylash (ponder)
