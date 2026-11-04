@@ -260,6 +260,7 @@ async function start() {
   }
   async function onCallback(q) {
     try { if (q.data && q.data.indexOf('nf:') === 0 && await require('./notify.js').onCallback(q)) return; } catch (e) { console.log('[nf]', e.message); }
+    try { if (q.data && q.data.indexOf('ig:') === 0 && await require('./social.js').onCallback(q)) return; } catch (e) { console.log('[ig]', e.message); }
     try { if (q.data && q.data.indexOf('el:') === 0 && await require('./elon.js').onCallback(q)) return; } catch (e) { console.log('[elon]', e.message); }
     try { if (q.data && q.data.indexOf('md:') === 0 && await require('./mod.js').onCallback(q)) return; } catch (e) { console.log('[mod]', e.message); }
     try { if (q.data && q.data.indexOf('g:') === 0 && await require('./grp.js').onCallback(q)) return; } catch (e) { console.log('[grp]', e.message); }

@@ -150,7 +150,7 @@
         card('🎮', 'linear-gradient(135deg,#22e6a8,#34f5c5)', d.games, 'Jami o‘yinlar') +
         card('📊', 'linear-gradient(135deg,#8e3bf0,#c05cf0)', pct + '%', 'G‘alaba foizi') +
         card('🔥', 'linear-gradient(135deg,#ff7a18,#ffb347)', d.streak, 'Joriy seriya') +
-        '</div>';
+        '</div><div id="pfSoc"></div>';
       h += '<div class="pf-box"><h3>Oxirgi o‘yinlar</h3>';
       if (!d.hist.length) h += '<div class="pf-l">Hali o‘yin yo‘q</div>';
       d.hist.forEach(function (x) {
@@ -171,6 +171,24 @@
       }
       h += '</div><button class="pf-bt" id="pfDaily" disabled>🎁 Kunlik bonus</button><div id="pfMsg" class="pf-l" style="margin:8px 0 20px;text-align:center"></div>';
       $('pfBody').innerHTML = h;
+      (function () {   // 🎖 unvon progressi · ❤️ like · 📸 Instagram · 🔐 parol
+        var go = function (f) { var run = function () { window.spSocial[f](); }; if (window.spSocial) return run(); var s = document.createElement('script'); s.src = '/socialview.js?v=1'; s.onload = run; document.head.appendChild(s); };
+        api('/api/social/me').then(function (S) {
+          var box = $('pfSoc'); if (!box || !S || S.error) return;
+          var r = S.rank, nx = r.next, pc = nx ? Math.round((r.n - nx.from) * 100 / Math.max(1, nx.n - nx.from)) : 100;
+          var row = function (id, ic, bg, t, s) { return '<div id="' + id + '" class="pf-box" style="display:flex;align-items:center;gap:12px;cursor:pointer;padding:12px 14px"><div class="pf-ic" style="margin:0;flex:none;background:' + bg + '">' + ic + '</div><div style="flex:1;min-width:0"><b style="display:block;font-size:16px">' + t + '</b><span class="pf-l" style="font-size:13px">' + s + '</span></div><span style="opacity:.5;font-size:20px">›</span></div>'; };
+          var h2 = '<div id="pfRk" class="pf-box" style="cursor:pointer"><div style="display:flex;align-items:center;gap:10px;font-size:15px"><b>' + esc(r.name) + '</b><span class="pf-l" style="flex:1;text-align:right">' + (nx ? '<b style="color:#fff">' + esc(nx.name.replace(/^\S+\s/, '')) + '</b> unvoniga yana <b style="color:#fff">' + nx.need + '</b> ta do‘st taklifi' : 'Eng yuqori unvon!') + '</span></div>' +
+            '<div style="display:flex;align-items:center;gap:10px;margin-top:10px"><div style="flex:1;height:8px;border-radius:6px;background:#262b5a;overflow:hidden"><div style="height:100%;width:' + pc + '%;background:linear-gradient(90deg,#8e3bf0,#e03a8c)"></div></div><span class="pf-l">' + r.n + (nx ? ' / ' + nx.n : '') + '</span></div></div>';
+          if (!S.hasPass) h2 += row('pfPw', '🔒', 'linear-gradient(135deg,#f59e0b,#fbbf24)', 'Parol o‘rnating', 'Telegram ishlamasa ham saytdan login + parol bilan kirasiz');
+          h2 += row('pfIg', '📸', 'linear-gradient(135deg,#f58529,#dd2a7b,#8134af)', 'Instagram’da ulash', 'Har tasdiqlangan post +' + S.ig.bonus + ' 🪙, har yangi do‘st +100 🪙 gacha');
+          if (S.hasPass) h2 += row('pfPw', '🔐', 'linear-gradient(135deg,#334155,#64748b)', 'Login: ' + esc(S.login), 'Parolni almashtirish');
+          box.innerHTML = h2;
+          $('pfRk').onclick = function () { if (window.refGo) window.refGo(); };
+          $('pfIg').onclick = function () { go('ig'); };
+          $('pfPw').onclick = function () { go('pass'); };
+          var rk = $('pfRank'); if (rk && !document.getElementById('pfLk')) { var lk = document.createElement('div'); lk.id = 'pfLk'; lk.className = 'pf-bd'; lk.style.marginRight = '6px'; lk.textContent = '❤️ ' + S.likes; rk.parentNode.insertBefore(lk, rk); }
+        }).catch(function () {});
+      })();
       [].forEach.call(document.querySelectorAll('[data-ach]'), function (el) { el.onclick = function () { var t = $('pfAchT'); if (t) t.textContent = el.getAttribute('data-ach'); }; });
       if (d.achNew && d.achNew.length && d.achNew.some(function (x) { return !/ \+0$/.test(x); })) { var _t = $('pfAchT'); if (_t) { _t.style.color = '#7ee08a'; _t.textContent = '🎉 Yangi: ' + d.achNew.join(' · '); } }
       api('/api/balance').then(function (b) {

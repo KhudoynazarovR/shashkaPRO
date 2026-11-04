@@ -148,6 +148,16 @@ function handle(req, res, p, ctx) {
     });
     return true;
   }
+  if (p === '/api/auth/pass' && req.method === 'POST') {   // 🔐 login + parol
+    readBody(req, 500, body => {
+      let j = {}; try { j = JSON.parse(body); } catch (e) {}
+      const ip = String(req.headers['x-forwarded-for'] || (req.socket && req.socket.remoteAddress) || '').split(',')[0].trim();
+      const r = require('./social.js').passLogin(ip, j.login, j.password);
+      if (r.error) return send(res, 200, { error: r.error });
+      send(res, 200, session(r.user));
+    });
+    return true;
+  }
   if (p === '/api/auth/refresh' && req.method === 'POST') {
     readBody(req, 2000, body => {
       let j = {}; try { j = JSON.parse(body); } catch (e) {}

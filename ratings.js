@@ -254,6 +254,15 @@
             m.innerHTML = "<div style='width:100%;max-width:360px;background:#141833;color:#fff;border:1px solid #2c3270;border-radius:22px;padding:18px 16px;text-align:center;font-family:inherit'>" + html + "</div>";
             document.body.appendChild(m); return m;
           }
+          (function () {   // ❤️ profilga like (kuniga 1 marta) va 🎖 unvon
+            var lb = mk("❤️ Yoqdi", "linear-gradient(90deg,#be123c,#f43f5e)", function () {
+              lb.disabled = true;
+              post("/api/social/like", { uid: String(d.id) }).then(function (r) { lb.disabled = false; if (r.likes != null) lb.innerHTML = "❤️ " + r.likes + (r.ok ? " · rahmat!" : ""); if (r.error) { lb.innerHTML = "❤️ " + (r.likes != null ? r.likes + " · " : "") + esc(r.error); } });
+            });
+            fetch("/api/social/user?uid=" + encodeURIComponent(d.id), { headers: { "x-init-data": (tg && tg.initData) || "" } }).then(function (r) { return r.json(); }).then(function (r) {
+              if (!r || r.error) return; lb.innerHTML = (r.liked ? "❤️ " : "🤍 ") + r.likes + (r.liked ? " · bugun yoqtirdingiz" : " · Yoqdi"); lb.title = r.rank;
+            }).catch(function () {});
+          })();
           var my = d.myDiamonds || 0, F = d.giftFee || [0.05, 5];
           function fee(n) { return Math.max(F[1], Math.ceil(n * F[0])); }
           if (window.lbChallengeUid) {
