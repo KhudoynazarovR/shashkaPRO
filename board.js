@@ -553,6 +553,26 @@
       kkno: function () { KK.pend = null; KK.msg = 'Bekor qilindi'; },
       kklist: function () { kkList(); },
       kkpdn: function () { panel = 'kkpdn'; KK.msg = ''; },
+      kkload: function () {
+        var ta = document.getElementById('kkPdn'), txt = ta ? ta.value : ''; if (!txt.trim()) { KK.msg = 'Yurishlarni kiriting'; return; }
+        KK.text = txt;
+        var toks = txt.replace(/\{[^}]*\}/g, ' ').split(/\s+/).filter(function (t) { return t && !/^\d+\.+$/.test(t) && !/^(1-0|0-1|1\/2-1\/2|\*)$/.test(t); }).map(function (t) { return t.replace(/^\d+\.+/, '').toLowerCase(); });
+        var H = [{ b: start(), t: 1, m: null }], err = '';
+        for (var n = 0; n < toks.length; n++) {
+          var ps = toks[n].split(/[-:x]/).map(function (q) { var c = 'abcdefgh'.indexOf(q[0]), r = 8 - parseInt(q.slice(1), 10); return (c < 0 || !(r >= 0 && r < 8)) ? null : [r, c]; });
+          if (ps.length < 2 || ps.some(function (q) { return !q; })) { err = (n + 1) + '-yurish tushunarsiz: «' + toks[n] + '»'; break; }
+          var h = H[H.length - 1], f = ps[0], e = ps[ps.length - 1], ms = legal(h.b, h.t).filter(function (m) { var z = m.path[m.path.length - 1]; return m.path[0][0] === f[0] && m.path[0][1] === f[1] && z[0] === e[0] && z[1] === e[1]; });
+          var m = (ps.length > 2 && ms.filter(function (x) { return x.path.length === ps.length && x.path.every(function (q, i) { return q[0] === ps[i][0] && q[1] === ps[i][1]; }); })[0]) || ms[0];
+          if (!m) { err = (n + 1) + '-yurish noto‘g‘ri: «' + toks[n] + '»'; break; }
+          H.push({ b: applyM(h.b, m), t: -h.t, m: m, n: note(m) });
+        }
+        if (H.length < 2) { KK.msg = '⚠️ ' + (err || 'Yurish topilmadi'); return; }
+        AU.run = false; AU.msg = ''; GI = null; PL = null; E = null; sel = null;
+        hist = H; cur = H.length - 1; panel = 'kk'; KK.pend = null;
+        KK.msg = '♟ ' + Math.ceil((H.length - 1) / 2) + ' ta yurish doskaga qo‘yildi' + (err ? ' (⚠️ ' + err + ')' : '') + '. ◀ ▶ bilan yurib chiqing: ?! ? ?? — xato yurishlar, 🦍 — King Kong boshqacha yurardi. Xato joyda to‘g‘ri yurishni qilib, «Shu yurishni o‘rgatish»ni bosing.';
+        if (!S.engine) { S.engine = true; sv(); }
+        setTimeout(runAll, 50);
+      },
       kkpdngo: function () {
         var ta = document.getElementById('kkPdn'), txt = ta ? ta.value : ''; if (!txt.trim()) { KK.msg = 'Yurishlarni kiriting'; return; }
         KK.text = txt; KK.msg = '⏳ Kiritilmoqda…';
@@ -679,7 +699,7 @@
           s += '<div style="font-size:15px;font-weight:700;margin-bottom:6px">📋 Partiyani kiritish</div><div style="font-size:12px;opacity:.75;margin-bottom:6px">Masalan: 1. c3-d4 f6-g5 2. b2-c3 g7-f6 3. ... (urish: c3:e5)</div>' +
             '<textarea id="kkPdn" style="width:100%;box-sizing:border-box;height:90px;border-radius:10px;border:1px solid #3a4a2a;background:#1d2a14;color:#fff;padding:8px;font:13px monospace">' + String(KK.text || '').replace(/</g, '&lt;') + '</textarea>' +
             '<div style="margin:6px 0;font-size:13px">Qaysi tomon yurishlarini o‘rgatamiz?</div><div>' + [['w', '⚪ Oq'], ['b', '⚫ Qora'], ['both', 'Ikkalasi']].map(function (x) { return '<button data-a="kks:' + x[0] + '" style="' + sm + ';background:' + (KK.sides === x[0] ? '#6aa22a' : '#262b66') + '">' + x[1] + '</button>'; }).join('') + '</div>' +
-            '<div style="margin-top:6px"><button data-a="kkpdngo" style="' + sm + ';background:#b45309">🦍 O‘rgatish</button><button data-a="kk" style="' + sm + '">Orqaga</button></div>' + (KK.msg ? '<div style="margin-top:8px;font-size:14px">' + KK.msg + '</div>' : '');
+            '<div style="margin-top:6px"><button data-a="kkload" style="' + sm + ';background:#2e7d5b">♟ Doskaga qo‘yish</button><button data-a="kkpdngo" style="' + sm + ';background:#b45309">🦍 O‘rgatish</button><button data-a="kk" style="' + sm + '">Orqaga</button></div>' + (KK.msg ? '<div style="margin-top:8px;font-size:14px">' + KK.msg + '</div>' : '');
         } else if (panel === 'edit') {
           s += '<div style="display:flex;justify-content:center;gap:8px;margin-bottom:8px">';
           [[1, 1], [3, 3], [2, 2], [4, 4], [0, 0]].forEach(function (t) {
