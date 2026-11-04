@@ -258,6 +258,7 @@ function createRooms({ send, clients, onFinish }) {
     if (room.etude) { try { require('./etudes.js').done(room, winner); } catch (e) { console.log('etude:', e.message); } }
     else try { botReward(room, winner); } catch (e) { console.log('botReward:', e.message); }
     try { h2hRecord(room, winner); } catch (e) { console.log('h2h:', e.message); }
+    try { require('./kkbook.js').result(room, winner); } catch (e) {}   // 🦍 ustaxona statistikasi va mag'lubiyat xabari
     try { // bot yutqazsa — o'sha o'yindan saboq oladi (keyingi safar shu pozitsiyalarda chuqurroq o'ylaydi)
       const bc = botColorOf(room);
       if (room.vsBot && !room.etude && bc && winner && winner !== 'draw' && winner !== bc) require('./kestoai.js').learn(room.id);

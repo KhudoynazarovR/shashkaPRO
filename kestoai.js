@@ -111,6 +111,7 @@ function move(j, cb) {
   if ((secs >= 2 || j.tbAlways) && TBP && TBP.ready()) {
     try { const t = TBP.best(b, side); if (t) return cb({ from: t.from, to: t.to, jumps: 0, ev: t.res === 'win' ? 3000 - t.d : t.res === 'loss' ? -3000 + t.d : 0, ms: 0, tb: t.res }); } catch (e) { console.log('[TB]', e.message); }
   }
+  if (j.kk) { try { const ab = require('./kkbook.js').get(b, side, j.room); if (ab) return cb({ from: ab.f, to: ab.t, jumps: 0, ev: null, ms: 0, book: 1, admin: 1 }); } catch (e) {} }   // 🦍 admin o'rgatgan yurish — birinchi
   try { const eb = require('./etudes.js').bookMove(b, side); if (eb) return cb({ from: eb.from, to: eb.to, jumps: 0, ev: null, ms: 0, book: 1, etude: 1 }); } catch (e) {}
   const bk = BOOK[b.join("") + side];
   const cm = j.book && (secs >= 2 || j.tbAlways) && COLETTE[b.join("") + side] && !DEEP.has(b.join(",") + "|" + side);   // coletteBOT (2300) o'yin uslubi: u shu pozitsiyada qanday yurgan bo'lsa

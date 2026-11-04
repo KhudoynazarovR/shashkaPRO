@@ -409,7 +409,51 @@
     }
     function newPos(b, t) { GI = null; hist = [{ b: cp(b), t: t, m: null }]; cur = 0; sel = null; PL = null; panel = null; E = null; draw(); analyzeCur(); }
     function cnt(b, f) { var n = 0; b.forEach(function (row) { row.forEach(function (p) { if (p && f(p)) n++; }); }); return n; }
+    // 🦍 King Kong ustaxonasi (faqat admin): yurish o'rgatish, partiya kiritish, ro'yxat
+    var KK = { msg: '', sides: 'w', busy: false };
+    function kkPost(u, body) { return fetch(u, { method: 'POST', headers: hd(), body: JSON.stringify(body) }).then(function (r) { return r.json(); }); }
+    function kkFromEng(a, s) { var b = [], r, c, v; for (r = 0; r < 8; r++) { b.push([]); for (c = 0; c < 8; c++) { v = +a[r * 8 + c]; b[r].push(v === 1 ? 1 : v === -1 ? 2 : v === 2 ? 3 : v === -2 ? 4 : 0); } } return b; }
+    function kkTeach() {
+      if (cur < 1 || KK.busy) return;
+      var h0 = hist[cur - 1], m = hist[cur].m, f = m.path[0], e = m.path[m.path.length - 1];
+      var body = { board: toEng(h0.b), side: h0.t, from: f[0] * 8 + f[1], to: e[0] * 8 + e[1] };
+      KK.busy = true; KK.msg = '⏳ KestoG tekshiryapti…'; draw();
+      kkPost('/api/kkbook/check', body).then(function (c) {
+        if (c.error) { KK.busy = false; KK.msg = '⚠️ ' + c.error; draw(); return; }
+        if (!c.same && c.evBest != null && c.evMove != null && c.evBest - c.evMove > 0.5 &&
+          !confirm('⚠️ KestoG bu yurishni yomonroq deb baholayapti.\n\nSiznikiga: ' + evFmt(c.evMove) + '\nEng yaxshisi ' + (c.best || '?') + ': ' + evFmt(c.evBest) + '\n\nBaribir King Kongga o‘rgatamizmi?')) { KK.busy = false; KK.msg = 'Bekor qilindi'; draw(); return; }
+        return kkPost('/api/kkbook/add', body).then(function (r) { KK.busy = false; KK.msg = r.error ? '⚠️ ' + r.error : '✅ O‘rgatildi: ' + r.n + ' (jami ' + r.total + ')'; draw(); });
+      }).catch(function () { KK.busy = false; KK.msg = '⚠️ Server bilan aloqa yo‘q'; draw(); });
+    }
+    function kkList() {
+      var o = document.createElement('div'); o.style.cssText = 'position:fixed;inset:0;z-index:2147483600;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;padding:10px';
+      var bx = document.createElement('div'); bx.style.cssText = 'width:100%;max-width:440px;max-height:92%;overflow-y:auto;background:#0b0e1a;color:#fff;border:1px solid #5a3a10;border-radius:18px;padding:14px;font:14px system-ui,sans-serif';
+      o.appendChild(bx); document.body.appendChild(o); o.onclick = function (e) { if (e.target === o) o.remove(); };
+      bx.innerHTML = 'Yuklanmoqda…';
+      fetch('/api/kkbook', { headers: hd() }).then(function (r) { return r.json(); }).then(function (d) {
+        if (d.error) { bx.textContent = d.error; return; }
+        var s = '<div style="display:flex;align-items:center;margin-bottom:8px"><b style="font-size:17px">🦍 O‘rgatilgan yurishlar (' + d.total + ')</b><span data-x style="margin-left:auto;font-size:22px;padding:2px 8px;cursor:pointer">✕</span></div>';
+        if (!d.list.length) s += '<div style="opacity:.7">Hali hech narsa o‘rgatilmagan</div>';
+        d.list.forEach(function (x) {
+          s += '<div style="display:flex;align-items:center;gap:8px;padding:8px 2px;border-bottom:1px solid #1c2147"><div style="flex:1"><b>' + (x.s > 0 ? '⚪ ' : '⚫ ') + x.n + '</b><div style="font-size:12px;opacity:.7">' + new Date(x.at).toLocaleDateString('ru') + ' · ishlatildi ' + x.used + ' · KK: ' + x.w + 'G ' + x.d + 'D ' + x.l + 'M</div></div>' +
+            '<button data-o="' + x.k + '" style="border:0;border-radius:10px;padding:7px 10px;background:#262b66;color:#fff">Ochish</button><button data-d="' + x.k + '" style="border:0;border-radius:10px;padding:7px 10px;background:#5a2a35;color:#fff">🗑</button></div>';
+        });
+        bx.innerHTML = s; bx.querySelector('[data-x]').onclick = function () { o.remove(); };
+        var byK = {}; d.list.forEach(function (x) { byK[x.k] = x; });
+        [].forEach.call(bx.querySelectorAll('[data-o]'), function (b) { b.onclick = function () { var x = byK[b.getAttribute('data-o')]; o.remove(); newPos(kkFromEng(x.b.split(','), x.s), x.s); }; });
+        [].forEach.call(bx.querySelectorAll('[data-d]'), function (b) { b.onclick = function () { if (!confirm('O‘chirilsinmi?')) return; kkPost('/api/kkbook/del', { k: b.getAttribute('data-d') }).then(function () { b.parentNode.remove(); }); }; });
+      }).catch(function () { bx.textContent = 'Server bilan aloqa yo‘q'; });
+    }
     var A = {
+      kk: function () { panel = 'kk'; KK.msg = ''; },
+      kkteach: function () { kkTeach(); },
+      kklist: function () { kkList(); },
+      kkpdn: function () { panel = 'kkpdn'; KK.msg = ''; },
+      kkpdngo: function () {
+        var ta = document.getElementById('kkPdn'), txt = ta ? ta.value : ''; if (!txt.trim()) { KK.msg = 'Yurishlarni kiriting'; return; }
+        KK.text = txt; KK.msg = '⏳ Kiritilmoqda…';
+        kkPost('/api/kkbook/pdn', { text: txt, sides: KK.sides }).then(function (r) { KK.msg = (r.added ? '✅ ' + r.added + ' ta yurish o‘rgatildi (jami ' + r.total + ')' : '') + (r.error ? ' ⚠️ ' + r.error : ''); draw(); }).catch(function () { KK.msg = '⚠️ Server bilan aloqa yo‘q'; draw(); });
+      },
       menu: function () { panel = panel ? null : 'menu'; E = null; },
       eng: function () { S.engine = !S.engine; sv(); },
       flip: function () { flip = !flip; },
@@ -432,7 +476,8 @@
     };
     function act(a) {
       var p = a.split(':'), n = p[0], v = p[1], r;
-      if (n === 'tool') { E.tool = +v; }
+      if (n === 'kks') { KK.sides = v; var _ta = document.getElementById('kkPdn'); if (_ta) KK.text = _ta.value; }
+      else if (n === 'tool') { E.tool = +v; }
       else if (n === 'st') { if (+v > 2 && !window.__prem) { if (window.premGo) window.premGo(); return; } S.t = +v; sv(); }
       else if (n === 'tog') { S[v] = !S[v]; sv(); }
       else if (n === 'me') {
@@ -497,8 +542,19 @@
         s += '<div style="background:#2a3b22;border-radius:0 0 12px 12px;padding:12px;text-align:left">';
         var mi = function (a, ic, tx) { return '<div data-a="' + a + '" style="display:flex;align-items:center;gap:10px;padding:10px 4px;cursor:pointer;font-size:15px"><span style="font-size:24px;width:32px;text-align:center">' + ic + '</span>' + tx + '</div>'; };
         if (panel === 'menu') {
-          s += '<div style="display:grid;grid-template-columns:1fr 1fr">' + mi('flip', '🔄', 'Taxtani aylantirish') + mi('edit', '✏️', 'Taxta muharriri') + mi('play', '🎯', 'Kompyuter bilan mashq qilish') + mi('cont', '♟', 'Shu pozitsiyadan davom etish') + mi('learn', '📚', 'O‘rganish') + mi('set', '⚙️', 'Sozlamalar') + '</div>';
+          s += '<div style="display:grid;grid-template-columns:1fr 1fr">' + mi('flip', '🔄', 'Taxtani aylantirish') + mi('edit', '✏️', 'Taxta muharriri') + mi('play', '🎯', 'Kompyuter bilan mashq qilish') + mi('cont', '♟', 'Shu pozitsiyadan davom etish') + mi('learn', '📚', 'O‘rganish') + mi('set', '⚙️', 'Sozlamalar') + (window.hzIsAdmin && window.hzIsAdmin() ? mi('kk', '🦍', 'King Kong ustaxonasi') : '') + '</div>';
           s += '<div style="text-align:center;margin-top:6px"><button id="bdA" style="' + sm + ';background:#2e9d6b">📊 Hammasini baholash' + (prog ? ' ' + prog : '') + '</button><button id="bdN" style="' + sm + ';background:#8a2b3a">🗑 Yangi o‘yin</button></div>';
+        } else if (panel === 'kk') {
+          s += '<div style="font-size:15px;font-weight:700;margin-bottom:6px">🦍 King Kong ustaxonasi</div>';
+          if (cur >= 1 && hist[cur].m) s += '<div style="font-size:14px;margin-bottom:8px">Oxirgi yurish: <b>' + note(hist[cur].m) + '</b> (' + (hist[cur - 1].t > 0 ? '⚪ oq' : '⚫ qora') + ')<br><span style="opacity:.7;font-size:12px">King Kong shu pozitsiyaga tushsa, aynan shu yurishni qiladi (Colette va kitobdan oldin).</span></div><button data-a="kkteach" style="' + sm + ';background:#b45309">🦍 Shu yurishni o‘rgatish</button>';
+          else s += '<div style="font-size:14px;opacity:.8;margin-bottom:8px">Doskada kerakli yurishni qiling — keyin shu yerda uni King Kongga o‘rgatasiz.</div>';
+          s += '<div style="margin-top:6px"><button data-a="kkpdn" style="' + sm + '">📋 Partiyani kiritish</button><button data-a="kklist" style="' + sm + '">📚 O‘rgatilganlar</button><button data-a="menu" style="' + sm + '">Orqaga</button></div>';
+          if (KK.msg) s += '<div style="margin-top:8px;font-size:14px">' + KK.msg + '</div>';
+        } else if (panel === 'kkpdn') {
+          s += '<div style="font-size:15px;font-weight:700;margin-bottom:6px">📋 Partiyani kiritish</div><div style="font-size:12px;opacity:.75;margin-bottom:6px">Masalan: 1. c3-d4 f6-g5 2. b2-c3 g7-f6 3. ... (urish: c3:e5)</div>' +
+            '<textarea id="kkPdn" style="width:100%;box-sizing:border-box;height:90px;border-radius:10px;border:1px solid #3a4a2a;background:#1d2a14;color:#fff;padding:8px;font:13px monospace">' + String(KK.text || '').replace(/</g, '&lt;') + '</textarea>' +
+            '<div style="margin:6px 0;font-size:13px">Qaysi tomon yurishlarini o‘rgatamiz?</div><div>' + [['w', '⚪ Oq'], ['b', '⚫ Qora'], ['both', 'Ikkalasi']].map(function (x) { return '<button data-a="kks:' + x[0] + '" style="' + sm + ';background:' + (KK.sides === x[0] ? '#6aa22a' : '#262b66') + '">' + x[1] + '</button>'; }).join('') + '</div>' +
+            '<div style="margin-top:6px"><button data-a="kkpdngo" style="' + sm + ';background:#b45309">🦍 O‘rgatish</button><button data-a="kk" style="' + sm + '">Orqaga</button></div>' + (KK.msg ? '<div style="margin-top:8px;font-size:14px">' + KK.msg + '</div>' : '');
         } else if (panel === 'edit') {
           s += '<div style="display:flex;justify-content:center;gap:8px;margin-bottom:8px">';
           [[1, 1], [3, 3], [2, 2], [4, 4], [0, 0]].forEach(function (t) {
