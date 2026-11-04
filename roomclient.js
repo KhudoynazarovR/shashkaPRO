@@ -596,6 +596,12 @@
         }
       }
       if (!spec && !st.etude && st.finished && st.winner === st.color && window.spShareCard) btn("📸 G‘alabani ulashish", function () { var opp = st.color === "white" ? st.black : st.white; window.spShareCard({ theme: "win", title: "G‘ALABA!", big: "🏆", sub: "Raqib: " + (st.vsBot ? "🤖 " : "") + (opp || ""), sub2: (st.tc ? "⏱ " + st.tc : "") + (st.reason === "timeout" ? " · vaqt bo‘yicha" : ""), cap: "🏆 ShashkaPRO’da " + (opp || "raqib") + "ni yutdim!" }); });
+      if (!spec && !st.etude && st.finished && (st.moves || []).length >= 4 && tg && tg.initData) btn("🎞 GIF qilib ulashish", function () {   // bot GIF yuboradi — u yerdan istalgan chatga ulashiladi
+        var b = this; b.disabled = true; b.textContent = "⏳ GIF tayyorlanmoqda…";
+        fetch("/api/gif", { method: "POST", headers: { "Content-Type": "application/json", "x-init-data": tg.initData }, body: JSON.stringify({ roomId: roomId }) })
+          .then(function (r) { return r.json(); }).then(function (r) { b.textContent = r.ok ? "✅ GIF botga yuborildi — u yerdan ulashing" : "⚠️ " + (r.error || "Xatolik"); if (!r.ok) b.disabled = false; })
+          .catch(function () { b.disabled = false; b.textContent = "⚠️ Server bilan aloqa yo‘q"; });
+      });
       if (!spec && st.finished && st.vsBot && !st.opening && /Monster|Terminator|King ?Kong/i.test(String(st[st.botColor] || ""))) {
         var openRv = function () {
           var g0 = { moves: st.moves, me: st.color, white: nameLine("white"), black: nameLine("black"), winner: st.winner, bot: String(st[st.botColor] || "") };
