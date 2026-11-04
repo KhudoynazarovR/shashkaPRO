@@ -148,7 +148,7 @@ function createLobby({ send, clients, roomsApi }) {
 
   // ---------- holat ----------
   function botX(u) { try { const d = require('./store').db; return { n: (d.botNames || {})[u], a: !!(d.botAv || {})[u] }; } catch (e) { return {}; } }
-  function botElo(u) { try { const _d = require('./store').db; if (_d && _d.botElo && !_d.botEloKK2500 && _d.botElo.bot_kingkong && _d.botElo.bot_terminator) { _d.botEloKK2500 = true; _d.botElo.bot_kingkong.elo = 2500; _d.botElo.bot_terminator.elo = 2400; } const m = _d.botElo; return (m && m[u] && m[u].elo) || 0; } catch (e) { return 0; } }
+  function botElo(u) { try { const _d = require('./store').db; if (_d && _d.botElo && !_d.botEloKK2500 && _d.botElo.bot_kingkong && _d.botElo.bot_terminator) { _d.botEloKK2500 = true; _d.botElo.bot_kingkong.elo = 2500; _d.botElo.bot_terminator.elo = 2400; } const m = _d.botElo; const _e = (m && m[u] && m[u].elo) || 0; const _cap = { bot_kingkong: 2500, bot_terminator: 2400 }[u]; return _cap && _e > _cap ? _cap : _e; } catch (e) { return 0; } }
   function playersList() {
     const seen = new Map();
     for (const c of lbClients()) {
