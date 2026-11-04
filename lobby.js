@@ -90,6 +90,12 @@ function pickOpening() {
 function createLobby({ send, clients, roomsApi }) {
   const queue = new Map();       // uid -> { uid, tc }
   const challenges = new Map();  // id -> { id, fromUid, fromName, toUid, tc, at }
+  // 🎲 Stollar (playok kabi): egasi stol ochadi (vaqt, tikish), boshqasi bo'sh joyga o'tiradi, ikkalasi «Tayyor» — o'yin
+  const tables = new Map(); let tblNo = 0;
+  const TBL_ELO = [0, 1100, 1200, 1300, 1500, 1800];
+  const eloOf = uid => { try { return Number((require('./store').users()[String(uid)] || {}).elo) || 1000; } catch (e) { return 1000; } };
+  const tblOf = uid => [...tables.values()].find(t => t.host.uid === uid || (t.guest && t.guest.uid === uid));
+  const pubTbl = t => ({ id: t.id, no: t.no, host: t.host, guest: t.guest, tc: t.tc, stake: t.stake, pos: t.pos, minElo: t.minElo, ready: Object.keys(t.ready), playing: !!t.playing, roomId: t.roomId || null, games: t.games });
   const tournaments = new Map(); // tid -> t
   // ---- Turnirlarni faylga saqlash (qayta ishga tushganda yo'qolmasligi uchun) ----
   const T_FILE = path.join(__dirname, 'tournaments.json');
@@ -252,6 +258,7 @@ function createLobby({ send, clients, roomsApi }) {
         .map(x => ({ id: x.id, toUid: x.toUid, tc: x.tc })),
       tournaments: [...tournaments.values()].map(pubT), promo: promoInfo(),
       simuls: [...simuls.values()].map(pubSimul),
+      tables: [...tables.values()].map(pubTbl),
       clubs: clubsApi.list(uid),
       appLink: process.env.TG_APP_LINK || process.env.APP_LINK || ''
     };
@@ -303,12 +310,13 @@ function createLobby({ send, clients, roomsApi }) {
     o = o || { pos: 'std', games: 1 };
     const first = Math.random() < 0.5 ? a : b;
     if (o.stake) {   // 💰 ikkala tomon tangasi muzlatiladi
-      if (!require('./wager.js').lock(a.uid, b.uid, o.stake)) { toast(a.uid, '💰 Tikib o‘ynash boshlanmadi: tanga yetmadi'); toast(b.uid, '💰 Tikib o‘ynash boshlanmadi: tanga yetmadi'); push(); return; }
+      if (!require('./wager.js').lock(a.uid, b.uid, o.stake)) { toast(a.uid, '💰 Tikib o‘ynash boshlanmadi: tanga yetmadi'); toast(b.uid, '💰 Tikib o‘ynash boshlanmadi: tanga yetmadi'); push(); return false; }
     }
-    const s = { id: hex(4), p: [first, first === a ? b : a], tc, pos: o.pos, total: o.games, voice: !!o.voice, played: 0, pts: {}, opening: null, reason, stake: o.stake || 0 };
+    const s = { id: hex(4), p: [first, first === a ? b : a], tc, pos: o.pos, total: o.games, voice: !!o.voice, played: 0, pts: {}, opening: null, reason, stake: o.stake || 0, tbl: o.tbl || null };
     s.pts[a.uid] = 0; s.pts[b.uid] = 0;
     startSeriesGame(s);
     push();
+    return true;
   }
 
   function startSeriesGame(s) {
@@ -320,6 +328,7 @@ function createLobby({ send, clients, roomsApi }) {
     openRoom(roomId, s.tc, w, k, false, s.opening, false, s.voice);
     if (s.stake) { const _r = roomsApi.get(roomId); if (_r) _r.stake = s.stake; }
     roomToSeries.set(roomId, { s, w: w.uid, k: k.uid });
+    if (s.tbl) { const _t = tables.get(s.tbl); if (_t) _t.roomId = roomId; }
     const series = s.total > 1 ? { game: g + 1, total: s.total, score: seriesScore(s) } : null;
     const reason = g === 0 ? s.reason : 'series';
     sendUid(w.uid, { type: 'lbGo', roomId, reason, color: 'white', opponent: k.name, tc: s.tc, series });
@@ -334,6 +343,7 @@ function createLobby({ send, clients, roomsApi }) {
     else { s.pts[w] += 0.5; s.pts[k] += 0.5; }
     const [A, B] = s.p;
     if (s.stake && !s.settled) { s.settled = true; try { const o = require('./wager.js').settle(room, w, k, s.stake); for (const u in o) toast(u, o[u]); } catch (e) { console.log('[wager]', e.message); } }
+    if (s.tbl) { const _t = tables.get(s.tbl); if (_t) { _t.playing = false; _t.roomId = null; _t.ready = {}; _t.at = Date.now(); } push(); }
     payWin(room, w, k, null); if (s.total <= 1) return;
     if (s.played >= s.total) {
       const sa = s.pts[A.uid], sb = s.pts[B.uid];
@@ -987,7 +997,7 @@ function createLobby({ send, clients, roomsApi }) {
     if (!c.lb) { err(c, 'Avval kirish kerak'); return true; }
     const me = c.lb;
     {   // ⛔ o'yin taqiqi: odamlar bilan o'yin, turnir, simul yopiq (botlar va masalalar ochiq)
-      const PB = ['lbQuick', 'lbChallenge', 'lbFriendNew', 'lbFriendJoin', 'lbTJoin', 'lbTCreate', 'lbSJoin', 'lbSCreate'];
+      const PB = ['lbQuick', 'lbChallenge', 'lbTblNew', 'lbTblSit', 'lbTblReady', 'lbFriendNew', 'lbFriendJoin', 'lbTJoin', 'lbTCreate', 'lbSJoin', 'lbSCreate'];
       if ((PB.includes(m.type) || (m.type === 'lbRespond' && m.accept)) && !(m.type === 'lbChallenge' && /^bot(_|$)/.test(String(m.toUid)))) { const _pb = require('./mod.js').playText(me.uid); if (_pb) return err(c, _pb), true; }
     }
 
@@ -1141,6 +1151,55 @@ function createLobby({ send, clients, roomsApi }) {
         sendUid(ch.toUid, { type: 'lbChallengeIn', id: ch.id, fromName: ch.fromName, tc: ch.tc + describeOpts(ch) });
         push();
         break;
+      }
+      case 'lbTblNew': {   // 🎲 stol ochish
+        const tr = text => (toast(me.uid, text), true);
+        if (tblOf(me.uid)) return tr('Siz allaqachon stoldasiz');
+        if (tables.size >= 150) return tr('Stollar juda ko‘p, keyinroq urinib ko‘ring');
+        const stake = require('./wager.js').STAKES.includes(Number(m.stake)) ? Number(m.stake) : 0;
+        if (stake) { const e = require('./wager.js').can(me.uid, stake); if (e) return tr(e); }
+        const t = { id: 't' + hex(4), no: ++tblNo, host: { uid: me.uid, name: me.name, elo: eloOf(me.uid) }, guest: null, tc: TCS.includes(String(m.tc)) ? String(m.tc) : '3+2',
+          stake, pos: m.pos === 'idf' ? 'idf' : 'std', minElo: TBL_ELO.includes(Number(m.minElo)) ? Number(m.minElo) : 0, ready: {}, playing: false, roomId: null, games: 0, at: Date.now() };
+        tables.set(t.id, t); queue.delete(me.uid);
+        push(); break;
+      }
+      case 'lbTblSit': {
+        const tr = text => (toast(me.uid, text), true);
+        const t = tables.get(String(m.id)); if (!t) return tr('Stol yopilgan');
+        if (t.host.uid === me.uid) return true;
+        if (t.guest) return tr('Bu stolda joy band');
+        if (tblOf(me.uid)) return tr('Avval o‘z stolingizdan turing');
+        try { const us = require('./store').users(), h = us[String(t.host.uid)] || {}; if ((h.blocked || []).includes(String(me.uid))) return tr('Bu stolga o‘tira olmaysiz'); } catch (e) {}
+        const el = eloOf(me.uid); if (t.minElo && el < t.minElo) return tr('Bu stol ' + t.minElo + '+ reyting uchun (sizda ' + el + ')');
+        if (t.stake) { const e = require('./wager.js').can(me.uid, t.stake); if (e) return tr(e); }
+        t.guest = { uid: me.uid, name: me.name, elo: el }; t.ready = {}; t.at = Date.now();
+        toast(t.host.uid, '🎲 ' + me.name + ' (' + el + ') stolingizga o‘tirdi — «🎲 Stollar»da ✅ Tayyor bosing');
+        push(); break;
+      }
+      case 'lbTblReady': {
+        const t = tables.get(String(m.id)); if (!t || !t.guest || t.playing) return true;
+        if (t.host.uid !== me.uid && t.guest.uid !== me.uid) return true;
+        t.ready[me.uid] = true; t.at = Date.now();
+        if (t.ready[t.host.uid] && t.ready[t.guest.uid]) {
+          t.ready = {};
+          if (!connsOf(t.host.uid).length || !connsOf(t.guest.uid).length) { toast(me.uid, 'Raqib hozir onlayn emas'); push(); break; }
+          queue.delete(t.host.uid); queue.delete(t.guest.uid);
+          t.playing = true;
+          const ok = makeMatch({ uid: t.host.uid, name: t.host.name }, { uid: t.guest.uid, name: t.guest.name }, t.tc, 'table', { pos: t.pos, games: 1, voice: false, stake: t.stake, tbl: t.id });
+          if (ok === false) t.playing = false; else t.games++;
+        } else toast(t.host.uid === me.uid ? t.guest.uid : t.host.uid, '✅ ' + me.name + ' tayyor — Stol #' + t.no);
+        push(); break;
+      }
+      case 'lbTblKick': {
+        const t = tables.get(String(m.id)); if (!t || t.host.uid !== me.uid || !t.guest || t.playing) return true;
+        toast(t.guest.uid, 'Stol #' + t.no + ' egasi sizni stoldan chiqardi'); t.guest = null; t.ready = {};
+        push(); break;
+      }
+      case 'lbTblLeave': {
+        const t = tables.get(String(m.id)); if (!t) return true;
+        if (t.host.uid === me.uid) { if (t.guest) toast(t.guest.uid, 'Stol #' + t.no + ' yopildi'); tables.delete(t.id); }
+        else if (t.guest && t.guest.uid === me.uid) { toast(t.host.uid, '🚪 ' + me.name + ' stoldan turdi'); t.guest = null; t.ready = {}; }
+        push(); break;
       }
       case 'lbStakeRematch': {   // 🔁 yutqazgan o'yinchi: revansh, tikish 2 barobar (eng ko'pi 1000)
         const r = roomsApi.get(String(m.roomId));
@@ -1470,6 +1529,13 @@ function createLobby({ send, clients, roomsApi }) {
     const now = Date.now();
     let changed = false;
     for (const [id, ch] of challenges) if (now - ch.at > CHALLENGE_TTL) { challenges.delete(id); changed = true; }
+    for (const [id, t] of tables) {   // 🎲 egasi chiqib ketgan (90 s) yoki 60 daqiqa harakatsiz stollar yopiladi
+      if (t.playing) continue;
+      const hOn = connsOf(t.host.uid).length > 0;
+      t.hGone = hOn ? 0 : (t.hGone || now);
+      if ((t.hGone && now - t.hGone > 90000) || now - t.at > 3600e3) { if (t.guest) toast(t.guest.uid, 'Stol #' + t.no + ' yopildi'); tables.delete(id); changed = true; continue; }
+      if (t.guest) { const gOn = connsOf(t.guest.uid).length > 0; t.gGone = gOn ? 0 : (t.gGone || now); if (t.gGone && now - t.gGone > 90000) { t.guest = null; t.ready = {}; t.gGone = 0; changed = true; } }
+    }
     for (const [id, t] of tournaments) {
       if ((t.status === 'finished' && now - t.finishedAt > KEEP_FINISHED) || (t.status === 'reg' && now - t.created > REG_TTL && !(t.startAt && t.startAt > now))) {
         console.log('[turnir] tozalandi:', id, t.name, t.status); tournaments.delete(id); changed = true;

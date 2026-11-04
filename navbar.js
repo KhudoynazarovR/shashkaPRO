@@ -660,3 +660,24 @@ document.addEventListener('click', function (e) {
   var t = e.target;
   if (t && t.closest && t.closest('#nvBar')) { var h = document.getElementById('nvMiniHub'); if (h) h.remove(); }
 }, true);
+
+/* nvStol: 🎲 Stollar — bosh sahifada Botlar kartasidan keyin */
+(function () {
+  var st = document.createElement('style');
+  st.textContent = '#nvDuo #nvMemRow{flex:0 0 27%!important}#nvDuo #nvBotRow{flex:1 1 0!important}' +
+    '#nvStolRow{flex:1 1 0;min-width:0;margin:0!important;padding:8px 10px!important;border-radius:16px;background:linear-gradient(135deg,#b45309,#ea580c);border:1px solid #fbbf24;color:#fff;cursor:pointer;display:flex;flex-direction:column;justify-content:center;gap:4px;box-sizing:border-box}' +
+    '#nvStolRow .i{font-size:22px;line-height:1}#nvStolRow b{font-size:14px}#nvStolRow small{font-size:11px;opacity:.9}';
+  document.head.appendChild(st);
+  setInterval(function () {
+    var d = document.getElementById('nvDuo'), b = document.getElementById('nvBotRow'); if (!d || !b) return;
+    var r = document.getElementById('nvStolRow');
+    if (!r) {
+      r = document.createElement('div'); r.id = 'nvStolRow';
+      r.innerHTML = '<span class="i">🎲</span><b>Stollar</b><small id="nvStolN">tanga tikib</small>';
+      r.onclick = function () { if (window.lbTables) window.lbTables(); };
+      b.parentNode.insertBefore(r, b.nextSibling);
+    } else if (r.previousSibling !== b) b.parentNode.insertBefore(r, b.nextSibling);
+    var n = window.lbTblCount ? window.lbTblCount() : 0, el = document.getElementById('nvStolN');
+    if (el) { var t = n ? '🟢 ' + n + ' ta ochiq' : 'tanga tikib'; if (el.textContent !== t) el.textContent = t; }
+  }, 800);
+})();

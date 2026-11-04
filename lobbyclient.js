@@ -91,6 +91,76 @@
     function go(roomId) { location.href = location.pathname + "?room=" + encodeURIComponent(roomId); }
 
     // ---------- ulanish ----------
+    // 🎲 Stollar (playok kabi): stol ochish, bo'sh joyga o'tirish, ikkalasi «Tayyor» — o'yin; tikish stolda yozilgan
+    var TB = { form: false, tc: "3+2", stake: 0, pos: "std", minElo: 0 };
+    try { var _tb = JSON.parse(localStorage.getItem("tblForm") || "{}"); ["tc", "stake", "pos", "minElo"].forEach(function (k) { if (_tb[k] != null) TB[k] = _tb[k]; }); } catch (e) {}
+    window.lbTblCount = function () { return ((S && S.tables) || []).filter(function (t) { return !t.guest; }).length; };
+    function tblCss() {
+      if ($("tblCss")) return;
+      var s = document.createElement("style"); s.id = "tblCss";
+      s.textContent = "#tblOv{position:fixed;inset:0;z-index:100050;background:radial-gradient(circle at 50% 0,#2a1a5e 0,#120c33 60%);color:#fff;overflow:auto;padding:calc(12px + env(safe-area-inset-top,0px)) 14px calc(90px + env(safe-area-inset-bottom,0px));box-sizing:border-box;font-family:system-ui,Roboto,sans-serif}" +
+        "#tblOv .hd{display:flex;align-items:center;gap:10px;margin-bottom:12px}#tblOv .hd b{flex:1;font-size:22px}#tblOv .hd button{border:0;background:#352d86;color:#fff;border-radius:12px;width:42px;height:42px;font-size:18px}" +
+        "#tblOv .tb{background:#221c5a;border:1px solid #3d3590;border-radius:16px;padding:12px;margin-bottom:10px}#tblOv .tb.my{border-color:#f59e0b;background:#2c2150}" +
+        "#tblOv .tt{display:flex;align-items:center;gap:8px;font-size:13px;color:#c9c5f5;margin-bottom:8px;flex-wrap:wrap}#tblOv .tt .st{background:#3a2a05;color:#ffd54a;border-radius:10px;padding:3px 9px;font-weight:800;font-size:15px}" +
+        "#tblOv .sx{display:flex;align-items:center;gap:8px}#tblOv .sx .p{flex:1;min-width:0;background:#15113d;border-radius:12px;padding:9px 10px;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#tblOv .sx .p small{opacity:.65}#tblOv .sx .p.e{border:1px dashed #5b52c0;color:#9d97e0;text-align:center}" +
+        "#tblOv .bt{display:inline-block;width:auto;flex:none;border:0;border-radius:12px;padding:10px 14px;font-size:14px;font-weight:700;color:#fff;background:#4f46e5;margin:8px 6px 0 0}#tblOv .bt.g{background:#16a34a}#tblOv .bt.r{background:#7f1d1d}#tblOv .bt.o{background:linear-gradient(90deg,#f59e0b,#ea580c)}#tblOv .bt:disabled{opacity:.5}" +
+        "#tblOv .ch{border:1px solid #4a42a0;background:#15113d;color:#fff;border-radius:10px;padding:8px 0;font-size:14px;flex:1;font-weight:700}#tblOv .ch.on{border-color:#f59e0b;background:#3a2a05;color:#ffd54a}#tblOv .rw{display:flex;gap:6px;margin:4px 0 10px}#tblOv .lb{font-size:12px;opacity:.7;margin-top:4px}" +
+        "#tblOv .mu{font-size:12px;color:#b8b3ea;line-height:1.45}";
+      document.head.appendChild(s);
+    }
+    function tblHtml(t, myId) {
+      var mine = t.host.uid === myId || (t.guest && t.guest.uid === myId), host = t.host.uid === myId, rd = t.ready || [];
+      var who = function (p) { return p ? esc(p.name) + " <small>" + p.elo + "</small>" + (rd.indexOf(p.uid) >= 0 ? " ✅" : "") : ""; };
+      var h = "<div class='tb" + (mine ? " my" : "") + "'><div class='tt'><b style='color:#fff'>Stol #" + t.no + "</b>" + (t.stake ? "<span class='st'>💰 " + t.stake + " 🪙</span>" : "<span>tikishsiz</span>") + "<span>⏱ " + esc(t.tc) + "</span>" + (t.pos === "idf" ? "<span>IDF 780</span>" : "") + (t.minElo ? "<span>⭐ " + t.minElo + "+</span>" : "") + (t.playing ? "<span style='color:#4ade80'>● o‘ynalmoqda</span>" : "") + "</div>" +
+        "<div class='sx'><div class='p'>👑 " + who(t.host) + "</div><b style='opacity:.6'>vs</b><div class='p" + (t.guest ? "" : " e") + "'>" + (t.guest ? who(t.guest) : "bo‘sh joy") + "</div></div>";
+      if (t.stake) h += "<div class='lb'>G‘olibga " + Math.floor(t.stake * 1.8) + " 🪙 · durangda tanga qaytadi</div>";
+      if (mine) {
+        if (t.playing) h += "<button class='bt g' data-w='" + t.roomId + "'>▶ O‘yinga qaytish</button>";
+        else if (!t.guest) h += "<div class='lb'>⏳ Raqib kutilmoqda — bu vaqtda boshqa ishlar bilan shug‘ullanavering</div><button class='bt r' data-l='" + t.id + "'>🚪 Stolni yopish</button>";
+        else {
+          h += rd.indexOf(myId) >= 0 ? "<button class='bt' disabled>⏳ Raqib tayyor emas…</button>" : "<button class='bt g' data-r='" + t.id + "'>✅ Tayyor" + (t.games ? " (yana)" : "") + "</button>";
+          if (host) h += "<button class='bt r' data-k='" + t.id + "'>🚪 Chiqarish</button><button class='bt r' data-l='" + t.id + "'>Yopish</button>";
+          else h += "<button class='bt r' data-l='" + t.id + "'>🚪 Turish</button>";
+        }
+      } else if (t.playing && t.roomId) h += "<button class='bt' data-w='" + t.roomId + "'>👁 Tomosha</button>";
+      else if (!t.guest) h += "<button class='bt o' data-s='" + t.id + "'>🪑 O‘tirish</button>";
+      return h + "</div>";
+    }
+    function renderTables() {
+      var ov = $("tblOv"); if (!ov) return;
+      var st = ov.scrollTop, myId = S && S.me ? String(S.me.uid) : "", L = ((S && S.tables) || []).slice();
+      var mine = L.filter(function (t) { return t.host.uid === myId || (t.guest && t.guest.uid === myId); })[0];
+      var open = L.filter(function (t) { return t !== mine && !t.guest; }).sort(function (a, b) { return b.stake - a.stake; });
+      var busy = L.filter(function (t) { return t !== mine && t.guest; });
+      var h = "<div class='hd'><b>🎲 Stollar</b><button id='tblX'>✕</button></div>";
+      if (mine) h += "<div class='lb' style='margin-bottom:6px'>SIZNING STOLINGIZ</div>" + tblHtml(mine, myId);
+      else if (TB.form) {
+        var ch = function (k, v, lab) { return "<button class='ch" + (String(TB[k]) === String(v) ? " on" : "") + "' data-f='" + k + ":" + v + "'>" + lab + "</button>"; };
+        h += "<div class='tb my'><b style='font-size:16px'>➕ Yangi stol</b>" +
+          "<div class='lb'>⏱ VAQT</div><div class='rw'>" + ["1+1", "2+2", "3+2", "5+3"].map(function (v) { return ch("tc", v, v); }).join("") + "</div>" +
+          "<div class='lb'>💰 TIKISH</div><div class='rw'>" + [0, 10, 50, 100, 500].map(function (v) { return ch("stake", v, v ? v : "yo‘q"); }).join("") + "</div>" +
+          "<div class='lb'>♟ POZITSIYA</div><div class='rw'>" + ch("pos", "std", "Standart") + ch("pos", "idf", "IDF 780") + "</div>" +
+          "<div class='lb'>⭐ RAQIB REYTINGI</div><div class='rw'>" + [0, 1200, 1300, 1500].map(function (v) { return ch("minElo", v, v ? v + "+" : "har kim"); }).join("") + "</div>" +
+          (+TB.stake ? "<div class='mu'>G‘olibga " + Math.floor(TB.stake * 1.8) + " 🪙 (10% komissiya). Durangda tanga qaytadi. Shart: 3 kunlik akkaunt va 10 ta o‘yin.</div>" : "") +
+          "<button class='bt o' id='tblGo'>🎲 Stolni ochish</button><button class='bt r' id='tblNo'>Bekor</button></div>";
+      } else h += "<button class='bt o' id='tblNew' style='width:100%;margin:0 0 12px;padding:14px;font-size:16px'>➕ Stol ochish</button>";
+      h += "<div class='lb' style='margin:4px 0 6px'>OCHIQ STOLLAR · " + open.length + "</div>";
+      h += open.length ? open.map(function (t) { return tblHtml(t, myId); }).join("") : "<div class='mu' style='margin-bottom:12px'>Hozir ochiq stol yo‘q — birinchi bo‘lib stol oching!</div>";
+      if (busy.length) h += "<div class='lb' style='margin:10px 0 6px'>BAND STOLLAR · " + busy.length + "</div>" + busy.map(function (t) { return tblHtml(t, myId); }).join("");
+      ov.innerHTML = h; ov.scrollTop = st;
+      $("tblX").onclick = function () { ov.remove(); };
+      if ($("tblNew")) $("tblNew").onclick = function () { TB.form = true; renderTables(); };
+      if ($("tblNo")) $("tblNo").onclick = function () { TB.form = false; renderTables(); };
+      if ($("tblGo")) $("tblGo").onclick = function () { try { localStorage.setItem("tblForm", JSON.stringify(TB)); } catch (e) {} TB.form = false; sendMsg({ type: "lbTblNew", tc: TB.tc, stake: +TB.stake, pos: TB.pos, minElo: +TB.minElo }); };
+      [].forEach.call(ov.querySelectorAll("[data-f]"), function (b) { b.onclick = function () { var p = b.getAttribute("data-f").split(":"); TB[p[0]] = p[0] === "tc" || p[0] === "pos" ? p[1] : +p[1]; renderTables(); }; });
+      var on = function (a, type) { [].forEach.call(ov.querySelectorAll("[data-" + a + "]"), function (b) { b.onclick = function () { b.disabled = true; sendMsg({ type: type, id: b.getAttribute("data-" + a) }); }; }); };
+      on("s", "lbTblSit"); on("r", "lbTblReady"); on("k", "lbTblKick"); on("l", "lbTblLeave");
+      [].forEach.call(ov.querySelectorAll("[data-w]"), function (b) { b.onclick = function () { go(b.getAttribute("data-w")); }; });
+    }
+    window.lbTables = function () {
+      tblCss(); var ov = $("tblOv"); if (!ov) { ov = document.createElement("div"); ov.id = "tblOv"; document.body.appendChild(ov); }
+      renderTables();
+    };
     window.lbStakeRematch = function (rid) { sendMsg({ type: "lbStakeRematch", roomId: String(rid) }); };   // 🔁 2× tikish revansh
     window.lbEtude = function (id) { sendMsg({ type: "lbEtude", id: String(id) }); };   // ♔ etyudni King Kongga qarshi yechish
     try { if (!inRoom && localStorage.getItem("etOpen") === "1") { localStorage.removeItem("etOpen"); setTimeout(function () { var se = document.createElement("script"); se.src = "/etudeview.js?v=1"; se.onload = function () { window.spEtudes(); }; document.head.appendChild(se); }, 900); } } catch (e) {}
@@ -117,7 +187,7 @@
 
     function onMsg(m) {
       if (m.type === "lbState") {
-        S = m; if (m.now) window.__lbSkew = m.now - Date.now(); renderBadge(); if (panelOpen) renderAll(); renderIncoming(); updateSimulBtn();
+        S = m; if (m.now) window.__lbSkew = m.now - Date.now(); renderBadge(); if ($("tblOv")) renderTables(); if (panelOpen) renderAll(); renderIncoming(); updateSimulBtn();
         if (linkTid && !inRoom) openLinked("t");
         if (linkSid && !inRoom) openLinked("s");
         if (m.appLink && !window.TG_APP_LINK) window.TG_APP_LINK = m.appLink;
