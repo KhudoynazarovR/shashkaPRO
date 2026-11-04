@@ -247,7 +247,7 @@ function createLobby({ send, clients, roomsApi }) {
       seekers: [...queue.values()].reduce((o, x) => { if (x.uid !== uid && connsOf(x.uid).length) { const k = x.tc + (x.voice ? 'v' : '') + (x.stake ? 's' + x.stake : ''); o[k] = (o[k] || 0) + 1; } return o; }, {}),
       myStake: (queue.get(uid) || {}).stake || 0,
       incoming: [...challenges.values()].filter(x => x.toUid === uid)
-        .map(x => ({ id: x.id, fromName: x.fromName, tc: x.tc + describeOpts(x) })),
+        .map(x => ({ id: x.id, fromName: x.fromName, tc: x.tc + describeOpts(x), stake: x.stake || 0, rm: !!x.rm })),
       outgoing: [...challenges.values()].filter(x => x.fromUid === uid)
         .map(x => ({ id: x.id, toUid: x.toUid, tc: x.tc })),
       tournaments: [...tournaments.values()].map(pubT), promo: promoInfo(),
@@ -1139,6 +1139,26 @@ function createLobby({ send, clients, roomsApi }) {
         }
         challenges.set(ch.id, ch);
         sendUid(ch.toUid, { type: 'lbChallengeIn', id: ch.id, fromName: ch.fromName, tc: ch.tc + describeOpts(ch) });
+        push();
+        break;
+      }
+      case 'lbStakeRematch': {   // 🔁 yutqazgan o'yinchi: revansh, tikish 2 barobar (eng ko'pi 1000)
+        const r = roomsApi.get(String(m.roomId));
+        if (!r || !r.finished || !r.stake || !r.white || !r.black) return err(c, 'Revansh mumkin emas'), true;
+        const myCol = String(r.white.uid) === me.uid ? 'white' : String(r.black.uid) === me.uid ? 'black' : null;
+        if (!myCol || !r.winner || r.winner === 'draw' || r.winner === myCol) return err(c, 'Revansh faqat yutqazgan o‘yinchi uchun'), true;
+        if ((r.plies || 0) < 2) return err(c, 'O‘yin boshlanmagan edi — tanga qaytarilgan'), true;
+        if (r.stakeRm) return err(c, 'Revansh allaqachon taklif qilingan'), true;
+        const opp = String(r[myCol === 'white' ? 'black' : 'white'].uid), oppName = r[myCol === 'white' ? 'black' : 'white'].name;
+        if (!connsOf(opp).length) return err(c, 'Raqib chiqib ketgan'), true;
+        const W = require('./wager.js'), stake2 = Math.min(W.MAXX, r.stake * 2);
+        { const e = W.can(me.uid, stake2); if (e) return err(c, e), true; }
+        if ([...challenges.values()].some(x => x.fromUid === me.uid && x.toUid === opp)) return err(c, 'Chaqiruv allaqachon yuborilgan'), true;
+        r.stakeRm = true;
+        const ch = { id: 'c' + hex(4), fromUid: me.uid, fromName: me.name, toUid: opp, tc: r.tc || '3+2', pos: 'std', games: 1, voice: false, stake: stake2, rm: true, at: Date.now() };
+        challenges.set(ch.id, ch);
+        sendUid(opp, { type: 'lbChallengeIn', id: ch.id, fromName: ch.fromName, tc: ch.tc + describeOpts(ch) });
+        toast(me.uid, '🔁 ' + (oppName || 'Raqib') + 'ga revansh taklif qilindi: 💰 ' + stake2 + ' 🪙');
         push();
         break;
       }

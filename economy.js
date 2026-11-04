@@ -27,6 +27,7 @@ function note(u, d, why) {
   u.log = u.log || [];
   u.log.push({ t: Date.now(), d, why });
   if (u.log.length > 30) u.log.shift();
+  try { require('./eco.js').coin(d, why); } catch (e) {}
 }
 function add(id, n, why) {
   const u = user(id);
@@ -146,6 +147,7 @@ function handle(req, res, url) {
   if (p === '/api/wager' && req.method === 'GET') { const W = require('./wager.js'); send(res, 200, { stakes: W.STAKES, fee: W.FEE, top: W.top() }); return true; }
   if (p.startsWith('/api/kkbook')) { if (require('./kkbook.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }
   if (p === '/api/notify') { if (require('./notify.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }
+  if (p === '/api/admin/eco') { if (require('./eco.js').handle(req, res, p, { verifyInitData, send })) return true; }
   if (p === '/api/gif') { if (require('./gif.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }
   if (p.startsWith('/api/corr')) { if (require('./corr.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }
   if (p === '/api/endgame') { if (require('./endgame.js').handle(req, res, p, { verifyInitData, send })) return true; }

@@ -24,6 +24,7 @@ const dmy = t => { const d = new Date(t + 5 * 3600e3); return String(d.getUTCDat
 function grant(u, days, why) {
   u.premiumUntil = Math.max(Date.now(), u.premiumUntil || 0) + days * DAY;
   u.premLog = u.premLog || []; u.premLog.push({ t: Date.now(), days, why }); if (u.premLog.length > 20) u.premLog.shift();
+  try { require('./eco.js').prem(why, days); } catch (e) {}
   store.save();
   return u.premiumUntil;
 }
@@ -64,6 +65,7 @@ function onPaid(msg, x) {   // payments.js dan, to'lov tekshirilgandan keyin
   u.charges.push(p.telegram_payment_charge_id); if (u.charges.length > 50) u.charges.shift();
   if (p.subscription_expiration_date) u.premSub = p.subscription_expiration_date * 1000;
   u.payLog = u.payLog || []; u.payLog.push({ c: p.telegram_payment_charge_id, k: 'pr_' + x.plan, s: p.total_amount, t: Date.now() }); if (u.payLog.length > 30) u.payLog.shift();
+  try { require('./eco.js').stars(p.total_amount); } catch (e) {}
   const until = grant(u, x.P.days, 'stars_' + x.plan + (p.is_recurring ? '_renew' : ''));
   dm(x.uid, (p.is_recurring ? '🔄 Premium obunasi yangilandi' : '👑 Premium yoqildi (' + x.P.name + ')') + '! ' + dmy(until) + ' gacha amal qiladi.\nRahmat! 🙏');
   for (const a of ADM()) dm(a, '💰 ' + (u.name || x.uid) + ' (' + x.uid + '): Premium ' + x.P.name + ' — ' + p.total_amount + ' ⭐' + (p.is_recurring ? ' (yangilanish)' : '') + '\n' + p.telegram_payment_charge_id);
@@ -97,7 +99,7 @@ function giveTrial(u) {   // store.getOrCreate (yangi o'yinchi) va bir martalik 
   if (!u || u.premTrial) return false;
   u.premTrial = Date.now();
   u.premiumUntil = Math.max(Date.now(), u.premiumUntil || 0) + TRIAL_DAYS * DAY;
-  u.trialEnd = u.premiumUntil; u.trialShow = 1;
+  u.trialEnd = u.premiumUntil; u.trialShow = 1; try { require('./eco.js').prem('trial'); } catch (e) {}
   return true;
 }
 setTimeout(() => {   // hozirgi o'yinchilarga bir martalik sovg'a (server birinchi ishga tushganda)

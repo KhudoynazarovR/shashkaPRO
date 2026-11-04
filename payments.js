@@ -113,6 +113,7 @@ async function onPayment(msg) {
   if (u.charges.length > 50) u.charges.shift();
   u.diamonds = (u.diamonds || 0) + pack.diamonds;
   u.payLog = u.payLog || []; u.payLog.push({ c: charge, k: parts[1], s: p.total_amount, t: Date.now() }); if (u.payLog.length > 30) u.payLog.shift();
+  try { require('./eco.js').stars(p.total_amount); require('./eco.js').coin(pack.diamonds, 'stars_pack'); } catch (e) {}
   store.save();
   for (const a of String(process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean)) tg('sendMessage', { chat_id: a, text: '💰 ' + (u.name || parts[0]) + ' (' + parts[0] + '): ' + pack.diamonds + ' tanga — ' + p.total_amount + ' ⭐\n' + charge }).catch(() => {});
 

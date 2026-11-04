@@ -23,6 +23,7 @@
   function render(ov, x) {
     var h = '<div class="hd"><b>📊 Statistika</b><button id="stR">🔄</button><button id="stX">✕</button></div>';
     h += '<div class="kp"><div><b>' + x.total + '</b><small>Jami</small></div><div><b>' + x.dau + '</b><small>Bugun</small></div><div><b>' + x.wau + '</b><small>7 kun</small></div><div><b>' + x.mau + '</b><small>30 kun</small></div></div>';
+    h += '<div id="stEco"><div class="cd">💰 Iqtisod yuklanmoqda…</div></div>';
     var ds = x.days.slice().reverse(), mx = Math.max.apply(null, ds.map(function (d) { return d.dau; }).concat([1]));
     h += '<div class="cd"><h3>👥 Kunlik faol o‘yinchilar</h3><div class="ch">' + ds.map(function (d) { return '<div><em>' + (d.dau || '') + '</em><i style="height:' + Math.round(d.dau / mx * 100) + '%"></i><span>' + dm(d.d).slice(0, 2) + '</span></div>'; }).join('') + '</div></div>';
     h += '<div class="cd"><h3>🔁 Yangi o‘yinchilar va qaytish</h3><table><tr><th>Sana</th><th>Faol</th><th>Yangi</th><th>Ertasi</th><th>7 kun</th></tr>' +
@@ -36,6 +37,35 @@
     ov.innerHTML = h;
     ov.querySelector('#stX').onclick = function () { ov.remove(); };
     ov.querySelector('#stR').onclick = function () { load(ov); };
+    eco(ov);
+  }
+  // 💰 iqtisod: tikish, komissiya, Premium sotuvlari, ⭐, muomaladagi tanga
+  var CAT = { wager_lock: '💰 Tikish (muzlatildi)', wager_win: '💰 Tikish yutug‘i', wager_refund: '💰 Tikish qaytdi', stars_pack: '⭐ Tanga paketi', premium_week: '👑 Premium hafta', premium_month: '👑 Premium oy', premium_year: '👑 Premium yil', gift_out: '🎁 Sovg‘a (yuborildi)', gift_in: '🎁 Sovg‘a (olindi)' };
+  function n0(v) { return (v || 0).toLocaleString('ru-RU'); }
+  function eco(ov) {
+    var box = ov.querySelector('#stEco'); if (!box) return;
+    fetch('/api/admin/eco', { headers: { 'x-init-data': initData } }).then(function (r) { return r.json(); }).then(function (e) {
+      if (!e || e.error) { box.innerHTML = '<div class="cd">' + esc((e && e.error) || 'Xato') + '</div>'; return; }
+      var t = e.days[0] || { wager: {}, prem: {}, top: [] }, y = e.days[1] || { wager: {}, prem: {}, top: [] };
+      var P = function (d) { var p = d.prem || {}; return (p.coins || 0) + ' 🪙 · ' + (p.stars || 0) + ' ⭐' + (p.renew ? ' · ' + p.renew + ' 🔄' : ''); };
+      var h = '<div class="kp"><div><b>' + e.premA + '</b><small>👑 Premium</small></div><div><b>' + e.paidA + '</b><small>Pullik</small></div><div><b>' + e.trialA + '</b><small>Sinov</small></div><div><b>' + n0(e.coins) + '</b><small>🪙 muomalada</small></div></div>';
+      h += '<div class="cd"><h3>💰 Bugun · iqtisod</h3><table><tr><th></th><th>Bugun</th><th>Kecha</th></tr>' +
+        '<tr><td>💰 Tikib o‘ynalgan o‘yin</td><td>' + (t.wager.games || 0) + '</td><td>' + (y.wager.games || 0) + '</td></tr>' +
+        '<tr><td>💰 Tikilgan tanga</td><td>' + n0(t.wager.vol) + '</td><td>' + n0(y.wager.vol) + '</td></tr>' +
+        '<tr><td>🔥 Yo‘q qilingan komissiya</td><td>' + n0(t.wager.fee) + '</td><td>' + n0(y.wager.fee) + '</td></tr>' +
+        '<tr><td>👑 Premium sotildi</td><td>' + P(t) + '</td><td>' + P(y) + '</td></tr>' +
+        '<tr><td>👑 Tangaga sotilgan Premium</td><td>' + n0(t.premCoins) + ' 🪙</td><td>' + n0(y.premCoins) + ' 🪙</td></tr>' +
+        '<tr><td>⭐ Stars to‘lovlari</td><td>' + n0(t.stars) + ' (' + (t.starsN || 0) + ')</td><td>' + n0(y.stars) + ' (' + (y.starsN || 0) + ')</td></tr>' +
+        '<tr><td>🎁 Sovg‘a / sinov</td><td>' + ((t.prem || {}).gift || 0) + ' / ' + ((t.prem || {}).trial || 0) + '</td><td>' + ((y.prem || {}).gift || 0) + ' / ' + ((y.prem || {}).trial || 0) + '</td></tr>' +
+        '<tr><td>➕ Berilgan tanga</td><td class="stG">' + n0(t.minted) + '</td><td class="stG">' + n0(y.minted) + '</td></tr>' +
+        '<tr><td>➖ Sarflangan tanga</td><td class="stR">' + n0(t.burned) + '</td><td class="stR">' + n0(y.burned) + '</td></tr></table>' +
+        '<div class="mu">Tikib o‘ynaganlar: ' + e.wgPl + ' kishi, jami ' + e.wgN + ' ta o‘yin · 1000+ tangali: ' + e.rich + ' · faol yozishma o‘yinlar: ' + e.corr + '</div></div>';
+      if (e.days.length > 1) h += '<div class="cd"><h3>📅 Kunlar bo‘yicha</h3><table><tr><th>Sana</th><th>Tikish</th><th>🔥</th><th>👑</th><th>⭐</th></tr>' + e.days.map(function (d) { var p = d.prem || {}; return '<tr><td>' + dm(d.day) + '</td><td>' + n0(d.wager.vol) + '</td><td>' + n0(d.wager.fee) + '</td><td>' + ((p.coins || 0) + (p.stars || 0) + (p.renew || 0)) + '</td><td>' + n0(d.stars) + '</td></tr>'; }).join('') + '</table></div>';
+      if (t.top && t.top.length) h += '<div class="cd"><h3>🔎 Bugungi tanga oqimi (sabab bo‘yicha)</h3><table><tr><th>Sabab</th><th>+</th><th>−</th><th>soni</th></tr>' + t.top.map(function (r) { return '<tr><td>' + esc(CAT[r.k] || r.k) + '</td><td class="stG">' + n0(r.in) + '</td><td class="stR">' + n0(r.out) + '</td><td>' + r.n + '</td></tr>'; }).join('') + '</table></div>';
+      if (e.wtop && e.wtop.length) h += '<div class="cd"><h3>🏆 Tikishda eng ko‘p yutganlar</h3><table>' + e.wtop.map(function (w, i) { return '<tr><td>' + (i + 1) + '. ' + esc(w.name) + '</td><td class="' + (w.net >= 0 ? 'stG' : 'stR') + '">' + (w.net >= 0 ? '+' : '') + n0(w.net) + '</td><td>' + w.w + '/' + w.n + '</td></tr>'; }).join('') + '</table></div>';
+      h += '<div class="mu" style="margin-bottom:10px">Iqtisod kuzatuvi ' + esc(e.since) + ' dan boshlangan (Toshkent vaqti). Ba‘zi mukofotlar (yutuqlar, qaytarilgan tangalar) bu hisobga kirmasligi mumkin.</div>';
+      box.innerHTML = h;
+    }).catch(function () { box.innerHTML = '<div class="cd">💰 Iqtisod: server bilan aloqa yo‘q</div>'; });
   }
   function load(ov) {
     fetch('/api/admin/stats', { headers: { 'x-init-data': initData } }).then(function (r) { return r.json(); }).then(function (x) {

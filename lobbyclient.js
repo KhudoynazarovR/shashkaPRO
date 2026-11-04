@@ -91,6 +91,7 @@
     function go(roomId) { location.href = location.pathname + "?room=" + encodeURIComponent(roomId); }
 
     // ---------- ulanish ----------
+    window.lbStakeRematch = function (rid) { sendMsg({ type: "lbStakeRematch", roomId: String(rid) }); };   // 🔁 2× tikish revansh
     window.lbEtude = function (id) { sendMsg({ type: "lbEtude", id: String(id) }); };   // ♔ etyudni King Kongga qarshi yechish
     try { if (!inRoom && localStorage.getItem("etOpen") === "1") { localStorage.removeItem("etOpen"); setTimeout(function () { var se = document.createElement("script"); se.src = "/etudeview.js?v=1"; se.onload = function () { window.spEtudes(); }; document.head.appendChild(se); }, 900); } } catch (e) {}
     function sendMsg(m) {
@@ -228,7 +229,7 @@
         shownIncoming[c.id] = 1;
         try { if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred("success"); else if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch (e) {}
         if (panelOpen && curTab === "pl" && !c.grp) return;
-        toast("⚔️ <b>" + esc(c.fromName) + "</b> sizni o‘yinga chaqirdi (" + esc(c.tc) + ")" + (c.stake ? "<br>💰 Tikish: <b>" + c.stake + " 🪙</b> · g‘olibga " + Math.floor(c.stake * 1.8) + " 🪙" : ""), [
+        toast((c.rm ? "🔁 <b>" + esc(c.fromName) + "</b> revansh so‘rayapti — tikish 2 barobar! (" + esc(String(c.tc).split(" · ")[0]) + ")" : "⚔️ <b>" + esc(c.fromName) + "</b> sizni o‘yinga chaqirdi (" + esc(c.stake ? String(c.tc).split(" · ")[0] : c.tc) + ")") + (c.stake ? "<br>💰 Tikish: <b>" + c.stake + " 🪙</b> · g‘olibga " + Math.floor(c.stake * 1.8) + " 🪙" : ""), [
           ["Qabul", function () { sendMsg({ type: "lbRespond", id: c.id, accept: true }); }],
           ["Rad etish", function () { sendMsg({ type: "lbRespond", id: c.id, accept: false }); }, "no"]
         ], 55000);

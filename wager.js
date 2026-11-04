@@ -3,12 +3,12 @@
 // G'olib bankni oladi, 10% komissiya yo'q qilinadi (tanga qadrsizlanmasin). Durang yoki o'yin boshlanmay tugasa — qaytariladi.
 // Shart: kamida 3 kunlik va 10 o'yinli akkaunt (soxta akkaunt bilan tanga yig'ishdan himoya). O'yinlar soni cheklanmagan.
 const store = require('./store.js');
-const STAKES = [10, 50, 100, 500], FEE = 0.10, MIN_AGE = 3 * 86400e3, MIN_GAMES = 10;
+const STAKES = [10, 50, 100, 500], ALLOWED = [10, 20, 50, 100, 200, 500, 1000], MAXX = 1000, FEE = 0.10, MIN_AGE = 3 * 86400e3, MIN_GAMES = 10;
 const users = () => store.users();
 const prize = s => Math.floor(2 * s * (1 - FEE));
 function can(uid, stake) {
   const u = users()[String(uid)];
-  if (!STAKES.includes(stake)) return 'Tikish miqdori noto‘g‘ri';
+  if (!ALLOWED.includes(stake)) return 'Tikish miqdori noto‘g‘ri';
   if (!u || !/^\d+$/.test(String(uid))) return 'Tikib o‘ynash faqat Telegram orqali kirganda';
   if (Date.now() - (u.created || 0) < MIN_AGE) return '💰 Tikib o‘ynash ro‘yxatdan o‘tgach 3 kundan keyin ochiladi';
   if ((u.games || 0) < MIN_GAMES) return '💰 Tikib o‘ynash uchun kamida ' + MIN_GAMES + ' ta o‘yin o‘ynagan bo‘lish kerak (sizda ' + (u.games || 0) + ')';
@@ -32,7 +32,7 @@ function settle(room, w, k, stake) {
     out[w] = out[k] = '💰 O‘yin boshlanmadi — ' + stake + ' 🪙 qaytarildi';
   } else if (room.winner === 'white' || room.winner === 'black') {
     const win = room.winner === 'white' ? w : k, los = win === w ? k : w, p = prize(stake);
-    E.add(win, p, 'wager_win');
+    E.add(win, p, 'wager_win'); try { require('./eco.js').fee(2 * stake - p); } catch (e) {}
     stat(win, p - stake, 'w'); stat(los, -stake, 'l');
     out[win] = '💰 Bank sizniki: +' + p + ' 🪙 (komissiya ' + (2 * stake - p) + ')'; out[los] = '💰 Tikilgan ' + stake + ' 🪙 raqibga o‘tdi';
   } else {
@@ -45,4 +45,4 @@ function settle(room, w, k, stake) {
 function top() {
   return Object.entries(users()).filter(([, u]) => u.wg && u.wg.n).map(([id, u]) => ({ name: u.name || 'O‘yinchi', net: u.wg.net, n: u.wg.n, w: u.wg.w })).sort((a, b) => b.net - a.net).slice(0, 10);
 }
-module.exports = { STAKES, FEE, prize, can, lock, settle, top };
+module.exports = { STAKES, ALLOWED, MAXX, FEE, prize, can, lock, settle, top };

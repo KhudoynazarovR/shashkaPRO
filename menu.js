@@ -131,7 +131,7 @@
       if (i === 1 && open === "help") h += "<div class='mnx mqX'>📱 <b>Pastki menyu:</b><br>👤 Profil: ma‘lumotlaringiz va balans<br>🎮 O‘yin: onlayn raqiblar va tezkor o‘yin<br>🏆 Turnir: turnirlar va klublar<br>📊 Reyting: eng kuchli o‘yinchilar<br>☰ Menyu: AI o‘yin, muharrir va sozlamalar</div>";
       if (i === 1 && open === "fb") h += "<div class='mnx mqX'><textarea id='mnFbT' maxlength='1000' placeholder='Taklif yoki shikoyatingizni yozing…'></textarea><button id='mnFbB' onclick='mnSend()'>Yuborish</button><div id='mnFbM' class='mnm' style='margin:8px 0 0'></div></div>";
     });
-    if (window.__isAdmin) h += "<div class='mqS'><span>🛡</span>ADMIN</div><div class='mqGr'>" + cardHtml(["📊", "Statistika", "Faollik, qaytish, eslatmalar", "@stats", "#0ea5e9,#22c55e"]) + "</div>";
+    if (window.__isAdmin) h += "<div class='mqS'><span>🛡</span>ADMIN</div><div class='mqGr'>" + cardHtml(["📊", "Statistika", "Faollik, iqtisod, Premium, tikish", "@stats", "#0ea5e9,#22c55e"]) + "</div>";
     h += "<div class='mqB'><span>🏆</span><div><b>ShashkaPRO — Doim siz bilan!</b><small>O‘yin, do‘stlar, turnirlar va yanada ko‘p imkoniyatlar!</small></div></div>";
     panel.innerHTML = h + "<div class='mnp'></div>";
   }
@@ -205,7 +205,7 @@
     if (a === "@gomoku") { close(); var _o = document.createElement("div"); _o.style.cssText = "position:fixed;inset:0;z-index:99999;background:#161512"; _o.innerHTML = "<iframe src='/gomoku.html' style='position:absolute;inset:0;width:100%;height:100%;border:0'></iframe><button style='position:absolute;top:8px;right:8px;z-index:2;width:40px;height:40px;border:0;border-radius:50%;background:#000a;color:#fff;font-size:20px'>✕</button>"; _o.querySelector("button").onclick = function () { _o.remove(); }; document.body.appendChild(_o); return; } if (a === "@set") { close(); if (window.spSettings) window.spSettings(); return; } if (a.indexOf("@ai:") === 0) { close(); if (window.aiShow) window.aiShow(a.slice(4)); return; }
     if (a === "@live") { close(); liveOpen(); return; }
     if (a === "@deb") { close(); if (window.spDebut) window.spDebut(); else { var _d = document.createElement('script'); _d.src = '/debyut.js?v=2'; _d.onload = function () { window.spDebut(); }; document.head.appendChild(_d); } return; }
-    if (a === "@stats") { close(); if (window.spStats) window.spStats(); else { var _s = document.createElement('script'); _s.src = '/statsview.js?v=1'; _s.onload = function () { window.spStats(); }; document.head.appendChild(_s); } return; }
+    if (a === "@stats") { close(); if (window.spStats) window.spStats(); else { var _s = document.createElement('script'); _s.src = '/statsview.js?v=2'; _s.onload = function () { window.spStats(); }; document.head.appendChild(_s); } return; }
     if (a === "@arena") { close(); if (window.avOpen) window.avOpen(); return; }
     if (a === "@arch") { close(); archOpen(); return; }
     if (a === "@board") {

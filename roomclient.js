@@ -595,6 +595,10 @@
           btn("🔁 Qayta o‘ynash", function () { send({ type: "roomRematch", roomId: roomId }); });
         }
       }
+      if (!spec && st.stake && st.finished && st.winner && st.winner !== "draw" && st.winner !== st.color && !st.vsBot && (st.moves || []).length >= 2 && window.lbStakeRematch && !st._stRm) {
+        var s2 = Math.min(1000, st.stake * 2);
+        btn("🔁 Revansh: 2× tikish (" + s2 + " 🪙)", function () { st._stRm = true; window.lbStakeRematch(roomId); this.disabled = true; this.textContent = "⏳ Revansh taklifi yuborildi"; });
+      }
       if (!spec && !st.etude && st.finished && st.winner === st.color && window.spShareCard) btn("📸 G‘alabani ulashish", function () { var opp = st.color === "white" ? st.black : st.white; window.spShareCard({ theme: "win", title: "G‘ALABA!", big: "🏆", sub: "Raqib: " + (st.vsBot ? "🤖 " : "") + (opp || ""), sub2: (st.tc ? "⏱ " + st.tc : "") + (st.reason === "timeout" ? " · vaqt bo‘yicha" : ""), cap: "🏆 ShashkaPRO’da " + (opp || "raqib") + "ni yutdim!" }); });
       if (!spec && !st.etude && st.finished && (st.moves || []).length >= 4 && tg && tg.initData) btn("🎞 GIF qilib ulashish", function () {   // bot GIF yuboradi — u yerdan istalgan chatga ulashiladi
         var b = this; b.disabled = true; b.textContent = "⏳ GIF tayyorlanmoqda…";
