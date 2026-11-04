@@ -29,6 +29,7 @@ function record(whiteId, blackId, winner) {
   apply(b, 1 - sw, w.name);
   try { require('./ref.js').onGame(String(whiteId), String(blackId)); } catch (e) { console.log('[ref]', e.message); }
   try { require('./region.js').onGame(String(whiteId), String(blackId), sw); } catch (e) { console.log('[region]', e.message); }
+  try { const A = require('./ach.js'); A.sync(whiteId); A.sync(blackId); } catch (e) { console.log('[ach]', e.message); }
   store.save();
 }
 

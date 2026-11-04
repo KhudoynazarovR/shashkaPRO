@@ -215,6 +215,7 @@ function createRooms({ send, clients, onFinish }) {
     const coins = BOT_COINS[botUid]; if (!coins) return;
     const eco = require('./economy'), u = require('./store').users()[String(human)];
     if (!u) return;
+    if (!room.etude) { u.botWins = u.botWins || {}; u.botWins[botUid] = (u.botWins[botUid] || 0) + 1; try { require('./ach.js').sync(human); } catch (e) {} }   // 🏅 yutuqlar uchun
     const day = new Date().toISOString().slice(0, 10);
     if (!u.botDay || u.botDay.day !== day) u.botDay = { day, n: 0 };
     if (u.botDay.n >= BOT_DAILY) return;

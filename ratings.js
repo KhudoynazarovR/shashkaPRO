@@ -213,6 +213,14 @@
           }
           w.innerHTML = h; grid.parentNode.insertBefore(w, grid.nextSibling);
         })();
+        (function () {   // 🏅 yutuqlar (faqat ochilganlari)
+          if (!d.ach || !d.ach.list || !d.ach.list.length) return;
+          var grid = box.querySelector("div[style*='grid-template-columns']"); if (!grid) return;
+          var w = document.createElement("div");
+          w.innerHTML = "<div style='background:#161a3a;border:1px solid #262b5a;border-radius:16px;padding:12px;margin-bottom:10px;text-align:left'><div style='display:flex;justify-content:space-between;font-size:14px;margin-bottom:8px'><span>🏅 Yutuqlar</span><span style='opacity:.7'>" + d.ach.n + "/" + d.ach.total + "</span></div><div style='display:flex;flex-wrap:wrap;gap:6px'>" +
+            d.ach.list.map(function (a) { return "<span title='" + esc(a.name) + "' style='width:38px;height:38px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-size:20px;background:linear-gradient(135deg,#3a2a00,#1d1f45);border:1px solid #f5b72b'>" + a.ic + "</span>"; }).join("") + "</div></div>";
+          grid.parentNode.insertBefore(w, grid.nextSibling);
+        })();
         (function () {   // 🎮 o'yinga taklif · 🎁 tanga sovg'a · 👑 Premium sovg'a
           var stt = window.lbFriendState ? window.lbFriendState(d.id) : "ok";
           if (stt === "me" || stt === "bot" || stt === "blocked" || !/^\d+$/.test(String(d.id))) return;

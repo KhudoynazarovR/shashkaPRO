@@ -263,7 +263,7 @@ function handle(req, res, url) {
       id: _id, name: _u.name || 'Oyinchi', elo: _u.elo || 1000, diamonds: _u.diamonds || 0,
       wins: _u.wins || 0, losses: _u.losses || 0, draws: _u.draws || 0, games: _u.games || 0,
       bestStreak: _u.bestStreak || 0, tournWins: _u.tournWins || 0,
-      bio: _u.bio || '', hasAv: !!store.avOf(_u), premium: !!store.isPremium(_u), lastSeen: _u.lastSeen || 0, elchi: require('./ref.js').elchi(_u), region: _u.region || '',
+      bio: _u.bio || '', hasAv: !!store.avOf(_u), premium: !!store.isPremium(_u), lastSeen: _u.lastSeen || 0, elchi: require('./ref.js').elchi(_u), region: _u.region || '', ach: (require('./ach.js').sync(_id, { quiet: true }), require('./ach.js').list(_id, false)),
       stones: (() => { const S = store.db.shop || [], eq = _u.equipped === '-' ? '' : (_u.equipped || ((S.find(x => x.def) || {}).id) || ''); return S.filter(x => x.def || (_u.owned || []).includes(x.id)).slice(0, 24).map(x => ({ id: x.id, name: x.name, eq: x.id === eq })); })(),
       myDiamonds: ((store.users()[String(_tg.id)] || {}).diamonds) || 0, giftFee: [require('./gift.js').FEE_PCT, require('./gift.js').FEE_MIN],
       ...(isAdmin(_tg.id) ? { adm: true, sanc: require('./mod.js').info(_id) } : {})
@@ -706,7 +706,9 @@ function handle(req, res, url) {
     const tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!tg) { send(res, 401, { error: 'auth' }); return true; }
     const u = store.getOrCreate(tg);
+    const _fresh = require('./ach.js').sync(tg.id);
     send(res, 200, {
+      ach: require('./ach.js').list(tg.id, true), achNew: _fresh.map(x => x.ic + ' ' + x.name + ' +' + x.coins),
       name: u.name, elo: u.elo || 1000, diamonds: u.diamonds || 0,
       wins: u.wins || 0, losses: u.losses || 0, draws: u.draws || 0, games: u.games || 0,
       streak: u.streak || 0, bestStreak: u.bestStreak || 0, hist: u.hist || [],

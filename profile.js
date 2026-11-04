@@ -162,8 +162,17 @@
       d.log.forEach(function (x) {
         h += '<div class="pf-row"><span>' + (x.d > 0 ? '+' : '') + x.d + ' 🪙</span><span class="pf-l">' + esc(x.why) + ' · ' + ago(x.t) + '</span></div>';
       });
+      if (d.ach && d.ach.list) {   // 🏅 yutuqlar javoni
+        h += '</div><div class="pf-box"><h3>🏅 Yutuqlar <span class="pf-l" style="font-weight:400">' + d.ach.n + '/' + d.ach.total + '</span></h3><div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">';
+        d.ach.list.forEach(function (a) {
+          h += '<div data-ach="' + esc(a.ic + ' ' + a.name + ' — ' + a.cond + ' (+' + a.coins + ' 🪙)' + (a.at ? ' ✅' : '')) + '" style="aspect-ratio:1;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;background:' + (a.at ? 'linear-gradient(135deg,#3a2a00,#1d1f45);border:1px solid #f5b72b' : '#141833;border:1px solid #262b5a;filter:grayscale(1);opacity:.35') + '">' + a.ic + '</div>';
+        });
+        h += '</div><div id="pfAchT" class="pf-l" style="min-height:18px;margin-top:8px;font-size:13px"></div>';
+      }
       h += '</div><button class="pf-bt" id="pfDaily" disabled>🎁 Kunlik bonus</button><div id="pfMsg" class="pf-l" style="margin:8px 0 20px;text-align:center"></div>';
       $('pfBody').innerHTML = h;
+      [].forEach.call(document.querySelectorAll('[data-ach]'), function (el) { el.onclick = function () { var t = $('pfAchT'); if (t) t.textContent = el.getAttribute('data-ach'); }; });
+      if (d.achNew && d.achNew.length && d.achNew.some(function (x) { return !/ \+0$/.test(x); })) { var _t = $('pfAchT'); if (_t) { _t.style.color = '#7ee08a'; _t.textContent = '🎉 Yangi: ' + d.achNew.join(' · '); } }
       api('/api/balance').then(function (b) {
         if (b.error) return;
         $('pfDaily').disabled = !b.canClaimDaily;
