@@ -147,7 +147,19 @@
       var _cs = /^corr_(\w*)$/.exec((_tw.initDataUnsafe || {}).start_param || ""); if (_cs) window.corrGo(_cs[1] || undefined);
       fetch("/api/premium", { headers: { "x-init-data": _id } }).then(function (r) { return r.json(); }).then(function (d) {
         if (d && !d.error) { window.__prem = !!d.premium; try { window.dispatchEvent(new Event("spPrem")); } catch (e) {} }
-        if (!d || !d.trialShow) return;
+        function askRegion() {   // 🗺 viloyat tanlanmagan bo'lsa — tanlash oynasi (Viloyatlar jangiga qo'shilish)
+          try { if (Date.now() < +(localStorage.getItem("spRegLater") || 0)) return; } catch (e) {}
+          fetch("/api/region", { headers: { "x-init-data": _id } }).then(function (r) { return r.json(); }).then(function (v) {
+            if (!v || v.error || v.my) return;
+            var go = function () { if (window.regOpen) window.regOpen(true); else { var s = document.createElement("script"); s.src = "/regionpanel.js?v=" + Date.now(); s.onload = function () { window.regOpen(true); }; document.head.appendChild(s); } };
+            var tries = 0, wt = setInterval(function () {   // kunlik vazifalar va boshqa oynalar yopilgach ko'rsatamiz
+              if (++tries > 240) return clearInterval(wt);
+              if (document.getElementById("dqOv") || (document.getElementById("rcMenuBtn") && document.getElementById("rcMenuBtn").offsetParent)) return;   // o'yin paytida emas
+              clearInterval(wt); go();
+            }, 1000);
+          }).catch(function () {});
+        }
+        if (!d || !d.trialShow) return askRegion();
         fetch("/api/premium/seen", { method: "POST", headers: { "x-init-data": _id, "Content-Type": "application/json" }, body: "{}" });
         var ov = document.createElement("div");
         ov.style.cssText = "position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;padding:16px";
@@ -157,7 +169,7 @@
           "<div style='font-size:12px;opacity:.7;margin-bottom:14px'>" + new Date(d.until).toLocaleDateString("ru") + " gacha amal qiladi</div>" +
           "<button id='trOk' style='width:100%;border:0;border-radius:14px;padding:13px;font-size:16px;font-weight:700;color:#2a1600;background:linear-gradient(135deg,#ffd54a,#b8860b)'>Ajoyib! 🎉</button></div>";
         document.body.appendChild(ov);
-        ov.querySelector("#trOk").onclick = function () { ov.remove(); };
+        ov.querySelector("#trOk").onclick = function () { ov.remove(); setTimeout(askRegion, 400); };
       }).catch(function () {});
     } catch (e) {}
   }, 2500);
