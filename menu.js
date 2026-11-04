@@ -136,6 +136,25 @@
   function close() { if (panel) panel.style.display = "none"; }
   window.refGo = window.refGo || function () { if (window.refOpen) return window.refOpen(); var s = document.createElement("script"); s.src = "/refpanel.js?v=" + Date.now(); s.onload = function () { window.refOpen(); }; document.head.appendChild(s); };
   window.premGo = window.premGo || function () { if (window.premOpen) return window.premOpen(); var s = document.createElement("script"); s.src = "/prempanel.js?v=" + Date.now(); s.onload = function () { window.premOpen(); }; document.head.appendChild(s); };
+  setTimeout(function () {   // 🎁 sovg'a Premium oynasi + startapp=prem (bot eslatmasidagi tugma)
+    try {
+      var _tw = window.Telegram && Telegram.WebApp, _id = _tw && _tw.initData; if (!_id) return;
+      if ((_tw.initDataUnsafe || {}).start_param === "prem") return window.premGo();
+      fetch("/api/premium", { headers: { "x-init-data": _id } }).then(function (r) { return r.json(); }).then(function (d) {
+        if (!d || !d.trialShow) return;
+        fetch("/api/premium/seen", { method: "POST", headers: { "x-init-data": _id, "Content-Type": "application/json" }, body: "{}" });
+        var ov = document.createElement("div");
+        ov.style.cssText = "position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;padding:16px";
+        ov.innerHTML = "<div style='width:100%;max-width:360px;background:linear-gradient(160deg,#3a2a00,#0b0e1a 60%);border:1px solid #ffd54a;border-radius:24px;padding:22px 16px;color:#fff;text-align:center;font-family:inherit'>" +
+          "<div style='font-size:56px'>🎁</div><b style='font-size:21px;color:#ffd54a'>7 kunlik Premium sovg‘a!</b>" +
+          "<div style='font-size:14px;line-height:1.7;margin:12px 0 16px;text-align:left'>👑 Toj va oltin ism<br>🤖 Legend, Monster, Terminator, King Kong<br>🪙 G‘alabadan 2× tanga<br>🖼 Profil rasmi<br>🏆 Turnirga kirish −50%</div>" +
+          "<div style='font-size:12px;opacity:.7;margin-bottom:14px'>" + new Date(d.until).toLocaleDateString("ru") + " gacha amal qiladi</div>" +
+          "<button id='trOk' style='width:100%;border:0;border-radius:14px;padding:13px;font-size:16px;font-weight:700;color:#2a1600;background:linear-gradient(135deg,#ffd54a,#b8860b)'>Ajoyib! 🎉</button></div>";
+        document.body.appendChild(ov);
+        ov.querySelector("#trOk").onclick = function () { ov.remove(); };
+      }).catch(function () {});
+    } catch (e) {}
+  }, 2500);
   window.mnA = function (a) {
     if (a === "@prem") { close(); window.premGo(); return; }
     if (a === "@ref") { close(); window.refGo(); return; }

@@ -1,4 +1,5 @@
 require("./bot.js");
+try { require("./premium.js"); } catch (e) { console.log("[prem]", e.message); }   // 👑 eslatmalar va bir martalik sovg'a
 const http = require("http");
 const fs = require("fs");
 const path = require("path");

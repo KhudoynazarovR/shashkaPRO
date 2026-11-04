@@ -68,20 +68,79 @@ function onPaid(msg, x) {   // payments.js dan, to'lov tekshirilgandan keyin
   for (const a of ADM()) dm(a, '💰 ' + (u.name || x.uid) + ' (' + x.uid + '): Premium ' + x.P.name + ' — ' + p.total_amount + ' ⭐' + (p.is_recurring ? ' (yangilanish)' : '') + '\n' + p.telegram_payment_charge_id);
 }
 
-// ---------- muddat tugashiga 1 kun qolganda eslatma
-setInterval(() => {
+// ---------- 🎁 7 kunlik sovg'a Premium (har kimga bir marta) va 📩 eslatmalar
+const TRIAL_DAYS = 7;
+const appLink = () => (process.env.TG_APP_LINK || process.env.APP_LINK || 'https://t.me/DraughtsPRObot/play').replace(/\/$/, '');
+const kb = (bt, sp) => ({ inline_keyboard: [[{ text: bt || '👑 Faollashtirish', url: appLink() + '?startapp=' + (sp || 'prem') }]] });
+const dmK = (uid, text, bt, sp) => /^\d+$/.test(String(uid)) && tg('sendMessage', { chat_id: String(uid), text, parse_mode: 'HTML', link_preview_options: { is_disabled: true }, reply_markup: kb(bt, sp) });
+// 📩 xabar matnlari (HTML)
+const PERKS_TXT = '👑 Toj va oltin ism\n🤖 Legend, Monster, Terminator, King Kong\n🪙 G‘alabadan 2× tanga\n🔥 Kunlik bonus 2×\n🖼 Profil rasmi\n🏆 Turnirga kirish −50%';
+const bar = n => '▰'.repeat(Math.max(0, Math.min(7, n))) + '▱'.repeat(7 - Math.max(0, Math.min(7, n)));
+const TIPS = {
+  6: '🤖 Bugun <b>Monster BOT</b> bilan kuchingizni sinab ko‘ring — u faqat Premium uchun!',
+  5: '🪙 Har g‘alabadan <b>2 barobar</b> tanga — tangalarni yig‘ib qoling!',
+  4: '🖼 Profilingizga <b>o‘z rasmingizni</b> qo‘ying — hamma ko‘radi.',
+  3: '🦾 <b>Terminator BOT</b> ni yenga olasizmi? Sinab ko‘ring!',
+  2: '🏆 Turnirlarga <b>yarim narxda</b> qatnashing.'
+};
+const PRICE_TXT = '💡 Davom ettirish:\n• haftalik — <b>300 🪙</b> yoki <b>50 ⭐</b>\n• oylik — <b>800 🪙</b> yoki <b>150 ⭐</b>\n• yillik — <b>8000 🪙</b> yoki <b>1200 ⭐</b>';
+const MSG = {
+  gift: t => '🎁 <b>Sizga sovg‘a — 7 kunlik Premium!</b>\n\nShashkaPRO jamoasidan kichik sovg‘a 💛\nHammasi yoqildi, kirib sinab ko‘ring:\n\n' + PERKS_TXT + '\n\n⏳ <i>' + dmy(t) + ' gacha amal qiladi</i>',
+  trial: (left, t) => (left === 1
+    ? '⏰ <b>Ertaga Premium tugaydi!</b>\n' + bar(1) + '  <b>1 kun</b>\n\nErtadan quyidagilar yopiladi:\n' + PERKS_TXT + '\n\n'
+    : '👑 <b>Premium: ' + left + ' kun qoldi</b>\n' + bar(left) + '  <i>' + dmy(t) + ' gacha</i>\n\n' + (TIPS[left] || '') + '\n\n') + PRICE_TXT,
+  paid: (left, t) => (left === 1 ? '⏰ <b>Premium ertaga tugaydi</b>' : '👑 <b>Premium: ' + left + ' kun qoldi</b>') + '\n<i>' + dmy(t) + ' gacha</i>\n\nUzilib qolmasligi uchun oldindan uzaytiring — yangi muddat ustiga qo‘shiladi.\n\n' + PRICE_TXT,
+  expired: () => '😔 <b>Premium muddati tugadi</b>\n\nYopilgan imkoniyatlar:\n' + PERKS_TXT + '\n\n' + PRICE_TXT + '\n\n👇 Bir bosishda qayta yoqing'
+};
+function giveTrial(u) {   // store.getOrCreate (yangi o'yinchi) va bir martalik hammaga tarqatish
+  if (!u || u.premTrial) return false;
+  u.premTrial = Date.now();
+  u.premiumUntil = Math.max(Date.now(), u.premiumUntil || 0) + TRIAL_DAYS * DAY;
+  u.trialEnd = u.premiumUntil; u.trialShow = 1;
+  return true;
+}
+setTimeout(() => {   // hozirgi o'yinchilarga bir martalik sovg'a (server birinchi ishga tushganda)
   try {
-    const now = Date.now(); let ch = false;
-    for (const [id, u] of Object.entries(users())) {
-      const t = u.premiumUntil || 0;
-      if (t <= now || t - now > DAY || u.premRem === t) continue;
-      u.premRem = t; ch = true;
+    const db = store.db; if (db.trialAll) return;
+    db.trialAll = Date.now();
+    const q = [];
+    for (const [id, u] of Object.entries(users())) if (/^\d+$/.test(id) && giveTrial(u)) q.push(id);
+    store.save();
+    console.log('[prem] sovg\'a Premium berildi:', q.length);
+    let k = 0;
+    const t = setInterval(() => {   // Telegram cheklovi: sekundiga ~10 ta xabar
+      if (k >= q.length) return clearInterval(t);
+      const id = q[k++], u = users()[id]; dmK(id, MSG.gift((u && u.premiumUntil) || Date.now()), '🎮 O‘ynash', 'go_play');
+    }, 100);
+  } catch (e) { console.log('[prem] sovg\'a xato:', e.message); }
+}, 20000);
+// har kuni ~12:00 (Toshkent) — sovg'a Premium: 6…1 kun qoldi; sotib olingan: 3 va 1 kun qoldi; tugaganda bir marta
+const dayKey = () => new Date(Date.now() + 5 * 3600e3).toISOString().slice(0, 10);
+const hourTz = () => new Date(Date.now() + 5 * 3600e3).getUTCHours();
+function remindTick() {
+  if (hourTz() < 12) return;
+  const now = Date.now(), dk = dayKey(); let ch = false, k = 0;
+  for (const [id, u] of Object.entries(users())) {
+    if (!/^\d+$/.test(id)) continue;
+    const t = u.premiumUntil || 0;
+    if (t > now) {
+      if (u.premRemDay === dk) continue;
+      const left = Math.ceil((t - now) / DAY), trialOnly = u.trialEnd && t <= u.trialEnd + 60000;
       if (u.premSub && u.premSub >= t - 3 * 3600e3) continue;   // oylik obuna o'zi yangilanadi
-      dm(id, '⏰ Premium muddatingiz ertaga (' + dmy(t) + ') tugaydi. Uzaytirish: ilova → Menyu → 👑 Premium');
+      let msg = '';
+      if (trialOnly && left >= 1 && left <= 6) msg = MSG.trial(left, t);
+      else if (!trialOnly && (left === 3 || left === 1)) msg = MSG.paid(left, t);
+      if (!msg) continue;
+      u.premRemDay = dk; ch = true;
+      setTimeout(() => dmK(id, msg), (k++) * 100);
+    } else if (t && now - t < 2 * DAY && u.premExp !== t) {
+      u.premExp = t; ch = true;
+      setTimeout(() => dmK(id, MSG.expired(), '👑 Qayta faollashtirish'), (k++) * 100);
     }
-    if (ch) store.save();
-  } catch (e) {}
-}, 3600e3).unref();
+  }
+  if (ch) store.save();
+}
+setInterval(() => { try { remindTick(); } catch (e) { console.log('[prem] eslatma xato:', e.message); } }, 15 * 60e3).unref();
 
 // ---------- HTTP
 function handle(req, res, p, h) {
@@ -92,7 +151,7 @@ function handle(req, res, p, h) {
   if (p === '/api/premium' && req.method === 'GET') {
     const packs = require('./payments.js').PACKS;
     h.send(res, 200, {
-      premium: isPrem(u), until: u.premiumUntil || 0, sub: !!(u.premSub && u.premSub > Date.now()), diamonds: u.diamonds || 0,
+      premium: isPrem(u), until: u.premiumUntil || 0, trialShow: !!u.trialShow, trial: !!(u.trialEnd && (u.premiumUntil || 0) <= u.trialEnd + 60000), sub: !!(u.premSub && u.premSub > Date.now()), diamonds: u.diamonds || 0,
       plans: Object.entries(PLANS).map(([k, x]) => ({ id: k, name: x.name, days: x.days, coins: x.coins, stars: x.stars, sub: !!x.sub })),
       packs: Object.entries(packs).map(([k, x]) => ({ id: k, stars: x.stars, diamonds: x.diamonds, bonus: x.bonus || 0 }))
     });
@@ -101,6 +160,7 @@ function handle(req, res, p, h) {
   if (req.method !== 'POST') { h.send(res, 405, { error: 'method' }); return true; }
   h.readBody(req, 2000, body => {
     let j = {}; try { j = JSON.parse(body); } catch (e) {}
+    if (p === '/api/premium/seen') { if (u.trialShow) { delete u.trialShow; store.save(); } h.send(res, 200, { ok: true }); return; }
     if (p === '/api/premium/buy') { const r = buyCoins(uid, String(j.plan)); h.send(res, r.error ? 400 : 200, r); return; }
     if (p === '/api/premium/invoice') { invoice(uid, String(j.plan)).then(r => h.send(res, r.error ? 400 : 200, r)); return; }
     h.send(res, 404, { error: 'none' });
@@ -126,4 +186,4 @@ async function refund(uid, charge) {
   return '✅ Qaytarildi' + what;
 }
 
-module.exports = { PLANS, isPrem, grant, buyCoins, invoice, checkPay, onPaid, handle, refund };
+module.exports = { MSG, giveTrial, TRIAL_DAYS, PLANS, isPrem, grant, buyCoins, invoice, checkPay, onPaid, handle, refund };

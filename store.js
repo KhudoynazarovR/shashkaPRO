@@ -211,6 +211,7 @@ function getOrCreate(tg) {
       id, name, elo: 1000, diamonds: 500, premiumUntil: 0,
       wins: 0, losses: 0, games: 0, lastDaily: '', created: Date.now()
     };
+    try { require('./premium.js').giveTrial(u); } catch (e) {}   // 🎁 yangi o'yinchiga 7 kunlik Premium
   } else {
     u.name = name;
   }
