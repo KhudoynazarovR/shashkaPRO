@@ -512,7 +512,7 @@
     document.body.appendChild(ov);
     load();
   }
-  function close() { curLv = 0; curFo = ''; curLv = 0; if (ov) ov.remove(); }
+  function close() { curLv = 0; curFo = ''; curLv = 0; MG.on = false; MG.sel = []; var _mb = document.getElementById('pzMgBar'); if (_mb) _mb.remove(); if (ov) ov.remove(); }
   function load() {
     ov.innerHTML = head('🧩 Masalalar') + '<div style="padding:30px;opacity:.7">Yuklanmoqda…</div>';
     on('#pzBack', close);
@@ -607,13 +607,14 @@
     return h;
   }
   function list() {
+    { var _mb0 = document.getElementById('pzMgBar'); if (_mb0) _mb0.remove(); }
     if (hub && !curLv && !curFo && !window.__pzPF) return hubView();
     if (window.__pzPF) { var _pf = window.__pzPF; window.__pzPF = ''; if ((S.folders || []).indexOf(_pf) >= 0) { curFo = _pf; curLv = 0; } }
     if (curFo && (S.folders || []).indexOf(curFo) < 0) curFo = '';
     if (curLv || curFo) return items();
     var fl = S.folders || [], h = head(view === 'custom' ? '🎨 Maxsus masalalar' : view === 'map' ? '🗺 Xarita' : '🧩 Masalalar', topBtns()); if (view === 'map') h += '<div style="font-weight:800;font-size:18px;margin:2px 0 6px">🗺 ' + MAINF + '</div>' + pzMap(mainOrder(), '');
     var _mapV = view === 'map';   // xarita alohida sahifa: unda papkalar yo'q
-    if (S.admin && !_mapV) h += '<div style="margin-bottom:10px"><button id="pzNF" style="' + BG + '">📁 Yangi papka</button></div>';
+    if (S.admin && !_mapV) h += '<div style="margin-bottom:10px"><button id="pzNF" style="' + BG + '">📁 Yangi papka</button>' + (fl.filter(mgOk).length >= 2 ? '<button id="pzMG" style="' + BG + (MG.on ? ';background:#7c3aed' : '') + '">🔗 Birlashtirish</button>' : '') + '</div>';
     if (!S.list.length && !fl.length) h += '<div style="padding:30px;opacity:.7">Hozircha masala yo‘q</div>';
     if (!_mapV) [1, 2, 3].forEach(function (lv) {
       var arr = S.list.filter(function (p) { return lvOf(p) === lv && !foOf(p); }); if (!arr.length && (S.hideLv || []).indexOf(lv) >= 0) return;
@@ -647,6 +648,40 @@
     Array.prototype.forEach.call(ov.querySelectorAll('[data-fo]'), function (e) {
       e.onclick = function () { curFo = (S.folders || [])[Number(e.getAttribute('data-fo'))] || ''; curLv = 0; list(); };
     });
+    on('#pzMG', function () { MG.on = !MG.on; MG.sel = []; list(); });
+    mgUi(fl);
+  }
+  // ---- admin: 🔗 papkalarni birlashtirish (belgilangan papkalardagi masalalar bitta papkaga, tartib bilan qayta raqamlanadi)
+  var MG = { on: false, sel: [] };
+  function mgOk(f) { return f.indexOf('Etyudlar · ') !== 0 && f.indexOf('Ustyanov · ') !== 0 && f.indexOf('Malamed') !== 0; }   // etyud papkalari birlashtirilmaydi
+  function mgUi(fl) {
+    var old = document.getElementById('pzMgBar'); if (old) old.remove();
+    if (!MG.on || !S.admin) return;
+    var cnt = function (f) { return S.list.filter(function (p) { return foOf(p) === f; }).length; };
+    Array.prototype.forEach.call(ov.querySelectorAll('[data-fo]'), function (e) {
+      var f = fl[Number(e.getAttribute('data-fo'))]; if (!mgOk(f)) { e.style.opacity = '.35'; e.onclick = null; return; }
+      var k = MG.sel.indexOf(f);
+      e.style.outline = k >= 0 ? '3px solid #a78bfa' : '2px dashed rgba(255,255,255,.25)'; e.style.outlineOffset = '-2px'; e.style.position = 'relative';
+      var cb = document.createElement('span'); cb.style.cssText = 'position:absolute;left:-6px;top:-6px;z-index:3;width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;border:2px solid ' + (k >= 0 ? '#7c3aed;background:#7c3aed' : '#fff;background:#141040');
+      cb.textContent = k >= 0 ? String(k + 1) : ''; e.appendChild(cb);
+      e.onclick = function (ev) { ev.stopPropagation(); var i = MG.sel.indexOf(f); if (i >= 0) MG.sel.splice(i, 1); else MG.sel.push(f); list(); };
+    });
+    var n = MG.sel.reduce(function (s, f) { return s + cnt(f); }, 0);
+    var bar = document.createElement('div'); bar.id = 'pzMgBar';
+    bar.style.cssText = 'position:fixed;left:10px;right:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 74px);z-index:100005;display:flex;gap:8px;align-items:center;padding:10px;border-radius:16px;background:#141040;box-shadow:0 6px 24px rgba(0,0,0,.6);color:#fff;font-family:inherit';
+    bar.innerHTML = '<b style="flex:1;font-size:14px">' + (MG.sel.length ? MG.sel.length + ' ta papka · ' + n + ' ta masala' : 'Birlashtiriladigan papkalarni belgilang (tartib bo‘yicha)') + '</b><button id="pzMgX" style="border:0;border-radius:12px;padding:10px 12px;font-size:15px;color:#fff;background:#352d86">Bekor</button><button id="pzMgGo" style="border:0;border-radius:12px;padding:10px 12px;font-size:15px;font-weight:700;color:#fff;background:#7c3aed"' + (MG.sel.length < 2 ? ' disabled' : '') + '>✅ Birlashtirish</button>';
+    document.body.appendChild(bar);
+    bar.querySelector('#pzMgX').onclick = function () { MG.on = false; MG.sel = []; list(); };
+    bar.querySelector('#pzMgGo').onclick = function () {
+      if (MG.sel.length < 2) return;
+      var to = cleanName(prompt('Birlashtirilgan papka nomi (belgilanganlardan biri yoki yangi nom):', MG.sel[0])); if (!to) return;
+      if (!confirm(MG.sel.length + ' ta papkani (' + n + ' ta masala) «' + to + '» papkasiga birlashtiramizmi?\n\nMasalalar tanlangan tartibda qayta raqamlanadi. Yechilganlar saqlanadi.')) return;
+      var b = this; b.disabled = true; b.textContent = '⏳';
+      api('/api/puzzle/merge', { from: MG.sel, to: to }).then(function (r) {
+        if (r && r.error) { alert('⚠️ ' + r.error); b.disabled = false; b.textContent = '✅ Birlashtirish'; return; }
+        MG.on = false; MG.sel = []; var x = document.getElementById('pzMgBar'); if (x) x.remove(); load();
+      }).catch(function () { b.disabled = false; b.textContent = '✅ Birlashtirish'; });
+    };
   }
   // ---- admin: ro'yxatda belgilab bir nechta masalani o'chirish /*PZBULK*/
   var bulk = { on: false, sel: {} };

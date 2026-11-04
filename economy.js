@@ -123,6 +123,14 @@ function pzRenum(arr, folder, level) {
   });
   return ch;
 }
+// guruh: papka bo'lsa — papka, bo'lmasa — daraja (Oson / O'rta / Qiyin)
+function pzMaxNo(arr, folder, level, skip) { let m = 0; arr.forEach(x => { if (x !== skip && (x.folder || '') === (folder || '') && (folder || x.level === level) && x.no) m = Math.max(m, x.no); }); return m; }
+function pzRenumAll(arr, folders) {
+  let ch = 0; const fs = new Set((folders || []).concat(arr.map(x => x.folder).filter(Boolean)));
+  fs.forEach(f => { ch += pzRenum(arr, f); });
+  [1, 2, 3].forEach(lv => { ch += pzRenum(arr, undefined, lv); });
+  return ch;
+}
 function readBody(req, max, cb) {
   let d = '', big = false;
   req.on('data', c => { d += c; if (d.length > max) { big = true; req.destroy(); } });
@@ -489,6 +497,7 @@ function handle(req, res, url) {
     if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
     store.db.puzzles = store.db.puzzles || []; try { require('./pzimport.js')(store); require('./pzimport2.js')(store); require('./pzimport3.js')(store); require('./pzimport4.js')(store); require('./pzimport5.js')(store); try { if (!store.db.pzTitleNumV1) { const _a = store.db.puzzles || [], _fs = new Set(); _a.forEach(x => { const t = String(x.title || '').trim(); if (t && !/\d$/.test(t) && x.no) { x.title = t + ' ' + x.no; _fs.add(x.folder || ''); } }); _fs.forEach(f => { if (f) pzRenum(_a, f, 1); }); store.db.pzTitleNumV1 = 1; if (_fs.size) store.db.pzVer = (store.db.pzVer || 0) + 1; store.save(); console.log('[pz] raqamsiz nomlar tuzatildi, papkalar:', _fs.size); } } catch (e) { console.log('[pz] raqam', e.message); } require('./pzfix.js')(store); require('./pzrenum.js')(store); } catch (e) { console.log('[Import] xato', e.message); }
     { let _mx = 0, _ch = false; const _a = store.db.puzzles; _a.forEach(x => { if (x.no) _mx = Math.max(_mx, x.no); }); _a.forEach(x => { if (!x.no) { x.no = ++_mx; _ch = true; } if (x.title === 'Masala') { x.title = 'Masala ' + x.no; _ch = true; } }); if (_ch) store.save(); } if (!store.db.pzNoV2) { const _c = {}; store.db.puzzles.slice().sort((p, q) => (p.at || 0) - (q.at || 0)).forEach(x => { const k = x.folder || ''; _c[k] = (_c[k] || 0) + 1; if (/^Masala \d+$/.test(x.title)) x.title = 'Masala ' + _c[k]; x.no = _c[k]; }); store.db.pzNoV2 = 1; store.save(); }
+    if (!store.db.pzRenumV3) { try { const _rc = pzRenumAll(store.db.puzzles, store.db.pzFolders); store.db.pzRenumV3 = 1; if (_rc) store.db.pzVer = (store.db.pzVer || 0) + 1; store.save(); console.log('[pz] barcha papkalar qayta raqamlandi:', _rc); } catch (e) { console.log('[pz] renum', e.message); } }
     const _u = store.users()[String(_tg.id)] || {};
     const _adm = (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(_tg.id));
     let _etF = [], _etL = [], _etN = {}, _etP = {}; try { const _E = require('./etudes.js'); _etL = _E.puzzleList(); _etF = _E.FOLDERS.filter(f => _etL.some(x => x.folder === f)); _etN = _E.ETF; _etP = _E.ETP; } catch (e) {}
@@ -496,7 +505,7 @@ function handle(req, res, url) {
     send(res, 200, { etf: _etN, etp: _etP, folders: _fo, settings: store.db.pzSettings || {}, hideLv: store.db.pzHideLv || [], best: _u.pzBest || {}, inv: _u.pzInv || null, ranks: require('./pzranks.js').RANKS, topInv: (function () { const m = require('./pzranks.js'); m.watch(store); return m.top(store); })(), promo: Date.parse(process.env.PZ_PROMO_END || '2026-10-25T23:59:59+05:00'), admin: _adm, link: process.env.TG_APP_LINK || '', myId: String(_tg.id), solved: _u.solved || [], heroAv: _u.pzHero || '', list: (() => { const _c = {}; Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { _c[i] = (_c[i] || 0) + 1; })); return store.db.puzzles.slice().sort((x, y) => (x.no || 0) - (y.no || 0)).map(x => Object.assign({}, x, { cnt: _c[x.id] || 0 })); })(), etl: (() => { const _c = {}; Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { if (i[0] === 'e') _c[i] = (_c[i] || 0) + 1; })); return _etL.map(x => [x.id.slice(2), x.no, x.level, x.b32, x.t, _c[x.id] || 0]); })() });
     return true;
   }
-  if ((p === '/api/puzzle' || p === '/api/puzzle/del' || p === '/api/puzzle/solved' || p === '/api/puzzle/rename' || p === '/api/puzzle/folder' || p === '/api/puzzle/move' || p === '/api/puzzle/settings' || p === '/api/puzzle/order' || p === '/api/puzzle/edit' || p === '/api/puzzle/renum') && req.method === 'POST') {
+  if ((p === '/api/puzzle' || p === '/api/puzzle/del' || p === '/api/puzzle/solved' || p === '/api/puzzle/rename' || p === '/api/puzzle/folder' || p === '/api/puzzle/move' || p === '/api/puzzle/settings' || p === '/api/puzzle/order' || p === '/api/puzzle/edit' || p === '/api/puzzle/renum' || p === '/api/puzzle/merge') && req.method === 'POST') {
     const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
     readBody(req, 100000, body => {
@@ -536,12 +545,13 @@ function handle(req, res, url) {
       if (p === '/api/puzzle/order') {
         const _a0 = arr.find(x => x.id === j.id);
         if (!_a0) return send(res, 404, { error: 'none' });
+        pzRenum(arr, _a0.folder, _a0.level);   // avval raqamlar takrorsiz bo'lsin
         const _sib = arr.filter(x => x.folder === _a0.folder && (_a0.folder || x.level === _a0.level)).sort((x, y) => (x.no || 0) - (y.no || 0));
         const _i0 = _sib.indexOf(_a0), _k0 = _i0 + (j.dir === 'up' ? -1 : 1);
         if (_k0 < 0 || _k0 >= _sib.length) return send(res, 200, { ok: true });
         const _b0 = _sib[_k0], _tn = _a0.no; _a0.no = _b0.no; _b0.no = _tn;
-        [_a0, _b0].forEach(x => { if (/^Masala \d+$/.test(x.title)) x.title = 'Masala ' + x.no; });
-        store.save();
+        pzRenum(arr, _a0.folder, _a0.level);   // nomlardagi raqam ham (Masala 5, Kombinatsiya 5 …)
+        store.db.pzVer = (store.db.pzVer || 0) + 1; store.save();
         return send(res, 200, { ok: true });
       }
       if (p === '/api/puzzle/rename') {
@@ -574,13 +584,36 @@ function handle(req, res, url) {
         store.save();
         return send(res, 200, { ok: true, folders: fl });
       }
+      if (p === '/api/puzzle/merge') {   // 🔗 papkalarni birlashtirish
+        const fl = store.db.pzFolders = store.db.pzFolders || [];
+        const src = (Array.isArray(j.from) ? j.from : []).map(x => String(x || '')).filter((x, i, a) => fl.includes(x) && a.indexOf(x) === i);
+        const to = String(j.to || '').replace(/[<>]/g, '').trim().slice(0, 30);
+        if (!to) return send(res, 400, { error: 'Papka nomini yozing' });
+        if (src.length < 2 && !(src.length === 1 && to !== src[0])) return send(res, 400, { error: 'Kamida 2 ta papka tanlang' });
+        if (!fl.includes(to)) fl.splice(fl.indexOf(src[0]), 0, to);
+        const order = (src.includes(to) ? [] : [to]).concat(src);
+        let no = 0, moved = 0;
+        order.forEach(f => {
+          arr.filter(x => x.folder === f).sort((a, b) => (a.no || 0) - (b.no || 0) || (a.at || 0) - (b.at || 0)).forEach(x => { x.no = ++no; if (x.folder !== to) moved++; x.folder = to; });
+        });
+        pzRenum(arr, to);
+        src.filter(f => f !== to).forEach(f => { const k = fl.indexOf(f); if (k >= 0) fl.splice(k, 1); if (store.db.pzSettings) delete store.db.pzSettings[f]; });
+        store.db.pzVer = (store.db.pzVer || 0) + 1; store.save();
+        return send(res, 200, { ok: true, to, total: no, moved, folders: fl });
+      }
       if (p === '/api/puzzle/move') {
         const fl = store.db.pzFolders = store.db.pzFolders || [];
         const pzm = arr.find(x => x.id === j.id);
         const nf = String(j.folder || '').replace(/[<>]/g, '').trim().slice(0, 30);
         if (!pzm) return send(res, 404, { error: 'none' });
         if (nf && !fl.includes(nf)) return send(res, 400, { error: 'papka yo‘q' });
+        const _of = pzm.folder, _ol = pzm.level;
         if (nf) pzm.folder = nf; else delete pzm.folder;
+        if ((_of || '') !== (pzm.folder || '')) {   // yangi papka oxiriga, eski papka qayta raqamlanadi
+          pzm.no = pzMaxNo(arr, pzm.folder, pzm.level, pzm) + 1;
+          pzRenum(arr, _of, _ol); pzRenum(arr, pzm.folder, pzm.level);
+          store.db.pzVer = (store.db.pzVer || 0) + 1;
+        }
         store.save();
         return send(res, 200, { ok: true });
       }
@@ -618,7 +651,7 @@ function handle(req, res, url) {
       const _dk = JSON.stringify(b) + j.side; if (arr.some(x => JSON.stringify(x.board) + x.side === _dk)) return send(res, 400, { error: 'Bunday masala allaqachon mavjud' });
       const id = 'p' + Date.now().toString(36); const _fn = String(j.folder || '').replace(/[<>]/g, '').trim().slice(0, 30), _fo = (store.db.pzFolders || []).includes(_fn) ? _fn : undefined;
       let _mx = 0; arr.forEach(x => { if (x.folder === _fo && x.no) _mx = Math.max(_mx, x.no); });
-      const _no = (function () { const _u = new Set(); arr.forEach(x => { if (x.folder === _fo && x.no) _u.add(x.no); }); let _n = 1; while (_u.has(_n)) _n++; return _n; })(), _t0 = String(j.title || '').replace(/[<>]/g, '').trim().slice(0, 40), _title = (!_t0 || _t0 === 'Masala') ? 'Masala ' + _no : /\d$/.test(_t0) ? _t0 : _t0 + ' ' + _no;   // raqamsiz nom (masalan "Kombinatsiya") — raqam qo'shiladi j.title = _title;
+      const _no = pzMaxNo(arr, _fo, [1, 2, 3].includes(j.level) ? j.level : 1) + 1, _t0 = String(j.title || '').replace(/[<>]/g, '').trim().slice(0, 40), _title = (!_t0 || _t0 === 'Masala') ? 'Masala ' + _no : /\d$/.test(_t0) ? _t0 : _t0 + ' ' + _no;   // raqamsiz nom (masalan "Kombinatsiya") — raqam qo'shiladi j.title = _title;
       arr.push({ id, no: _no, title: _title, level: [1, 2, 3].includes(j.level) ? j.level : 1, side: j.side, board: b, sol, sols: _sols, at: Date.now(), folder: _fo });
       store.save();
       try {
