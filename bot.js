@@ -160,6 +160,7 @@ async function onMessage(msg) {
     return;
   }
   if (name === "/kanal") { if (await require("./kanal.js").cmd(msg, text)) return; }   // 📣 kanal masalalari (admin)
+  if (name === "/reel") { if (await require("./reelgen.js").cmd(msg, text)) return; }   // 🎬 Instagram Reels videosi (admin)
   if (name === "/elon") { if (await require("./elon.js").cmd(msg, text)) return; }   // 📣 admin e'loni
   if (name === "/xatolar") {   // faqat admin: oxirgi server xatolari
     if (!(process.env.ADMIN_IDS || "").split(",").map(s => s.trim()).includes(String(msg.from.id))) return;
@@ -248,6 +249,7 @@ async function start() {
   } catch (e) {}
   console.log("[bot] ishga tushdi: @" + BOT);
   try { require("./kanal.js").start(); } catch (e) { console.log("[kanal] start:", e.message); }
+  try { require("./reelgen.js").start(); } catch (e) { console.log("[reel] start:", e.message); }
 
   function onMyChat(m) {
     try {

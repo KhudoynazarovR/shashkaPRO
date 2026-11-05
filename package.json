@@ -12,5 +12,8 @@
     "pg": "^8.23.1",
     "sharp": "^0.35.5",
     "ws": "^8.18.0"
+  },
+  "optionalDependencies": {
+    "ffmpeg-static": "^5.2.0"
   }
 }
