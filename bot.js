@@ -134,6 +134,8 @@ async function onMessage(msg) {
     await api("sendMessage", { chat_id: msg.chat.id, text: "🔐 ShashkaPRO ilovasiga yoki saytiga kirish so‘raldi.\n\nBu siz bo‘lsangiz — «✅ Ha, kiraman» ni bosing.\n⚠️ Agar bu havolani sizga boshqa odam yuborgan bo‘lsa, BOSMANG — u sizning hisobingizga kirib oladi.", reply_markup: { inline_keyboard: [[{ text: "✅ Ha, kiraman", callback_data: "lg:" + _lg[1], style: "success" }], [{ text: "❌ Yo‘q, bu men emas", callback_data: "lgno:" + _lg[1] }]] } });
     return;
   }
+  const _sh = /^\/start(?:@\w+)?\s+sh_([A-Za-z0-9_]{2,40})$/.exec(text);   // 📤 kanal postidagi «Do'stga yuborish»
+  if (_sh && msg.chat && msg.chat.type === "private" && msg.from) { await require("./kanal.js").shareStart(msg.chat.id, msg.from, _sh[1]); return; }
   const _go = { "🎮 Shashka Mini App": ["Shashka Mini App", "main"], "🧩 Masala yechish": ["Masalalar", "puz"], "🤖 AI bilan o‘ynash": ["AI bilan o‘yin", "ai"] }[text];
   if (_go) {
     try { await api("deleteMessage", { chat_id: msg.chat.id, message_id: msg.message_id }); } catch (e) {}
@@ -157,6 +159,7 @@ async function onMessage(msg) {
     await api("sendMessage", { chat_id: msg.chat.id, text: "✅ Xabaringiz adminlarga yuborildi. Tez orada javob beriladi." });
     return;
   }
+  if (name === "/kanal") { if (await require("./kanal.js").cmd(msg, text)) return; }   // 📣 kanal masalalari (admin)
   if (name === "/elon") { if (await require("./elon.js").cmd(msg, text)) return; }   // 📣 admin e'loni
   if (name === "/xatolar") {   // faqat admin: oxirgi server xatolari
     if (!(process.env.ADMIN_IDS || "").split(",").map(s => s.trim()).includes(String(msg.from.id))) return;
@@ -209,6 +212,7 @@ async function onMessage(msg) {
 }
 
 async function onInline(q) {
+  { const kr = require('./kanal.js').inlineResults(q); if (kr) { await api('answerInlineQuery', { inline_query_id: q.id, cache_time: 0, is_personal: true, results: kr }); return; } }   // 📤 kanal masalasini do'stga yuborish
   const id = newRoomId(), G = require("./gcard.js"), from = String((q.from && (q.from.first_name || q.from.username)) || "").slice(0, 30);
   const o = G.parseOpt(q.query), tcC = (o.tc || "").replace("+", "p").replace(".", "d");
   const results = [];
@@ -243,6 +247,7 @@ async function start() {
     });
   } catch (e) {}
   console.log("[bot] ishga tushdi: @" + BOT);
+  try { require("./kanal.js").start(); } catch (e) { console.log("[kanal] start:", e.message); }
 
   function onMyChat(m) {
     try {

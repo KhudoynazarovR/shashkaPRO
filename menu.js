@@ -1070,7 +1070,7 @@
     })();
     function solved() { if (tOut) return; try { window.pzFan(); } catch (e) {} var _el = pzEl(), _er = errs; fin = _el;
       done = true; msg = '🎉 Masala yechildi!'; draw();
-      api('/api/puzzle/solved', { id: p.id, time: _el, errs: _er, ref: window.__pzRef || '' }).then(function (d) {
+      api('/api/puzzle/solved', { id: p.id, time: _el, errs: _er, ref: window.__pzRef || '', refP: window.__pzRefP || '' }).then(function (d) {
         if (d && d.gain) msg += ' +' + d.gain + ' 🪙';
         msg += ' · ⏱ ' + _el + ' s · xato: ' + _er;
         if (d && d.best) { S.best = S.best || {}; S.best[p.id] = d.best; msg += ' · 🏅 eng yaxshi: ' + d.best + ' s'; }
@@ -1233,7 +1233,7 @@
   window.spPuzzleOpenId = function (id) { dayIds = null; pending = String(id); open(); };
   window.spPuzzleDaily = function (ids, first) { dayIds = (ids || []).map(String); pending = String(first || dayIds[0] || ''); open(); }; // kunlik vazifa: 5 ta masala
   var _sp = tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param;
-  if (_sp && _sp.indexOf('pz_') === 0) { pending = _sp.slice(3); setTimeout(open, 700); }
+  if (_sp && _sp.indexOf('pz_') === 0) { var _pm = /^pz_([A-Za-z0-9_]+?)(?:-r(\d{3,15}))?$/.exec(_sp); pending = _pm ? _pm[1] : _sp.slice(3); if (_pm && _pm[2]) { window.__pzRef = _pm[2]; window.__pzRefP = _pm[1]; } setTimeout(open, 700); }   // 📤 kanal: pz_<id>-r<taklif qilgan>
   if (_sp && _sp.indexOf('pf_') === 0) { try { var _r = _sp.slice(3), _m = /^(\d{3,15})_(.+)$/.exec(_r); if (_m) { window.__pzRef = _m[1]; _r = _m[2]; } var _b = _r.replace(/-/g, '+').replace(/_/g, '/'); while (_b.length % 4) _b += '='; window.__pzPF = decodeURIComponent(escape(atob(_b))); } catch (e) {} setTimeout(open, 700); }
   if (/[?&]go=puz/.test(location.search || '') || _sp === 'go_puz') setTimeout(open, 700);
 })();
