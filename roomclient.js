@@ -47,7 +47,7 @@
     // 🧠 Xotira havolasi (mm_KOD): shashka/AI doskasi emas — Xotira o'yinini ochamiz
     try { var _sp = (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || ""; if (!q.get("room") && /^mm_[A-Z0-9]{6}$/i.test(_sp)) { if (!window.spMemori) { var _ms = document.createElement("script"); _ms.src = "/memori.js?v=9"; document.head.appendChild(_ms); } return; } } catch (e) {}
     if (q.get("room")) roomId = q.get("room");
-    else if (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param && !/^(ref_|pz_|pf_|go_|shop_|pb_|pzt_|ntf_|mm_)/.test(tg.initDataUnsafe.start_param)) roomId = String(tg.initDataUnsafe.start_param);
+    else if (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param && !/^(ref_|pz_|pf_|go_|shop_|pb_|pzt_|ntf_|mm_|prem$|corr_|lbt_|lbs_|lbf_)/.test(tg.initDataUnsafe.start_param)) roomId = String(tg.initDataUnsafe.start_param);
     var _nb = function () { var bt = document.getElementById("rcBoot"); if (bt) bt.remove(); };
     if (/^lb[ts]_/.test(roomId)) return _nb(); // turnir/sians havolasi - xona emas
     if (!ROOM_RE.test(roomId)) return _nb(); // xona rejimi emas
