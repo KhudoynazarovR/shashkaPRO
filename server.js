@@ -1,3 +1,4 @@
+try { require("./tgcoin.js"); } catch (e) {}   // 💰 Telegram xabarlarida 🪙 → 💰
 try { require("./alert.js").install(); } catch (e) {}   // 🚨 xatolar adminga
 require("./bot.js");
 try { require("./premium.js"); require("./season.js"); require("./ach.js"); } catch (e) { console.log("[prem]", e.message); }   // 👑 eslatmalar va bir martalik sovg'a
@@ -169,7 +170,7 @@ function leaveClient(c) {
 }
 
 const BLOCKED = new Set([
-  "quests.js", "leagues.js", "weblogin.js", "social.js", "elon.js", "eco.js", "vrules.js", "kanal.js",
+  "quests.js", "leagues.js", "weblogin.js", "social.js", "elon.js", "eco.js", "vrules.js", "kanal.js", "tgcoin.js",
   "server.js", "rooms.js", "mod.js", "ref.js", "premium.js", "gift.js", "region.js", "ach.js", "season.js", "cheat.js", "endgame.js", "corr.js", "gif.js", "alert.js", "notify.js", "kkbook.js", "wager.js", "economy.js", "store.js", "payments.js", "etudes.js", "pzrush.js", "pzbattle.js", "pztour.js", "draw-rules.js", "lobby.js", "users.json", "package.json", "package-lock.json"
 ]);
 

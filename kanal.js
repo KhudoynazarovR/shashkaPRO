@@ -79,15 +79,16 @@ function notation(p) {
 function sharp() { try { return require('sharp'); } catch (e) { return null; } }
 function boardSvg(p, top, bottom, sub) {
   let svg = require('./puzimg.js').svgBoard(p.board, p.side, null);
-  const W = +/width="(\d+)"/.exec(svg)[1], H1 = 92, H2 = sub ? 118 : 86;
+  // deyarli kvadrat (≈1.07): Telegram chatda rasmni kesmaydi
+  const B = +/width="(\d+)"/.exec(svg)[1], P = 60, W = B + P * 2, H1 = 80, H2 = sub ? 100 : 76, H = B + H1 + H2;
   const inner = svg.replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '');
-  return '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + W + '" height="' + (W + H1 + H2) + '" viewBox="0 0 ' + W + ' ' + (W + H1 + H2) + '">'
+  return '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">'
     + '<defs><linearGradient id="bg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a1a6e"/><stop offset="1" stop-color="#14093f"/></linearGradient></defs>'
-    + '<rect width="' + W + '" height="' + (W + H1 + H2) + '" fill="url(#bg1)"/>'
-    + '<text x="' + W / 2 + '" y="60" font-family="DejaVu Sans, Arial" font-weight="700" font-size="40" fill="#ffd54a" text-anchor="middle">' + xml(top) + '</text>'
-    + '<g transform="translate(0,' + H1 + ')">' + inner + '</g>'
-    + '<text x="' + W / 2 + '" y="' + (W + H1 + 54) + '" font-family="DejaVu Sans, Arial" font-weight="700" font-size="36" fill="#ffffff" text-anchor="middle">' + xml(bottom) + '</text>'
-    + (sub ? '<text x="' + W / 2 + '" y="' + (W + H1 + 98) + '" font-family="DejaVu Sans, Arial" font-size="28" fill="#b9a8ff" text-anchor="middle">' + xml(sub) + '</text>' : '')
+    + '<rect width="' + W + '" height="' + H + '" fill="url(#bg1)"/>'
+    + '<text x="' + W / 2 + '" y="54" font-family="DejaVu Sans, Arial" font-weight="700" font-size="38" fill="#ffd54a" text-anchor="middle">' + xml(top) + '</text>'
+    + '<g transform="translate(' + P + ',' + H1 + ')">' + inner + '</g>'
+    + '<text x="' + W / 2 + '" y="' + (B + H1 + 46) + '" font-family="DejaVu Sans, Arial" font-weight="700" font-size="34" fill="#ffffff" text-anchor="middle">' + xml(bottom) + '</text>'
+    + (sub ? '<text x="' + W / 2 + '" y="' + (B + H1 + 84) + '" font-family="DejaVu Sans, Arial" font-size="26" fill="#b9a8ff" text-anchor="middle">' + xml(sub) + '</text>' : '')
     + '</svg>';
 }
 async function png(svg) { const sh = sharp(); if (!sh) return null; return sh(Buffer.from(svg)).png().toBuffer(); }
