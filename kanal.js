@@ -49,13 +49,68 @@ function prune(s) {
 
 // ---------- masala tanlash: kun davomida osondan qiyinga, ishlatilmaganlardan
 function pick(s, lv) {
-  const used = new Set(s.used), all = (store.db.puzzles || []).filter(p => p && p.id && p.board && (p.sol || (p.sols && p.sols[0])) && !used.has(p.id));
+  const used = new Set(s.used), all = (store.db.puzzles || []).filter(p => p && p.id && p.board && !p.chBad && (p.sol || (p.sols && p.sols[0])) && !used.has(p.id));
   if (!all.length) { if (!s.used.length) return null; s.used = []; return pick(s, lv); }
   const len = p => (p.sol || p.sols[0]).length;
   let c = all.filter(p => (p.level || 2) === lv && len(p) <= (lv === 1 ? 14 : 30));
   if (!c.length) c = all.filter(p => (p.level || 2) === lv);
   if (!c.length) c = all;
   return c[Math.floor(Math.random() * c.length)];
+}
+// 🧠 kanalga chiqishidan oldin tekshiruv: King Kong dvigateli birinchi yurishni ham shunday topadimi
+function firstMove(p) {
+  try {
+    const R = require('./kkrules.js'), sol = p.sol || p.sols[0];
+    const b = []; p.board.forEach(r => r.forEach(v => b.push(v === 1 ? 1 : v === 2 ? -1 : v === 3 ? 2 : v === 4 ? -2 : 0)));
+    const side = p.side === 'b' ? -1 : 1;
+    for (const m of R.moves(b, side)) { const pts = [m.from].concat(m.path && m.path.length ? m.path : [m.to]); let ok = true; for (let k = 1; k < pts.length; k++) { const st = sol[k - 1]; if (!st || st[0] * 8 + st[1] !== pts[k - 1] || st[2] * 8 + st[3] !== pts[k]) { ok = false; break; } } if (ok) return { b, side, from: m.from, to: m.to, n: R.moves(b, side).length }; }
+  } catch (e) {}
+  return null;
+}
+// yechim oxirigacha qoidaga mos yuriladimi va oxirida yechuvchi oldinda (yoki raqibda yurish qolmagan)mi
+function finalOk(p) {
+  try {
+    const R = require('./kkrules.js'), sol = p.sol || p.sols[0];
+    let b = []; p.board.forEach(r => r.forEach(v => b.push(v === 1 ? 1 : v === 2 ? -1 : v === 3 ? 2 : v === 4 ? -2 : 0)));
+    const me = p.side === 'b' ? -1 : 1; let side = me, i = 0;
+    while (i < sol.length) {
+      let hit = null;
+      for (const m of R.moves(b, side)) { const pts = [m.from].concat(m.path && m.path.length ? m.path : [m.to]); let ok = true; for (let k = 1; k < pts.length; k++) { const st = sol[i + k - 1]; if (!st || st[0] * 8 + st[1] !== pts[k - 1] || st[2] * 8 + st[3] !== pts[k]) { ok = false; break; } } if (ok) { hit = [m, pts.length - 1]; break; } }
+      if (!hit) return -1;   // yechim qoidaga zid
+      b = hit[0].board; side = -side; i += hit[1];
+    }
+    if (p.goal === 'draw') return 1;
+    if (!R.moves(b, side).length && side !== me) return 1;
+    let d = 0; for (const v of b) d += v * me > 0 ? (Math.abs(v) === 2 ? 3 : 1) : v * me < 0 ? -(Math.abs(v) === 2 ? 3 : 1) : 0;
+    return d >= 1 ? 1 : 0;
+  } catch (e) { return 0; }
+}
+function engineOk(p) {
+  return new Promise(res => {
+    const f = firstMove(p); if (!f) return res(false);
+    const fo = finalOk(p); if (fo < 0) return res(false); if (fo > 0) return res(true);   // oxirida yechuvchi oldinda — yaxshi masala
+    if (f.n === 1) return res(true);   // yagona yurish — tekshirish shart emas
+    let done = false; const t = setTimeout(() => { if (!done) { done = true; res(true); } }, 20000);   // dvigatel javob bermasa — o'tkazamiz
+    try {
+      require('./kestoai.js').move({ board: f.b, side: f.side, time: 3, book: false }, r => {
+        if (done) return; done = true; clearTimeout(t);
+        if (!r || typeof r.from !== 'number') return res(true);   // dvigatel band/tayyor emas — to'xtatmaymiz
+        res(r.from === f.from && r.to === f.to);
+      });
+    } catch (e) { done = true; clearTimeout(t); res(true); }
+  });
+}
+async function pickChecked(s, lv) {
+  let last = null;
+  for (let k = 0; k < 6; k++) {
+    const p = pick(s, lv); if (!p) return last;
+    last = p;
+    if (await engineOk(p)) return p;
+    p.chSkip = (p.chSkip || 0) + 1; if (p.chSkip >= 2) p.chBad = 1;   // ikki marta shubhali chiqsa — kanal uchun yaroqsiz
+    s.used.push(p.id);
+    console.log('[kanal] dvigatel bilan mos kelmadi, boshqasi tanlanadi:', p.id);
+  }
+  return last;
 }
 // yechim → "1. c3-d4 f6-g5 2. ..." (urishlar bitta yurish bo'lib)
 function notation(p) {
@@ -79,8 +134,8 @@ function notation(p) {
 function sharp() { try { return require('sharp'); } catch (e) { return null; } }
 function boardSvg(p, top, bottom, sub) {
   let svg = require('./puzimg.js').svgBoard(p.board, p.side, null);
-  // deyarli kvadrat (≈1.07): Telegram chatda rasmni kesmaydi
-  const B = +/width="(\d+)"/.exec(svg)[1], P = 60, W = B + P * 2, H1 = 80, H2 = sub ? 100 : 76, H = B + H1 + H2;
+  // kvadrat: Telegram chatda rasmni kesmaydi
+  const B = +/width="(\d+)"/.exec(svg)[1], H1 = 80, H2 = sub ? 100 : 76, P = (H1 + H2) / 2, W = B + P * 2, H = B + H1 + H2;   // aniq kvadrat
   const inner = svg.replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '');
   return '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">'
     + '<defs><linearGradient id="bg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a1a6e"/><stop offset="1" stop-color="#14093f"/></linearGradient></defs>'
@@ -108,8 +163,21 @@ const solveUrl = (id, ref) => APP + '?startapp=pz_' + id + (ref ? '-r' + ref : '
 
 // ---------- masala posti
 async function postSlot(i, chat, test) {
-  const s = S(), t = T(), lv = (i === 4 && t.dow === 0) ? 3 : SLOTS[i][2], p = pick(s, lv);
+  const s = S(), t = T(), lv = (i === 4 && t.dow === 0) ? 3 : SLOTS[i][2], p = test ? pick(s, lv) : await pickChecked(s, lv);
   if (!p) return null;
+  const { buf, cap, kb } = await postParts(p, i, lv, t);
+  const r = await sendPhoto(chat || s.ch, buf, cap, kb);
+  if (!r || !r.ok) { console.log('[kanal] post xato:', r && r.description); return r; }
+  if (!test) {
+    const key = t.day + '#' + i;
+    s.used.push(p.id);
+    s.posts[key] = { pid: p.id, mid: r.result.message_id, at: Date.now(), ans: 0, sv: {}, first: [], slot: i };
+    store.save();
+    adminCopy(key, r);
+  }
+  return r;
+}
+async function postParts(p, i, lv, t) {
   const sv = boardSvg(p, 'KUNNING MASALASI · ' + (i + 1) + '/5', '@' + BOT, LV[p.level || lv].replace(/^\S+ /, '') + (p.author ? ' · ' + p.author : ''));
   let buf = null; try { buf = await png(sv); } catch (e) { console.log('[kanal] rasm:', e.message); }
   const cap = '🧩 <b>Kunning masalasi · ' + t.dd + ' · ' + (i + 1) + '/5</b>\n' + goTxt(p) + '\n' + LV[p.level || lv] + (p.author ? ' · ✍️ ' + esc(p.author) : '')
@@ -117,14 +185,56 @@ async function postSlot(i, chat, test) {
     + '\n📤 Do‘stingizga yuboring — u yechsa sizga +' + INV + ' 🪙 (yangi o‘yinchi bo‘lsa +' + INV_NEW + ')'
     + '\n\n⏰ Javob: ' + SLOTS[i][1] + ' da · #masala #shashka';
   const kb = { inline_keyboard: [[{ text: '🧩 Yechish', url: solveUrl(p.id) }, { text: '📤 Do‘stga yuborish', url: 'https://t.me/' + BOT + '?start=sh_' + p.id }]] };
-  const r = await sendPhoto(chat || s.ch, buf, cap, kb);
-  if (!r || !r.ok) { console.log('[kanal] post xato:', r && r.description); return r; }
-  if (!test) {
-    s.used.push(p.id);
-    s.posts[t.day + '#' + i] = { pid: p.id, mid: r.result.message_id, at: Date.now(), ans: 0, sv: {}, first: [], slot: i };
-    store.save();
-  }
-  return r;
+  return { buf, cap, kb };
+}
+// 🛠 adminga post nusxasi — tahrirlash / yangilash / almashtirish tugmalari bilan
+function adminKb(key, pid) {
+  return { inline_keyboard: [[{ text: '✏️ Tahrirlash (ilovada)', url: solveUrl(pid) }], [{ text: '🔄 Kanalda yangilash', callback_data: 'kn:u:' + key }, { text: '🔁 Almashtirish', callback_data: 'kn:r:' + key }]] };
+}
+async function adminCopy(key, r) {
+  const s = S(), P = s.posts[key]; if (!P) return;
+  const p = (store.db.puzzles || []).find(x => x.id === P.pid) || {}, fid = fileId(r);
+  const cap = '🛠 <b>Kanal posti</b> · ' + SLOTS[P.slot][0] + '\n🧩 ' + esc(p.title || p.id) + (p.folder ? ' · 📁 ' + esc(p.folder) : '') + '\n<code>' + esc(notation(p) || '') + '</code>'
+    + '\n\nXato bo‘lsa: ✏️ ilovada tahrirlang → 🔄 Yangilash. Yaroqsiz bo‘lsa: 🔁 Almashtirish (boshqa masala chiqadi, bu masala kanalga qayta tushmaydi).';
+  for (const a of ADM()) { if (fid) tg('sendPhoto', { chat_id: a, photo: fid, caption: cap.slice(0, 1000), parse_mode: 'HTML', reply_markup: adminKb(key, P.pid) }); else tg('sendMessage', { chat_id: a, text: cap, parse_mode: 'HTML', reply_markup: adminKb(key, P.pid) }); }
+}
+// 🔄 tahrirlangan masala bilan kanal postini yangilash (post o'chmaydi)
+async function refresh(key) {
+  const s = S(), P = s.posts[key]; if (!P) return 'Post topilmadi';
+  const p = (store.db.puzzles || []).find(x => x.id === P.pid); if (!p) return 'Masala o‘chirilgan — 🔁 Almashtirish ni bosing';
+  const t = T(P.at), { buf, cap, kb } = await postParts(p, P.slot, SLOTS[P.slot][2], t);
+  const T0 = process.env.BOT_TOKEN; if (!T0) return 'BOT_TOKEN yo‘q';
+  let r;
+  if (buf) {
+    const fd = new FormData();
+    fd.append('chat_id', String(s.ch)); fd.append('message_id', String(P.mid));
+    fd.append('media', JSON.stringify({ type: 'photo', media: 'attach://ph', caption: cap, parse_mode: 'HTML' }));
+    fd.append('reply_markup', JSON.stringify(kb));
+    fd.append('ph', new Blob([buf], { type: 'image/png' }), 'pz.png');
+    r = await fetch('https://api.telegram.org/bot' + T0 + '/editMessageMedia', { method: 'POST', body: fd }).then(x => x.json()).catch(() => null);
+  } else r = await tg('editMessageCaption', { chat_id: s.ch, message_id: P.mid, caption: cap, parse_mode: 'HTML', reply_markup: kb });
+  if (r && r.ok) { delete s.card[p.id]; store.save(); return '✅ Kanal posti yangilandi'; }
+  return '⚠️ ' + ((r && r.description) || 'yangilab bo‘lmadi');
+}
+// 🔁 yaroqsiz masalani kanaldan olib, o'rniga boshqasini qo'yish
+async function replace(key) {
+  const s = S(), P = s.posts[key]; if (!P) return 'Post topilmadi';
+  if (P.ans) return 'Javobi chiqib bo‘lgan — almashtirib bo‘lmaydi';
+  const p = (store.db.puzzles || []).find(x => x.id === P.pid); if (p) { p.chBad = 1; }
+  if (key.slice(0, 10) !== T().day) return 'Bu kechagi post';
+  await tg('deleteMessage', { chat_id: s.ch, message_id: P.mid });
+  delete s.posts[key]; store.save();
+  const r = await postSlot(P.slot);
+  return r && r.ok ? '✅ Almashtirildi: yangi masala kanalga chiqdi' : '⚠️ Yangi masala chiqmadi: ' + ((r && r.description) || '');
+}
+async function onCallback(q) {
+  const m = /^kn:([ur]):(\d{4}-\d\d-\d\d#\d)$/.exec(String(q.data || '')); if (!m) return false;
+  const ans = (t, alert) => tg('answerCallbackQuery', { callback_query_id: q.id, text: t, show_alert: !!alert });
+  if (!ADM().includes(String(q.from && q.from.id))) { await ans('Faqat admin'); return true; }
+  await ans(m[1] === 'u' ? '⏳ Yangilanmoqda…' : '⏳ Almashtirilmoqda…');
+  const res = m[1] === 'u' ? await refresh(m[2]) : await replace(m[2]);
+  await tg('sendMessage', { chat_id: q.from.id, text: res });
+  return true;
 }
 // ---------- javob posti
 async function answer(key) {
@@ -276,10 +386,16 @@ async function cmd(msg, text) {
   const s = S(), a = text.trim().split(/\s+/).slice(1), t = T(), c = msg.chat.id;
   if (a[0] === 'on' || a[0] === 'off') { s.on = a[0] === 'on'; store.save(); await tg('sendMessage', { chat_id: c, text: s.on ? '✅ Kanal postlari yoqildi' : '⏸ Kanal postlari to‘xtatildi' }); return true; }
   if (a[0] && /^@\w{4,}$|^-100\d+$/.test(a[0])) { s.ch = a[0]; store.save(); await tg('sendMessage', { chat_id: c, text: '✅ Kanal: ' + s.ch }); return true; }
+  if (a[0] === 'yangila' || a[0] === 'almashtir') {
+    const ks = Object.keys(s.posts).filter(k => k.startsWith(t.day + '#')).sort(), key = a[1] ? t.day + '#' + (Number(a[1]) - 1) : ks[ks.length - 1];
+    if (!key || !s.posts[key]) { await tg('sendMessage', { chat_id: c, text: 'Bugun kanal posti yo‘q' }); return true; }
+    await tg('sendMessage', { chat_id: c, text: a[0] === 'yangila' ? await refresh(key) : await replace(key) });
+    return true;
+  }
   if (a[0] === 'test') { await postSlot(Math.min(4, Number(a[1]) || 0), c, true); await topPost('d', String(c)); return true; }
   const td = SLOTS.map((x, i) => { const P = s.posts[t.day + '#' + i]; return x[0] + ' — ' + (P ? '✅ ' + Object.keys(P.sv).length + ' yechdi' + (P.ans ? ', javob berildi' : '') : (t.hm >= x[1] ? '— o‘tib ketdi' : '⏳')); }).join('\n');
   const top = rank(s.pts['d:' + t.day]).slice(0, 3).map((r, i) => (i + 1) + '. ' + nm(store.users()[r.u]) + ' — ' + r.p).join('\n');
-  await tg('sendMessage', { chat_id: c, text: '📣 Kanal: ' + s.ch + ' · ' + (s.on ? '✅ yoqilgan' : '⏸ to‘xtatilgan') + '\n\nBugun:\n' + td + '\n\nKunlik TOP:\n' + (top || '—') + '\n\n/kanal test — namunani shu yerga yuborish\n/kanal off · /kanal on\n/kanal @kanal — kanalni almashtirish' });
+  await tg('sendMessage', { chat_id: c, text: '📣 Kanal: ' + s.ch + ' · ' + (s.on ? '✅ yoqilgan' : '⏸ to‘xtatilgan') + '\n\nBugun:\n' + td + '\n\nKunlik TOP:\n' + (top || '—') + '\n\n/kanal test — namunani shu yerga yuborish\n/kanal yangila [1–5] — tahrirlangan masala bilan postni yangilash\n/kanal almashtir [1–5] — yaroqsiz masala o‘rniga boshqasi\n/kanal off · /kanal on\n/kanal @kanal — kanalni almashtirish' });
   return true;
 }
-module.exports = { start, tick, onSolve, shareStart, inlineResults, cmd, notation, _t: { T, pick, boardSvg, topSvg, rank, S } };
+module.exports = { start, tick, onSolve, onCallback, shareStart, inlineResults, cmd, notation, refresh, replace, _t: { T, pick, pickChecked, engineOk, boardSvg, topSvg, rank, S } };
