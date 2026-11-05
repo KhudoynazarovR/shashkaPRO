@@ -505,10 +505,10 @@ function handle(req, res, url) {
     const _adm = (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(_tg.id));
     let _etF = [], _etL = [], _etN = {}, _etP = {}; try { const _E = require('./etudes.js'); _etL = _E.puzzleList(); _etF = _E.FOLDERS.filter(f => _etL.some(x => x.folder === f)); _etN = _E.ETF; _etP = _E.ETP; } catch (e) {}
     const _fo = (store.db.pzFolders || []).slice(); { const _ki = _fo.indexOf('Kombinatsiyalar'); _fo.splice(_ki >= 0 ? _ki + 1 : 0, 0, ..._etF); }
-    send(res, 200, { etf: _etN, etp: _etP, folders: _fo, settings: store.db.pzSettings || {}, dayFolder: (function () { try { return require('./quests.js').dayFolder(); } catch (e) { return ''; } })(), hideLv: store.db.pzHideLv || [], best: _u.pzBest || {}, inv: _u.pzInv || null, ranks: require('./pzranks.js').RANKS, topInv: (function () { const m = require('./pzranks.js'); m.watch(store); return m.top(store); })(), promo: Date.parse(process.env.PZ_PROMO_END || '2026-10-25T23:59:59+05:00'), admin: _adm, link: process.env.TG_APP_LINK || '', myId: String(_tg.id), solved: _u.solved || [], heroAv: _u.pzHero || '', list: (() => { const _c = {}; Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { _c[i] = (_c[i] || 0) + 1; })); return store.db.puzzles.slice().sort((x, y) => (x.no || 0) - (y.no || 0)).map(x => Object.assign({}, x, { cnt: _c[x.id] || 0 })); })(), etl: (() => { const _c = {}; Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { if (i[0] === 'e') _c[i] = (_c[i] || 0) + 1; })); return _etL.map(x => [x.id.slice(2), x.no, x.level, x.b32, x.t, _c[x.id] || 0]); })() });
+    send(res, 200, { etf: _etN, etp: _etP, folders: _fo, settings: store.db.pzSettings || {}, dayFolder: (function () { try { return require('./quests.js').dayFolder(); } catch (e) { return ''; } })(), chanFolders: (function () { try { return require('./kanal.js').folders(); } catch (e) { return []; } })(), hideLv: store.db.pzHideLv || [], best: _u.pzBest || {}, inv: _u.pzInv || null, ranks: require('./pzranks.js').RANKS, topInv: (function () { const m = require('./pzranks.js'); m.watch(store); return m.top(store); })(), promo: Date.parse(process.env.PZ_PROMO_END || '2026-10-25T23:59:59+05:00'), admin: _adm, link: process.env.TG_APP_LINK || '', myId: String(_tg.id), solved: _u.solved || [], heroAv: _u.pzHero || '', list: (() => { const _c = {}; Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { _c[i] = (_c[i] || 0) + 1; })); return store.db.puzzles.slice().sort((x, y) => (x.no || 0) - (y.no || 0)).map(x => Object.assign({}, x, { cnt: _c[x.id] || 0 })); })(), etl: (() => { const _c = {}; Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { if (i[0] === 'e') _c[i] = (_c[i] || 0) + 1; })); return _etL.map(x => [x.id.slice(2), x.no, x.level, x.b32, x.t, _c[x.id] || 0]); })() });
     return true;
   }
-  if ((p === '/api/puzzle' || p === '/api/puzzle/del' || p === '/api/puzzle/solved' || p === '/api/puzzle/rename' || p === '/api/puzzle/folder' || p === '/api/puzzle/move' || p === '/api/puzzle/settings' || p === '/api/puzzle/order' || p === '/api/puzzle/edit' || p === '/api/puzzle/renum' || p === '/api/puzzle/merge' || p === '/api/puzzle/dayfolder') && req.method === 'POST') {
+  if ((p === '/api/puzzle' || p === '/api/puzzle/del' || p === '/api/puzzle/solved' || p === '/api/puzzle/rename' || p === '/api/puzzle/folder' || p === '/api/puzzle/move' || p === '/api/puzzle/settings' || p === '/api/puzzle/order' || p === '/api/puzzle/edit' || p === '/api/puzzle/renum' || p === '/api/puzzle/merge' || p === '/api/puzzle/dayfolder' || p === '/api/puzzle/chanfolder') && req.method === 'POST') {
     const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
     readBody(req, 100000, body => {
@@ -530,6 +530,11 @@ function handle(req, res, url) {
       }
       const adm = (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(_tg.id));
       if (!adm) return send(res, 403, { error: 'admin emassiz' });
+      if (p === '/api/puzzle/chanfolder') {   // 📣 kanal masalalari qaysi papkalardan (bir nechta tanlash mumkin)
+        const _cf = String(j.folder || '');
+        if (!arr.some(x => x.folder === _cf)) return send(res, 400, { error: 'Bu papkada masala yo‘q' });
+        return send(res, 200, { ok: true, chanFolders: require('./kanal.js').toggleFolder(_cf) });
+      }
       if (p === '/api/puzzle/dayfolder') {   // 📅 kunlik 5 ta masala qaysi papkadan
         const _df = String(j.folder || '');
         if (_df && !arr.some(x => x.folder === _df)) return send(res, 400, { error: 'Bu papkada masala yo‘q' });

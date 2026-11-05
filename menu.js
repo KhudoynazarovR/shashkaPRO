@@ -622,7 +622,7 @@
     });
     if (!_mapV) fl.forEach(function (f, i) {
       var arr = S.list.filter(function (p) { return foOf(p) === f; });
-      h += '<div data-fo="' + i + '" style="' + CARD + '">' + (S.admin && f.indexOf('Etyudlar · ') !== 0 && f.indexOf('Ustyanov · ') !== 0 && f.indexOf('Malamed') !== 0 ? '<span style="float:right"><button data-dy="' + i + '" title="Kunlik 5 ta masala shu papkadan" style="background:' + (S.dayFolder === f ? '#16a34a' : '#262b5a') + ';color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">📅</button> <button data-rf="' + i + '" style="background:#262b5a;color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">✏️</button> <button data-df="' + i + '" style="background:#262b5a;color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">🗑</button></span>' : '') + '<b style="font-size:17px">📁 ' + esc(f) + '</b>' + (S.dayFolder === f ? ' <span style="font-size:12px;background:#16a34a;border-radius:8px;padding:2px 7px;vertical-align:middle">📅 Kunlik</span>' : '') + '<div style="font-size:12px;opacity:.65;margin-top:4px">' + arr.length + ' ta masala · ✅ ' + nDone(arr) + '/' + arr.length + '</div></div>';
+      h += '<div data-fo="' + i + '" style="' + CARD + '">' + (S.admin && f.indexOf('Etyudlar · ') !== 0 && f.indexOf('Ustyanov · ') !== 0 && f.indexOf('Malamed') !== 0 ? '<span style="float:right"><button data-ch="' + i + '" title="Kanal masalalari shu papkadan" style="background:' + ((S.chanFolders || []).indexOf(f) >= 0 ? '#2563eb' : '#262b5a') + ';color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">📣</button> <button data-dy="' + i + '" title="Kunlik 5 ta masala shu papkadan" style="background:' + (S.dayFolder === f ? '#16a34a' : '#262b5a') + ';color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">📅</button> <button data-rf="' + i + '" style="background:#262b5a;color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">✏️</button> <button data-df="' + i + '" style="background:#262b5a;color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">🗑</button></span>' : '') + '<b style="font-size:17px">📁 ' + esc(f) + '</b>' + (S.dayFolder === f ? ' <span style="font-size:12px;background:#16a34a;border-radius:8px;padding:2px 7px;vertical-align:middle">📅 Kunlik</span>' : '') + (S.admin && (S.chanFolders || []).indexOf(f) >= 0 ? ' <span style="font-size:12px;background:#2563eb;border-radius:8px;padding:2px 7px;vertical-align:middle">📣 Kanal</span>' : '') + '<div style="font-size:12px;opacity:.65;margin-top:4px">' + arr.length + ' ta masala · ✅ ' + nDone(arr) + '/' + arr.length + '</div></div>';
     });
     if (!S.admin) h += '<div style="font-size:11px;opacity:.4;margin-top:16px">ID: ' + esc(S.myId) + '</div>';
     ov.innerHTML = h;
@@ -638,6 +638,11 @@
     });
     Array.prototype.forEach.call(ov.querySelectorAll('[data-hl]'), function (e) {
       e.onclick = function (ev) { ev.stopPropagation(); var lv = Number(e.getAttribute('data-hl')); if (!confirm('"' + LV[lv] + '" papkasi yashirilsinmi? (Unga masala qo‘shsangiz qayta chiqadi)')) return; api('/api/puzzle/folder', { name: 'x', hideLv: lv }).then(function () { load(); }); };
+    });
+    Array.prototype.forEach.call(ov.querySelectorAll('[data-ch]'), function (e) {   // 📣 kanal masalalari papkasi (bir nechta)
+      e.onclick = function (ev) { ev.stopPropagation(); var f = fl[Number(e.getAttribute('data-ch'))], on = (S.chanFolders || []).indexOf(f) >= 0;
+        if (!confirm(on ? '«' + f + '» kanal masalalari ro‘yxatidan olib tashlansinmi?' : 'Kanalga masalalar «' + f + '» papkasidan ham tushsinmi?\n\n(Bir nechta papka tanlash mumkin. Hech biri tanlanmasa — hamma papkalardan.)')) return;
+        api('/api/puzzle/chanfolder', { folder: f }).then(function (d) { if (d && d.error) { alert(d.error); return; } load(); }); };
     });
     Array.prototype.forEach.call(ov.querySelectorAll('[data-dy]'), function (e) {
       e.onclick = function (ev) { ev.stopPropagation(); var f = fl[Number(e.getAttribute('data-dy'))], off = S.dayFolder === f;

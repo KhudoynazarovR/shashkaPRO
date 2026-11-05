@@ -49,8 +49,12 @@ function prune(s) {
 
 // ---------- masala tanlash: kun davomida osondan qiyinga, ishlatilmaganlardan
 function pick(s, lv) {
-  const used = new Set(s.used), all = (store.db.puzzles || []).filter(p => p && p.id && p.board && !p.chBad && (p.sol || (p.sols && p.sols[0])) && !used.has(p.id));
-  if (!all.length) { if (!s.used.length) return null; s.used = []; return pick(s, lv); }
+  const used = new Set(s.used), fo = new Set(s.folders || []);
+  const pcs = p => { let n = 0; p.board.forEach(r => r.forEach(v => { if (v) n++; })); return n; };
+  let all = (store.db.puzzles || []).filter(p => p && p.id && p.board && !p.chBad && (p.sol || (p.sols && p.sols[0])) && !used.has(p.id) && (!fo.size || fo.has(p.folder)));
+  { const rich = all.filter(p => pcs(p) >= 6 && (p.sol || p.sols[0]).length >= 3); if (rich.length) all = rich; }   // juda oddiy (kam donali, 1 yurishli) masalalar chiqmaydi
+  if (!all.length && fo.size && (store.db.puzzles || []).some(p => fo.has(p.folder) && !p.chBad)) { s.used = s.used.filter(id => !(store.db.puzzles || []).some(p => p.id === id && fo.has(p.folder))); return pick(s, lv); }   // tanlangan papkalar tugadi — qaytadan
+  if (!all.length) { if (!s.used.length || fo.size) return null; s.used = []; return pick(s, lv); }
   const len = p => (p.sol || p.sols[0]).length;
   let c = all.filter(p => (p.level || 2) === lv && len(p) <= (lv === 1 ? 14 : 30));
   if (!c.length) c = all.filter(p => (p.level || 2) === lv);
@@ -394,8 +398,11 @@ async function cmd(msg, text) {
   }
   if (a[0] === 'test') { await postSlot(Math.min(4, Number(a[1]) || 0), c, true); await topPost('d', String(c)); return true; }
   const td = SLOTS.map((x, i) => { const P = s.posts[t.day + '#' + i]; return x[0] + ' — ' + (P ? '✅ ' + Object.keys(P.sv).length + ' yechdi' + (P.ans ? ', javob berildi' : '') : (t.hm >= x[1] ? '— o‘tib ketdi' : '⏳')); }).join('\n');
+  const fl = (s.folders || []).join(', ') || 'hamma papkalar';
   const top = rank(s.pts['d:' + t.day]).slice(0, 3).map((r, i) => (i + 1) + '. ' + nm(store.users()[r.u]) + ' — ' + r.p).join('\n');
-  await tg('sendMessage', { chat_id: c, text: '📣 Kanal: ' + s.ch + ' · ' + (s.on ? '✅ yoqilgan' : '⏸ to‘xtatilgan') + '\n\nBugun:\n' + td + '\n\nKunlik TOP:\n' + (top || '—') + '\n\n/kanal test — namunani shu yerga yuborish\n/kanal yangila [1–5] — tahrirlangan masala bilan postni yangilash\n/kanal almashtir [1–5] — yaroqsiz masala o‘rniga boshqasi\n/kanal off · /kanal on\n/kanal @kanal — kanalni almashtirish' });
+  await tg('sendMessage', { chat_id: c, text: '📣 Kanal: ' + s.ch + ' · ' + (s.on ? '✅ yoqilgan' : '⏸ to‘xtatilgan') + '\n📁 Masalalar: ' + fl + ' (ilovada papka yonidagi 📣 tugmasi)\n\nBugun:\n' + td + '\n\nKunlik TOP:\n' + (top || '—') + '\n\n/kanal test — namunani shu yerga yuborish\n/kanal yangila [1–5] — tahrirlangan masala bilan postni yangilash\n/kanal almashtir [1–5] — yaroqsiz masala o‘rniga boshqasi\n/kanal off · /kanal on\n/kanal @kanal — kanalni almashtirish' });
   return true;
 }
-module.exports = { start, tick, onSolve, onCallback, shareStart, inlineResults, cmd, notation, refresh, replace, _t: { T, pick, pickChecked, engineOk, boardSvg, topSvg, rank, S } };
+function folders() { return (S().folders || []).slice(); }
+function toggleFolder(f) { const s = S(); s.folders = s.folders || []; const i = s.folders.indexOf(f); if (i >= 0) s.folders.splice(i, 1); else s.folders.push(f); store.save(); return s.folders.slice(); }
+module.exports = { folders, toggleFolder, start, tick, onSolve, onCallback, shareStart, inlineResults, cmd, notation, refresh, replace, _t: { T, pick, pickChecked, engineOk, boardSvg, topSvg, rank, S } };
