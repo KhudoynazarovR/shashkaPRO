@@ -3123,3 +3123,78 @@ setInterval(tick,250);
 var hooked=null;
 setInterval(function(){var el=document.getElementById('lbTs');if(el&&el!==hooked){hooked=el;try{new MutationObserver(tick).observe(el,{childList:true})}catch(e){}}},1000);
 })();
+
+/* DESIGN2 — 2-rasmdagidek karta dizayni */
+(function(){
+var css=[
+'.card.lbtk{background:linear-gradient(180deg,#101c40,#0a1230)!important;border:1px solid rgba(60,130,255,.45)!important;box-shadow:0 0 22px rgba(30,110,255,.28)!important}',
+'.card.lbtk .tcx{background:#0d1735!important;border:1px solid rgba(120,140,255,.18);padding:12px 4px!important}',
+'.card.lbtk .tcx>div{flex:1;text-align:center;border-left:1px solid rgba(255,255,255,.08)}',
+'.card.lbtk .tcx>div:first-child{border-left:0}',
+'.card.lbtk .tcAv::before{content:"🕒 ";font-size:.65em}',
+'.card.lbtk .tcPv::before{content:"🏆 ";font-size:.65em}',
+'.card.lbtk .tcNv::before{content:"👥 ";font-size:.65em}',
+'.card.lbtk .tkb_reg::before{content:"● ";color:#2ee66b}',
+'.card.lbtk .tcIc{font-size:20px!important;letter-spacing:-5px;background:linear-gradient(135deg,#0c3b22,#14602f)!important;border:2px solid #2ee66b!important;border-radius:16px!important}',
+'.card.lbtk .tvRow{display:flex!important;flex-wrap:wrap;gap:10px;margin-top:14px}',
+'.card.lbtk .tvCE{order:1;flex:1 1 0;background:linear-gradient(180deg,#8fdc4f,#5fb82e)!important;color:#fff!important;border:0!important;border-radius:14px!important;padding:15px!important;font-size:19px!important;font-weight:800!important;box-shadow:0 4px 0 #3f8a1f!important}',
+'.card.lbtk .tvRow [data-a="tlink"]{order:2;flex:0 0 60px;background:#141f45!important;border:1px solid rgba(120,140,255,.35)!important;border-radius:14px!important;font-size:22px!important;padding:0!important;box-shadow:none!important}',
+'.card.lbtk .tvCL{order:3;flex:1 0 100%;background:none!important;border:0!important;box-shadow:none!important;color:#3ddc6b!important;font-weight:700;font-size:16px;padding:4px!important}',
+'.card.lbtk .tvCJ{order:3;flex:1 0 100%;background:#141f45!important;border:1px solid rgba(120,140,255,.35)!important;border-radius:12px!important;color:#fff!important}',
+'#nxtBox{margin:18px 0}',
+'#nxtBox .nxH{font-size:20px;font-weight:700;color:#fff;margin:0 0 10px}',
+'#nxtBox .nxI{display:flex;align-items:center;gap:12px;background:linear-gradient(180deg,#101c40,#0a1230);border:1px solid rgba(60,130,255,.35);border-radius:16px;padding:12px;margin-bottom:10px;cursor:pointer}',
+'#nxtBox .nxIc{flex:0 0 52px;height:52px;border-radius:12px;background:#1a2550;display:flex;align-items:center;justify-content:center;font-size:28px}',
+'#nxtBox .nxT b{display:block;font-size:18px;color:#fff}',
+'#nxtBox .nxT small{color:#8fa3ff;font-size:14px}',
+'#nxtBox .nxA{margin-left:auto;color:#fff;font-size:22px}'
+].join('');
+var st=document.createElement('style');st.id='design2Css';st.textContent=css;document.head.appendChild(st);
+function S(){try{return window.__lb?window.__lb.S:null}catch(e){return null}}
+function f2(n){return(n<10?'0':'')+n}
+function fix(){
+  document.querySelectorAll('.card.lbtk').forEach(function(card){
+    var sm=card.querySelectorAll('.tcx small');
+    if(sm[2]&&sm[2].textContent==='Ishtirokchi')sm[2].textContent='Ishtirokchilar';
+    var ic=card.querySelector('.tcIc');
+    if(ic&&ic.textContent.indexOf('⚔')>=0)ic.textContent='⚫⚪';
+    var tr=card.querySelector('.tvRow');
+    if(tr&&!card.getAttribute('data-d2')){
+      var lk=card.querySelector('[data-a="tlink"]');
+      if(lk){tr.appendChild(lk);lk.textContent='🔗';}
+      var ce=tr.querySelector('.tvCE');if(ce)ce.textContent='➜ Kirish';
+      var row=card.querySelector(':scope>.row');
+      if(row&&!row.querySelector('button'))row.style.setProperty('display','none','important');
+      card.setAttribute('data-d2','1');
+    }
+  });
+}
+function nxt(){
+  var s=S(),el=document.getElementById('lbTs');
+  if(!s||!s.tournaments||!el)return;
+  var now=Date.now()+(window.__lbSkew||0);
+  var L=s.tournaments.filter(function(t){return t.status==='reg'&&t.startAt&&t.startAt>now}).sort(function(a,b){return a.startAt-b.startAt}).slice(1,5);
+  var box=document.getElementById('nxtBox');
+  if(box&&box.previousElementSibling!==el){box.remove();box=null}
+  if(!box){box=document.createElement('div');box.id='nxtBox';el.insertAdjacentElement('afterend',box)}
+  var sig=L.map(function(t){return t.id+':'+t.startAt}).join(',');
+  if(box.getAttribute('data-sig')===sig)return;
+  box.setAttribute('data-sig',sig);box.textContent='';
+  if(!L.length)return;
+  var h=document.createElement('div');h.className='nxH';h.textContent='🏆 Keyingi turnirlar';box.appendChild(h);
+  L.forEach(function(t){
+    var d=new Date(t.startAt);
+    var it=document.createElement('div');it.className='nxI';
+    var ic=document.createElement('div');ic.className='nxIc';ic.textContent=t.type==='arena'?'⚡':'🏆';
+    var tt=document.createElement('div');tt.className='nxT';
+    var b=document.createElement('b');b.textContent=String(t.name||'Turnir').replace(/^\S+\s/,'');
+    var sm=document.createElement('small');sm.textContent='🕒 '+f2(d.getHours())+':'+f2(d.getMinutes());
+    tt.appendChild(b);tt.appendChild(sm);
+    var ar=document.createElement('div');ar.className='nxA';ar.textContent='›';
+    it.appendChild(ic);it.appendChild(tt);it.appendChild(ar);
+    it.onclick=function(){var c=document.getElementById('lbtc_'+t.id);if(c)c.scrollIntoView({behavior:'smooth',block:'center'})};
+    box.appendChild(it);
+  });
+}
+setInterval(function(){try{fix();nxt()}catch(e){}},500);
+})();
