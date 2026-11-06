@@ -756,7 +756,7 @@
       if (_inf && _inf.elo) { var _eb = document.createElement("span"); _eb.textContent = "⭐" + _inf.elo; _eb.style.cssText = "color:#ffd86b;font-size:13px;font-weight:bold;flex:none"; l.appendChild(_eb); }
       var r = document.createElement("span");
       r.setAttribute("data-clock", color);
-      r.style.cssText = "font-weight:bold;min-width:64px;text-align:center;padding:3px 8px;border-radius:6px;background:#1c2733";
+      r.style.cssText = "font:700 26px/1 ui-monospace,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums;min-width:96px;text-align:center;padding:8px 12px;border-radius:8px;background:#1c2733;color:#9a9fb5;flex:none";
       el.appendChild(l);
       el.appendChild(r);
     }
@@ -770,6 +770,7 @@
 
     function fmt(ms) {
       if (st && st.vsBot && (st.tc === "∞" || !st.tc)) return "∞";
+      if (ms < 10000) { var _t = Math.floor(ms / 100) / 10; return "0:" + (_t < 10 ? "0" : "") + _t.toFixed(1); }
       var sec = Math.ceil(ms / 1000), m = Math.floor(sec / 60), s = sec % 60;
       return m + ":" + (s < 10 ? "0" : "") + s;
     }
@@ -781,8 +782,8 @@
         if (st.vsBot && st.botColor === color && /King ?Kong/i.test(String(st[color] || "")) && false) { els[i].textContent = "∞"; els[i].style.background = "#1c2733"; els[i].style.color = "#fff"; continue; }   // 🦍 soatsiz
         els[i].textContent = fmt(ms);
         var active = st.clockRunning && !st.finished && st.turn === color;
-        els[i].style.background = active ? (ms < 30000 ? "#7a1f1f" : "#2b4a1f") : "#1c2733";
-        els[i].style.color = ms < 30000 && active ? "#ffb4b4" : "#fff";
+        els[i].style.background = active ? (ms < 10000 ? "#a83232" : "#4d7a1a") : "#1c2733";
+        els[i].style.color = active ? "#fff" : "#9a9fb5";
       }
     }
 
@@ -1448,7 +1449,7 @@
     }
 
     hb = setInterval(function () { send({ type: "roomSync", roomId: roomId }); }, 25000);
-    setInterval(updateClocks, 250);
+    setInterval(updateClocks, 100);
     render();
     connect();
   }
