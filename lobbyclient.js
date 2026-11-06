@@ -3302,3 +3302,22 @@ function run(){
 
 /* TARENA — arena turniri lidraughts uslubidagi sahifada (tarena.js) */
 ;(function(){var s=document.createElement("script");s.src="/tarena.js";document.head.appendChild(s)})();
+
+/* VAQTINCHALIK: o'z jazomni olib tashlash (admin). Ishlatgach o'chiring */
+;(function(){
+  function go(){
+    try{
+      var tg=window.Telegram&&window.Telegram.WebApp; if(!tg||!tg.initDataUnsafe||!tg.initDataUnsafe.user) return;
+      var uid=String(tg.initDataUnsafe.user.id);
+      var b=document.createElement('button');
+      b.textContent='🧹 Jazoni olib tashlash';
+      b.style.cssText='position:fixed;left:8px;bottom:84px;z-index:99999;padding:10px 14px;border-radius:10px;border:0;background:#c0392b;color:#fff;font-weight:700';
+      b.onclick=function(){
+        fetch('/api/mod',{method:'POST',headers:{'x-init-data':tg.initData,'Content-Type':'application/json'},body:JSON.stringify({uid:uid,act:'undo'})})
+          .then(function(r){return r.text()}).then(function(t){alert('Javob: '+t)}).catch(function(e){alert('Xato: '+e)});
+      };
+      document.body.appendChild(b);
+    }catch(e){}
+  }
+  setTimeout(go,3000);
+})();
