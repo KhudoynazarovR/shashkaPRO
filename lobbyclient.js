@@ -3312,3 +3312,20 @@ it.appendChild(ar);
 
 /* TARENA — arena turniri lidraughts uslubidagi sahifada (tarena.js) */
 ;(function(){var s=document.createElement("script");s.src="/tarena.js";document.head.appendChild(s)})();
+
+/* DIAG: vaqtincha */
+;(function(){
+  setTimeout(function(){
+    var b=document.createElement('button');
+    b.textContent='🔍 Diag';
+    b.style.cssText='position:fixed;left:8px;bottom:84px;z-index:99999;padding:10px 14px;border-radius:10px;border:0;background:#2c3e90;color:#fff;font-weight:700';
+    b.onclick=function(){
+      var S=null;try{S=window.__lb.S}catch(e){}
+      var T=(S&&S.tournaments)||[];
+      alert('tvOpen: '+(typeof window.tvOpen)+'\nwrapped(__ta): '+(window.tvOpen&&window.tvOpen.__ta?'HA':'YOQ')+
+        '\ntaPeek: '+(typeof window.taPeek)+
+        '\nturnirlar: '+T.map(function(t){return t.name+'='+t.type+'/'+t.status}).join(' | '));
+    };
+    document.body.appendChild(b);
+  },3000);
+})();
