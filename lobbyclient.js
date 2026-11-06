@@ -459,6 +459,7 @@
         "<select id=\"lbTp\"><option value=\"std\">Standart</option><option value=\"idf\">IDF 780</option></select></div>" +
 "<div class=\"row\"><span class=\"muted\">Vaqt:</span><select id=\"lbTtc\">" + tcOpts + "</select></div>" +
 "<div class=\"row\" id=\"lbTbzr\"><label><input type=\"checkbox\" id=\"lbTbz\" checked> ⚡ Berserk yoqilgan</label></div>" +
+"<div class=\"row\" id=\"lbTmgr\"><select id=\"lbTmg\" style=\"flex:1\"><option value=\"0\">✅ Sharti yo‘q — hamma qatnasha oladi</option><option value=\"5\">Kamida 5 ta reytingli o‘yin</option><option value=\"10\">Kamida 10 ta reytingli o‘yin</option><option value=\"20\">Kamida 20 ta reytingli o‘yin</option><option value=\"50\">Kamida 50 ta reytingli o‘yin</option></select></div>" +
 "<div class=\"row\"><span class=\"muted\">🪙 Mukofot:</span><input id=\"lbTpz\" type=\"number\" min=\"100\" value=\"100\" style=\"flex:1;min-width:0\"></div>" +
 "<div class=\"row\"><span class=\"muted\">🏅 Mukofot oladigan o‘rinlar:</span><select id=\"lbTpl\"><option value=\"3\">3</option><option value=\"4\">4</option><option value=\"5\">5</option><option value=\"6\">6</option><option value=\"7\">7</option><option value=\"8\">8</option><option value=\"9\">9</option><option value=\"10\">10</option></select></div>" +
 "<div id=\"lbTpzc\" class=\"muted\" style=\"font-size:12px\"></div>" +
@@ -490,7 +491,7 @@
         $("lbTin").style.display = "none";
         $("lbSw").style.display = this.value === "swiss" ? "" : "none";
         var K = this.value, I = $("lbTinfo"); if (I) I.textContent = K === "swiss" ? "Shveytsar: turlar bo‘yicha o‘ynaladi, kamida 3 o‘yinchi kerak." : K === "olympic" ? "Olimpiya: yutgan keyingi bosqichga o‘tadi, yutqazgan o‘yindan chiqadi." : "Arena: belgilangan vaqt to‘xtovsiz o‘ynaladi (g‘alaba 2, durang 1, ketma-ket 2 g‘alabadan so‘ng olov ×2, berserk +1).";
-        { var br = $("lbTbzr"); if (br) br.style.display = K === "arena" ? "" : "none"; }
+        { var br = $("lbTbzr"); if (br) br.style.display = K === "arena" ? "" : "none"; } { var mr = $("lbTmgr"); if (mr) mr.style.display = K === "arena" ? "" : "none"; }
       };
       $("lbTk").onchange();
       var PZT = { 3: [50,30,20], 4: [40,28,20,12], 5: [35,25,18,13,9], 6: [30,22,17,13,10,8], 7: [28,20,15,12,10,8,7], 8: [26,19,15,12,10,8,5,5], 9: [24,18,14,11,10,8,6,5,4], 10: [22,17,13,11,9,8,7,5,4,4] };
@@ -503,7 +504,7 @@
       $("lbTpz").oninput = _pzc; $("lbTpl").onchange = _pzc; _pzc();
       (function () { var _f0 = $("lbTform"); if (_f0) _f0.style.display = "none"; })();
       $("lbTCreate").onclick = function () {
-        var _okc = window.lbAtOk(); _okc && sendMsg({ type: "lbTCreate", startAt: window.lbAt(), clubIds: lbClubIds(), kind: $("lbTk").value, pos: $("lbTp").value, duration: Number($("lbTdur").value), startIn: Number($($("lbTk").value === "arena" ? "lbTin" : "lbTsin").value), rounds: Number($("lbTr").value), interval: Number($("lbTiv").value), name: $("lbTn").value, tc: $("lbTtc").value, berserk: $("lbTbz").checked, prize: Number($("lbTpz").value)||0, places: Number($("lbTpl").value)||3 });
+        var _okc = window.lbAtOk(); _okc && sendMsg({ type: "lbTCreate", startAt: window.lbAt(), clubIds: lbClubIds(), kind: $("lbTk").value, pos: $("lbTp").value, duration: Number($("lbTdur").value), startIn: Number($($("lbTk").value === "arena" ? "lbTin" : "lbTsin").value), rounds: Number($("lbTr").value), interval: Number($("lbTiv").value), name: $("lbTn").value, tc: $("lbTtc").value, berserk: $("lbTbz").checked, prize: Number($("lbTpz").value)||0, places: Number($("lbTpl").value)||3, minGames: $("lbTmg") ? Number($("lbTmg").value) || 0 : 0 });
         $("lbTn").value = ""; if (_okc) { var _tf = $("lbTform"); if (_tf) _tf.style.display = "none"; } try { var _d = $("lbTclD"); if (_d) _d.open = false; var _cb = document.querySelectorAll("#lbTclD input[type=checkbox]"); for (var _i = 0; _i < _cb.length; _i++) _cb[_i].checked = false; } catch (e) {}
       };
       if (!initData) {
@@ -3298,3 +3299,6 @@ function run(){
 }
 (function(){var el=null;setInterval(function(){var e=document.getElementById('lbTs');if(e&&e!==el){el=e;try{new MutationObserver(function(){try{run()}catch(x){}}).observe(e,{childList:true,subtree:true})}catch(x){}}try{run()}catch(x){}},700)})();
 })();
+
+/* TARENA — arena turniri lidraughts uslubidagi sahifada (tarena.js) */
+;(function(){var s=document.createElement("script");s.src="/tarena.js";document.head.appendChild(s)})();

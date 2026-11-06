@@ -64,7 +64,8 @@ const ARENA_FIRE_AFTER = 2;                          // ketma-ket shuncha g'alab
 const ARENA_PAIR_DELAY_MS = Number(process.env.ARENA_PAIR_DELAY_MS || 5000);       // o'yin tugagach juftlashgacha
 const ARENA_REMATCH_WAIT_MS = Number(process.env.ARENA_REMATCH_WAIT_MS || 15000);  // bir xil raqibga qaytishdan oldin kutish
 const ARENA_NOSHOW_MS = Number(process.env.ARENA_NOSHOW_MS || 30000);              // o'yinga kirmaganlar uchun kutish
-const ARENA_MIN_DRAW_PLIES = Number(process.env.ARENA_MIN_DRAW_PLIES || 0);        // shundan qisqa durangga ochko yo'q (0 = o'chirilgan)
+const ARENA_MIN_DRAW_PLIES = Number(process.env.ARENA_MIN_DRAW_PLIES || 20);       // lidraughts: 10 yurishdan (20 yarim-yurish) oldingi durangga ochko yo'q
+const ARENA_MIN_GAMES = [0, 5, 10, 20, 50];          // ishtirok sharti: kamida N ta reytingli o'yin
 const ARENA_BERSERK_MIN_PLIES = Number(process.env.ARENA_BERSERK_MIN_PLIES || 14); // berserk bonusi uchun minimal yarim-yurishlar soni
 
 const hex = n => crypto.randomBytes(n).toString('hex');
@@ -188,13 +189,16 @@ function createLobby({ send, clients, roomsApi }) {
     return arr;
   }
 
+  // turnirdagi samaradorlik: raqiblar o'rtacha reytingi + 400·(G−M)/O
+  function arenaPerf(p) { const n = p.games || 0; if (!n || !p.oppSum) return 0; return Math.round(p.oppSum / n + 400 * ((p.wins || 0) - (p.losses || 0)) / n); }
   function arenaStandings(t) {
     const arr = [...t.players.values()].map(p => ({
       uid: p.uid, name: p.name, score: p.score, buch: 0, withdrawn: p.withdrawn,
-      games: p.games, wins: p.wins, fire: p.streak >= ARENA_FIRE_AFTER, busy: p.busy, at: p.lastScoreAt
+      games: p.games, wins: p.wins, fire: p.streak >= ARENA_FIRE_AFTER, busy: p.busy, at: p.lastScoreAt,
+      elo: olyElo(p.uid), d: p.elo0 ? olyElo(p.uid) - p.elo0 : 0, sheet: (p.sheet || '').slice(-40), perf: arenaPerf(p)
     }));
-    // ochko teng bo'lsa shu ochkoga birinchi yetgan yuqorida
-    arr.sort((a, b) => b.score - a.score || a.at - b.at || a.name.localeCompare(b.name));
+    // lidraughts: ochko, teng bo'lsa turnirdagi samaradorlik (performance), keyin shu ochkoga birinchi yetgan
+    arr.sort((a, b) => b.score - a.score || b.perf - a.perf || a.at - b.at || a.name.localeCompare(b.name));
     return arr;
   }
 
@@ -222,9 +226,11 @@ function createLobby({ send, clients, roomsApi }) {
       creatorUid: t.creatorUid, creatorName: t.creatorName, clubIds: t.clubIds || [], clubs: clubStandings(t),
       round: t.round, rounds: t.rounds, nextAt: t.nextAt || 0,
       players: t.type === 'arena' ? arenaStandings(t) : standings(t),
+      minGames: t.minGames || 0,
       boards: t.cur.map(b => ({
         board: b.board, roomId: b.roomId, white: b.white, black: b.black,
         whiteName: t.players.get(b.white).name, blackName: t.players.get(b.black).name,
+        whiteElo: t.type === 'arena' ? olyElo(b.white) : 0, blackElo: t.type === 'arena' ? olyElo(b.black) : 0,
         done: b.done, winner: b.winner || null
       })),
       bye: t.curBye || null, hist: (t.hist || []).slice(-40), chat: (t.chat || []).slice(-60)
@@ -473,6 +479,7 @@ function createLobby({ send, clients, roomsApi }) {
   // ---------- Olimpiya tizimi (yutgan o‘tadi) ----------
   const OLY_LADDER = ['5+3', '3+2', '2+2', '1+1', '0.5+0'];
   const olyLadder = tc => { const i = OLY_LADDER.indexOf(tc); return OLY_LADDER.slice(i < 0 ? 0 : i); };
+  function ratedGames(uid) { try { const u = require('./store').users()[String(uid)]; return u ? (Number(u.games) || ((u.wins || 0) + (u.losses || 0) + (u.draws || 0))) : 0; } catch (e) { return 0; } }
   function olyElo(uid) { try { const u = require('./store').users()[String(uid)]; return u ? (Number(u.elo) || 1000) : 1000; } catch (e) { return 1000; } }
 
   function olyOpenBoard(t, b, tcN) {
@@ -684,7 +691,8 @@ function createLobby({ send, clients, roomsApi }) {
     return {
       uid: me.uid, name: me.name, score: 0, streak: 0, games: 0, wins: 0, draws: 0, losses: 0,
       busy: false, withdrawn: false, lastOpp: null, colors: { w: 0, b: 0 },
-      waitingSince: now, lastScoreAt: now
+      waitingSince: now, lastScoreAt: now,
+      elo0: olyElo(me.uid), sheet: '', oppSum: 0   // sheet: har o'yin ochkosi (lidraughts kabi), olovdagisi katta harf
     };
   }
 
@@ -755,8 +763,10 @@ function createLobby({ send, clients, roomsApi }) {
     if (t.hist.length > 60) t.hist.splice(0, t.hist.length - 60);
     // Berserk: rooms.js room.berserk = { white: bool, black: bool } ni to'ldiradi.
     // Berserk qilgan o'yinchi g'alaba qozonsa +1 ochko (kamida ARENA_BERSERK_MIN_PLIES yurishdan keyin).
+    const eW = olyElo(b.white), eB = olyElo(b.black);
     const award = (p, kind, color) => {
       const fire = p.streak >= ARENA_FIRE_AFTER;
+      p.oppSum = (p.oppSum || 0) + (color === 'white' ? eB : eW);
       let pts = 0;
       if (kind === 'win') {
         pts = fire ? 4 : 2; p.streak++; p.wins++;
@@ -769,6 +779,7 @@ function createLobby({ send, clients, roomsApi }) {
       } else { p.streak = 0; p.losses++; }
       if (pts) { p.score += pts; p.lastScoreAt = now; }
       p.games++;
+      { const ch = pts > 9 ? '9' : String(pts); p.sheet = ((p.sheet || '') + (fire && kind !== 'loss' ? ({ '0': 'o' }[ch] || String.fromCharCode(64 + Number(ch))) : ch)).slice(-60); }   // olovdagi: B=2, D=4, E=5 …
     };
     if (room.noshowBoth) {
       for (const p of [pw, pb]) { p.withdrawn = true; toast(p.uid, '⚠️ ' + t.name + ': o‘yinga kirmadingiz, pauzadasiz. Qaytish uchun „Qo‘shilish“ni bosing'); }
@@ -1251,7 +1262,8 @@ function createLobby({ send, clients, roomsApi }) {
             creatorUid: me.uid, creatorName: me.name, status: 'reg', created: Date.now(),
             players: new Map(), round: 0, rounds: 0, cur: [], curBye: null, nextAt: 0,
             durationMin: dur, startAt, endAt: startAt + dur * 60000, gameNo: 0, ending: false,
-            pos: m.pos === 'idf' ? 'idf' : 'std', berserk: m.berserk !== false, prize: m._prize || 0, prizePaid: m._paid || 0, places: Math.max(3, Math.min(10, Math.floor(Number(m.places)) || 3))
+            pos: m.pos === 'idf' ? 'idf' : 'std', berserk: m.berserk !== false, prize: m._prize || 0, prizePaid: m._paid || 0, places: Math.max(3, Math.min(10, Math.floor(Number(m.places)) || 3)),
+            minGames: ARENA_MIN_GAMES.includes(Number(m.minGames)) ? Number(m.minGames) : 0
           };
           at.players.set(me.uid, newArenaPlayer(me));
           at.clubIds = cl.ids; tournaments.set(at.id, at);
@@ -1283,6 +1295,7 @@ function createLobby({ send, clients, roomsApi }) {
           if (ex) { if (ex.withdrawn) { ex.withdrawn = false; ex.waitingSince = Date.now(); } }
           else {
             if (t.players.size >= ARENA_MAX_PLAYERS) return err(c, 'Arena to‘lgan'), true;
+            if (t.minGames && ratedGames(me.uid) < t.minGames) return err(c, 'Ishtirok sharti: kamida ' + t.minGames + ' ta reytingli o‘yin (sizda ' + ratedGames(me.uid) + ' ta)'), true;
             t.players.set(me.uid, newArenaPlayer(me));
           }
           push();
