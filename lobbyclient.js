@@ -3006,3 +3006,24 @@ document.head.appendChild(_as); }
   s.textContent = "html body #lbPanel #lbTs .card.lbtk{background:#1c1c22!important;border:1px solid #2e2e38!important;box-shadow:0 3px 0 #000!important;color:#c9c9d2!important}html body #lbPanel #lbTs .card.lbtk>div:first-child b{color:#ffffff!important}html body #lbPanel #lbTs .card.lbtk .muted{color:#b4b4bf!important}html body #lbPanel #lbTs .card.lbtk .tkd{color:#c9c9d2!important}html body #lbPanel #lbTs .card.lbtk .tkd b{color:#ffffff!important}html body #lbPanel #lbTs .card.lbtk .tkb{background:#2c2c35!important;color:#b4b4bf!important}html body #lbPanel #lbTs .card.lbtk .tkb_running{background:#143d2a!important;color:#2ecc71!important}html body #lbPanel #lbTs .card.lbtk .tkb_reg{background:#1f2a4d!important;color:#8fb0ff!important}html body #lbPanel #lbTs .card.lbtk [data-a=\"tlink\"]{background:#2c2c35!important;color:#ffffff!important;border:0!important;box-shadow:0 2px 0 #000!important}html body #lbPanel #lbTs .card.lbtk .tvCE{background:#34343f!important;color:#ffffff!important;border:0!important;box-shadow:0 3px 0 #000!important}html body #lbPanel #lbTs .card.lbtk .tbody{border-color:#2c2c35!important}html body #lbPanel #lbTs .card.lbtk th{background:#24242c!important;color:#9a9aa6!important}html body #lbPanel #lbTs .card.lbtk td{border-top-color:#2c2c35!important;color:#c9c9d2!important}html body #lbPanel #lbTs .card.lbtk .tkCd small{color:#b4b4bf!important}html body #lbPanel #lbTs .card.lbtk .tkCd b{color:#ffffff!important}";
   document.head.appendChild(s);
 })();
+
+;(function () {
+  if (document.getElementById('tvPolishCss')) return;
+  var s = document.createElement('style'); s.id = 'tvPolishCss';
+  s.textContent =
+    '#tvP,#tvP *,#lbPanel,#lbPanel *{font-family:system-ui,Roboto,"Segoe UI",sans-serif!important}' +
+    '.tvCL{background:linear-gradient(180deg,#45d873,#1e9e45)!important;box-shadow:0 3px 12px rgba(40,200,90,.35)!important}' +
+    '.tvL{background:rgba(255,255,255,.08)!important;border:1px solid rgba(255,255,255,.22)!important;color:#ffb4b4!important;box-shadow:none!important;font-size:14px!important;padding:9px 16px!important}';
+  document.head.appendChild(s);
+  var Q = '[data-a="tl"],[data-a="sl"],[data-tv="leave"]';
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest ? e.target.closest(Q) : null;
+    if (!b) return;
+    if (b.__ok) { b.__ok = false; return; }
+    e.stopImmediatePropagation(); e.preventDefault();
+    var msg = b.getAttribute('data-a') === 'sl' ? 'Sians‘dan chiqasizmi?' : 'Turnirdan chiqasizmi?';
+    function go() { b.__ok = true; b.click(); }
+    try { var tg = window.Telegram && Telegram.WebApp; if (tg && tg.showConfirm) { tg.showConfirm(msg, function (ok) { if (ok) go(); }); return; } } catch (x) {}
+    if (confirm(msg)) go();
+  }, true);
+})();
