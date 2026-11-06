@@ -3234,3 +3234,67 @@ function icons(){
 }
 (function(){var el=null;function go(){try{icons();}catch(e){}}setInterval(function(){var e=document.getElementById('lbTs');if(e&&e!==el){el=e;try{new MutationObserver(go).observe(e,{childList:true,subtree:true})}catch(x){}go()}},300)})();
 })();
+
+/* DESIGN4 — ixcham Keyingi turnirlar */
+(function(){
+var css=[
+'#nxtBox{display:none!important}',
+'#lbTs .card.lbtk ~ .card.lbtk{display:none!important}',
+'#lbTs .card.lbtk.d4h{display:none!important}',
+'#lbTs .card.lbtk ~ .card.lbtk.d4o,#lbTs .card.lbtk.d4h.d4o{display:block!important}',
+'html #lbTs .card.lbtk.lbtk .tcx b{font-size:23px!important;white-space:nowrap}',
+'html #lbTs .card.lbtk.lbtk .tcx>div{flex-wrap:nowrap!important;flex-direction:row!important;flex-wrap:wrap!important}',
+'#nxtBox2{margin:18px 0 90px}',
+'#nxtBox2 .nxH{display:flex;align-items:center;justify-content:space-between;font-size:20px;font-weight:700;color:#fff;margin:0 4px 10px}',
+'#nxtBox2 .nxH span{font-size:15px;font-weight:600;color:#6f9bff;cursor:pointer}',
+'#nxtBox2 .nxI{display:flex;align-items:center;gap:12px;background:linear-gradient(180deg,#0f1c48,#081030);border:1px solid rgba(70,140,255,.4);border-radius:16px;padding:10px 12px;margin-bottom:10px;cursor:pointer}',
+'#nxtBox2 .nxIc{flex:0 0 54px;height:54px;border-radius:12px;background:radial-gradient(circle at 50% 40%,rgba(255,190,40,.35),#141c44 70%);border:1px solid rgba(255,190,60,.25);display:flex;align-items:center;justify-content:center;font-size:30px}',
+'#nxtBox2 .nxT{min-width:0}',
+'#nxtBox2 .nxT b{display:block;font-size:19px;color:#fff;font-weight:700}',
+'#nxtBox2 .nxT small{display:block;color:#8fa3ff;font-size:14px;margin-top:2px}',
+'#nxtBox2 .nxA{margin-left:auto;flex:0 0 38px;height:38px;border-radius:10px;background:#1a2552;color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center}'
+].join('');
+var st=document.createElement('style');st.id='design4Css';st.textContent=css;document.head.appendChild(st);
+function S(){try{return window.__lb?window.__lb.S:null}catch(e){return null}}
+function f2(n){return(n<10?'0':'')+n}
+function run(){
+  var el=document.getElementById('lbTs');if(!el)return;
+  var cards=[].slice.call(el.querySelectorAll('.card.lbtk'));
+  var s=S(),T=(s&&s.tournaments)||[];
+  var rest=[];
+  cards.forEach(function(c,i){if(i===0)c.classList.remove('d4h');else{c.classList.add('d4h');rest.push(c)}});
+  var box=document.getElementById('nxtBox2');
+  if(!rest.length){if(box)box.remove();return}
+  if(!box){box=document.createElement('div');box.id='nxtBox2'}
+  if(box.previousElementSibling!==el)el.insertAdjacentElement('afterend',box);
+  var sig=rest.map(function(c){return c.id}).join(',');
+  if(box.getAttribute('data-sig')===sig)return;
+  box.setAttribute('data-sig',sig);box.textContent='';
+  var h=document.createElement('div');h.className='nxH';
+  var ht=document.createElement('div');ht.textContent='🏆 Keyingi turnirlar';h.appendChild(ht);
+  var all=document.createElement('span');all.textContent='Barchasi ›';
+  all.onclick=function(){var on=rest[0].classList.contains('d4o');rest.forEach(function(c){c.classList.toggle('d4o',!on)})};
+  h.appendChild(all);box.appendChild(h);
+  rest.forEach(function(c){
+    var id=c.id.replace('lbtc_',''),t=null;
+    for(var i=0;i<T.length;i++)if(String(T[i].id)===id){t=T[i];break}
+    var nm=String((t&&t.name)||(c.querySelector('.tcNm')||{}).textContent||'Turnir').replace(/^[^\p{L}\p{N}]+\s*/u,'');
+    var sb=((c.querySelector('.tcSb')||{}).textContent||'').split('·')[0].trim();
+    var when='';
+    if(t&&t.status==='reg'&&t.startAt){var d=new Date(t.startAt);when=f2(d.getHours())+':'+f2(d.getMinutes())}
+    else if(t&&t.status==='running')when='O‘ynalmoqda';
+    else when='Boshlanish vaqti aniqlanmoqda…';
+    var it=document.createElement('div');it.className='nxI';
+    var ic=document.createElement('div');ic.className='nxIc';ic.textContent=(t&&t.type==='arena')?'⚡':'🏆';
+    var tt=document.createElement('div');tt.className='nxT';
+    var b=document.createElement('b');b.textContent=nm;
+    var sm=document.createElement('small');sm.textContent='🕒 '+(sb?sb+' · ':'')+when;
+    tt.appendChild(b);tt.appendChild(sm);
+    var ar=document.createElement('div');ar.className='nxA';ar.textContent='›';
+    it.appendChild(ic);it.appendChild(tt);it.appendChild(ar);
+    it.onclick=function(){c.classList.toggle('d4o');if(c.classList.contains('d4o'))c.scrollIntoView({behavior:'smooth',block:'center'})};
+    box.appendChild(it);
+  });
+}
+(function(){var el=null;setInterval(function(){var e=document.getElementById('lbTs');if(e&&e!==el){el=e;try{new MutationObserver(function(){try{run()}catch(x){}}).observe(e,{childList:true,subtree:true})}catch(x){}}try{run()}catch(x){}},700)})();
+})();
