@@ -1309,9 +1309,40 @@
       if (_azBox && _azBox.parentNode) _azBox.parentNode.removeChild(_azBox);
       _azBox = null;
     }
+    /* ARENA: o'yin tugagach tugmalar + birinchi yurish chizig'i */
+    function spBeep() { try { var C = window.AudioContext || window.webkitAudioContext; if (!window.__spAC) window.__spAC = new C(); var c = window.__spAC; if (c.state === "suspended") c.resume(); var o = c.createOscillator(), g = c.createGain(); o.frequency.value = 880; g.gain.value = 0.15; o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + 0.08); } catch (e) {} }
+    function spArenaEnd() {
+      var old = document.getElementById("spAE"); if (old) old.remove();
+      var mm = String(roomId).match(/^A(.+?)G\d+/), tid = mm ? mm[1] : "";
+      var bx = document.createElement("div"); bx.id = "spAE";
+      bx.style.cssText = "position:fixed;left:8px;right:8px;bottom:84px;z-index:2147483000;display:flex;gap:8px;background:#1c2733;border:1px solid #2a3647;border-radius:12px;padding:10px";
+      function mk(t, f, bg) { var x = document.createElement("button"); x.textContent = t; x.style.cssText = "flex:1;border:0;border-radius:8px;padding:10px 4px;font-size:14px;color:#fff;background:" + bg; x.onclick = f; bx.appendChild(x); }
+      mk("🏟 Turnirga qaytish", function () { try { elZal.onclick(); } catch (e) {} }, "#3fa34d");
+      mk("⏸ Pauza", function () { try { if (window.__lb && window.__lb.send) window.__lb.send({ type: "lbTLeave", tid: tid }); } catch (e) {} this.textContent = "✓ Pauzadasiz"; }, "#4a4390");
+      mk("🔍 Tahlil", function () { var a = document.getElementById("rcAn"); if (a) a.click(); }, "#2c3e90");
+      document.body.appendChild(bx);
+    }
+    var _fmKey = -1, _fmT0 = 0, _fmLast = -1;
+    setInterval(function () {
+      try {
+        var ae = document.getElementById("spAE"); if (ae && !st.finished) ae.remove();
+        var bar = document.getElementById("spFM");
+        var turn = st.moves.length % 2 === 0 ? "white" : "black";
+        var on = st.arena && !st.finished && st.moves.length < 2 && st.color === turn && bothIn();
+        if (!on) { if (bar) bar.remove(); _fmKey = -1; _fmLast = -1; return; }
+        if (_fmKey !== st.moves.length) { _fmKey = st.moves.length; _fmT0 = Date.now(); _fmLast = -1; }
+        var left = Math.max(0, 15 - Math.floor((Date.now() - _fmT0) / 1000));
+        if (!bar) { bar = document.createElement("div"); bar.id = "spFM"; bar.style.cssText = "position:fixed;left:0;right:0;bottom:84px;z-index:2147482000;text-align:center;color:#fff;font:600 15px Arial,sans-serif;padding:8px"; document.body.appendChild(bar); }
+        bar.style.background = left <= 5 ? "#cf2a2a" : "#629924";
+        bar.innerHTML = "<b>" + left + "</b> soniya birinchi yurishga";
+        if (left <= 5 && left > 0 && left !== _fmLast) spBeep();
+        _fmLast = left;
+      } catch (e) {}
+    }, 250);
     function autoZalStart() {
       autoZalStop();
-      if (st.vsBot || st.gamesTotal > 1) return;   // bot bilan o'yinda zalga avtomatik qaytmaymiz (qayta o'ynash bor)
+      if (st.vsBot || st.gamesTotal > 1) return;
+      if (/^A.+?G\d+/.test(String(roomId))) { spArenaEnd(); return; }   // bot bilan o'yinda zalga avtomatik qaytmaymiz (qayta o'ynash bor)
       if (typeof elZal === "undefined" || !elZal || !elZal.onclick) return;
       var n = /^T.+?R\d+B\d+|^A.+?G\d+/.test(String(roomId)) ? 3 : 10;
       _azBox = document.createElement("div");
