@@ -532,7 +532,7 @@
         '#nvKK{order:1!important;margin:0 0 10px!important;padding:10px 12px!important;gap:10px!important;border:1.5px solid #ffc04d!important;border-radius:16px!important;background:linear-gradient(110deg,#4a1d8f,#b4440f 70%,#f08a1c)!important;box-shadow:0 4px 14px #0006}#nvKK .kf{font-size:32px!important}#nvKK b{font-size:16px!important;margin:3px 0 1px!important}#nvKK p{font-size:12px!important}#nvKK .go{margin-left:auto;flex:none;background:#ffc04d;color:#2a1405;font-weight:800;font-size:12px;padding:8px 11px;border-radius:12px}@keyframes nvKKp{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}@keyframes nvKKs{0%{left:-60%}60%,100%{left:130%}}';
         document.head.appendChild(kc); }
       var kk = document.createElement('div'); kk.id = 'nvKK';
-      kk.innerHTML = '<span class="kf">🎁</span><div><small>AKSIYA</small><b>Do‘st taklif qiling</b><p>Do‘st 3 ta o‘yin o‘ynasa +100 🪙<br>Botni guruh yoki kanalga admin qiling: har a‘zo 1 🪙</p></div><span class="go">Taklif ›</span>';
+      kk.innerHTML = '<span class="kf">🎁</span><div><small>AKSIYA</small><b>Do‘st taklif qiling</b><p>Do‘st +100 🪙 · guruh/kanalga admin: a‘zo 1 🪙</p></div><span class="go">Taklif ›</span>';
       kk.onclick = function () { try { var t = window.Telegram && window.Telegram.WebApp, me = (t && t.initDataUnsafe && t.initDataUnsafe.user && t.initDataUnsafe.user.id) || ''; var l = 'https://t.me/DraughtsPRObot/play?startapp=ref_' + me, u = 'https://t.me/share/url?url=' + encodeURIComponent(l) + '&text=' + encodeURIComponent('♟ Keling, shashka o‘ynaymiz! ShashkaPRO — Telegram’dagi shashka.'); if (t && t.openTelegramLink) t.openTelegramLink(u); else window.open(u, '_blank'); } catch (e) {} };
           hero.insertBefore(kk, hero.firstChild);
     }
@@ -690,5 +690,18 @@ document.addEventListener('click', function (e) {
     '#nvDuo{width:100%!important;box-sizing:border-box!important}' +
     '#nvDuo #nvMemRow{flex:1 1 0!important}#nvDuo #nvBotRow{flex:1 1 0!important}' +
     '#nvKK{width:100%!important;box-sizing:border-box!important}';
+  document.head.appendChild(st);
+})();
+
+/* nvPromoSmall: ixcham aksiya banneri */
+(function () {
+  var st = document.createElement('style');
+  st.textContent =
+    '#nvKK{padding:7px 10px!important;gap:8px!important;margin:0 0 8px!important;border-radius:14px!important}' +
+    '#nvKK small{display:none!important}' +
+    '#nvKK .kf{font-size:26px!important;animation:none!important}' +
+    '#nvKK b{font-size:14px!important;margin:0!important}' +
+    '#nvKK p{font-size:11px!important;line-height:1.25!important}' +
+    '#nvKK .go{padding:6px 10px!important;font-size:12px!important}';
   document.head.appendChild(st);
 })();
