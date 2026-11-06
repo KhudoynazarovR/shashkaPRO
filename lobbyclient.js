@@ -3198,3 +3198,39 @@ function nxt(){
 }
 setInterval(function(){try{fix();nxt()}catch(e){}},500);
 })();
+
+/* DESIGN3 */
+(function(){
+var Q='html :is(#lbTs,body) .card.lbtk.lbtk';
+var css=[
+'html,body{background:#050a22!important}',
+'body{background:radial-gradient(90% 45% at 50% 100%,rgba(30,120,255,.5),transparent 70%),radial-gradient(60% 35% at 0% 25%,rgba(30,120,255,.28),transparent 70%),linear-gradient(180deg,#050a22,#0a1647)!important;background-attachment:fixed!important}',
+Q+'{background:linear-gradient(180deg,#0f1c48,#081030)!important;border:1px solid rgba(70,140,255,.55)!important;box-shadow:0 0 24px rgba(40,130,255,.35)!important;border-radius:22px!important}',
+Q+' .tcx{background:rgba(8,14,40,.7)!important;border:1px solid rgba(120,140,255,.2)!important;border-radius:16px!important;padding:12px 4px!important}',
+Q+' .tcx>div{flex:1;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:0 6px;border-left:1px solid rgba(255,255,255,.1)}',
+Q+' .tcx>div:first-child{border-left:0}',
+Q+' .tcx small{flex:0 0 100%;text-align:center;color:#aab4e6!important}',
+Q+' .tcx b{font-size:26px!important}',
+Q+' .d2i{font-size:20px;line-height:1}',
+Q+' .tcAv::before,'+Q+' .tcPv::before,'+Q+' .tcNv::before{content:none!important}',
+Q+' .tkb_reg{background:radial-gradient(circle at 13px 50%,#2ee66b 5px,transparent 6px),#0f3d22!important;padding-left:26px!important;color:#7dffa8!important;border:1px solid #1f7a3d!important}',
+Q+' .tcF{display:none!important}',
+Q+' .tvRow{display:flex!important;flex-wrap:wrap;gap:10px;margin-top:14px}',
+Q+' .tvRow .tvCE{order:1;flex:1 1 0;background:linear-gradient(180deg,#9be35a,#5cb82a)!important;color:#fff!important;border:0!important;border-radius:16px!important;padding:16px!important;font-size:21px!important;font-weight:800!important;box-shadow:0 4px 0 #3b8a1c,0 0 18px rgba(120,230,60,.35)!important}',
+Q+' .tvRow [data-a="tlink"]{order:2;flex:0 0 64px;background:#111c46!important;border:1px solid rgba(120,140,255,.4)!important;border-radius:16px!important;font-size:24px!important;padding:0!important;box-shadow:none!important;color:#fff!important}',
+Q+' .tvRow .tvCJ{order:3;flex:1 0 100%;background:transparent!important;border:1px solid rgba(120,140,255,.4)!important;border-radius:14px!important;color:#fff!important;box-shadow:none!important;padding:12px!important;font-size:16px!important}',
+Q+' .tvRow .tvCL{order:3;flex:1 0 100%;background:transparent!important;border:0!important;box-shadow:none!important;color:#3ddc6b!important;font-weight:700!important;font-size:17px!important;padding:2px!important}'
+].join('');
+var st=document.createElement('style');st.id='design3Css';st.textContent=css;document.head.appendChild(st);
+function icons(){
+  document.querySelectorAll('.card.lbtk .tcx').forEach(function(px){
+    var I=['🕒','🏆','👥'],c=px.children;
+    for(var i=0;i<3&&i<c.length;i++){
+      if(c[i].querySelector('.d2i'))continue;
+      var s=document.createElement('span');s.className='d2i';s.textContent=I[i];
+      var b=c[i].querySelector('b');if(b)c[i].insertBefore(s,b);
+    }
+  });
+}
+setInterval(function(){try{icons()}catch(e){}},500);
+})();
