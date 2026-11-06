@@ -33,6 +33,7 @@
   var css = '' +
     '#taP{position:fixed;inset:0;z-index:2147483050;display:none;flex-direction:column;background:#161244;color:#ecebff;font-family:-apple-system,system-ui,Roboto,"Segoe UI","Noto Sans",Arial,sans-serif;font-variant-numeric:tabular-nums}' +
     '#taP.on{display:flex}' +
+    'body.taOn #lbPanel{visibility:hidden!important}' +
     '#taP .taTop{display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 10px) 12px 10px;background:#1e1856;border-bottom:1px solid #2d2775}' +
     '#taP .taBk{border:0;background:#2d2775;color:#fff;border-radius:12px;width:40px;height:40px;font-size:18px;flex:none}' +
     '#taP .taTt{flex:1;min-width:0}#taP .taTt b{display:block;font-size:19px;color:#f5b72b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
@@ -242,13 +243,13 @@
 
   function open(id) {
     build(); cur = String(id); window.__tvCur = cur; page = -1; sigMain = ''; sigChat = ''; sigFeat = ''; peek = null;
-    P.classList.add('on'); g('taSc').scrollTop = 0; render();
+    document.body.classList.add('taOn'); P.classList.add('on'); g('taSc').scrollTop = 0; render();
     if (timer) clearInterval(timer);
     var k = 0; timer = setInterval(function () { render(); if (++k % 3 === 0) askPeek(); }, 1000);
     setTimeout(askPeek, 300);
   }
   function close() {
-    if (P) P.classList.remove('on'); cur = null; window.__tvCur = null;
+    document.body.classList.remove('taOn'); if (P) P.classList.remove('on'); cur = null; window.__tvCur = null;
     if (timer) { clearInterval(timer); timer = null; }
     try { if (ws) ws.close(); } catch (e) {} ws = null;
   }
