@@ -3196,7 +3196,7 @@ function nxt(){
     box.appendChild(it);
   });
 }
-setInterval(function(){try{fix();nxt()}catch(e){}},500);
+(function(){var el=null;function go(){try{fix();nxt();}catch(e){}}setInterval(function(){var e=document.getElementById('lbTs');if(e&&e!==el){el=e;try{new MutationObserver(go).observe(e,{childList:true,subtree:true})}catch(x){}go()}},300)})();
 })();
 
 /* DESIGN3 */
@@ -3232,5 +3232,5 @@ function icons(){
     }
   });
 }
-setInterval(function(){try{icons()}catch(e){}},500);
+(function(){var el=null;function go(){try{icons();}catch(e){}}setInterval(function(){var e=document.getElementById('lbTs');if(e&&e!==el){el=e;try{new MutationObserver(go).observe(e,{childList:true,subtree:true})}catch(x){}go()}},300)})();
 })();
