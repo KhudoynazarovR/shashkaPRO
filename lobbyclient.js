@@ -2136,9 +2136,9 @@ document.head.appendChild(_as); }
       card.style.cursor = 'pointer';
       (function(tid){
         card.addEventListener('click', function(e){
-          if (e.target.closest('[data-tvopen]')) return open(tid);
+          if (e.target.closest('[data-tvopen]')) return (window.tvOpen||open)(tid);
           if (e.target.closest('button,a,input,select,summary,label')) return;
-          open(tid);
+          (window.tvOpen||open)(tid);
         });
       })(id);
     }

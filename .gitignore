@@ -24,3 +24,13 @@ bot-info*.txt
 bak_*/
 tozalash_zaxira/
 engine/*.bin
+node_modules/
+*.log
+nohup.out
+.env
+*.bak*
+*.before-*
+bak_*/
+zaxira_zal/
+*.db
+patch-*.js
