@@ -521,7 +521,7 @@
   setInterval(function () {
     var hero = $('hzHero');
     if (!hero) { sheet.style.display = sheet.style.display === 'flex' && window.nvK !== 'pl' ? 'none' : sheet.style.display; return; }
-    if (false && !$('nvKK')) {   // 🦍 King Kong — tez kunda (premyera e'loni)
+    if (!$('nvKK')) {   // 🦍 King Kong — tez kunda (premyera e'loni)
       if (!$('nvKKcss')) { var kc = document.createElement('style'); kc.id = 'nvKKcss'; kc.textContent =
         '#nvKK{order:-1;position:relative;overflow:hidden;display:flex;align-items:center;gap:12px;margin:0 0 12px;padding:14px;border-radius:18px;color:#fff;cursor:pointer;' +
         'background:linear-gradient(120deg,#1a0d05,#5a2a0c 45%,#8a3f10 70%,#1a0d05);box-shadow:inset 0 0 0 1.5px #ffb347,0 0 22px rgba(255,140,40,.35)}' +
@@ -532,9 +532,9 @@
         '@keyframes nvKKp{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}@keyframes nvKKs{0%{left:-60%}60%,100%{left:130%}}';
         document.head.appendChild(kc); }
       var kk = document.createElement('div'); kk.id = 'nvKK';
-      kk.innerHTML = '<span class="kf">🦍</span><div><small>TEZ KUNDA</small><b>King Kong BOT</b><p>Eng kuchli bot keladi: Monster va Terminatordan ham kuchli. Siz o‘ylayotganda ham o‘ylaydi!</p></div>';
-      kk.onclick = function () { var t = window.Telegram && window.Telegram.WebApp; var m = '🦍 King Kong BOT tez kunda! Uni birinchilardan bo‘lib sinab ko‘ring — birinchi yutganga 800 🪙, har g‘alabaga 65 🪙.'; try { if (t && t.showAlert) t.showAlert(m); else alert(m); } catch (e) { alert(m); } };
-      hero.insertBefore(kk, hero.firstChild);
+      kk.innerHTML = '<span class="kf">🎁</span><div><small>AKSIYA</small><b>Do‘st taklif qiling: +100 🪙</b><p>Do‘stingiz 3 ta o‘yin o‘ynasa +100 🪙. Botni guruhga admin qilsangiz, har a‘zo uchun 1 🪙!</p></div>';
+      kk.onclick = function () { try { var t = window.Telegram && window.Telegram.WebApp, me = (t && t.initDataUnsafe && t.initDataUnsafe.user && t.initDataUnsafe.user.id) || ''; var l = 'https://t.me/DraughtsPRObot/play?startapp=ref_' + me, u = 'https://t.me/share/url?url=' + encodeURIComponent(l) + '&text=' + encodeURIComponent('♟ Keling, shashka o‘ynaymiz! ShashkaPRO — Telegram’dagi shashka.'); if (t && t.openTelegramLink) t.openTelegramLink(u); else window.open(u, '_blank'); } catch (e) {} };
+          hero.insertBefore(kk, hero.firstChild);
     }
     if (!window.__mmSP) { window.__mmSP = 1; try { var _sp = window.Telegram && Telegram.WebApp && Telegram.WebApp.initDataUnsafe && Telegram.WebApp.initDataUnsafe.start_param; if (/^mm_/i.test(_sp || '') && !window.spMemori) { var _ms = document.createElement('script'); _ms.src = '/memori.js?v=9'; document.head.appendChild(_ms); } } catch (e) {} }
     if (!$('nvMemRow') && $('nvBotRow')) {   // 🃏 Memori — bosh sahifadan tez kirish
