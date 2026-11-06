@@ -705,3 +705,10 @@ document.addEventListener('click', function (e) {
     '#nvKK .go{padding:6px 10px!important;font-size:12px!important}';
   document.head.appendChild(st);
 })();
+
+/* nvTabNum: raqamlar bir xil kenglikda (taymer tebranmasin) */
+(function () {
+  var st = document.createElement('style');
+  st.textContent = '*{font-variant-numeric:tabular-nums}';
+  document.head.appendChild(st);
+})();

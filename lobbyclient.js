@@ -3027,3 +3027,99 @@ document.head.appendChild(_as); }
     if (confirm(msg)) go();
   }, true);
 })();
+
+/* CHESSCARD — turnir kartasi chess.com uslubida */
+;(function(){
+if(window.__chessCard)return;window.__chessCard=1;
+var P='html body #lbPanel #lbTs .lbtk.tcxOn';
+var css=[
+P+'{background:#2b2926!important;border:1px solid #3a3835!important;box-shadow:none!important;border-radius:16px!important;padding:16px!important;color:#fff!important}',
+P+'>div:first-child{display:flex!important;align-items:center!important;gap:10px!important;background:none!important;border:0!important;padding:0!important}',
+P+'>div:first-child>b{display:flex!important;align-items:center!important;gap:12px!important;flex:1 1 auto;min-width:0;color:#fff!important}',
+P+' .tcIc{flex:0 0 52px;width:52px;height:52px;border-radius:12px;background:#3a3835;display:grid;place-items:center;font-size:26px}',
+P+' .tcT{display:flex;flex-direction:column;min-width:0}',
+P+' .tcNm{font-size:20px;font-weight:700;line-height:1.15;color:#fff;word-break:break-word}',
+P+' .tcSb{font-size:13px;font-weight:400;color:#9b9a97;margin-top:3px}',
+P+' .tkb{flex:0 0 auto;font-size:13px!important;padding:6px 10px!important;border-radius:6px!important}',
+P+' .tkb_reg{background:#2f5e22!important;color:#9fd47f!important}',
+P+' .tkb_running{background:#5b4310!important;color:#ffc857!important}',
+P+' .tkb_finished{background:#3a3835!important;color:#9b9a97!important}',
+P+'>.muted,'+P+'>.tkd,'+P+' .tkCd{display:none!important}',
+P+' .tcx{display:flex;justify-content:space-between;gap:8px;background:#363431;border-radius:12px;padding:12px 14px;margin-top:14px}',
+P+' .tcx>div{min-width:0}',
+P+' .tcx small{display:block;font-size:12px;font-weight:600;color:#9b9a97}',
+P+' .tcx b{display:block;font-size:24px;font-weight:800;color:#fff;font-variant-numeric:tabular-nums;line-height:1.2}',
+P+' .tcx b.txt{font-size:17px;padding-top:4px}',
+P+' .tcx b.gold{color:#f5c542}',
+P+' .tcx b.soon{color:#ffb547}',
+P+' .tcx b.now{color:#ff5a5a}',
+P+' .row{display:flex!important;flex-wrap:wrap!important;gap:10px!important;margin-top:14px!important;align-items:stretch!important}',
+P+' .row button{border:0!important;border-radius:10px!important;padding:14px!important;font-size:16px!important;font-weight:700!important;color:#fff!important;order:2;flex:1 1 100px;background:#363431!important;box-shadow:0 4px 0 #1f1e1c!important}',
+P+' .row button:active{transform:translateY(3px);box-shadow:0 1px 0 #1f1e1c!important}',
+P+' .row [data-a="tj"],'+P+' .row [data-a="go"],'+P+' .row [data-a="ts"]{order:1;flex:2 1 150px;font-size:18px!important;background:#81b64c!important;box-shadow:0 4px 0 #5d8f35!important}',
+P+' .row [data-a="tc"]{background:#b33a3a!important;box-shadow:0 4px 0 #7a2424!important}',
+P+' .row [data-a="tlink"]{order:3;flex:0 0 auto}',
+P+' .row .muted{order:4;flex:1 0 100%;color:#9b9a97!important;font-size:14px!important}',
+P+' .tcF{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:14px;color:#9b9a97;margin-top:12px}',
+P+' .tcF .ok{color:#81b64c;font-weight:600}'
+].join('');
+var stl=document.createElement('style');stl.id='chessCardCss';stl.textContent=css;document.head.appendChild(stl);
+function S(){try{return window.__lb?window.__lb.S:null}catch(e){return null}}
+function f2(n){return(n<10?'0':'')+n}
+function fmt(ms){ms=Math.max(0,ms);var x=Math.ceil(ms/1000),h=Math.floor(x/3600),m=Math.floor(x%3600/60),s=x%60;return(h?h+':'+f2(m):f2(m))+':'+f2(s)}
+function mk(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
+function cell(lbCls,vCls,label){var d=mk('div');d.appendChild(mk('small',lbCls,label));d.appendChild(mk('b',vCls,''));return d}
+function build(card,t){
+  var hd=card.firstElementChild;if(!hd)return false;
+  var b=hd.querySelector('b'),mu=null,i;
+  for(i=0;i<card.children.length;i++){if(card.children[i].className==='muted'){mu=card.children[i];break}}
+  var row=null;for(i=0;i<card.children.length;i++){if(card.children[i].className==='row'){row=card.children[i];break}}
+  if(!b||!row)return false;
+  var tx=b.textContent,k=tx.indexOf(' '),ic=k>0?tx.slice(0,k):'⚔️',nm=k>0?tx.slice(k+1):tx;
+  var sub=mu?mu.textContent:'';
+  var px=mk('div','tcx');
+  px.appendChild(cell('tcAl','tcAv','Holat'));
+  px.appendChild(cell('','tcPv gold','Mukofot'));
+  px.appendChild(cell('','tcNv','Ishtirokchi'));
+  var ft=mk('div','tcF');ft.appendChild(mk('span','tcFl'));ft.appendChild(mk('span','tcFr'));
+  b.textContent='';
+  b.appendChild(mk('span','tcIc',ic));
+  var col=mk('span','tcT');col.appendChild(mk('span','tcNm',nm));col.appendChild(mk('span','tcSb',sub));b.appendChild(col);
+  hd.insertAdjacentElement('afterend',px);
+  row.insertAdjacentElement('afterend',ft);
+  return true;
+}
+function upd(card,t,now){
+  var px=card.querySelector('.tcx');if(!px)return;
+  var target=0,label='Holat',txt='',cls='';
+  if(t.status==='reg'&&t.startAt){target=t.startAt;label='Boshlanishiga'}
+  else if(t.status==='running'&&t.type==='arena'&&t.endAt&&!t.ending){target=t.endAt;label='Tugashiga'}
+  if(target){var left=target-now;txt=fmt(left);cls=left<=10000?'now':(left<=60000?'soon':'')}
+  else{
+    cls='txt';
+    if(t.status==='reg')txt='Kutilmoqda';
+    else if(t.status==='running'){if(t.type==='arena')txt=t.ending?'Tugayapti…':'O‘ynalmoqda';else{label='Tur';txt=t.round+'/'+t.rounds}}
+    else txt='Tugagan';
+  }
+  px.querySelector('.tcAl').textContent=label;
+  var v=px.querySelector('.tcAv');if(v.textContent!==txt)v.textContent=txt;v.className='tcAv '+cls;
+  px.querySelector('.tcPv').textContent=t.prize>0?t.prize:'—';
+  px.querySelector('.tcNv').textContent=t.players?t.players.length:0;
+  var joined=!!card.querySelector('[data-a="tl"],[data-a="go"]');
+  var fl=card.querySelector('.tcFl'),fr=card.querySelector('.tcFr');
+  if(fl)fl.textContent='👤 '+(t.creatorName||'');
+  if(fr){fr.textContent=joined?'✓ Qo‘shildingiz':(t.type==='arena'?(t.berserk===false?'⚡ Berserk yo‘q':'⚡ Berserk'):'');fr.className='tcFr'+(joined?' ok':'')}
+}
+function tick(){
+  var s=S();if(!s||!s.tournaments)return;
+  var now=Date.now()+(window.__lbSkew||0);
+  s.tournaments.forEach(function(t){
+    var card=document.getElementById('lbtc_'+t.id);if(!card)return;
+    if(!card.classList.contains('tcxOn')){try{if(build(card,t))card.classList.add('tcxOn')}catch(e){}}
+    if(card.classList.contains('tcxOn'))upd(card,t,now);
+  });
+}
+setInterval(tick,250);
+var hooked=null;
+setInterval(function(){var el=document.getElementById('lbTs');if(el&&el!==hooked){hooked=el;try{new MutationObserver(tick).observe(el,{childList:true})}catch(e){}}},1000);
+})();
