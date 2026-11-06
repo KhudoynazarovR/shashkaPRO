@@ -277,7 +277,17 @@
             if (left <= 0) { clearInterval(t); go(m.roomId); }
           }, 1000);
         } else {
-          toast(txt, [["▶ O‘yinga o‘tish", function () { go(m.roomId); }]], 30000);
+          if (m.reason === "arena") {
+          var aleft = 3, at;
+          window.__spArenaStop = false;
+          toast(txt + "<br><span id=\"lbCd\">" + aleft + "</span> soniyadan so‘ng o‘tasiz…", [["Hozir", function () { clearInterval(at); go(m.roomId); }]], 4000);
+          at = setInterval(function () {
+            if (window.__spArenaStop) { clearInterval(at); return; }
+            aleft--;
+            var ael = $("lbCd"); if (ael) ael.textContent = aleft;
+            if (aleft <= 0) { clearInterval(at); go(m.roomId); }
+          }, 1000);
+        } else toast(txt, [["▶ O‘yinga o‘tish", function () { go(m.roomId); }]], 30000);
         }
       } else {
         if (!inRoom) go(m.roomId);

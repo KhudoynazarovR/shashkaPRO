@@ -1318,7 +1318,7 @@
       bx.style.cssText = "position:fixed;left:8px;right:8px;bottom:84px;z-index:2147483000;display:flex;gap:8px;background:#1c2733;border:1px solid #2a3647;border-radius:12px;padding:10px";
       function mk(t, f, bg) { var x = document.createElement("button"); x.textContent = t; x.style.cssText = "flex:1;border:0;border-radius:8px;padding:10px 4px;font-size:14px;color:#fff;background:" + bg; x.onclick = f; bx.appendChild(x); }
       mk("🏟 Turnirga qaytish", function () { try { elZal.onclick(); } catch (e) {} }, "#3fa34d");
-      mk("⏸ Pauza", function () { try { if (window.__lb && window.__lb.send) window.__lb.send({ type: "lbTLeave", tid: tid }); } catch (e) {} this.textContent = "✓ Pauzadasiz"; }, "#4a4390");
+      mk("⏸ Pauza", function () { try { if (window.__lb && window.__lb.send) window.__lb.send({ type: "lbTLeave", tid: tid }); } catch (e) {} window.__spArenaStop = true; this.textContent = "✓ Pauzadasiz"; }, "#4a4390");
       mk("🔍 Tahlil", function () { var a = document.getElementById("rcAn"); if (a) a.click(); }, "#2c3e90");
       document.body.appendChild(bx);
     }
