@@ -174,6 +174,32 @@ const BLOCKED = new Set([
   "server.js", "rooms.js", "mod.js", "ref.js", "premium.js", "gift.js", "region.js", "ach.js", "season.js", "cheat.js", "endgame.js", "corr.js", "gif.js", "alert.js", "notify.js", "kkbook.js", "wager.js", "economy.js", "store.js", "payments.js", "etudes.js", "pzrush.js", "pzbattle.js", "pztour.js", "draw-rules.js", "lobby.js", "users.json", "package.json", "package-lock.json"
 ]);
 
+const VER = String(process.env.RENDER_GIT_COMMIT || Date.now()).slice(0, 8);
+const _zlib = require("zlib"), _cr = require("crypto");
+const _gzc = new Map();
+const TXT = new Set([".html", ".js", ".css", ".svg", ".webmanifest"]);
+function sendSmart(req, res, headers, tag, getBuf) {
+  const etag = 'W/"' + tag + '"';
+  headers["ETag"] = etag; headers["Vary"] = "Accept-Encoding";
+  if (String(req.headers["if-none-match"] || "").indexOf('"' + tag + '"') >= 0) {
+    res.writeHead(304, { "ETag": etag, "Cache-Control": headers["Cache-Control"], "Vary": "Accept-Encoding" });
+    return res.end();
+  }
+  if (/\bgzip\b/.test(String(req.headers["accept-encoding"] || ""))) {
+    let gz = _gzc.get(tag);
+    if (!gz) {
+      const b = getBuf();
+      if (b.length <= 1024) { headers["Content-Length"] = b.length; res.writeHead(200, headers); return res.end(b); }
+      gz = _zlib.gzipSync(b, { level: 6 });
+      if (_gzc.size > 80) _gzc.clear();
+      _gzc.set(tag, gz);
+    }
+    headers["Content-Encoding"] = "gzip"; headers["Content-Length"] = gz.length;
+    res.writeHead(200, headers); return res.end(gz);
+  }
+  const b = getBuf(); headers["Content-Length"] = b.length;
+  res.writeHead(200, headers); return res.end(b);
+}
 function serveFile(req, res) {
   let requested = new URL(req.url, "http://localhost").pathname;
 
@@ -220,7 +246,7 @@ function serveFile(req, res) {
     // Telegramdan tashqarida kirish (sayt / Play Market ilovasi) — boshqa skriptlardan oldin
     if (!html.includes("webauth.js")) html = html.replace('<script src="https://telegram.org/js/telegram-web-app.js"></script>', '<script src="https://telegram.org/js/telegram-web-app.js"></script><script src="/webauth.js?v=4"></script><script src="/i18n.js?v=11"></script><link rel="manifest" href="/app/manifest.webmanifest"><meta name="theme-color" content="#1b1150"><link rel="apple-touch-icon" href="/app/apple-180.png">');
     if (!html.includes("aiview.js")) {
-      html = html.replace("</body>", '<script src="/aiview.js?v=' + Date.now() + '"></script>\n</body>');
+      html = html.replace("</body>", '<script src="/aiview.js?v=' + VER + '"></script>\n</body>');
     }
     if (!html.includes("sound.js")) {
       html = html.replace("</body>", '<script src="/sound.js"></script>\n</body>');
@@ -234,17 +260,17 @@ function serveFile(req, res) {
       html = html.replace("</body>", '<script src="/roomclient.js?v=' + String(process.env.RENDER_GIT_COMMIT || Date.now()).slice(0, 8) + '"></script>\n</body>');
     }
     if (!html.includes("profile.js")) {
-      html = html.replace("</body>", '<script src="/profile.js?v=' + Date.now() + '"></script>\n</body>');
+      html = html.replace("</body>", '<script src="/profile.js?v=' + VER + '"></script>\n</body>');
     }
     if (!html.includes("navbar.js")) {
       html = html.replace("</body>", '<script src="/navbar.js?v=' + String(process.env.RENDER_GIT_COMMIT || Date.now()).slice(0, 8) + '"></script>\n</body>');
     }
     if (!html.includes("voice.js")) html = html.replace("</body>", '<script src="/voice.js?v=4"></script>\n</body>');
     if (!html.includes("ratings.js")) {
-      html = html.replace("</body>", '<script src="/ratings.js?v=' + Date.now() + '"></script>\n</body>');
+      html = html.replace("</body>", '<script src="/ratings.js?v=' + VER + '"></script>\n</body>');
     }
     if (!html.includes("/menu.js")) {
-      html = html.replace("</body>", '<script src="/menu.js?v=' + Date.now() + '"></script>\n</body>');
+      html = html.replace("</body>", '<script src="/menu.js?v=' + VER + '"></script>\n</body>');
     }
     if (!html.includes("dailyq.js")) {
       html = html.replace("</body>", '<script src="/sharecard.js?v=' + String(process.env.RENDER_GIT_COMMIT || Date.now()).slice(0, 8) + '"></script>\n<script src="/dailyq.js?v=' + String(process.env.RENDER_GIT_COMMIT || Date.now()).slice(0, 8) + '"></script>\n<script src="/leagueview.js?v=' + String(process.env.RENDER_GIT_COMMIT || Date.now()).slice(0, 8) + '"></script>\n</body>');
@@ -253,19 +279,12 @@ function serveFile(req, res) {
       html = html.replace("</body>", '<script src="/lobbyclient.js?v=' + String(process.env.RENDER_GIT_COMMIT || Date.now()).slice(0, 8) + '"></script>\n</body>');
     }
     if (typeof req !== "undefined" && /[?&]pad=1/.test(req.url || "")) html = html.replace(/<script src="\/(navbar|menu|lobbyclient|roomclient|profile|ratings|dailyq|sharecard|voice)\.js[^"]*"><\/script>\n?/g, "");
-    html = html.replace(/(lobbyclient|roomclient|sound)\.js(\?v=\d+)?/g, "$1.js?v=" + Date.now());
-    res.writeHead(200, {
-      "Content-Type": types[".html"],
-      "Cache-Control": "no-cache"
-    });
-    return res.end(html);
+    html = html.replace(/(lobbyclient|roomclient|sound)\.js(\?v=[0-9a-zA-Z]+)?/g, "$1.js?v=" + VER);
+    return sendSmart(req, res, { "Content-Type": types[".html"], "Cache-Control": "no-cache" }, "h-" + _cr.createHash("md5").update(html).digest("hex"), () => Buffer.from(html));
   }
 
-  res.writeHead(200, {
-    "Content-Type": types[ext],
-    "Cache-Control": "no-cache"
-  });
-
+  if (TXT.has(ext)) { const _st = fs.statSync(file); return sendSmart(req, res, { "Content-Type": types[ext], "Cache-Control": "no-cache" }, ext.slice(1) + "-" + _st.size + "-" + Math.floor(_st.mtimeMs), () => fs.readFileSync(file)); }
+  res.writeHead(200, { "Content-Type": types[ext], "Cache-Control": "no-cache" });
   fs.createReadStream(file).pipe(res);
 }
 
