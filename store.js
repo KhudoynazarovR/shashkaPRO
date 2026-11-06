@@ -179,7 +179,7 @@ function writeFile() {
 if (URL_) {
   const { Pool } = require('pg');
   const external = /@[^/]*\./.test(URL_);
-  pool = new Pool({ connectionString: URL_, ssl: external ? { rejectUnauthorized: false } : false, max: 3 });
+  pool = new Pool({ connectionString: URL_, ssl: external ? { rejectUnauthorized: false } : false, max: 3, keepAlive: true, idleTimeoutMillis: 20000, connectionTimeoutMillis: 10000 });
   pool.on('error', e => console.log('DB xato:', e.message));
   let tries = 0;
   const init = async () => {

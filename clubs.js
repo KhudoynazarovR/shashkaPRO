@@ -28,7 +28,7 @@ async function writeDb() {
 if (process.env.DATABASE_URL) {
   const { Pool } = require('pg');
   const U = process.env.DATABASE_URL;
-  pool = new Pool({ connectionString: U, ssl: /@[^/]*\./.test(U) ? { rejectUnauthorized: false } : false, max: 2 });
+  pool = new Pool({ connectionString: U, ssl: /@[^/]*\./.test(U) ? { rejectUnauthorized: false } : false, max: 2, keepAlive: true, idleTimeoutMillis: 20000, connectionTimeoutMillis: 10000 });
   pool.on('error', e => console.log('Klub DB xato:', e.message));
   (async () => {
     try {
