@@ -681,3 +681,14 @@ document.addEventListener('click', function (e) {
     if (el) { var t = n ? '🟢 ' + n + ' ta ochiq' : 'tanga tikib'; if (el.textContent !== t) el.textContent = t; }
   }, 800);
 })();
+
+/* nvLayout2: Stollar yashirin, kartalar to'liq kenglikda, banner to'liq kenglikda */
+(function () {
+  var st = document.createElement('style');
+  st.textContent =
+    '#nvStolRow{display:none!important}' +
+    '#nvDuo{width:100%!important;box-sizing:border-box!important}' +
+    '#nvDuo #nvMemRow{flex:1 1 0!important}#nvDuo #nvBotRow{flex:1 1 0!important}' +
+    '#nvKK{width:100%!important;box-sizing:border-box!important}';
+  document.head.appendChild(st);
+})();
