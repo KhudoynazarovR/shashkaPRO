@@ -77,7 +77,7 @@ function onGame(a, b) {
 // ---------- 🤖 botni guruhga admin qilish: har a'zo uchun 1 🪙 (1000 gacha), har guruh uchun bir marta
 async function onGroupAdmin(m) {
   const ch = m.chat || {}, from = m.from || {}, uid = String(from.id || '');
-  if (ch.type !== 'group' && ch.type !== 'supergroup') return;
+  if (ch.type !== 'group' && ch.type !== 'supergroup' && ch.type !== 'channel') return;
   const st = (m.new_chat_member || {}).status;
   if (st !== 'administrator') return;
   const db = store.db, R = db.grpRew = db.grpRew || {}, cid = String(ch.id);
@@ -86,11 +86,13 @@ async function onGroupAdmin(m) {
   if (!u) { dm(uid, '🤖 Botni guruhga admin qilganingiz uchun bonus olish uchun avval @DraughtsPRObot ilovasini oching, so‘ng botning admin huquqini olib, qayta bering.'); return; }
   const r = await tg('getChatMemberCount', { chat_id: ch.id });
   const cnt = r && r.ok ? r.result : 0;
-  const n = Math.min(GRP_MAX, Math.max(0, cnt - 1));   // botning o'zi hisoblanmaydi
+  const isCh = ch.type === 'channel';
+  if (isCh && cnt < 20) { dm(uid, '📢 Kanalda kamida 20 obunachi bo‘lishi kerak. Obunachi ko‘paygach, botni admin qilib qayta bering.'); return; }
+  const n = Math.min(isCh ? 500 : GRP_MAX, Math.max(0, cnt - 1));   // botning o'zi hisoblanmaydi
   R[cid] = { uid, n, at: Date.now(), title: String(ch.title || '').slice(0, 60) };
   if (n > 0) add(uid, n, 'group-admin');
   store.save();
-  dm(uid, n > 0 ? '🎉 Botni «' + R[cid].title + '» guruhiga admin qildingiz: ' + n + ' a‘zo → +' + n + ' 🪙' : '🤖 Bot «' + R[cid].title + '» guruhiga admin bo‘ldi. Bonus a‘zolar soniga qarab beriladi — bu guruhda a‘zo topilmadi.');
+  dm(uid, n > 0 ? '🎉 Botni «' + R[cid].title + '» guruhiga admin qildingiz: ' + n + ' a‘zo/obunachi → +' + n + ' 🪙' : '🤖 Bot «' + R[cid].title + '» guruhiga admin bo‘ldi. Bonus a‘zolar soniga qarab beriladi — bu guruhda a‘zo topilmadi.');
 }
 
 // ---------- GET /api/ref

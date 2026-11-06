@@ -254,6 +254,7 @@ async function start() {
   function onMyChat(m) {
     try {
       const ch = m.chat || {};
+      if (ch.type === 'channel') { if (((m.new_chat_member || {}).status) === 'administrator') require('./ref.js').onGroupAdmin(m).catch(e => console.log('[ref] kanal:', e.message)); return; }
       if (ch.type !== 'group' && ch.type !== 'supergroup') return;
       const st = (m.new_chat_member || {}).status;
       const adm = st === 'administrator' || st === 'creator';
