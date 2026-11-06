@@ -2116,6 +2116,15 @@ document.head.appendChild(_as); }
   }
 
   function open(id){
+    try {
+      var _S = window.__lb && window.__lb.S, _T = null;
+      ((_S && _S.tournaments) || []).forEach(function (x) { if (String(x.id) === String(id)) _T = x; });
+      var _n = open.__r || 0;
+      if ((!_T || !window.taOpen) && _n < 12) { open.__r = _n + 1; setTimeout(function () { open(id); }, 400); return; }
+      open.__r = 0;
+      if (_T && _T.type === 'arena' && window.taOpen) { try { close(); } catch (e) {} return window.taOpen(id); }
+    } catch (e) {}
+
     build(); curId = String(id); window.__tvCur = curId; lastMain = ''; lastChat = ''; g('tvMsgs').__init = 0;
     P.classList.add('on'); render();
     if (timer) clearInterval(timer); timer = setInterval(render, 1000);
