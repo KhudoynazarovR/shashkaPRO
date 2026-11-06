@@ -238,7 +238,7 @@ async function gifBuild(id, from, tc) {
   const defs = '<defs><linearGradient id="bgx" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#18224a"/><stop offset="1" stop-color="#0a0f26"/></linearGradient><radialGradient id="wpx" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#bdbdbd"/></radialGradient><radialGradient id="bpx" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#8a8a8a"/><stop offset="1" stop-color="#0b0b0b"/></radialGradient></defs>';
   for (let i = 0; i < n; i++) {
     const bd = ln.frames[i].map(r => r.map(x => NUM[x] || 0));
-    const inner = svgBoard(bd, 'w', IM, 'teal').replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '');
+    const inner = svgBoard(bd, 'w', IM, 'wood').replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '');
     const svg = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1000" height="700">' + defs + '<rect width="1000" height="700" fill="url(#bgx)"/><g transform="translate(10 10) scale(1.0625)">' + inner + '</g>' + panel + '</svg>';
     const { data } = await sharp(Buffer.from(svg)).resize(W, H).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
     const pal = quantize(data, 256);

@@ -12,8 +12,9 @@ async function pcImgs(sharp) {
     return o;
   } catch (e) { return null; }
 }
-function svgBoard(board, side, IM) {
-  const S = 80, M = 28, W = S * 8 + M * 2, flip = side === 'b';
+function svgBoard(board, side, IM, theme) {
+  const T = theme === 'wood';
+  const S = 80, M = T ? 0 : 28, W = S * 8 + M * 2, flip = side === 'b';
   let s = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + W + '" height="' + W + '" viewBox="0 0 ' + W + ' ' + W + '">';
   s += '<defs>'
     + '<linearGradient id="fr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#eeb272"/><stop offset="1" stop-color="#e9a868"/></linearGradient>'
@@ -21,11 +22,13 @@ function svgBoard(board, side, IM) {
     + '<linearGradient id="lt" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f3bb86"/><stop offset=".5" stop-color="#f6c493"/><stop offset="1" stop-color="#eaa874"/></linearGradient>'
     + '<radialGradient id="wp" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#ffffff"/><stop offset=".35" stop-color="#f0f0f0"/><stop offset="1" stop-color="#bdbdbd"/></radialGradient>'
     + '<radialGradient id="bp" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#8a8a8a"/><stop offset=".35" stop-color="#3a3a3a"/><stop offset="1" stop-color="#0b0b0b"/></radialGradient>'
+    + '<pattern id="wl" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#f2bf8c"/><rect width="3" height="8" fill="#e8a970"/><rect x="5" width="1.5" height="8" fill="#f8d0a6"/></pattern>'
+    + '<pattern id="wd" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#7c2f12"/><rect width="3" height="8" fill="#6b2610"/><rect x="5" width="1.5" height="8" fill="#94411d"/></pattern>'
     + '</defs>';
-  s += '<rect width="' + W + '" height="' + W + '" fill="url(#fr)"/>'; /* edeonL */ s += '<rect x="' + (M - 2) + '" y="' + (M - 2) + '" width="' + (S * 8 + 4) + '" height="' + (S * 8 + 4) + '" fill="none" stroke="#8a4a1c" stroke-width="3"/>';
+  s += '<rect width="' + W + '" height="' + W + '" fill="url(#fr)"/>'; /* edeonL */ if (!T) s += '<rect x="' + (M - 2) + '" y="' + (M - 2) + '" width="' + (S * 8 + 4) + '" height="' + (S * 8 + 4) + '" fill="none" stroke="#8a4a1c" stroke-width="3"/>';
   for (let vr = 0; vr < 8; vr++) for (let vc = 0; vc < 8; vc++) {
     const r = flip ? 7 - vr : vr, c = flip ? 7 - vc : vc, x = M + vc * S, y = M + vr * S;
-    s += '<rect x="' + x + '" y="' + y + '" width="' + S + '" height="' + S + '" fill="url(#' + ((r + c) % 2 ? 'dk' : 'lt') + ')"/>';
+    s += '<rect x="' + x + '" y="' + y + '" width="' + S + '" height="' + S + '" fill="url(#' + (T ? ((r + c) % 2 ? 'wd' : 'wl') : ((r + c) % 2 ? 'dk' : 'lt')) + ')"/>';
     const v = board[r][c];
     if (v) {
       const w = v === 1 || v === 3, cx = x + S / 2, cy = y + S / 2;
@@ -38,7 +41,7 @@ function svgBoard(board, side, IM) {
   }
   const files = 'abcdefgh';
   for (let i = 0; i < 8; i++) {
-    const f = flip ? files[7 - i] : files[i], n = flip ? i + 1 : 8 - i;
+    if (T) continue; const f = flip ? files[7 - i] : files[i], n = flip ? i + 1 : 8 - i;
     s += '<text x="' + (M + i * S + S / 2) + '" y="' + (W - 8) + '" font-size="16" text-anchor="middle" fill="#6b3a14" font-family="sans-serif">' + f + '</text>';
     s += '<text x="12" y="' + (M + i * S + S / 2 + 6) + '" font-size="16" text-anchor="middle" fill="#6b3a14" font-family="sans-serif">' + n + '</text>';
   }
