@@ -197,7 +197,7 @@ async function make(id, out) {
   await hold(3.8, { end: 1, hint: false });
   await Promise.all(pend.filter(Boolean)); p.stdin.end(); const code = await done;
   if (code !== 0) throw new Error('ffmpeg: ' + perr.slice(-300));
-  const dur = n / FPS, mus = path.join(__dirname, 'reel_music', 'm' + (Number(id) % 4) + '.m4a');
+  const dur = n / FPS, mus = path.join(__dirname, 'reel_music', 'm' + ((Number(Array.isArray(id) ? id[0] : id) || 0) % 4) + '.m4a');
   const args = ['-y', '-v', 'error', '-i', vid];
   if (fs.existsSync(mus)) args.push('-i', mus, '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '160k', '-af', 'afade=t=in:d=0.5,afade=t=out:st=' + Math.max(0, dur - 1.8).toFixed(2) + ':d=1.8', '-shortest');
   else args.push('-c', 'copy');
