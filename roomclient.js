@@ -1654,3 +1654,60 @@ WebSocket.prototype.send=function(){
   return S.apply(this,arguments);
 };
 })();
+
+/* DRAWCNT — Durang tugmasi 10 yurishgacha kulrang sanoq bilan */
+;(function(){
+if(window.__drawCnt)return;window.__drawCnt=1;
+var last=null;
+function pick(o){
+  if(!o||typeof o!=='object')return null;
+  if(typeof o.canDraw==='boolean')return o;
+  var k=['state','room','st','s'];
+  for(var i=0;i<k.length;i++){var v=o[k[i]];if(v&&typeof v==='object'&&typeof v.canDraw==='boolean')return v}
+  return null;
+}
+function got(s){
+  var n=0;
+  if(s.drawMoves&&typeof s.drawMoves.w==='number')n=Math.min(s.drawMoves.w,s.drawMoves.b);
+  else if(Array.isArray(s.moves))n=Math.floor(s.moves.length/2);
+  last={can:s.canDraw,fin:!!s.finished,n:Math.min(n,9)};
+}
+function tick(){
+  var b=document.getElementById('rcDrawOffer'),c=document.getElementById('rcDrawCnt');
+  if(!b||!b.parentNode){if(c)c.style.display='none';return}
+  var act=false;
+  [].forEach.call(b.parentNode.querySelectorAll('button'),function(x){
+    if(x!==b&&x!==c&&x.offsetParent!==null&&(x.textContent||'').indexOf('Taslim')>=0)act=true;
+  });
+  var on=!!(last&&!last.can&&!last.fin&&act&&b.offsetParent===null);
+  if(!c){
+    c=b.cloneNode(false);c.id='rcDrawCnt';
+    c.style.cssText='display:none;opacity:.5';
+    c.addEventListener('click',function(e){
+      e.preventDefault();
+      var m='Durang taklif qilish uchun har tomondan kamida 10 yurish kerak';
+      try{var tg=window.Telegram&&Telegram.WebApp;if(tg&&tg.showAlert){tg.showAlert(m);return}}catch(x){}
+      alert(m);
+    });
+    b.insertAdjacentElement('beforebegin',c);
+  }
+  if(!on){if(c.style.display!=='none')c.style.display='none';return}
+  var t='🤝 '+last.n+'/10';
+  if(c.textContent!==t)c.textContent=t;
+  if(c.style.display==='none')c.style.display='';
+}
+var S=WebSocket.prototype.send;
+WebSocket.prototype.send=function(){
+  if(!this.__drwH){
+    this.__drwH=1;
+    this.addEventListener('message',function(ev){
+      try{
+        if(typeof ev.data!=='string'||ev.data.indexOf('"canDraw"')<0)return;
+        var s=pick(JSON.parse(ev.data));if(s)got(s);
+      }catch(e){}
+    });
+  }
+  return S.apply(this,arguments);
+};
+setInterval(tick,300);
+})();

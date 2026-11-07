@@ -141,7 +141,7 @@ function createRooms({ send, clients, onFinish }) {
       drawOffer: room.drawOffer,
       drawInfo: (room.dr && room.dr.st && room.dr.st.info) || null,
       drawText: room.drawText || null,
-      canDraw: DRAW.canOfferDraw(room.dr && room.dr.st),
+      canDraw: DRAW.canOfferDraw(room.dr && room.dr.st), drawMoves: (room.dr && room.dr.st && room.dr.st.moves) ? { w: room.dr.st.moves.white, b: room.dr.st.moves.black } : null,
       chat: room.chat, gamesTotal: room.gamesTotal || 1, played: room.played || 0, seriesScore: (room.gamesTotal > 1 ? { white: (room.white && room.pts && room.pts[room.white.uid]) || 0, black: (room.black && room.pts && room.pts[room.black.uid]) || 0 } : null), seriesDone: (room.gamesTotal > 1 && (room.played || 0) >= room.gamesTotal), nextIn: !!room.nextTimer, rematch: room.rematch || null, casual: !!room.casual
     };
   }
@@ -789,7 +789,7 @@ function createRooms({ send, clients, onFinish }) {
       if (!col) return err(c, "Siz tomoshabinsiz"), true;
       if (room.finished || !room.white || !room.black) return true;
       if (room.moves.length < 2) return err(c, "Avval kamida bittadan yurish qiling"), true;
-      if (!DRAW.canOfferDraw(room.dr && room.dr.st)) return err(c, "Durang taklif qilish uchun har tomondan kamida 20 yurish bo‘lishi kerak (qoida 9.2)"), true;
+      if (!DRAW.canOfferDraw(room.dr && room.dr.st)) return err(c, "Durang taklif qilish uchun har tomondan kamida 10 yurish bo‘lishi kerak (qoida 9.2)"), true;
       if (room.drawOffer) return true;
       if (room.offerPly[col] >= room.plies) return err(c, "Durang taklifini keyingi yurishdan so‘ng qayta yuboring"), true;
       room.drawOffer = col;
