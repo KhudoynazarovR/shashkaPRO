@@ -946,7 +946,7 @@
       else if (!bothIn()) t = "⏳ Raqib kutilmoqda…";
       else if (st.color === "spectator") t = "👁 Tomoshabin · navbat: " + sideName(st.turn);
       else if (st.turn === st.color) t = st.forced ? "🔴 Yana urish majburiy!" : "";
-      else t = "⏳ Raqib yurishi kutilmoqda";
+      else t = "";
       elStatus.textContent = t;
       // ♔ etyud tugadi: qayta urinish / ro'yxatga qaytish
       var _eb = document.getElementById("rcEtB");
