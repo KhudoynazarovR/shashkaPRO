@@ -2252,9 +2252,6 @@ document.head.appendChild(_as); }
       if (left <= 15 * 60000) {
         var k = 'tvRem15_' + t.id;
         if (!shown[k] && !ls(k)) { shown[k] = 1; ls(k, '1'); show(t, 'm15'); return; }
-      } else if (!isIn(t)) {
-        var k2 = 'enter_' + t.id;
-        if (!shown[k2]) { shown[k2] = 1; show(t, 'enter'); return; }
       }
     }
   }
