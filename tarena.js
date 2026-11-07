@@ -161,7 +161,7 @@
     if (t.status !== 'finished' && !t.ending) {
       if (t.status === 'reg' && !t.startAt && String(t.creatorUid) === u) jb += '<button class="taJ s" data-a="start">▶ BOSHLASH</button> ';
       if (!mp || mp.withdrawn) jb += '<button class="taJ" data-a="join">▶ QATNASHISH</button>';
-      else jb += t.status === 'running' ? '<button class="taJ p" data-a="pause">⏸ PAUZA</button>' : '<button class="taJ p" data-a="leave">🚪 CHIQISH</button>';
+      else jb += t.status === 'running' ? '<button class="taJ p" data-a="pause">⏸ PAUZA</button>' : '<button class="taJ p" data-a="leave"><svg viewBox="0 0 24 24" width="18" height="18" style="vertical-align:-3px;margin-right:6px" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/></svg>TARK ETISH</button>';
     }
     g('taJw').innerHTML = jb;
     // jadval
