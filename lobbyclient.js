@@ -1218,7 +1218,7 @@
     })();
     // O'ynash sahifasi (navbar.js) uchun: tanlangan vaqt bilan raqib qidirish / do'stga havola
     window.lbPlay = {
-      addBots: function (tid, ids) { sendMsg({ type: "lbTAddBots", tid: tid, botIds: ids }); },
+      addBots: function (tid, ids, club) { sendMsg({ type: "lbTAddBots", tid: tid, botIds: ids, club: !!club }); },
       bcast: function (tc) { sendMsg({ type: "lbBroadcast", tc: tc, pos: window.nvPos || "std" }); },
       quick: function (tc, voice) { if (S.inQueue) sendMsg({ type: "lbQuickCancel" }); sendMsg({ type: "lbQuick", tc: tc, pos: window.nvPos || ($("lbPos") || {}).value || "std", games: 1, voice: !!voice }); },
       cancel: function () { sendMsg({ type: "lbQuickCancel" }); },
@@ -3351,11 +3351,13 @@ it.appendChild(ar);
     d.style.cssText = 'position:fixed;inset:0;z-index:2147482500;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;font-family:system-ui,sans-serif';
     d.innerHTML = '<div style="width:100%;background:#141040;color:#fff;border-radius:20px 20px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom));box-sizing:border-box;max-height:80vh;overflow:auto"><div style="display:flex;align-items:center"><b style="font-size:18px">🤖 Arenaga bot qo‘shish</b><span data-x="1" style="margin-left:auto;font-size:24px;padding:4px 8px">✕</span></div>' +
       BOTS.map(function (b) { return '<label style="display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid rgba(255,255,255,.08);font-size:16px"><input type="checkbox" class="tvbk" value="' + b[0] + '" style="width:20px;height:20px"> ' + b[1] + '</label>'; }).join('') +
+      '<button data-club="1" style="width:100%;margin-top:14px;padding:12px;border:1px solid rgba(255,255,255,.25);border-radius:12px;background:none;color:#fff;font:700 15px system-ui,sans-serif">🤖 Botlar klubini qo‘shish (hammasi)</button>' +
       '<button data-ok="1" style="width:100%;margin-top:14px;padding:14px;border:0;border-radius:12px;background:linear-gradient(#7fb847,#5f9a2f);color:#fff;font:800 17px system-ui,sans-serif">Qo‘shish</button></div>';
     document.body.appendChild(d);
     d.onclick = function (e) {
       var t = e.target;
       if (t === d || (t.getAttribute && t.getAttribute('data-x'))) return d.remove();
+      if (t.getAttribute && t.getAttribute('data-club')) { d.remove(); if (window.lbPlay && window.lbPlay.addBots) window.lbPlay.addBots(window.__tvCur, [], true); return; }
       if (t.getAttribute && t.getAttribute('data-ok')) {
         var ids = [].map.call(d.querySelectorAll('.tvbk'), function (x) { return x.checked ? x.value : null; }).filter(Boolean);
         d.remove();

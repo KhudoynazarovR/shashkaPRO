@@ -56,11 +56,23 @@ function save() {
 }
 const clean = (s, n) => String(s || '').replace(/[<>\u0000-\u001f]/g, '').trim().slice(0, n);
 const okImg = s => typeof s === 'string' && s.length < 30000 && IMG_RE.test(s);
+const SYS = 'cbots';
+const SYS_BOTS = [['bot_easy', 'Shogird'], ['bot_mid', 'Jangchi'], ['bot', 'Yo‘lbars'], ['bot_pro', 'Arslon'], ['bot_gm', 'Sulton'], ['bot_champ', 'Legend'], ['bot_monster', 'Monster'], ['bot_terminator', 'Terminator'], ['bot_kingkong', 'King Kong']];
+const isEnvAdm = uid => (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(uid));
+function ensureSys() {
+  let c = clubs.get(SYS);
+  if (!c) { c = { id: SYS, name: '🤖 Botlar klubi', desc: 'Tizim klubi: botlar jamoasi. Faqat admin turnirga qo‘sha oladi.', leaderUid: 'sys', leaderName: 'ShashkaPRO', created: Date.now(), open: false, img: '', pts: 0, tw: 0, members: new Map(SYS_BOTS), pending: new Map(), admins: new Set() }; clubs.set(SYS, c); }
+  if (c.members.size !== SYS_BOTS.length) c.members = new Map(SYS_BOTS);
+  c.open = false; if (c.pending.size) c.pending = new Map(); if (c.admins.size) c.admins = new Set();
+  return c;
+}
+ensureSys();
 function countOf(uid) { let n = 0; for (const c of clubs.values()) if (c.members.has(uid)) n++; return n; }
 
 function list(uid) {
+  ensureSys();
   return [...clubs.values()].sort((a, b) => b.members.size - a.members.size).slice(0, 60).map(c => {
-    const adm = c.admins.has(uid);
+    const adm = c.admins.has(uid) || (c.id === SYS && isEnvAdm(uid));
     return {
       id: c.id, name: c.name, desc: c.desc, leaderUid: c.leaderUid, leaderName: c.leaderName,
       count: c.members.size, joined: c.members.has(uid), open: c.open, img: c.img,
@@ -75,6 +87,7 @@ function act(me, m) {
   const uid = me.uid, name = me.name;
   const c = m.cid ? clubs.get(String(m.cid)) : null;
   const adm = c && c.admins.has(uid);
+  if (c && c.id === SYS) return { error: 'Botlar klubi — tizim klubi, uni o‘zgartirib bo‘lmaydi' };
   switch (m.type) {
     case 'lbClubCreate': {
       const nm = clean(m.name, 40);
@@ -153,8 +166,10 @@ function act(me, m) {
 function check(uid, raw) {
   if (!Array.isArray(raw) || !raw.length) return { ids: [] };
   const ids = [...new Set(raw.map(String))].slice(0, 6);
+  ensureSys();
   for (const id of ids) if (!clubs.has(id)) return { error: 'Klub topilmadi' };
-  if (!ids.some(id => clubs.get(id).admins.has(uid))) return { error: 'Klub turnirini faqat klub admini ocha oladi' };
+  if (ids.includes(SYS) && !isEnvAdm(uid)) return { error: 'Botlar klubini faqat admin tanlay oladi' };
+  if (!ids.some(id => clubs.get(id).admins.has(uid) || (id === SYS && isEnvAdm(uid)))) return { error: 'Klub turnirini faqat klub admini ocha oladi' };
   return { ids };
 }
 function inAny(uid, ids) { return ids.some(id => { const c = clubs.get(id); return !!c && c.members.has(uid); }); }
@@ -164,4 +179,4 @@ function award(cs) {
   cs.forEach((x, i) => { const c = clubs.get(x.id); if (!c) return; c.pts = (c.pts || 0) + x.score; if (i === 0 && x.score > 0) c.tw = (c.tw || 0) + 1; });
   save();
 }
-module.exports = { list, act, check, inAny, clubOfIn, nameOf, award };
+module.exports = { list, act, check, inAny, clubOfIn, nameOf, award, SYS, sysBots: () => SYS_BOTS.map(b => b[0]) };

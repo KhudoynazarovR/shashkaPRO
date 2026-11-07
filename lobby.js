@@ -782,7 +782,7 @@ function createLobby({ send, clients, roomsApi }) {
 
   function startArena(t) {
     if (t.status !== 'reg') return;
-    for (const id of (t.botIds || [])) {
+    for (const id of [...(t.botIds || []), ...((t.clubIds || []).includes(clubsApi.SYS) ? clubsApi.sysBots() : [])]) {
       const b = botAny(id); if (!b || t.players.has(b.uid)) continue;
       const p = newArenaPlayer({ uid: b.uid, name: '🤖 ' + b.name }); p.bot = true; t.players.set(b.uid, p);
     }
@@ -1345,6 +1345,7 @@ function createLobby({ send, clients, roomsApi }) {
       }
       case 'lbTCreate': {
         const cl = clubsApi.check(me.uid, m.clubIds); if (cl.error) return err(c, cl.error), true;
+        if (cl.ids.includes(clubsApi.SYS) && m.kind !== 'arena') return err(c, 'Botlar klubi faqat arenada ishlaydi'), true;
         if (tournaments.size >= MAX_TOURNAMENTS) return err(c, 'Turnirlar soni limitga yetdi'), true;
         if ([...tournaments.values()].some(t => t.creatorUid === me.uid && t.status === 'reg')) return err(c, 'Sizda allaqachon ochiq turnir bor'), true;
         if (m.kind === 'arena') {
@@ -1385,7 +1386,9 @@ function createLobby({ send, clients, roomsApi }) {
         if (!(process.env.ADMIN_IDS || '').split(',').map(x => x.trim()).includes(String(me.uid))) return err(c, 'Faqat admin'), true;
         const t = tournaments.get(String(m.tid));
         if (!t || t.type !== 'arena' || t.status === 'finished') return err(c, 'Arena topilmadi yoki tugagan'), true;
-        const ids = Array.isArray(m.botIds) ? [...new Set(m.botIds.map(String))].filter(id => botAny(id)) : [];
+        let ids = Array.isArray(m.botIds) ? m.botIds.map(String) : [];
+        if (m.club) { ids = ids.concat(clubsApi.sysBots()); if (t.clubIds && t.clubIds.length && !t.clubIds.includes(clubsApi.SYS)) t.clubIds.push(clubsApi.SYS); }
+        ids = [...new Set(ids)].filter(id => botAny(id));
         let n = 0;
         for (const id of ids) {
           const b = botAny(id); if (!b) continue;
