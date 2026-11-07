@@ -307,9 +307,9 @@ function drawInfo(st) {
   return st ? st.info : null;
 }
 
-/* 9.2: har tomondan kamida 20 yurish bo'lgach durang taklif qilish mumkin */
+/* 9.2: har tomondan kamida 10 yurish bo'lgach durang taklif qilish mumkin */
 function canOfferDraw(st) {
-  return !!st && st.moves.white >= 20 && st.moves.black >= 20;
+  return !!st && st.moves.white >= 10 && st.moves.black >= 10;
 }
 
 function material(board, side) {
