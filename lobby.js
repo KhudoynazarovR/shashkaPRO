@@ -808,6 +808,7 @@ function createLobby({ send, clients, roomsApi }) {
 
   function arenaPair(t) {
     const now = Date.now();
+    if (t.endAt && t.endAt - now < 60000) return;   // oxirgi daqiqada yangi juftlik yo'q (lidraughts kabi)
     const avail = shuffle([...t.players.values()].filter(p =>
       !p.withdrawn && !p.busy && now - p.waitingSince >= ARENA_PAIR_DELAY_MS && connsOf(p.uid).length
     )).sort((a, b) => b.score - a.score);
