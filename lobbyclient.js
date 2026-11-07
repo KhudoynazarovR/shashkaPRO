@@ -3303,7 +3303,8 @@ function run(){
     var when='';
     if(t&&t.status==='reg'&&t.startAt){var d=new Date(t.startAt);when=f2(d.getHours())+':'+f2(d.getMinutes())}
     else if(t&&t.status==='running')when='O‘ynalmoqda';
-    else when='Boshlanish vaqti aniqlanmoqda…';
+    else if(t&&t.status==='finished')when='Tugagan';
+                                                        else when='Boshlanish vaqti aniqlanmoqda…';
     var it=document.createElement('div');it.className='nxI';
     var ic=document.createElement('div');ic.className='nxIc';ic.textContent=(t&&t.type==='arena')?'⚡':'🏆';
     var tt=document.createElement('div');tt.className='nxT';
@@ -3322,7 +3323,7 @@ if(t&&(t.status==='reg'||t.status==='running')){
   it.appendChild(jb);ar.style.marginLeft='0';
 }
 it.appendChild(ar);
-    it.onclick=function(){c.classList.toggle('d4o');if(c.classList.contains('d4o'))c.scrollIntoView({behavior:'smooth',block:'center'})};
+    it.onclick=function(){if(window.tvOpen){window.tvOpen(id);return}c.classList.toggle('d4o');if(c.classList.contains('d4o'))c.scrollIntoView({behavior:'smooth',block:'center'})};
     box.appendChild(it);
   });
 }
