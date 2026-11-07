@@ -1036,8 +1036,9 @@ function createLobby({ send, clients, roomsApi }) {
       if (!t0) return true;
       const now = Date.now();
       if (now - (c.lb._tvChatAt || 0) < 800) return true;
-      const tx = String(m.text || '').replace(/[\u0000-\u001f<>]/g, ' ').trim().slice(0, 200);
+      let tx = String(m.text || '').replace(/[\u0000-\u001f<>]/g, ' ').trim().slice(0, 200);
       if (!tx) return true;
+      { const _md = require('./mod.js'); if (_md.isMuted(uid)) { err(c, _md.muteText ? (_md.muteText(uid) || 'Chatga yozish vaqtincha yopiq') : 'Chatga yozish vaqtincha yopiq'); return true; } try { tx = _md.censor(tx) || tx; } catch (e) {} }
       c.lb._tvChatAt = now;
       t0.chat = t0.chat || [];
       t0.chat.push({ id: hex(4), uid: String(uid), name: c.lb.name, text: tx, at: now, likes: [] }); /*TVMID*/
