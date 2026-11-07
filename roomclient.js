@@ -1752,3 +1752,25 @@ WebSocket.prototype.send=function(){
 };
 setInterval(tick,300);
 })();
+
+/* ZALBTN — o'yin tugagach "Qayta o'ynash" yonida "Zalga chiqish" */
+;(function(){
+if(window.__zalBtn)return;window.__zalBtn=1;
+function tick(){
+  var z=document.getElementById('rcZal'),ex=document.getElementById('rcZalX');
+  var rb=[].filter.call(document.querySelectorAll('button'),function(b){
+    var t=b.textContent||'';
+    return b.id!=='rcZalX'&&t.indexOf('Qayta o')>=0&&t.indexOf('ynash')>=0&&b.offsetParent!==null;
+  })[0];
+  if(!z||!rb){if(ex)ex.remove();return}
+  if(ex&&ex.parentNode===rb.parentNode)return;
+  if(ex)ex.remove();
+  var x=document.createElement('button');
+  x.id='rcZalX';x.textContent='🏟 Zalga chiqish';
+  x.style.cssText=rb.style.cssText;
+  x.style.background='#363431';x.style.boxShadow='0 4px 0 #1f1e1c';
+  x.addEventListener('click',function(){z.click()});
+  rb.insertAdjacentElement('afterend',x);
+}
+setInterval(tick,400);
+})();
