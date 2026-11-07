@@ -1576,7 +1576,8 @@ function createLobby({ send, clients, roomsApi }) {
         if (!t) return fail('notfound');
         prefix = 'lbt_';
         title = (t.type === 'arena' ? '⚔️ ' : '🏆 ') + t.name;
-        text = title + ' ga qo‘shiling!\n' + t.tc + ' · ' + t.players.size + ' o‘yinchi';
+        let _hm = ''; if (t.startAt && t.startAt > Date.now()) { const _d = new Date(t.startAt + 5 * 3600e3).toISOString(), _n = new Date(Date.now() + 5 * 3600e3).toISOString(); _hm = '🕒 ' + (_d.slice(0, 10) !== _n.slice(0, 10) ? _d.slice(8, 10) + '.' + _d.slice(5, 7) + ' ' : '') + _d.slice(11, 16) + ' da boshlanadi · '; }
+        text = title + ' ga qo‘shiling!\n' + _hm + t.tc + ' · ' + t.players.size + ' o‘yinchi';
       } else if (m.kind === 's') {
         const sm = simuls.get(id);
         if (!sm) return fail('notfound');
