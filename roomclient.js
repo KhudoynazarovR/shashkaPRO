@@ -1711,3 +1711,44 @@ WebSocket.prototype.send=function(){
 };
 setInterval(tick,300);
 })();
+
+/* HIDELINK — Havola tugmasi faqat o'yin boshlanmaguncha va tugagach */
+;(function(){
+if(window.__hideLink)return;window.__hideLink=1;
+var hide=false;
+function pick(o){
+  if(!o||typeof o!=='object')return null;
+  if(Array.isArray(o.moves)&&'finished' in o)return o;
+  var k=['state','room','st','s'];
+  for(var i=0;i<k.length;i++){var v=o[k[i]];if(v&&typeof v==='object'&&Array.isArray(v.moves)&&'finished' in v)return v}
+  return null;
+}
+function tick(){
+  var l=document.getElementById('rcLink');if(!l)return;
+  var want=false;
+  if(hide){
+    var tas=false;
+    [].forEach.call(l.parentNode.querySelectorAll('button'),function(x){
+      if(x!==l&&x.offsetParent!==null&&(x.textContent||'').indexOf('Taslim')>=0)tas=true;
+    });
+    want=tas;
+  }
+  var d=want?'none':'';
+  if(l.style.display!==d)l.style.display=d;
+}
+var S=WebSocket.prototype.send;
+WebSocket.prototype.send=function(){
+  if(!this.__hlH){
+    this.__hlH=1;
+    this.addEventListener('message',function(ev){
+      try{
+        if(typeof ev.data!=='string'||ev.data.indexOf('"moves"')<0)return;
+        var s=pick(JSON.parse(ev.data));
+        if(s)hide=s.moves.length>0&&!s.finished;
+      }catch(e){}
+    });
+  }
+  return S.apply(this,arguments);
+};
+setInterval(tick,300);
+})();
