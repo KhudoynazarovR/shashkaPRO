@@ -750,7 +750,7 @@ function createLobby({ send, clients, roomsApi }) {
       if (t.daily && el[0]) {   // 🌙 kunlik arena g'olibiga 7 kunlik Premium
         try { const _st = require('./store'), _u = _st.users()[String(el[0].uid)]; if (_u) { require('./premium.js').grant(_u, 7, 'daily_arena'); toast(el[0].uid, '👑 Kunlik arena g‘olibi: +7 kunlik Premium!'); } } catch (e) {}
       }
-      if (t.daily) { const _st = require('./store'); _st.db.dailyFans = _st.db.dailyFans || {}; for (const p of t.players.values()) if (/^\d+$/.test(String(p.uid))) _st.db.dailyFans[p.uid] = Date.now(); _st.save(); }
+      if (t.daily || t.sched) { const _st = require('./store'); _st.db.dailyFans = _st.db.dailyFans || {}; for (const p of t.players.values()) if (/^\d+$/.test(String(p.uid))) _st.db.dailyFans[p.uid] = Date.now(); _st.save(); }
     }
     const top = st[0] ? st[0].name : '-';
     if (t.clubIds && t.clubIds.length) { const cs = clubStandings(t); if (cs.length > 1) { clubsApi.award(cs); if (cs[0]) for (const p of t.players.values()) toast(p.uid, '🏅 Klublar hisobida g‘olib: ' + cs[0].name + ' (' + cs[0].score + ')'); } }
@@ -1693,7 +1693,50 @@ function createLobby({ send, clients, roomsApi }) {
     }, i * 120));
     push();
   }
-  setInterval(() => { try { dailyArenaTick(); } catch (e) { console.log('[arena] kunlik xato:', e.message); } }, 30000).unref();
+  // 📅 KUNLIK JADVAL (Toshkent vaqti = UTC+5). Yangi turnir qo'shish uchun SCHED ga qator qo'shing.
+  const SCHED_ANNOUNCE = 60;   // daqiqa: boshlanishidan oldin e'lon qilinadi
+  const SCHED = [
+    { id: 'sw14', h: 14, m: 0, kind: 'swiss', name: '🏁 Shveytsar turnir', tc: '2+1', rounds: 5, interval: 60, pos: 'std', prize: 0 },
+    { id: 'mm1515', h: 15, m: 15, kind: 'swiss', name: '⚡ Mikro match · IDF 780', tc: '1+1', rounds: 4, interval: 10, pos: 'idf', prize: 0 },
+    { id: 'a18', h: 18, m: 0, kind: 'arena', name: '🌱 Havaskorlar arenasi', tc: '5+3', dur: 55, pos: 'std', prize: 100 },
+    { id: 'a19', h: 19, m: 0, kind: 'arena', name: '⚔️ Blits arena', tc: '3+2', dur: 55, pos: 'std', prize: 100 },
+    { id: 'a20', h: 20, m: 0, kind: 'arena', name: '🎯 Bullet arena · IDF 780', tc: '2+2', dur: 55, pos: 'idf', prize: 100 },
+    { id: 'a21', h: 21, m: 0, kind: 'arena', name: '🎯 Bullet arena · IDF 780', tc: '1+1', dur: 55, pos: 'idf', prize: 100 },
+    { id: 'a22', h: 22, m: 0, kind: 'arena', name: '👑 Super Arena', tc: '0.75+0', dur: 115, pos: 'std', prize: 100 }
+  ];
+  function schedTick() {
+    const st = require('./store'), now = Date.now(), tz = new Date(now + 5 * 3600e3), dk = tz.toISOString().slice(0, 10);
+    const Y = tz.getUTCFullYear(), M = tz.getUTCMonth(), D = tz.getUTCDate();
+    let S = st.db.sched;
+    if (!S || S.d !== dk) { S = st.db.sched = { d: dk, made: {}, note: 0 }; st.save(); }
+    for (const s of SCHED) {
+      const startAt = Date.UTC(Y, M, D, s.h - 5, s.m, 0);
+      if (now < startAt - SCHED_ANNOUNCE * 60000 || now >= startAt - 60000) continue;
+      if (S.made[s.id]) continue;
+      const base = { id: hex(3), name: s.name, tc: s.tc, creatorUid: 'sys', creatorName: 'ShashkaPRO', status: 'reg', created: now, players: new Map(), round: 0, rounds: 0, cur: [], curBye: null, nextAt: 0, pos: s.pos || 'std', prize: s.prize || 0, prizePaid: 0, places: 3, startAt: startAt, sched: true };
+      const t = s.kind === 'arena'
+        ? Object.assign(base, { type: 'arena', durationMin: s.dur, endAt: startAt + s.dur * 60000, gameNo: 0, ending: false, berserk: true })
+        : Object.assign(base, { roundsWanted: s.rounds, interval: s.interval * 1000 });
+      tournaments.set(t.id, t);
+      S.made[s.id] = t.id; st.save();
+      console.log("[jadval] e'lon qilindi:", s.name, s.tc, t.id);
+      push();
+    }
+    const noteAt = Date.UTC(Y, M, D, 12, 30, 0);   // 17:30 Toshkent
+    if (!S.note && now >= noteAt && now < noteAt + 30 * 60000) {
+      S.note = 1; st.save();
+      const appLink = (process.env.TG_APP_LINK || process.env.APP_LINK || "").replace(/\/$/, "");
+      const fans = Object.keys(st.db.dailyFans || {}).filter(u => now - st.db.dailyFans[u] < 14 * 86400e3);
+      const text = "📅 <b>Bugungi turnirlar</b>\n\n🏁 14:00 · Shveytsar · 2+1\n⚡ 15:15 · Mikro match IDF 780 · 1+1\n🌱 18:00 · Havaskorlar · 5+3\n⚔️ 19:00 · Blits · 3+2\n🎯 20:00 · Bullet IDF 780 · 2+2\n🎯 21:00 · Bullet IDF 780 · 1+1\n👑 22:00 · Super Arena · 45 soniya\n\n💰 Har arenada 100 🪙 sovrin fondi";
+      fans.forEach((u, i) => setTimeout(() => {
+        try { if (!require("./notify.js").allowed(u, "arena")) return; } catch (e) {}
+        const msg = { chat_id: Number(u), parse_mode: "HTML", text: text };
+        if (appLink) msg.reply_markup = { inline_keyboard: [[{ text: "⚔️ Ochish", url: appLink }]] };
+        tgCall("sendMessage", msg).catch(() => {});
+      }, i * 120));
+    }
+  }
+  setInterval(() => { try { schedTick(); } catch (e) { console.log("[jadval] xato:", e.message); } }, 30000).unref();
   setInterval(remindTick, 5000).unref();
   setInterval(arenaTick, 2000).unref();
 
