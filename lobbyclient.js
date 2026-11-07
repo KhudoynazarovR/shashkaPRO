@@ -469,7 +469,7 @@
         "<select id=\"lbTp\"><option value=\"std\">Standart</option><option value=\"idf\">IDF 780</option></select></div>" +
 "<div class=\"row\"><span class=\"muted\">Vaqt:</span><select id=\"lbTtc\">" + tcOpts + "</select></div>" +
 "<div class=\"row\" id=\"lbTbzr\"><label><input type=\"checkbox\" id=\"lbTbz\" checked> ⚡ Berserk yoqilgan</label></div>" +
-      "<details id='lbTbotr' style='margin:6px 0'><summary>🤖 Botlar (faqat admin)</summary><label style='display:block;padding:4px 0'><input type='checkbox' onchange=\"var c=this.checked;[].forEach.call(this.closest('details').getElementsByClassName('lbTbot'),function(x){x.checked=c})\"> Hammasi</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot_easy'> Shogird</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot_mid'> Jangchi</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot'> Yo‘lbars</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot_pro'> Arslon</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot_gm'> Sulton</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot_champ'> Legend</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot_monster'> Monster</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot_terminator'> Terminator</label></details>" +
+      "<details id='lbTbotr' style='margin:6px 0'><summary>🤖 Botlar (faqat admin)</summary><label style='display:block;padding:4px 0'><input type='checkbox' onchange=\"var c=this.checked;[].forEach.call(this.closest('details').getElementsByClassName('lbTbot'),function(x){x.checked=c})\"> Hammasi</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot_easy'> Shogird</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot_mid'> Jangchi</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot'> Yo‘lbars</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot_pro'> Arslon</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot_gm'> Sulton</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot_champ'> Legend</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot_monster'> Monster</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot_terminator'> Terminator</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot_kingkong'> 🦍 King Kong</label></details>" +
 "<div class=\"row\" id=\"lbTmgr\"><select id=\"lbTmg\" style=\"flex:1\"><option value=\"0\">✅ Sharti yo‘q — hamma qatnasha oladi</option><option value=\"5\">Kamida 5 ta reytingli o‘yin</option><option value=\"10\">Kamida 10 ta reytingli o‘yin</option><option value=\"20\">Kamida 20 ta reytingli o‘yin</option><option value=\"50\">Kamida 50 ta reytingli o‘yin</option></select></div>" +
 "<div class=\"row\"><span class=\"muted\">🪙 Mukofot:</span><input id=\"lbTpz\" type=\"number\" min=\"100\" value=\"100\" style=\"flex:1;min-width:0\"></div>" +
 "<div class=\"row\"><span class=\"muted\">🏅 Mukofot oladigan o‘rinlar:</span><select id=\"lbTpl\"><option value=\"3\">3</option><option value=\"4\">4</option><option value=\"5\">5</option><option value=\"6\">6</option><option value=\"7\">7</option><option value=\"8\">8</option><option value=\"9\">9</option><option value=\"10\">10</option></select></div>" +
@@ -1218,6 +1218,7 @@
     })();
     // O'ynash sahifasi (navbar.js) uchun: tanlangan vaqt bilan raqib qidirish / do'stga havola
     window.lbPlay = {
+      addBots: function (tid, ids) { sendMsg({ type: "lbTAddBots", tid: tid, botIds: ids }); },
       bcast: function (tc) { sendMsg({ type: "lbBroadcast", tc: tc, pos: window.nvPos || "std" }); },
       quick: function (tc, voice) { if (S.inQueue) sendMsg({ type: "lbQuickCancel" }); sendMsg({ type: "lbQuick", tc: tc, pos: window.nvPos || ($("lbPos") || {}).value || "std", games: 1, voice: !!voice }); },
       cancel: function () { sendMsg({ type: "lbQuickCancel" }); },
@@ -3330,3 +3331,36 @@ it.appendChild(ar);
 
 /* TARENA — arena turniri lidraughts uslubidagi sahifada (tarena.js) */
 ;(function(){var s=document.createElement("script");s.src="/tarena.js";document.head.appendChild(s)})();
+
+;(function () {
+  if (window.__tvAddBots) return; window.__tvAddBots = 1;
+  var adm = false;
+  var BOTS = [['bot_easy', 'Shogird'], ['bot_mid', 'Jangchi'], ['bot', 'Yo‘lbars'], ['bot_pro', 'Arslon'], ['bot_gm', 'Sulton'], ['bot_champ', 'Legend'], ['bot_monster', 'Monster'], ['bot_terminator', 'Terminator'], ['bot_kingkong', '🦍 King Kong']];
+  function ini() { return (window.Telegram && Telegram.WebApp && Telegram.WebApp.initData) || ''; }
+  try { fetch('/api/botadmin', { headers: { 'x-init-data': ini() } }).then(function (r) { return r.json(); }).then(function (j) { adm = !!(j && j.admin); }).catch(function () {}); } catch (x) {}
+  var btn = document.createElement('button'); btn.id = 'tvAddBots'; btn.textContent = '🤖 Bot qo‘shish';
+  btn.style.cssText = 'position:fixed;right:14px;bottom:calc(140px + env(safe-area-inset-bottom));z-index:2147482000;display:none;padding:9px 14px;border:0;border-radius:14px;background:#2c2f66;color:#fff;font:700 13px system-ui,sans-serif;box-shadow:0 3px 0 #0e0f2a';
+  document.body.appendChild(btn);
+  setInterval(function () {
+    var p = document.getElementById('tvP'), cs = p ? getComputedStyle(p) : null;
+    btn.style.display = (adm && cs && cs.display !== 'none' && window.__tvCur) ? 'block' : 'none';
+  }, 700);
+  btn.onclick = function () {
+    var old = document.getElementById('tvBotSheet'); if (old) old.remove();
+    var d = document.createElement('div'); d.id = 'tvBotSheet';
+    d.style.cssText = 'position:fixed;inset:0;z-index:2147482500;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;font-family:system-ui,sans-serif';
+    d.innerHTML = '<div style="width:100%;background:#141040;color:#fff;border-radius:20px 20px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom));box-sizing:border-box;max-height:80vh;overflow:auto"><div style="display:flex;align-items:center"><b style="font-size:18px">🤖 Arenaga bot qo‘shish</b><span data-x="1" style="margin-left:auto;font-size:24px;padding:4px 8px">✕</span></div>' +
+      BOTS.map(function (b) { return '<label style="display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid rgba(255,255,255,.08);font-size:16px"><input type="checkbox" class="tvbk" value="' + b[0] + '" style="width:20px;height:20px"> ' + b[1] + '</label>'; }).join('') +
+      '<button data-ok="1" style="width:100%;margin-top:14px;padding:14px;border:0;border-radius:12px;background:linear-gradient(#7fb847,#5f9a2f);color:#fff;font:800 17px system-ui,sans-serif">Qo‘shish</button></div>';
+    document.body.appendChild(d);
+    d.onclick = function (e) {
+      var t = e.target;
+      if (t === d || (t.getAttribute && t.getAttribute('data-x'))) return d.remove();
+      if (t.getAttribute && t.getAttribute('data-ok')) {
+        var ids = [].map.call(d.querySelectorAll('.tvbk'), function (x) { return x.checked ? x.value : null; }).filter(Boolean);
+        d.remove();
+        if (ids.length && window.lbPlay && window.lbPlay.addBots) window.lbPlay.addBots(window.__tvCur, ids);
+      }
+    };
+  };
+})();

@@ -33,7 +33,9 @@ const BOTS = [
   { uid: 'bot_kingkong', name: 'King Kong BOT', secs: 15, blunder: 0, ponder: true, soon: process.env.KINGKONG_OPEN !== '1' }   // 🦍 eng kuchli: raqib o'ylayotganda ham o'ylaydi, saboqlar bazada saqlanadi
 ];
 const PREM_BOTS = new Set(['bot_champ', 'bot_monster', 'bot_terminator', 'bot_kingkong']);   // 👑 faqat Premium bilan
-const botByUid = uid => BOTS.find(b => b.uid === uid && !b.soon) || null;   // 'soon' — hali e'lon qilingan, o'ynab bo'lmaydi
+const botByUid = uid => BOTS.find(b => b.uid === uid && !b.soon) || null;
+const botAny = uid => BOTS.find(b => b.uid === uid) || null;   // faqat admin tanlovi uchun ('soon' ham bo'ladi)
+   // 'soon' — hali e'lon qilingan, o'ynab bo'lmaydi
 const BOT_TCS = ['1+1', '2+2', '3+2', '5+3'];
 // bot bilan: '∞' (vaqtsiz) yoki 'daqiqa+soniya' (¼ daqiqadan 180 gacha, 0–60 s qo'shimcha)
 const botTcOk = s => { if (s === '∞') return true; const m = /^(\d{1,3}(?:\.\d{1,2})?)\+(\d{1,2})$/.exec(String(s || '')); return !!m && +m[1] >= 0.25 && +m[1] <= 180 && +m[2] <= 60 && (+m[1] * 60) % 1 === 0; };
@@ -781,7 +783,7 @@ function createLobby({ send, clients, roomsApi }) {
   function startArena(t) {
     if (t.status !== 'reg') return;
     for (const id of (t.botIds || [])) {
-      const b = botByUid(id); if (!b || t.players.has(b.uid)) continue;
+      const b = botAny(id); if (!b || t.players.has(b.uid)) continue;
       const p = newArenaPlayer({ uid: b.uid, name: '🤖 ' + b.name }); p.bot = true; t.players.set(b.uid, p);
     }
     t.status = 'running';
@@ -801,7 +803,7 @@ function createLobby({ send, clients, roomsApi }) {
     w.colors.w++; k.colors.b++;
     w.busy = true; k.busy = true;
     if (w.bot || k.bot) {
-      const bt = botByUid((w.bot ? w : k).uid), op = t.pos === 'idf' ? pickOpening() : null;
+      const bt = botAny((w.bot ? w : k).uid), op = t.pos === 'idf' ? pickOpening() : null;
       const side = x => x.bot ? { uid: x.uid, name: x.name, clientId: 'ai_' + x.uid } : { uid: x.uid, name: x.name };
       roomsApi.create(roomId, { tc: t.tc, arena: true, noBerserk: true, vsBot: true, opening: op, botCfg: { id: bt.uid, secs: bt.secs, blunder: bt.blunder, ponder: !!bt.ponder }, white: side(w), black: side(k) });
     } else openRoom(roomId, t.tc, w, k, true, t.pos === 'idf' ? pickOpening() : null, t.berserk === false);
@@ -1355,7 +1357,7 @@ function createLobby({ send, clients, roomsApi }) {
             creatorUid: me.uid, creatorName: me.name, status: 'reg', created: Date.now(),
             players: new Map(), round: 0, rounds: 0, cur: [], curBye: null, nextAt: 0,
             durationMin: dur, startAt, endAt: startAt + dur * 60000, gameNo: 0, ending: false,
-            pos: m.pos === 'idf' ? 'idf' : 'std', berserk: m.berserk !== false, botIds: ((process.env.ADMIN_IDS || '').split(',').map(x => x.trim()).includes(String(me.uid)) && Array.isArray(m.botIds)) ? [...new Set(m.botIds.map(String))].filter(id => botByUid(id)).slice(0, 12) : [], prize: m._prize || 0, prizePaid: m._paid || 0, places: Math.max(3, Math.min(10, Math.floor(Number(m.places)) || 3)),
+            pos: m.pos === 'idf' ? 'idf' : 'std', berserk: m.berserk !== false, botIds: ((process.env.ADMIN_IDS || '').split(',').map(x => x.trim()).includes(String(me.uid)) && Array.isArray(m.botIds)) ? [...new Set(m.botIds.map(String))].filter(id => botAny(id)).slice(0, 12) : [], prize: m._prize || 0, prizePaid: m._paid || 0, places: Math.max(3, Math.min(10, Math.floor(Number(m.places)) || 3)),
             minGames: ARENA_MIN_GAMES.includes(Number(m.minGames)) ? Number(m.minGames) : 0
           };
           at.players.set(me.uid, newArenaPlayer(me));
@@ -1376,6 +1378,24 @@ function createLobby({ send, clients, roomsApi }) {
         t.players.set(me.uid, newPlayer(me));
         if (m.kind === 'olympic') { t.type = 'olympic'; t.roundsWanted = 0; }
         t.clubIds = cl.ids; tournaments.set(t.id, t);
+        push();
+        break;
+      }
+      case 'lbTAddBots': {
+        if (!(process.env.ADMIN_IDS || '').split(',').map(x => x.trim()).includes(String(me.uid))) return err(c, 'Faqat admin'), true;
+        const t = tournaments.get(String(m.tid));
+        if (!t || t.type !== 'arena' || t.status === 'finished') return err(c, 'Arena topilmadi yoki tugagan'), true;
+        const ids = Array.isArray(m.botIds) ? [...new Set(m.botIds.map(String))].filter(id => botAny(id)) : [];
+        let n = 0;
+        for (const id of ids) {
+          const b = botAny(id); if (!b) continue;
+          t.botIds = t.botIds || [];
+          if (t.status === 'reg') { if (!t.botIds.includes(b.uid) && t.botIds.length < 12) { t.botIds.push(b.uid); n++; } continue; }
+          if (t.players.has(b.uid)) continue;
+          const p = newArenaPlayer({ uid: b.uid, name: '🤖 ' + b.name }); p.bot = true; p.waitingSince = Date.now() - ARENA_PAIR_DELAY_MS;
+          t.players.set(b.uid, p); n++;
+        }
+        toast(me.uid, n ? n + ' ta bot qo‘shildi' : 'Hech narsa qo‘shilmadi');
         push();
         break;
       }
@@ -1766,7 +1786,7 @@ function createLobby({ send, clients, roomsApi }) {
   const _applyBN = () => { try { const bn = require('./store').db.botNames || {}; for (const k in bn) global.__botRename(k, bn[k]); } catch (e) {} };
   _applyBN(); setTimeout(_applyBN, 5000); setTimeout(_applyBN, 20000);
   for (const b of BOTS) {
-    if (b.soon) continue;
+    if (b.soon && b.uid !== 'bot_kingkong') continue;   // King Kong: faqat admin arenasi uchun mijoz yaratiladi (zalda yashirin)
     clients.set('ai_' + b.uid, { id: 'ai_' + b.uid, name: b.name, elo: 0, ws: botWs, isBot: true, hidden: true, lb: { uid: b.uid, name: b.name, tg: false, inRoom: false } });
   }
 
