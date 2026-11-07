@@ -270,3 +270,62 @@
   var hk = setInterval(function () { hook(); }, 400);
   setTimeout(function () { clearInterval(hk); setInterval(hook, 3000); }, 20000);
 })();
+
+/* TAFX: g'oliblar shohsupasi — konfetti, lentalar va fanfara */
+;(function () {
+  var fired = {}, lastCur = null;
+  function fanfare() {
+    try {
+      var C = window.AudioContext || window.webkitAudioContext; if (!C) return;
+      var c = window.__spAC || (window.__spAC = new C()); if (c.state === 'suspended') c.resume();
+      function note(f, t, d, type, v) {
+        var o = c.createOscillator(), g = c.createGain(), t0 = c.currentTime + t;
+        o.type = type; o.frequency.value = f;
+        g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(v, t0 + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d);
+        o.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0 + d + 0.05);
+      }
+      // ta-ta-ta-taaa
+      [[523.25, 0, .16], [523.25, .18, .16], [523.25, .36, .16], [659.25, .54, .5]].forEach(function (n) { note(n[0], n[1], n[2], 'square', 0.12); note(n[0] / 2, n[1], n[2], 'triangle', 0.15); });
+      [[783.99, 1.1, .2], [659.25, 1.3, .2], [783.99, 1.5, .2], [1046.5, 1.7, .9]].forEach(function (n) { note(n[0], n[1], n[2], 'square', 0.12); note(n[0] / 2, n[1], n[2], 'triangle', 0.15); });
+      for (var i = 0; i < 12; i++) note(1500 + Math.random() * 2500, 1.7 + i * 0.07, 0.12, 'sine', 0.05);
+    } catch (e) {}
+  }
+  function confetti() {
+    try {
+      var cv = document.createElement('canvas'); cv.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:2147483200';
+      var W = cv.width = innerWidth, H = cv.height = innerHeight; document.body.appendChild(cv);
+      var cx = cv.getContext('2d'), cols = ['#f5b72b', '#4cc9f0', '#f72585', '#7ae582', '#b5179e', '#ff9b2f', '#ffffff'], P = [];
+      function add(x, ang, n) {
+        for (var i = 0; i < n; i++) {
+          var a = ang + (Math.random() - 0.5) * 1.3, s = 9 + Math.random() * 13, rib = Math.random() < 0.3;
+          P.push({ x: x, y: H * 0.55, vx: Math.cos(a) * s, vy: Math.sin(a) * s, r: Math.random() * 6, vr: (Math.random() - 0.5) * 0.4,
+            w: rib ? 5 : 8 + Math.random() * 6, h: rib ? 26 + Math.random() * 22 : 6 + Math.random() * 6, c: cols[(Math.random() * cols.length) | 0] });
+        }
+      }
+      add(0, -Math.PI / 3, 90); add(W, -2 * Math.PI / 3, 90);
+      setTimeout(function () { add(W * 0.25, -Math.PI / 2, 50); add(W * 0.75, -Math.PI / 2, 50); }, 900);
+      var t0 = Date.now();
+      (function loop() {
+        var el = Date.now() - t0; cx.clearRect(0, 0, W, H);
+        P.forEach(function (p) {
+          p.vy += 0.35; p.vx *= 0.985; p.vy *= 0.985; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+          cx.save(); cx.translate(p.x, p.y); cx.rotate(p.r); cx.globalAlpha = Math.max(0, Math.min(1, (5200 - el) / 1200));
+          cx.fillStyle = p.c; cx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); cx.restore();
+        });
+        if (el < 5200) requestAnimationFrame(loop); else cv.remove();
+      })();
+    } catch (e) {}
+  }
+  setInterval(function () {
+    try {
+      var P = document.getElementById('taP'), on = P && P.classList.contains('on'), cur = on ? window.__tvCur : null;
+      if (cur !== lastCur) { lastCur = cur; }
+      if (!cur || fired[cur]) return;
+      var T = (window.__lb && window.__lb.S && window.__lb.S.tournaments) || [], t = null;
+      for (var i = 0; i < T.length; i++) if (String(T[i].id) === String(cur)) t = T[i];
+      if (!t || t.type !== 'arena' || t.status !== 'finished') return;
+      if (!(t.players || []).some(function (p) { return p.games > 0; })) return;
+      fired[cur] = 1; confetti(); fanfare();
+    } catch (e) {}
+  }, 500);
+})();
