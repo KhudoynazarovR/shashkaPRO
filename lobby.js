@@ -275,7 +275,7 @@ function createLobby({ send, clients, roomsApi }) {
   function arenaPerf(p) { const n = p.games || 0; if (!n || !p.oppSum) return 0; return Math.round(p.oppSum / n + 400 * ((p.wins || 0) - (p.losses || 0)) / n); }
   function arenaStandings(t) {
     const arr = [...t.players.values()].map(p => ({
-      uid: p.uid, name: p.name, score: p.score, buch: 0, withdrawn: p.withdrawn,
+      uid: p.uid, name: p.name, score: p.score, buch: 0, withdrawn: p.withdrawn, bot: !!p.bot,
       games: p.games, wins: p.wins, fire: p.streak >= ARENA_FIRE_AFTER, busy: p.busy, at: p.lastScoreAt,
       elo: olyElo(p.uid), d: p.elo0 ? olyElo(p.uid) - p.elo0 : 0, sheet: (p.sheet || '').slice(-40), perf: arenaPerf(p)
     }));
@@ -739,7 +739,7 @@ function createLobby({ send, clients, roomsApi }) {
     const st = t.type === 'arena' ? arenaStandings(t) : standings(t);
     if (t.prize > 0 && !t.prizeDone) {
       t.prizeDone = true;
-      const el = st.filter(x => x.games > 0 && (t.type === "arena" || !x.withdrawn));
+      const el = st.filter(x => x.games > 0 && !x.bot && (t.type === "arena" || !x.withdrawn));
       const PZT = { 3: [50,30,20], 4: [40,28,20,12], 5: [35,25,18,13,9], 6: [30,22,17,13,10,8], 7: [28,20,15,12,10,8,7], 8: [26,19,15,12,10,8,5,5], 9: [24,18,14,11,10,8,6,5,4], 10: [22,17,13,11,9,8,7,5,4,4] };
       const sh = el.length >= 3 ? PZT[Math.min(t.places || 3, el.length)] : el.length === 2 ? [60, 40] : el.length === 1 ? [100] : [];
       sh.forEach((pc, i) => {
@@ -780,6 +780,10 @@ function createLobby({ send, clients, roomsApi }) {
 
   function startArena(t) {
     if (t.status !== 'reg') return;
+    for (const id of (t.botIds || [])) {
+      const b = botByUid(id); if (!b || t.players.has(b.uid)) continue;
+      const p = newArenaPlayer({ uid: b.uid, name: '🤖 ' + b.name }); p.bot = true; t.players.set(b.uid, p);
+    }
     t.status = 'running';
     const now = Date.now();
     for (const p of t.players.values()) {
@@ -796,12 +800,16 @@ function createLobby({ send, clients, roomsApi }) {
     const roomId = 'A' + t.id + 'G' + (++t.gameNo);
     w.colors.w++; k.colors.b++;
     w.busy = true; k.busy = true;
-    openRoom(roomId, t.tc, w, k, true, t.pos === 'idf' ? pickOpening() : null, t.berserk === false);
+    if (w.bot || k.bot) {
+      const bt = botByUid((w.bot ? w : k).uid), op = t.pos === 'idf' ? pickOpening() : null;
+      const side = x => x.bot ? { uid: x.uid, name: x.name, clientId: 'ai_' + x.uid } : { uid: x.uid, name: x.name };
+      roomsApi.create(roomId, { tc: t.tc, arena: true, noBerserk: true, vsBot: true, opening: op, botCfg: { id: bt.uid, secs: bt.secs, blunder: bt.blunder, ponder: !!bt.ponder }, white: side(w), black: side(k) });
+    } else openRoom(roomId, t.tc, w, k, true, t.pos === 'idf' ? pickOpening() : null, t.berserk === false);
     const board = { board: t.gameNo, roomId, white: w.uid, black: k.uid, done: false, winner: null };
     t.cur.push(board);
     roomToBoard.set(roomId, { t, b: board });
-    sendUid(w.uid, { type: 'lbGo', roomId, reason: 'arena', tname: t.name, round: 0, color: 'white', opponent: k.name, tc: t.tc });
-    sendUid(k.uid, { type: 'lbGo', roomId, reason: 'arena', tname: t.name, round: 0, color: 'black', opponent: w.name, tc: t.tc });
+    if (!w.bot) sendUid(w.uid, { type: 'lbGo', roomId, reason: 'arena', tname: t.name, round: 0, color: 'white', opponent: k.name, tc: t.tc });
+    if (!k.bot) sendUid(k.uid, { type: 'lbGo', roomId, reason: 'arena', tname: t.name, round: 0, color: 'black', opponent: w.name, tc: t.tc });
     const timer = setTimeout(() => forfeitIdle(board), ARENA_NOSHOW_MS);
     if (timer.unref) timer.unref();
   }
@@ -810,7 +818,7 @@ function createLobby({ send, clients, roomsApi }) {
     const now = Date.now();
     if (t.endAt && t.endAt - now < 60000) return;   // oxirgi daqiqada yangi juftlik yo'q (lidraughts kabi)
     const avail = shuffle([...t.players.values()].filter(p =>
-      !p.withdrawn && !p.busy && now - p.waitingSince >= ARENA_PAIR_DELAY_MS && connsOf(p.uid).length
+      !p.withdrawn && !p.busy && now - p.waitingSince >= ARENA_PAIR_DELAY_MS && (p.bot || connsOf(p.uid).length)
     )).sort((a, b) => b.score - a.score);
     const used = new Set();
     let made = false;
@@ -821,7 +829,8 @@ function createLobby({ send, clients, roomsApi }) {
       for (let j = i + 1; j < avail.length; j++) {
         const b = avail[j];
         if (used.has(b)) continue;
-        const rematch = a.lastOpp === b.uid || b.lastOpp === a.uid;
+      if (a.bot && b.bot) continue;
+      const rematch = a.lastOpp === b.uid || b.lastOpp === a.uid;
         if (rematch && !(now - a.waitingSince >= ARENA_REMATCH_WAIT_MS && now - b.waitingSince >= ARENA_REMATCH_WAIT_MS)) continue;
         pick = b; break;
       }
@@ -875,7 +884,7 @@ function createLobby({ send, clients, roomsApi }) {
         if (lost) { lost.withdrawn = true; toast(lost.uid, '⚠️ ' + t.name + ': o‘yinga kirmadingiz, pauzadasiz. Qaytish uchun „Qo‘shilish“ni bosing'); }
       }
     }
-    payWin(room, b.white, b.black, t.id); pw.lastOpp = pb.uid; pb.lastOpp = pw.uid;
+    if (!(pw && pw.bot) && !(pb && pb.bot)) payWin(room, b.white, b.black, t.id); pw.lastOpp = pb.uid; pb.lastOpp = pw.uid;
     pw.busy = false; pb.busy = false;
     pw.waitingSince = now; pb.waitingSince = now;
     push();
@@ -1346,7 +1355,7 @@ function createLobby({ send, clients, roomsApi }) {
             creatorUid: me.uid, creatorName: me.name, status: 'reg', created: Date.now(),
             players: new Map(), round: 0, rounds: 0, cur: [], curBye: null, nextAt: 0,
             durationMin: dur, startAt, endAt: startAt + dur * 60000, gameNo: 0, ending: false,
-            pos: m.pos === 'idf' ? 'idf' : 'std', berserk: m.berserk !== false, prize: m._prize || 0, prizePaid: m._paid || 0, places: Math.max(3, Math.min(10, Math.floor(Number(m.places)) || 3)),
+            pos: m.pos === 'idf' ? 'idf' : 'std', berserk: m.berserk !== false, botIds: ((process.env.ADMIN_IDS || '').split(',').map(x => x.trim()).includes(String(me.uid)) && Array.isArray(m.botIds)) ? [...new Set(m.botIds.map(String))].filter(id => botByUid(id)).slice(0, 12) : [], prize: m._prize || 0, prizePaid: m._paid || 0, places: Math.max(3, Math.min(10, Math.floor(Number(m.places)) || 3)),
             minGames: ARENA_MIN_GAMES.includes(Number(m.minGames)) ? Number(m.minGames) : 0
           };
           at.players.set(me.uid, newArenaPlayer(me));
