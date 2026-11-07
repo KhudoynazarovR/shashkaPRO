@@ -241,6 +241,48 @@ async function onCallback(q) {
   return true;
 }
 // ---------- javob posti
+// === JAVOB VIDEOSI (patch-answer-video.js) ===
+let _vidBusy = false;
+// store masalasi -> reelgen formati [id, daraja, maqsad, doska(32 belgi), yurishlar(4 raqamdan), muallif]
+function _toDk(p, lvl) {
+  if (!p || !Array.isArray(p.board) || p.board.length !== 8) return null;
+  if (p.side === 'b') return null;   // video faqat "oq yuradi" masalalar uchun
+  const sol = p.sol || (p.sols && p.sols[0]);
+  if (!sol || !sol.length) return null;
+  let bs = '';
+  for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) if ((r + c) % 2) bs += '.wbWB'.charAt(+(p.board[r] && p.board[r][c]) || 0);
+  let mv = '';
+  for (const st of sol) { if (!st || st.length < 4) return null; mv += String(st[0]) + String(st[1]) + String(st[2]) + String(st[3]); }
+  return [p.id, lvl, p.goal === 'd' ? 'd' : 'w', bs, mv, p.author || ''];
+}
+async function _sendAnswer(s, P, p, txt) {
+  const kb = { inline_keyboard: [[{ text: '🧩 Yechish', url: solveUrl(p.id) }]] };
+  const reply = { message_id: P.mid, allow_sending_without_reply: true };
+  const textOnly = () => tg('sendMessage', { chat_id: s.ch, text: txt, parse_mode: 'HTML', reply_parameters: reply, reply_markup: kb });
+  if (process.env.ANSWER_VIDEO === '0' || _vidBusy) return textOnly();
+  const _fs = require('fs'), _path = require('path'), _os = require('os');
+  let r = null, sent = null;
+  _vidBusy = true;
+  try {
+    const dk = _toDk(p, (SLOTS[P.slot || 0] || [])[2] || 2);
+    if (!dk) return await textOnly();
+    r = await require('./reelgen.js').make(dk, _path.join(_os.tmpdir(), 'kanal_ans_' + Date.now() + '.mp4'));
+    const long = txt.length > 1000;
+    const fd = new FormData();
+    fd.append('chat_id', String(s.ch)); fd.append('supports_streaming', 'true');
+    fd.append('caption', long ? txt.split('\n\n')[0].slice(0, 900) : txt); fd.append('parse_mode', 'HTML');
+    fd.append('reply_parameters', JSON.stringify(reply)); fd.append('reply_markup', JSON.stringify(kb));
+    if (r.dur) fd.append('duration', String(Math.round(r.dur)));
+    fd.append('video', new Blob([_fs.readFileSync(r.file)], { type: 'video/mp4' }), 'javob.mp4');
+    if (r.cover) fd.append('thumbnail', new Blob([r.cover], { type: 'image/jpeg' }), 'cover.jpg');
+    sent = await fetch('https://api.telegram.org/bot' + process.env.BOT_TOKEN + '/sendVideo', { method: 'POST', body: fd }).then(x => x.json()).catch(e => ({ ok: false, description: e.message }));
+    if (sent && sent.ok) { if (long) await textOnly(); return sent; }
+    console.log('[kanal] javob videosi yuborilmadi:', sent && sent.description);
+  } catch (e) { console.log('[kanal] javob videosi yasalmadi:', e && e.message); }
+  finally { _vidBusy = false; if (r && r.file) { try { _fs.unlinkSync(r.file); } catch (e) {} } }
+  return textOnly();
+}
+// === /JAVOB VIDEOSI ===
 async function answer(key) {
   const s = S(), P = s.posts[key]; if (!P || P.ans) return;
   P.ans = Date.now(); store.save();
@@ -254,7 +296,7 @@ async function answer(key) {
     + (first ? '\n⚡ Birinchilar: ' + first : '')
     + (topInv ? '\n📤 Bugun eng ko‘p do‘st olib kelgan: ' + esc(nm(us[topInv[0]])) + ' (' + topInv[1] + ')' : '')
     + '\n\n' + (nx ? '⏰ Keyingi masala — ' + nx[0] + ' da' : '🏅 Kunlik TOP — 22:50 da') + '\n🧩 O‘zingiz ham yechib ko‘ring 👇';
-  await tg('sendMessage', { chat_id: s.ch, text: txt, parse_mode: 'HTML', reply_parameters: { message_id: P.mid, allow_sending_without_reply: true }, reply_markup: { inline_keyboard: [[{ text: '🧩 Yechish', url: solveUrl(p.id) }]] } });
+  await _sendAnswer(s, P, p, txt);
 }
 
 // ---------- reyting (rasm)

@@ -136,7 +136,7 @@ const RSS_MAX = Number(process.env.REEL_RSS_MAX || 340) * 1e6;   // server RAMi 
 const ramOk = () => process.memoryUsage().rss < RSS_MAX;
 async function make(id, out) {
   if (!ramOk()) throw new Error('RAM band (' + Math.round(process.memoryUsage().rss / 1e6) + ' MB) — keyinroq urinib ko‘ring');
-  const d = data().find(x => x[0] === Number(id)); if (!d) throw new Error('Masala topilmadi: ' + id);
+  const d = Array.isArray(id) ? id : data().find(x => x[0] === Number(id)); if (!d) throw new Error('Masala topilmadi: ' + id); if (Array.isArray(id)) id = 'k' + d[0];
   const I = info(d); if (!I) throw new Error('Yechimni o‘qib bo‘lmadi: ' + id);
   const draw = I.goal === 'd', title = draw ? 'Oq yuradi — durang' : 'Oq yuradi va yutadi', hint = draw ? 'Durangni toping' : I.wm + ' yurishda';
   const A = await assets(I.lvl, title), END = await endCard(I.goal);
