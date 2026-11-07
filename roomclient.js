@@ -831,7 +831,29 @@
     }
 
     // 🤝 o'zaro natija (lidraughts uslubida): oxirgi 10 o'yin va umumiy hisob
-    function drawH2H(topColor, bottomColor) {
+    window.__h2hAdm = false;
+  function h2hHdr() { return { 'x-init-data': (window.Telegram && Telegram.WebApp && Telegram.WebApp.initData) || '' }; }
+  try { fetch('/api/h2hreset', { headers: h2hHdr() }).then(function (r) { return r.json(); }).then(function (j) { window.__h2hAdm = !!(j && j.admin); }).catch(function () {}); } catch (x) {}
+  function h2hBtn() {
+    if (!(st.botUid && window.__h2hAdm)) return '';
+    var S = 'background:none;border:0;color:#ffb4b4;font-size:12px;padding:4px 2px';
+    return '<div style="display:flex;justify-content:flex-end;gap:14px;margin-top:2px"><button data-h2h="one" style="' + S + '">🗑 Shu bot</button><button data-h2h="all" style="' + S + '">🗑 Hammasi</button></div>';
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest ? e.target.closest('[data-h2h]') : null;
+    if (!b) return;
+    var one = b.getAttribute('data-h2h') === 'one';
+    var msg = (one ? 'Shu bot bilan hisob' : 'Hamma botlar bilan hisob') + ' o‘chiriladi. Qaytarib bo‘lmaydi. Davom etasizmi?';
+    function go() {
+      fetch('/api/h2hreset' + (one && st.botUid ? '/' + encodeURIComponent(st.botUid) : ''), { method: 'POST', headers: h2hHdr() })
+        .then(function (r) { return r.json(); })
+        .then(function (j) { if (j && j.ok) { st.h2h = null; var el = document.getElementById('rcH2H'); if (el) el.style.display = 'none'; } })
+        .catch(function () {});
+    }
+    try { var tg = window.Telegram && Telegram.WebApp; if (tg && tg.showConfirm) { tg.showConfirm(msg, function (ok) { if (ok) go(); }); return; } } catch (x) {}
+    if (confirm(msg)) go();
+  });
+  function drawH2H(topColor, bottomColor) {
       var el = document.getElementById("rcH2H"), h = st.h2h;
       if (!h || !h.n) { if (el) el.style.display = "none"; return; }
       if (!el) {
@@ -847,7 +869,7 @@
         return '<div style="display:flex;align-items:center;gap:2px;padding:3px 0"><span style="display:flex;gap:2px;flex:1;min-width:0;overflow:hidden">' + cells + '</span>' +
           '<b style="min-width:42px;text-align:center;background:#262b5a;border-radius:6px;padding:2px 4px;margin:0 6px">' + fmt(h[color]) + '</b><span style="max-width:40%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.85">' + String(nm).replace(/[<>&]/g, "") + "</span></div>";
       }
-      el.innerHTML = '<div style="font-size:11px;opacity:.6;margin-bottom:2px">🤝 O‘zaro natija · ' + h.n + ' o‘yin</div>' + row(topColor) + '<div style="height:1px;background:#262b5a"></div>' + row(bottomColor);
+      el.innerHTML = '<div style="font-size:11px;opacity:.6;margin-bottom:2px">🤝 O‘zaro natija · ' + h.n + ' o‘yin</div>' + row(topColor) + '<div style="height:1px;background:#262b5a"></div>' + row(bottomColor) + h2hBtn();
     }
     function render() {
       var fl = flipped();
@@ -1375,7 +1397,7 @@
         st.spectators = m.spectators || 0;
         st.specNames = m.spectatorNames || [];
         st.gamesTotal = m.gamesTotal || 1; st.played = m.played || 0; st.seriesScore = m.seriesScore || null;
-        st.seriesDone = !!m.seriesDone; st.nextIn = !!m.nextIn; st.rematch = m.rematch || null; st.casual = !!m.casual; st.voice = !!m.voice; st.voiceSaid = m.voiceSaid || null; st.vsBot = !!m.vsBot; st.etude = m.etude || null; st.h2h = m.h2h || null; try { var _bk = "spBotRoom:" + roomId; if (st.vsBot) localStorage.setItem(_bk, "1"); else if (localStorage.getItem(_bk) === "1") { localStorage.removeItem(_bk); alert("Server qayta ishga tushdi, bot bilan o‘yin uzildi. Zalga qaytasiz."); location.href = location.pathname; return; } } catch (e) {} try { renderChat(); } catch (e) {} st.botStarted = !!m.botStarted; st.srvBot = !!m.srvBot; st.botColor = m.botColor || null; st.botSecs = Number(m.botSecs) > 0 ? Number(m.botSecs) : 1.2; st.botBlunder = Number(m.botBlunder) || 0;
+        st.seriesDone = !!m.seriesDone; st.nextIn = !!m.nextIn; st.rematch = m.rematch || null; st.casual = !!m.casual; st.voice = !!m.voice; st.botUid = m.botUid || null; st.voiceSaid = m.voiceSaid || null; st.vsBot = !!m.vsBot; st.etude = m.etude || null; st.h2h = m.h2h || null; try { var _bk = "spBotRoom:" + roomId; if (st.vsBot) localStorage.setItem(_bk, "1"); else if (localStorage.getItem(_bk) === "1") { localStorage.removeItem(_bk); alert("Server qayta ishga tushdi, bot bilan o‘yin uzildi. Zalga qaytasiz."); location.href = location.pathname; return; } } catch (e) {} try { renderChat(); } catch (e) {} st.botStarted = !!m.botStarted; st.srvBot = !!m.srvBot; st.botColor = m.botColor || null; st.botSecs = Number(m.botSecs) > 0 ? Number(m.botSecs) : 1.2; st.botBlunder = Number(m.botBlunder) || 0;
         var openNew = (m.opening ? m.opening.id : null) !== (st.opening ? st.opening.id : null);
         st.opening = m.opening || null;
         var same = !openNew && st.moves.length === (m.moves || []).length && st.turn === m.turn;

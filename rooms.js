@@ -133,7 +133,7 @@ function createRooms({ send, clients, onFinish }) {
       incMs: room.incMs,
       tc: room.tc,
       tcs: room.vsBot ? BOT_TCS : Object.keys(TCS).filter(k => k !== "0.5+0" && k !== "7+5"),
-      vsBot: !!room.vsBot, etude: room.etude || null, botStarted: !!room.botStarted, botColor: botColorOf(room),
+      vsBot: !!room.vsBot, etude: room.etude || null, botUid: (room.vsBot ? ((botColorOf(room) === 'white' ? room.white : room.black) || {}).uid : null) || null, botStarted: !!room.botStarted, botColor: botColorOf(room),
       srvBot: srvBotOn(room), botSecs: room.botCfg ? room.botCfg.secs : 1.2, botBlunder: room.botCfg ? room.botCfg.blunder : 0,
       arena: !!room.arena, noBerserk: !!room.noBerserk, voice: !!room.voice, voiceSaid: room.voiceSaid || null,
       opening: room.opening,

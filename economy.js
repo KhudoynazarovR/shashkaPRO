@@ -303,6 +303,23 @@ function handle(req, res, url) {
     send(res, 200, { day: _dk, top: _rows.slice(0, 3), me: _pd && _pd.d === _dk ? (_pd.c[String(_tg.id)] || 0) : 0 });
     return true;
   }
+  if (p.indexOf('/api/h2hreset') === 0) {
+    const _ht = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
+    const _hadm = !!(_ht && isAdmin(_ht.id));
+    if (req.method === 'GET') { send(res, 200, { admin: _hadm }); return true; }
+    if (req.method === 'POST') {
+      if (!_hadm) { send(res, 403, { error: 'admin emassiz' }); return true; }
+      const _sub = p.slice('/api/h2hreset'.length).replace(/^\//, '');
+      const _hu = store.users()[String(_ht.id)]; let _hn = 0;
+      if (_hu && _hu.h2h) {
+        if (_sub) { if (/^bot(_[a-z]+)?$/.test(_sub) && _hu.h2h[_sub]) { delete _hu.h2h[_sub]; _hn = 1; } }
+        else for (const k of Object.keys(_hu.h2h)) if (/^bot(_|$)/.test(k)) { delete _hu.h2h[k]; _hn++; }
+      }
+      store.save();
+      send(res, 200, { ok: true, cleared: _hn });
+      return true;
+    }
+  }
   if (p === '/api/arena') {
     const _ar = require('./botarena.js');
     const _t = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
