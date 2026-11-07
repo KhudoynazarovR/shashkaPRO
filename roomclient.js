@@ -897,7 +897,7 @@
       if (!st.finished && !st.vsBot && st.joined && bothIn() && (st.moves || []).length < 2) { var _fk = st.moves.length + ":" + st.turn; if (st._fmK !== _fk) { st._fmK = _fk; st._fmAt = Date.now(); } } else { st._fmK = null; st._fmAt = 0; }
       if (!st._fmIv) st._fmIv = setInterval(function () {
         var el = document.getElementById("rcFM");
-        if (!st._fmAt || st.finished) { if (el) el.style.display = "none"; return; }
+        if (true) { if (el) el.style.display = "none"; return; }
         var left = Math.max(0, Math.ceil(15 - (Date.now() - st._fmAt) / 1000));
         if (!el) { el = document.createElement("div"); el.id = "rcFM"; document.body.appendChild(el); }
         var br = elBoard.getBoundingClientRect(), mine = st.turn === st.color;
@@ -1328,14 +1328,14 @@
         var ae = document.getElementById("spAE"); if (ae && !st.finished) ae.remove();
         var bar = document.getElementById("spFM");
         var turn = st.moves.length % 2 === 0 ? "white" : "black";
-        var on = st.arena && !st.finished && st.moves.length < 2 && st.color === turn && bothIn();
+        var on = !st.finished && st.moves.length < 2 && bothIn() && st.joined && (st.arena || !st.vsBot);
         if (!on) { if (bar) bar.remove(); _fmKey = -1; _fmLast = -1; return; }
         if (_fmKey !== st.moves.length) { _fmKey = st.moves.length; _fmT0 = Date.now(); _fmLast = -1; }
         var left = Math.max(0, 15 - Math.floor((Date.now() - _fmT0) / 1000));
         if (!bar) { bar = document.createElement("div"); bar.id = "spFM"; bar.style.cssText = "position:fixed;left:0;right:0;bottom:84px;z-index:2147482000;text-align:center;color:#fff;font:600 15px Arial,sans-serif;padding:8px"; document.body.appendChild(bar); }
-        bar.style.background = left <= 5 ? "#cf2a2a" : "#629924";
-        bar.innerHTML = "<b>" + left + "</b> soniya birinchi yurishga";
-        if (left <= 5 && left > 0 && left !== _fmLast) spBeep();
+        bar.style.bottom = (st.color === turn) ? "84px" : "auto"; bar.style.top = (st.color === turn) ? "auto" : "0"; bar.style.background = left <= 5 ? "#cf2a2a" : "#629924";
+        bar.innerHTML = ((st.color === turn || st.color === "spectator") ? "" : "Raqib: ") + "<b>" + left + "</b> soniya birinchi yurishga";
+        if (left <= 5 && left > 0 && left !== _fmLast && st.color === turn) spBeep();
         _fmLast = left;
       } catch (e) {}
     }, 250);
