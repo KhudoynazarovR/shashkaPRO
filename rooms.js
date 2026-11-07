@@ -177,7 +177,7 @@ function createRooms({ send, clients, onFinish }) {
     room.clock = { white: room.timeMs, black: room.timeMs };
     room.berserk = { white: false, black: false };
     room.drawOffer = null; room.offerPly = { white: -1, black: -1 };
-    room.dr = null; room.drawText = null; // yangi o'yin: durang sanog'i noldan
+    room.dr = null; room.drawText = null; room.eloD = null; // yangi o'yin: durang sanog'i noldan
     room.turnStartedAt = 0; room.rematch = null; room.lastActive = Date.now();
     room.turn = room.opening && room.opening.side === "b" ? "black" : "white";
     room.first = room.turn;
@@ -307,6 +307,7 @@ function createRooms({ send, clients, onFinish }) {
     broadcast(room, { type: "roomFinished", roomId: room.id, winner, reason: room.reason, clock: room.clock, text: room.drawText || undefined }); try { require('./gcard.js').touch(room); } catch (e) {} try { require('./grp.js').roomFinished(room); } catch (e) {} try { afterFinish(room, winner); } catch (e) { console.error("[afterFinish]", e); }
     if (typeof onFinish === "function") {
       try { onFinish(room); } catch (e) { console.error("[onFinish]", e); }
+      setTimeout(function () { try { if (room.eloD) broadcast(room, { type: "roomElo", roomId: room.id, eloD: room.eloD, wu: room.white && room.white.uid, bu: room.black && room.black.uid }); } catch (e) {} }, 400);
     }
   }
 

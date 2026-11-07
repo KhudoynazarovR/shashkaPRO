@@ -22,6 +22,7 @@ function record(whiteId, blackId, winner) {
   const w = user(whiteId), b = user(blackId);
   if (!w || !b || w === b) return;
   const sw = winner === 'white' ? 1 : winner === 'black' ? 0 : 0.5;
+  const w0 = w.elo || 1000, b0 = b.elo || 1000;
   const ew = exp(w.elo || 1000, b.elo || 1000);
   w.elo = Math.max(100, Math.round((w.elo || 1000) + K * (sw - ew)));
   b.elo = Math.max(100, Math.round((b.elo || 1000) + K * ((1 - sw) - (1 - ew))));
@@ -32,6 +33,7 @@ function record(whiteId, blackId, winner) {
   try { require('./season.js').onGame(String(whiteId), String(blackId)); } catch (e) { console.log('[season]', e.message); }
   try { const A = require('./ach.js'); A.sync(whiteId); A.sync(blackId); } catch (e) { console.log('[ach]', e.message); }
   store.save();
+  return { white: w.elo - w0, black: b.elo - b0, we: w.elo, be: b.elo };
 }
 
 module.exports = { record };

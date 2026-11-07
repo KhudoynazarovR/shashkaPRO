@@ -10,7 +10,7 @@ const clubsApi = require('./clubs');
 const friends = new Map();
 const MIN_REWARD_PLIES = Number(process.env.REWARD_MIN_PLIES || 8);
 function payWin(room, whiteUid, blackUid, tid) {
-  if (!room.noshowBoth && room.reason !== 'noshow' && (room.plies || 0) >= MIN_REWARD_PLIES) { require('./stats').record(whiteUid, blackUid, room.winner); try { require('./cheat.js').onFinish(room); } catch (e) {} }
+  if (!room.noshowBoth && room.reason !== 'noshow' && (room.plies || 0) >= MIN_REWARD_PLIES) { { const _d = require('./stats').record(whiteUid, blackUid, room.winner); if (_d) room.eloD = _d; } try { require('./cheat.js').onFinish(room); } catch (e) {} }
   if (room.noshowBoth || room.reason === 'noshow' || (room.plies || 0) < MIN_REWARD_PLIES) return;
   if (room.winner === 'white') economy.rewardWin(whiteUid, blackUid, tid);
   else if (room.winner === 'black') economy.rewardWin(blackUid, whiteUid, tid);

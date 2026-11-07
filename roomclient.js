@@ -1601,3 +1601,56 @@
     } catch (e) { fallback(); }
   };
 })();
+
+/* ELODELTA — o'yin tugagach reyting o'zgarishi (yashil +N / qizil −N) */
+;(function(){
+if(window.__eloDelta)return;window.__eloDelta=1;
+var last=null,iv=null;
+function myId(){try{var u=window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initDataUnsafe&&Telegram.WebApp.initDataUnsafe.user;return u?String(u.id):''}catch(e){return ''}}
+function clear(){[].forEach.call(document.querySelectorAll('.eloDx,.eloDp'),function(e){e.remove()})}
+function inl(){
+  if(!last||document.querySelector('.eloDx'))return;
+  var n1=last.e,n0=last.e-last.d;
+  var c=[].filter.call(document.querySelectorAll('span,b,div'),function(e){
+    if(e.children.length)return false;
+    var m=/^[★⭐]?\s*(\d{3,4})$/.exec((e.textContent||'').trim());
+    return m&&(+m[1]===n1||+m[1]===n0);
+  });
+  var e=c[c.length-1];if(!e)return;
+  var s=document.createElement('b');s.className='eloDx';
+  s.style.cssText='color:'+last.col+';margin-left:6px;font-weight:800';
+  s.textContent=last.txt;
+  e.insertAdjacentElement('afterend',s);
+}
+function got(m){
+  var id=myId(),side=String(m.wu)===id?'white':String(m.bu)===id?'black':null;
+  if(!side||!m.eloD)return;
+  var d=m.eloD[side],ne=side==='white'?m.eloD.we:m.eloD.be;
+  if(typeof d!=='number')return;
+  var col=d>0?'#4ade80':d<0?'#f87171':'#cfcfcf',txt=(d>0?'+':d<0?'−':'±')+Math.abs(d);
+  last={d:d,e:ne,col:col,txt:txt};
+  clear();
+  var p=document.createElement('div');p.className='eloDp';
+  p.style.cssText='position:fixed;left:50%;top:10px;transform:translateX(-50%);z-index:99992;background:#1f1e1c;border:1px solid '+col+';color:'+col+';padding:8px 16px;border-radius:12px;font:800 18px system-ui,sans-serif;pointer-events:none;white-space:nowrap';
+  p.textContent='⭐ '+(ne-d)+' → '+ne+'  ('+txt+')';
+  document.body.appendChild(p);
+  setTimeout(function(){p.remove()},7000);
+  if(iv)clearInterval(iv);
+  var t0=Date.now();
+  iv=setInterval(function(){inl();if(Date.now()-t0>120000){clearInterval(iv);clear();last=null}},500);
+}
+var S=WebSocket.prototype.send;
+WebSocket.prototype.send=function(){
+  if(!this.__eloH){
+    this.__eloH=1;
+    this.addEventListener('message',function(ev){
+      try{
+        if(typeof ev.data!=='string'||ev.data.indexOf('"roomElo"')<0)return;
+        var m=JSON.parse(ev.data);
+        if(m&&m.type==='roomElo')got(m);
+      }catch(e){}
+    });
+  }
+  return S.apply(this,arguments);
+};
+})();
