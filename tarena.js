@@ -159,7 +159,7 @@
     bs[1].disabled = bs[2].disabled = page <= 0; bs[3].disabled = bs[4].disabled = page >= n - 1; bs[0].disabled = mi < 0;
     var jb = '';
     if (t.status !== 'finished' && !t.ending) {
-      if (t.status === 'reg' && String(t.creatorUid) === u) jb += '<button class="taJ s" data-a="start">▶ BOSHLASH</button> ';
+      if (t.status === 'reg' && !t.startAt && String(t.creatorUid) === u) jb += '<button class="taJ s" data-a="start">▶ BOSHLASH</button> ';
       if (!mp || mp.withdrawn) jb += '<button class="taJ" data-a="join">▶ QATNASHISH</button>';
       else jb += t.status === 'running' ? '<button class="taJ p" data-a="pause">⏸ PAUZA</button>' : '<button class="taJ p" data-a="leave">🚪 CHIQISH</button>';
     }
