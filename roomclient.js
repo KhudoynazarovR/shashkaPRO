@@ -577,7 +577,7 @@
       ex.innerHTML = "";
       var spec = st.color === "spectator", ser = (st.gamesTotal || 1) > 1;
       function line(t) { var d = document.createElement("div"); d.style.margin = "4px 0"; d.textContent = t; ex.appendChild(d); }
-      function btn(t, fn) { var b = document.createElement("button"); b.textContent = t; b.style.margin = "3px"; b.onclick = fn; ex.appendChild(b); }
+      function btn(t, fn) { var b = document.createElement("button"); b.textContent = t; b.style.margin = "3px"; b.onclick = fn; ex.appendChild(b); return b; }
       if (ser) {
         var sc = st.seriesScore || { white: 0, black: 0 };
         var no = Math.min((st.played || 0) + (st.finished ? 0 : 1), st.gamesTotal);
@@ -593,7 +593,7 @@
           btn("✅ Qabul", function () { send({ type: "roomRematch", roomId: roomId }); });
           btn("❌ Rad", function () { send({ type: "roomRematchNo", roomId: roomId }); });
         } else {
-          btn("🔁 Qayta o‘ynash", function () { send({ type: "roomRematch", roomId: roomId }); });
+          var _rb = btn("🔁 Qayta o‘ynash", function () { send({ type: "roomRematch", roomId: roomId }); }); _rb.style.cssText = "margin:3px;background:#5c9a2e;color:#fff;border:0;border-radius:10px;padding:10px 20px;font-size:16px;font-weight:bold;box-shadow:0 3px 0 #3e6b1f"; ex.insertBefore(_rb, ex.firstChild);
         }
       }
       if (!spec && st.stake && st.finished && st.winner && st.winner !== "draw" && st.winner !== st.color && !st.vsBot && (st.moves || []).length >= 2 && window.lbStakeRematch && !st._stRm) {
@@ -601,7 +601,7 @@
         btn("🔁 Revansh: 2× tikish (" + s2 + " 🪙)", function () { st._stRm = true; window.lbStakeRematch(roomId); this.disabled = true; this.textContent = "⏳ Revansh taklifi yuborildi"; });
       }
       if (!spec && !st.etude && st.finished && st.winner === st.color && window.spShareCard) btn("📸 G‘alabani ulashish", function () { var opp = st.color === "white" ? st.black : st.white; window.spShareCard({ theme: "win", title: "G‘ALABA!", big: "🏆", sub: "Raqib: " + (st.vsBot ? "🤖 " : "") + (opp || ""), sub2: (st.tc ? "⏱ " + st.tc : "") + (st.reason === "timeout" ? " · vaqt bo‘yicha" : ""), cap: "🏆 ShashkaPRO’da " + (opp || "raqib") + "ni yutdim!" }); });
-      if (!spec && !st.etude && st.finished && (st.moves || []).length >= 4 && tg && tg.initData) btn("🎞 GIF qilib ulashish", function () {   // bot GIF yuboradi — u yerdan istalgan chatga ulashiladi
+      if (false) btn("🎞 GIF qilib ulashish", function () {   // bot GIF yuboradi — u yerdan istalgan chatga ulashiladi
         var b = this; b.disabled = true; b.textContent = "⏳ GIF tayyorlanmoqda…";
         fetch("/api/gif", { method: "POST", headers: { "Content-Type": "application/json", "x-init-data": tg.initData }, body: JSON.stringify({ roomId: roomId }) })
           .then(function (r) { return r.json(); }).then(function (r) { b.textContent = r.ok ? "✅ GIF botga yuborildi — u yerdan ulashing" : "⚠️ " + (r.error || "Xatolik"); if (!r.ok) b.disabled = false; })
@@ -1373,7 +1373,7 @@
       bt.textContent = "Qolish";
       bt.style.cssText = "background:#3b3f8f;color:#fff;border:0;border-radius:8px;padding:6px 12px;font-size:14px";
       bt.onclick = autoZalStop;
-      _azBox.appendChild(tx); _azBox.appendChild(bt); document.body.appendChild(_azBox);
+      _azBox.appendChild(tx); _azBox.appendChild(bt); document.body.appendChild(_azBox); var _azH = function () { autoZalStop(); document.removeEventListener("pointerdown", _azH, true); }; setTimeout(function () { document.addEventListener("pointerdown", _azH, true); }, 600);
       function upd() { tx.textContent = "🏟 " + n + " soniyadan keyin zalga qaytasiz"; }
       upd();
       _azT = setInterval(function () {
