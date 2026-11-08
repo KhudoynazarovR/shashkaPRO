@@ -86,8 +86,9 @@ function list(uid) {
 function act(me, m) {
   const uid = me.uid, name = me.name;
   const c = m.cid ? clubs.get(String(m.cid)) : null;
-  const adm = c && c.admins.has(uid);
-  if (c && c.id === SYS) return { error: 'Botlar klubi — tizim klubi, uni o‘zgartirib bo‘lmaydi' };
+  const sysAdm = !!(c && c.id === SYS && isEnvAdm(uid));
+  const adm = (c && c.admins.has(uid)) || sysAdm;
+  if (c && c.id === SYS && !(sysAdm && m.type === 'lbClubImg')) return { error: 'Botlar klubi — tizim klubi, uni o‘zgartirib bo‘lmaydi' };
   switch (m.type) {
     case 'lbClubCreate': {
       const nm = clean(m.name, 40);
