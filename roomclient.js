@@ -753,7 +753,7 @@
       var _tx = document.createElement("span"); _tx.style.cssText = "overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0";
       _tx.textContent = nameLine(color) + (st.berserk && st.berserk[color] ? " ⚡" : "");
       l.appendChild(_tx);
-      if (_inf && _inf.elo) { var _eb = document.createElement("span"); _eb.textContent = "⭐" + _inf.elo; _eb.style.cssText = "color:#ffd86b;font-size:13px;font-weight:bold;flex:none"; l.appendChild(_eb); }
+      if (_inf && _inf.elo) { var _eb = document.createElement("span"); _eb.textContent = _inf.elo; _eb.style.cssText = "color:#9aa3b5;font-size:14px;font-weight:600;flex:none;margin-left:2px"; l.appendChild(_eb); }
       var r = document.createElement("span");
       r.setAttribute("data-clock", color);
       r.style.cssText = "font:700 26px/1 ui-monospace,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums;min-width:96px;text-align:center;padding:8px 12px;border-radius:8px;background:#1c2733;color:#9a9fb5;flex:none";
@@ -1618,7 +1618,7 @@ function inl(){
   });
   var e=c[c.length-1];if(!e)return;
   var s=document.createElement('b');s.className='eloDx';
-  s.style.cssText='color:'+last.col+';margin-left:6px;font-weight:800';
+  s.style.cssText='color:'+last.col+';margin-left:4px;font-weight:700;font-size:13px;flex:none;white-space:nowrap';
   s.textContent=last.txt;
   e.insertAdjacentElement('afterend',s);
 }
@@ -1632,7 +1632,7 @@ function got(m){
   clear();
   var p=document.createElement('div');p.className='eloDp';
   p.style.cssText='position:fixed;left:50%;top:10px;transform:translateX(-50%);z-index:99992;background:#1f1e1c;border:1px solid '+col+';color:'+col+';padding:8px 16px;border-radius:12px;font:800 18px system-ui,sans-serif;pointer-events:none;white-space:nowrap';
-  p.textContent='⭐ '+(ne-d)+' → '+ne+'  ('+txt+')';
+  p.textContent='';p.style.display='none';
   document.body.appendChild(p);
   setTimeout(function(){p.remove()},7000);
   if(iv)clearInterval(iv);
