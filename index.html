@@ -638,7 +638,9 @@ function undo(){if(G.edit)return;G.tok++;let t=G.cur-1;while(t>=0&&G.mode==='ai'
 function redo(){let t=G.cur+1;while(t<G.pos.length-1&&G.mode==='ai'&&sideAt(t)!==G.me)t++;go(t);kick()}
 function resign(){if(G.over||G.edit)return;if(Date.now()-G.tapR>2500){G.tapR=Date.now();return toast(T('tap'))}end(G.mode==='ai'?(G.me>0?'b':'w'):(sideAt(G.cur)>0?'b':'w'))}
 function offerDraw(){if(G.over||G.edit)return;if(G.mode==='local'){toast(T('ok'));return end('d')}
- const r=bestMove(G.pos[G.cur],-G.me,2,300);const aiScore=r?r.v*-G.me:0;if(aiScore<=30){toast(T('ok'));end('d')}else toast(T('no'))}
+const b=G.pos[G.cur];let w=0,k=0;for(let i=0;i<64;i++){if(b[i]>0)w++;else if(b[i]<0)k++}
+if(w>3||k>3){toast(T('no'));return}
+const r=bestMove(b,-G.me,4,1200);const aiScore=r?r.v*-G.me:0;if(Math.abs(aiScore)<=30){toast(T('ok'));end('d')}else toast(T('no'))}
 function hint(){if(G.over||G.edit||G.pad||!myTurn())return;const r=bestMove(G.pos[G.cur],sideAt(G.cur),3,1200);if(r){G.hint=[r.m.path[0],r.m.path[r.m.path.length-1]];render()}}
 function analyze(){if(+S.lvl>=5)return analyze6();const b=G.pos[G.cur],s=sideAt(G.cur);$('an').textContent='…';setTimeout(()=>{const r=bestMove(b,s,4,2500);
  if(!r){$('an').textContent='—';return}G.hint=[r.m.path[0],r.m.path[r.m.path.length-1]];$('an').textContent=`${(r.v/100).toFixed(2)} · d${r.d} · ${nodes} nodes · ${fmt(r.m)}`;render()},30)}
