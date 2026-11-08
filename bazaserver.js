@@ -21,7 +21,7 @@ function load() {
 }
 function nm(k, i) { return (NM && NM[k] && NM[k][i]) || ''; }
 const RES = { 1: '1-0', 2: '½-½', 3: '0-1' };
-function brief(i) { const g = G[i]; return { id: i, q: G[i].o ? 1 : 0, w: nm('n', g.w) || '?', b: nm('n', g.b) || '?', t: nm('t', g.t), s: nm('s', g.s), y: g.y || null, r: RES[g.r] || '*', n: g.m ? g.m.split(' ').length : 0 }; }
+function brief(i) { const g = G[i]; return { id: i, q: G[i].o ? 1 : 0, q: G[i].o ? 1 : 0, w: nm('n', g.w) || '?', b: nm('n', g.b) || '?', t: nm('t', g.t), s: nm('s', g.s), y: g.y || null, r: RES[g.r] || '*', n: g.m ? g.m.split(' ').length : 0 }; }
 // lotin/kirill farqi bo'lmasin: qidiruvda ikkala yozuvni ham sinaymiz
 const TR = { a: 'а', b: 'б', v: 'в', g: 'г', d: 'д', e: 'е', z: 'з', i: 'и', y: 'й', k: 'к', l: 'л', m: 'м', n: 'н', o: 'о', p: 'п', r: 'р', s: 'с', t: 'т', u: 'у', f: 'ф', h: 'х', c: 'ц' };
 const TR2 = [['sh', 'ш'], ['ch', 'ч'], ['zh', 'ж'], ['yu', 'ю'], ['ya', 'я'], ['kh', 'х'], ['ts', 'ц']];
@@ -41,6 +41,19 @@ function search(q, res) {
   cacheQ = key; cacheR = out; return out;
 }
 function handle(req, res, url, send) {
+  if (url.searchParams.get('set') !== 'd') return handle0(req, res, url, send);
+  try { load(); loadD(); } catch (e) { send(res, 500, { error: 'baza yuklanmadi' }); return true; }
+  const sg = G, sl = LC; G = GD; LC = LCD; cacheQ = ''; cacheR = null;
+  try { return handle0(req, res, url, send); } finally { G = sg; LC = sl; cacheQ = ''; cacheR = null; }
+}
+let GD = null, LCD = null;
+function loadD() {
+  if (GD) return;
+  GD = []; LCD = [];
+  let t = ''; try { t = fs.readFileSync(path.join(__dirname, 'partiyalar', 'dasturlar.txt'), 'utf8'); } catch (e) {}
+  for (const l of t.split('\n')) { if (!l) continue; const f = l.split('\t'); const g = { w: +f[0], b: +f[1], t: +f[2], s: +f[3], y: +f[4], r: +f[5], m: f[6] || '', o: f[7] || '' }; GD.push(g); LCD.push((nm('n', g.w) + ' | ' + nm('n', g.b) + ' | ' + nm('t', g.t) + ' | ' + nm('s', g.s) + ' | ' + (g.y || '')).toLowerCase()); }
+}
+function handle0(req, res, url, send) {
   const p = url.pathname;
   try { load(); } catch (e) { send(res, 500, { error: 'baza yuklanmadi' }); return true; }
   if (p === '/api/baza/list') {

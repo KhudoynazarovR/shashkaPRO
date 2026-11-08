@@ -52,6 +52,7 @@
 
   // ---------- ro'yxat
   function rsCls(r) { return r === '1-0' ? 'w' : r === '0-1' ? 'b' : r === '½-½' ? 'd' : ''; }
+  var bset = '', _pk = null;
   function list() {
     stopAuto(); cur = null; shell();
     var h = '<div class="tp"><button data-x="1">‹</button><b>📚 Partiyalar bazasi</b><button data-sk="1" aria-label="Doska">🎨</button></div>' +
@@ -60,7 +61,8 @@
       '<div class="ch">' + [['', 'Hammasi'], ['1', '⚪ Oq yutgan'], ['2', '½ Durang'], ['3', '⚫ Qora yutgan']].map(function (x) { return '<button data-r="' + x[0] + '"' + (res === x[0] ? ' class="on"' : '') + '>' + x[1] + '</button>'; }).join('') + '</div>' +
       '<div class="sub">' + (loading && !items.length ? 'Yuklanmoqda…' : 'Topildi: ' + fmt(total)) + '</div><div id="bzL">';
     var _pk = null;
-    items.forEach(function (g) { if (g.t === 'Dasturlar partiyalari · 09.02.2011') { if (_pk !== g.q) { _pk = g.q; h += '<div class="sub"><b>' + (g.q ? '🎲 Qura' : '📋 Standart') + '</b></div>'; } } else _pk = null;
+    _pk = null;
+    items.forEach(function (g) { if (bset === 'd' && _pk !== g.q) { _pk = g.q; h += '<div class="sub"><b>' + (g.q ? '🎲 Qura' : '📋 Standart') + '</b></div>'; } if (g.t === 'Dasturlar partiyalari · 09.02.2011') { if (_pk !== g.q) { _pk = g.q; h += '<div class="sub"><b>' + (g.q ? '🎲 Qura' : '📋 Standart') + '</b></div>'; } } else _pk = null;
       h += '<button class="it" data-id="' + g.id + '"><span class="rs ' + rsCls(g.r) + '">' + esc(g.r) + '</span><span class="tx"><b>' + esc(g.w) + ' – ' + esc(g.b) + '</b><small>' +
         esc([g.t, g.s, g.y].filter(Boolean).join(' · ') || 'Turnir ko‘rsatilmagan') + ' · ' + Math.ceil(g.n / 2) + ' yurish</small></span>›</button>';
     });
@@ -70,6 +72,7 @@
     ov.querySelector('[data-x]').onclick = close;
     ov.querySelector('[data-sk]').onclick = function () { skinOpen(); };
     var inp = ov.querySelector('.sr');
+    var dk = document.createElement('button'); dk.style.cssText = 'display:block;width:100%;margin:0 0 10px;padding:12px;border:0;border-radius:12px;background:#2d2775;color:#fff;font-size:15px;font-weight:700'; dk.textContent = bset === 'd' ? '← Asosiy baza' : '📁 Dasturlar partiyalari (35)'; dk.onclick = function () { bset = bset === 'd' ? '' : 'd'; q = ''; res = ''; load(true); }; inp.parentNode.insertBefore(dk, inp);
     inp.oninput = function () { clearTimeout(qT); qT = setTimeout(function () { q = inp.value.trim(); load(true); }, 450); };
     Array.prototype.forEach.call(ov.querySelectorAll('[data-r]'), function (b) { b.onclick = function () { res = b.getAttribute('data-r'); load(true); }; });
     Array.prototype.forEach.call(ov.querySelectorAll('[data-id]'), function (b) { b.onclick = function () { scrollY = ov.scrollTop; openGame(+b.getAttribute('data-id')); }; });
@@ -78,7 +81,7 @@
   function load(reset) {
     if (reset) { page = 0; items = []; }
     loading = true; if (reset) list();
-    fetch('/api/baza/list?q=' + encodeURIComponent(q) + '&res=' + res + '&page=' + page, { headers: hdr() }).then(function (r) { return r.json(); }).then(function (j) {
+    fetch('/api/baza/list?set=' + bset + '&q=' + encodeURIComponent(q) + '&res=' + res + '&page=' + page, { headers: hdr() }).then(function (r) { return r.json(); }).then(function (j) {
       loading = false; if (!ov || cur) return;
       total = j.total || 0; all = j.all || all; items = items.concat(j.items || []);
       var y = ov.scrollTop, focus = document.activeElement && document.activeElement.classList.contains('sr');
@@ -111,7 +114,7 @@
   function openGame(id) {
     stopAuto(); shell(); ov.innerHTML = '<div class="tp"><button data-x="1">‹</button><b>Yuklanmoqda…</b></div>';
     ov.querySelector('[data-x]').onclick = back;
-    fetch('/api/baza/game?id=' + id, { headers: hdr() }).then(function (r) { return r.json(); }).then(function (g) {
+    fetch('/api/baza/game?set=' + bset + '&id=' + id, { headers: hdr() }).then(function (r) { return r.json(); }).then(function (g) {
       if (!ov || !g || g.error) return; cur = g; openCode = g.open || ''; steps = parse(g.mv); ply = 0; flip = false; draw(); ov.scrollTop = 0;
     }).catch(function () { if (ov) ov.querySelector('.tp b').textContent = 'Server bilan aloqa yo‘q'; });
   }
