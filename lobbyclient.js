@@ -3273,7 +3273,7 @@ var css=[
 '#nxtBox2 .nxT small{display:block;color:#8fa3ff;font-size:14px;margin-top:2px}',
 '#nxtBox2 .nxA{margin-left:auto;flex:0 0 38px;height:38px;border-radius:10px;background:#1a2552;color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center}'
 ].join('');
-var st=document.createElement('style');st.id='design4Css';st.textContent=css;document.head.appendChild(st);
+var st=document.createElement('style');st.id='design4Css';st.textContent=css+'#nxtBox2 .nxRun{background:linear-gradient(180deg,#0f3a24,#08200f)!important;border-color:rgba(60,220,120,.7)!important;box-shadow:0 0 14px rgba(60,220,120,.25)}#nxtBox2 .nxRun .nxIc{background:radial-gradient(circle at 50% 40%,rgba(80,255,140,.35),#0f2a1c 70%)!important;border-color:rgba(80,255,140,.4)!important}';document.head.appendChild(st);
 function S(){try{return window.__lb?window.__lb.S:null}catch(e){return null}}
 function f2(n){return(n<10?'0':'')+n}
 function run(){
@@ -3284,13 +3284,13 @@ function run(){
   cards.forEach(function(c,i){if(i===0)c.classList.remove('d4h');else{c.classList.add('d4h');rest.push(c)}});
   function dayLbl(d){var n=new Date(),a=new Date(n.getFullYear(),n.getMonth(),n.getDate()).getTime(),b=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime(),k=Math.round((b-a)/864e5);return (k===0?'Bugun, ':k===1?'Ertaga, ':'')+f2(d.getDate())+'.'+f2(d.getMonth()+1)}
 function cdTxt(ms){var x=Math.ceil(ms/1000),dd=Math.floor(x/86400),h=Math.floor(x%86400/3600),m=Math.floor(x%3600/60),sc=x%60;return (dd?dd+' kun ':'')+f2(h)+':'+f2(m)+':'+f2(sc)}
-function nxLink(c,id){var b=c.querySelector('[data-a=tlink]');if(b){b.click();return}var base=window.TG_APP_LINK||'https://t.me/DraughtsPRObot/play';var url=base+'?startapp=lbt_'+encodeURIComponent(id);var done=function(){try{if(window.toast)window.toast('🔗 Havola nusxalandi',null,2500)}catch(x){}};if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(url).then(done,function(){prompt('Havola:',url)});else prompt('Havola:',url)}
-if(!window.__nxCd){window.__nxCd=setInterval(function(){var now=Date.now()+(window.__lbSkew||0);[].slice.call(document.querySelectorAll('.nxCd')).forEach(function(el){var left=(+el.getAttribute('data-t'))-now;el.textContent='⏳ '+(left>0?cdTxt(left):'Boshlanmoqda…')})},1000)}
+function nxLink(c,id){var base=window.TG_APP_LINK||'https://t.me/DraughtsPRObot/play';var url=base+'?startapp=lbt_'+encodeURIComponent(id);var text='Shashka PRO turniri — qo‘shiling!';var tg=window.Telegram&&window.Telegram.WebApp;if(tg&&tg.openTelegramLink){tg.openTelegramLink('https://t.me/share/url?url='+encodeURIComponent(url)+'&text='+encodeURIComponent(text));return}if(navigator.share){navigator.share({title:'ShashkaPRO',text:text,url:url}).catch(function(){});return}var done=function(){try{if(window.toast)window.toast('🔗 Havola nusxalandi',null,2500)}catch(x){}};if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(url).then(done,function(){prompt('Havola:',url)});else prompt('Havola:',url)}
+if(!window.__nxCd){window.__nxCd=setInterval(function(){var now=Date.now()+(window.__lbSkew||0);[].slice.call(document.querySelectorAll('.nxCd')).forEach(function(el){var left=(+el.getAttribute('data-t'))-now;el.textContent=(el.getAttribute('data-p')||'⏳ ')+(left>0?cdTxt(left):(el.getAttribute('data-e')||'Boshlanmoqda…'))})},1000)}
 var box=document.getElementById('nxtBox2');
   if(!rest.length){if(box)box.remove();return}
   if(!box){box=document.createElement('div');box.id='nxtBox2'}
   if(box.previousElementSibling!==el)el.insertAdjacentElement('afterend',box);
-  var sig=rest.map(function(c){return c.id}).join(',');
+  var sig=rest.map(function(c){var tid=c.id.replace('lbtc_','');var t2=null;for(var q=0;q<T.length;q++)if(String(T[q].id)===tid){t2=T[q];break}return c.id+':'+(t2?t2.status+(t2.ending?'e':'')+(t2.players?t2.players.length:0):'')}).join(',');
   if(box.getAttribute('data-sig')===sig)return;
   box.setAttribute('data-sig',sig);box.textContent='';
   var h=document.createElement('div');h.className='nxH';
@@ -3308,12 +3308,12 @@ var box=document.getElementById('nxtBox2');
     else if(t&&t.status==='running')when='O‘ynalmoqda';
     else if(t&&t.status==='finished')when='Tugagan';
                                                         else when='Boshlanish vaqti aniqlanmoqda…';
-    var it=document.createElement('div');it.className='nxI';
+    var it=document.createElement('div');it.className='nxI'+((t&&t.status==='running')?' nxRun':'');
     var ic=document.createElement('div');ic.className='nxIc';ic.textContent=(t&&t.type==='arena')?'⚡':'🏆';
     var tt=document.createElement('div');tt.className='nxT';
     var b=document.createElement('b');b.textContent=nm;
     var sm=document.createElement('small');sm.textContent='🕒 '+(sb?sb+' · ':'')+when;
-    tt.appendChild(b);tt.appendChild(sm);if(t&&t.status==='reg'&&t.startAt){var cd=document.createElement('small');cd.className='nxCd';cd.style.cssText='color:#ffd35a;font-weight:700';cd.setAttribute('data-t',t.startAt);cd.textContent='⏳ '+cdTxt(t.startAt-(Date.now()+(window.__lbSkew||0)));tt.appendChild(cd)}
+    tt.appendChild(b);if(t&&t.tc){var tcl=document.createElement('small');tcl.style.cssText='color:#cdd6ff;font-weight:700';tcl.textContent='⏱ '+t.tc+(t.type==='arena'?' · Arena':'')+(t.prize?' · 🪙 '+t.prize:'');tt.appendChild(tcl)}tt.appendChild(sm);if(t&&t.status==='reg'&&t.startAt){var cd=document.createElement('small');cd.className='nxCd';cd.style.cssText='color:#ffd35a;font-weight:700';cd.setAttribute('data-t',t.startAt);cd.textContent='⏳ '+cdTxt(t.startAt-(Date.now()+(window.__lbSkew||0)));tt.appendChild(cd)}else if(t&&t.status==='running'&&t.type==='arena'&&t.endAt&&!t.ending){var cd2=document.createElement('small');cd2.className='nxCd';cd2.style.cssText='color:#7cff9b;font-weight:700';cd2.setAttribute('data-t',t.endAt);cd2.setAttribute('data-p','🔥 Tugashiga ');cd2.setAttribute('data-e','Tugayapti…');cd2.textContent='🔥 Tugashiga '+cdTxt(t.endAt-(Date.now()+(window.__lbSkew||0)));tt.appendChild(cd2)}
     var ar=document.createElement('div');ar.className='nxA';ar.textContent='›';
     it.appendChild(ic);it.appendChild(tt);
 if(t&&(t.status==='reg'||t.status==='running')){
