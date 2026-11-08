@@ -14,7 +14,7 @@ function load() {
   G = new Array(L.length); LC = new Array(L.length);
   for (let i = 0; i < L.length; i++) {
     const f = L[i].split('\t');
-    G[i] = { w: +f[0], b: +f[1], t: +f[2], s: +f[3], y: +f[4], r: +f[5], m: f[6] || '' };
+    G[i] = { w: +f[0], b: +f[1], t: +f[2], s: +f[3], y: +f[4], r: +f[5], m: f[6] || '', o: f[7] || '' };
     LC[i] = (nm('n', G[i].w) + ' | ' + nm('n', G[i].b) + ' | ' + nm('t', G[i].t) + ' | ' + nm('s', G[i].s) + ' | ' + (G[i].y || '')).toLowerCase();
   }
   console.log('[Baza] partiyalar:', G.length);
@@ -53,7 +53,7 @@ function handle(req, res, url, send) {
   if (p === '/api/baza/game') {
     const id = +url.searchParams.get('id');
     if (!(id >= 0 && id < G.length)) { send(res, 404, { error: 'topilmadi' }); return true; }
-    send(res, 200, Object.assign(brief(id), { mv: G[id].m }));
+    send(res, 200, Object.assign(brief(id), { mv: G[id].m, open: G[id].o }));
     return true;
   }
   return false;

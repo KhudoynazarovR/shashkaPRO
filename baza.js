@@ -89,7 +89,8 @@
   // ---------- partiyani ko'rish
   function rc(ch) { var k = AL.indexOf(ch), row = k >> 2; return [7 - row, row % 2 === 0 ? 2 * (k & 3) : 2 * (k & 3) + 1]; }
   function nm(p) { return String.fromCharCode(97 + p[1]) + (8 - p[0]); }
-  function init() { var b = []; for (var r = 0; r < 8; r++) { b.push([]); for (var c = 0; c < 8; c++) b[r].push((r + c) % 2 === 1 ? (r < 3 ? 2 : r > 4 ? 1 : 0) : 0); } return b; }
+  var openCode = ''; function init() { var b = init0(); for (var i = 0; i + 1 < openCode.length; i += 2) { var f = rc(openCode.charAt(i)), z = rc(openCode.charAt(i + 1)); b[z[0]][z[1]] = b[f[0]][f[1]]; b[f[0]][f[1]] = 0; } return b; }
+  function init0() { var b = []; for (var r = 0; r < 8; r++) { b.push([]); for (var c = 0; c < 8; c++) b[r].push((r + c) % 2 === 1 ? (r < 3 ? 2 : r > 4 ? 1 : 0) : 0); } return b; }
   function hop(b, a, z) {
     var p = b[a[0]][a[1]]; b[a[0]][a[1]] = 0;
     var dr = z[0] > a[0] ? 1 : -1, dc = z[1] > a[1] ? 1 : -1, cap = false;
@@ -110,7 +111,7 @@
     stopAuto(); shell(); ov.innerHTML = '<div class="tp"><button data-x="1">‹</button><b>Yuklanmoqda…</b></div>';
     ov.querySelector('[data-x]').onclick = back;
     fetch('/api/baza/game?id=' + id, { headers: hdr() }).then(function (r) { return r.json(); }).then(function (g) {
-      if (!ov || !g || g.error) return; cur = g; steps = parse(g.mv); ply = 0; flip = false; draw(); ov.scrollTop = 0;
+      if (!ov || !g || g.error) return; cur = g; openCode = g.open || ''; steps = parse(g.mv); ply = 0; flip = false; draw(); ov.scrollTop = 0;
     }).catch(function () { if (ov) ov.querySelector('.tp b').textContent = 'Server bilan aloqa yo‘q'; });
   }
   function back() { stopAuto(); cur = null; list(); ov.scrollTop = scrollY; }
