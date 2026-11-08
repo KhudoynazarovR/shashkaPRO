@@ -175,6 +175,20 @@ function handle(req, res, url) {
   if (p === '/api/economy' && req.method === 'GET') { send(res, 200, CFG); return true; }
   const _ADM = tg => !!(tg && (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(tg.id)));
   if (p === '/api/botadmin' && req.method === 'GET') { const tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN); send(res, 200, { admin: _ADM(tg) }); return true; }
+  if (p === '/api/botpower' && req.method === 'GET') { send(res, 200, { power: (store.db && store.db.botPower) || {} }); return true; }
+  if (p === '/api/botpower' && req.method === 'POST') {
+    const tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
+    if (!_ADM(tg)) { send(res, 403, { error: 'admin emassiz' }); return true; }
+    readBody(req, 5000, body => {
+      let j = {}; try { j = JSON.parse(body); } catch (e) {}
+      const uid = String(j.uid || ''), pct = Math.round(+j.pct);
+      if (!/^bot[a-z_]*$/.test(uid) || !store.db) { send(res, 400, { error: 'noto‘g‘ri so‘rov' }); return; }
+      const d = store.db; if (!d.botPower) d.botPower = {};
+      if (pct >= 1 && pct <= 100) d.botPower[uid] = pct; else delete d.botPower[uid];
+      store.save(); send(res, 200, { ok: 1, power: d.botPower });
+    });
+    return true;
+  }
   if (p === '/api/botedit' && req.method === 'POST') {
     const tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!_ADM(tg)) { send(res, 403, { error: 'admin emassiz' }); return true; }

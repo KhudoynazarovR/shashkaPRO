@@ -33,6 +33,13 @@ const BOTS = [
   { uid: 'bot_kingkong', name: 'King Kong BOT', secs: 15, blunder: 0, ponder: true, soon: process.env.KINGKONG_OPEN !== '1' }   // 🦍 eng kuchli: raqib o'ylayotganda ham o'ylaydi, saboqlar bazada saqlanadi
 ];
 const PREM_BOTS = new Set(['bot_champ', 'bot_monster', 'bot_terminator', 'bot_kingkong']);   // 👑 faqat Premium bilan
+function botPow(b) {   // admin belgilagan foiz (1-100) → o'ylash vaqti va tasodifiy yurish ehtimoli
+  try {
+    const d = require('./store').db, p = d && d.botPower && +d.botPower[b.uid];
+    if (p >= 1 && p <= 100) return { secs: Math.round(0.05 * Math.pow(300, p / 100) * 100) / 100, blunder: p < 70 ? Math.round((70 - p) / 70 * 0.3 * 1000) / 1000 : 0 };
+  } catch (e) {}
+  return { secs: b.secs, blunder: b.blunder };
+}
 const botByUid = uid => BOTS.find(b => b.uid === uid && !b.soon) || null;
 const botAny = uid => BOTS.find(b => b.uid === uid) || null;   // faqat admin tanlovi uchun ('soon' ham bo'ladi)
    // 'soon' — hali e'lon qilingan, o'ynab bo'lmaydi
@@ -388,7 +395,7 @@ function createLobby({ send, clients, roomsApi }) {
     const hw = o && o.color === 'black' ? false : o && o.color === 'random' ? Math.random() < 0.5 : true;
     const H = { uid: human.uid, name: human.name }, B = { uid: bot.uid, name: bot.name, clientId: 'ai_' + bot.uid };
     roomsApi.create(roomId, {
-      tc, vsBot: true, opening, botCfg: { id: bot.uid, secs: bot.secs, blunder: bot.blunder, ponder: !!bot.ponder },
+      tc, vsBot: true, opening, botCfg: Object.assign({ id: bot.uid, ponder: !!bot.ponder }, botPow(bot)),
       white: hw ? H : B,
       black: hw ? B : H
     });
@@ -805,7 +812,7 @@ function createLobby({ send, clients, roomsApi }) {
     if (w.bot || k.bot) {
       const bt = botAny((w.bot ? w : k).uid), op = t.pos === 'idf' ? pickOpening() : null;
       const side = x => x.bot ? { uid: x.uid, name: x.name, clientId: 'ai_' + x.uid } : { uid: x.uid, name: x.name };
-      roomsApi.create(roomId, { tc: t.tc, arena: true, noBerserk: true, vsBot: true, opening: op, botCfg: { id: bt.uid, secs: bt.secs, blunder: bt.blunder, ponder: !!bt.ponder }, white: side(w), black: side(k) });
+      roomsApi.create(roomId, { tc: t.tc, arena: true, noBerserk: true, vsBot: true, opening: op, botCfg: Object.assign({ id: bt.uid, ponder: !!bt.ponder }, botPow(bt)), white: side(w), black: side(k) });
     } else openRoom(roomId, t.tc, w, k, true, t.pos === 'idf' ? pickOpening() : null, t.berserk === false);
     const board = { board: t.gameNo, roomId, white: w.uid, black: k.uid, done: false, winner: null };
     t.cur.push(board);
