@@ -173,7 +173,6 @@
     { k: 'memori', t: 'Xotira', s: 'Juftliklarni toping · bot yoki do‘st bilan', r: '+10', c1: '#0f6fb0', c2: '#0a3b6b', bd: '#7cc8ff', sh: '#06243f' },
     { k: 'deb', t: 'Debyutlar', s: 'Ochilishlarni ko‘ring va yod oling', r: '', c1: '#2563eb', c2: '#1e1b6b', bd: '#8fb3ff', sh: '#120f45' },
     { k: 'trap', t: 'Debyut tuzoqlari', s: 'Xatoni jazolang · Kozirev kitobi', r: '', c1: '#e11d48', c2: '#6d0a22', bd: '#ff8fa3', sh: '#3f0614' },
-    { k: 'baza', t: 'Partiyalar bazasi', s: 'Chempionat o‘yinlari · ustalar partiyalarini tomosha qiling', r: '', c1: '#b7791f', c2: '#5c3a08', bd: '#ffd27a', sh: '#3a2404' },
     { k: 'custom', t: 'Maxsus masalalar', s: 'Daraja va papkalar bo‘yicha', r: '+25', c1: '#128ca3', c2: '#0a4d5d', bd: '#63dcee', sh: '#06303a' },
     { k: 'solve', t: 'Masalalarni yechish', s: 'Yeching, o‘sing, mukofot oling!', r: '+30', c1: '#33a13d', c2: '#135a1c', bd: '#85e589', sh: '#0b3a11' }
   ];

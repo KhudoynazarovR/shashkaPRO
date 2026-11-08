@@ -345,7 +345,7 @@ function handle(req, res, url) {
       return true;
     }
   }
-  if (p.startsWith('/api/baza/') && req.method === 'GET') { if (require('./bazaserver.js').handle(req, res, url, send)) return true; }
+  // [baza o'chirilgan]
   if (p === '/api/lidraughts/status' && req.method === 'GET') { send(res, 200, require('./lidraughts.js').status()); return true; }
   // 🃏 Memori: rekordlar va tanga
   if (p === '/api/memori/stat' && req.method === 'GET') {
