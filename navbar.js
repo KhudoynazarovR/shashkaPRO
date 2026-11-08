@@ -141,7 +141,7 @@
   document.head.appendChild(cssC);
   chip.onclick = function () { tcSheet(); };
   function chipDraw() {
-    var t = '<span style="text-align:center;line-height:1.2">⏱ ' + tcLabel(TC) + (POS === 'idf' ? '<br><small style="font-size:11px;opacity:.8">IDF 780</small>' : '') + '</span>'; if (chip._h !== t) { chip._h = t; chip.innerHTML = t; }
+    try { window.__nvTc = TC; window.__nvPos = POS; var _lt = document.getElementById('lbTc'); if (_lt && TC) { if (![].some.call(_lt.options, function (o) { return o.value === TC; })) _lt.add(new Option(TC, TC)); _lt.value = TC; } var _lp = document.getElementById('lbPos'); if (_lp && POS) _lp.value = POS; } catch (e) {} var t = '<span style="text-align:center;line-height:1.2">⏱ ' + tcLabel(TC) + (POS === 'idf' ? '<br><small style="font-size:11px;opacity:.8">IDF 780</small>' : '') + '</span>'; if (chip._h !== t) { chip._h = t; chip.innerHTML = t; }
     var cs = getComputedStyle(pb); chip.style.zIndex = cs.zIndex;
     chip.style.display = (cs.display === 'none' || cs.visibility === 'hidden') ? 'none' : 'flex';
   }

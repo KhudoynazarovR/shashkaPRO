@@ -535,7 +535,7 @@
         if (act === "stk") { var _r2 = t.closest(".lbp"), _n2 = _r2 && _r2.querySelector(".lbinf b"); window.lbStakeInvite(id, _n2 ? _n2.textContent.replace(/\s+/g, " ").trim() : "", 50); return; }
         if (act === "ch" && /^bot_(champ|monster|terminator|kingkong)$/.test(id) && !(S.me && S.me.prem)) { toast("👑 Bu bot faqat Premium uchun", null, 2500); if (window.premGo) window.premGo(); return; }
         if (act === "ch" && /^bot/.test(id) && !window.__botTc && window.spBotSetup) { var _row = t.closest(".lbp"), _nm = _row && _row.querySelector(".lbinf b"); window.spBotSetup({ uid: id, name: _nm ? _nm.textContent.replace(/\s+/g, " ").trim() : id }); }
-        else if (act === "ch") { var _bt = /^bot/.test(id) && window.__botTc ? window.__botTc : null; sendMsg({ type: "lbChallenge", toUid: id, tc: _bt || $("lbTc").value, color: _bt ? (window.__botColor || "white") : undefined, pos: _bt && window.__botPos ? window.__botPos : $("lbPos").value, games: _bt ? 1 : Number($("lbGm").value) }); window.__botTc = null; } else if (act === "cx") sendMsg({ type: "lbCancelTo", toUid: id });
+        else if (act === "ch") { var _bt = /^bot/.test(id) && window.__botTc ? window.__botTc : null; sendMsg({ type: "lbChallenge", toUid: id, tc: _bt || window.__nvTc || $("lbTc").value, color: _bt ? (window.__botColor || "white") : undefined, pos: _bt && window.__botPos ? window.__botPos : (window.__nvPos || $("lbPos").value), games: _bt ? 1 : Number($("lbGm").value) }); window.__botTc = null; } else if (act === "cx") sendMsg({ type: "lbCancelTo", toUid: id });
         else if (act === "tj") sendMsg({ type: "lbTJoin", tid: id });
         else if (act === "tl") sendMsg({ type: "lbTLeave", tid: id });
         else if (act === "ts") sendMsg({ type: "lbTStart", tid: id });
@@ -593,7 +593,7 @@
       var me = S.me ? S.me.uid : "";
       window.lbFriendAdd = function (u) { sendMsg({ type: "lbFriendReq", uid: String(u) }); };
       window.lbIsOnline = function (u) { u = String(u); return (S.players || []).some(function (p) { return String(p.uid) === u && !p.offline; }); };
-      window.lbChallengeUid = function (u, stake) { var tc = ($("lbTc") && $("lbTc").value) || "3+2"; sendMsg({ type: "lbChallenge", toUid: String(u), tc: tc, stake: stake || 0 }); };
+      window.lbChallengeUid = function (u, stake) { var tc = window.__nvTc || ($("lbTc") && $("lbTc").value) || "3+2"; sendMsg({ type: "lbChallenge", toUid: String(u), tc: tc, stake: stake || 0 }); };
       // 💰 tikib o'ynash: tasodifiy raqib (bir xil vaqt va tikish)
       window.lbStakeOpen = function () {
         var TC = ["1+1", "2+2", "3+2", "5+3"], tc = ($("lbTc") && $("lbTc").value) || "3+2", stake = 50;
