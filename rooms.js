@@ -134,7 +134,7 @@ function createRooms({ send, clients, onFinish }) {
       tc: room.tc,
       tcs: room.vsBot ? BOT_TCS : Object.keys(TCS).filter(k => k !== "0.5+0" && k !== "7+5"),
       vsBot: !!room.vsBot, etude: room.etude || null, botUid: (room.vsBot ? ((botColorOf(room) === 'white' ? room.white : room.black) || {}).uid : null) || null, botStarted: !!room.botStarted, botColor: botColorOf(room),
-      srvBot: srvBotOn(room), botSecs: room.botCfg ? room.botCfg.secs : 1.2, botBlunder: room.botCfg ? room.botCfg.blunder : 0,
+      srvBot: srvBotOn(room), botSecs: botSecsFor(room), botBlunder: room.botCfg ? room.botCfg.blunder : 0,
       arena: !!room.arena, noBerserk: !!room.noBerserk, voice: !!room.voice, voiceSaid: room.voiceSaid || null,
       opening: room.opening,
       berserk: room.berserk,
@@ -399,7 +399,18 @@ function createRooms({ send, clients, onFinish }) {
   // 🦍 King Kong (vaqtli o'yin): yurishni server o'zi hisoblab, darhol qo'yadi — telefon orqali borib-kelish yo'q.
   // Yagona yurish yoki urish zanjiri — o'ylamasdan (avtohod). Server javob bermasa, odamning ilovasi zaxira sifatida yuradi.
   const SBC = { id: "srvbot", ws: null };
-  const srvBotOn = room => !!(room && room.vsBot && room.botCfg && room.botCfg.id === "bot_kingkong" && room.tc && room.tc !== "∞");
+  function botSecsFor(room) {
+  const cfg = room && room.botCfg, d = cfg ? cfg.secs : 1.2;
+  try {
+    if (!cfg || !room.tc || room.tc === '∞' || !(room.timeMs > 0)) return d;
+    const bc = botColorOf(room); if (!bc) return d;
+    const rem = Math.max(0, currentClock(room)[bc] / 1000), inc = (room.incMs || 0) / 1000, base = room.timeMs / 1000;
+    let s = Math.max(rem < 4 ? 0.05 : 0.1, Math.min(d, rem / 60 + inc * 0.6, rem / 12));
+    if (base <= 30 || rem < 3) s = Math.min(d, 0.05);
+    return s;
+  } catch (e) { return d; }
+}
+const srvBotOn = room => !!(room && room.vsBot && room.botCfg && room.botCfg.id === "bot_kingkong" && room.tc && room.tc !== "∞");
   function kkSteps(b, m) {   // kkrules yurishi → xona qadamlari (har sakrashda urilgan dona)
     const pts = [m.from].concat(m.path && m.path.length ? m.path : [m.to]), out = [];
     for (let i = 1; i < pts.length; i++) {
