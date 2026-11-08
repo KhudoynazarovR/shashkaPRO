@@ -21,7 +21,7 @@ function load() {
 }
 function nm(k, i) { return (NM && NM[k] && NM[k][i]) || ''; }
 const RES = { 1: '1-0', 2: '½-½', 3: '0-1' };
-function brief(i) { const g = G[i]; return { id: i, w: nm('n', g.w) || '?', b: nm('n', g.b) || '?', t: nm('t', g.t), s: nm('s', g.s), y: g.y || null, r: RES[g.r] || '*', n: g.m ? g.m.split(' ').length : 0 }; }
+function brief(i) { const g = G[i]; return { id: i, q: G[i].o ? 1 : 0, w: nm('n', g.w) || '?', b: nm('n', g.b) || '?', t: nm('t', g.t), s: nm('s', g.s), y: g.y || null, r: RES[g.r] || '*', n: g.m ? g.m.split(' ').length : 0 }; }
 // lotin/kirill farqi bo'lmasin: qidiruvda ikkala yozuvni ham sinaymiz
 const TR = { a: 'а', b: 'б', v: 'в', g: 'г', d: 'д', e: 'е', z: 'з', i: 'и', y: 'й', k: 'к', l: 'л', m: 'м', n: 'н', o: 'о', p: 'п', r: 'р', s: 'с', t: 'т', u: 'у', f: 'ф', h: 'х', c: 'ц' };
 const TR2 = [['sh', 'ш'], ['ch', 'ч'], ['zh', 'ж'], ['yu', 'ю'], ['ya', 'я'], ['kh', 'х'], ['ts', 'ц']];

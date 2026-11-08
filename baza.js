@@ -59,7 +59,8 @@
       '<input class="sr" placeholder="O‘yinchi, turnir, shahar yoki yil…" value="' + esc(q) + '">' +
       '<div class="ch">' + [['', 'Hammasi'], ['1', '⚪ Oq yutgan'], ['2', '½ Durang'], ['3', '⚫ Qora yutgan']].map(function (x) { return '<button data-r="' + x[0] + '"' + (res === x[0] ? ' class="on"' : '') + '>' + x[1] + '</button>'; }).join('') + '</div>' +
       '<div class="sub">' + (loading && !items.length ? 'Yuklanmoqda…' : 'Topildi: ' + fmt(total)) + '</div><div id="bzL">';
-    items.forEach(function (g) {
+    var _pk = null;
+    items.forEach(function (g) { if (g.t === 'Dasturlar partiyalari · 09.02.2011') { if (_pk !== g.q) { _pk = g.q; h += '<div class="sub"><b>' + (g.q ? '🎲 Qura' : '📋 Standart') + '</b></div>'; } } else _pk = null;
       h += '<button class="it" data-id="' + g.id + '"><span class="rs ' + rsCls(g.r) + '">' + esc(g.r) + '</span><span class="tx"><b>' + esc(g.w) + ' – ' + esc(g.b) + '</b><small>' +
         esc([g.t, g.s, g.y].filter(Boolean).join(' · ') || 'Turnir ko‘rsatilmagan') + ' · ' + Math.ceil(g.n / 2) + ' yurish</small></span>›</button>';
     });
