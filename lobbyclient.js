@@ -3282,7 +3282,11 @@ function run(){
   var s=S(),T=(s&&s.tournaments)||[];
   var rest=[];
   cards.forEach(function(c,i){if(i===0)c.classList.remove('d4h');else{c.classList.add('d4h');rest.push(c)}});
-  var box=document.getElementById('nxtBox2');
+  function dayLbl(d){var n=new Date(),a=new Date(n.getFullYear(),n.getMonth(),n.getDate()).getTime(),b=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime(),k=Math.round((b-a)/864e5);return (k===0?'Bugun, ':k===1?'Ertaga, ':'')+f2(d.getDate())+'.'+f2(d.getMonth()+1)}
+function cdTxt(ms){var x=Math.ceil(ms/1000),dd=Math.floor(x/86400),h=Math.floor(x%86400/3600),m=Math.floor(x%3600/60),sc=x%60;return (dd?dd+' kun ':'')+f2(h)+':'+f2(m)+':'+f2(sc)}
+function nxLink(c,id){var b=c.querySelector('[data-a=tlink]');if(b){b.click();return}var base=window.TG_APP_LINK||'https://t.me/DraughtsPRObot/play';var url=base+'?startapp=lbt_'+encodeURIComponent(id);var done=function(){try{if(window.toast)window.toast('🔗 Havola nusxalandi',null,2500)}catch(x){}};if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(url).then(done,function(){prompt('Havola:',url)});else prompt('Havola:',url)}
+if(!window.__nxCd){window.__nxCd=setInterval(function(){var now=Date.now()+(window.__lbSkew||0);[].slice.call(document.querySelectorAll('.nxCd')).forEach(function(el){var left=(+el.getAttribute('data-t'))-now;el.textContent='⏳ '+(left>0?cdTxt(left):'Boshlanmoqda…')})},1000)}
+var box=document.getElementById('nxtBox2');
   if(!rest.length){if(box)box.remove();return}
   if(!box){box=document.createElement('div');box.id='nxtBox2'}
   if(box.previousElementSibling!==el)el.insertAdjacentElement('afterend',box);
@@ -3300,7 +3304,7 @@ function run(){
     var nm=String((t&&t.name)||(c.querySelector('.tcNm')||{}).textContent||'Turnir').replace(/^[^\p{L}\p{N}]+\s*/u,'');
     var sb=((c.querySelector('.tcSb')||{}).textContent||'').split('·')[0].trim();
     var when='';
-    if(t&&t.status==='reg'&&t.startAt){var d=new Date(t.startAt);when=f2(d.getHours())+':'+f2(d.getMinutes())}
+    if(t&&t.status==='reg'&&t.startAt){var d=new Date(t.startAt);when=dayLbl(d)+' · '+f2(d.getHours())+':'+f2(d.getMinutes())}
     else if(t&&t.status==='running')when='O‘ynalmoqda';
     else if(t&&t.status==='finished')when='Tugagan';
                                                         else when='Boshlanish vaqti aniqlanmoqda…';
@@ -3309,7 +3313,7 @@ function run(){
     var tt=document.createElement('div');tt.className='nxT';
     var b=document.createElement('b');b.textContent=nm;
     var sm=document.createElement('small');sm.textContent='🕒 '+(sb?sb+' · ':'')+when;
-    tt.appendChild(b);tt.appendChild(sm);
+    tt.appendChild(b);tt.appendChild(sm);if(t&&t.status==='reg'&&t.startAt){var cd=document.createElement('small');cd.className='nxCd';cd.style.cssText='color:#ffd35a;font-weight:700';cd.setAttribute('data-t',t.startAt);cd.textContent='⏳ '+cdTxt(t.startAt-(Date.now()+(window.__lbSkew||0)));tt.appendChild(cd)}
     var ar=document.createElement('div');ar.className='nxA';ar.textContent='›';
     it.appendChild(ic);it.appendChild(tt);
 if(t&&(t.status==='reg'||t.status==='running')){
@@ -3319,7 +3323,7 @@ if(t&&(t.status==='reg'||t.status==='running')){
   jb.style.cssText='margin-left:auto;flex:0 0 auto;padding:0 12px;font-size:14px;font-weight:700;background:'+(inn?'#1d6b3a':'#3b7a1e');
   jb.textContent=inn?'✓ Siz bor':'Qo‘shilish';
   jb.onclick=function(e){e.stopPropagation();if(inn)return;if(window.__lb)window.__lb.send({type:'lbTJoin',tid:id});jb.textContent='✓ Siz bor';inn=true;jb.style.background='#1d6b3a'};
-  it.appendChild(jb);ar.style.marginLeft='0';
+  it.appendChild(jb);ar.style.marginLeft='0';ar.textContent='🔗';ar.onclick=function(e){e.stopPropagation();nxLink(c,id)};
 }
 it.appendChild(ar);
     it.onclick=function(){if(window.tvOpen){window.tvOpen(id);return}c.classList.toggle('d4o');if(c.classList.contains('d4o'))c.scrollIntoView({behavior:'smooth',block:'center'})};
