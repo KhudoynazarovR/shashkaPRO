@@ -15,7 +15,7 @@ let child = null, buf = "", cur = null, queue = [];
 function spawnEngine() {
   buf = "";
   const ch = spawn(BIN, [], { cwd: DIR, stdio: ["pipe", "pipe", "ignore"] });
-  child = ch;
+  child = ch; if (process.env.KKLOG) console.log("[KK] ENGINE SPAWN");
   ch.on("error", () => { if (child === ch) { child = null; finish("spawn"); } });
   ch.on("close", () => { if (child === ch) { child = null; finish("noout"); } });
   ch.stdin.on("error", () => {});
@@ -31,6 +31,7 @@ function spawnEngine() {
 function finish(err, val) {
   if (!cur) return;
   const c = cur; cur = null; clearTimeout(c.tm);
+  if (err && child && process.env.KKLOG) console.log("[KK] ENGINE KILL sabab:", err);
   if (err && child) { const o = child; child = null; try { o.kill("SIGKILL"); } catch (e) {} }
   c.cb(err, val);
   next();
@@ -111,6 +112,7 @@ function track(roomId, key) {
 }
 
 function move(j, cb) {
+  if (j && j.kk && process.env.KKLOG) { const _c = cb; cb = r => { try { console.log("[KK]", JSON.stringify({ room: j.room, t: j.time, rem: j.rem, from: r.from, to: r.to, ev: r.ev, ms: r.ms, book: r.book, colette: r.colette, admin: r.admin, tb: r.tb, cached: r.cached, deep: r.deep, err: r.error })); } catch (e) {} return _c(r); }; }
   LOWFLAG = !!(j && j.arena);
   if (process.env.KDEBUG) console.log("[KestoG] request", j && j.time);
   if (!ready) return cb({ error: "notready", code: 503 });
@@ -124,9 +126,9 @@ function move(j, cb) {
   if (j.kk) { try { const ab = require('./kkbook.js').get(b, side, j.room); if (ab) return cb({ from: ab.f, to: ab.t, jumps: 0, ev: null, ms: 0, book: 1, admin: 1 }); } catch (e) {} }   // 🦍 admin o'rgatgan yurish — birinchi
   try { const eb = require('./etudes.js').bookMove(b, side); if (eb) return cb({ from: eb.from, to: eb.to, jumps: 0, ev: null, ms: 0, book: 1, etude: 1 }); } catch (e) {}
   const bk = BOOK[b.join("") + side];
-  const cm = j.book && (secs >= 2 || j.tbAlways) && COLETTE[b.join("") + side];   // coletteBOT (2300) o'yin uslubi — saboq (DEEP) uni chetga surmaydi
+  const cm = j.book && !(j.kk && process.env.KK_NOBOOK === "1") && (secs >= 2 || j.tbAlways) && COLETTE[b.join("") + side];   // coletteBOT (2300) o'yin uslubi — saboq (DEEP) uni chetga surmaydi
   if (cm) return cb({ from: cm[0], to: cm[1], jumps: 0, ev: null, ms: 0, book: 1, colette: 1 });
-  if (bk && j.book) return cb({ from: bk.from, to: bk.to, jumps: 0, ev: null, ms: 0, book: 1 });
+  if (bk && j.book && !(j.kk && process.env.KK_NOBOOK === "1")) return cb({ from: bk.from, to: bk.to, jumps: 0, ev: null, ms: 0, book: 1 });
   const key = b.join(",") + "|" + side;
   if (j.room && secs >= 1) track(j.room, key);
   const deep = secs >= 1 && DEEP.has(key);
