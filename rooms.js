@@ -529,7 +529,7 @@ function createRooms({ send, clients, onFinish }) {
       room.turnStartedAt = now;
       const dres = drawTrack(room, col, m);
       // 🦍 King Kong: o'z yurishidan keyin raqib o'ylayotganda ham o'ylaydi (ponder)
-      if (!m.keepTurn && room.vsBot && room.botCfg && room.botCfg.ponder && col === botColorOf(room) && room.dr && room.dr.b && !room.finished) {
+      if (!m.keepTurn && room.vsBot && room.botCfg && room.botCfg.ponder && room.timeMs > 0 && room.timeMs <= 60000 && !(room.incMs > 0) && col === botColorOf(room) && room.dr && room.dr.b && !room.finished) {
         try { const b64 = []; for (let r = 0; r < 8; r++) for (let c2 = 0; c2 < 8; c2++) { const p = room.dr.b[r][c2]; b64.push(p === 'w' ? 1 : p === 'W' ? 2 : p === 'b' ? -1 : p === 'B' ? -2 : 0); } require('./kestoai.js').ponder(b64, col === 'white' ? -1 : 1, room.botCfg.secs, room.id); } catch (e) { console.log('[ponder]', e.message); }
       }
       broadcast(room, {
