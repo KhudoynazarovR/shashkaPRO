@@ -251,6 +251,7 @@ function createRooms({ send, clients, onFinish }) {
     } catch (e) { return null; }
   }
   function finish(room, winner, reason) {
+    console.log('[finish]', room.id, winner, reason, 'yurish:', room.moves && room.moves.length, 'text:', room.drawText);
     if (room.finished) return;
     room.clock = currentClock(room); // soatni to'xtatamiz
     room.finished = true;
@@ -813,6 +814,7 @@ const srvBotOn = room => !!(room && room.vsBot && room.botCfg && room.botCfg.id 
             const bc = botColorOf(room);
             let ok = false;
             try { ok = !!(bc && room.dr && DRAW.botAcceptsDraw(room.dr.b, bc, room.dr.st)); } catch (e) { console.error("[botDraw]", e && e.message); }
+                        if (ok && room.arena) { let nw = 0, nb = 0; for (const r of room.dr.b) for (const p of r) { if (p === "w" || p === "W") nw++; else if (p === "b" || p === "B") nb++; } if (nw > 3 || nb > 3) ok = false; }
             if (ok) finish(room, "draw", "agreed");
             else broadcast(room, { type: "roomDraw", roomId, offer: null, declined: true });
           }
