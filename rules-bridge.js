@@ -25,7 +25,9 @@ function rawCaptures(b,r,c,dead){
 }
 function keepStep(b,m){
   const n=clone(b),p=n[m.from.r][m.from.c];n[m.from.r][m.from.c]=EMPTY;
-  n[m.to.r][m.to.c]=(p===WHITE&&m.to.r===0)?WHITE_KING:(p===BLACK&&m.to.r===7)?BLACK_KING:p;
+  // butun zanjir (path) bitta qadamda kelsa: yo'lda oxirgi qatorga tegsa ham damka bo'ladi (rus qoidasi) — server bilan bir xil
+  const prom=r=>(p===WHITE&&r===0)||(p===BLACK&&r===7);
+  n[m.to.r][m.to.c]=(prom(m.to.r)||(m.path&&m.path.some(q=>prom(q.r))))?(p===WHITE?WHITE_KING:BLACK_KING):p;
   if(m.captures.length)DEADS.set(n,deadOf(b).concat(m.captures));
   return n
 }
@@ -64,7 +66,7 @@ function getAllMoves(b,side){
 }
 function applyMove(b,m){
   const n=clone(b),p=n[m.from.r][m.from.c];n[m.from.r][m.from.c]=EMPTY;m.captures.forEach(x=>n[x.r][x.c]=EMPTY);
-  let q=p;if(p===WHITE&&m.to.r===0)q=WHITE_KING;if(p===BLACK&&m.to.r===7)q=BLACK_KING;n[m.to.r][m.to.c]=q;return n
+  let q=p;const pr=r=>(p===WHITE&&r===0)||(p===BLACK&&r===7);if(pr(m.to.r)||(m.path&&m.path.some(x=>pr(x.r))))q=p===WHITE?WHITE_KING:p===BLACK?BLACK_KING:p;n[m.to.r][m.to.c]=q;return n
 }
 window.WHITE=WHITE;window.BLACK=BLACK;
 window.initialBoard=startPosition;
