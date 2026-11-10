@@ -255,11 +255,15 @@ function handle(req, res, url) {
       arr.push(now); global.__fbAt[k] = arr;
       try { require('fs').appendFileSync(require('path').join(__dirname, 'feedback.txt'), new Date().toISOString() + ' | ' + who + ' | ' + text + '\n'); } catch (e) {}
       try {
-        if (process.env.ADMIN_ID && process.env.BOT_TOKEN) {
-          const body = JSON.stringify({ chat_id: process.env.ADMIN_ID, text: '💬 Taklif/shikoyat\n' + who + '\n\n' + text });
+        // 💬 barcha adminlarga (ADMIN_IDS, eski ADMIN_ID ham) — admin shu xabarga «Reply» qilsa, javob foydalanuvchiga boradi (bot.js)
+        const ids = [...new Set(String((process.env.ADMIN_IDS || '') + ',' + (process.env.ADMIN_ID || '')).split(',').map(x => x.trim()).filter(Boolean))];
+        if (process.env.BOT_TOKEN) ids.forEach(id => {
+          const un = tg && tg.username ? ' @' + tg.username : '';
+          const body = JSON.stringify({ chat_id: id, text: '💬 Taklif/shikoyat\n' + who + un + '\n\n' + text + '\n\n↩️ Javob berish uchun shu xabarga «Reply» qiling' });
           const r = require('https').request({ hostname: 'api.telegram.org', path: '/bot' + process.env.BOT_TOKEN + '/sendMessage', method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } });
           r.on('error', () => {}); r.end(body);
-        }
+        });
+        try { const d = store.db; if (d) { d.feedback = (d.feedback || []).concat([{ t: Date.now(), uid: tg ? String(tg.id) : null, name: who, text }]).slice(-300); if (store.save) store.save(); } } catch (e) {}
       } catch (e) {}
       send(res, 200, { ok: true });
     });

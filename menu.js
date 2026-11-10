@@ -80,29 +80,32 @@
       ".mnx{padding:12px 14px;background:#10142e;border-top:1px solid rgba(255,255,255,.07);font-size:14px;line-height:1.5}" +
       ".mnx textarea{width:100%;box-sizing:border-box;min-height:90px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:#161a3a;color:#fff;padding:10px}" +
       ".mnx button{margin-top:8px;border:0;border-radius:12px;padding:10px 16px;background:#6b5cf0;color:#fff}.mnp{height:24px}";
+    st.textContent += ".mqU{display:flex;align-items:center;gap:10px;min-width:0}.mqA{width:46px;height:46px;border-radius:50%;overflow:hidden;flex:none;background:#2a2f63;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 0 0 2px #f5b82e}.mqA img{width:100%;height:100%;object-fit:cover}" +
+      ".mqU b{display:block;font-size:17px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw}.mqU .mqC{font-size:14px;color:#f5d36a;font-weight:700}" +
+      ".mqG{margin-left:8px;border:0;border-radius:10px;padding:3px 8px;background:#f5b82e;color:#222;font-weight:800;font-size:12px}" +
+      ".mqR{display:flex;gap:8px}.mqI{border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:9px 12px;background:rgba(255,255,255,.07);color:#fff;font-weight:700;font-size:14px}" +
+      ".mqLs{margin:0 14px;border-radius:18px;overflow:hidden;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}.mqLs .mnr{border-bottom:1px solid rgba(255,255,255,.06)}" +
+      ".mqV{text-align:center;opacity:.45;font-size:12px;margin:22px 0 6px}#bpBtn{display:none!important}";
     st.textContent += "#mnPanel{background:radial-gradient(circle at 50% 0,#1a1450 0,#0b0e1a 55%)}.mqT{display:flex;align-items:center;justify-content:space-between;padding:14px 14px 6px}.mqL b{font-size:26px;font-weight:900;color:#fff}.mqL b i{font-style:normal;color:#f5b82e}.mqL small{display:block;font-size:12px;color:#a9b0ff}.mqR{display:flex;align-items:center;gap:8px}.mqC{padding:6px 12px;border-radius:14px;background:rgba(255,255,255,.1);border:1px solid #3d5bd9;font-weight:700}.mqP{margin:8px 14px;border-radius:22px;padding:14px;background:linear-gradient(135deg,#2b2a78,#4a1f8a 60%,#2a1050);border:1px solid #7a5cf0;box-shadow:0 0 18px rgba(122,92,240,.45)}.mqPh{display:flex;align-items:center;gap:12px}.mqav{width:64px;height:64px;border-radius:50%;border:3px solid #f5b82e;box-shadow:0 0 14px rgba(245,184,46,.6);background:#2a1fc9;display:flex;align-items:center;justify-content:center;font-size:28px;overflow:hidden;flex:none}.mqav img{width:100%;height:100%;object-fit:cover}.mqN{flex:1;min-width:0}.mqN b{display:block;font-size:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mqN small{opacity:.7}.mqG{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.mqG.two{grid-template-columns:repeat(2,1fr);margin-top:8px}.mqG div{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:8px 4px;text-align:center}.mqG b{display:block;font-size:18px}.mqG small{font-size:11px;opacity:.7}.mqS{display:flex;align-items:center;gap:8px;margin:16px 16px 8px;font-size:17px;font-weight:800;letter-spacing:.5px}.mqS span{font-size:20px}.mqGr{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 14px}.mqK{position:relative;border-radius:16px;padding:10px 8px;min-height:96px;box-sizing:border-box;cursor:pointer;overflow:hidden}.mqK .ic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:6px}.mqK b{display:block;font-size:13px;line-height:1.2}.mqK small{display:block;font-size:10px;opacity:.7;margin-top:2px;line-height:1.2}.mqK em{position:absolute;right:8px;top:10px;font-style:normal;opacity:.6}.mqX{margin:8px 14px 0;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.1)}.mqB{margin:16px 14px 0;display:flex;align-items:center;gap:12px;padding:12px;border-radius:18px;background:linear-gradient(135deg,#3a1d12,#1a1440);border:1px solid #f5873b;box-shadow:0 0 14px rgba(245,135,59,.4)}.mqB>span{font-size:30px}.mqB b{display:block;font-size:14px}.mqB small{opacity:.75;font-size:11px}"; document.head.appendChild(st);
   }
   var SEC = [
-    ["O‘YINLAR", [
-      ["🤖", "AI bilan o‘ynash", "Kompyuterga qarshi o‘ynang", "@ai:play", "#8e6ff0,#c58bf2"],
-      ["📺", "Jonli efir", "Hozirgi o‘yinlarni kuzating", "@live", "#ff4d6d,#ff8fa3"],
-      ["🔴", "Bot arenasi", "Botlar o‘yinini jonli kuzating", "@arena", "#b91c1c,#ef4444"],
-      ["📁", "Arxiv", "O‘tgan o‘yinlar tarixi", "@arch", "#2fd27f,#1ea36a"],
-      ["🔬", "Tahlil taxtasi", "KestoG bilan pozitsiya tahlili", "@board", "#3b82f6,#06b6d4"],
-      ["🧩", "Masalalar", "Shashka masalalarini yeching", "@puz", "#f5873b,#f7c02d"],
-      ["", "Stollar", "Stol oching yoki o‘tiring — tanga tikib o‘ynash", "@stake", "#f59e0b,#ea580c"],
+    ["O‘YNASH", [
       ["📮", "Yozishma o‘yinlari", "Har yurishga 1 kun — bot navbatingizni aytadi", "@corr", "#7c3aed,#0ea5e9"],
       ["🎓", "Endshpil maktabi", "Bazada tekshirilgan mashqlar — King Kongga qarshi", "@eg", "#0f766e,#22c55e"],
-      ["📖", "Debyutlar", "Mashhur ochilishlar va yod olish", "@deb", "#0ea5e9,#6366f1"],
-      ["🪙", "Tosh do‘koni", "Donalar va o‘z donangiz", "@shop", "#7b3ff2,#d62f8f"]]],
-    ["ILOVA", [
+      ["📖", "Debyutlar", "Mashhur ochilishlar va yod olish", "@deb", "#0ea5e9,#6366f1"]], "🎮"],
+    ["TOMOSHA VA TAHLIL", [
+      ["📺", "Jonli efir", "Hozirgi o‘yinlarni kuzating", "@live", "#ff4d6d,#ff8fa3"],
+      ["📁", "Arxiv", "O‘tgan o‘yinlar tarixi", "@arch", "#2fd27f,#1ea36a"],
+      ["🔬", "Tahlil taxtasi", "KestoG bilan pozitsiya tahlili", "@board", "#3b82f6,#06b6d4"]], "📺"],
+    ["DO‘KON VA SOVRINLAR", [
       ["👑", "Premium", "2× tanga, chegirmalar va boshqalar", "@prem", "#b8860b,#ffd54a"],
-      ["🗺", "Viloyatlar jangi", "Viloyatingiz uchun o‘ynang — oylik sovrin", "@reg", "#16a34a,#0ea5e9"],
+      ["🪙", "Tosh do‘koni", "Donalar va o‘z donangiz", "@shop", "#7b3ff2,#d62f8f"],
       ["👥", "Do‘stlarni taklif qilish", "Har do‘st uchun 300 🪙 gacha", "@ref", "#2fd27f,#f5b72b"],
-      ["⚙️", "Sozlamalar", "Ovoz, fon va boshqalar", "@set", "#6b7bff,#8fa0ff"],
-      ["❓", "Yordam", "Bo‘limlar haqida", "@help", "#17b2f7,#17e3ff"],
-      ["💬", "Taklif va shikoyatlar", "Fikringizni yozib qoldiring", "@fb", "#f5873b,#f7c02d"]]]
+      ["🗺", "Viloyatlar jangi", "Viloyatingiz uchun o‘ynang — oylik sovrin", "@reg", "#16a34a,#0ea5e9"]], "💎"]
   ];
+  var LIST = [
+    ["⚙️", "Sozlamalar", "Til, ovoz, mavzu, AI o‘yin va boshqalar", "@set", "#6b7bff,#8fa0ff"],
+    ["💬", "Taklif va shikoyatlar", "Dasturchiga yozing — javob shu botga keladi", "@fb", "#f5873b,#f7c02d"]];
   function rowHtml(r) {
     var a = r[3], right = "›";
     if (a === "@lite") right = "<span class=\"mnsw" + (isLite() ? " on" : "") + "\"><i></i></span>";
@@ -124,15 +127,16 @@
     var av = u.id ? "<img src='/api/av/" + encodeURIComponent(u.id) + "?t=" + Date.now() + "' onerror=\"this.outerHTML='👤'\">" : "👤";
     function v(x) { return x == null ? "—" : x; }
     var P = pst || {};
-    var h = "<div class='mqT'><div class='mqL'><b>Shashka<i>PRO</i> 👑</b><small>Yaxshiroq o‘yinchilar uchun!</small></div><div class='mqR'><span class='mqC'>🪙 " + (bal == null ? "—" : bal) + "</span><button class='mnd' onclick=\"mnA('@daily')\"" + (canDaily ? "" : " disabled") + ">" + (canDaily ? "🎁 Bonus" : "✅ Olingan") + "</button></div></div>";
+    var lc = "UZ"; try { lc = String(localStorage.getItem("shashkaPRO_lang") || "uz").slice(0, 2).toUpperCase(); } catch (e) {}
+    var tk = "a"; try { tk = localStorage.getItem("spTheme") || "a"; } catch (e) {}
+    var ti = tk === "auto" ? "🌗" : tk === "d" ? "☀️" : "🌙";
+    var h = "<div class='mqT'><div class='mqU'><span class='mqA'>" + av + "</span><div><b>" + esc(name) + "</b><span class='mqC'>🪙 " + (bal == null ? "—" : bal) + "</span>" + (canDaily ? "<button class='mqG' onclick=\"mnA('@daily')\">🎁 Bonus</button>" : "") + "</div></div>" +
+      "<div class='mqR'><button class='mqI' onclick='mnLang()'>🌐 " + lc + "</button><button class='mqI' onclick='mnTheme()' title='Tungi / kunduzgi / avto'>" + ti + "</button></div></div>";
     h += "<div class='mnm' id='mnMsg'></div>";
-    SEC.forEach(function (s, i) {
-      h += "<div class='mqS'><span>" + (i === 0 ? "🎮" : "⚙️") + "</span>" + s[0] + "</div><div class='mqGr'>" + s[1].map(cardHtml).join("") + "</div>";
-      if (i === 1 && open === "help") h += "<div class='mnx mqX'>📱 <b>Pastki menyu:</b><br>👤 Profil: ma‘lumotlaringiz va balans<br>🎮 O‘yin: onlayn raqiblar va tezkor o‘yin<br>🏆 Turnir: turnirlar va klublar<br>📊 Reyting: eng kuchli o‘yinchilar<br>☰ Menyu: AI o‘yin, muharrir va sozlamalar</div>";
-      if (i === 1 && open === "fb") h += "<div class='mnx mqX'><textarea id='mnFbT' maxlength='1000' placeholder='Taklif yoki shikoyatingizni yozing…'></textarea><button id='mnFbB' onclick='mnSend()'>Yuborish</button><div id='mnFbM' class='mnm' style='margin:8px 0 0'></div></div>";
-    });
-    if (window.__isAdmin) h += "<div class='mqS'><span>🛡</span>ADMIN</div><div class='mqGr'>" + cardHtml(["📊", "Statistika", "Faollik, iqtisod, Premium, tikish", "@stats", "#0ea5e9,#22c55e"]) + "</div>";
-    h += "<div class='mqB'><span>🏆</span><div><b>ShashkaPRO — Doim siz bilan!</b><small>O‘yin, do‘stlar, turnirlar va yanada ko‘p imkoniyatlar!</small></div></div>";
+    SEC.forEach(function (s) { h += "<div class='mqS'><span>" + s[2] + "</span>" + s[0] + "</div><div class='mqGr'>" + s[1].map(cardHtml).join("") + "</div>"; });
+    h += "<div class='mqS'><span>⚙️</span>ILOVA</div><div class='mqLs'>" + LIST.map(rowHtml).join("") + "</div>";
+    if (window.__isAdmin) h += "<div class='mqS'><span>🛡</span>ADMIN</div><div class='mqGr'>" + cardHtml(["📊", "Statistika", "Faollik, iqtisod, Premium, tikish", "@stats", "#0ea5e9,#22c55e"]) + (document.getElementById("bpBtn") ? cardHtml(["🤖", "Bot kuchi", "Botlar kuchini 1–100% belgilash", "@bpow", "#8e6ff0,#c58bf2"]) : "") + "</div>";
+    h += "<div class='mqV'>ShashkaPRO · v" + (window.SP_VER || "10.1") + "</div>";
     panel.innerHTML = h + "<div class='mnp'></div>";
   }
   function loadStats() {
@@ -206,6 +210,7 @@
     if (a === "@live") { close(); liveOpen(); return; }
     if (a === "@deb") { close(); if (window.spDebut) window.spDebut(); else { var _d = document.createElement('script'); _d.src = '/debyut.js?v=2'; _d.onload = function () { window.spDebut(); }; document.head.appendChild(_d); } return; }
     if (a === "@stats") { close(); if (window.spStats) window.spStats(); else { var _s = document.createElement('script'); _s.src = '/statsview.js?v=2'; _s.onload = function () { window.spStats(); }; document.head.appendChild(_s); } return; }
+    if (a === "@bpow") { var _bp = document.getElementById("bpBtn"); if (_bp) _bp.click(); return; }
     if (a === "@arena") { close(); if (window.avOpen) window.avOpen(); return; }
     if (a === "@arch") { close(); archOpen(); return; }
     if (a === "@board") {
@@ -224,6 +229,13 @@
     close();
     if (a === "btnAI") { var b = document.getElementById("btnAI"); if (b) b.click(); return; }
     if (window.openScreen) window.openScreen(a);
+  };
+  window.mnLang = function () { if (window.spLangPicker) window.spLangPicker(); };
+  window.mnTheme = function () {   // 🌙 tungi → ☀️ kunduzgi → 🌗 avto (Telegram mavzusi bo'yicha)
+    var k = "a"; try { k = localStorage.getItem("spTheme") || "a"; } catch (e) {}
+    var nx = k === "d" ? "auto" : k === "auto" ? "a" : "d";
+    if (window.spThemeSet) window.spThemeSet(nx); else { try { localStorage.setItem("spTheme", nx); } catch (e) {} }
+    render();
   };
   window.mnSend = function () {
     var t = document.getElementById("mnFbT"), m = document.getElementById("mnFbM"), b = document.getElementById("mnFbB");

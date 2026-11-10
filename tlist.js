@@ -135,7 +135,7 @@
     box.style.display = hid ? 'none' : '';
   }
   // ⚙️ admin «Bot kuchi» tugmasi faqat Menyu sahifasida (boshqa sahifalarda tugmalar ustida suzib turmasin)
-  function gear() { var bp = g('bpBtn'); if (!bp) return; var on = document.querySelector('#nvBar button.on'), m = !!(on && /Menyu|Меню|Menu/i.test(on.textContent || '')); bp.style.setProperty('display', m ? 'flex' : 'none', 'important'); }
+  function gear() { var bp = g('bpBtn'); if (!bp) return; var on = document.querySelector('#nvBar button.on'), m = !!(on && /Menyu|Меню|Menu/i.test(on.textContent || '')); bp.style.setProperty('display', 'none', 'important'); }   // endi Menyu → ADMIN → «Bot kuchi» kartasidan ochiladi
   setInterval(function () { try { render(); enhanceForm(); gear(); } catch (e) {} }, 1000);
   setTimeout(function () { try { render(); } catch (e) {} }, 300);
 })();

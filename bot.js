@@ -89,6 +89,17 @@ async function onMessage(msg) {
       await api("sendMessage", { chat_id: msg.chat.id, text: fid ? "✅ Banner saqlandi. /start yozib ko‘ring.\n\nDoimiy bo‘lishi uchun Render → Environment ga BANNER_FILE_ID qiymatini qo‘ying:\n" + fid : "⚠️ Banner saqlanmadi. Fayl MP4 yoki GIF bo‘lsin (20 MB gacha)." });
       return;
     }
+    // 💬 admin taklif/shikoyat xabariga «Reply» qilsa — javob foydalanuvchiga boradi
+    const _rp = msg.reply_to_message;
+    if (_adm && _rp && msg.text && /^💬 Taklif\/shikoyat/.test(_rp.text || "")) {
+      const _m = (_rp.text || "").match(/#(\d{3,})/);
+      if (_m) {
+        let ok = false;
+        try { const r = await api("sendMessage", { chat_id: _m[1], text: "📩 Dasturchidan javob:\n\n" + msg.text.slice(0, 3500) + "\n\n💬 Yana yozish: Menyu → Taklif va shikoyatlar" }); ok = !!(r && r.ok !== false); } catch (e) {}
+        await api("sendMessage", { chat_id: msg.chat.id, text: ok ? "✅ Javob yuborildi" : "⚠️ Yuborilmadi (foydalanuvchi botni bloklagan bo‘lishi mumkin)", reply_to_message_id: msg.message_id });
+        return;
+      }
+    }
     if (_adm && /^\/backup\b/i.test(msg.text || "")) {
       const ok = await require("./store.js").tgBackup(msg.chat.id).catch(e => { console.log("backup xato:", e.message); return false; });
       if (!ok) await api("sendMessage", { chat_id: msg.chat.id, text: "⚠️ Zaxira yuborilmadi." });
