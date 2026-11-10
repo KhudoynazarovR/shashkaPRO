@@ -27,7 +27,7 @@
       ["🌐", "Til · Язык · Language", (window.spLangName ? window.spLangName() : "O‘zbekcha"), function () { if (window.spLangPicker) window.spLangPicker(); }],
       ["🔊", "Ovoz", "Ovoz balandligi, yurish va olish ovozlari", function () { if (window.SPSound && SPSound.openSettings) SPSound.openSettings(); }],
       ["🎤", "Ovozli boshqaruv", (function () { var off = false; try { off = localStorage.getItem("spMicOff") !== "0"; } catch (e) {} return !(window.spVoice && window.spVoice.supported()) ? "Bu brauzerda ishlamaydi (Chrome yoki ilovada ishlaydi)" : off ? "O‘chirilgan — yoqish uchun bosing" : "Yoqilgan — o‘chirish uchun bosing"; })(), function () { try { localStorage.setItem("spMicOff", localStorage.getItem("spMicOff") === "0" ? "1" : "0"); } catch (e) {} }],
-      ["🎨", "Fon", "Kunduzgi, kechki va boshqa fonlar", function () { if (window.spBgPicker) window.spBgPicker(); }],
+      ["🎨", "Mavzu", "Tungi ko‘k, Grafit, Zumrad va fon rasmi", function () { if (window.spThemePicker) window.spThemePicker(); else if (window.spBgPicker) window.spBgPicker(); }],
       ["🔔", "Bot xabarlari", "Qaysi xabarlar kelishini tanlang", function () { window.spNotify(); }],
       ["🤖", "AI o‘yin sozlamalari", "Doska, vaqt va AI bilan o‘yin sozlamalari", function () { if (window.aiShow) window.aiShow("set"); }]
     ];

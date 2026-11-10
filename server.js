@@ -251,6 +251,7 @@ function serveFile(req, res) {
     if (!html.includes("sound.js")) {
       html = html.replace("</body>", '<script src="/sound.js"></script>\n</body>');
     }
+    if (!html.includes("theme.js")) html = html.replace("</head>", '<script src="/theme.js"></script>\n</head>');   // 🎨 mavzu: shrift va fon — sahifa chizilishidan oldin
     if (!html.includes("rules-bridge.js")) {
       html = html.replace("</body>", '<script src="/rules-bridge.js"></script>\n</body>');
     }
