@@ -305,4 +305,4 @@ async function kvSet(k, v) {
   catch (e) { console.log('kv yozish xatosi:', e.message); return false; }
 }
 
-module.exports = { kvGet, kvSet, backups, restoreDay, tgBackup, restore, db, getOrCreate, save, isPremium, avOf, users: () => db.users };
+module.exports = { isReady: () => ready || !pool, kvGet, kvSet, backups, restoreDay, tgBackup, restore, db, getOrCreate, save, isPremium, avOf, users: () => db.users };

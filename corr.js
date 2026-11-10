@@ -18,7 +18,7 @@ const left = ms => { const h = Math.max(0, Math.floor(ms / 3600e3)), m = Math.ma
 const init = () => { const b = Array(64).fill(0); for (let i = 0; i < 64; i++) { const r = i >> 3, c = i & 7; if ((r + c) % 2 !== 1) continue; if (r < 3) b[i] = -1; if (r > 4) b[i] = 1; } return b; };
 const active = uid => Object.values(db().g).filter(g => !g.res && (g.w === uid || g.b === uid)).length;
 const sideOf = (g, uid) => g.w === uid ? 1 : g.b === uid ? -1 : 0;
-const celo = uid => (users()[uid] || {}).celo || 1000;
+const celo = uid => (users()[uid] || {}).celo || 1500;
 
 function create(w, b, per) {
   const id = hex(4), g = { id, w, b, per, board: init(), turn: 1, moves: [], created: Date.now(), dl: Date.now() + PERS[per], quiet: 0, rep: {} };
@@ -30,9 +30,8 @@ function finish(g, res, why) {   // res: 'w' | 'b' | 'd'
   g.res = res; g.why = why; g.end = Date.now(); g.drawBy = null;
   const a = users()[g.w], b = users()[g.b];
   if (a && b && g.moves.length >= 4) {
-    const s = res === 'w' ? 1 : res === 'b' ? 0 : 0.5, ea = 1 / (1 + Math.pow(10, ((b.celo || 1000) - (a.celo || 1000)) / 400));
-    a.celo = Math.max(100, Math.round((a.celo || 1000) + K * (s - ea)));
-    b.celo = Math.max(100, Math.round((b.celo || 1000) + K * ((1 - s) - (1 - ea))));
+    const s = res === 'w' ? 1 : res === 'b' ? 0 : 0.5;
+    try { require('./glicko.js').rate(g.w, g.b, s, 'corr'); } catch (e) { console.log('[reyting corr]', e.message); }   // ⭐ 📮 Yozishma toifasi (Glicko-2)
     a.cgames = (a.cgames || 0) + 1; b.cgames = (b.cgames || 0) + 1;
   }
   store.save();

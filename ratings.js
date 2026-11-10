@@ -1,131 +1,106 @@
 (function () {
   "use strict";
-  var D = null, tab = "elo", q = "", panel = null, loading = false;
-  var TABS = [["elo", "ELO", "elo"], ["puz", "Masala", "n"], ["diamonds", "Tanga", "diamonds"], ["wins", "G‘alaba", "wins"], ["games", "O‘yin", "games"], ["best", "Seriya", "best"], ["pct", "G‘alaba %", "pct"], ["tourn", "Turnir", "tw"]];
+  var D = null, tab = "blits", flt = "all", q = "", panel = null, loading = false, CACHE = {};
+  var TABS = [["bullet", "🚀 Bullet"], ["blits", "⚡ Blits"], ["rapid", "⏱ Rapid"], ["corr", "📮 Yozishma"], ["puz", "🧩 Masala"], ["bots", "🤖 Botlar"]];
+  var FLT = [["all", "🌐 Hammasi"], ["friends", "👥 Do‘stlar"], ["region", "📍 Viloyatim"], ["week", "📅 Hafta"]];
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function fmt(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " "); }
+  function idata() { var tg = window.Telegram && window.Telegram.WebApp; return (tg && tg.initData) || ""; }
   function css() {
-    if (document.getElementById("rkStyle")) return;
-    var st = document.createElement("style"); st.id = "rkStyle";
-    st.textContent = "#rkPanel{position:fixed;left:0;right:0;top:0;bottom:64px;z-index:9000;background:#0b0e1a;color:#fff;overflow-y:auto;-webkit-overflow-scrolling:touch;font-family:inherit}" +
-      ".rkh{background:linear-gradient(135deg,#2b2a78,#5a1f9a);padding:18px 14px 14px;border-radius:0 0 28px 28px}" +
-      ".rkt{display:flex;align-items:center;justify-content:space-between;font-size:22px;font-weight:700}" +
-      ".rkb{width:42px;height:42px;border-radius:13px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.12);color:#fff;font-size:18px}" +
-      ".rkc{display:flex;gap:10px;overflow-x:auto;margin-top:14px;padding-bottom:4px}.rkc::-webkit-scrollbar{display:none}" +
-      ".rkk{min-width:150px;border-radius:16px;padding:10px 12px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2)}" +
-      ".rkk small{opacity:.85;display:block}.rkk b{display:block;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px}" +
-      ".rks{display:none;margin:12px 14px 0}.rks input{width:100%;padding:11px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.2);background:#161a3a;color:#fff;box-sizing:border-box}" +
-      ".rkn{display:flex;gap:8px;overflow-x:auto;padding:14px 14px 4px}.rkn::-webkit-scrollbar{display:none}" +
-      ".rkn button{flex:none;padding:9px 14px;border-radius:14px;border:0;background:#161a3a;color:#cfd3ff}.rkn button.on{background:#6b5cf0;color:#fff}" +
-      ".rkl{margin:10px 14px 20px;border-radius:18px;background:#161a3a;overflow:hidden;border:1px solid rgba(255,255,255,.08)}" +
-      ".rkr{display:flex;align-items:center;gap:12px;padding:10px 12px;border-top:1px solid rgba(255,255,255,.07)}.rkr:first-child{border-top:0}" +
-      ".rkm{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#9aa0d6;flex:none}" +
-      ".rka{width:42px;height:42px;border-radius:50%;background:#2a1fc9;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none;overflow:hidden}.rka img{width:100%;height:100%;object-fit:cover}" +
-      ".rkw{flex:1;min-width:0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rkw small{display:block;font-weight:400;opacity:.6}" +
-      ".rkv{padding:6px 12px;border-radius:12px;background:#262b66;color:#a9b0ff;font-weight:700;flex:none}" +
-      ".rke{padding:24px;text-align:center;opacity:.7}";
-    st.textContent += "#rkPanel{background:radial-gradient(circle at 50% 0,#1a1450 0,#0b0e1a 55%)}.rkh{background:none;padding:16px 14px 0;border-radius:0}.rkT{font-size:24px;font-weight:900;letter-spacing:1px;background:linear-gradient(90deg,#27d3ff,#c24dff);-webkit-background-clip:text;background-clip:text;color:transparent}.rkS{font-size:13px;color:#a9b0ff;margin-top:2px;font-weight:400}.rkb{border:1px solid #2fc8ff;background:rgba(47,200,255,.1);box-shadow:0 0 10px rgba(47,200,255,.35)}#rkPod{display:flex;align-items:flex-end;justify-content:center;gap:8px;padding:18px 10px 6px}.rkp{flex:1;min-width:0;text-align:center;border-radius:18px;padding:22px 4px 10px;position:relative;background:linear-gradient(180deg,#1b2350,#10143a);border:1px solid #3d5bd9;box-shadow:0 0 14px rgba(61,91,217,.45)}.rkp1{padding-top:30px;padding-bottom:16px;background:linear-gradient(180deg,#3a2a08,#1a1405);border:1px solid #f5b72b;box-shadow:0 0 22px rgba(245,183,43,.55)}.rkp3{background:linear-gradient(180deg,#3a1d12,#1a0f0c);border:1px solid #d9733d;box-shadow:0 0 14px rgba(217,115,61,.45)}.rkpb{position:absolute;top:-14px;left:50%;transform:translateX(-50%);min-width:30px;height:30px;border-radius:50%;background:#0b0e1a;border:2px solid currentColor;display:flex;align-items:center;justify-content:center;font-weight:800;color:#9fb4ff}.rkp1 .rkpb{color:#f5b72b}.rkp3 .rkpb{color:#d9733d}.rkp .rka{width:58px;height:58px;margin:0 auto 6px;border:3px solid currentColor}.rkp1 .rka{width:70px;height:70px;border-color:#f5b72b}.rkpn{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px}.rkps{font-size:10px;opacity:.7;margin:3px 0 7px}.rkpv{margin:0 6px;padding:5px 2px;border-radius:12px;background:rgba(255,255,255,.1);font-weight:800;font-size:14px}.rkpv small{display:block;font-size:9px;opacity:.6;font-weight:600}.rkn button{border:1px solid #2a3470;background:#10143a}.rkn button.on{background:#10143a;border:1px solid #2fc8ff;color:#fff;box-shadow:0 0 10px rgba(47,200,255,.5)}.rkl{background:none;border:0;margin:6px 14px 10px;overflow:visible}.rkr{border:1px solid #2a3470;border-radius:16px;background:#10143a;margin-bottom:8px;border-top:1px solid #2a3470}.rkr:first-child{border-top:1px solid #2a3470}.rkm{background:#1b2350;color:#cfd3ff}.rkv{background:#16206a;border:1px solid #3d5bd9;color:#fff}.rkd{font-size:11px;font-weight:700;text-align:center;line-height:1.1;min-width:26px;color:#9aa0d6}.rkd.up{color:#32e07a}.rkd.dn{color:#ff4d5e}.rkme{position:sticky;bottom:6px;margin:6px 14px 12px;padding:10px 12px;border-radius:18px;background:#10143a;border:2px solid #6b5cf0;box-shadow:0 0 16px rgba(107,92,240,.6);display:none;align-items:center;gap:10px}.rkme b{font-size:26px;color:#4d7bff}.rkme small{display:block;font-size:12px;color:#c9ceff}.rkme .tx{margin-left:auto;text-align:right;font-size:11px;color:#cfd3ff}"; document.head.appendChild(st);
+    if (document.getElementById("rkStyle2")) return;
+    var st = document.createElement("style"); st.id = "rkStyle2";
+    st.textContent = "#rkPanel{position:fixed;left:0;right:0;top:0;bottom:64px;z-index:9000;color:#fff;overflow-y:auto;-webkit-overflow-scrolling:touch;font-family:inherit;background:radial-gradient(circle at 50% 0,#22186a 0,#110c3c 45%,#0c0930 100%);padding-bottom:84px;box-sizing:border-box}" +
+      ".rk2{padding:14px 12px 0}.rkHd{display:flex;align-items:center;justify-content:space-between}.rkHd b{font-size:24px;font-weight:900}.rkHd button{width:42px;height:42px;border-radius:14px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.07);font-size:18px;color:#fff}" +
+      ".rkS2{display:none;margin-top:10px}.rkS2 input{width:100%;padding:11px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#fff;box-sizing:border-box;font-size:15px}" +
+      ".rkTb{display:flex;gap:6px;margin:12px 0 10px;overflow-x:auto;scrollbar-width:none}.rkTb::-webkit-scrollbar{display:none}.rkTb button{flex:none;border:0;padding:9px 12px;border-radius:12px;font-size:13.5px;font-weight:700;color:#cfd3ff;background:rgba(255,255,255,.06)}.rkTb button.on{background:#6d5cf0;color:#fff;box-shadow:0 3px 10px rgba(109,92,240,.4)}" +
+      ".rkCh{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none}.rkCh::-webkit-scrollbar{display:none}.rkCh button{flex:none;white-space:nowrap;padding:6px 11px;border-radius:20px;font-size:12.5px;border:1px solid rgba(255,255,255,.14);background:none;color:#dfe2ff}.rkCh button.on{background:rgba(255,255,255,.16);border-color:transparent;color:#fff}" +
+      ".rkPd{display:flex;align-items:flex-end;gap:8px;margin:14px 0 14px}.rkPd>div{flex:1;min-width:0;text-align:center;border-radius:18px;padding:14px 4px 10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);position:relative;cursor:pointer}" +
+      ".rkPd .q1{padding-top:20px;background:linear-gradient(180deg,rgba(245,184,46,.25),rgba(245,184,46,.05));border-color:rgba(245,184,46,.6)}.rkPd .q2{border-color:rgba(190,200,220,.45)}.rkPd .q3{border-color:rgba(205,127,50,.5)}" +
+      ".rkPd .md{position:absolute;top:-13px;left:50%;transform:translateX(-50%);font-size:22px}.rkPd .ra{width:52px;height:52px;margin:0 auto 6px}.rkPd .q1 .ra{width:62px;height:62px;box-shadow:0 0 0 3px #f5b82e}" +
+      ".rkPd b{display:block;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 3px}.rkPd em{font-style:normal;display:block;font-size:19px;font-weight:900;color:#f5d36a;margin-top:2px}.rkPd small{opacity:.6;font-size:11px}" +
+      ".ra{width:36px;height:36px;border-radius:50%;background:#2b2f6b;display:flex;align-items:center;justify-content:center;font-size:18px;flex:none;overflow:hidden}.ra img{width:100%;height:100%;object-fit:cover}" +
+      ".rkL{border-radius:18px;overflow:hidden;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);margin-bottom:12px}" +
+      ".rkR{display:flex;align-items:center;gap:10px;padding:9px 12px;border-top:1px solid rgba(255,255,255,.06);cursor:pointer}.rkR:first-child{border-top:0}.rkR.me{background:rgba(109,92,240,.2)}" +
+      ".rkR .n{width:26px;text-align:center;opacity:.6;font-weight:700;font-size:14px;flex:none}.rkR .t{flex:1;min-width:0}.rkR .t b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rkR .t small{opacity:.55;font-size:12px}" +
+      ".rkR .v{text-align:right;flex:none}.rkR .v b{font-size:17px}.rkR .v small{display:block;font-size:11.5px;font-weight:700}.rkUp{color:#22c55e}.rkDn{color:#ef4444}.rkQ{opacity:.55;font-weight:700}" +
+      ".rkE{padding:22px;text-align:center;opacity:.7;font-size:14px;line-height:1.5}" +
+      ".rkMe{position:fixed;left:12px;right:12px;bottom:74px;z-index:9001;display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:16px;background:linear-gradient(90deg,#4b3ac9,#6d5cf0);box-shadow:0 8px 24px rgba(0,0,0,.4)}" +
+      ".rkMe .ra{width:38px;height:38px}.rkMe b{font-size:18px}.rkMe small{opacity:.85;font-size:12px;display:block}.rkMe .x{margin-left:auto;text-align:right}";
+    document.head.appendChild(st);
   }
-  function card(label, ico, arr, key, suf) {
-    var x = arr && arr[0];
-    return "<div class=\"rkk\"><small>" + ico + " " + label + "</small><b>👑 " + (x ? esc(x.name) : "—") + "</b>" +
-      (x ? "<small>" + fmt(x[key]) + (suf || "") + "</small>" : "") + "</div>";
-  }
-  function avatar(p) { if (p.id) return "<div class=\"rka\">" + (p.hasAv ? "<img src=\"/api/av/" + encodeURIComponent(p.id) + "\">" : "👤") + "</div>";
-    var a = p.av || "";
-    if (a && (a.indexOf("http") === 0 || a.indexOf("/") === 0 || a.indexOf("data:image") === 0)) return "<div class=\"rka\"><img src=\"" + esc(a) + "\"></div>";
-    return "<div class=\"rka\">" + esc((p.name || "?").charAt(0).toUpperCase()) + "</div>";
-  }
-  var ICO = { puz: "🧩", elo: "📊", wins: "🏆", games: "🎮", diamonds: "🪙", best: "🔥", pct: "📈", tourn: "🥇" };
-  function myId() { var tg = window.Telegram && window.Telegram.WebApp; var u = tg && tg.initDataUnsafe && tg.initDataUnsafe.user; return u ? String(u.id) : ""; }
-  function dl(p) {
-    var v = p.delta != null ? p.delta : (p.d != null ? p.d : (p.change != null ? p.change : null));
-    if (v == null || isNaN(v)) return "";
-    v = Number(v);
-    if (v > 0) return "<div class='rkd up'>▲<br>+" + v + "</div>";
-    if (v < 0) return "<div class='rkd dn'>▼<br>" + v + "</div>";
-    return "<div class='rkd'>–<br>0</div>";
-  }
-  function pcard(p, rank, key, suf, lab) {
-    if (!p) return "<div class='rkp' style='visibility:hidden'></div>";
-    var sub = p.puz ? "✅ " + p.n + " masala yechgan" : "🏆 " + (p.wins || 0) + " g‘alaba · " + (p.games || 0) + " o‘yin";
-    return "<div class='rkp rkp" + rank + "' onclick=\"spUser('" + esc(p.id) + "')\"><div class='rkpb'>" + (rank === 1 ? "👑" : rank) + "</div>" + avatar(p) +
-      "<div class='rkpn'>" + esc(p.name) + "</div><div class='rkps'>" + sub + "</div><div class='rkpv'>" + ico() + " " + fmt(p[key]) + suf + "<small>" + lab + "</small></div></div>";
-  }
+  function av(p) { return "<div class='ra'>" + (p.id && p.hasAv ? "<img src='/api/av/" + encodeURIComponent(p.id) + "'>" : (p.bot ? "🤖" : "👤")) + "</div>"; }
+  function rv(p) { return fmt(p.r) + (p.prov ? "<span class='rkQ'>?</span>" : ""); }
+  function dlt(d) { if (d == null) return "<small style='opacity:.35'>—</small>"; if (d > 0) return "<small class='rkUp'>▲ " + d + "</small>"; if (d < 0) return "<small class='rkDn'>▼ " + (-d) + "</small>"; return "<small style='opacity:.5'>0</small>"; }
+  function sub(p) { return tab === "puz" ? "✅ " + p.n + " ta masala" : tab === "bots" ? (p.n ? p.n + " o‘yin · " + (p.w || 0) + "/" + (p.l || 0) + "/" + (p.dr || 0) : "hali o‘yin yo‘q") : p.n + " o‘yin" + (p.pct ? " · " + p.pct + "%" : ""); }
+  function val(p) { return tab === "puz" ? "<b>" + fmt(p.n) + "</b>" : "<b>" + rv(p) + "</b>" + (tab === "bots" ? "" : dlt(flt === "week" ? p.d : p.d)); }
+  function click(p) { return p.bot ? "" : " onclick=\"spUser('" + esc(p.id) + "')\""; }
   function render() {
     if (!panel) return;
-    var h = "<div class='rkh'><div class='rkt'><div><div class='rkT'>🏆 REYTING ARENASI</div><div class='rkS'>Eng kuchli o‘yinchilar — bu yerda!</div></div><button class='rkb' onclick='rkSearch()'>🔍</button></div></div>";
-    h += "<div class='rks' id='rkS'><input id='rkQ' placeholder='Ism bo‘yicha qidirish' value=\"" + esc(q) + "\" oninput='rkQ(this.value)'></div>";
-    h += "<div id='rkPod'></div>";
-    h += "<div class='rkn'>" + TABS.map(function (t) { return "<button class='" + (t[0] === tab ? "on" : "") + "' onclick=\"rkTab('" + t[0] + "')\">" + (ICO[t[0]] || "") + " " + t[1] + "</button>"; }).join("") + "</div>";
-    h += "<div class='rkl' id='rkList'></div><div class='rkme' id='rkMe'></div>";
+    var h = "<div class='rk2'><div class='rkHd'><b>📊 Reyting</b><button onclick='rkSearch()'>🔍</button></div>" +
+      "<div class='rkS2' id='rkS'><input id='rkQ' placeholder='Ism bo‘yicha qidirish' value=\"" + esc(q) + "\" oninput='rkQ(this.value)'></div>" +
+      "<div class='rkTb'>" + TABS.map(function (t) { return "<button class='" + (t[0] === tab ? "on" : "") + "' onclick=\"rkTab('" + t[0] + "')\">" + t[1] + "</button>"; }).join("") + "</div>" +
+      (tab === "puz" || tab === "bots" ? "" : "<div class='rkCh'>" + FLT.map(function (f) { return "<button class='" + (f[0] === flt ? "on" : "") + "' onclick=\"rkF('" + f[0] + "')\">" + f[1] + "</button>"; }).join("") + "</div>") +
+      "<div id='rkSeasonSlot'></div><div id='rkBody'></div></div><div class='rkMe' id='rkMe' style='display:none'></div>";
     panel.innerHTML = h;
     var s = document.getElementById("rkS"); if (s && q) s.style.display = "block";
-    list();
+    var se = document.getElementById("rkSeason"); if (se) document.getElementById("rkSeasonSlot").appendChild(se);
+    body();
   }
-  function list() {
-    var el = document.getElementById("rkList"); if (!el) return;
-    var pe = document.getElementById("rkPod"), me = document.getElementById("rkMe");
-    if (!D) { if (pe) pe.innerHTML = ""; if (me) me.style.display = "none"; el.innerHTML = "<div class='rke'>" + (loading ? "Yuklanmoqda…" : "Ma‘lumot olinmadi. Qayta urinib ko‘ring.") + "</div>"; return; }
-    var t = TABS.filter(function (x) { return x[0] === tab; })[0], key = t[2], lab = t[1];
-    var full = D[tab] || [], arr = full, qq = q.trim().toLowerCase();
-    if (qq) arr = arr.filter(function (p) { return (p.name || "").toLowerCase().indexOf(qq) >= 0; });
-    var suf = tab === "pct" ? "%" : "";
-    var top = !qq && arr.length > 0;
-    if (pe) { pe.style.display = top ? "flex" : "none"; pe.innerHTML = top ? pcard(arr[1], 2, key, suf, lab) + pcard(arr[0], 1, key, suf, lab) + pcard(arr[2], 3, key, suf, lab) : ""; }
-    if (!arr.length) { el.style.display = "block"; el.innerHTML = "<div class='rke'>" + (tab === "pct" ? "Kamida 20 ta o‘yin o‘ynaganlar chiqadi." : (tab === "tourn" ? "Hali turnir g‘olibi yo‘q." : "Hozircha bo‘sh.")) + "</div>"; }
-    else {
-      var rest = top ? arr.slice(3) : arr;
-      el.style.display = rest.length ? "block" : "none";
-      el.innerHTML = rest.map(function (p) {
-        var sub = p.puz ? "✅ " + p.n + " masala yechgan" : p.games ? "🏆 " + p.wins + " g‘alaba · 🎮 " + p.games + " o‘yin" : "";
-        return "<div class='rkr' style='cursor:pointer' onclick=\"spUser('" + esc(p.id) + "')\"><div class='rkm'>" + (full.indexOf(p) + 1) + "</div>" + avatar(p) +
-          "<div class='rkw'" + (p.premium ? " style='color:#ffd54a'" : "") + ">" + esc(p.name) + (p.premium ? " 👑" : "") + (sub ? "<small>" + sub + "</small>" : "") + "</div><div class='rkv'>" + ico() + " " + fmt(p[key]) + suf + "</div>" + dl(p) + "</div>";
-      }).join("");
+  function body() {
+    var el = document.getElementById("rkBody"), me = document.getElementById("rkMe"); if (!el) return;
+    if (!D) { el.innerHTML = "<div class='rkE'>" + (loading ? "Yuklanmoqda…" : "Ma‘lumot olinmadi. Qayta urinib ko‘ring.") + "</div>"; if (me) me.style.display = "none"; return; }
+    var full = D.list || [], arr = full, qq = q.trim().toLowerCase();
+    if (qq) arr = arr.filter(function (p) { return String(p.name || "").toLowerCase().indexOf(qq) >= 0; });
+    var h = "";
+    if (!arr.length) {
+      h = "<div class='rkE'>" + (qq ? "Topilmadi." : flt === "region" && !D.region ? "Viloyatingiz tanlanmagan — Menyu → Viloyatlar jangi." : flt === "week" ? "Bu hafta hali hech kim reyting yig‘magan." : tab === "puz" || tab === "bots" ? "Hozircha bo‘sh." :
+        "Jadvalga oxirgi 2 haftada kamida 3 ta o‘yin o‘ynaganlar chiqadi (<b>?</b> — reyting hali aniqlanmoqda).<br>O‘ynang — reytingingiz shu yerda paydo bo‘ladi!") + "</div>";
+    } else {
+      var top = !qq && arr.length >= 3, rest = top ? arr.slice(3) : arr;
+      if (top) {
+        var pc = function (p, k) { return "<div class='q" + k + "'" + click(p) + "><span class='md'>" + (k === 1 ? "👑" : k === 2 ? "🥈" : "🥉") + "</span>" + av(p) + "<b>" + esc(p.name) + "</b><em>" + (tab === "puz" ? fmt(p.n) : rv(p)) + "</em><small>" + sub(p) + "</small></div>"; };
+        h += "<div class='rkPd'>" + pc(arr[1], 2) + pc(arr[0], 1) + pc(arr[2], 3) + "</div>";
+      }
+      if (rest.length) h += "<div class='rkL'>" + rest.map(function (p) {
+        return "<div class='rkR" + (p.id === myId() ? " me" : "") + "'" + click(p) + "><span class='n'>" + (full.indexOf(p) + 1) + "</span>" + av(p) + "<div class='t'><b>" + esc(p.name) + (p.premium ? " 👑" : "") + "</b><small>" + sub(p) + "</small></div><div class='v'>" + val(p) + "</div></div>";
+      }).join("") + "</div>";
     }
-    var id = myId(), mi = -1;
-    if (id) for (var i = 0; i < full.length; i++) if (String(full[i].id) === id) { mi = i; break; }
+    el.innerHTML = h;
+    // pastda: sizning o'rningiz
     if (me) {
-      if (mi < 0) { me.style.display = "none"; }
+      var M = D.me;
+      if (!M || tab === "bots" || tab === "puz") { me.style.display = "none"; }
       else {
-        var m = full[mi]; me.style.display = "flex";
-        me.innerHTML = "<div class='rka'>" + (m.hasAv ? "<img src='/api/av/" + encodeURIComponent(m.id) + "'>" : "👤") + "</div><div><small>Sizning o‘rningiz:</small><b>#" + (mi + 1) + "</b></div>" +
-          "<div class='rkv'>" + ico() + " " + fmt(m[key]) + suf + "</div><div class='tx'>Barqaror o‘yin<br>bilan oldinga!</div>";
+        me.style.display = "flex";
+        me.innerHTML = av({ id: myId(), hasAv: M.hasAv }) + "<div><small>Sizning o‘rningiz</small><b>" + (M.pos ? "#" + M.pos + " · " : "") + fmt(M.r) + (M.prov ? "?" : "") + "</b></div>" +
+          "<div class='x'><small>" + (M.prov ? "«?» — yana o‘ynang" : "Shu hafta") + "</small>" + (M.prov ? "" : "<b class='" + (M.d > 0 ? "rkUp" : M.d < 0 ? "rkDn" : "") + "'>" + (M.d == null ? "—" : (M.d > 0 ? "▲ " : M.d < 0 ? "▼ " : "") + Math.abs(M.d)) + "</b>") + "</div>";
       }
     }
   }
-  window.rkTab = function (t) { tab = t; render(); };
-  window.rkQ = function (v) { q = v; list(); };
+  function myId() { var tg = window.Telegram && window.Telegram.WebApp; var u = tg && tg.initDataUnsafe && tg.initDataUnsafe.user; return u ? String(u.id) : ""; }
+  window.rkTab = function (t) { tab = t; if (t === "puz" || t === "bots") flt = "all"; load(); };
+  window.rkF = function (f) { flt = f; load(); };
+  window.rkQ = function (v) { q = v; body(); };
   window.rkSearch = function () {
     var s = document.getElementById("rkS"); if (!s) return;
     var on = s.style.display !== "block"; s.style.display = on ? "block" : "none";
-    if (on) { var i = document.getElementById("rkQ"); if (i) i.focus(); } else { q = ""; list(); }
+    if (on) { var i = document.getElementById("rkQ"); if (i) i.focus(); } else { q = ""; body(); }
   };
-  function ico() { return ({ puz: "🧩", elo: "📊", diamonds: "🪙", wins: "🏆", games: "🎮" })[tab] || ""; }
-  function loadPuz() {
-    var tg = window.Telegram && window.Telegram.WebApp;
-    fetch("/api/puzzles/top", { headers: { "x-init-data": (tg && tg.initData) || "" } })
-      .then(function (r) { return r.json(); })
-      .then(function (d) {
-        if (!D || !d || !d.top) return;
-        var m = {};
-        ["elo", "wins", "games", "diamonds", "best", "pct"].forEach(function (k) { (D[k] || []).forEach(function (p) { if (p.id != null) m[String(p.id)] = p; }); });
-        D.puz = d.top.map(function (x) { var o = m[String(x.id)] || {}; return { id: x.id, name: x.name, n: x.n, hasAv: o.hasAv, av: o.av, premium: o.premium, puz: 1 }; });
-        render();
-      }).catch(function () {});
-  }
   function load() {
-    loading = true;
-    var tg = window.Telegram && window.Telegram.WebApp;
-    fetch("/api/leaderboard", { headers: { "x-init-data": (tg && tg.initData) || "" } })
-      .then(function (r) { return r.json(); })
-      .then(function (j) { D = j; D.puz = []; loading = false; render(); loadPuz(); })
-      .catch(function () { loading = false; render(); });
+    var key = tab + "|" + flt, c = CACHE[key];
+    D = c && Date.now() - c.t < 60000 ? c.d : null; loading = !D; render();
+    if (D) return;
+    var url = tab === "puz" ? "/api/puzzles/top" : "/api/rating?cat=" + tab + "&f=" + flt;
+    fetch(url, { headers: { "x-init-data": idata() } }).then(function (r) { return r.json(); }).then(function (j) {
+      var d = tab === "puz" ? { list: ((j && j.top) || []).map(function (x) { return { id: x.id, name: x.name, n: x.n, hasAv: true }; }) } : j;
+      CACHE[key] = { t: Date.now(), d: d };
+      if (key === tab + "|" + flt) { D = d; loading = false; render(); }
+    }).catch(function () { loading = false; render(); });
   }
   window.rkOpen = function () {
     css();
     if (!panel) { panel = document.createElement("div"); panel.id = "rkPanel"; document.body.appendChild(panel); }
-    panel.style.display = "block"; render(); load();
+    panel.style.display = "block"; CACHE = {}; load();
     seasonBar();
   };
   function seasonBar() {   // 🏆 oylik mavsum banneri
@@ -133,8 +108,8 @@
     fetch("/api/season", { headers: { "x-init-data": (tg && tg.initData) || "" } }).then(function (r) { return r.json(); }).then(function (d) {
       if (!d || d.error || !panel) return;
       var MN = ["", "Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun", "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr"], mn = MN[+d.m.slice(5, 7)];
-      var el = document.getElementById("rkSeason"); if (!el) { el = document.createElement("div"); el.id = "rkSeason"; panel.insertBefore(el, panel.firstChild.nextSibling); }
-      el.style.cssText = "margin:10px 12px;padding:12px;border-radius:16px;background:linear-gradient(135deg,#3a2a00,#1d1f45);border:1px solid #f5b72b;color:#fff;cursor:pointer;font-size:14px";
+      var el = document.getElementById("rkSeason"); if (!el) { el = document.createElement("div"); el.id = "rkSeason"; } var _sl = document.getElementById("rkSeasonSlot"); if (_sl && el.parentNode !== _sl) _sl.appendChild(el);
+      el.style.cssText = "margin:0 0 12px;padding:10px 12px;border-radius:16px;background:linear-gradient(135deg,#3a2a00,#1d1f45);border:1px solid #f5b72b;color:#fff;cursor:pointer;font-size:14px";
       el.innerHTML = "🏆 <b>" + mn + " mavsumi</b> — oy oxirida ELO TOP-10 ga sovrin<div style='font-size:12px;opacity:.8;margin-top:4px'>🥇 2000 🪙 + 30 kun 👑 · 🥈 1000 🪙 + 7 kun · 🥉 500 🪙 + 7 kun · 4–10: 200 🪙<br>Shart: oyda kamida " + d.min + " ta o‘yin · siz: <b>" + Math.min(d.myGames, d.min) + "/" + d.min + "</b> · batafsil ›</div>";
       el.onclick = function () {
         var ov = document.createElement("div"); ov.style.cssText = "position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:16px";
@@ -202,10 +177,11 @@
         if (d.premium) av = "<div class=\"spPrRing\"><b>👑</b>" + av.replace("margin:0 auto;", "") + "</div>";
         box.innerHTML = av + "<div style=\"font-size:21px;font-weight:700;margin-top:10px\">" + esc(d.name) + (d.premium ? " 👑" : "") + "</div>" + (d.elchi ? "<div style=\"font-size:12px;color:#f5b72b;margin-top:2px\">🏅 Elchi</div>" : "") + (d.region ? "<div style=\"font-size:12px;color:#7ee08a;margin-top:2px\">📍 " + esc(d.region) + "</div>" : "") + (d.titles && d.titles.length ? "<div style=\"font-size:12px;color:#ffd54a;margin-top:4px\">" + d.titles.map(esc).join("<br>") + "</div>" : "") +
           (d.bio ? "<div style=\"font-size:13px;color:#a9b0ff;margin-top:6px\">" + esc(d.bio) + "</div>" : "") +
-          "<div style=\"display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0\">" +
-          cell("📈", d.elo, "ELO") + cell("🪙", d.diamonds, "Tanga") + cell("🏆", d.wins, "G‘alaba") +
-          cell("✖️", d.losses, "Mag‘lub") + cell("🤝", d.draws, "Durang") + cell("🎮", d.games, "O‘yinlar") +
-          cell("📊", pct + "%", "G‘alaba %") + cell("⭐", d.bestStreak, "Eng yaxshi seriya") + cell("🥇", d.tournWins, "Turnir") +
+          (d.rt ? "<div style=\"display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:16px 0 0\">" + [["bullet", "🚀", "Bullet"], ["blits", "⚡", "Blits"], ["rapid", "⏱", "Rapid"], ["corr", "📮", "Yozishma"]].map(function (c) { var x = d.rt[c[0]] || { r: 1500, prov: true, n: 0 }; return "<div style=\"background:#161a3a;border:1px solid #262b5a;border-radius:14px;padding:8px 2px\"><div style=\"font-size:18px\">" + c[1] + "</div><b style=\"font-size:16px\">" + x.r + (x.prov ? "<span style=\"opacity:.55\">?</span>" : "") + "</b><div style=\"font-size:10.5px;opacity:.6\">" + c[2] + " · " + x.n + "</div></div>"; }).join("") + "</div>" : "") +
+          "<div style=\"display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 16px\">" +
+          cell("🪙", d.diamonds, "Tanga") + cell("🏆", d.wins, "G‘alaba") +
+          cell("🤝", d.draws, "Durang") + cell("🎮", d.games, "O‘yinlar") +
+          cell("📊", pct + "%", "G‘alaba %") + cell("⭐", d.bestStreak, "Eng yaxshi seriya") + cell("🥇", d.tournWins, "Turnir") + cell("✖️", d.losses, "Mag‘lub") +
           "</div><button style=\"width:100%;border:0;border-radius:14px;padding:12px;font-size:15px;color:#fff;background:#6b5cf0\" onclick=\"document.getElementById('spUo').remove()\">Yopish</button>";
         (function () {
           var stt = window.lbFriendState ? window.lbFriendState(d.id) : "ok";

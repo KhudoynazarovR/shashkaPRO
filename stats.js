@@ -18,14 +18,12 @@ function apply(u, s, opp) {
 }
 
 // Faqat ikkala o'yinchi ham ro'yxatdan o'tgan bo'lsa (mehmonlar hisoblanmaydi)
-function record(whiteId, blackId, winner) {
+function record(whiteId, blackId, winner, tc) {
   const w = user(whiteId), b = user(blackId);
   if (!w || !b || w === b) return;
   const sw = winner === 'white' ? 1 : winner === 'black' ? 0 : 0.5;
-  const w0 = w.elo || 1000, b0 = b.elo || 1000;
-  const ew = exp(w.elo || 1000, b.elo || 1000);
-  w.elo = Math.max(100, Math.round((w.elo || 1000) + K * (sw - ew)));
-  b.elo = Math.max(100, Math.round((b.elo || 1000) + K * ((1 - sw) - (1 - ew))));
+  // ⭐ Glicko-2, vaqt nazorati toifasi bo'yicha (glicko.js)
+  let G = null; try { G = require('./glicko.js').rate(whiteId, blackId, sw, tc); } catch (e) { console.log('[reyting]', e.message); }
   apply(w, sw, b.name);
   apply(b, 1 - sw, w.name);
   try { require('./ref.js').onGame(String(whiteId), String(blackId)); } catch (e) { console.log('[ref]', e.message); }
@@ -33,7 +31,7 @@ function record(whiteId, blackId, winner) {
   try { require('./season.js').onGame(String(whiteId), String(blackId)); } catch (e) { console.log('[season]', e.message); }
   try { const A = require('./ach.js'); A.sync(whiteId); A.sync(blackId); } catch (e) { console.log('[ach]', e.message); }
   store.save();
-  return { white: w.elo - w0, black: b.elo - b0, we: w.elo, be: b.elo };
+  return G ? { white: G.a.d, black: G.b.d, we: G.a.r, be: G.b.r, cat: G.cat, wp: G.a.prov, bp: G.b.prov } : null;
 }
 
 module.exports = { record };

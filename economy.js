@@ -300,6 +300,7 @@ function handle(req, res, url) {
       id: _id, name: _u.name || 'Oyinchi', elo: _u.elo || 1000, diamonds: _u.diamonds || 0,
       wins: _u.wins || 0, losses: _u.losses || 0, draws: _u.draws || 0, games: _u.games || 0,
       bestStreak: _u.bestStreak || 0, tournWins: _u.tournWins || 0,
+      rt: (function () { try { return require('./glicko.js').view(_u); } catch (e) { return null; } })(),
       bio: _u.bio || '', hasAv: !!store.avOf(_u), premium: !!store.isPremium(_u), lastSeen: _u.lastSeen || 0, elchi: require('./ref.js').elchi(_u), region: _u.region || '', titles: (_u.titles || []).slice(-3).reverse().map(x => x.t), ach: (require('./ach.js').sync(_id, { quiet: true }), require('./ach.js').list(_id, false)),
       stones: (() => { const S = store.db.shop || [], eq = _u.equipped === '-' ? '' : (_u.equipped || ((S.find(x => x.def) || {}).id) || ''); return S.filter(x => x.def || (_u.owned || []).includes(x.id)).slice(0, 24).map(x => ({ id: x.id, name: x.name, eq: x.id === eq })); })(),
       myDiamonds: ((store.users()[String(_tg.id)] || {}).diamonds) || 0, giftFee: [require('./gift.js').FEE_PCT, require('./gift.js').FEE_MIN],
@@ -323,7 +324,40 @@ function handle(req, res, url) {
       const me = g.wu === _id ? 'white' : g.bu === _id ? 'black' : (g.w && g.w === _u.name ? 'white' : g.b && g.b === _u.name ? 'black' : null);
       return { id: g.id, at: g.at, w: g.w, b: g.b, win: g.win, tc: g.tc, me, oe: me === 'white' ? g.be : me === 'black' ? g.we : null, m: g.m };
     });
-    send(res, 200, { elo: _u.elo || 1000, solved: (_u.solved || []).length, day: _pd && _pd.d === _dk ? (_pd.c[_id] || 0) : 0, arch });
+    let _rt = null; try { _rt = require('./glicko.js').view(_u); } catch (e) {}
+    send(res, 200, { elo: _u.elo || 1500, rt: _rt, solved: (_u.solved || []).length, day: _pd && _pd.d === _dk ? (_pd.c[_id] || 0) : 0, arch });
+    return true;
+  }
+  // ⭐ Reyting jadvali (faqat odamlar): ?cat=bullet|blits|rapid|corr & f=all|friends|region|week ; ?cat=bots — botlar
+  if (p === '/api/rating' && req.method === 'GET') {
+    const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
+    if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
+    const G = require('./glicko.js'); G.ensure();
+    const _q = new URL(req.url, 'http://x').searchParams, cat = G.CATS.includes(_q.get('cat')) ? _q.get('cat') : (_q.get('cat') === 'bots' ? 'bots' : 'blits'), f = _q.get('f') || 'all';
+    const _id = String(_tg.id), us = store.users(), me = us[_id] || {};
+    if (cat === 'bots') {
+      let L = []; try { const nm = store.db.botNames || {}; L = Object.keys(G.BOT0).map(id => Object.assign({ id, name: nm[id] || G.BOTN[id], bot: 1, hasAv: !!((store.db.botAv || {})[id]) }, G.botView(id))).sort((a, b) => b.r - a.r); } catch (e) {}
+      send(res, 200, { cat, list: L }); return true;
+    }
+    const now = Date.now(), ACT = 14 * 864e5, fr = new Set((me.friends || []).map(String).concat([_id]));
+    let rows = [];
+    for (const [id, u] of Object.entries(us)) {
+      if (!u || G.isBot(id) || u.banned) continue;
+      if (f === 'friends' && !fr.has(id)) continue;
+      if (f === 'region' && (!me.region || u.region !== me.region)) continue;
+      const p = u.rt && u.rt[cat]; if (!p || !p.n) continue;
+      const v = G.view(u)[cat];
+      const g = u.games || 0, w = u.wins || 0;
+      rows.push({ id, name: u.name || 'O‘yinchi', r: v.r, prov: v.prov, n: v.n, d: v.d, pct: g ? Math.round(w * 100 / g) : 0, hasAv: !!store.avOf(u), premium: !!store.isPremium(u), act: now - (p.at || 0) < ACT });
+    }
+    const ok = x => !x.prov && x.act;   // jadvalga: «?»siz va oxirgi 2 haftada o'ynaganlar (do'stlar ro'yxatida hammasi)
+    const byR = (a, b) => b.r - a.r || b.n - a.n;
+    let list;
+    if (f === 'week') list = rows.filter(x => x.d != null && x.d > 0).sort((a, b) => b.d - a.d || b.r - a.r);
+    else if (f === 'friends') list = rows.sort(byR);
+    else list = rows.filter(ok).sort(byR).concat(rows.filter(x => !ok(x) && x.act && x.n >= 3).sort(byR));   // «?» lilar — aniqlar ostida (yangi mavsum boshida jadval bo'sh qolmasin)
+    const mi = list.findIndex(x => x.id === _id), mv = G.view(me)[cat];
+    send(res, 200, { cat, f, region: me.region || '', list: list.slice(0, 100), me: { pos: mi >= 0 ? mi + 1 : null, r: mv.r, prov: mv.prov, n: mv.n, d: mv.d, hasAv: !!store.avOf(me), name: me.name || '' } });
     return true;
   }
   if (p === '/api/puzzles/day' && req.method === 'GET') {

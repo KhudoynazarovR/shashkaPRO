@@ -10,7 +10,7 @@ const clubsApi = require('./clubs');
 const friends = new Map();
 const MIN_REWARD_PLIES = Number(process.env.REWARD_MIN_PLIES || 8);
 function payWin(room, whiteUid, blackUid, tid) {
-  if (!room.noshowBoth && room.reason !== 'noshow' && (room.plies || 0) >= MIN_REWARD_PLIES) { { const _d = require('./stats').record(whiteUid, blackUid, room.winner); if (_d) room.eloD = _d; } try { require('./cheat.js').onFinish(room); } catch (e) {} }
+  if (!room.noshowBoth && room.reason !== 'noshow' && (room.plies || 0) >= MIN_REWARD_PLIES) { { const _d = require('./stats').record(whiteUid, blackUid, room.winner, room.tc); if (_d) room.eloD = _d; } try { require('./cheat.js').onFinish(room); } catch (e) {} }
   if (room.noshowBoth || room.reason === 'noshow' || (room.plies || 0) < MIN_REWARD_PLIES) return;
   if (room.winner === 'white') economy.rewardWin(whiteUid, blackUid, tid);
   else if (room.winner === 'black') economy.rewardWin(blackUid, whiteUid, tid);
@@ -245,7 +245,7 @@ function createLobby({ send, clients, roomsApi }) {
 
   // ---------- holat ----------
   function botX(u) { try { const d = require('./store').db; return { n: (d.botNames || {})[u], a: !!(d.botAv || {})[u] }; } catch (e) { return {}; } }
-  function botElo(u) { try { const _d = require('./store').db; if (_d && _d.botElo && !_d.botEloKK2500 && _d.botElo.bot_kingkong && _d.botElo.bot_terminator) { _d.botEloKK2500 = true; _d.botElo.bot_kingkong.elo = 2500; _d.botElo.bot_terminator.elo = 2400; } const m = _d.botElo; const _e = (m && m[u] && m[u].elo) || 0; const _cap = { bot_kingkong: 2500, bot_terminator: 2400 }[u]; return _cap && _e > _cap ? _cap : _e; } catch (e) { return 0; } }
+  function botElo(u) { try { const _d = require('./store').db; if (_d && _d.botElo && !_d.botEloKK2500 && _d.botElo.bot_kingkong && _d.botElo.bot_terminator) { _d.botEloKK2500 = true; _d.botElo.bot_kingkong.elo = 2500; _d.botElo.bot_terminator.elo = 2400; } const m = _d.botElo; return (m && m[u] && m[u].elo) || 0; } catch (e) { return 0; } }
   function playersList() {
     const seen = new Map();
     for (const c of lbClients()) {
@@ -388,6 +388,17 @@ function createLobby({ send, clients, roomsApi }) {
     return A.name + ' ' + fmtPts(s.pts[A.uid]) + ' – ' + fmtPts(s.pts[B.uid]) + ' ' + B.name;
   }
 
+  // ⭐ bot bilan o'yin reytingli (lidraughts kabi): ikkala tomon kamida bir yurish qilgan bo'lsa. Etyud mashqlari — reytingsiz
+  function botRated(room) {
+    try {
+      if (room.rated || !room.white || !room.black || (room.plies || 0) < 2 || room.reason === 'noshow') return;
+      if (room.opening && /^et/.test(String(room.opening.id || ''))) return;
+      room.rated = true;
+      const sw = room.winner === 'white' ? 1 : room.winner === 'black' ? 0 : 0.5;
+      const G = require('./glicko.js').rate(room.white.uid, room.black.uid, sw, room.tc);
+      if (G) room.eloD = { white: G.a.d, black: G.b.d, we: G.a.r, be: G.b.r, cat: G.cat, wp: G.a.prov, bp: G.b.prov };
+    } catch (e) { console.log('[reyting bot]', e.message); }
+  }
   // 🤖 Bot bilan o'yin: chaqiruv darhol qabul qilinadi, xona ochiladi, vaqt/rang/pozitsiya xonada tanlanadi
   function startBotGame(human, o, bot) {
     const roomId = 'B' + hex(5);
@@ -616,6 +627,7 @@ function createLobby({ send, clients, roomsApi }) {
     const lad = olyLadder(t.tc);
     if (!winUid && !room.noshowBoth && b.level + 1 < lad.length) {
       // durang: keyingi pog‘ona vaqti bilan yana bitta partiya, ranglar almashadi
+      if ((room.plies || 0) >= MIN_REWARD_PLIES) { try { const _d = require('./stats').record(b.white, b.black, 'draw', room.tc); if (_d) room.eloD = _d; } catch (e) {} }   // ⭐ durang ham reytingga ta'sir qiladi
       roomToBoard.delete(room.id);
       b.level++; b.game++;
       const tmp = b.white; b.white = b.black; b.black = tmp;
@@ -637,7 +649,7 @@ function createLobby({ send, clients, roomsApi }) {
     const winP = winUid === b.white ? pw : pb, loseP = winUid === b.white ? pb : pw;
     winP.score += 1; winP.res.push({ opp: loseP.uid, pts: 1 }); loseP.res.push({ opp: winP.uid, pts: 0 });
     loseP.out = true; loseP.outRound = t.round;
-    if (room.winner === 'white' || room.winner === 'black') { try { payWin(room, b.white, b.black, t.id); } catch (e) {} }
+    try { payWin(room, b.white, b.black, t.id); } catch (e) {}   // ⭐ durang ham reytingli (mukofot faqat g'olibga — payWin ichida)
     toast(loseP.uid, '❌ ' + t.name + ': turnirdan chiqdingiz');
     toast(winP.uid, '✅ ' + t.name + ': keyingi turga o‘tdingiz');
     if (t.status === 'running' && t.cur.every(x => x.done)) {
@@ -699,6 +711,7 @@ function createLobby({ send, clients, roomsApi }) {
   }
 
   function onRoomFinished(room) {
+    if (room.vsBot && !room.arena && !roomToBoard.has(room.id)) botRated(room);
     const sim = roomToSimul.get(room.id);
     if (sim) { roomToSimul.delete(room.id); return simulGameDone(sim, room); }
     const sr = roomToSeries.get(room.id);
@@ -915,7 +928,8 @@ function createLobby({ send, clients, roomsApi }) {
         if (lost) { lost.withdrawn = true; toast(lost.uid, '⚠️ ' + t.name + ': o‘yinga kirmadingiz, pauzadasiz. Qaytish uchun „Qo‘shilish“ni bosing'); }
       }
     }
-    if (!(pw && pw.bot) && !(pb && pb.bot)) payWin(room, b.white, b.black, t.id); pw.lastOpp = pb.uid; pb.lastOpp = pw.uid;
+    if (!(pw && pw.bot) && !(pb && pb.bot)) payWin(room, b.white, b.black, t.id); else if (!(pw && pw.bot && pb && pb.bot)) botRated(room);   // ⭐ arenada bot bilan o'yin ham reytingli
+    pw.lastOpp = pb.uid; pb.lastOpp = pw.uid;
     pw.busy = false; pb.busy = false;
     pw.waitingSince = now; pb.waitingSince = now;
     push();

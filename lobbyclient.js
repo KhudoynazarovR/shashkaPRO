@@ -3430,4 +3430,4 @@ if(document.readyState==='complete')setTimeout(init,1500);else window.addEventLi
 /* TLIST — turnirlar ro'yxati chess.com/lichess uslubida (tlist.js) */
 ;(function(){var s=document.createElement("script");s.src="/tlist.js";document.head.appendChild(s)})();
 /* HOMEX — bosh sahifa: kunlik masala, reytinglar, o'yinlarim, do'stlar (homex.js) */
-;(function(){var s=document.createElement("script");s.src="/homex.js?v=1";document.head.appendChild(s)})();
+;(function(){var s=document.createElement("script");s.src="/homex.js?v=2";document.head.appendChild(s)})();

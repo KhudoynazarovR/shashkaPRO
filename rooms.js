@@ -80,6 +80,15 @@ function createRooms({ send, clients, onFinish }) {
       }
       if (ch) pushState(room);
     }
+    // 🤖 bot bilan o'yin: o'yin boshlangandan keyin odam 60 soniya qaytmasa — mag'lubiyat (lidraughts kabi; chiqib ketib reytingni saqlab bo'lmaydi)
+    for (const room of rooms.values()) {
+      if (!room.vsBot || room.finished || room.arena || !room.white || !room.black || (room.plies || 0) < 2) continue;
+      const hc = isBotUid(String(room.white.uid)) ? "black" : "white", h = room[hc];
+      if (!h || isBotUid(String(h.uid))) continue;
+      if (isOnline(h)) { h.offSince = 0; continue; }
+      if (!h.offSince) { h.offSince = now; continue; }
+      if (now - h.offSince >= 60000) { h.offSince = 0; finish(room, hc === "white" ? "black" : "white", "abandon"); }
+    }
   }, 1000).unref();
 
   // Soat: har ikki tomonning birinchi yurishi bepul, undan keyin navbatdagi o'yinchi vaqti ketadi.
@@ -111,8 +120,8 @@ function createRooms({ send, clients, onFinish }) {
   function _liveElo(seat) {
     try {
       if (seat && seat.uid && isBotUid(seat.uid)) {
-        const m = require("./store").db.botElo, e = (m && m[seat.uid] && m[seat.uid].elo) || 0, cap = { bot_kingkong: 2500, bot_terminator: 2400 }[seat.uid];
-        return Math.round(cap && e > cap ? cap : e) || 1000;
+        const m = require("./store").db.botElo, e = (m && m[seat.uid] && m[seat.uid].elo) || 0;
+        return Math.round(e) || 1500;
       }
     } catch (e) {}
     return (_pi(seat) || {}).elo || 1000;

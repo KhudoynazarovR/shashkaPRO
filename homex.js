@@ -29,8 +29,8 @@
     '#hxPz .n{margin-top:auto;font-weight:800;font-size:13.5px}#hxPz .bar{margin-top:6px;height:10px;border-radius:8px;background:rgba(0,0,0,.25)}#hxPz .bar i{display:block;height:100%;min-width:6px;border-radius:8px;background:linear-gradient(90deg,#ff8a00,#ffb02e)}' +
     '#hxPz button{border:0;border-radius:12px;padding:9px 14px;font-weight:800;font-size:15px;background:#fff;color:#1a7a4c}' +
     // 📊 reytinglar
-    '#hxRt .rt{display:flex;gap:8px;margin-bottom:12px}#hxRt .rt div{flex:1;min-width:0;border-radius:16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.09);padding:10px 3px;text-align:center;cursor:pointer}' +
-    '#hxRt em{font-style:normal;font-size:21px;display:block}#hxRt b{display:block;font-size:16px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#hxRt small{opacity:.65;font-size:11px}' +
+    '#hxRt .rt{display:flex;gap:6px;margin-bottom:12px}#hxRt .rt div{flex:1;min-width:0;border-radius:16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.09);padding:10px 3px;text-align:center;cursor:pointer}' +
+    '#hxRt em{font-style:normal;font-size:21px;display:block}#hxRt b{display:block;font-size:14.5px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#hxRt small{opacity:.65;font-size:11px}' +
     // 🕹 o'yinlarim
     '#hxGm .gh{border-radius:18px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);overflow:hidden;margin-bottom:6px}' +
     '#hxGm .g{display:flex;align-items:center;gap:9px;padding:9px 11px;border-top:1px solid rgba(255,255,255,.06);font-size:14px}#hxGm .g:first-child{border-top:0}' +
@@ -80,12 +80,10 @@
       '<div class="n">Jami ' + sol + ' ta yechilgan</div><div class="bar"><i style="width:' + Math.min(100, day * 20) + '%"></i></div></div><div class="R"><div class="bd"></div><button>Yechish!</button></div>');
     if (pz.parentNode !== hero) { hero.appendChild(pz); pz.onclick = openDaily; }
     // 📊 reytinglar
-    var lg = txt('lgCard').match(/(\d+)\s*-?\s*o[‘'`ʻ]?rin/i), sk = txt('dqCard').match(/^\D*(\d+)/);
+        var RT = (D && D.rt) || {}, cell = function (k, ic, lb) { var x = RT[k] || { r: 1500, prov: true }; return '<div data-x="rk"><em>' + ic + '</em><b>' + x.r + (x.prov ? '<span style="opacity:.5">?</span>' : '') + '</b><small>' + lb + '</small></div>'; };
     var rt = el('hxRt', '<div class="hxH">Reytinglar <a data-x="rk">Hammasi ›</a></div><div class="rt">' +
-      '<div data-x="rk"><em>⚡</em><b>' + (D ? D.elo : '—') + '</b><small>ELO</small></div>' +
-      '<div data-x="pz"><em>🧩</em><b>' + sol + '</b><small>Masalalar</small></div>' +
-      '<div data-x="lg"><em>🏆</em><b>' + (lg ? lg[1] + '-o‘rin' : '—') + '</b><small>Liga</small></div>' +
-      '<div data-x="dq"><em>🔥</em><b>' + (sk ? sk[1] : 0) + '</b><small>Seriya</small></div></div>');
+      cell('bullet', '🚀', 'Bullet') + cell('blits', '⚡', 'Blits') + cell('rapid', '⏱', 'Rapid') + cell('corr', '📮', 'Yozishma') +
+      '<div data-x="pz"><em>🧩</em><b>' + sol + '</b><small>Masala</small></div></div>');
     if (rt.parentNode !== hero) {
       hero.appendChild(rt);
       rt.onclick = function (e) {
