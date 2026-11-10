@@ -688,6 +688,7 @@ const srvBotOn = room => !!(room && room.vsBot && room.botCfg && room.botCfg.id 
       if (!room.vsBot || !col || !room.botStarted) return true;
       const bc = botColorOf(room);
       if (!bc || col === bc) return true;   // faqat odam bot nomidan yubora oladi
+      if (m.src) try { require("./memguard.js").botSrc(m.src, room.botCfg && room.botCfg.id); } catch (e) {}
       return applyMove(c, room, roomId, bc, m);
     }
 

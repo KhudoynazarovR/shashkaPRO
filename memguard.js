@@ -54,11 +54,28 @@ async function cleanReport() {
   const b = snap();
   return { a, b, r };
 }
+// 🤖 bot yurishlari qayerdan keldi (odam bilan o'yinlarda): e — dvigatel, z — zaxira (telefonning sayoz qidiruvi), t — vaqt tugay deb tez yurish, r — ataylab tasodifiy, f — yagona yurish
+const BS = { since: Date.now(), all: { e: 0, z: 0, t: 0, r: 0, f: 0 }, bots: {} };
+function botSrc(k, bot) {
+  if (!/^[eztrf]$/.test(String(k))) return;
+  BS.all[k]++; const id = String(bot || '?').slice(0, 30), o = BS.bots[id] || (BS.bots[id] = { e: 0, z: 0, t: 0, r: 0, f: 0 }); o[k]++;
+}
+function pct(a, b) { return b ? Math.round(a * 100 / b) + '%' : '0%'; }
+function fmtBots() {
+  const a = BS.all, n = a.e + a.z + a.t + a.r + a.f, h = new Date(BS.since + 5 * 3600e3).toISOString().slice(11, 16);
+  let q = null; try { q = require('./kestoai.js').qstat(); } catch (e) {}
+  let t = '\n\n🤖 <b>Bot yurishlari</b> (' + h + ' dan beri, ' + n + ' ta)\n' +
+    'Dvigatel: ' + a.e + ' · <b>zaxira: ' + a.z + ' (' + pct(a.z, n) + ')</b> · tezkor ⏱: ' + a.t + ' · tasodifiy: ' + a.r + ' · yagona: ' + a.f;
+  const worst = Object.keys(BS.bots).map(id => { const o = BS.bots[id], m = o.e + o.z + o.t + o.r + o.f; return { id, z: o.z + o.t, m }; }).filter(x => x.z).sort((x, y) => y.z - x.z).slice(0, 4);
+  if (worst.length) t += '\nZaif yurish ko‘p: ' + worst.map(x => x.id.replace(/^bot_?/, '') + ' ' + pct(x.z, x.m)).join(', ');
+  if (q) t += '\nDvigatel navbati: o‘rtacha ' + q.avg + ' ms, eng ko‘p ' + Math.round(q.max / 100) / 10 + ' s, 1.5 s dan uzoq: ' + q.slow + ' marta (hozir navbatda ' + q.queue + ')';
+  return t;
+}
 function fmtSnap(s) {
   return 'RAM jami: <b>' + MB(s.jami) + ' MB</b> / 512 MB (' + Math.round(s.jami / 5368709.12) + '%)\n' +
     'Node: rss ' + MB(s.rss) + ' · heap ' + MB(s.heap) + ' · ext ' + MB(s.ext) + ' · ab ' + MB(s.ab) + ' MB' + (s.dv ? '\nDvigatel (KestoG): ' + MB(s.dv) + ' MB' : '') +
     '\nUlanishlar: ' + s.ws + (s.rooms ? ' · Xonalar: ' + s.rooms : '') +
-    '\n\n🗂 Keshlar:\n' + (s.c.length ? s.c.map(x => '• ' + x.n + ': ' + x.k + ' ta, ' + MB(x.b) + ' MB').join('\n') : '—');
+    '\n\n🗂 Keshlar:\n' + (s.c.length ? s.c.map(x => '• ' + x.n + ': ' + x.k + ' ta, ' + MB(x.b) + ' MB').join('\n') : '—') + fmtBots();
 }
 const KB = { inline_keyboard: [[{ text: '🧹 Keshni tozalash', callback_data: 'mg:clr' }, { text: '🔄 Yangilash', callback_data: 'mg:st' }]] };
 async function cmd(msg, text) {
@@ -90,4 +107,4 @@ function start() {
     for (const a of ADM()) tg('sendMessage', { chat_id: a, text: '⚠️ Xotira ' + MB(r.a.jami) + ' MB ga yetdi — keshlar avtomatik tozalandi.\n' + done(r), parse_mode: 'HTML', reply_markup: KB });
   }, 60e3).unref();
 }
-module.exports = { reg, snap, line, clear, cmd, onCallback, start, setRefs, total };
+module.exports = { botSrc, reg, snap, line, clear, cmd, onCallback, start, setRefs, total };

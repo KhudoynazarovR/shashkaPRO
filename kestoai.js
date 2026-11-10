@@ -111,6 +111,9 @@ function track(roomId, key) {
   if (a.length < 200 && a[a.length - 1] !== key) a.push(key);
 }
 
+// 📊 navbatda kutish (odamlar bilan o'yinlar): /kesh da ko'rinadi
+const QS = { n: 0, sum: 0, max: 0, slow: 0 };
+function qNote(ms) { QS.n++; QS.sum += ms; if (ms > QS.max) QS.max = ms; if (ms > 1500) QS.slow++; }
 function move(j, cb) {
   if (j && j.kk && process.env.KKLOG) { const _c = cb; cb = r => { try { console.log("[KK]", JSON.stringify({ room: j.room, t: j.time, rem: j.rem, from: r.from, to: r.to, ev: r.ev, ms: r.ms, book: r.book, colette: r.colette, admin: r.admin, tb: r.tb, cached: r.cached, deep: r.deep, err: r.error })); } catch (e) {} return _c(r); }; }
   LOWFLAG = !!(j && j.arena);
@@ -126,7 +129,7 @@ function move(j, cb) {
   if (j.kk) { try { const ab = require('./kkbook.js').get(b, side, j.room); if (ab) return cb({ from: ab.f, to: ab.t, jumps: 0, ev: null, ms: 0, book: 1, admin: 1 }); } catch (e) {} }   // 🦍 admin o'rgatgan yurish — birinchi
   try { const eb = require('./etudes.js').bookMove(b, side); if (eb) return cb({ from: eb.from, to: eb.to, jumps: 0, ev: null, ms: 0, book: 1, etude: 1 }); } catch (e) {}
   const bk = BOOK[b.join("") + side];
-  const cm = j.book && !(j.kk && process.env.KK_NOBOOK === "1") && (secs >= 2 || j.tbAlways) && COLETTE[b.join("") + side];   // coletteBOT (2300) o'yin uslubi — saboq (DEEP) uni chetga surmaydi
+  const cm = j.book && !(j.kk && process.env.KK_NOBOOK === "1") && (secs >= 2 || j.tbAlways) && b.filter(v => v).length >= 18 && COLETTE[b.join("") + side];   // faqat ochilish/erta o'rta o'yin (18+ dona) — keyin dvigatel o'zi hisoblaydi   // coletteBOT (2300) o'yin uslubi — saboq (DEEP) uni chetga surmaydi
   if (cm) return cb({ from: cm[0], to: cm[1], jumps: 0, ev: null, ms: 0, book: 1, colette: 1 });
   if (bk && j.book && !(j.kk && process.env.KK_NOBOOK === "1")) return cb({ from: bk.from, to: bk.to, jumps: 0, ev: null, ms: 0, book: 1 });
   const key = b.join(",") + "|" + side;
@@ -139,12 +142,12 @@ function move(j, cb) {
   // bitta dvigatel jarayoni: so'rovlar navbatga qo'yiladi (rad etilmaydi). Arena (bot va bot) faqat navbat bo'sh bo'lsa.
   if (j && j.arena ? (busy >= 1) : (queue.length >= 12)) return cb({ error: "busy", code: 429 });
   busy++; const t0 = Date.now();
-  const due = j.kk && Number(j.rem) > 0 ? t0 + Math.round(secs * 1000) : 0;   // ⏱ vaqtli King Kong: shu vaqtgacha javob berilishi shart (navbat kutish ham shunga kiradi)
+  const due = j.kk && Number(j.rem) > 0 ? t0 + Math.round(secs * 1000) : Number(j.wait) > 0 ? t0 + Math.round(Math.max(secs, Math.min(60, Number(j.wait))) * 1000) : 0;   // ⏱ ilova shu vaqtgacha kutadi: navbatda kutilsa o'ylash qisqaradi, javob kechikmaydi (ilova zaif zaxiraga tushmaydi)   // ⏱ vaqtli King Kong: shu vaqtgacha javob berilishi shart (navbat kutish ham shunga kiradi)
   const ng = newGame(b), mk = s => (ng ? "9 0\n" : "") + encode(b, side, s);
   let used = secs, capped = false;
   // uzoq o'ylash (vaqtsiz o'yin) 1 s lik bo'laklarga bo'linadi: oraliqda vaqtli o'yinlar navbatsiz o'tib ketadi,
   // dvigatel xesh-jadvali saqlangani uchun keyingi bo'lak oldingisidan davom etadi
-  const CH = 1.0, lowNow = LOWFLAG;
+  const lowNow = LOWFLAG, CH = lowNow ? 0.4 : 1.0;   // fon ishlari (arena bot-bot) 0.4 s lik bo'laklarda — odamning o'yini 0.4 s dan ko'p kutmaydi
   const go = (left, cb2) => {
     if (due || left <= CH + 0.3) return run(mk(left), left, cb2, { mk: s => { used = s; capped = s < left - 0.01; return mk(s); }, due, slow: !!(j.kk && !due), low: lowNow });
     run(mk(CH), CH, (err, v) => { if (err) return cb2(err, v); go(left - CH, (e2, v2) => cb2(null, e2 ? v : v2)); }, { slow: true, low: lowNow });
@@ -156,7 +159,8 @@ function move(j, cb) {
     if (!(from >= 0 && from < 64 && to >= 0 && to < 64) || from === to) return cb({ error: "nomove", code: 500 });
     if (process.env.KDEBUG) console.log('[KestoG] vaqt', secs, 'sek soralgan,', Date.now() - t0, 'ms'); const res = { bk: bk ? { from: bk.from, to: bk.to } : null, from: from, to: to, jumps: v[4], ev: (v.length > 5 ? v[5] : null) };
     if (!ng && (capped ? used : secs) >= 1) remember(key, capped ? used : secs, res);
-    cb(Object.assign({ ms: Date.now() - t0, deep: deep ? 1 : 0 }, res));
+    const tot = Date.now() - t0; if (!lowNow) qNote(Math.max(0, tot - Math.round((capped ? used : secs) * 1000)));
+    cb(Object.assign({ ms: tot, deep: deep ? 1 : 0 }, res));
   });
 }
 
@@ -313,4 +317,4 @@ function pv(b, side, secs, plies, cb) {
     });
   })();
 }
-module.exports = { pv, peek, clearDeep, move, learn, ponder, review, ponderStat: () => PONDER, load: () => busy, mem: () => ({ cache: CACHE.size, deep: DEEP.size }) };
+module.exports = { qstat: () => ({ n: QS.n, avg: QS.n ? Math.round(QS.sum / QS.n) : 0, max: QS.max, slow: QS.slow, queue: queue.length }), pv, peek, clearDeep, move, learn, ponder, review, ponderStat: () => PONDER, load: () => busy, mem: () => ({ cache: CACHE.size, deep: DEEP.size }) };
