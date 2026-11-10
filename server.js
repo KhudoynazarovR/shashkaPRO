@@ -269,6 +269,7 @@ function serveFile(req, res) {
     if (!html.includes("ratings.js")) {
       html = html.replace("</body>", '<script src="/ratings.js?v=' + VER + '"></script>\n</body>');
     }
+    if (!html.includes("perf.js")) html = html.replace("</body>", '<script src="/perf.js?v=' + VER + '"></script>\n</body>');
     if (!html.includes("/menu.js")) {
       html = html.replace("</body>", '<script src="/menu.js?v=' + VER + '"></script>\n</body>');
     }
