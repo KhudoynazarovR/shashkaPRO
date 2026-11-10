@@ -2122,9 +2122,10 @@ document.head.appendChild(_as); }
       var _S = window.__lb && window.__lb.S, _T = null;
       ((_S && _S.tournaments) || []).forEach(function (x) { if (String(x.id) === String(id)) _T = x; });
       var _n = open.__r || 0;
-      if ((!_T || !window.taOpen) && _n < 12) { open.__r = _n + 1; setTimeout(function () { open(id); }, 400); return; }
+      // turnirlar ro'yxati hali kelmagan bo'lsa (sekin internet) — 20 s gacha kutamiz; eski jadval arena uchun hech qachon ochilmaydi
+      if ((!_T || !window.taOpen) && _n < 50) { open.__r = _n + 1; setTimeout(function () { open(id); }, 400); return; }
       open.__r = 0;
-      if (_T && _T.type === 'arena' && window.taOpen) { try { close(); } catch (e) {} return window.taOpen(id); }
+      if (window.taOpen && (!_T || _T.type === 'arena')) { try { close(); } catch (e) {} return window.taOpen(id); }
     } catch (e) {}
 
     build(); curId = String(id); window.__tvCur = curId; lastMain = ''; lastChat = ''; g('tvMsgs').__init = 0;
@@ -3422,3 +3423,6 @@ function addBtn(){if(document.getElementById('bpBtn'))return;var b=mk('button','
 function init(){fetch('/api/botadmin',{headers:{'x-init-data':ini()}}).then(function(r){return r.json()}).then(function(j){if(j&&j.admin)addBtn()}).catch(function(){})}
 if(document.readyState==='complete')setTimeout(init,1500);else window.addEventListener('load',function(){setTimeout(init,1500)});
 })();
+
+/* TLIST — turnirlar ro'yxati chess.com/lichess uslubida (tlist.js) */
+;(function(){var s=document.createElement("script");s.src="/tlist.js";document.head.appendChild(s)})();

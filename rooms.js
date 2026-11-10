@@ -582,7 +582,7 @@ const srvBotOn = room => !!(room && room.vsBot && room.botCfg && room.botCfg.id 
       const games = [];
       for (const id of ids) {
         const r = rooms.get(String(id));
-        if (!r) continue;
+        if (!r) { try { const bb = require('./arenabb.js').live(String(id)); if (bb) games.push({ id: bb.roomId, moves: bb.moves, turn: bb.turn, finished: !!bb.over, winner: bb.winner || null, clock: bb.clock, running: !bb.over, bb: 1 }); } catch (e) {} continue; }   // 🤖 arenadagi bot va bot o'yini
         games.push({
           id: r.id, moves: r.moves || [], turn: r.turn, finished: !!r.finished, winner: r.winner || null,
           clock: currentClock(r), running: clockRunning(r),

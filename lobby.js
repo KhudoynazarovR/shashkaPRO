@@ -74,7 +74,8 @@ const ARENA_PAIR_DELAY_MS = Number(process.env.ARENA_PAIR_DELAY_MS || 5000);    
 const ARENA_REMATCH_WAIT_MS = Number(process.env.ARENA_REMATCH_WAIT_MS || 15000);  // bir xil raqibga qaytishdan oldin kutish
 const ARENA_NOSHOW_MS = Number(process.env.ARENA_NOSHOW_MS || 30000);              // o'yinga kirmaganlar uchun kutish
 const ARENA_MIN_DRAW_PLIES = Number(process.env.ARENA_MIN_DRAW_PLIES || 20);       // lidraughts: 10 yurishdan (20 yarim-yurish) oldingi durangga ochko yo'q
-const ARENA_MIN_GAMES = [0, 5, 10, 20, 50];          // ishtirok sharti: kamida N ta reytingli o'yin
+const ARENA_MIN_GAMES = [0, 5, 10, 20, 50];
+const ARENA_BB_MAX = Number(process.env.ARENA_BB_MAX || 3);   // bir arenada bir vaqtda eng ko'pi shuncha bot–bot o'yini (dvigatel yuki)          // ishtirok sharti: kamida N ta reytingli o'yin
 const ARENA_BERSERK_MIN_PLIES = Number(process.env.ARENA_BERSERK_MIN_PLIES || 14); // berserk bonusi uchun minimal yarim-yurishlar soni
 
 const hex = n => crypto.randomBytes(n).toString('hex');
@@ -321,7 +322,7 @@ function createLobby({ send, clients, roomsApi }) {
       boards: t.cur.map(b => ({
         board: b.board, roomId: b.roomId, white: b.white, black: b.black,
         whiteName: t.players.get(b.white).name, blackName: t.players.get(b.black).name,
-        whiteElo: t.type === 'arena' ? olyElo(b.white) : 0, blackElo: t.type === 'arena' ? olyElo(b.black) : 0,
+        whiteElo: t.type === 'arena' ? olyElo(b.white) : 0, blackElo: t.type === 'arena' ? olyElo(b.black) : 0, bb: !!b.bb,
         done: b.done, winner: b.winner || null
       })),
       bye: t.curBye || null, hist: (t.hist || []).slice(-40), chat: (t.chat || []).slice(-60)
@@ -838,7 +839,7 @@ function createLobby({ send, clients, roomsApi }) {
       for (let j = i + 1; j < avail.length; j++) {
         const b = avail[j];
         if (used.has(b)) continue;
-      if (a.bot && b.bot) continue;
+      if (a.bot && b.bot) continue;   // bot–bot keyingi bosqichda (odamlar birinchi juftlanadi)
       const rematch = a.lastOpp === b.uid || b.lastOpp === a.uid;
         if (rematch && !(now - a.waitingSince >= ARENA_REMATCH_WAIT_MS && now - b.waitingSince >= ARENA_REMATCH_WAIT_MS)) continue;
         pick = b; break;
@@ -848,7 +849,28 @@ function createLobby({ send, clients, roomsApi }) {
       startArenaGame(t, a, pick);
       made = true;
     }
+    // 🤖⚔️🤖 bo'sh qolgan botlar bir-biri bilan haqiqiy o'yin (serverda); bot o'yinlari ko'pi bilan ARENA_BB_MAX ta parallel
+    const freeBots = avail.filter(p => p.bot && !used.has(p));
+    let bbN = (t.cur || []).filter(x => x.bb).length;
+    for (let i = 0; i < freeBots.length && bbN < ARENA_BB_MAX; i++) {
+      const a = freeBots[i]; if (used.has(a)) continue;
+      const b = freeBots.slice(i + 1).find(x => !used.has(x) && !(x.lastOpp === a.uid && a.lastOpp === x.uid)) || freeBots.slice(i + 1).find(x => !used.has(x));
+      if (!b) break;
+      used.add(a); used.add(b); bbN++;
+      startBotBot(t, a, b); made = true;
+    }
     if (made) push();
+  }
+  function startBotBot(t, a, b) {
+    let w = a, k = b; if (Math.random() < 0.5) { w = b; k = a; }
+    const roomId = 'A' + t.id + 'G' + (++t.gameNo);
+    w.colors.w++; k.colors.b++; w.busy = true; k.busy = true;
+    const board = { board: t.gameNo, roomId, white: w.uid, black: k.uid, done: false, winner: null, bb: true };
+    t.cur.push(board);
+    const cfg = uid => { const bt = botAny(uid); return bt ? botPow(bt) : { secs: 1, blunder: 0 }; };
+    require('./arenabb.js').play({ roomId, tc: t.tc, white: { uid: w.uid, cfg: cfg(w.uid) }, black: { uid: k.uid, cfg: cfg(k.uid) }, alive: () => tournaments.has(t.id) && t.status === 'running' && !board.done })
+      .then(r => { if (board.done || !tournaments.has(t.id) || r.reason === 'stop') { w.busy = false; k.busy = false; t.cur = (t.cur || []).filter(x => x !== board); return; } arenaGameDone(t, board, { id: roomId, winner: r.winner, plies: r.plies, berserk: {}, reason: r.reason }); })
+      .catch(e => { console.log('[arenabb]', e.message); w.busy = false; k.busy = false; t.cur = t.cur.filter(x => x !== board); });
   }
 
   // Ochko: g'alaba 2, durang 1. Olovda (ketma-ket 2 g'alabadan keyin) g'alaba 4, durang 2.

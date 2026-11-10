@@ -186,13 +186,13 @@
     g('taInfo').innerHTML = inf;
     // TOP o'yinlar (eng yuqori o'rinlar bo'yicha)
     var rk = {}; ps.forEach(function (p, i) { rk[String(p.uid)] = i + 1; });
-    var live = (t.boards || []).filter(function (b) { return !b.done; }).map(function (b) { return { b: b, r: Math.min(rk[String(b.white)] || 999, rk[String(b.black)] || 999) }; }).sort(function (a, b) { return a.r - b.r; });
+    var live = (t.boards || []).filter(function (b) { return !b.done; }).map(function (b) { return { b: b, r: Math.min(rk[String(b.white)] || 999, rk[String(b.black)] || 999) }; }).sort(function (a, b) { return (a.b.bb ? 1 : 0) - (b.b.bb ? 1 : 0) || a.r - b.r; });
     feat = live.length ? live[0].b : null;
     g('taFeatC').style.display = feat ? '' : 'none';
     g('taTopC').style.display = live.length > 1 ? '' : 'none';
     g('taTop').innerHTML = live.slice(1, 9).map(function (x) {
       var b = x.b;
-      return '<div class="taTg"><div><span><i class="rk">#' + (rk[String(b.white)] || '–') + '</i>⚪ ' + nm(b.whiteName) + ' <small>' + (b.whiteElo || '') + '</small></span><span><i class="rk">#' + (rk[String(b.black)] || '–') + '</i>⚫ ' + nm(b.blackName) + ' <small>' + (b.blackElo || '') + '</small></span></div><button data-a="watch" data-room="' + esc(b.roomId) + '">👁 Tomosha</button></div>';
+      return '<div class="taTg"><div><span><i class="rk">#' + (rk[String(b.white)] || '–') + '</i>⚪ ' + nm(b.whiteName) + ' <small>' + (b.whiteElo || '') + '</small></span><span><i class="rk">#' + (rk[String(b.black)] || '–') + '</i>⚫ ' + nm(b.blackName) + ' <small>' + (b.blackElo || '') + '</small></span></div>' + (b.bb ? '<small>🤖 bot o‘yini</small>' : '<button data-a="watch" data-room="' + esc(b.roomId) + '">👁 Tomosha</button>') + '</div>';
     }).join('');
     featRk = rk; renderFeat();
   }
@@ -238,7 +238,7 @@
       var uid = col === 'w' ? feat.white : feat.black, n = col === 'w' ? feat.whiteName : feat.blackName, e = col === 'w' ? feat.whiteElo : feat.blackElo, t = col === 'w' ? ck.white : ck.black;
       return '<div class="taFp"><span><small>#' + (featRk[String(uid)] || '–') + '</small> <b>' + nm(n) + '</b> <small>' + (e || '') + '</small></span><span class="c">' + clk(t) + '</span></div>';
     }
-    g('taFeat').innerHTML = line('b') + '<div class="taFt">' + cells + '</div>' + line('w') + '<button class="taW" data-a="watch" data-room="' + esc(feat.roomId) + '">👁 Tomosha qilish</button>';
+    g('taFeat').innerHTML = line('b') + '<div class="taFt">' + cells + '</div>' + line('w') + (feat.bb ? '<div style="text-align:center;color:#a9a4d8;font-size:13px;margin-top:8px">🤖 Botlar o‘yini — jonli</div>' : '<button class="taW" data-a="watch" data-room="' + esc(feat.roomId) + '">👁 Tomosha qilish</button>');
   }
 
   function open(id) {
