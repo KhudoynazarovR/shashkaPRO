@@ -119,7 +119,8 @@ function view(u) {
 
 // ---------- ulashish rasmlari (xotirada, 48 soat)
 const IMG = new Map();
-const IMG_TTL = 48 * 3600e3, IMG_MAX = 300;
+try { require('./memguard.js').reg('vazifa_rasm', IMG); } catch (e) {}
+const IMG_TTL = 48 * 3600e3, IMG_MAX = 100;
 function putImg(buf) {
   const id = crypto.randomBytes(9).toString('hex');
   IMG.set(id, { buf, at: Date.now() });

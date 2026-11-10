@@ -5,7 +5,8 @@
 const svgBoard = require('./puzimg.js').svgBoard;
 const BASE = () => (process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || '').replace(/\/$/, '');
 const msgs = new Map();   // xona -> { imid, from, at, last, tmr, ver, done }
-const cache = new Map();  // kalit -> jpeg
+const cache = new Map();  // kalit -> jpeg (eng ko'pi 100 ta)
+try { require('./memguard.js').reg('karta_jpg', cache); } catch (e) {}
 let ROOMS = null;
 
 function tg(method, params) {
@@ -69,7 +70,7 @@ async function render(roomId, from) {
     '<rect x="740" y="575" width="230" height="80" rx="20" fill="' + bc + '"/>' + (live ? '<circle cx="785" cy="615" r="11" fill="#fff"/>' : '') +
     '<text x="' + (live ? 870 : 855) + '" y="626" font-size="30" font-weight="800" fill="#fff" text-anchor="middle" font-family="' + F + '">' + badge + '</text></svg>';
   const buf = await sharp(Buffer.from(svg)).jpeg({ quality: 86 }).toBuffer();
-  cache.set(key, buf); if (cache.size > 300) cache.delete(cache.keys().next().value);
+  cache.set(key, buf); if (cache.size > 100) cache.delete(cache.keys().next().value);
   return buf;
 }
 function url(roomId, from, v) { const b = BASE(); return b ? b + '/api/gcard/' + roomId + '.jpg?f=' + encodeURIComponent(from || '') + '&v=' + (v || 0) : ''; }
@@ -184,7 +185,7 @@ async function mmRender(codeX, from, romQ) {
     '<rect x="740" y="575" width="230" height="80" rx="20" fill="' + bc + '"/>' + (live ? '<circle cx="785" cy="615" r="11" fill="#fff"/>' : '') +
     '<text x="' + (live ? 870 : 855) + '" y="626" font-size="30" font-weight="800" fill="#fff" text-anchor="middle" font-family="' + F + '">' + badge + '</text></svg>';
   const buf = await sharp(Buffer.from(svg)).jpeg({ quality: 86 }).toBuffer();
-  cache.set(key, buf); if (cache.size > 300) cache.delete(cache.keys().next().value);
+  cache.set(key, buf); if (cache.size > 100) cache.delete(cache.keys().next().value);
   return buf;
 }
 const MM_CAP = 'O‘yla, izla, top — keng mushohada 🎮';
@@ -221,6 +222,7 @@ function mmTouch(r) {
 }
 function mmNow(r) { const m = r && msgs.get('mm:' + r.code); if (m) { if (m.tmr) { clearTimeout(m.tmr); m.tmr = null; } mmEdit(r, m); } }
 const gifCache = new Map();
+try { require('./memguard.js').reg('karta_gif', gifCache); } catch (e) {}
 async function gifBuild(id, from, tc) {
   const ck = id + '|' + from + '|' + tc;
   if (gifCache.has(ck)) return gifCache.get(ck);
@@ -246,7 +248,7 @@ async function gifBuild(id, from, tc) {
   }
   gif.finish();
   const buf = Buffer.from(gif.bytes());
-  gifCache.set(ck, buf); if (gifCache.size > 20) gifCache.delete(gifCache.keys().next().value);
+  gifCache.set(ck, buf); if (gifCache.size > 5) gifCache.delete(gifCache.keys().next().value);
   return buf;
 }
 const gifPend = new Map();

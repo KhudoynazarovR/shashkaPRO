@@ -3,7 +3,8 @@
 // Har yurish — bitta kadr (zanjirli urishda har sakrash alohida), oxirgi kadrda natija. sharp bilan animatsiya.
 const store = require('./store.js');
 const W = 380, HEAD = 46, FOOT = 34;
-const cache = new Map();   // roomId -> gif buffer
+const cache = new Map();   // roomId -> gif buffer (eng ko'pi 8 ta)
+try { require('./memguard.js').reg('partiya_gif', cache); } catch (e) {}
 const lim = new Map();     // uid -> [vaqtlar]
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 function start(room) {
@@ -52,7 +53,7 @@ async function make(room, flip) {
   }
   const delay = imgs.map((_, i) => i === 0 ? 1200 : i === imgs.length - 1 ? 4000 : 650);
   const gif = await sharp(imgs, { join: { animated: true } }).gif({ delay, loop: 0, effort: 4 }).toBuffer();
-  cache.set(key, gif); if (cache.size > 30) cache.delete(cache.keys().next().value);
+  cache.set(key, gif); if (cache.size > 8) cache.delete(cache.keys().next().value);
   return gif;
 }
 async function sendTo(uid, gif, caption) {

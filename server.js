@@ -170,7 +170,7 @@ function leaveClient(c) {
 }
 
 const BLOCKED = new Set([
-  "quests.js", "leagues.js", "weblogin.js", "social.js", "elon.js", "eco.js", "vrules.js", "kanal.js", "tgcoin.js", "reelgen.js",
+  "quests.js", "leagues.js", "weblogin.js", "social.js", "elon.js", "eco.js", "vrules.js", "kanal.js", "tgcoin.js", "reelgen.js", "memguard.js",
   "server.js", "rooms.js", "mod.js", "ref.js", "premium.js", "gift.js", "region.js", "ach.js", "season.js", "cheat.js", "endgame.js", "corr.js", "gif.js", "alert.js", "notify.js", "kkbook.js", "wager.js", "economy.js", "store.js", "payments.js", "etudes.js", "pzrush.js", "pzbattle.js", "pztour.js", "draw-rules.js", "lobby.js", "users.json", "package.json", "package-lock.json"
 ]);
 
@@ -352,9 +352,16 @@ function handleReq(req, res) {
   serveFile(req, res);
 }
 
-const wss = new WebSocketServer({ server });
+const wss = new WebSocketServer({ server, maxPayload: 64 * 1024 });   // 🛡 bitta xabar 64 KB dan katta bo'lmaydi
+const _mg = require('./memguard.js');
+_mg.reg('gzip', _gzc);
+// 💓 har 30 s da ping: javob bermagan (uzilib qolgan) ulanish yopiladi va xotiradan chiqadi
+setInterval(() => { wss.clients.forEach(ws => { if (ws.isAlive === false) { try { ws.terminate(); } catch (e) {} return; } ws.isAlive = false; try { ws.ping(); } catch (e) {} }); }, 30000).unref();
+const WS_RATE = Number(process.env.WS_RATE || 40);   // 🛡 bitta ulanishdan soniyasiga eng ko'pi shuncha xabar
 
-wss.on("connection", ws => {
+wss.on("connection", (ws, req) => {
+  ws.isAlive = true; ws.on("pong", () => { ws.isAlive = true; });
+  const _rl = { t: Date.now(), n: 0, bad: 0 };
   const c = {
     id: id("player"),
     ws,
@@ -375,6 +382,9 @@ wss.on("connection", ws => {
   notifyPlayers();
 
   ws.on("message", raw => {
+    ws.isAlive = true;
+    { const now = Date.now(); if (now - _rl.t >= 1000) { if (_rl.n > WS_RATE) _rl.bad++; else if (_rl.bad) _rl.bad--; _rl.t = now; _rl.n = 0; }
+      if (++_rl.n > WS_RATE && _rl.bad >= 5) { console.log('[ws] juda ko‘p xabar — ulanish uzildi:', (c.lb && c.lb.uid) || c.id, (req && req.headers && (req.headers['x-forwarded-for'] || '')) || ''); try { ws.terminate(); } catch (e) {} return; } }   // xabar tashlab yuborilmaydi (yurish yo'qolmasin) — faqat 5 s davom etgan oqimda uziladi
     let m;
 
     try {
@@ -636,8 +646,9 @@ server.listen(PORT, HOST, () => {
   console.log("================================");
 });
 
+try { _mg.setRefs({ wss, rooms: { count: () => roomsApi.rooms.size } }); _mg.start(); } catch (e) { console.log('[xotira]', e.message); }
 setInterval(() => {
   const m = process.memoryUsage();
   var _t = 0, _e = 0; try { var _f = require('fs'); _f.readdirSync('/proc').forEach(function (d) { if (!/^\d+$/.test(d)) return; try { var r = +_f.readFileSync('/proc/' + d + '/statm', 'utf8').split(' ')[1] * 4096; _t += r; if (/bridge|Kesto/i.test(_f.readFileSync('/proc/' + d + '/cmdline', 'utf8'))) _e += r; } catch (e) {} }); } catch (e) {}
-  console.log('RAM: rss=' + ((m.rss / 1048576) | 0) + 'MB heap=' + ((m.heapUsed / 1048576) | 0) + 'MB ext=' + ((m.external / 1048576) | 0) + 'MB ab=' + ((m.arrayBuffers / 1048576) | 0) + 'MB jami=' + ((_t / 1048576) | 0) + 'MB dvigatel=' + ((_e / 1048576) | 0) + 'MB');
+  console.log('RAM: rss=' + ((m.rss / 1048576) | 0) + 'MB heap=' + ((m.heapUsed / 1048576) | 0) + 'MB ext=' + ((m.external / 1048576) | 0) + 'MB ab=' + ((m.arrayBuffers / 1048576) | 0) + 'MB jami=' + ((_t / 1048576) | 0) + 'MB dvigatel=' + ((_e / 1048576) | 0) + 'MB ' + (function () { try { return _mg.line(_mg.snap()); } catch (e) { return ''; } })());
 }, 60000);

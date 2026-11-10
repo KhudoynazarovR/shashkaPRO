@@ -31,11 +31,7 @@
       btn('O‘chirish', function () { try { localStorage.setItem('spPerfOff', '1'); } catch (e) {} box.remove(); });
       document.body.appendChild(box);
     }
-    if (sp === 'perf') { setTimeout(show, 6000); return; }
-    var n = 0, iv = setInterval(function () {
-      n++;
-      if (window.__isAdmin) { clearInterval(iv); setTimeout(show, Math.max(0, 6000 - (Date.now() - t0))); }
-      else if (n > 30) clearInterval(iv);
-    }, 500);
+    // faqat ?startapp=perf bilan ochilganda ko'rinadi (adminga avtomatik chiqmaydi)
+    if (sp === 'perf') setTimeout(show, 6000);
   } catch (e) {}
 })();

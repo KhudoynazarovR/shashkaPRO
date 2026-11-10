@@ -250,7 +250,7 @@ if (URL_) {
 
 let dbTimer = null;
 function save() {
-  if (!timer) timer = setTimeout(() => { timer = null; writeFile(); }, 5000);
+  if (!timer) timer = setTimeout(() => { timer = null; writeFile(); }, URL_ ? 60000 : 5000);   // Postgres bor bo'lsa disk nusxasi — zaxira, har daqiqada
   if (!dbTimer) dbTimer = setTimeout(() => { dbTimer = null; writeDb(); }, 10000);
 }
 

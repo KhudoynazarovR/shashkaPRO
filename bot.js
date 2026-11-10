@@ -161,6 +161,7 @@ async function onMessage(msg) {
   }
   if (name === "/kanal") { if (await require("./kanal.js").cmd(msg, text)) return; }   // 📣 kanal masalalari (admin)
   if (name === "/reel") { if (await require("./reelgen.js").cmd(msg, text)) return; }   // 🎬 Instagram Reels videosi (admin)
+  if (name === "/kesh") { if (await require("./memguard.js").cmd(msg, text)) return; }   // 🧹 xotira va keshlar (admin)
   if (name === "/elon") { if (await require("./elon.js").cmd(msg, text)) return; }   // 📣 admin e'loni
   if (name === "/xatolar") {   // faqat admin: oxirgi server xatolari
     if (!(process.env.ADMIN_IDS || "").split(",").map(s => s.trim()).includes(String(msg.from.id))) return;
@@ -269,6 +270,7 @@ async function start() {
   async function onCallback(q) {
     try { if (q.data && q.data.indexOf('nf:') === 0 && await require('./notify.js').onCallback(q)) return; } catch (e) { console.log('[nf]', e.message); }
     try { if (q.data && q.data.indexOf('kn:') === 0 && await require('./kanal.js').onCallback(q)) return; } catch (e) { console.log('[kanal]', e.message); }
+    try { if (q.data && q.data.indexOf('mg:') === 0 && await require('./memguard.js').onCallback(q)) return; } catch (e) { console.log('[xotira]', e.message); }
     try { if (q.data && q.data.indexOf('ig:') === 0 && await require('./social.js').onCallback(q)) return; } catch (e) { console.log('[ig]', e.message); }
     try { if (q.data && q.data.indexOf('el:') === 0 && await require('./elon.js').onCallback(q)) return; } catch (e) { console.log('[elon]', e.message); }
     try { if (q.data && q.data.indexOf('md:') === 0 && await require('./mod.js').onCallback(q)) return; } catch (e) { console.log('[mod]', e.message); }
