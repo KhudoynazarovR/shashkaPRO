@@ -469,6 +469,7 @@
         "<select id=\"lbTp\"><option value=\"std\">Standart</option><option value=\"idf\">IDF 780</option></select></div>" +
 "<div class=\"row\"><span class=\"muted\">Vaqt:</span><select id=\"lbTtc\">" + tcOpts + "</select></div>" +
 "<div class=\"row\" id=\"lbTbzr\"><label><input type=\"checkbox\" id=\"lbTbz\" checked> ⚡ Berserk yoqilgan</label></div>" +
+        "<div class=\"row\"><span class=\"muted\">Reyting</span><select id=\"lbTrated\"><option value=\"1\">⭐ Reytingli</option><option value=\"0\">🤝 Reytingsiz</option></select></div>" +
       "<details id='lbTbotr' style='margin:6px 0'><summary>🤖 Botlar (faqat admin)</summary><label style='display:block;padding:4px 0'><input type='checkbox' onchange=\"var c=this.checked;[].forEach.call(this.closest('details').getElementsByClassName('lbTbot'),function(x){x.checked=c})\"> Hammasi</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot_easy'> Shogird</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot_mid'> Jangchi</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot'> Yo‘lbars</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot_pro'> Arslon</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot_gm'> Sulton</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot_champ'> Legend</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot_monster'> Monster</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot_terminator'> Terminator</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot_kingkong'> 🦍 King Kong</label></details>" +
 "<div class=\"row\" id=\"lbTmgr\"><select id=\"lbTmg\" style=\"flex:1\"><option value=\"0\">✅ Sharti yo‘q — hamma qatnasha oladi</option><option value=\"5\">Kamida 5 ta reytingli o‘yin</option><option value=\"10\">Kamida 10 ta reytingli o‘yin</option><option value=\"20\">Kamida 20 ta reytingli o‘yin</option><option value=\"50\">Kamida 50 ta reytingli o‘yin</option></select></div>" +
 "<div class=\"row\"><span class=\"muted\">🪙 Mukofot:</span><input id=\"lbTpz\" type=\"number\" min=\"100\" value=\"100\" style=\"flex:1;min-width:0\"></div>" +
@@ -515,7 +516,7 @@
       $("lbTpz").oninput = _pzc; $("lbTpl").onchange = _pzc; _pzc();
       (function () { var _f0 = $("lbTform"); if (_f0) _f0.style.display = "none"; })();
       $("lbTCreate").onclick = function () {
-        var _okc = window.lbAtOk(); _okc && sendMsg({ type: "lbTCreate", startAt: window.lbAt(), clubIds: lbClubIds(), kind: $("lbTk").value, pos: $("lbTp").value, duration: Number($("lbTdur").value), startIn: Number($($("lbTk").value === "arena" ? "lbTin" : "lbTsin").value), rounds: Number($("lbTr").value), interval: Number($("lbTiv").value), name: $("lbTn").value, tc: $("lbTtc").value, berserk: $("lbTbz").checked, botIds: [].map.call(document.getElementsByClassName("lbTbot"), function (x) { return x.checked ? x.value : null; }).filter(Boolean), prize: Number($("lbTpz").value)||0, places: Number($("lbTpl").value)||3, minGames: $("lbTmg") ? Number($("lbTmg").value) || 0 : 0 });
+        var _okc = window.lbAtOk(); _okc && sendMsg({ type: "lbTCreate", startAt: window.lbAt(), clubIds: lbClubIds(), kind: $("lbTk").value, pos: $("lbTp").value, duration: Number($("lbTdur").value), startIn: Number($($("lbTk").value === "arena" ? "lbTin" : "lbTsin").value), rounds: Number($("lbTr").value), interval: Number($("lbTiv").value), name: $("lbTn").value, tc: $("lbTtc").value, berserk: $("lbTbz").checked, rated: !($("lbTrated") && $("lbTrated").value === "0"), botIds: [].map.call(document.getElementsByClassName("lbTbot"), function (x) { return x.checked ? x.value : null; }).filter(Boolean), prize: Number($("lbTpz").value)||0, places: Number($("lbTpl").value)||3, minGames: $("lbTmg") ? Number($("lbTmg").value) || 0 : 0 });
         $("lbTn").value = ""; if (_okc) { var _tf = $("lbTform"); if (_tf) _tf.style.display = "none"; } try { var _d = $("lbTclD"); if (_d) _d.open = false; var _cb = document.querySelectorAll("#lbTclD input[type=checkbox]"); for (var _i = 0; _i < _cb.length; _i++) _cb[_i].checked = false; } catch (e) {}
       };
       if (!initData) {
@@ -1390,6 +1391,7 @@ document.head.appendChild(_as); }
         if (t.startAt && t.status === "reg") { var _d = new Date(t.startAt); _ex.push("🕐 " + (_d.toDateString() === new Date().toDateString() ? "" : _p2(_d.getDate()) + "." + _p2(_d.getMonth() + 1) + " ") + _p2(_d.getHours()) + ":" + _p2(_d.getMinutes())); }
         if (t.prize > 0) _ex.push("🪙 Mukofot: " + t.prize + " (" + (t.places || 3) + " o‘ringa)");
         if (arena) _ex.push(t.berserk === false ? "⚡ Berserk yo‘q" : "⚡ Berserk");
+        _ex.push(t.rated === false ? "🤝 Reytingsiz" : "⭐ Reytingli");
         if (_ex.length) st += (st ? "<br>" : "") + _ex.join(" · ");
         h += "<div class=\"card lbtk " + (arena ? "lbta" : "lbts") + "\" id=\"lbtc_" + esc(t.id) + "\"><div style=\"cursor:pointer\" onclick=\"lbTog('" + esc(t.id) + "')\"><b>" + (arena ? "⚔️" : "🏆") + " " + esc(t.name) + " ▾</b><span class=\"tkb tkb_" + t.status + "\">" + (t.status === "reg" ? "Ro‘yxat ochiq" : (t.status === "running" ? "O‘ynalmoqda" : "Tugagan")) + "</span></div><div class=\"muted\">⏱ " + esc(t.tc) + " · " + (t.pos === "idf" ? "🎲 IDF 780" : "♟ Standart") + "</div><div class=\"tkd\">" + st + "</div><div class=\"tkd\">👥 Ishtirokchilar: <b>" + t.players.length + "</b></div><div class=\"tkd\">👤 Yaratuvchi: <b>" + esc(t.creatorName) + "</b>" + "</div><div class=\"row\">";
         h += "<button class=\"sec\" data-a=\"tlink\" data-id=\"" + esc(t.id) + "\" data-n=\"" + esc(t.name) + "\">🔗 Havola</button>";
@@ -2082,6 +2084,7 @@ document.head.appendChild(_as); }
     var ch = ['🎯 ' + (ar ? 'Arena' : t.type === 'olympic' ? 'Olimpiya' : 'Shveytsar'), '⏱ ' + t.tc, '👥 ' + (t.players || []).length];
     if (t.prize) ch.push('🪙 ' + t.prize + (t.places ? ' (' + t.places + ' o‘ringa)' : ''));
     if (ar && t.berserk) ch.push('⚡ Berserk');
+    ch.push(t.rated === false ? '🤝 Reytingsiz' : '⭐ Reytingli');
     if (t.startAt && t.status === 'reg') ch.push('🕐 ' + hm(t.startAt));
     if (t.creatorName) ch.push('👤 ' + t.creatorName);
     g('tvInfo').innerHTML = ch.map(function(x){ return '<span class="tvChip">' + esc(x) + '</span>'; }).join('');

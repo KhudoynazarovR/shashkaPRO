@@ -10,7 +10,7 @@ const clubsApi = require('./clubs');
 const friends = new Map();
 const MIN_REWARD_PLIES = Number(process.env.REWARD_MIN_PLIES || 8);
 function payWin(room, whiteUid, blackUid, tid) {
-  if (!room.noshowBoth && room.reason !== 'noshow' && (room.plies || 0) >= MIN_REWARD_PLIES) { { const _d = require('./stats').record(whiteUid, blackUid, room.winner, room.tc); if (_d) room.eloD = _d; } try { require('./cheat.js').onFinish(room); } catch (e) {} }
+  if (!room.noshowBoth && room.reason !== 'noshow' && (room.plies || 0) >= MIN_REWARD_PLIES) { if (!room.unrated) { const _d = require('./stats').record(whiteUid, blackUid, room.winner, room.tc); if (_d) room.eloD = _d; } try { require('./cheat.js').onFinish(room); } catch (e) {} }
   if (room.noshowBoth || room.reason === 'noshow' || (room.plies || 0) < MIN_REWARD_PLIES) return;
   if (room.winner === 'white') economy.rewardWin(whiteUid, blackUid, tid);
   else if (room.winner === 'black') economy.rewardWin(blackUid, whiteUid, tid);
@@ -314,7 +314,7 @@ function createLobby({ send, clients, roomsApi }) {
     return {
       id: t.id, name: t.name, tc: t.tc, status: t.status, pos: t.pos || 'std',
       roundsWanted: t.roundsWanted || 0, interval: t.interval || 0,
-      type: t.type || 'swiss', durationMin: t.durationMin || 0, awards: t.awards || [], prize: t.prize || 0, places: t.places || 0, berserk: t.berserk !== false, tc: t.tc || "", pos: t.pos || "std", startAt: t.startAt || 0, endAt: t.endAt || 0, ending: !!t.ending,
+      type: t.type || 'swiss', durationMin: t.durationMin || 0, awards: t.awards || [], prize: t.prize || 0, places: t.places || 0, berserk: t.berserk !== false, rated: t.rated !== false, tc: t.tc || "", pos: t.pos || "std", startAt: t.startAt || 0, endAt: t.endAt || 0, ending: !!t.ending,
       creatorUid: t.creatorUid, creatorName: t.creatorName, clubIds: t.clubIds || [], clubs: clubStandings(t),
       round: t.round, rounds: t.rounds, nextAt: t.nextAt || 0,
       players: t.type === 'arena' ? arenaStandings(t) : standings(t),
@@ -391,7 +391,7 @@ function createLobby({ send, clients, roomsApi }) {
   // ⭐ bot bilan o'yin reytingli (lidraughts kabi): ikkala tomon kamida bir yurish qilgan bo'lsa. Etyud mashqlari — reytingsiz
   function botRated(room) {
     try {
-      if (room.rated || !room.white || !room.black || (room.plies || 0) < 2 || room.reason === 'noshow') return;
+      if (room.rated || room.unrated || !room.white || !room.black || (room.plies || 0) < 2 || room.reason === 'noshow') return;
       if (room.opening && /^et/.test(String(room.opening.id || ''))) return;
       room.rated = true;
       const sw = room.winner === 'white' ? 1 : room.winner === 'black' ? 0 : 0.5;
@@ -627,7 +627,7 @@ function createLobby({ send, clients, roomsApi }) {
     const lad = olyLadder(t.tc);
     if (!winUid && !room.noshowBoth && b.level + 1 < lad.length) {
       // durang: keyingi pog‘ona vaqti bilan yana bitta partiya, ranglar almashadi
-      if ((room.plies || 0) >= MIN_REWARD_PLIES) { try { const _d = require('./stats').record(b.white, b.black, 'draw', room.tc); if (_d) room.eloD = _d; } catch (e) {} }   // ⭐ durang ham reytingga ta'sir qiladi
+      if ((room.plies || 0) >= MIN_REWARD_PLIES && !room.unrated) { try { const _d = require('./stats').record(b.white, b.black, 'draw', room.tc); if (_d) room.eloD = _d; } catch (e) {} }   // ⭐ durang ham reytingga ta'sir qiladi
       roomToBoard.delete(room.id);
       b.level++; b.game++;
       const tmp = b.white; b.white = b.black; b.black = tmp;
@@ -718,6 +718,7 @@ function createLobby({ send, clients, roomsApi }) {
     if (sr) { roomToSeries.delete(room.id); return seriesGameDone(sr, room); }
     const ref = roomToBoard.get(room.id);
     if (!ref) return;
+    if (ref.t && ref.t.rated === false) room.unrated = true;   // 🤝 reytingsiz turnir: ochko va mukofot bor, reyting o'zgarmaydi
     const { t, b } = ref;
     if (b.done) return;
     if (t.type === 'arena') return arenaGameDone(t, b, room);
@@ -1401,7 +1402,7 @@ function createLobby({ send, clients, roomsApi }) {
             creatorUid: me.uid, creatorName: me.name, status: 'reg', created: Date.now(),
             players: new Map(), round: 0, rounds: 0, cur: [], curBye: null, nextAt: 0,
             durationMin: dur, startAt, endAt: startAt + dur * 60000, gameNo: 0, ending: false,
-            pos: m.pos === 'idf' ? 'idf' : 'std', berserk: m.berserk !== false, botIds: ((process.env.ADMIN_IDS || '').split(',').map(x => x.trim()).includes(String(me.uid)) && Array.isArray(m.botIds)) ? [...new Set(m.botIds.map(String))].filter(id => botAny(id)).slice(0, 12) : [], prize: m._prize || 0, prizePaid: m._paid || 0, places: Math.max(3, Math.min(10, Math.floor(Number(m.places)) || 3)),
+            pos: m.pos === 'idf' ? 'idf' : 'std', berserk: m.berserk !== false, rated: m.rated !== false, botIds: ((process.env.ADMIN_IDS || '').split(',').map(x => x.trim()).includes(String(me.uid)) && Array.isArray(m.botIds)) ? [...new Set(m.botIds.map(String))].filter(id => botAny(id)).slice(0, 12) : [], prize: m._prize || 0, prizePaid: m._paid || 0, places: Math.max(3, Math.min(10, Math.floor(Number(m.places)) || 3)),
             minGames: ARENA_MIN_GAMES.includes(Number(m.minGames)) ? Number(m.minGames) : 0
           };
           at.players.set(me.uid, newArenaPlayer(me));
