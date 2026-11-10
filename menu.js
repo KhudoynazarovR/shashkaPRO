@@ -777,7 +777,7 @@
       if (curLv ? (lvOf(p) !== curLv || foOf(p)) : foOf(p) !== curFo) return;
       shown++;
       var ok = (S.solved || []).indexOf(p.id) >= 0;
-      h += '<div data-i="' + i + '" style="' + CARD + '">' + (S.admin ? '<button data-mv="' + i + '" style="float:right;background:#262b5a;color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">📁</button>' : '') + '<b>' + (ok ? '✅ ' : '') + esc(p.title) + '</b><div style="font-size:12px;opacity:.65;margin-top:4px">' + LV[lvOf(p)] + ' · 👥 ' + (p.cnt || 0) + ' · ' + (p.side === 'w' ? '⚪ Oq yuradi' : '⚫ Qora yuradi') + (p.author ? ' · ✍️ ' + esc(p.author) : '') + '</div></div>';
+      h += '<div data-i="' + i + '" style="' + CARD + '">' + (S.admin ? '<button data-mv="' + i + '" style="float:right;background:#262b5a;color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">📁</button>' : '') + '<b>' + (ok ? '✅ ' : '') + esc(p.title) + (S.admin && (S.reels || []).indexOf(p.id) >= 0 ? ' 🎬' : '') + '</b><div style="font-size:12px;opacity:.65;margin-top:4px">' + LV[lvOf(p)] + ' · 👥 ' + (p.cnt || 0) + ' · ' + (p.side === 'w' ? '⚪ Oq yuradi' : '⚫ Qora yuradi') + (p.author ? ' · ✍️ ' + esc(p.author) : '') + '</div></div>';
     });
     if (!shown) h += '<div style="padding:24px;opacity:.7">Bu papkada masala yo‘q</div>';
     if (curFo && !curLv) { var _stz = ''; for (var _q = 0; _q < 22; _q++) _stz += '<i style="left:' + Math.round(Math.random() * 96) + '%;top:' + Math.round(Math.random() * 92) + '%;animation-delay:' + (Math.random() * 3).toFixed(2) + 's;animation-duration:' + (2.4 + Math.random() * 2).toFixed(2) + 's"></i>'; h += '<div class="pzStars">' + _stz + '</div>';
@@ -1030,7 +1030,7 @@
       if (_a.length > 1 && !(_day && _i >= _a.length - 1) && window.__pzMapKey !== '') h += done ? ('<div style="text-align:center"><span class="pzWrap"><span class="pzO">' + [0,1,2,3,4,5,6,7].map(function (k) { return '<i style="animation-delay:-' + (k * 0.375) + 's"></i>'; }).join('') + '</span><button id="pzNext" class="pzBig" style="' + BS + '">➡️ Keyingi masala</button></span></div>') : '<button id="pzNext" style="' + BG + '">➡️ Keyingi</button>';
       if (_i > 0) h += '<button id="pzPrev" style="' + BG + '">⬅️ Oldingi</button>';
       h += '<button id="pzR" style="' + BG + '">🔄 Qayta</button><button id="pzH" style="' + BS + '">💡 Ko‘rsatma</button>';
-      if (S.link) h += '<button id="pzS" style="' + BS + '">📤 Yuborish</button>'; if (S.admin && !p.et) h += '<button id="pzE" style="' + BS + '">🛠 Tahrirlash</button>'; if (S.admin && !p.et) h += '<button id="pzN" style="' + BG + '">✏️ Nomi</button>'; if (S.admin && !p.et) h += '<button id="pzD" style="' + BG + '">🗑 O‘chirish</button>';
+      if (S.link) h += '<button id="pzS" style="' + BS + '">📤 Yuborish</button>'; if (S.admin && !p.et) h += '<button id="pzE" style="' + BS + '">🛠 Tahrirlash</button>'; if (S.admin && !p.et) h += '<button id="pzN" style="' + BG + '">✏️ Nomi</button>'; if (S.admin && !p.et) h += '<button id="pzD" style="' + BG + '">🗑 O‘chirish</button>'; if (S.admin) h += '<button id="pzRl" style="' + BG + '">🎬 Reel' + ((S.reels || []).indexOf(p.id) >= 0 ? ' ✓' : '') + '</button>';
       ov.innerHTML = h;
       on('#pzBack', function () { dayIds = null; list(); });
       on('#pzDayEnd', function () { dayIds = null; close(); if (window.dqOpen) window.dqOpen(); });
@@ -1042,6 +1042,15 @@
         var u = S.link + '?startapp=pz_' + p.id, t = '🧩 Shashka masalasi: ' + p.title;
         var sh = 'https://t.me/share/url?url=' + encodeURIComponent(u) + '&text=' + encodeURIComponent(t);
         if (tg && tg.openTelegramLink) tg.openTelegramLink(sh); else window.open(sh, '_blank');
+      });
+      on('#pzRl', function () {   // 🎬 shu masaladan Instagram Reel videosi — bot Telegram'ga yuboradi
+        if ((S.reels || []).indexOf(p.id) >= 0 && !confirm('Bu masaladan Reel avval yasalgan. Yana yasalsinmi?')) return;
+        msg = '⏳ So‘rov yuborilmoqda…'; draw();
+        api('/api/reel', { id: p.id }).then(function (d) {
+          if (d && d.ok) { S.reels = S.reels || []; if (S.reels.indexOf(p.id) < 0) S.reels.push(p.id); msg = '🎬 Video tayyorlanmoqda (~' + (d.dur || 30) + ' s) — 1–3 daqiqada bot Telegram’da yuboradi'; }
+          else msg = '⚠️ ' + ((d && d.error) || 'Video yasab bo‘lmadi');
+          draw();
+        }).catch(function () { msg = '⚠️ Server bilan aloqa yo‘q'; draw(); });
       });
       on('#pzN', function () {
         var n = prompt('Yangi nom:', p.title); if (n === null) return; n = n.trim(); if (!n) return;

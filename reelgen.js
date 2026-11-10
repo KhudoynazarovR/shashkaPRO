@@ -27,7 +27,11 @@ function data() { if (!DK) { try { DK = JSON.parse(fs.readFileSync(path.join(__d
 function board(s) { const b = []; let k = 0; for (let r = 0; r < 8; r++) { b.push([]); for (let c = 0; c < 8; c++) b[r].push((r + c) % 2 ? '.wbWB'.indexOf(s.charAt(k++)) : 0); } return b; }
 // yechimni yurishlarga ajratadi: [{ white, path:[[r,c]..], caps:[[r,c]..], note }]
 function moves(d) {
-  const b = board(d[3]), st = []; for (let i = 0; i + 3 < d[4].length; i += 4) st.push([+d[4][i], +d[4][i + 1], +d[4][i + 2], +d[4][i + 3]]);
+  const st = []; for (let i = 0; i + 3 < d[4].length; i += 4) st.push([+d[4][i], +d[4][i + 1], +d[4][i + 2], +d[4][i + 3]]);
+  return movesB(board(d[3]), st);
+}
+function movesB(b0, st) {   // b0: 8×8 (1 oq, 2 qora, 3 oq damka, 4 qora damka), st: [[fr,fc,tr,tc]…]
+  const b = b0.map(r => r.slice());
   const out = []; let cur = null, dead = [];
   for (const [fr, fc, tr, tc] of st) {
     const p = b[fr][fc]; if (!p) return null;
@@ -62,18 +66,33 @@ function blackMoves(b) {
 function info(d) {
   const mv = moves(d); if (!mv || !mv.length) return null;
   const b = board(d[3]);
-  return { id: d[0], lvl: d[1], goal: d[2], author: d[5] || '', b, mv, wm: mv.filter(m => m.white).length, pieces: b.flat().filter(Boolean).length };
+  mv.forEach(m => { m.me = m.white; });
+  return { id: d[0], label: 'Damki №' + d[0], side: 'w', lvl: d[1], goal: d[2], author: d[5] || '', b, mv, wm: mv.length && mv.filter(m => m.white).length, pieces: b.flat().filter(Boolean).length };
 }
 function cleanWin(d, I) {
   if (!I || I.goal !== 'w' || !I.mv[I.mv.length - 1].white) return false;
   const f = finalBoard(d, I.mv); return !f.flat().some(x => x === 2 || x === 4) || blackMoves(f) === 0;
 }
+// platformadagi istalgan masaladan (admin tanlaydi): { id, title, board, side, sol|sols, level, goal, author }
+function infoPz(pz) {
+  const st = (pz.sol && pz.sol.length ? pz.sol : (pz.sols || [])[0]) || [];
+  if (!Array.isArray(pz.board) || pz.board.length !== 8 || !st.length) return null;
+  const b = pz.board.map(r => r.map(v => Number(v) || 0)), side = pz.side === 'b' ? 'b' : 'w';
+  const mv = movesB(b, st.map(x => x.map(Number))); if (!mv || !mv.length) return null;
+  mv.forEach(m => { m.me = m.white === (side === 'w'); });
+  return { id: String(pz.id), pid: String(pz.id), label: String(pz.title || pz.id), side, lvl: Math.max(1, Math.min(3, Number(pz.level) || 2)), goal: pz.goal === 'draw' ? 'd' : 'w',
+    author: pz.author || '', b, mv, wm: mv.filter(m => m.me).length, pieces: b.flat().filter(Boolean).length };
+}
+const who = I => I.side === 'b' ? 'Qora' : 'Oq';
 let Q = null;
 function queueAll() {
   if (!Q) Q = data().map(d => [d, info(d)]).filter(([d, I]) => I && I.lvl >= 2 && cleanWin(d, I)).sort((a, b) => a[1].wm - b[1].wm || a[0][0] - b[0][0]).map(x => x[0][0]);
   return Q;
 }
-function S() { const s = store.db.reel = store.db.reel || {}; if (s.on === undefined) s.on = true; s.used = s.used || USED0.slice(); s.done = s.done || {}; return s; }
+function S() { const s = store.db.reel = store.db.reel || {}; if (s.on === undefined) s.on = true; s.used = s.used || USED0.slice(); s.usedP = s.usedP || []; s.done = s.done || {}; return s; }
+// Reel'i yasalgan masalalar (platforma id'lari) — ro'yxatda 🎬 belgisi uchun
+function usedIds() { const s = S(), o = new Set(s.usedP); for (const n of s.used) o.add('dk' + Number(n).toString(36)); return [...o]; }
+function markUsed(I) { const s = S(); if (I.pid) { if (!s.usedP.includes(I.pid)) s.usedP.push(I.pid); const m = /^dk([0-9a-z]+)$/.exec(I.pid); if (m) { const n = parseInt(m[1], 36); if (!s.used.includes(n)) s.used.push(n); } } else if (!s.used.includes(I.id)) s.used.push(I.id); if (s.usedP.length > 3000) s.usedP.splice(0, s.usedP.length - 3000); }
 const left = () => { const u = new Set(S().used); return queueAll().filter(id => !u.has(id)); };
 
 // ---------- chizish (xom RGB)
@@ -122,8 +141,8 @@ async function assets(lvl, title) {
   };
   return A;
 }
-async function endCard(goal) {
-  const L = [[600, goal === 'w' ? 'Oq yutdi!' : 'Durang!', 110, '#ffd54a', 1], [740, 'Siz topdingizmi?', 62, '#fff', 1], [820, 'Izohga yozing ⬇', 52, '#cdc3ff', 0],
+async function endCard(goal, side) {
+  const L = [[600, goal === 'w' ? (side === 'b' ? 'Qora yutdi!' : 'Oq yutdi!') : 'Durang!', 110, '#ffd54a', 1], [740, 'Siz topdingizmi?', 62, '#fff', 1], [820, 'Izohga yozing ⬇', 52, '#cdc3ff', 0],
     [990, 'Har kuni yangi masalalar', 54, '#fff', 1], [1070, 'Telegram: @Draughts_uz', 56, '#ffd54a', 1], [1215, 'O‘ynash:', 48, '#cdc3ff', 0],
     [1305, '@DraughtsPRObot', 80, '#fff', 1], [1460, 'Do‘stingizga yuboring — u topa oladimi?', 40, '#cdc3ff', 0]];
   return rgba(svgOpen(W, H) + '<rect width="' + W + '" height="' + H + '" fill="#10062c" fill-opacity="0.93"/>' + L.map(x => txt(W / 2, x[0], x[1], x[2], x[3], x[4], 6)).join('') + '</svg>');
@@ -134,15 +153,19 @@ const ease = t => t * t * (3 - 2 * t);
 const ctr = p => [BX + p[1] * C + C / 2, BY + p[0] * C + C / 2];
 const RSS_MAX = Number(process.env.REEL_RSS_MAX || 340) * 1e6;   // server RAMi bundan yuqori bo'lsa video yasalmaydi (kutadi)
 const ramOk = () => process.memoryUsage().rss < RSS_MAX;
-async function make(id, out) {
+async function make(id, out) {   // id: damki raqami yoki tayyor info (infoPz)
   if (!ramOk()) throw new Error('RAM band (' + Math.round(process.memoryUsage().rss / 1e6) + ' MB) — keyinroq urinib ko‘ring');
-  const d = Array.isArray(id) ? id : data().find(x => x[0] === Number(id)); if (!d) throw new Error('Masala topilmadi: ' + id); if (Array.isArray(id)) id = 'k' + d[0];
-  const I = info(d); if (!I) throw new Error('Yechimni o‘qib bo‘lmadi: ' + id);
-  const draw = I.goal === 'd', title = draw ? 'Oq yuradi — durang' : 'Oq yuradi va yutadi', hint = draw ? 'Durangni toping' : I.wm + ' yurishda';
-  const A = await assets(I.lvl, title), END = await endCard(I.goal);
+  let I, mseed = 0;
+  if (id && typeof id === 'object' && !Array.isArray(id) && id.mv) { I = id; mseed = [...String(I.id)].reduce((a, c) => a + c.charCodeAt(0), 0); id = 'p' + String(I.id).replace(/[^\w-]/g, '').slice(0, 24); }
+  else {
+    const d = Array.isArray(id) ? id : data().find(x => x[0] === Number(id)); if (!d) throw new Error('Masala topilmadi: ' + id); if (Array.isArray(id)) id = 'k' + d[0];
+    I = info(d); if (!I) throw new Error('Yechimni o‘qib bo‘lmadi: ' + id); mseed = Number(d[0]) || 0;
+  }
+  const draw = I.goal === 'd', title = draw ? who(I) + ' yuradi — durang' : who(I) + ' yuradi va yutadi', hint = draw ? 'Durangni toping' : I.wm + ' yurishda';
+  const A = await assets(I.lvl, title), END = await endCard(I.goal, I.side);
   const state = new Map(); for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) { const v = I.b[r][c]; if (v) state.set(r * 8 + c, [v === 1 || v === 3, v === 3 || v === 4]); }
   // javob qismi ~24 soniyadan oshmasin
-  const est = I.mv.reduce((s, m) => s + (m.white ? 1.55 : 1.05) + (m.path.length - 1) * 0.5, 0), K = Math.max(0.5, Math.min(1, 24 / est));
+  const est = I.mv.reduce((s, m) => s + (m.me ? 1.55 : 1.05) + (m.path.length - 1) * 0.5, 0), K = Math.max(0.5, Math.min(1, 24 / est));
   const ff = FF(), tmp = path.join(os.tmpdir(), 'reel_' + id + '_' + Date.now()), vid = tmp + '_v.mp4';
   const p = spawn(ff, ['-y', '-v', 'error', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-s', W2 + 'x' + H2, '-r', String(FPS), '-i', '-', '-c:v', 'libx264', '-preset', 'ultrafast', '-tune', 'zerolatency', '-crf', '21', '-threads', '1', '-x264-params', 'rc-lookahead=0:sync-lookahead=0', '-pix_fmt', 'yuv420p', vid], { stdio: ['pipe', 'ignore', 'pipe'] });
   let perr = ''; p.stderr.on('data', x => { perr += x; }); const done = new Promise(res => { p.on('close', res); p.on('error', e => { perr += e.message; res(-1); }); }); p.stdin.on('error', () => {});
@@ -175,8 +198,8 @@ async function make(id, out) {
   let wn = 0;
   for (const m of I.mv) {
     const p0 = m.path[0], k0 = p0[0] * 8 + p0[1], pc = state.get(k0); if (!pc) break;
-    const w = pc[0]; let kg = pc[1]; if (m.white) wn++;
-    const note = (m.white ? wn + '. ' : wn + '… ') + m.note + (m.white ? '!' : ''), sp = (m.white ? 0.42 : 0.34) * K;
+    const w = pc[0]; let kg = pc[1]; if (m.me) wn++;
+    const note = (m.me ? wn + '. ' : wn + '… ') + m.note + (m.me ? '!' : ''), sp = (m.me ? 0.42 : 0.34) * K;
     await hold(0.25 * K, { note, hl: [p0] });
     const caps = new Set();
     for (let i = 1; i < m.path.length; i++) {
@@ -190,14 +213,14 @@ async function make(id, out) {
     const e = m.path[m.path.length - 1]; state.delete(k0); state.set(e[0] * 8 + e[1], [w, kg]);
     const nn = Math.round(0.4 * FPS); for (let j = 0; j <= nn; j++) await frame({ note, hl: [e], fading: caps, fade: 1 - j / nn });
     for (const k of caps) state.delete(k);
-    await hold((m.white ? 0.8 : 0.45) * K, { note, hl: [e] });
+    await hold((m.me ? 0.8 : 0.45) * K, { note, hl: [e] });
   }
-  await hold(1.0, { note: draw ? 'Durang!' : 'Oq yutdi!' });
+  await hold(1.0, { note: draw ? 'Durang!' : who(I) + ' yutdi!' });
   for (let j = 0, m = Math.round(0.6 * FPS); j <= m; j++) await frame({ end: j / m, hint: false });
   await hold(3.8, { end: 1, hint: false });
   await Promise.all(pend.filter(Boolean)); p.stdin.end(); const code = await done;
   if (code !== 0) throw new Error('ffmpeg: ' + perr.slice(-300));
-  const dur = n / FPS, mus = path.join(__dirname, 'reel_music', 'm' + ((Number(Array.isArray(id) ? id[0] : id) || 0) % 4) + '.m4a');
+  const dur = n / FPS, mus = path.join(__dirname, 'reel_music', 'm' + (mseed % 4) + '.m4a');
   const args = ['-y', '-v', 'error', '-i', vid];
   if (fs.existsSync(mus)) args.push('-i', mus, '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '160k', '-af', 'afade=t=in:d=0.5,afade=t=out:st=' + Math.max(0, dur - 1.8).toFixed(2) + ':d=1.8', '-shortest');
   else args.push('-c', 'copy');
@@ -210,7 +233,8 @@ async function make(id, out) {
 }
 function caption(I) {
   const lv = (LV[I.lvl] || LV[2])[0], lvn = lv.charAt(0) + lv.slice(1).toLowerCase(), draw = I.goal === 'd';
-  return '🧩 ' + lvn + ' masala: ' + (draw ? 'oq yuradi — durang' : 'oq yuradi va yutadi — ' + I.wm + ' yurishda') + '!\n' +
+  const w = who(I).toLowerCase();
+  return '🧩 ' + lvn + ' masala: ' + (draw ? w + ' yuradi — durang' : w + ' yuradi va yutadi — ' + I.wm + ' yurishda') + '!\n' +
     'Videoni to‘xtating va o‘ylang 🤔 Javobni izohga yozing ⬇️\nDo‘stingizga yuboring — u topa oladimi?\n\n' +
     'Har kuni yangi masalalar — Telegram: @Draughts_uz\nO‘ynash: @DraughtsPRObot\n' + (I.author ? 'Muallif: ' + I.author + '\n' : '') +
     '\n#shashka #shashki #шашки #русскиешашки #checkers #draughts #masala #uzbekistan #shashkapro';
@@ -221,8 +245,8 @@ async function sendVideo(chat, r) {
   const T0 = process.env.BOT_TOKEN; if (!T0) return null;
   const fd = new FormData();
   fd.append('chat_id', String(chat)); fd.append('supports_streaming', 'true'); fd.append('width', String(W2)); fd.append('height', String(H2)); fd.append('duration', String(Math.round(r.dur)));
-  fd.append('caption', '🎬 Bugungi Reel · ' + (LV[r.I.lvl] || LV[2])[0] + ' · Damki №' + r.I.id + ' · ' + Math.round(r.dur) + ' soniya\nSaqlang (⋮ → Save to gallery) va Instagram’da ＋ → REEL orqali joylang. Izoh — keyingi xabarda (bosib nusxalang).');
-  fd.append('video', new Blob([fs.readFileSync(r.file)], { type: 'video/mp4' }), 'reel_' + r.I.id + '.mp4');
+  fd.append('caption', '🎬 Bugungi Reel · ' + (LV[r.I.lvl] || LV[2])[0] + ' · ' + (r.I.label || 'Damki №' + r.I.id) + ' · ' + Math.round(r.dur) + ' soniya\nSaqlang (⋮ → Save to gallery) va Instagram’da ＋ → REEL orqali joylang. Izoh — keyingi xabarda (bosib nusxalang).');
+  fd.append('video', new Blob([fs.readFileSync(r.file)], { type: 'video/mp4' }), 'reel_' + String(r.I.id).replace(/[^\w-]/g, '') + '.mp4');
   if (r.cover) fd.append('thumbnail', new Blob([r.cover], { type: 'image/jpeg' }), 'cover.jpg');
   const j = await fetch('https://api.telegram.org/bot' + T0 + '/sendVideo', { method: 'POST', body: fd }).then(x => x.json()).catch(e => ({ ok: false, description: e.message }));
   if (j && j.ok) await tg('sendMessage', { chat_id: chat, text: '<pre>' + xml(caption(r.I)) + '</pre>', parse_mode: 'HTML' });
@@ -232,15 +256,15 @@ let busy = false;
 async function produce(id, to) {   // id yo'q bo'lsa — navbatdagisi
   if (busy) return '⏳ Video hozir yasalmoqda, biroz kuting';
   busy = true;
-  const s = S(), pid = id || left()[0];
+  const s = S(), pid = id || left()[0], fn = 'reel_' + (typeof pid === 'object' ? 'p' + String(pid.id).replace(/[^\w-]/g, '').slice(0, 24) : pid) + '.mp4';
   try {
     if (!pid) return '📭 Navbatda masala qolmadi';
-    const t0 = Date.now(), r = await make(pid, path.join(os.tmpdir(), 'reel_' + pid + '.mp4'));
+    const t0 = Date.now(), r = await make(pid, path.join(os.tmpdir(), fn));
     let ok = 0; for (const a of (to || ADM())) { const j = await sendVideo(a, r); if (j && j.ok) ok++; else console.log('[reel] sendVideo:', j && j.description); }
     try { fs.unlinkSync(r.file); } catch (e) {}
-    if (ok && !s.used.includes(pid)) s.used.push(pid);
+    if (ok) markUsed(r.I);
     store.save();
-    console.log('[reel]', pid, Math.round(r.dur) + 's video,', Math.round((Date.now() - t0) / 1000) + 's da yasaldi, yuborildi:', ok);
+    console.log('[reel]', r.I.label || r.I.id, Math.round(r.dur) + 's video,', Math.round((Date.now() - t0) / 1000) + 's da yasaldi, yuborildi:', ok);
     return ok ? '' : '⚠️ Video yasaldi, lekin yuborib bo‘lmadi';
   } catch (e) { console.log('[reel]', e.message); return '⚠️ Reel xatosi: ' + e.message.slice(0, 300); }
   finally { busy = false; }
@@ -286,4 +310,22 @@ async function cmd(msg, text) {
   const m = await produce(a[0] ? Number(a[0]) : 0, [c]); if (m) await say(m);
   return true;
 }
-module.exports = { start, cmd, make, caption, queueAll, left, _t: { moves, cleanWin, info, tick } };
+// ---------- platformadan: masala oynasidagi «🎬 Reel» tugmasi (admin) → POST /api/reel { id }
+function handle(req, res, p, h) {
+  if (p !== '/api/reel' || req.method !== 'POST') return false;
+  const t = h.verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
+  if (!t || !ADM().includes(String(t.id))) { h.send(res, 403, { error: 'admin emassiz' }); return true; }
+  h.readBody(req, 5000, body => {
+    let j = {}; try { j = JSON.parse(body); } catch (e) {}
+    const id = String(j.id || '');
+    let pz = (store.db.puzzles || []).find(x => String(x.id) === id);
+    if (!pz) { try { pz = require('./etudes.js').asPuzzle(id); } catch (e) {} }
+    if (!pz) return h.send(res, 404, { error: 'Masala topilmadi' });
+    const I = infoPz(pz); if (!I) return h.send(res, 400, { error: 'Bu masalaning yechimi yo‘q yoki o‘qib bo‘lmadi' });
+    if (busy) return h.send(res, 409, { error: '⏳ Boshqa video yasalmoqda, 1–2 daqiqadan keyin urinib ko‘ring' });
+    h.send(res, 200, { ok: 1, dur: Math.round(14 + I.mv.length * 1.3) });
+    produce(I, [String(t.id)]).then(m => { if (m) tg('sendMessage', { chat_id: String(t.id), text: m }); });
+  });
+  return true;
+}
+module.exports = { handle, usedIds, infoPz, start, cmd, make, caption, queueAll, left, _t: { moves, cleanWin, info, tick } };
