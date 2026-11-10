@@ -13,10 +13,12 @@
   function send(m) { var l = L(); if (l && l.send) l.send(m); }
   function fmt(ms) { ms = Math.max(0, ms); var s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return (h ? h + ':' + (m < 10 ? '0' : '') : '') + m + ':' + (x < 10 ? '0' : '') + x; }
   function clk(ms) { if (ms == null) return ''; ms = Math.max(0, ms); var s = Math.ceil(ms / 1000), m = Math.floor(s / 60), x = s % 60; return m + ':' + (x < 10 ? '0' : '') + x; }
+  // 🏳️ viloyat belgisi (SRX…) yoki chet el bayrog'i
+  function bdg(k, c, t) { return /^[A-Z]+$/.test(String(k)) ? '<span title="' + esc(t || '') + '" style="display:inline-block;min-width:30px;padding:1px 4px;margin-right:5px;border-radius:5px;background:' + c + ';color:#fff;font-size:10.5px;font-weight:900;letter-spacing:.3px;text-align:center;vertical-align:1px">' + esc(k) + '</span>' : '<span title="' + esc(t || '') + '" style="margin-right:4px">' + esc(k) + '</span>'; }
   function nm(s) { return esc(String(s || '').replace(/^🤖\s*/, '')); }
   function tcInfo(tc) {
     var a = String(tc || '3+2').split('+'), b = Number(a[0]) || 0, inc = Number(a[1]) || 0, est = b * 60 + inc * 40;
-    var sp = est < 30 ? ['⚡', 'Giper'] : est < 180 ? ['🚀', 'Bullet'] : est < 480 ? ['🔥', 'Blits'] : est < 1500 ? ['🐇', 'Tezkor'] : ['🐢', 'Klassik'];
+    var sp = est < 30 ? ['⚡', 'Giper'] : est < 180 ? ['🚀', 'Bullet'] : est < 480 ? ['🔥', 'Blits'] : ['⏱', 'Rapid'];
     return { icon: sp[0], name: sp[1], txt: (b > 0 && b < 1 ? Math.round(b * 60) + ' s' : b) + ' + ' + inc };
   }
   // ochko ketma-ketligi: '0'..'9' oddiy, 'A'..'I' (=1..9) va 'o' (=0) — olovdagi o'yin
@@ -113,7 +115,17 @@
       var n = Math.max(1, Math.ceil((t.players || []).length / PER));
       if (a === 'first') page = 0; else if (a === 'prev') page = Math.max(0, page - 1); else if (a === 'next') page = Math.min(n - 1, page + 1); else if (a === 'last') page = n - 1;
       else if (a === 'me') { var i = myIdx(t); if (i >= 0) page = Math.floor(i / PER); }
-      else if (a === 'join') { send({ type: 'lbTJoin', tid: cur }); }
+      else if (a === 'join') {
+        if (t.flag) {   // 🏳️ bayroqli: viloyat tanlanmagan bo'lsa — avval tanlash
+          var tg0 = window.Telegram && Telegram.WebApp, idt = (tg0 && tg0.initData) || '', tid0 = cur;
+          fetch('/api/region', { headers: { 'x-init-data': idt } }).then(function (r) { return r.json(); }).then(function (v) {
+            if (v && v.my) return send({ type: 'lbTJoin', tid: tid0 });
+            var go = function () { window.regOpen(true); };
+            if (window.regOpen) go(); else { var sc = document.createElement('script'); sc.src = '/regionpanel.js?v=' + Date.now(); sc.onload = go; document.head.appendChild(sc); }
+            alert('🏳️ Bu bayroqli turnir — avval viloyatingizni tanlang, keyin «Qatnashish»ni yana bosing.');
+          }).catch(function () { send({ type: 'lbTJoin', tid: tid0 }); });
+        } else send({ type: 'lbTJoin', tid: cur });
+      }
       else if (a === 'pause') { send({ type: 'lbTLeave', tid: cur }); }
       else if (a === 'leave') { if (confirm('Arenadan chiqasizmi?')) send({ type: 'lbTLeave', tid: cur }); }
       else if (a === 'start') { send({ type: 'lbTStart', tid: cur }); }
@@ -161,6 +173,14 @@
         return '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #2d2775"><span style="width:26px;text-align:center">' + (md2[i] || (i + 1)) + '</span><b style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + nm(c.name) + '</b><small style="color:#a9a4d8">' + (c.players || 0) + ' o‘yinchi</small><b style="min-width:40px;text-align:right;color:#f5b72b">' + (c.score || 0) + '</b></div>';
       }).join('') + '</div>';
     }
+    if (t.flag && (t.regs || []).length) {   // 🏳️ viloyatlar hisobi: eng yaxshi 5 o'yinchi
+      var R = t.regs, mx = Math.max(1, R[0].score || 1), md3 = ['🥇', '🥈', '🥉'];
+      ch = '<div class="taCard" style="margin-top:10px"><h4>🗺 Viloyatlar hisobi · eng yaxshi 5 o‘yinchi</h4>' + R.slice(0, 14).map(function (r, i) {
+        return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #2d2775;font-size:14px"><span style="width:24px;text-align:center">' + (md3[i] || (i + 1)) + '</span>' + bdg(r.k, r.c) +
+          '<span style="width:96px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(r.r) + '</span><span style="flex:1;height:9px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden"><i style="display:block;height:100%;width:' + Math.round((r.score || 0) * 100 / mx) + '%;background:' + r.c + '"></i></span>' +
+          '<b style="min-width:30px;text-align:right">' + r.score + '</b><small style="opacity:.55;min-width:30px;text-align:right">' + r.n + ' ki.</small></div>';
+      }).join('') + '</div>' + ch;
+    }
     g('taClubs').innerHTML = ch;
     // sahifalash va tugma
     g('taPg').textContent = ps.length ? (page * PER + 1) + '-' + Math.min(ps.length, page * PER + PER) + ' / ' + ps.length : '0';
@@ -179,13 +199,13 @@
       var dh = d > 0 ? ' <span class="u">↗' + d + '</span>' : d < 0 ? ' <span class="dn">↘' + (-d) + '</span>' : '';
       return '<div class="taRow' + (String(p.uid) === u ? ' me' : '') + '">' +
         '<div class="taRk' + (p.withdrawn ? ' ps' : '') + '">' + (p.withdrawn ? 'II' : (i + 1)) + '</div>' +
-        '<div class="taNm"><b>' + nm(p.name) + '</b><small>' + (p.elo || '') + dh + (p.busy ? '<span class="pl">⚔ o‘ynamoqda</span>' : '') + '</small></div>' +
+        '<div class="taNm"><b>' + (p.rg ? bdg(p.rg, p.rc, p.rn) : '') + nm(p.name) + '</b><small>' + (p.elo || '') + dh + (p.busy ? '<span class="pl">⚔ o‘ynamoqda</span>' : '') + '</small></div>' +
         '<div class="taSh"><span>' + sheetHtml(p.sheet) + '</span></div>' +
         '<div class="taPt' + (p.fire ? ' f' : '') + '">' + (p.fire ? '🔥' : '') + p.score + '</div></div>';
     }).join('');
     g('taRows').innerHTML = rows || '<div class="taEm">Hali hech kim qo‘shilmadi. Birinchi bo‘ling!</div>';
     // ma'lumot
-    var tc = tcInfo(t.tc), inf = '<div class="taInf"><span class="ic">' + tc.icon + '</span><div><b>' + tc.txt + '</b> · ' + tc.name + ' · ' + (t.durationMin || 0) + ' daq<br>Reytingli · Arena' + (t.berserk ? ' · ⚡ Berserk' : '') + (t.pos === 'idf' ? ' · 🎲 IDF pozitsiyalar' : '') + '</div></div>';
+    var tc = tcInfo(t.tc), inf = '<div class="taInf"><span class="ic">' + tc.icon + '</span><div><b>' + tc.txt + '</b> · ' + tc.name + ' · ' + (t.durationMin || 0) + ' daq<br>' + (t.rated === false ? '🤝 Reytingsiz' : '⭐ Reytingli') + ' · Arena' + (t.flag ? ' · 🏳️ Bayroqli' : '') + (t.berserk ? ' · ⚡ Berserk' : '') + (t.pos === 'idf' ? ' · 🎲 IDF pozitsiyalar' : '') + '</div></div>' + (t.desc ? '<div class="taLn">📝 ' + esc(t.desc) + '</div>' : '');
     if (t.prize > 0) inf += '<div class="taLn">🏆 Mukofot jamg‘armasi: <b>' + t.prize + '</b> tanga · ' + (t.places || 3) + ' o‘ringa</div>';
     if (t.minGames > 0) {
       var s = St(), mg = s && s.me && s.me.games != null ? Number(s.me.games) : null, ok = mp ? true : mg == null ? null : mg >= t.minGames;

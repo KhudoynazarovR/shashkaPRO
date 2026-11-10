@@ -99,7 +99,7 @@
     g('tlList').innerHTML = h;
   }
   // ---- ➕ Turnir yaratish formasi: ochiladigan ro'yxatlar o'rniga bosiladigan tugmalar (select'lar joyida qoladi — eski mantiq ishlaydi)
-  var LBL = { lbTk: 'Turnir turi', lbTtc: 'Vaqt nazorati', lbTdur: 'Davomiyligi', lbTr: 'Turlar soni', lbTiv: 'Turlar orasida tanaffus', lbTsin: 'Boshlanishi', lbTp: 'Pozitsiya', lbTmg: 'Ishtirok sharti', lbTrated: 'Reyting', lbTpl: 'Mukofot oladigan o‘rinlar' };
+  var LBL = { lbTk: 'Turnir turi', lbTtb: 'Boshlang‘ich vaqt', lbTti: 'Har yurishga qo‘shimcha', lbTdur: 'Davomiyligi', lbTflag: 'Bayroq', lbTr: 'Turlar soni', lbTiv: 'Turlar orasida tanaffus', lbTsin: 'Boshlanishi', lbTp: 'Pozitsiya', lbTmg: 'Ishtirok sharti', lbTrated: 'Reyting', lbTpl: 'Mukofot oladigan o‘rinlar' };
   var SHORT = { lbTmg: function (v) { return +v ? 'Kamida ' + v + ' o‘yin' : '✅ Shartsiz'; }, lbTk: function (v, t) { return v === 'swiss' ? '♟ Shveytsariya' : t; } };
   var fcss = document.createElement('style'); fcss.textContent =
     '#lbTform.tlF{background:linear-gradient(180deg,#26207a,#1a155a)!important;border:1px solid #3a33a0!important;border-radius:18px!important;padding:14px!important;box-shadow:0 8px 24px rgba(0,0,0,.35)!important}' +

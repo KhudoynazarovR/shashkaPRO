@@ -13,13 +13,13 @@ const LBL = { bullet: '🚀 Bullet', blits: '⚡ Blits', rapid: '⏱ Rapid', cor
 // botlarning boshlang'ich kuchi (taxminiy) — «?» bilan, o'yinlarda o'zi to'g'rilanadi
 const BOT0 = { bot_easy: 900, bot_mid: 1150, bot: 1400, bot_pro: 1650, bot_gm: 1850, bot_champ: 2000, bot_monster: 2200, bot_terminator: 2350, bot_kingkong: 2500 };
 
-// '3+2' → 'blits'; '1+1' → 'bullet'; '10+5' → 'rapid'; '∞' (bot bilan vaqtsiz) → 'rapid'; 'corr' → 'corr'
+// lichess kabi: '1+1' → bullet (100 s), '2+2'/'3+2'/'5+3' → blits, '10+5' → rapid; '∞' (bot bilan vaqtsiz) → rapid; 'corr' → corr
 function catOf(tc) {
   if (tc === 'corr') return 'corr';
-  const m = /^(\d+(?:\.\d+)?)/.exec(String(tc || ''));
+  const m = /^(\d+(?:\.\d+)?)(?:\+(\d+))?/.exec(String(tc || ''));
   if (!m) return 'rapid';
-  const b = +m[1];
-  return b < 3 ? 'bullet' : b < 10 ? 'blits' : 'rapid';
+  const est = +m[1] * 60 + (+m[2] || 0) * 40;   // lichess kabi: taxminiy o'yin vaqti = boshlang'ich + 40 × qo'shimcha
+  return est < 180 ? 'bullet' : est < 480 ? 'blits' : 'rapid';
 }
 function fresh() { return { r: R0, rd: RD0, v: V0, n: 0, at: 0 }; }
 function age(p, now) {   // o'ynamagan kunlar → rd oshadi

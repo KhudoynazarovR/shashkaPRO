@@ -246,6 +246,7 @@
         window.__mmInvT[_mc] = toast((m.all ? "🎲 <b>" + esc(m.fromName) + "</b> <b>Xotira</b> o‘yini uchun raqib qidiryapti — birinchi qabul qilgan o‘ynaydi!" : "🧠 <b>" + esc(m.fromName) + "</b> sizni <b>Xotira</b> o‘yiniga taklif qilyapti") + (m.size ? " (" + esc(m.size.replace("x", "×")) + ")" : ""),
           [["▶ Qabul qilish", function () { var go = function () { window.spMemori({ join: _mc }); }; if (window.spMemori) go(); else { var sm = document.createElement("script"); sm.src = "/memori.js?v=9"; sm.onload = go; document.head.appendChild(sm); } }],
            ["Rad etish", function () { sendMsg({ type: "mmDecline", code: _mc, init: (tg && tg.initData) || "" }); }, "no"]], 30000);
+      } else if (m.type === "lbRec") { if (window.tfRec) window.tfRec(m.list || []);
       } else if (m.type === "lbToast") {
         toast(esc(m.text), null, 7000);
       } else if (m.type === "error" && (panelOpen || Date.now() - (window.__siAt || 0) < 5000)) {
@@ -464,10 +465,14 @@
         "<div id=\"lbT\" style=\"display:none\">" +
         "<div class=\"card\"><div class=\"row\"><input id=\"lbTn\" maxlength=\"30\" placeholder=\"Turnir nomi\" style=\"flex:1\"><button id=\"lbTCreate\">➕ Ochish</button><button class=\"sec\" onclick=\"lbTPlus()\" title=\"Yopish\">✕</button></div>" +
         "<div class=\"row\"><select id=\"lbTk\"><option value=\"arena\">⚔️ Arena</option><option value=\"swiss\">Shveytsar</option><option value=\"olympic\">🏆 Olimpiya</option></select>" +
-        "<select id=\"lbTdur\"><option value=\"10\">10 daq</option><option value=\"20\">20 daq</option><option value=\"30\" selected>30 daq</option><option value=\"45\">45 daq</option><option value=\"60\">60 daq</option><option value=\"90\">90 daq</option></select>" +
+        "<select id=\"lbTdur\">" + [10, 20, 25, 30, 40, 45, 50, 60, 70, 80, 90, 100, 120].map(function (x) { return "<option value=\"" + x + "\"" + (x === 30 ? " selected" : "") + ">" + x + " daq</option>"; }).join("") + "</select>" +
         "<select id=\"lbTin\" style=\"display:none\"><option value=\"0\">hozir</option><option value=\"2\">2 daq</option><option value=\"5\" selected>5 daq</option><option value=\"10\">10 daq</option><option value=\"30\">30 daq</option></select>" +
         "<select id=\"lbTp\"><option value=\"std\">Standart</option><option value=\"idf\">IDF 780</option></select></div>" +
-"<div class=\"row\"><span class=\"muted\">Vaqt:</span><select id=\"lbTtc\">" + tcOpts + "</select></div>" +
+"<div class=\"row\" style=\"display:none\"><span class=\"muted\">Vaqt:</span><select id=\"lbTtc\">" + tcOpts + "</select></div>" +
+"<div class=\"row\"><span class=\"muted\">Boshlang‘ich vaqt</span><select id=\"lbTtb\">" + [["0.25", "¼"], ["0.5", "½"], ["0.75", "¾"], ["1", "1"], ["1.5", "1½"], ["2", "2"], ["3", "3"], ["4", "4"], ["5", "5"], ["7", "7"], ["10", "10"], ["15", "15"], ["20", "20"], ["30", "30"]].map(function (x) { return "<option value=\"" + x[0] + "\"" + (x[0] === "5" ? " selected" : "") + ">" + x[1] + " daq</option>"; }).join("") + "</select></div>" +
+"<div class=\"row\"><span class=\"muted\">Har yurishga qo‘shimcha</span><select id=\"lbTti\">" + [0, 1, 2, 3, 4, 5, 7, 10, 15].map(function (x) { return "<option value=\"" + x + "\"" + (x === 3 ? " selected" : "") + ">" + x + " s</option>"; }).join("") + "</select></div>" +
+"<div id=\"lbTtcI\" class=\"muted\" style=\"font-size:13px;margin:-2px 0 4px\"></div>" +
+"<div class=\"row\" id=\"lbTflagr\"><span class=\"muted\">Bayroq</span><select id=\"lbTflag\"><option value=\"0\">Oddiy</option><option value=\"1\">🏳️ Bayroqli (viloyatlar)</option></select></div>" +
 "<div class=\"row\" id=\"lbTbzr\"><label><input type=\"checkbox\" id=\"lbTbz\" checked> ⚡ Berserk yoqilgan</label></div>" +
         "<div class=\"row\"><span class=\"muted\">Reyting</span><select id=\"lbTrated\"><option value=\"1\">⭐ Reytingli</option><option value=\"0\">🤝 Reytingsiz</option></select></div>" +
       "<details id='lbTbotr' style='margin:6px 0'><summary>🤖 Botlar (faqat admin)</summary><label style='display:block;padding:4px 0'><input type='checkbox' onchange=\"var c=this.checked;[].forEach.call(this.closest('details').getElementsByClassName('lbTbot'),function(x){x.checked=c})\"> Hammasi</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot_easy'> Shogird</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot_mid'> Jangchi</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot'> Yo‘lbars</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot_pro'> Arslon</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot_gm'> Sulton</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot_champ'> Legend</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot_monster'> Monster</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot_terminator'> Terminator</label><label style='display:block;padding:4px 0'><input type='checkbox' class='lbTbot' value='bot_kingkong'> 🦍 King Kong</label></details>" +
@@ -516,7 +521,7 @@
       $("lbTpz").oninput = _pzc; $("lbTpl").onchange = _pzc; _pzc();
       (function () { var _f0 = $("lbTform"); if (_f0) _f0.style.display = "none"; })();
       $("lbTCreate").onclick = function () {
-        var _okc = window.lbAtOk(); _okc && sendMsg({ type: "lbTCreate", startAt: window.lbAt(), clubIds: lbClubIds(), kind: $("lbTk").value, pos: $("lbTp").value, duration: Number($("lbTdur").value), startIn: Number($($("lbTk").value === "arena" ? "lbTin" : "lbTsin").value), rounds: Number($("lbTr").value), interval: Number($("lbTiv").value), name: $("lbTn").value, tc: $("lbTtc").value, berserk: $("lbTbz").checked, rated: !($("lbTrated") && $("lbTrated").value === "0"), botIds: [].map.call(document.getElementsByClassName("lbTbot"), function (x) { return x.checked ? x.value : null; }).filter(Boolean), prize: Number($("lbTpz").value)||0, places: Number($("lbTpl").value)||3, minGames: $("lbTmg") ? Number($("lbTmg").value) || 0 : 0 });
+        var _okc = window.lbAtOk(); _okc && sendMsg(Object.assign({ type: "lbTCreate", startAt: window.lbAt(), clubIds: lbClubIds(), kind: $("lbTk").value, pos: $("lbTp").value, duration: Number($("lbTdur").value), startIn: Number($($("lbTk").value === "arena" ? "lbTin" : "lbTsin").value), rounds: Number($("lbTr").value), interval: Number($("lbTiv").value), name: $("lbTn").value, tc: (window.__tfTc ? window.__tfTc() : $("lbTtc").value), berserk: $("lbTbz").checked, rated: !($("lbTrated") && $("lbTrated").value === "0"), botIds: [].map.call(document.getElementsByClassName("lbTbot"), function (x) { return x.checked ? x.value : null; }).filter(Boolean), prize: Number($("lbTpz").value)||0, places: Number($("lbTpl").value)||3, minGames: $("lbTmg") ? Number($("lbTmg").value) || 0 : 0 }, window.__tfx ? window.__tfx() : {}));
         $("lbTn").value = ""; if (_okc) { var _tf = $("lbTform"); if (_tf) _tf.style.display = "none"; } try { var _d = $("lbTclD"); if (_d) _d.open = false; var _cb = document.querySelectorAll("#lbTclD input[type=checkbox]"); for (var _i = 0; _i < _cb.length; _i++) _cb[_i].checked = false; } catch (e) {}
       };
       if (!initData) {
@@ -1229,6 +1234,7 @@
     window.lbFriend = function () { sendMsg({ type: "lbFriendNew", tc: $("lbTc").value, pos: $("lbPos").value, games: Number($("lbGm").value) }); toast("🔗 Havola tayyorlanmoqda…", null, 2000); };
     var tFil = "new";
     window.lbTF = function (f) { tFil = f === 2 ? "fin" : "new"; renderTournaments(); };
+    window.lbSend = sendMsg;   // tform.js (🔁 doimiy turnirlar) uchun
     window.lbTPlus = function () { var f = $("lbTform"); if (f) f.style.display = f.style.display === "none" ? "block" : "none"; };
     window.lbTRef = function () { renderTournaments(); };
     function renderTournaments() {
@@ -1477,7 +1483,7 @@ document.head.appendChild(_as); }
       h += "<div class=\"hzLvG\">";
       list.slice(0, 10).forEach(function (r) {
         var bot = r.vsBot || /BOT/.test(String(r.white)+String(r.black)); var tcl = bot ? (r.tc && r.tc !== "∞" ? r.tc.replace(/^0\.25\+/, "¼+").replace(/^0\.5\+/, "½+").replace(/^0\.75\+/, "¾+") : "∞") : r.tc; var c = bot ? "#8e6bd6" : (COL[r.tc] || "#6aaed4");
-        var bm = bot ? "" : (function (t) { var m = /^(\d+(?:\.\d+)?)/.exec(String(t || "")); if (!m) return ""; var x = +m[1]; return x < 3 ? "🚀 Bullet " : x < 10 ? "⚡ Blits " : "⏱ Rapid "; })(r.tc);
+        var bm = bot ? "" : (function (t) { var m = /^(\d+(?:\.\d+)?)(?:\+(\d+))?/.exec(String(t || "")); if (!m) return ""; var x = +m[1] * 60 + (+m[2] || 0) * 40; return x < 180 ? "🚀 Bullet " : x < 480 ? "⚡ Blits " : "⏱ Rapid "; })(r.tc);
         if (!bot) c = /Bullet/.test(bm) ? "#d9534f" : /Blits/.test(bm) ? "#3b82f6" : /Rapid/.test(bm) ? "#16a34a" : c;
         var mb = ""; if (r.bd && r.bd.length === 64) { mb = "<div class=\"hzLvB\">"; for (var q = 0; q < 64; q++) { var rr = q >> 3, cc = q & 7, dk = (rr + cc) % 2 === 1, pv = r.bd.charAt(q); mb += "<i class=\"" + (dk ? "d" : "l") + "\">" + (pv !== "0" ? "<s class=\"p" + pv + "\"></s>" : "") + "</i>"; } mb += "</div>"; }
         h += "<div class=\"hzLvC\" data-r=\"" + esc(r.id) + "\"><b style=\"background:" + c + "\">" + (bot ? "🤖 Bot " + esc(tcl) : bm + esc(tcl)) + "</b>" + mb + "<div>⚪ " + esc(r.white) + " (" + (r.wElo || 1000) + ")</div><i>vs</i><div>⚫ " + esc(r.black) + " (" + (r.bElo || 1000) + ")</div><u>👁 " + (r.spectators || 0) + " · " + Math.ceil((r.moves || 0) / 2) + " yurish</u></div>";
@@ -3432,5 +3438,7 @@ if(document.readyState==='complete')setTimeout(init,1500);else window.addEventLi
 
 /* TLIST — turnirlar ro'yxati chess.com/lichess uslubida (tlist.js) */
 ;(function(){var s=document.createElement("script");s.src="/tlist.js";document.head.appendChild(s)})();
+/* TFORM — turnir yaratish: lidraughts kabi vaqt, bayroqli, tavsif, e'lon, 🔁 doimiy (tform.js) */
+;(function(){var s=document.createElement("script");s.src="/tform.js?v=1";document.head.appendChild(s)})();
 /* HOMEX — bosh sahifa: kunlik masala, reytinglar, o'yinlarim, do'stlar (homex.js) */
 ;(function(){var s=document.createElement("script");s.src="/homex.js?v=2";document.head.appendChild(s)})();

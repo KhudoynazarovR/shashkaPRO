@@ -18,7 +18,7 @@ function payWin(room, whiteUid, blackUid, tid) {
 
 const TCS = ['1+1', '2+2', '3+2', '5+3'];
 const DEFAULT_TC = '5+3';
-const tcOk = s => { const m = /^(\d{1,2})\+(\d{1,2})$/.exec(String(s || '')); if (!m) return false; const a = +m[1], b = +m[2]; return a >= 1 && a <= 60 && b <= 30; };
+const tcOk = s => { const m = /^(\d{1,2}(?:\.\d{1,2})?)\+(\d{1,2})$/.exec(String(s || '')); if (!m) return false; const a = +m[1], b = +m[2]; return ([0.25, 0.5, 0.75, 1.5].includes(a) || (Number.isInteger(a) && a >= 1 && a <= 60)) && b <= 30 && (a >= 1 || b <= 30); };
 const tcOf = s => tcOk(s) ? String(s) : DEFAULT_TC;
 // 🤖 Botlar: kuch pog'onasi. secs = dvigatelga beriladigan o'ylash vaqti, blunder = tasodifiy yurish ehtimoli
 const BOTS = [
@@ -65,7 +65,7 @@ const REG_TTL = 24 * 3600 * 1000;
 const KEEP_FINISHED = 24 * 3600 * 1000;
 
 // ---- Arena sozlamalari ----
-const ARENA_DURATIONS = [10, 20, 30, 45, 60, 90];   // daqiqa
+const ARENA_DURATIONS = [10, 20, 25, 30, 40, 45, 50, 60, 70, 80, 90, 100, 120];   // daqiqa
 const ARENA_STARTS = [0, 2, 5, 10, 30];
 const validStart = v => { v = Number(v); const n = Date.now(); return v >= n + 60000 && v <= n + 183 * 86400000 ? Math.floor(v) : 0; };   // aniq boshlanish: 1 daqiqadan 6 oygacha             // boshlanishgacha kutish (daqiqa)
 const ARENA_MAX_PLAYERS = 200;
@@ -317,7 +317,8 @@ function createLobby({ send, clients, roomsApi }) {
       type: t.type || 'swiss', durationMin: t.durationMin || 0, awards: t.awards || [], prize: t.prize || 0, places: t.places || 0, berserk: t.berserk !== false, rated: t.rated !== false, tc: t.tc || "", pos: t.pos || "std", startAt: t.startAt || 0, endAt: t.endAt || 0, ending: !!t.ending,
       creatorUid: t.creatorUid, creatorName: t.creatorName, clubIds: t.clubIds || [], clubs: clubStandings(t),
       round: t.round, rounds: t.rounds, nextAt: t.nextAt || 0,
-      players: t.type === 'arena' ? arenaStandings(t) : standings(t),
+      players: t.flag ? arenaStandings(t).map(p => Object.assign({}, p, require('./flags.js').badge(p.uid) || {})) : (t.type === 'arena' ? arenaStandings(t) : standings(t)),
+      flag: !!t.flag, desc: t.desc || '', rec: t.rec || null, regs: t.flag ? require('./flags.js').regStandings(arenaStandings(t)).map(r => ({ r: r.r, k: r.k, c: r.c, n: r.n, score: r.score })) : [],
       minGames: t.minGames || 0,
       boards: t.cur.map(b => ({
         board: b.board, roomId: b.roomId, white: b.white, black: b.black,
@@ -754,6 +755,98 @@ function createLobby({ send, clients, roomsApi }) {
     push();
   }
 
+  // 🏆 turnir yaratish (qo'lda va 🔁 doimiy andozadan). Xato bo'lsa — matn qaytadi
+  function makeT(me, m, sys) {
+    const cl = clubsApi.check(me.uid, m.clubIds); if (cl.error) return cl.error;
+    if (cl.ids.includes(clubsApi.SYS) && m.kind !== 'arena') return 'Botlar klubi faqat arenada ishlaydi';
+    if (tournaments.size >= MAX_TOURNAMENTS) return 'Turnirlar soni limitga yetdi';
+    if (!sys && [...tournaments.values()].some(t => t.creatorUid === me.uid && t.status === 'reg')) return 'Sizda allaqachon ochiq turnir bor';
+    const adm = economy.isAdmin(me.uid) || !!sys;
+    const extra = {
+      rated: m.rated !== false, flag: !!m.flag && m.kind === 'arena', desc: String(m.desc || '').replace(/[\u0000-\u001f<>]/g, ' ').trim().slice(0, 200),
+      announce: adm && !!m.announce, rec: m._rec || null
+    };
+    if (m.kind === 'arena') {
+      const dur = ARENA_DURATIONS.includes(Number(m.duration)) ? Number(m.duration) : 30;
+      const delay = ARENA_STARTS.includes(Number(m.startIn)) ? Number(m.startIn) : 5;
+      const startAt = sys ? Number(m.startAt) : (validStart(m.startAt) || (Date.now() + delay * 60000));
+      const at = Object.assign({
+        id: hex(3), type: 'arena', name: cleanTitle(m.name) || ('Arena ' + me.name),
+        tc: tcOf(m.tc),
+        creatorUid: me.uid, creatorName: me.name, status: 'reg', created: Date.now(),
+        players: new Map(), round: 0, rounds: 0, cur: [], curBye: null, nextAt: 0,
+        durationMin: dur, startAt, endAt: startAt + dur * 60000, gameNo: 0, ending: false,
+        pos: m.pos === 'idf' ? 'idf' : 'std', berserk: m.berserk !== false, botIds: (adm && Array.isArray(m.botIds)) ? [...new Set(m.botIds.map(String))].filter(id => botAny(id)).slice(0, 12) : [], prize: m._prize || 0, prizePaid: m._paid || 0,
+        places: Math.max(3, Math.min(10, Math.floor(Number(m.places)) || 3)),
+        minGames: ARENA_MIN_GAMES.includes(Number(m.minGames)) ? Number(m.minGames) : 0
+      }, extra);
+      if (!sys) at.players.set(me.uid, newArenaPlayer(me));
+      at.clubIds = cl.ids; tournaments.set(at.id, at);
+      return at;
+    }
+    const t = Object.assign({
+      id: hex(3), name: cleanTitle(m.name) || ('Turnir ' + me.name), tc: tcOf(m.tc),
+      creatorUid: me.uid, creatorName: me.name, status: 'reg', created: Date.now(),
+      players: new Map(), round: 0, rounds: 0, cur: [], curBye: null, nextAt: 0,
+      pos: m.pos === 'idf' ? 'idf' : 'std',
+      prize: m._prize || 0, prizePaid: m._paid || 0, places: Math.max(3, Math.min(10, Math.floor(Number(m.places)) || 3)),
+      roundsWanted: SWISS_ROUNDS.includes(Number(m.rounds)) ? Number(m.rounds) : 0,
+      interval: SWISS_INTERVALS.includes(Number(m.interval)) ? Number(m.interval) * 1000 : 0,
+      startAt: sys ? Number(m.startAt) : (validStart(m.startAt) || (SWISS_STARTS.includes(Number(m.startIn)) ? Date.now() + Number(m.startIn) * 60000 : 0))
+    }, extra);
+    if (!sys) t.players.set(me.uid, newPlayer(me));
+    if (m.kind === 'olympic') { t.type = 'olympic'; t.roundsWanted = 0; }
+    t.clubIds = cl.ids; tournaments.set(t.id, t);
+    return t;
+  }
+  // 🔁 DOIMIY TURNIRLAR: andoza (store.db.tRec) — tanlangan hafta kunlari va soatda turnir o'zi yaratiladi, REC_LEAD_H soat oldin e'lon
+  const REC_LEAD_H = 24, DN = ['Ya', 'Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh'];
+  function recList() { const st = require('./store'); st.db.tRec = st.db.tRec || []; return st.db.tRec; }
+  function recSave(me, m) {
+    const days = [...new Set((Array.isArray(m.recDays) ? m.recDays : []).map(Number).filter(d => d >= 0 && d <= 6))].sort();
+    if (!days.length) return 'Kamida bitta kunni tanlang';
+    const at = Number(m.startAt) || 0; if (!at) return 'Boshlanish soatini tanlang (📅 Aniq sana va vaqt)';
+    const d = new Date(at + 5 * 3600e3), hh = d.getUTCHours(), mm = d.getUTCMinutes();
+    const L = recList(); if (L.length >= 20) return 'Doimiy turnirlar ko‘p (20)';
+    const tpl = Object.assign({}, m); ['type', 'rec', 'recDays', 'startAt', 'startIn', '_prize', '_paid', '_rec'].forEach(k => delete tpl[k]);
+    tpl.prize = Math.max(0, Math.floor(Number(m.prize) || 0));
+    const r = { id: hex(3), name: cleanTitle(m.name) || 'Haftalik turnir', days, hh, mm, tpl, n: 0, made: {}, pause: false, skip: '', by: me.uid, at: Date.now() };
+    L.push(r); require('./store').save();
+    return Object.assign({ daysTxt: days.map(x => DN[x]).join(', '), time: String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0') }, r);
+  }
+  function recTick() {
+    const L = recList(); if (!L.length) return;
+    const now = Date.now(); let ch = false;
+    for (const r of L) {
+      if (r.pause) continue;
+      for (let k = 0; k <= 7; k++) {   // bugundan 7 kungacha
+        const day = new Date(now + 5 * 3600e3 + k * 86400e3), dk = day.toISOString().slice(0, 10);
+        if (!r.days.includes(day.getUTCDay())) continue;
+        const startAt = Date.UTC(day.getUTCFullYear(), day.getUTCMonth(), day.getUTCDate(), r.hh - 5, r.mm, 0);
+        if (startAt <= now + 2 * 60000 || startAt - now > REC_LEAD_H * 3600e3) continue;
+        if (r.made[dk] || r.skip === dk) continue;
+        r.made[dk] = 'x'; r.n = (r.n || 0) + 1; ch = true;
+        const m = Object.assign({}, r.tpl, { name: (r.name + ' #' + r.n).slice(0, 30), startAt, _prize: r.tpl.prize || 0, _paid: 0, _rec: r.id, announce: r.tpl.announce !== false });
+        const t = makeT({ uid: 'sys', name: 'ShashkaPRO' }, m, true);
+        if (typeof t === 'string') { console.log('[doimiy] yaratilmadi:', r.name, t); r.n--; delete r.made[dk]; continue; }
+        r.made[dk] = t.id;
+        console.log('[doimiy] yaratildi:', t.name, dk);
+        if (t.announce) { try { require('./tposter.js').announce(t); } catch (e) {} }
+      }
+      for (const k of Object.keys(r.made)) if (Date.parse(k) < now - 14 * 86400e3) delete r.made[k];
+    }
+    if (ch) { require('./store').save(); push(); }
+  }
+  setInterval(() => { try { recTick(); } catch (e) { console.log('[doimiy] xato:', e.message); } }, 30000).unref();
+  // admin: ro'yxat va boshqaruv (to'xtatish / bu safar o'tkazib yuborish / o'chirish)
+  function recPub() {
+    const now = Date.now();
+    return recList().map(r => {
+      let next = 0;
+      for (let k = 0; k <= 7 && !next; k++) { const day = new Date(now + 5 * 3600e3 + k * 86400e3); if (!r.days.includes(day.getUTCDay())) continue; const s0 = Date.UTC(day.getUTCFullYear(), day.getUTCMonth(), day.getUTCDate(), r.hh - 5, r.mm, 0); if (s0 > now) next = s0; }
+      return { id: r.id, name: r.name, days: r.days, hh: r.hh, mm: r.mm, n: r.n || 0, pause: !!r.pause, skip: r.skip || '', next, tc: r.tpl.tc, kind: r.tpl.kind, prize: r.tpl.prize || 0, flag: !!r.tpl.flag };
+    });
+  }
   function finishT(t) {
     if (t.status === 'finished') return;
     if (t.timer) clearTimeout(t.timer);
@@ -765,12 +858,21 @@ function createLobby({ send, clients, roomsApi }) {
       t.prizeDone = true;
       const el = st.filter(x => x.games > 0 && !x.bot && (t.type === "arena" || !x.withdrawn));
       const PZT = { 3: [50,30,20], 4: [40,28,20,12], 5: [35,25,18,13,9], 6: [30,22,17,13,10,8], 7: [28,20,15,12,10,8,7], 8: [26,19,15,12,10,8,5,5], 9: [24,18,14,11,10,8,6,5,4], 10: [22,17,13,11,9,8,7,5,4,4] };
-      const sh = el.length >= 3 ? PZT[Math.min(t.places || 3, el.length)] : el.length === 2 ? [60, 40] : el.length === 1 ? [100] : [];
+      let sh = el.length >= 3 ? PZT[Math.min(t.places || 3, el.length)] : el.length === 2 ? [60, 40] : el.length === 1 ? [100] : [];
+      if (t.flag && el.length) {   // 🏳️ bayroqli: 60% g'olib viloyat top-5 (ochkosiga qarab), 40% individual 1-2-3 (50/30/20)
+        const regs = require('./flags.js').regStandings(el), win = regs[0];
+        const regPool = win && win.score > 0 ? Math.floor(t.prize * 0.6) : 0, topPool = t.prize - regPool;
+        t.payReg = []; t.payTop = [];
+        if (win && win.score > 0) win.top.forEach(p => { const amt = Math.floor(regPool * p.score / win.score); if (amt > 0 && economy.add(p.uid, amt, 'tournament_region')) { toast(p.uid, '🏳️ Viloyatingiz g‘olib! Mukofot: +' + amt + ' 🪙'); } t.payReg.push({ uid: p.uid, name: p.name, amt }); });
+        const T3 = el.length >= 3 ? [50, 30, 20] : el.length === 2 ? [60, 40] : [100];
+        T3.forEach((pc, i) => { const amt = Math.floor(topPool * pc / 100); t.payTop.push({ uid: el[i].uid, name: el[i].name, amt }); (t.awards = t.awards || []).push({ uid: el[i].uid, name: el[i].name, place: i + 1, amt }); if (amt > 0 && economy.add(el[i].uid, amt, 'tournament_prize_' + (i + 1))) toast(el[i].uid, '🏆 ' + (i + 1) + '-o‘rin mukofoti: +' + amt + ' 🪙'); });
+        sh = [];
+      }
       sh.forEach((pc, i) => {
         const amt = Math.floor(t.prize * pc / 100);
         (t.awards = t.awards || []).push({ uid: el[i].uid, name: el[i].name, place: i + 1, amt: amt }); if (amt > 0 && economy.add(el[i].uid, amt, 'tournament_prize_' + (i + 1))) toast(el[i].uid, '🏆 ' + (i + 1) + '-o‘rin mukofoti: +' + amt + ' 🪙');
       });
-      if (!sh.length && t.prizePaid) economy.refund(t.creatorUid, t.prizePaid, 'refund_prize');
+      if (!sh.length && !t.flag && t.prizePaid) economy.refund(t.creatorUid, t.prizePaid, 'refund_prize');
       if (t.daily && el[0]) {   // 🌙 kunlik arena g'olibiga 7 kunlik Premium
         try { const _st = require('./store'), _u = _st.users()[String(el[0].uid)]; if (_u) { require('./premium.js').grant(_u, 7, 'daily_arena'); toast(el[0].uid, '👑 Kunlik arena g‘olibi: +7 kunlik Premium!'); } } catch (e) {}
       }
@@ -784,9 +886,18 @@ function createLobby({ send, clients, roomsApi }) {
         if (_u) { _u.tournWins = (_u.tournWins || 0) + 1; _st.save(); }
       }
     } catch (e) {}
+    let regsF = [];
+    if (t.flag) { try { regsF = require('./flags.js').regStandings(st); } catch (e) {} }
     for (const p of t.players.values()) {
       const rank = st.findIndex(x => x.uid === p.uid) + 1;
       toast(p.uid, '🏆 ' + t.name + ' tugadi. G‘olib: ' + top + '. Sizning o‘rningiz: ' + rank);
+      if (t.flag && regsF.length && /^\d+$/.test(String(p.uid))) {   // 🛡 viloyatingiz natijasi — shaxsiy xabar
+        const b = require('./flags.js').badge(p.uid), ri = b ? regsF.findIndex(r => r.r === b.reg) : -1;
+        if (ri >= 0) { const R = regsF[ri]; tgCall('sendMessage', { chat_id: Number(p.uid), text: '🏁 ' + t.name + ' yakunlandi!\n\n👑 G‘olib viloyat: ' + regsF[0].k + ' ' + regsF[0].r + ' — ' + regsF[0].score + ' ochko\n🛡 Viloyatingiz: ' + (ri + 1) + '-o‘rin — ' + R.score + ' ochko\n⭐ Viloyatingiz yulduzlari: ' + R.top.slice(0, 3).map(x => x.name + ' — ' + x.score).join(' · ') + '\n\nSizning o‘rningiz: ' + rank }).catch(() => {}); }
+      }
+    }
+    if (t.announce || t.flag) {   // 📣 natija kanalga (e'longa javob sifatida)
+      try { const stB = st.filter(x => x.games > 0 && !x.bot).map(x => Object.assign({}, x, require('./flags.js').badge(x.uid) || {})); require('./tposter.js').result(t, stB, regsF.filter(r => r.score > 0), { reg: t.payReg || [], top: t.payTop || [] }); } catch (e) { console.log('[tposter]', e.message); }
     }
     push();
   }
@@ -1388,43 +1499,31 @@ function createLobby({ send, clients, roomsApi }) {
         break;
       }
       case 'lbTCreate': {
-        const cl = clubsApi.check(me.uid, m.clubIds); if (cl.error) return err(c, cl.error), true;
-        if (cl.ids.includes(clubsApi.SYS) && m.kind !== 'arena') return err(c, 'Botlar klubi faqat arenada ishlaydi'), true;
-        if (tournaments.size >= MAX_TOURNAMENTS) return err(c, 'Turnirlar soni limitga yetdi'), true;
-        if ([...tournaments.values()].some(t => t.creatorUid === me.uid && t.status === 'reg')) return err(c, 'Sizda allaqachon ochiq turnir bor'), true;
-        if (m.kind === 'arena') {
-          const dur = ARENA_DURATIONS.includes(Number(m.duration)) ? Number(m.duration) : 30;
-          const delay = ARENA_STARTS.includes(Number(m.startIn)) ? Number(m.startIn) : 5;
-          const startAt = validStart(m.startAt) || (Date.now() + delay * 60000);
-          const at = {
-            id: hex(3), type: 'arena', name: cleanTitle(m.name) || ('Arena ' + me.name),
-            tc: tcOf(m.tc),
-            creatorUid: me.uid, creatorName: me.name, status: 'reg', created: Date.now(),
-            players: new Map(), round: 0, rounds: 0, cur: [], curBye: null, nextAt: 0,
-            durationMin: dur, startAt, endAt: startAt + dur * 60000, gameNo: 0, ending: false,
-            pos: m.pos === 'idf' ? 'idf' : 'std', berserk: m.berserk !== false, rated: m.rated !== false, botIds: ((process.env.ADMIN_IDS || '').split(',').map(x => x.trim()).includes(String(me.uid)) && Array.isArray(m.botIds)) ? [...new Set(m.botIds.map(String))].filter(id => botAny(id)).slice(0, 12) : [], prize: m._prize || 0, prizePaid: m._paid || 0, places: Math.max(3, Math.min(10, Math.floor(Number(m.places)) || 3)),
-            minGames: ARENA_MIN_GAMES.includes(Number(m.minGames)) ? Number(m.minGames) : 0
-          };
-          at.players.set(me.uid, newArenaPlayer(me));
-          at.clubIds = cl.ids; tournaments.set(at.id, at);
-          push();
-          break;
+        if (m.rec && economy.isAdmin(me.uid)) {   // 🔁 doimiy turnir: andoza saqlanadi, turnirlar o'zi yaratiladi
+          const r = recSave(me, m); if (typeof r === 'string') return err(c, r), true;
+          toast(me.uid, '🔁 Doimiy turnir saqlandi: ' + r.name + ' · ' + r.daysTxt + ' ' + r.time + '. Har gal ' + REC_LEAD_H + ' soat oldin e’lon qilinadi.');
+          recTick(); push(); send(c.ws, { type: 'lbRec', list: recPub() }); break;
         }
-        const t = {
-          id: hex(3), name: cleanTitle(m.name) || ('Turnir ' + me.name), tc: tcOf(m.tc),
-          creatorUid: me.uid, creatorName: me.name, status: 'reg', created: Date.now(),
-          players: new Map(), round: 0, rounds: 0, cur: [], curBye: null, nextAt: 0,
-          pos: m.pos === 'idf' ? 'idf' : 'std',
-          prize: m._prize || 0, prizePaid: m._paid || 0, places: Math.max(3, Math.min(10, Math.floor(Number(m.places)) || 3)),
-          roundsWanted: SWISS_ROUNDS.includes(Number(m.rounds)) ? Number(m.rounds) : 0,
-          interval: SWISS_INTERVALS.includes(Number(m.interval)) ? Number(m.interval) * 1000 : 0,
-          startAt: validStart(m.startAt) || (SWISS_STARTS.includes(Number(m.startIn)) ? Date.now() + Number(m.startIn) * 60000 : 0)
-        };
-        t.players.set(me.uid, newPlayer(me));
-        if (m.kind === 'olympic') { t.type = 'olympic'; t.roundsWanted = 0; }
-        t.clubIds = cl.ids; tournaments.set(t.id, t);
+        const t = makeT(me, m); if (typeof t === 'string') return err(c, t), true;
+        if (t.announce) { try { require('./tposter.js').announce(t); } catch (e) {} }
         push();
         break;
+      }
+      case 'lbRecList': {   // 🔁 doimiy turnirlar (faqat admin)
+        if (!economy.isAdmin(me.uid)) return true;
+        send(c.ws, { type: 'lbRec', list: recPub() });
+        return true;
+      }
+      case 'lbRecAct': {
+        if (!economy.isAdmin(me.uid)) return true;
+        const L = recList(), i = L.findIndex(r => r.id === String(m.id)); if (i < 0) return true;
+        const r = L[i];
+        if (m.act === 'pause') r.pause = !r.pause;
+        else if (m.act === 'skip') { const p0 = recPub()[i]; const dk = p0 && p0.next ? new Date(p0.next + 5 * 3600e3).toISOString().slice(0, 10) : ''; r.skip = r.skip === dk ? '' : dk; }
+        else if (m.act === 'del') L.splice(i, 1);
+        require('./store').save();
+        send(c.ws, { type: 'lbRec', list: recPub() });
+        return true;
       }
       case 'lbTAddBots': {
         if (!(process.env.ADMIN_IDS || '').split(',').map(x => x.trim()).includes(String(me.uid))) return err(c, 'Faqat admin'), true;
@@ -1735,6 +1834,7 @@ function createLobby({ send, clients, roomsApi }) {
         if (url) msg.reply_markup = { inline_keyboard: [[{ text: '▶ Turnirga kirish', url }]] };
         tgCall('sendMessage', msg).catch(() => {});
       }
+      if (t.announce) { try { require('./tposter.js').remind(t); } catch (e) {} }
       console.log('[turnir] 15 daqiqa eslatmasi:', t.name);
     }
   }

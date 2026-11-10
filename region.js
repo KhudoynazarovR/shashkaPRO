@@ -56,7 +56,7 @@ function view(uid) {
   for (const [id, x] of Object.entries(R.ppl)) if (!heroes[x.r] || x.p > heroes[x.r].p) heroes[x.r] = { name: (users()[id] || {}).name || '', p: x.p };
   const L = store.db.regLast;
   return {
-    regions: REGIONS, my: u.region || '', myPts: me && me.r === u.region ? me.p : 0, m: R.m,
+    regions: REGIONS, my: u.region || '', myC: u.country || '', countries: (function () { try { const C = require('./flags.js').COUNTRIES; return Object.keys(C).map(k => [k, C[k][0], C[k][1]]); } catch (e) { return []; } })(), myPts: me && me.r === u.region ? me.p : 0, m: R.m,
     canChange: !u.regionAt || Date.now() - u.regionAt > CHANGE_DAYS * 86400e3,
     table: REGIONS.filter(r => r !== 'Chet el' || R.pts[r]).map(r => ({ r, p: R.pts[r] || 0, hero: heroes[r] || null, n: Object.values(R.ppl).filter(x => x.r === r).length })).sort((a, b) => b.p - a.p),
     last: L ? { m: L.m, win: L.win, hero: L.hero, top: L.top } : null,
@@ -74,6 +74,8 @@ function handle(req, res, p, h) {
     let j = {}; try { j = JSON.parse(body); } catch (e) {}
     const u = store.getOrCreate(t), r = String(j.r || '');
     if (!REGIONS.includes(r)) return h.send(res, 400, { error: 'Viloyatni tanlang' });
+    const C = (function () { try { return require('./flags.js').COUNTRIES; } catch (e) { return {}; } })(), cc = String(j.c || '');
+    if (r === 'Chet el' && C[cc]) { u.country = cc; if (u.region === r) { store.save(); return h.send(res, 200, view(uid)); } }   // 🌍 davlatni istalgan payt o'zgartirish mumkin
     if (u.region === r) return h.send(res, 200, view(uid));
     if (u.region && u.regionAt && Date.now() - u.regionAt < CHANGE_DAYS * 86400e3) return h.send(res, 400, { error: 'Viloyatni ' + CHANGE_DAYS + ' kunda bir marta o‘zgartirish mumkin' });
     u.region = r; u.regionAt = Date.now(); store.save();

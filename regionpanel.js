@@ -23,8 +23,23 @@
       [].forEach.call(box.querySelectorAll("[data-r]"), function (b) {
         b.onclick = function () {
           var r = b.getAttribute("data-r");
+          if (r === "Chet el" && d.countries && d.countries.length) return country(d);   // 🌍 davlatni tanlash
           if (d.my && r !== d.my && !confirm("Viloyatni «" + r + "» ga o‘zgartirasizmi? Keyingi o‘zgartirish " + d.rules.days + " kundan keyin.")) return;
           fetch("/api/region", { method: "POST", headers: { "Content-Type": "application/json", "x-init-data": initData() }, body: JSON.stringify({ r: r }) })
+            .then(function (x) { return x.json(); }).then(function (j) { if (j.error) { box.querySelector("#rgE").textContent = j.error; return; } render(j); });
+        };
+      });
+    }
+    function country(d) {
+      var h = "<div style='font-size:36px;text-align:center'>🌍</div><b style='font-size:18px;display:block;text-align:center'>Qaysi davlatdasiz?</b><div style='font-size:13px;opacity:.75;margin:6px 0 12px;text-align:center'>Turnirlarda ismingiz yonida bayroq ko‘rinadi</div><div style='display:grid;grid-template-columns:1fr 1fr;gap:8px'>";
+      d.countries.forEach(function (c) { h += "<button data-c='" + c[0] + "' style='border:1px solid " + (c[0] === d.myC ? "#22c55e" : "#262b5a") + ";background:" + (c[0] === d.myC ? "#14532d" : "#161a3a") + ";color:#fff;border-radius:12px;padding:10px 6px;font-size:14px;text-align:left'>" + c[1] + " " + esc(c[2]) + "</button>"; });
+      h += "</div><div id='rgE' style='color:#ff6b7f;font-size:13px;min-height:18px;margin-top:8px'></div><button id='rgB' style='width:100%;margin-top:6px;border:0;border-radius:14px;padding:12px;font-size:15px;color:#fff;background:#3a3f6b'>Orqaga</button>";
+      box.innerHTML = h;
+      box.querySelector("#rgB").onclick = function () { render(d); };
+      [].forEach.call(box.querySelectorAll("[data-c]"), function (b) {
+        b.onclick = function () {
+          if (d.my && d.my !== "Chet el" && !confirm("Viloyatni «Chet el» ga o‘zgartirasizmi? Keyingi o‘zgartirish " + d.rules.days + " kundan keyin.")) return;
+          fetch("/api/region", { method: "POST", headers: { "Content-Type": "application/json", "x-init-data": initData() }, body: JSON.stringify({ r: "Chet el", c: b.getAttribute("data-c") }) })
             .then(function (x) { return x.json(); }).then(function (j) { if (j.error) { box.querySelector("#rgE").textContent = j.error; return; } render(j); });
         };
       });
