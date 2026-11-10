@@ -866,7 +866,7 @@
           "<div class=\"muted\" style=\"margin-top:6px\">Klub safida o‘ynang va turnirlarda birga qatnashing.</div>";
         if (!shown.length) h += "<div class=\"muted\" style=\"margin-top:10px\">Hozircha klub yo‘q. Birinchi bo‘lib oching!</div>";
         shown.forEach(function (c) {
-          h += "<div class=\"lbcr\" onclick=\"lbCA('cv','" + c.id + "')\">" + cav(c, false) + "<div class=\"lbinf\"><b>" + esc(c.name) + "</b><small>" + (c.open ? "🔓" : "🔒") + " " + c.count + " a‘zo" + (c.joined ? " · siz a‘zosiz" : (c.requested ? " · so‘rov yuborilgan" : "")) + "</small></div><span>›</span></div>";
+          h += "<div class=\"lbcr\" onclick=\"lbCA('cv','" + c.id + "')\">" + cav(c, false) + "<div class=\"lbinf\"><b>" + esc(c.name) + "</b><small>" + (c.open ? "🔓 Ochiq" : "🔒 Taklif bilan") + " · " + c.count + " a‘zo" + (c.joined ? " · <span style=\"color:#86efac;font-weight:700\">✓ A‘zosiz</span>" : (c.requested ? " · ⏳ so‘rov yuborilgan" : "")) + "</small></div><span>›</span></div>";
         });
         if (clubAll) {
           h += "<div style=\"margin-top:12px\"><div class=\"row\" style=\"margin-bottom:6px\">" + (clubImgData ? cav({ img: clubImgData }, true) : "") +

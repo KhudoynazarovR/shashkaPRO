@@ -14,6 +14,7 @@
     if (!tc || tc === '∞') return ['♟', ''];
     return est < 30 ? ['⚡', 'Giper'] : est < 180 ? ['🚀', 'Bullet'] : est < 480 ? ['🔥', 'Blits'] : est < 1500 ? ['🐇', 'Tezkor'] : ['🐢', 'Klassik'];
   }
+  function tcTxt(tc) { var a = String(tc || '').split('+'), b = Number(a[0]) || 0; return (b > 0 && b < 1 ? Math.round(b * 60) + ' s' : b) + ' + ' + (Number(a[1]) || 0); }
   function dur(ms) {
     var m = Math.max(0, Math.round(ms / 60000)), h = Math.floor(m / 60), d = Math.floor(h / 24);
     if (d >= 1) return d + ' kun' + (h % 24 ? ' ' + (h % 24) + ' soat' : '');
@@ -26,6 +27,7 @@
   }
   var css = '' +
     '#lbT.tlOn>#lbTbar,#lbT.tlOn>#lbHero,#lbT.tlOn #lbTs,#lbT.tlOn #lbDream,#lbT.tlOn #nxtBox2,#lbT.tlOn #lbTsH{display:none!important}' +
+    '#lbT.tlOn:not(.tlClub) #lbClubs,#tvClub3{display:none!important}#lbT.tlClub #tlList{display:none}' +
     'body.tlOnB #tvClub3{display:none!important}' +
     '#tlHead{display:flex;align-items:center;gap:8px;margin:4px 0 6px}#tlHead b{flex:1;font-size:21px;font-weight:800}' +
     '#tlHead button{border:0;border-radius:12px;height:40px;padding:0 12px;font-weight:700;font-size:14px;color:#fff;background:#2d2775}#tlHead button.add{background:#3fa34d}' +
@@ -47,7 +49,8 @@
     ps.forEach(function (p) { if (p.bot) bots++; else hum++; if (String(p.uid) === u && !p.withdrawn) inn = true; });
     var kind = t.type === 'arena' ? '' : t.type === 'swiss' ? 'Shveytsariya' + (t.roundsWanted ? ' · ' + t.roundsWanted + ' tur' : '') : t.type === 'olympic' || t.type === 'ko' ? 'Olimpiya tizimi' : 'Turnir';
     var name = String(t.name || 'Turnir').replace(/^[^\p{L}\p{N}]+\s*/u, '');
-    var sub = (t.tc && t.tc !== '∞' ? esc(t.tc) + ' ' + sp[1] + ' · ' : '') + (kind ? kind + ' · ' : '') + hum + ' o‘yinchi' + (bots ? ' · 🤖 ' + bots : '') +
+    var empty = !hum && !bots && t.status !== 'finished';
+    var sub = (t.tc && t.tc !== '∞' ? esc(tcTxt(t.tc)) + ' ' + sp[1] + ' · ' : '') + (kind ? kind + ' · ' : '') + (empty ? '<span class="y">Bo‘sh — qo‘shiling!</span>' : hum + ' o‘yinchi') + (bots ? ' · 🤖 ' + bots : '') +
       ((t.clubIds || []).length ? ' · 👥 ' + ((t.clubIds || []).length > 1 ? 'klublar jangi' : 'klub') : '') + (t.prize ? ' · <span class="p">🏆 ' + t.prize + '</span>' : '') + (inn ? ' · <span class="y">✓ siz</span>' : '');
     var w = '';
     if (t.status === 'running') w = t.ending ? '<b class="l">yakunlanmoqda</b>oxirgi o‘yinlar' : t.endAt ? '<b class="l">' + dur(t.endAt - now) + '</b>tugashiga' : '<b class="l">' + (t.round ? t.round + '-tur' : 'jonli') + '</b>' + (t.rounds ? t.rounds + ' turdan' : 'o‘ynalmoqda');
@@ -63,16 +66,22 @@
     var hd = g('tlHead');
     if (!hd) {
       hd = document.createElement('div'); hd.id = 'tlHead';
-      hd.innerHTML = '<b>🏆 Turnirlar</b><button type="button" id="tlClub" title="Klublar">👥</button><button type="button" class="add" id="tlAdd">➕ Yaratish</button>';
+      hd.innerHTML = '<b>🏆 Turnirlar</b><button type="button" class="add" id="tlAdd">➕ Yaratish</button>';
       bx.insertBefore(hd, bx.firstChild);
-      var tb = document.createElement('div'); tb.id = 'tlTabs'; tb.innerHTML = '<button type="button" data-tb="live" class="on">Jonli</button><button type="button" data-tb="fin">Tugaganlar</button>';
+      var tb = document.createElement('div'); tb.id = 'tlTabs'; tb.innerHTML = '<button type="button" data-tb="live" class="on">Jonli</button><button type="button" data-tb="fin">Tugaganlar</button><button type="button" data-tb="club">👥 Klublar</button>';
       var ls = document.createElement('div'); ls.id = 'tlList';
       var form = g('lbTform'); if (form && form.parentNode === bx) { bx.insertBefore(ls, form.nextSibling); bx.insertBefore(tb, ls); } else { bx.insertBefore(ls, hd.nextSibling); bx.insertBefore(tb, ls); }
       g('tlAdd').onclick = function () { if (window.lbTPlus) window.lbTPlus(); try { enhanceForm(); } catch (e) {} var f = g('lbTform'); if (f && f.style.display !== 'none') setTimeout(function () { f.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 50); };
-      g('tlClub').onclick = function () { var c = g('tvClub3'); if (c) c.click(); };
       tb.onclick = function (e) { var b = e.target.closest('[data-tb]'); if (!b) return; tab = b.getAttribute('data-tb'); [].forEach.call(tb.children, function (x) { x.classList.toggle('on', x === b); }); sig = ''; render(); };
+      tb.__set = function (k) { tab = k; [].forEach.call(tb.children, function (x) { x.classList.toggle('on', x.getAttribute('data-tb') === k); }); };
       ls.onclick = function (e) { var r = e.target.closest('[data-tid]'); if (!r) return; var id = r.getAttribute('data-tid'); if (window.tvOpen) window.tvOpen(id); };
     }
+    // 👥 Klublar tabi: mavjud klublar paneli (#lbClubs) shu yerga ko'chadi; boshqa tablarda yashirin
+    var club = tab === 'club', cl = g('lbClubs'), lsE = g('tlList'), tbE = g('tlTabs');
+    bx.classList.toggle('tlClub', club);
+    if (club && cl && lsE && cl.previousSibling !== tbE) bx.insertBefore(cl, lsE);
+    if (window.__lbCO !== club) { window.__lbCO = club; try { if (window.lbClubFix) window.lbClubFix(); } catch (e) {} }
+    if (club) { lsE.innerHTML = ''; sig = ''; return; }
     var s = St(), T = (s && s.tournaments) || [], u = me(), now = Date.now();
     var key = JSON.stringify([tab, u, Math.floor(now / 30000), T.map(function (t) { return [t.id, t.status, t.ending, t.startAt, t.endAt, (t.players || []).length, t.round, t.name, t.prize, (t.players || []).some(function (p) { return String(p.uid) === u && !p.withdrawn; })]; })]);
     if (key === sig) return; sig = key;
@@ -125,6 +134,8 @@
     var hid = sel.style.display === 'none' || (sel.closest('.row') && sel.closest('.row').style.display === 'none') || (sel.closest('#lbSw') && g('lbSw').style.display === 'none');
     box.style.display = hid ? 'none' : '';
   }
-  setInterval(function () { try { render(); enhanceForm(); } catch (e) {} }, 1000);
+  // ⚙️ admin «Bot kuchi» tugmasi faqat Menyu sahifasida (boshqa sahifalarda tugmalar ustida suzib turmasin)
+  function gear() { var bp = g('bpBtn'); if (!bp) return; var on = document.querySelector('#nvBar button.on'), m = !!(on && /Menyu|Меню|Menu/i.test(on.textContent || '')); bp.style.setProperty('display', m ? 'flex' : 'none', 'important'); }
+  setInterval(function () { try { render(); enhanceForm(); gear(); } catch (e) {} }, 1000);
   setTimeout(function () { try { render(); } catch (e) {} }, 300);
 })();

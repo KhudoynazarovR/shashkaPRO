@@ -16,8 +16,8 @@
   function nm(s) { return esc(String(s || '').replace(/^🤖\s*/, '')); }
   function tcInfo(tc) {
     var a = String(tc || '3+2').split('+'), b = Number(a[0]) || 0, inc = Number(a[1]) || 0, est = b * 60 + inc * 40;
-    var sp = est < 180 ? ['🚀', 'Bullet'] : est < 480 ? ['🔥', 'Blits'] : est < 1500 ? ['🐇', 'Tezkor'] : ['🐢', 'Klassik'];
-    return { icon: sp[0], name: sp[1], txt: b + '+' + inc };
+    var sp = est < 30 ? ['⚡', 'Giper'] : est < 180 ? ['🚀', 'Bullet'] : est < 480 ? ['🔥', 'Blits'] : est < 1500 ? ['🐇', 'Tezkor'] : ['🐢', 'Klassik'];
+    return { icon: sp[0], name: sp[1], txt: (b > 0 && b < 1 ? Math.round(b * 60) + ' s' : b) + ' + ' + inc };
   }
   // ochko ketma-ketligi: '0'..'9' oddiy, 'A'..'I' (=1..9) va 'o' (=0) — olovdagi o'yin
   function sheetHtml(s) {
@@ -94,7 +94,7 @@
     if (P) return;
     P = document.createElement('div'); P.id = 'taP';
     P.innerHTML = '<div class="taTop"><button class="taBk" id="taBk">←</button><div class="taTt"><b id="taNm"></b><small id="taSub"></small></div><div class="taCd" id="taCd"></div></div>' +
-      '<div class="taSc" id="taSc"><div id="taPod"></div>' +
+      '<div class="taSc" id="taSc"><div id="taPod"></div><div id="taClubs"></div>' +
       '<div class="taBar"><button class="n" data-a="me" title="Meni top">🔍</button><button class="n" data-a="first">⏮</button><button class="n" data-a="prev">◀</button><span class="taPg" id="taPg"></span><button class="n" data-a="next">▶</button><button class="n" data-a="last">⏭</button><span id="taJw" style="margin-left:auto"></span></div>' +
       '<div id="taRows"></div>' +
       '<div class="taCard" id="taInfo"></div>' +
@@ -134,7 +134,7 @@
     else if (t.status === 'running') { if (t.ending) { sub = '⌛ Yakunlanmoqda — o‘yinlar tugashi kutilmoqda'; } else { cd = fmt(t.endAt - now); sub = 'Tugashiga'; } }
     else sub = '🏁 Arena tugadi';
     g('taCd').textContent = cd; g('taSub').textContent = sub + ' · ' + (t.players || []).length + ' o‘yinchi';
-    var sig = JSON.stringify([t.status, t.ending, t.players, t.boards, page, me(), t.minGames, t.prize]);
+    var sig = JSON.stringify([t.status, t.ending, t.players, t.boards, page, me(), t.minGames, t.prize, t.clubs]);
     if (sig !== sigMain) { sigMain = sig; renderMain(t); }
     var cs = JSON.stringify(t.chat || []); if (cs !== sigChat) { sigChat = cs; renderChat(t); }
   }
@@ -153,6 +153,15 @@
       }
     }
     g('taPod').innerHTML = pod;
+    // 👥 klublar jangi (lichess Team Battle kabi): har klubning eng yaxshi 5 o'yinchisi ochkolari yig'indisi
+    var cl = t.clubs || [], ch = '';
+    if (cl.length) {
+      var md2 = ['🥇', '🥈', '🥉'];
+      ch = '<div class="taCard" style="margin-top:10px"><h4>👥 Klublar jangi · eng yaxshi 5 o‘yinchi</h4>' + cl.map(function (c, i) {
+        return '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #2d2775"><span style="width:26px;text-align:center">' + (md2[i] || (i + 1)) + '</span><b style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + nm(c.name) + '</b><small style="color:#a9a4d8">' + (c.players || 0) + ' o‘yinchi</small><b style="min-width:40px;text-align:right;color:#f5b72b">' + (c.score || 0) + '</b></div>';
+      }).join('') + '</div>';
+    }
+    g('taClubs').innerHTML = ch;
     // sahifalash va tugma
     g('taPg').textContent = ps.length ? (page * PER + 1) + '-' + Math.min(ps.length, page * PER + PER) + ' / ' + ps.length : '0';
     var bs = P.querySelectorAll('.taBar button.n');
