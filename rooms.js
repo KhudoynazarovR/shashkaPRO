@@ -117,6 +117,8 @@ function createRooms({ send, clients, onFinish }) {
     } catch (e) {}
     return (_pi(seat) || {}).elo || 1000;
   }
+  // 🎯 jonli stol kartasidagi kichik doska: 64 belgi (0 bo'sh, 1 oq, 2 qora, 3 oq damka, 4 qora damka)
+  function _bd64(r) { try { const v = require("./vrules.js").stateOf(r); if (!v || !v.b) return ""; let o = ""; for (let i = 0; i < 8; i++) for (let j = 0; j < 8; j++) o += String(v.b[i][j] || 0); return o; } catch (e) { return ""; } }
   function snapshot(room, color) {
     return {
       type: "roomState",
@@ -303,7 +305,7 @@ function createRooms({ send, clients, onFinish }) {
       const st = require('./store'), us = st.users();
       if (room.moves.length) {
         const g = {
-          id: room.id, at: Date.now(), w: room.white && room.white.name, b: room.black && room.black.name,
+          id: room.id, at: Date.now(), w: room.white && room.white.name, b: room.black && room.black.name, wu: room.white && String(room.white.uid || ''), bu: room.black && String(room.black.uid || ''), we: _liveElo(room.white), be: _liveElo(room.black),
           win: winner || null, why: room.reason || '', tc: room.tc,
           m: room.moves.map(m => [m.from.r, m.from.c, m.to.r, m.to.c, (m.captures || []).map(x => [x.r, x.c])])
         };
@@ -579,7 +581,7 @@ const srvBotOn = room => !!(room && room.vsBot && room.botCfg && room.botCfg.id 
         if (![...r.members].some(id => { const cl = clients.get(id); return cl && colorOf(r, cl); })) continue;
         list.push({
           id: r.id, vsBot: !!r.vsBot, white: r.white.name, black: r.black.name, tc: r.tc, wElo: _liveElo(r.white), bElo: _liveElo(r.black),
-          moves: (r.moves || []).length,
+          moves: (r.moves || []).length, bd: _bd64(r),
           spectators: [...r.members].filter(id => !colorOf(r, clients.get(id) || {})).length
         });
       }

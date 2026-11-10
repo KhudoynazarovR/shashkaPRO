@@ -314,6 +314,7 @@
       .catch(function () { shell('<div style="padding:30px;text-align:center">Server bilan aloqa yo‘q</div>'); });
   }
   window.mnClose = close;
+  window.mnArchOpen = archOpen;   // 🏠 bosh sahifadagi «O‘yinlarim › Arxiv»
 })();
 
 ;(function () {

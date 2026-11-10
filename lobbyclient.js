@@ -1475,7 +1475,10 @@ document.head.appendChild(_as); }
       h += "<div class=\"hzLvG\">";
       list.slice(0, 10).forEach(function (r) {
         var bot = r.vsBot || /BOT/.test(String(r.white)+String(r.black)); var tcl = bot ? (r.tc && r.tc !== "∞" ? r.tc.replace(/^0\.25\+/, "¼+").replace(/^0\.5\+/, "½+").replace(/^0\.75\+/, "¾+") : "∞") : r.tc; var c = bot ? "#8e6bd6" : (COL[r.tc] || "#6aaed4");
-        h += "<div class=\"hzLvC\" data-r=\"" + esc(r.id) + "\"><b style=\"background:" + c + "\">Shashka " + esc(tcl) + "</b><div>⚪ " + esc(r.white) + " (" + (r.wElo || 1000) + ")</div><i>vs</i><div>⚫ " + esc(r.black) + " (" + (r.bElo || 1000) + ")</div><u>👁 " + (r.spectators || 0) + " · " + Math.ceil((r.moves || 0) / 2) + " yurish</u></div>";
+        var bm = bot ? "" : (function (t) { var m = /^(\d+(?:\.\d+)?)/.exec(String(t || "")); if (!m) return ""; var x = +m[1]; return x < 3 ? "🚀 Bullet " : x < 10 ? "⚡ Blits " : "⏱ Rapid "; })(r.tc);
+        if (!bot) c = /Bullet/.test(bm) ? "#d9534f" : /Blits/.test(bm) ? "#3b82f6" : /Rapid/.test(bm) ? "#16a34a" : c;
+        var mb = ""; if (r.bd && r.bd.length === 64) { mb = "<div class=\"hzLvB\">"; for (var q = 0; q < 64; q++) { var rr = q >> 3, cc = q & 7, dk = (rr + cc) % 2 === 1, pv = r.bd.charAt(q); mb += "<i class=\"" + (dk ? "d" : "l") + "\">" + (pv !== "0" ? "<s class=\"p" + pv + "\"></s>" : "") + "</i>"; } mb += "</div>"; }
+        h += "<div class=\"hzLvC\" data-r=\"" + esc(r.id) + "\"><b style=\"background:" + c + "\">" + (bot ? "🤖 Bot " + esc(tcl) : bm + esc(tcl)) + "</b>" + mb + "<div>⚪ " + esc(r.white) + " (" + (r.wElo || 1000) + ")</div><i>vs</i><div>⚫ " + esc(r.black) + " (" + (r.bElo || 1000) + ")</div><u>👁 " + (r.spectators || 0) + " · " + Math.ceil((r.moves || 0) / 2) + " yurish</u></div>";
       });
       h += "</div>";
     }
@@ -3426,3 +3429,5 @@ if(document.readyState==='complete')setTimeout(init,1500);else window.addEventLi
 
 /* TLIST — turnirlar ro'yxati chess.com/lichess uslubida (tlist.js) */
 ;(function(){var s=document.createElement("script");s.src="/tlist.js";document.head.appendChild(s)})();
+/* HOMEX — bosh sahifa: kunlik masala, reytinglar, o'yinlarim, do'stlar (homex.js) */
+;(function(){var s=document.createElement("script");s.src="/homex.js?v=1";document.head.appendChild(s)})();

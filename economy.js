@@ -314,6 +314,18 @@ function handle(req, res, url) {
     send(res, 200, { list: _u.arch || [] });
     return true;
   }
+  // 🏠 bosh sahifa: oxirgi o'yinlar, masalalar, reyting (yengil — bitta so'rov)
+  if (p === '/api/home' && req.method === 'GET') {
+    const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
+    if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
+    const _id = String(_tg.id), _u = store.users()[_id] || {}, _dk = new Date(Date.now() + 5 * 3600e3).toISOString().slice(0, 10), _pd = store.db.pzDay;
+    const arch = (_u.arch || []).slice(0, 5).map(g => {
+      const me = g.wu === _id ? 'white' : g.bu === _id ? 'black' : (g.w && g.w === _u.name ? 'white' : g.b && g.b === _u.name ? 'black' : null);
+      return { id: g.id, at: g.at, w: g.w, b: g.b, win: g.win, tc: g.tc, me, oe: me === 'white' ? g.be : me === 'black' ? g.we : null, m: g.m };
+    });
+    send(res, 200, { elo: _u.elo || 1000, solved: (_u.solved || []).length, day: _pd && _pd.d === _dk ? (_pd.c[_id] || 0) : 0, arch });
+    return true;
+  }
   if (p === '/api/puzzles/day' && req.method === 'GET') {
     const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
