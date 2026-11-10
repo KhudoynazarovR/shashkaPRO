@@ -107,6 +107,16 @@ function createRooms({ send, clients, onFinish }) {
       return { uid: String(seat.uid), elo: u.elo || 1000, av: !!require("./store").avOf(u) };
     } catch (e) { return null; }
   }
+  // 🎯 Jonli stollar: botning haqiqiy reytingi (_pi botga 0 beradi → avval (1000) chiqardi)
+  function _liveElo(seat) {
+    try {
+      if (seat && seat.uid && isBotUid(seat.uid)) {
+        const m = require("./store").db.botElo, e = (m && m[seat.uid] && m[seat.uid].elo) || 0, cap = { bot_kingkong: 2500, bot_terminator: 2400 }[seat.uid];
+        return Math.round(cap && e > cap ? cap : e) || 1000;
+      }
+    } catch (e) {}
+    return (_pi(seat) || {}).elo || 1000;
+  }
   function snapshot(room, color) {
     return {
       type: "roomState",
@@ -568,7 +578,7 @@ const srvBotOn = room => !!(room && room.vsBot && room.botCfg && room.botCfg.id 
         if (!r.white || !r.black || r.finished) continue;
         if (![...r.members].some(id => { const cl = clients.get(id); return cl && colorOf(r, cl); })) continue;
         list.push({
-          id: r.id, vsBot: !!r.vsBot, white: r.white.name, black: r.black.name, tc: r.tc, wElo: (_pi(r.white) || {}).elo || 1000, bElo: (_pi(r.black) || {}).elo || 1000,
+          id: r.id, vsBot: !!r.vsBot, white: r.white.name, black: r.black.name, tc: r.tc, wElo: _liveElo(r.white), bElo: _liveElo(r.black),
           moves: (r.moves || []).length,
           spectators: [...r.members].filter(id => !colorOf(r, clients.get(id) || {})).length
         });

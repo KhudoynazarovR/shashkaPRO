@@ -79,8 +79,10 @@
   }
   var PROPS = ['background-color', 'background-image', 'border-color', 'color', 'box-shadow', 'text-shadow'];
   function save(el, p) { var o = el.__spO || (el.__spO = {}); if (!(p in o)) o[p] = [el.style.getPropertyValue(p), el.style.getPropertyPriority(p)]; }
-  function setP(el, p, v) { save(el, p); el.style.setProperty(p, v, 'important'); }
-  function restore(el) { var o = el.__spO; if (!o) return; for (var p in o) { if (o[p][0]) el.style.setProperty(p, o[p][0], o[p][1]); else el.style.removeProperty(p); } el.__spO = null; }
+  function setP(el, p, v) { save(el, p); el.style.setProperty(p, v, 'important'); (el.__spV || (el.__spV = {}))[p] = el.style.getPropertyValue(p); }
+  // ilova inline uslubni o'zgartirdi: biz yozgan (o'zgarmagan) xossalarni asl holiga qaytaramiz, ilova yozganlarini qoldiramiz
+  function settle(el) { var o = el.__spO, v = el.__spV || {}; if (!o) return; for (var p in o) { if (el.style.getPropertyPriority(p) === 'important' && el.style.getPropertyValue(p) === v[p]) { if (o[p][0]) el.style.setProperty(p, o[p][0], o[p][1]); else el.style.removeProperty(p); } } el.__spO = null; el.__spV = null; }
+  function restore(el) { var o = el.__spO; if (!o) return; for (var p in o) { if (o[p][0]) el.style.setProperty(p, o[p][0], o[p][1]); else el.style.removeProperty(p); } el.__spO = null; el.__spV = null; }
   var SKIP = /^(CANVAS|IMG|SVG|PATH|VIDEO|SCRIPT|STYLE|IFRAME|svg|path)$/;
   var NOTT = '.board,#board,#pzB,.cell,.sq,.pc,.taFt,[data-r][data-c],[data-nott],#spThSheet,#spBgSheet';   // doskalar (o'yin, masala, arena) va donalar
   function paint(el, t) {
@@ -106,7 +108,7 @@
       if (nsh2 !== sh) { setP(el, 'box-shadow', nsh2); ch = 1; }
     }
     el.setAttribute('data-spth', ch ? '1' : '0');
-    if (ch) el.__spS = el.getAttribute('style');
+    el.__spS = el.getAttribute('style');
   }
   function unpaint() {
     [].forEach.call(document.querySelectorAll('[data-spth]'), function (el) { restore(el); el.removeAttribute('data-spth'); el.__spS = null; });
@@ -130,7 +132,9 @@
           var el = m.target; if (!el.hasAttribute('data-spth')) continue;
           if (m.attributeName === 'style' && el.getAttribute('style') === el.__spS) continue;   // o'zimizning yozuvimiz
           if (m.attributeName === 'data-spth') continue;
-          restore(el); el.removeAttribute('data-spth'); q.push(el);   // ilova rangni o'zgartirdi — qayta bo'yaymiz
+          // ilova uslubni o'zgartirdi (masalan har 400ms tugmani yangilaydi) — darhol, kadr chizilishidan oldin qayta bo'yaymiz (pirpiramasin)
+          if (m.attributeName === 'style') settle(el); else restore(el);
+          el.removeAttribute('data-spth'); paint(el, T[cur()]);
           continue;
         }
         for (var j = 0; j < m.addedNodes.length; j++) if (m.addedNodes[j].nodeType === 1) q.push(m.addedNodes[j]);
