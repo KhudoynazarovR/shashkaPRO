@@ -44,7 +44,7 @@
         '<label><input type="checkbox" id="tfRec"> 🔁 Doimiy turnir — har hafta takrorlanadi</label>' +
         '<div id="tfRecD" style="display:none"><div class="tfDays">' + ORD.map(function (d) { return '<button type="button" data-d="' + d + '">' + DN[d] + '</button>'; }).join('') + '</div>' +
         '<div class="tfQ"><button type="button" data-p="all">Har kuni</button><button type="button" data-p="work">Ish kunlari</button><button type="button" data-p="wk">Dam olish kunlari</button></div>' +
-        '<div class="muted" style="font-size:12px;margin-top:6px">🕗 Soati «📅 Aniq sana va vaqt» dan olinadi. Turnir har gal 24 soat oldin o‘zi yaratiladi va e’lon qilinadi, nomiga #1, #2… qo‘shiladi.</div></div>' +
+        '<div class="muted" style="font-size:12px;margin-top:6px">🕗 Soati «📅 Aniq sana va vaqt» dan olinadi. Eng yaqin turnir darhol yaratiladi va e’lon qilinadi; keyingisi — oldingisi boshlangach. Nomiga #1, #2… qo‘shiladi. Kanalga 3 soat va 15 daqiqa oldin eslatma ketadi.</div></div>' +
         '<div style="margin-top:8px;font-size:13px;font-weight:700">🔁 Doimiy turnirlar</div><div id="tfRecL" style="font-size:13px;opacity:.85">Yuklanmoqda…</div></div>';
     }
     x.innerHTML = h;

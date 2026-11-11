@@ -1,13 +1,15 @@
 'use strict';
-// kanal.js — 📣 Telegram kanalga kuniga 5 ta masala (09:00 13:00 16:00 19:00 21:00, Toshkent), javoblar (12:45 15:45 18:45 20:45 22:45),
+// kanal.js — 📣 Telegram kanalga kuniga 1 ta masala (09:00, Toshkent). Javob kanalda chiqmaydi — ilovaga kirib yechiladi; birinchi 3 kishi +5 🪙, keyingilar +1,
+// kunlik TOP — yechish tartibida (birinchi yechgan 1-o'rin), 21:00 da. Eski: 5 ta masala va javoblar,
 // kunlik / haftalik / oylik TOP yechuvchilar (rasm + tangalar), «Do'stga yuborish» kartasi (inline) va taklif mukofotlari.
 // Holat store.db.chan da. Admin: /kanal (holat), /kanal on|off, /kanal test, /kanal @kanal
 const store = require('./store.js');
 const BOT = process.env.BOT_USERNAME || 'DraughtsPRObot';
 const APP = (process.env.TG_APP_LINK || ('https://t.me/' + BOT + '/' + (process.env.APP_NAME || 'play'))).replace(/\/$/, '');
-const SLOTS = [['09:00', '12:45', 1], ['13:00', '15:45', 1], ['16:00', '18:45', 2], ['19:00', '20:45', 2], ['21:00', '22:45', 3]];
-const PRZ = { d: [50, 30, 20], w: [200, 120, 80], m: [500, 300, 200] }, REST = { w: 20, m: 20 }, PREM = { w: 7, m: 30 };
-const BONUS = 5, FAST = 10, INV = 10, INV_NEW = 30, NEWBIE = 20;
+const SLOTS = [['09:00', '22:45', 2]];   // [post vaqti, kun oxiri (javob kanalda chiqmaydi), qiyinlik]
+const DLV = [3, 1, 1, 2, 2, 2, 3];   // hafta kuni bo'yicha qiyinlik: Du-Se oson, Ch-Ju o'rta, Sh-Ya qiyin
+const PRZ = { d: [], w: [200, 120, 80], m: [500, 300, 200] }, REST = { w: 20, m: 20 }, PREM = { w: 7, m: 30 };
+const BONUS = 0, FAST = 0, INV = 10, INV_NEW = 30, NEWBIE = 20;
 const LV = { 1: '🟢 Oson', 2: '🟡 O‘rta', 3: '🔴 Qiyin' };
 const OY = ['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avgust', 'sentabr', 'oktabr', 'noyabr', 'dekabr'];
 
@@ -167,7 +169,7 @@ const solveUrl = (id, ref) => APP + '?startapp=pz_' + id + (ref ? '-r' + ref : '
 
 // ---------- masala posti
 async function postSlot(i, chat, test) {
-  const s = S(), t = T(), lv = (i === 4 && t.dow === 0) ? 3 : SLOTS[i][2], p = test ? pick(s, lv) : await pickChecked(s, lv);
+  const s = S(), t = T(), lv = DLV[t.dow] || SLOTS[i][2], p = test ? pick(s, lv) : await pickChecked(s, lv);
   if (!p) return null;
   const { buf, cap, kb } = await postParts(p, i, lv, t);
   const r = await sendPhoto(chat || s.ch, buf, cap, kb);
@@ -182,12 +184,14 @@ async function postSlot(i, chat, test) {
   return r;
 }
 async function postParts(p, i, lv, t) {
-  const sv = boardSvg(p, 'KUNNING MASALASI · ' + (i + 1) + '/5', '@' + BOT, LV[p.level || lv].replace(/^\S+ /, '') + (p.author ? ' · ' + p.author : ''));
+  const sv = boardSvg(p, 'KUNNING MASALASI · ' + t.dd, '@' + BOT, LV[p.level || lv].replace(/^\S+ /, '') + (p.author ? ' · ' + p.author : ''));
   let buf = null; try { buf = await png(sv); } catch (e) { console.log('[kanal] rasm:', e.message); }
-  const cap = '🧩 <b>Kunning masalasi · ' + t.dd + ' · ' + (i + 1) + '/5</b>\n' + goTxt(p) + '\n' + LV[p.level || lv] + (p.author ? ' · ✍️ ' + esc(p.author) : '')
-    + '\n\n🪙 Javobgacha yechsangiz: +' + (5 + BONUS) + ' tanga · birinchi 3 kishiga yana +' + FAST
+  const cap = '🧩 <b>Kunning masalasi · ' + t.dd + '</b>\n' + goTxt(p) + '\n' + LV[p.level || lv] + (p.author ? ' · ✍️ ' + esc(p.author) : '')
+    + '\n\n🪙 Birinchi 3 kishiga: <b>+5 tanga</b> · keyingilarga: <b>+1</b>'
+    + '\n🏅 Kunlik TOP — kim birinchi yechsa, o‘sha 1-o‘rin (21:00 da e’lon)'
+    + '\n🔒 Javob faqat ilovada — «🧩 Yechish» ni bosing'
     + '\n📤 Do‘stingizga yuboring — u yechsa sizga +' + INV + ' 🪙 (yangi o‘yinchi bo‘lsa +' + INV_NEW + ')'
-    + '\n\n⏰ Javob: ' + SLOTS[i][1] + ' da · #masala #shashka';
+    + '\n\n#masala #shashka';
   const kb = { inline_keyboard: [[{ text: '🧩 Yechish', url: solveUrl(p.id) }, { text: '📤 Do‘stga yuborish', url: 'https://t.me/' + BOT + '?start=sh_' + p.id }]] };
   return { buf, cap, kb };
 }
@@ -315,23 +319,27 @@ function topSvg(title, sub, rows) {
       + '<circle cx="86" cy="' + (y + 27) + '" r="21" fill="' + (MC[i] || '#5b4bb5') + '"/>'
       + '<text x="86" y="' + (y + 37) + '" font-family="DejaVu Sans, Arial" font-weight="700" font-size="26" fill="' + (i < 3 ? '#2a1a6e' : '#fff') + '" text-anchor="middle">' + (i + 1) + '</text>'
       + '<text x="128" y="' + (y + 37) + '" font-family="DejaVu Sans, Arial" font-size="30" fill="#fff">' + xml(r.name) + '</text>'
-      + '<text x="' + (W - 250) + '" y="' + (y + 37) + '" font-family="DejaVu Sans, Arial" font-size="26" fill="#b9a8ff" text-anchor="end">' + r.n + ' ta masala</text>'
-      + '<text x="' + (W - 64) + '" y="' + (y + 37) + '" font-family="DejaVu Sans, Arial" font-weight="700" font-size="30" fill="#ffd54a" text-anchor="end">' + r.p + ' ochko</text>';
+      + (r.hm ? '<text x="' + (W - 64) + '" y="' + (y + 37) + '" font-family="DejaVu Sans, Arial" font-weight="700" font-size="30" fill="#ffd54a" text-anchor="end">' + xml(r.hm) + '</text>'
+        : '<text x="' + (W - 64) + '" y="' + (y + 37) + '" font-family="DejaVu Sans, Arial" font-weight="700" font-size="30" fill="#ffd54a" text-anchor="end">' + r.n + ' ta masala</text>');
   });
   return s + '<text x="' + W / 2 + '" y="' + (H - 26) + '" font-family="DejaVu Sans, Arial" font-size="26" fill="#ffffff" text-anchor="middle">@' + BOT + ' · ShashkaPRO</text></svg>';
 }
 function rank(o) { return Object.entries(o || {}).map(([u, v]) => ({ u, p: v[0], t: v[1], n: v[2] || 0 })).sort((a, b) => b.p - a.p || a.t - b.t).filter(r => r.p > 0); }
 async function topPost(kind, test) {
   const s = S(), t = T(), key = kind === 'd' ? 'd:' + t.day : kind === 'w' ? 'w:' + t.wk : 'm:' + t.mon;
-  const us = store.users(), R = rank(s.pts[key]).slice(0, 10), E = require('./economy.js'), PZ = PRZ[kind];
+  const dayP = kind === 'd' ? Object.values(s.posts).filter(x => T(x.at).day === t.day)[0] : null;
+  const us = store.users(), E = require('./economy.js'), PZ = PRZ[kind];
+  const R = kind === 'd' ? (dayP ? Object.entries(dayP.sv).sort((a, b) => a[1][0] - b[1][0]).slice(0, 10).map(([u, v]) => ({ u, p: 1, t: v[0], n: 1 })) : [])   // kunlik — bugungi masalani yechish tartibida
+    : rank(s.pts[key]).slice(0, 10);
   const title = kind === 'd' ? '🏅 KUNLIK TOP · ' + t.dd : kind === 'w' ? '🏆 HAFTALIK TOP' : '👑 OYLIK TOP · ' + OY[+t.mon.slice(5) - 1];
-  const rows = R.map(r => ({ name: nm(us[r.u]), p: r.p, n: r.n }));
-  let buf = null; try { buf = await png(topSvg(title.replace(/^\S+ /, ''), 'Eng yaxshi masala yechuvchilar', rows)); } catch (e) { console.log('[kanal] top rasm:', e.message); }
+  const hmOf = r => dayP && dayP.sv[r.u] ? T(dayP.at + dayP.sv[r.u][0] * 1000).hm : '';
+  const rows = R.map(r => ({ name: nm(us[r.u]), p: r.p, n: r.n, hm: kind === 'd' ? hmOf(r) : '' }));
+  let buf = null; try { buf = await png(topSvg(title.replace(/^\S+ /, ''), kind === 'd' ? 'Yechish tartibida · birinchi yechgan — 1-o‘rin' : 'Eng yaxshi masala yechuvchilar', rows)); } catch (e) { console.log('[kanal] top rasm:', e.message); }
   const lines = [];
   R.forEach((r, i) => {
     const c = PZ[i] || ((kind !== 'd' && i < 10) ? REST[kind] : 0), prem = i === 0 && PREM[kind];
-    lines.push((['🥇', '🥈', '🥉'][i] || (i + 1) + '.') + ' ' + esc(nm(us[r.u])) + ' — ' + r.p + ' ochko' + (c ? ' · +' + c + ' 🪙' : '') + (prem ? ' + 👑 ' + prem + ' kun' : ''));
-    if (test) return;
+    lines.push((['🥇', '🥈', '🥉'][i] || (i + 1) + '.') + ' ' + esc(nm(us[r.u])) + ' — ' + (kind === 'd' ? '⏱ ' + (hmOf(r) || '—') : r.n + ' ta masala') + (c ? ' · +' + c + ' 🪙' : '') + (prem ? ' + 👑 ' + prem + ' kun' : ''));
+    if (test || kind === 'd') return;   // kunlik — faqat ro'yxat (yechganda tanga allaqachon olingan)
     if (c) E.add(r.u, c, 'chan_top_' + kind);
     if (prem && us[r.u]) require('./premium.js').grant(us[r.u], prem, 'chan_top_' + kind);
     tg('sendMessage', { _cat: 'ach', chat_id: r.u, text: '🏆 Tabriklaymiz! ' + (kind === 'd' ? 'Kunlik' : kind === 'w' ? 'Haftalik' : 'Oylik') + ' masala reytingida ' + (i + 1) + '-o‘rin' + (c ? ': +' + c + ' 🪙' : '') + (prem ? ' va 👑 ' + prem + ' kunlik Premium' : '') + '!' });
@@ -345,7 +353,8 @@ async function topPost(kind, test) {
     }
   }
   const cap = '<b>' + title + '</b>\n\n' + (lines.join('\n') || 'Bugun hali hech kim yechmadi — ertaga birinchi bo‘ling!') + inv
-    + '\n\n🧩 Har kuni 5 ta masala: 09:00 · 13:00 · 16:00 · 19:00 · 21:00' + (kind === 'd' ? '\n🏆 Haftalik TOP — yakshanba 22:55 · 👑 Oylik — oy oxirida' : '');
+    + (kind === 'd' && R.length ? '\n\n👥 Bugun ' + Object.keys((dayP && dayP.sv) || {}).length + ' kishi yechdi · 🥇🥈🥉 +5 🪙, qolganlarga +1 🪙' : '')
+    + '\n\n🧩 Har kuni 09:00 da yangi masala' + (kind === 'd' ? '\n🏆 Haftalik TOP — yakshanba 22:55 · 👑 Oylik — oy oxirida' : '');
   const r = await sendPhoto(test || s.ch, buf, cap, { inline_keyboard: [[{ text: '🎮 ShashkaPRO', url: APP }]] });
   if (!test) store.save();
   return r;
@@ -360,9 +369,12 @@ function onSolve(uid, u, pz, j) {
     if (P && !P.sv[uid]) {
       const pre = !P.ans, t = Math.max(1, Math.round((now - P.at) / 1000));
       P.sv[uid] = [t, pre ? 1 : 0];
-      let pts = pre ? 3 : 1;
-      if (pre) { E.add(uid, BONUS, 'chan_bonus'); extra += BONUS; }
-      if (pre && P.first.length < 3) { P.first.push(uid); pts++; E.add(uid, FAST, 'chan_fast'); extra += FAST; }
+      let pts = 1;   // har yechilgan masala — 1; kunlik TOP yechish tartibida (vaqt bo'yicha)
+      // 🪙 birinchi 3 kishi — +5 (umumiy masala mukofoti), 4-dan boshlab — +1 (ortiqcha 4 qaytariladi)
+      const rank = Object.keys(P.sv).length, base = (j && j.__base) || 0;
+      if (rank > 3 && base >= 5) { u.diamonds = Math.max(0, (u.diamonds || 0) - 4); extra -= 4; }
+      if (pre && BONUS) { E.add(uid, BONUS, 'chan_bonus'); extra += BONUS; }
+      if (pre && P.first.length < 3) P.first.push(uid);   // birinchi uchtalik (endi qo'shimcha tanga/ochko yo'q)
       const tt = T(now);
       for (const k of ['d:' + tt.day, 'w:' + tt.wk, 'm:' + tt.mon]) { const o = s.pts[k] = s.pts[k] || {}, v = o[uid] = o[uid] || [0, 0, 0]; v[0] += pts; v[1] += t; v[2]++; }
     }
@@ -415,9 +427,9 @@ async function tick() {
     for (let i = 0; i < SLOTS.length; i++) {
       const key = t.day + '#' + i, dk = 'p' + key;
       if (t.hm >= SLOTS[i][0] && t.hm < SLOTS[i][1] && !s.posts[key] && !s.done[dk]) { s.done[dk] = 1; store.save(); await postSlot(i); }
-      const P = s.posts[key]; if (P && !P.ans && t.hm >= SLOTS[i][1]) await answer(key);
+      const P = s.posts[key]; if (P && !P.ans && t.hm >= SLOTS[i][1]) { P.ans = 1; store.save(); }   // 🔒 javob kanalda e'lon qilinmaydi
     }
-    if (t.hm >= '22:50' && !s.done['d' + t.day]) { s.done['d' + t.day] = 1; store.save(); await topPost('d'); }
+    if (t.hm >= '21:00' && !s.done['d' + t.day]) { s.done['d' + t.day] = 1; store.save(); await topPost('d'); }
     if (t.dow === 0 && t.hm >= '22:55' && !s.done['w' + t.day]) { s.done['w' + t.day] = 1; store.save(); await topPost('w'); }
     if (t.lastDay && t.hm >= '23:00' && !s.done['m' + t.day]) { s.done['m' + t.day] = 1; store.save(); await topPost('m'); }
     prune(s);

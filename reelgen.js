@@ -152,9 +152,11 @@ async function endCard(goal, side) {
 const ease = t => t * t * (3 - 2 * t);
 const ctr = p => [BX + p[1] * C + C / 2, BY + p[0] * C + C / 2];
 const RSS_MAX = Number(process.env.REEL_RSS_MAX || 340) * 1e6;   // server RAMi bundan yuqori bo'lsa video yasalmaydi (kutadi)
-const ramOk = () => process.memoryUsage().rss < RSS_MAX;
-async function make(id, out) {   // id: damki raqami yoki tayyor info (infoPz)
-  if (!ramOk()) throw new Error('RAM band (' + Math.round(process.memoryUsage().rss / 1e6) + ' MB) — keyinroq urinib ko‘ring');
+const RSS_MAN = Number(process.env.REEL_RSS_MANUAL || 380) * 1e6;   // admin qo'lda so'raganda (512 MB dan ~130 MB zaxira)
+const ramOk = lim => process.memoryUsage().rss < (lim || RSS_MAX);
+function freeRam() { try { require('./memguard.js').clear(); } catch (e) {} try { if (global.gc) global.gc(); } catch (e) {} }
+async function make(id, out, lim) {   // id: damki raqami yoki tayyor info (infoPz)
+  if (!ramOk(lim)) throw new Error('RAM band (' + Math.round(process.memoryUsage().rss / 1e6) + ' MB) — keyinroq urinib ko‘ring');
   let I, mseed = 0;
   if (id && typeof id === 'object' && !Array.isArray(id) && id.mv) { I = id; mseed = [...String(I.id)].reduce((a, c) => a + c.charCodeAt(0), 0); id = 'p' + String(I.id).replace(/[^\w-]/g, '').slice(0, 24); }
   else {
@@ -252,14 +254,17 @@ async function sendVideo(chat, r) {
   if (j && j.ok) await tg('sendMessage', { chat_id: chat, text: '<pre>' + xml(caption(r.I)) + '</pre>', parse_mode: 'HTML' });
   return j;
 }
-let busy = false;
+let busy = false, pend = null;
+// ⏳ RAM band bo'lsa — navbatga: har daqiqada tekshiramiz, bo'shashi bilan yasab yuboramiz
+setInterval(() => { if (!pend || busy) return; freeRam(); if (!ramOk(RSS_MAN)) return; const q = pend; pend = null; produce(q.id, q.to).then(m => { if (m) for (const a of (q.to || ADM())) require('./gcard.js').tg('sendMessage', { chat_id: a, text: m }).catch(() => {}); }); }, 60000).unref();
 async function produce(id, to) {   // id yo'q bo'lsa — navbatdagisi
   if (busy) return '⏳ Video hozir yasalmoqda, biroz kuting';
+  if (!ramOk(RSS_MAN)) { freeRam(); if (!ramOk(RSS_MAN)) { pend = { id, to }; return '⏳ Server xotirasi band (' + Math.round(process.memoryUsage().rss / 1e6) + ' MB). Reel navbatga qo‘yildi — xotira bo‘shashi bilan yasalib, sizga yuboriladi.'; } }
   busy = true;
   const s = S(), pid = id || left()[0], fn = 'reel_' + (typeof pid === 'object' ? 'p' + String(pid.id).replace(/[^\w-]/g, '').slice(0, 24) : pid) + '.mp4';
   try {
     if (!pid) return '📭 Navbatda masala qolmadi';
-    const t0 = Date.now(), r = await make(pid, path.join(os.tmpdir(), fn));
+    const t0 = Date.now(), r = await make(pid, path.join(os.tmpdir(), fn), RSS_MAN);
     let ok = 0; for (const a of (to || ADM())) { const j = await sendVideo(a, r); if (j && j.ok) ok++; else console.log('[reel] sendVideo:', j && j.description); }
     try { fs.unlinkSync(r.file); } catch (e) {}
     if (ok) markUsed(r.I);

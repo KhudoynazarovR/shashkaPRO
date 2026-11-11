@@ -163,4 +163,10 @@ async function result(t, st, regs, pay) {
     await sendPhoto(CH(), buf, c, { inline_keyboard: [[{ text: '🎮 ShashkaPRO', url: APP() }]] }, extra);
   } catch (e) { console.log('[tposter] natija xato', e.message); }
 }
-module.exports = { announce, remind, result, annSvg, resSvg, png, dayStr, hm };
+async function today(t) {
+  try {
+    const extra = t.annMsg ? { reply_parameters: { message_id: t.annMsg, allow_sending_without_reply: true } } : {};
+    await tg('sendMessage', Object.assign({ chat_id: CH(), parse_mode: 'HTML', text: '📣 <b>Bugun ' + hm(t.startAt) + ' da — ' + h(t.name) + '!</b>\n⏱ ' + tcTxt(t.tc) + ' ' + tcCat(t.tc) + (t.flag ? ' · 🏳️ viloyatingiz uchun' : '') + (t.prize > 0 ? ' · 💰 ' + fmt(t.prize) : '') + '\n👥 ' + t.players.size + ' kishi yozildi — siz ham qo‘shiling 👇', reply_markup: joinKb(t) }, extra));
+  } catch (e) {}
+}
+module.exports = { today, announce, remind, result, annSvg, resSvg, png, dayStr, hm };

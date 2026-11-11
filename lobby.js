@@ -757,9 +757,10 @@ function createLobby({ send, clients, roomsApi }) {
 
   // 🏆 turnir yaratish (qo'lda va 🔁 doimiy andozadan). Xato bo'lsa — matn qaytadi
   function makeT(me, m, sys) {
+    const adm0 = !!sys || economy.isAdmin(me.uid);
     const cl = clubsApi.check(me.uid, m.clubIds); if (cl.error) return cl.error;
     if (cl.ids.includes(clubsApi.SYS) && m.kind !== 'arena') return 'Botlar klubi faqat arenada ishlaydi';
-    if (tournaments.size >= MAX_TOURNAMENTS) return 'Turnirlar soni limitga yetdi';
+    if (!adm0 && [...tournaments.values()].filter(x => x.status !== 'finished').length >= MAX_TOURNAMENTS) return 'Turnirlar soni limitga yetdi';   // tugaganlar (24 soat saqlanadi) hisobga kirmaydi; admin va doimiy turnirlarga limit yo'q
     if (!sys && [...tournaments.values()].some(t => t.creatorUid === me.uid && t.status === 'reg')) return 'Sizda allaqachon ochiq turnir bor';
     const adm = economy.isAdmin(me.uid) || !!sys;
     const extra = {
@@ -800,7 +801,7 @@ function createLobby({ send, clients, roomsApi }) {
     return t;
   }
   // 🔁 DOIMIY TURNIRLAR: andoza (store.db.tRec) — tanlangan hafta kunlari va soatda turnir o'zi yaratiladi, REC_LEAD_H soat oldin e'lon
-  const REC_LEAD_H = 24, DN = ['Ya', 'Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh'];
+  const REC_LEAD_H = 7 * 24, DN = ['Ya', 'Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh'];
   function recList() { const st = require('./store'); st.db.tRec = st.db.tRec || []; return st.db.tRec; }
   function recSave(me, m) {
     const days = [...new Set((Array.isArray(m.recDays) ? m.recDays : []).map(Number).filter(d => d >= 0 && d <= 6))].sort();
@@ -828,7 +829,11 @@ function createLobby({ send, clients, roomsApi }) {
         r.made[dk] = 'x'; r.n = (r.n || 0) + 1; ch = true;
         const m = Object.assign({}, r.tpl, { name: (r.name + ' #' + r.n).slice(0, 30), startAt, _prize: r.tpl.prize || 0, _paid: 0, _rec: r.id, announce: r.tpl.announce !== false });
         const t = makeT({ uid: 'sys', name: 'ShashkaPRO' }, m, true);
-        if (typeof t === 'string') { console.log('[doimiy] yaratilmadi:', r.name, t); r.n--; delete r.made[dk]; continue; }
+        if (typeof t === 'string') {
+          console.log('[doimiy] yaratilmadi:', r.name, t); r.n--; delete r.made[dk];
+          if (r.errAt !== dk) { r.errAt = dk; ch = true; for (const a of (process.env.ADMIN_IDS || '').split(',').map(z => z.trim()).filter(Boolean)) tgCall('sendMessage', { chat_id: Number(a), text: '⚠️ Doimiy turnir yaratilmadi: ' + r.name + ' (' + dk + ')\nSabab: ' + t }).catch(() => {}); }
+          continue;
+        }
         r.made[dk] = t.id;
         console.log('[doimiy] yaratildi:', t.name, dk);
         if (t.announce) { try { require('./tposter.js').announce(t); } catch (e) {} }
@@ -1501,7 +1506,7 @@ function createLobby({ send, clients, roomsApi }) {
       case 'lbTCreate': {
         if (m.rec && economy.isAdmin(me.uid)) {   // 🔁 doimiy turnir: andoza saqlanadi, turnirlar o'zi yaratiladi
           const r = recSave(me, m); if (typeof r === 'string') return err(c, r), true;
-          toast(me.uid, '🔁 Doimiy turnir saqlandi: ' + r.name + ' · ' + r.daysTxt + ' ' + r.time + '. Har gal ' + REC_LEAD_H + ' soat oldin e’lon qilinadi.');
+          toast(me.uid, '🔁 Doimiy turnir saqlandi: ' + r.name + ' · ' + r.daysTxt + ' ' + r.time + '. Eng yaqin turnir hozir yaratilib, kanalga e’lon qilinadi; keyingilari — oldingisi boshlangach.');
           recTick(); push(); send(c.ws, { type: 'lbRec', list: recPub() }); break;
         }
         const t = makeT(me, m); if (typeof t === 'string') return err(c, t), true;
@@ -1819,6 +1824,11 @@ function createLobby({ send, clients, roomsApi }) {
 
   function remindTick() { /*TREMIND*/
     const now = Date.now(), appLink = (process.env.TG_APP_LINK || process.env.APP_LINK || '').replace(/\/$/, '');
+    for (const t of tournaments.values()) {   // 📣 e'lon qilingan turnir: 3 soat oldin kanalga «Bugun!» eslatmasi
+      if (t.status !== 'reg' || !t.announce || !t.startAt || t.remind3h) continue;
+      const lf = t.startAt - now; if (lf > 3 * 3600e3 || lf <= 20 * 60000) continue;
+      t.remind3h = true; try { require('./tposter.js').today(t); } catch (e) {}
+    }
     for (const t of tournaments.values()) {
       if (t.status !== 'reg' || !t.startAt || t.remind15) continue;
       const left = t.startAt - now;
