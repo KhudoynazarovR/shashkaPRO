@@ -135,7 +135,7 @@ function handle(c, m, clients) {
       p = { uid: u.uid, name: u.name }; r.p.push(p);
       invGone(r, u.uid);
     }
-    p.ws = c.ws; p.cid = c.id; p.offAt = 0; byConn.set(c.id, r.code);
+    p.ws = c.ws; p.cid = c.id; p.offAt = 0; p.j = true; byConn.set(c.id, r.code);
     if (r.p.length === 2 && r.status === 'wait' && (!(r.inline || r.gt || r.onEnd) || r.p.every(x => x.ws))) deal(r);
     push(r);
     return true;
@@ -287,13 +287,15 @@ function again(r) { if (!r || r.status !== 'over' || r.p.length !== 2) return fa
 // 🔀 Miks turnir: ikkala o'rin band, ikkalasi kirganda boshlanadi; natija onEnd(1|2|0, info) bilan
 function createTour(a, b, size, tc, onEnd, noshowMs) {
   const r = createPair(a, b, size, tc, 'animals'); r.onEnd = onEnd;
-  r.nsT = setTimeout(() => {
-    if (r.status !== 'wait' || r.reported) return;
-    const on = r.p.map(x => !!x.ws); r.reported = 1; r.status = 'over'; r.winner = on[0] && !on[1] ? 0 : on[1] && !on[0] ? 1 : -1;
-    try { onEnd(on[0] && !on[1] ? 1 : on[1] && !on[0] ? 2 : 0, { why: 'noshow', plies: 0, noshow: true, noshowBoth: !on[0] && !on[1] }); } catch (e) { console.log('[mix]', e.message); }
+  r.nsT = setTimeout(() => {   // ⏱ 30 s: kirmagan — texnik mag'lubiyat
+    if (r.reported || r.status === 'over') return;
+    const j = r.p.map(x => !!x.j); if (j[0] && j[1]) return;
+    r.reported = 1; clearTimeout(r.tmr); clearTimeout(r.btmr); r.status = 'over'; r.winner = j[0] ? 0 : j[1] ? 1 : -1;
+    try { onEnd(j[0] ? 1 : j[1] ? 2 : 0, { why: 'noshow', plies: 0, noshow: true, noshowBoth: !j[0] && !j[1] }); } catch (e) { console.log('[mix]', e.message); }
     push(r);
-  }, noshowMs || 120000);
+  }, noshowMs || 30000);
   if (r.nsT.unref) r.nsT.unref();
+  deal(r);   // 🔀 turnirda o'yin darhol boshlanadi
   return r;
 }
 module.exports = { handle, onClose, rooms, remember, createTour, createInline, createPair, again, finish, push, SIZES };

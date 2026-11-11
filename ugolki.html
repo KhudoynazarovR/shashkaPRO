@@ -189,6 +189,7 @@ svg.path{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-even
     else if (st.pend) s = st.turn === me ? '⚡ Oxirgi imkoniyat: shu yurishda to‘ldirsangiz — durang!' : '⚡ Raqibga oxirgi yurish';
     else s = st.turn === me ? 'Sizning navbatingiz' : (G.mode === 'bot' ? '🤖 Bot o‘ylayapti…' : 'Raqib navbati');
     if (!st.over && G.mode === 'net' && G.m && G.m.draw && G.m.draw !== me) s = '🤝 Raqib durang taklif qildi';
+    { var op = (G.m && G.m.players || []).filter(function (p) { return p.side && p.side !== G.me; })[0]; if (!st.over && !G.watch && G.m && G.m.tour && op && !op.j) s = '⏳ Raqib hali kirmadi — 30 soniyada kirmasa, texnik g‘alaba sizniki'; }   // 🔀 turnir
     h += homeBar(st, me) + '<div class="st">' + s + '</div><div class="btns">' +
       (G.mode === 'net' ? '<button id="dr"' + (st.over || G.watch ? ' disabled' : '') + '>🤝 ' + (G.m && G.m.draw && G.m.draw !== me ? 'Qabul' : 'Durang') + '</button>' : '<button id="un"' + (G.hist.length && !st.over ? '' : ' disabled') + '>↩ Ortga</button>') +
       '<button id="rs"' + (st.over || G.watch ? ' disabled' : '') + '>🏳 Taslim</button>' +

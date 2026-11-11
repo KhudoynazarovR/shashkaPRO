@@ -68,6 +68,7 @@ const KEEP_FINISHED = 24 * 3600 * 1000;
 const ARENA_DURATIONS = [10, 20, 25, 30, 40, 45, 50, 60, 70, 80, 90, 100, 120];   // daqiqa
 const ARENA_STARTS = [0, 2, 5, 10, 30];
 // 🔀 Miks turnir o'yinlari va vaqti
+const MIX_NOSHOW_MS = Number(process.env.MIX_NOSHOW_MS) || 30000;
 const MIX_G = {
   mm: { ic: '🧠', t: 'Xotira', tc: '-120', tcTxt: '⚡ 2 daq' }, sh: { ic: '⚫', t: 'Shashka', tc: '3+2' }, ug: { ic: '🏁', t: 'Ugolki', tc: '3+2' },
   chess: { ic: '♟', t: 'Shaxmat', tc: '3+2' }, go: { ic: '⚪', t: 'Go 9×9', tc: '5+3' }, gomoku: { ic: '⭕', t: 'Gomoku', tc: '3+2' }, pod: { ic: '🔄', t: 'Poddavki', tc: '3+2' }
@@ -673,7 +674,7 @@ function createLobby({ send, clients, roomsApi }) {
 
   // 🔀 MIKS TURNIR: har turda boshqa o'yin. Shashka — oddiy xona, qolganlari — o'z modullarida (natija mixDone ga qaytadi)
   function mixRoom(g, w, b, cb) {
-    const A = { uid: w.uid, name: w.name }, B = { uid: b.uid, name: b.name }, NS = NOSHOW_MS;
+    const A = { uid: w.uid, name: w.name }, B = { uid: b.uid, name: b.name }, NS = MIX_NOSHOW_MS;   // 30 s ichida kirmagan — texnik mag'lubiyat
     try {
       if (g === 'mm') return 'mx:mm:' + require('./memroom.js').createTour(A, B, '4x6', -120, cb, NS).code;
       if (g === 'ug') return 'mx:ug:' + require('./ugroom.js').createPair(A, B, MIX_G.ug.tc, cb, NS).code;

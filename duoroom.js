@@ -23,7 +23,7 @@ function view(r, uid) {
   return {
     type: 'duState', g: r.g, code: r.code, tc: r.tcK, status: r.status,
     st: S ? Object.assign({}, S, { rep: undefined }) : null,
-    players: r.p.map(x => ({ name: x.name, side: x.side || 0, on: !!x.ws })),
+    players: r.p.map(x => ({ name: x.name, side: x.side || 0, on: !!x.ws, j: !!x.j })),
     me: (r.p.find(x => x.uid === uid) || {}).side || 0, mi: r.p.findIndex(x => x.uid === uid), inl: !!r.inline,
     clk: clocks(r), draw: r.draw || 0, chat: r.chat || [], tour: !!r.onEnd, again: r.again ? Object.keys(r.again).map(Number) : []
   };
@@ -72,7 +72,7 @@ function handle(c, m) {
       if (r.p.length >= 2) { r.watch = r.watch || new Map(); if (r.watch.size < 100) { r.watch.set(c.id, c.ws); byConn.set(c.id, r.code); } send(c.ws, view(r, '')); return true; }   // 👁 tomosha
       p = { uid: u.uid, name: u.name }; r.p.push(p);
     }
-    p.ws = c.ws; p.cid = c.id; p.offAt = 0; byConn.set(c.id, r.code);
+    p.ws = c.ws; p.cid = c.id; p.offAt = 0; p.j = true; byConn.set(c.id, r.code);
     if (r.p.length === 2 && r.status === 'wait' && (!(r.onEnd || r.inline) || r.p.every(x => x.ws))) begin(r);   // turnir / guruh kartasi — ikkalasi ham kirganda
     else if (r.inline && r.status === 'wait' && r.p.length === 2 && !r.p[0].ws) { pingHost(r); card(r); }
     push(r);
@@ -144,15 +144,18 @@ function createPair(a, b, tcK, onEnd, noshowMs, g) {
   let k = code(); while (rooms.has(k)) k = code();
   const r = { code: k, tcK, tc: TCS[tcK][0], inc: TCS[tcK][1], p: [{ uid: String(a.uid), name: a.name, ws: null, offAt: 0 }, { uid: String(b.uid), name: b.name, ws: null, offAt: 0 }], status: 'wait', at: Date.now(), S: null, fixed: true, onEnd };
   if (g) r.g = g;
-  r.nsT = setTimeout(() => {
-    if (r.status !== 'wait') return;
-    const on = r.p.map(x => !!x.ws);
-    r.status = 'over'; r.at = Date.now();
-    if (!r.reported) { r.reported = 1; try { onEnd(on[0] && !on[1] ? 1 : on[1] && !on[0] ? 2 : 0, { why: 'noshow', plies: 0, noshow: true, noshowBoth: !on[0] && !on[1] }); } catch (e) { console.log('[mix]', e.message); } }
-    r.S = r.S || null; push(r);
-  }, noshowMs || 120000);
+  r.nsT = setTimeout(() => {   // ⏱ 30 s: kirmagan — texnik mag'lubiyat (ikkalasi ham kirmasa — ikkalasiga ham)
+    if (r.reported || r.status === 'over') return;
+    const j = r.p.map(x => !!x.j); if (j[0] && j[1]) return;
+    r.reported = 1; clearTimeout(r.tmr); r.status = 'over'; r.at = Date.now();
+    const res = j[0] ? 1 : j[1] ? 2 : 0;
+    if (r.S && !r.S.over) { r.S.over = true; r.S.res = res; r.S.why = 'noshow'; }
+    try { onEnd(res, { why: 'noshow', plies: 0, noshow: true, noshowBoth: !j[0] && !j[1] }); } catch (e) { console.log('[mix]', e.message); }
+    push(r);
+  }, noshowMs || 30000);
   if (r.nsT.unref) r.nsT.unref();
-  rooms.set(k, r); return r;
+  rooms.set(k, r); begin(r);   // 🔀 turnirda o'yin darhol boshlanadi — soat yuradi
+  return r;
 }
 // ================= 📣 GURUH KARTASI (inline): yuboruvchining o'rni band, guruhdan birinchi bosgan — raqib, ikkalasi kirganda boshlanadi.
 // Ma'lumot bazada 24 soat (server qayta yonsa yoki Telegram «tanlandi» xabarini yubormasa ham karta ishlaydi). Karta matni holatga qarab yangilanadi.

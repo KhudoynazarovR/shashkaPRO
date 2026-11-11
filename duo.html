@@ -198,6 +198,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
     else s = st.turn === me ? 'Sizning navbatingiz' : 'Raqib navbati';
     if (!st.over && GK === 'go' && st.pass === 1) s += ' · raqib «Pas» dedi';
     if (!st.over && G.m && G.m.draw && G.m.draw !== me) s = '🤝 Raqib durang taklif qildi';
+    { var op = (G.m && G.m.players || []).filter(function (p) { return p.side && p.side !== G.me; })[0]; if (!st.over && !G.watch && G.m && G.m.tour && op && !op.j) s = '⏳ Raqib hali kirmadi — 30 soniyada kirmasa, texnik g‘alaba sizniki'; }   // 🔀 turnir
     h += '<div class="st">' + s + '</div><div class="btns">' +
       (GK === 'go' ? '<button id="ps"' + (myTurn() ? '' : ' disabled') + '>✋ Pas</button>' : '<button id="dr"' + (st.over || G.watch ? ' disabled' : '') + '>🤝 ' + (G.m && G.m.draw && G.m.draw !== me ? 'Qabul' : 'Durang') + '</button>') +
       '<button id="rs"' + (st.over || G.watch ? ' disabled' : '') + '>🏳 Taslim</button></div>';
