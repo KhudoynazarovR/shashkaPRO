@@ -610,7 +610,7 @@
       ['⚪', 'Go 9×9', 'Hudud uchun kurash', '#92400e,#d4a24c', '', 'go'],
       ['⭕', 'Gomoku', '5 talik', '#475569,#64748b', '/gomoku.html', 'gomoku'],
       ['🔄', 'Padavki shashka', 'Yutqazgan yutadi', '#0f766e,#14b8a6', '/?pad=1', 'pod'],
-      ['✊', 'Tosh-qaychi-qog‘oz', '2–8 kishi · ochko bo‘yicha', '#7c3aed,#db2777', '/rps.html', 'rp'],
+      ['✊', 'Tosh-qaychi-qog‘oz', '2–8 kishi · ochko bo‘yicha', '#7c3aed,#db2777', null, 'rp'],
     ];
     var h = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><button id="nvMiniX" style="width:44px;height:44px;border:0;border-radius:12px;background:rgba(255,255,255,.1);color:#fff;font-size:22px">‹</button><b style="font-size:22px">🎮 Mini o‘yinlar</b></div>';
     var BS = 'flex:1;text-align:center;padding:9px 6px;border-radius:10px;font-size:14px;font-weight:700';
@@ -618,7 +618,7 @@
       var c = r[3].split(',');
       h += '<div data-i="' + i + '" style="padding:14px;margin-bottom:10px;border-radius:16px;background:linear-gradient(135deg,' + c[0] + '55,' + c[1] + '22);border:1px solid ' + c[0] + 'aa;cursor:pointer">' +
         '<div style="display:flex;align-items:center;gap:12px"><span style="width:46px;height:46px;flex:none;display:flex;align-items:center;justify-content:center;font-size:34px;line-height:1">' + r[0] + '</span><div style="flex:1;min-width:0"><b style="display:block;font-size:17px">' + r[1] + '</b><small style="opacity:.75;font-size:13px">' + r[2] + '</small></div></div>' +
-        '<div style="display:flex;gap:8px;margin-top:10px">' + (r[4] ? '<span data-b="1" style="' + BS + ';background:rgba(255,255,255,.12)">🤖 Bot bilan</span>' : '<span style="' + BS + ';background:rgba(255,255,255,.05);opacity:.45">🤖 tez orada</span>') + '<span data-d="1" style="' + BS + ';background:#3fa34d">👥 Do‘st bilan</span></div></div>';
+        '<div style="display:flex;gap:8px;margin-top:10px">' + (r[4] === null ? '' : r[4] ? '<span data-b="1" style="' + BS + ';background:rgba(255,255,255,.12)">🤖 Bot bilan</span>' : '<span style="' + BS + ';background:rgba(255,255,255,.05);opacity:.45">🤖 tez orada</span>') + '<span data-d="1" style="' + BS + ';background:#3fa34d">👥 Do‘st bilan</span></div></div>';
     });
     o.innerHTML = h;
     document.body.appendChild(o);

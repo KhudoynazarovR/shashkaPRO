@@ -52,10 +52,8 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
     A.innerHTML = '<div class="top"><b>✊✌️✋ Tosh-qaychi-qog‘oz</b><span style="margin-left:auto"></span>' + GSND.btn() + '</div>' +
       '<div class="cd" style="font-size:13px;line-height:1.6;color:#d6d3f5">✊ tosh ✌️ qaychini, ✌️ qaychi ✋ qog‘ozni, ✋ qog‘oz ✊ toshni yutadi.<br>Har turda 10 soniya. Har bir yutgan raqibingiz uchun <b>+1 ochko</b>. Tanlamasangiz — 0, boshqalar sizni yutgan hisoblanadi (3 marta tanlamasangiz chiqasiz).<br>Ochkosi ko‘p — g‘olib; teng kelsa — qo‘shimcha tur.</div>' +
       '<div class="sec">🔢 TURLAR SONI</div><div class="cd">' + chips('rn', [5, 10, 15], rn, function (v) { return v + ' tur'; }) + '</div>' +
-      '<div class="sec">🤖 BOT BILAN</div><div class="cd">' + chips('nb', [1, 2, 3, 5, 7], nb, function (v) { return v + ' bot'; }) + '<button class="go" id="bgo">▶ Boshlash</button></div>' +
       '<div class="sec">👥 DO‘STLAR BILAN (2–8 kishi)</div><div class="cd"><button class="go" id="ngo" style="margin-top:0">📤 Xona ochish va havola yuborish</button><div class="muted" style="margin-top:8px;text-align:center">Havolani guruhga ham yuborsa bo‘ladi — kirganlar qo‘shiladi, siz «Boshlash» ni bosasiz</div></div>';
-    pick('rn', 'rounds'); pick('nb', 'bots'); GSND.bind(A);
-    document.getElementById('bgo').onclick = function () { botStart(LS.get('rounds', 10), LS.get('bots', 2)); };
+    pick('rn', 'rounds'); GSND.bind(A);
     document.getElementById('ngo').onclick = function () { NET = { create: 1 }; A.innerHTML = '<div class="cd" style="text-align:center">⏳ Xona ochilmoqda…</div>'; net(function () { snd({ type: 'rpCreate', rounds: LS.get('rounds', 10), init: initData() }); }); };
     if (/[?&]m=net/.test(location.search) && !window.__rpNet) { window.__rpNet = 1; setTimeout(function () { var n = document.getElementById('ngo'); if (n) n.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100); }
   }
