@@ -52,6 +52,7 @@ svg.path{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-even
 <div id="app"></div>
 <script src="/ugcore.js?v=1"></script>
 <script src="/gsnd.js?v=1"></script>
+<script src="/gchat.js?v=1"></script>
 <script>
 (function () {
   var A = document.getElementById('app'), W = 1, B = 2;
@@ -68,7 +69,7 @@ svg.path{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-even
 
   // ---------- menyu
   function menu() {
-    stopNet(); G = null;
+    stopNet(); G = null; GCHAT.show(false);
     var lv = LS.get('lv', 2), side = LS.get('side', 1), tc = LS.get('tc', '3+2');
     A.innerHTML = '<div class="top"><b>🏁 Ugolki</b><span style="margin-left:auto"></span>' + GSND.btn() + '</div>' +
       '<div class="cd" style="font-size:13px;line-height:1.55;color:#d6d3f5">🎯 12 donani raqib burchagiga <b>birinchi</b> bo‘lib olib kiring.<br>↔ 1 katak yoki ⤴ dona ustidan sakrash (ketma-ket bir necha marta) · diagonal yo‘q · urish yo‘q<br>⚠️ 40-yurishdan keyin o‘z uyingizda dona qolsa — mag‘lubiyat</div>' +
@@ -127,7 +128,9 @@ svg.path{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-even
     var sh = document.getElementById('sh'); if (sh) sh.onclick = function () { share(code); };
     var cp = document.getElementById('cp'); if (cp) cp.onclick = function () { try { navigator.clipboard.writeText(link(code)); cp.textContent = '✅ Nusxalandi'; } catch (e) { prompt('Havola:', link(code)); } };
   }
+  GCHAT.init(function (t) { if (NET && NET.code) snd({ type: 'ugChat', code: NET.code, text: t }); });
   function onNet(m) {
+    if (m.type === 'ugState') { GCHAT.show(true); GCHAT.set(m.chat, (m.players[m.mi] || {}).name); }
     if (m.type === 'ugErr') { NET = null; A.innerHTML = '<div class="top"><b>🏁 Ugolki</b></div><div class="cd" style="text-align:center">⚠️ ' + esc(m.msg) + '</div><button class="go g2" id="mn">☰ Menyu</button>'; document.getElementById('mn').onclick = menu; return; }
     if (m.type !== 'ugState') return;
     NET = NET || {}; NET.code = m.code;

@@ -31,6 +31,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 </style></head><body>
 <div id="app"></div>
 <script src="/gsnd.js?v=1"></script>
+<script src="/gchat.js?v=1"></script>
 <script>
 (function () {
   var A = document.getElementById('app'), IC = { r: '✊', s: '✌️', p: '✋' }, BEATS = { r: 's', s: 'p', p: 'r' }, NM = { r: 'Tosh', s: 'Qaychi', p: 'Qog‘oz' };
@@ -46,7 +47,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
   function chips(id, vals, cur, fmt) { return '<div class="chips" id="' + id + '">' + vals.map(function (v) { return '<button data-v="' + v + '"' + (v === cur ? ' class="on"' : '') + '>' + fmt(v) + '</button>'; }).join('') + '</div>'; }
   function pick(id, key) { var el = document.getElementById(id); el.onclick = function (e) { var b = e.target.closest('button'); if (!b) return; [].forEach.call(el.children, function (x) { x.classList.toggle('on', x === b); }); LS.set(key, +b.getAttribute('data-v')); }; }
   function menu() {
-    stopNet(); B = null; S = null;
+    stopNet(); B = null; S = null; GCHAT.show(false);
     var rn = LS.get('rounds', 10), nb = LS.get('bots', 2);
     A.innerHTML = '<div class="top"><b>✊✌️✋ Tosh-qaychi-qog‘oz</b><span style="margin-left:auto"></span>' + GSND.btn() + '</div>' +
       '<div class="cd" style="font-size:13px;line-height:1.6;color:#d6d3f5">✊ tosh ✌️ qaychini, ✌️ qaychi ✋ qog‘ozni, ✋ qog‘oz ✊ toshni yutadi.<br>Har turda 10 soniya. Har bir yutgan raqibingiz uchun <b>+1 ochko</b>. Tanlamasangiz — 0, boshqalar sizni yutgan hisoblanadi (3 marta tanlamasangiz chiqasiz).<br>Ochkosi ko‘p — g‘olib; teng kelsa — qo‘shimcha tur.</div>' +
@@ -110,7 +111,9 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
   function stopNet() { if (NET && NET.code && WS) snd({ type: 'rpLeave', code: NET.code }); if (NET) NET.left = true; NET = null; try { WS && WS.close(); } catch (e) {} WS = null; }
   function link(code) { return 'https://t.me/DraughtsPRObot/play?startapp=rp_' + code; }
   function share(code) { var u = 'https://t.me/share/url?url=' + encodeURIComponent(link(code)) + '&text=' + encodeURIComponent('✊✌️✋ Tosh-qaychi-qog‘oz o‘ynaymizmi? Bosing — qo‘shilasiz!'), w = tgw(); if (w && w.openTelegramLink) w.openTelegramLink(u); else window.open(u, '_blank'); }
+  GCHAT.init(function (t) { if (NET && NET.code) snd({ type: 'rpChat', code: NET.code, text: t }); });
   function onNet(m) {
+    if (m.type === 'rpState') { GCHAT.show(true); GCHAT.set(m.chat, ((m.players || []).filter(function (p) { return p.me; })[0] || {}).name); }
     if (m.type === 'rpErr') { NET = null; A.innerHTML = '<div class="cd" style="text-align:center">⚠️ ' + esc(m.msg) + '</div><button class="go g2" id="mn">☰ Menyu</button>'; document.getElementById('mn').onclick = menu; return; }
     if (m.type !== 'rpState') return;
     NET = NET || {}; var first = !NET.code; NET.code = m.code;

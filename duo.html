@@ -64,6 +64,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 <div id="app"></div>
 <script src="/duocore.js?v=1"></script>
 <script src="/gsnd.js?v=1"></script>
+<script src="/gchat.js?v=1"></script>
 <script>
 (function () {
   var A = document.getElementById('app'), q = new URLSearchParams(location.search), GK = q.get('g') || 'gomoku', CORE = DUO.G[GK] || DUO.G.gomoku;
@@ -84,7 +85,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
   var G = null, WS = null, NET = null;
 
   function menu() {
-    stopNet(); G = null;
+    stopNet(); G = null; GCHAT.show(false);
     var tc = LS.get('tc', META.tc);
     A.innerHTML = '<div class="top"><b>' + META.ic + ' ' + META.t + '</b><small>👥 do‘st bilan</small>' + GSND.btn() + '</div>' +
       '<div class="cd" style="font-size:13px;line-height:1.6;color:#d6d3f5">' + META.rules + '</div>' +
@@ -118,7 +119,9 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
     var sh = document.getElementById('sh'); if (sh) sh.onclick = function () { share(code); };
     var cp = document.getElementById('cp'); if (cp) cp.onclick = function () { try { navigator.clipboard.writeText(link(code)); cp.textContent = '✅ Nusxalandi'; } catch (e) { prompt('Havola:', link(code)); } };
   }
+  GCHAT.init(function (t) { if (NET && NET.code) snd({ type: 'duChat', code: NET.code, text: t }); });
   function onNet(m) {
+    if (m.type === 'duState') { GCHAT.show(true); GCHAT.set(m.chat, (m.players[m.mi] || {}).name); }
     if (m.type === 'duErr') { NET = null; A.innerHTML = '<div class="top"><b>' + META.ic + ' ' + META.t + '</b></div><div class="cd" style="text-align:center">⚠️ ' + esc(m.msg) + '</div><button class="go g2" id="mn">☰ Menyu</button>'; document.getElementById('mn').onclick = menu; return; }
     if (m.type !== 'duState') return;
     NET = NET || {}; NET.code = m.code;

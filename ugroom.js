@@ -25,7 +25,7 @@ function view(r, uid) {
     res: S && S.over ? S.res : null, why: S ? S.why : '',
     players: r.p.map(x => ({ name: x.name, side: x.side || 0, on: !!x.ws })),
     me: (r.p.find(x => x.uid === uid) || {}).side || 0, mi: r.p.findIndex(x => x.uid === uid), inl: !!r.inline,
-    clk: clocks(r), draw: r.draw || 0, tour: !!r.onEnd, again: r.again ? Object.keys(r.again).map(Number) : []
+    clk: clocks(r), draw: r.draw || 0, chat: r.chat || [], tour: !!r.onEnd, again: r.again ? Object.keys(r.again).map(Number) : []
   };
 }
 function push(r) { r.p.forEach(x => send(x.ws, view(r, x.uid))); if (r.watch) for (const ws of r.watch.values()) send(ws, view(r, '')); }
@@ -78,6 +78,13 @@ function handle(c, m) {
     return true;
   }
   const me = r.p.find(x => x.cid === c.id); if (!me) return true;
+  if (m.type === 'ugChat') {   // 💬 chat (faqat o'yinchilar), sokinish filtri — mod.js
+    const now = Date.now(); if (me.lastChat && now - me.lastChat < 400) return true;
+    let t = String(m.text || '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 120); if (!t) return true;
+    try { const M = require('./mod.js'); if (M.isMuted(me.uid)) return true; t = M.censor(t); } catch (e) {}
+    me.lastChat = now; r.chat = r.chat || []; r.chatN = (r.chatN || 0) + 1; r.chat.push({ i: r.chatN, name: me.name, text: t }); if (r.chat.length > 30) r.chat.shift();
+    push(r); return true;
+  }
   const S = r.S;
   if (m.type === 'ugMove') {
     if (r.status !== 'play' || S.turn !== me.side) return true;

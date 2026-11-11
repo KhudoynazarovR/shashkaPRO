@@ -17,7 +17,7 @@ function view(r, uid) {
     type: 'rpState', code: r.code, status: r.status, rounds: r.rounds, round: r.round, tb: r.tb ? r.tb.length : 0, host: r.p[0] ? r.p[0].uid === uid : false, hostName: r.p[0] ? r.p[0].name : '',
     phase: r.phase || '', left: r.deadline ? Math.max(0, r.deadline - Date.now()) : 0, inl: !!r.inline,
     players: r.p.map(x => ({ name: x.name, score: x.score, out: !!x.out, on: !!x.ws, picked: r.phase === 'pick' ? !!r.picks[x.uid] : undefined, me: x.uid === uid, inTb: r.tb ? r.tb.includes(x.uid) : undefined })),
-    last: r.last || null, mine: r.phase === 'pick' ? r.picks[uid] || '' : '', winner: r.winner || null
+    last: r.last || null, chat: r.chat || [], mine: r.phase === 'pick' ? r.picks[uid] || '' : '', winner: r.winner || null
   };
 }
 function push(r) { r.p.forEach(x => send(x.ws, view(r, x.uid))); if (r.watch) for (const ws of r.watch.values()) send(ws, view(r, '')); }
@@ -103,6 +103,13 @@ function handle(c, m) {
     return true;
   }
   if (!u0) return true;
+  if (m.type === 'rpChat') {   // 💬 chat (faqat o'yinchilar), sokinish filtri — mod.js
+    const now = Date.now(); if (u0.lastChat && now - u0.lastChat < 400) return true;
+    let t = String(m.text || '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 120); if (!t) return true;
+    try { const M = require('./mod.js'); if (M.isMuted(u0.uid)) return true; t = M.censor(t); } catch (e) {}
+    u0.lastChat = now; r.chat = r.chat || []; r.chatN = (r.chatN || 0) + 1; r.chat.push({ i: r.chatN, name: u0.name, text: t }); if (r.chat.length > 30) r.chat.shift();
+    push(r); return true;
+  }
   if (m.type === 'rpStart') {   // ochgan odam; u 60 s dan beri yo'q bo'lsa — istalgan o'yinchi
     const host = r.p[0];
     if (u0 === host || !host.ws) start(r);
