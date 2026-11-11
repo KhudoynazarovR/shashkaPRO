@@ -193,7 +193,7 @@ function mmUrl(codeX, v, from, rom) { const b = BASE(); return b ? b + '/api/mca
 function mmCaption(codeX, from) {
   const r = MR() && MR().get(codeX), I = mmInfo(r), sz = ' · ' + I.size.replace('x', '×') + ' · ⏱ ' + tcTxt(I.tc);
   const vt = r && r.votes ? Object.values(r.votes) : [], v0 = vt.filter(x => x === 0).length;
-  if (I.st === 'wait') return I.b ? '🧠 <b>Xotira</b>' + sz + '\n⏳ ' + esc(I.a) + ' va ' + esc(I.b) + ' — ikkalasi kirishi bilan boshlanadi' : '🧠 <b>' + esc(I.a || from || 'Kimdir') + '</b> Xotira o‘yiniga chaqiryapti!' + sz + '\nBosing — raqib bo‘lasiz. Qolganlar tomosha qiladi 👁';
+  if (I.st === 'wait') return I.b ? '🧠 <b>Xotira</b>' + sz + '\n⏳ <b>' + esc(I.b) + '</b> qo‘shildi — <b>' + esc(I.a) + '</b> kirishi bilan boshlanadi' : '🧠 <b>' + esc(I.a || from || 'Kimdir') + '</b> Xotira o‘yiniga chaqiryapti!' + sz + '\nBosing — raqib bo‘lasiz. Qolganlar tomosha qiladi 👁';
   if (I.st === 'live') return '🔴 <b>Jonli · Xotira</b>: 🟢 ' + esc(I.a) + ' ' + I.sa + ' : ' + I.sb + ' ' + esc(I.b) + ' 🔴' + sz + (I.v ? ' · ' + I.v + ' tomosha' : '') + (vt.length ? '\n🗳 Kim yutadi? 🟢 ' + v0 + ' · 🔴 ' + (vt.length - v0) : '\n🗳 Kim yutadi? Ovoz bering — topganlarga +5 💰');
   return '🏁 Xotira tugadi: ' + (I.win >= 0 ? '🏆 G‘olib — <b>' + esc(I.win === 0 ? I.a : I.b) + '</b>' : '🤝 durang') + '\n🟢 ' + esc(I.a) + ' ' + I.sa + ' : ' + I.sb + ' ' + esc(I.b) + ' 🔴' + (vt.length ? '\n🗳 To‘g‘ri topganlar +5 💰 oldi' : '');
 }

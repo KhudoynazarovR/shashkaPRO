@@ -459,7 +459,7 @@
     }
     if (m.status === 'wait' && m.players && m.players.length === 2) {   // ikkala o'rin band (guruh kubogi / revansh): ikkinchisi kutilmoqda
       var oth = m.players[1 - me] || {};
-      ov.innerHTML = '<div class="top"><button class="bk" data-x>‹</button><h2>⏳ ' + T('Raqib kutilmoqda') + '</h2></div><div class="cd" style="text-align:center;line-height:1.5"><div style="font-size:42px">🧠</div><b>' + esc(oth.name || '') + '</b> ' + T('kirishi bilan o‘yin boshlanadi') + '</div><button class="go g2" data-x2>☰ ' + T('Menyu') + '</button>';
+      ov.innerHTML = '<div class="top"><button class="bk" data-x>‹</button><h2>⏳ ' + T('Raqib kutilmoqda') + '</h2></div><div class="cd" style="text-align:center;line-height:1.5"><div style="font-size:42px">🧠</div><b>' + esc(oth.name || '') + '</b> ' + T('kirishi bilan o‘yin boshlanadi') + (m.pinged && me === 1 ? '<div style="opacity:.75;font-size:13px;margin-top:8px">📩 ' + T('Unga botdan xabar yuborildi. 3 daqiqada kirmasa, o‘rin bo‘shaydi') + '</div>' : '') + '</div><button class="go g2" data-x2>☰ ' + T('Menyu') + '</button>';
       ov.querySelector('[data-x]').onclick = menu; ov.querySelector('[data-x2]').onclick = menu;
       return;
     }

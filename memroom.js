@@ -29,7 +29,7 @@ function view(r, uid) {
     type: 'mmState', code: r.code, size: r.size, theme: r.theme, tc: r.tc, rules: r.rules, cards,
     players: r.p.map((x, j) => ({ uid: x.uid, name: x.name, sc: S ? S.sc[j] : 0, on: !!x.ws })), me: r.p.findIndex(x => x.uid === uid),
     turn: S ? S.turn : 0, left: r.tc > 0 && r.deadline ? Math.max(0, r.deadline - now) : 0, blitz: r.tc < 0 && r.blitzEnd ? Math.max(0, r.blitzEnd - now) : 0,
-    canSit: !!(r.inline && r.p.length === 1 && r.status === 'wait'), host: r.p[0] ? r.p[0].name : '',
+    canSit: !!(r.inline && r.p.length === 1 && r.status === 'wait'), host: r.p[0] ? r.p[0].name : '', pinged: !!r.pinged,
     status: r.status, winner: r.winner, quit: r.quit != null ? r.quit : null, gain: r.gain || null, ev: r.ev || null
   };
 }
@@ -50,6 +50,7 @@ function arm(r) {
   }, r.tc * 1000 + 300);
 }
 function finish(r, quit) {
+  if (r.inline) forget(r.code);
   r.status = 'over'; clearTimeout(r.tmr); clearTimeout(r.btmr);
   r.winner = quit != null ? 1 - quit : C.winner(r.S); r.quit = quit != null ? quit : null;
   r.gain = [0, 0];
@@ -69,6 +70,7 @@ function finish(r, quit) {
   push(r);
 }
 function deal(r) {
+  clearTimeout(r.stmr); r.pinged = 0;
   const [w, h] = SIZES[r.size];
   r.S = C.newGame({ pairs: w * h / 2, symbols: r.symbols, rules: r.rules, rnd: R });
   r.busy = false; r.status = 'play'; r.winner = null; r.gain = null; r.quit = null;
@@ -116,7 +118,8 @@ function handle(c, m, clients) {
     send(c.ws, view(r, u.uid));
     return true;
   }
-  const r = rooms.get(String(m.code || '').toUpperCase());
+  let r = rooms.get(String(m.code || '').toUpperCase());
+  if (!r && (m.type === 'mmJoin' || m.type === 'mmSit' || m.type === 'mmWatch')) r = revive(String(m.code || '').toUpperCase());   // server qayta yongan bo'lsa ham guruh kartasi ishlaydi
   if (!r) return send(c.ws, { type: 'mmErr', msg: 'O‘yin topilmadi yoki tugagan' }), true;
   if (m.type === 'mmJoin') {
     const u = who(m); if (!u) return send(c.ws, { type: 'mmErr', msg: 'Telegram orqali kiring' }), true;
@@ -140,7 +143,7 @@ function handle(c, m, clients) {
     const u = who(m); if (!u || !r.inline || r.p.length !== 1 || r.status !== 'wait' || r.p[0].uid === u.uid) return true;
     if (r.watch) r.watch.delete(c.id); watching.delete(c.id);
     r.p.push({ uid: u.uid, name: u.name, ws: c.ws, cid: c.id, offAt: 0 }); byConn.set(c.id, r.code);
-    if (r.p[0].ws) deal(r);
+    if (r.p[0].ws) deal(r); else pingHost(r, u.name);   // yuboruvchi ilovada emas — botdan xabar, 3 daqiqa kutiladi
     push(r);
     return true;
   }
@@ -207,7 +210,8 @@ function handle(c, m, clients) {
     return true;
   }
   if (m.type === 'mmLeave') {
-    if (r.status === 'wait' && me === 0) { invGone(r); byConn.delete(c.id); rooms.delete(r.code); return true; }   // bekor qilindi
+    if (r.status === 'wait' && me === 0) { invGone(r); byConn.delete(c.id); clearTimeout(r.stmr); rooms.delete(r.code); if (r.inline) forget(r.code); return true; }   // bekor qilindi
+    if (r.status === 'wait' && me === 1 && r.inline) { r.p.pop(); byConn.delete(c.id); clearTimeout(r.stmr); r.pinged = 0; push(r); return true; }   // guruh kartasi: qo'shilgan raqib chiqib ketdi — o'rin yana bo'sh
     r.p[me].ws = null; byConn.delete(c.id);
     if (r.status === 'play') finish(r, me); else push(r);
     return true;
@@ -227,6 +231,7 @@ setInterval(() => {
   for (const [k, r] of rooms) {
     const on = r.p.some(x => x.ws);
     if (r.status === 'play') { const off = r.p.findIndex(x => !x.ws && x.offAt && now - x.offAt > 60e3); if (off >= 0) finish(r, off); }
+    if (r.inline && r.status === 'wait' && r.p.length === 2 && !r.p[1].ws && r.p[1].offAt && now - r.p[1].offAt > 60e3) { r.p.pop(); clearTimeout(r.stmr); r.pinged = 0; push(r); }   // qo'shilgan raqib ilovani yopib ketdi — o'rin bo'shaydi
     if ((!on && now - r.at > ((r.inline || r.gt) ? 90 : 10) * 60e3) || now - r.at > 6 * 3600e3) { clearTimeout(r.tmr); clearTimeout(r.btmr); rooms.delete(k); }
     else if (on) r.at = Math.max(r.at, now - 9 * 60e3);
   }
@@ -239,7 +244,42 @@ function newRoom(o) {
 }
 // guruh kartasi (inline): chaqiruvchi o'rni band
 function createInline(uid, name, size, tc, theme) { const r = newRoom({ size, tc, theme, p: [{ uid: String(uid), name: String(name || 'O‘yinchi').slice(0, 20), ws: null, offAt: 0 }] }); r.inline = true; return r; }
+// 💾 guruh kartasi xonalari bazada ham turadi (24 soat): server qayta yonsa yoki Telegram «tanlandi» xabarini yubormasa ham karta ishlaydi
+function inl() { const d = require('./store.js').db; return d ? (d.mmInl || (d.mmInl = {})) : null; }
+function remember(codeX, o) {
+  const I = inl(); if (!I || !codeX) return;
+  const now = Date.now();
+  for (const k of Object.keys(I)) if (now - (I[k].at || 0) > 24 * 3600e3) delete I[k];
+  const ks = Object.keys(I); if (ks.length > 300) ks.sort((a, b) => I[a].at - I[b].at).slice(0, ks.length - 300).forEach(k => delete I[k]);
+  I[codeX] = Object.assign(I[codeX] || { at: now }, o);
+  try { require('./store.js').save(); } catch (e) {}
+}
+function forget(codeX) { const I = inl(); if (I && I[codeX]) { delete I[codeX]; try { require('./store.js').save(); } catch (e) {} } }
+function revive(codeX) {
+  const I = inl(), o = I && I[codeX]; if (!o || !o.uid || Date.now() - (o.at || 0) > 24 * 3600e3) return null;
+  const r = createInline(o.uid, o.name, o.size, o.tc, o.theme); rooms.delete(r.code); r.code = codeX; rooms.set(codeX, r);
+  if (o.imid) { try { require('./gcard.js').mmChosen(codeX, o.imid, o.from || o.name, o.link); } catch (e) {} }
+  return r;
+}
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])); }
+function hostLink(r) {
+  let l = ''; try { const m = require('./gcard.js').msgOf('mm:' + r.code); l = m && m.link; } catch (e) {}
+  const I = inl(); if (!l && I && I[r.code]) l = I[r.code].link;
+  return l || (process.env.TG_APP_LINK || 'https://t.me/DraughtsPRObot/play') + '?startapp=mm_' + r.code;
+}
+// do'st qo'shildi, yuboruvchi esa ilovada emas: botdan xabar + 3 daqiqa kutish, kirmasa o'rin yana bo'shaydi
+function pingHost(r, name) {
+  const now = Date.now(); if (r.pinged && now - r.pinged < 60e3) return; r.pinged = now;
+  try { require('./gcard.js').tg('sendMessage', { chat_id: r.p[0].uid, parse_mode: 'HTML', text: '🧠 <b>' + esc(name) + '</b> Xotira o‘yiningizga qo‘shildi!\nSiz kirishingiz bilan o‘yin boshlanadi ⏳ (3 daqiqa kutadi)', reply_markup: { inline_keyboard: [[{ text: '▶ O‘yinga kirish', url: hostLink(r) }]] } }); } catch (e) {}
+  clearTimeout(r.stmr);
+  r.stmr = setTimeout(() => {
+    if (r.status !== 'wait' || r.p.length !== 2 || r.p[0].ws) return;
+    const f = r.p.pop(); if (f.cid) byConn.delete(f.cid);
+    send(f.ws, { type: 'mmErr', msg: 'Raqib 3 daqiqada kirmadi — keyinroq qayta urinib ko‘ring' });
+    r.pinged = 0; push(r);
+  }, 180e3);
+}
 // kubok: ikkala o'rin band, ikkalasi kirganda boshlanadi
 function createPair(a, b, size, tc, theme) { return newRoom({ size, tc, theme, p: [{ uid: a.uid, name: a.name, ws: null, offAt: 0 }, { uid: b.uid, name: b.name, ws: null, offAt: 0 }] }); }
 function again(r) { if (!r || r.status !== 'over' || r.p.length !== 2) return false; r.p.reverse(); r.again = {}; r.votes = {}; r.status = 'wait'; r.S = null; r.at = Date.now(); if (r.p.every(x => x.ws)) deal(r); push(r); return true; }
-module.exports = { handle, onClose, rooms, createInline, createPair, again, finish, push, SIZES };
+module.exports = { handle, onClose, rooms, remember, createInline, createPair, again, finish, push, SIZES };
