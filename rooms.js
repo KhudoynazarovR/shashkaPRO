@@ -315,7 +315,7 @@ function createRooms({ send, clients, onFinish }) {
       if (room.moves.length) {
         const g = {
           id: room.id, at: Date.now(), w: room.white && room.white.name, b: room.black && room.black.name, wu: room.white && String(room.white.uid || ''), bu: room.black && String(room.black.uid || ''), we: _liveElo(room.white), be: _liveElo(room.black),
-          win: winner || null, why: room.reason || '', tc: room.tc,
+          win: winner || null, why: room.reason || '', tc: room.tc, o: room.opening && room.opening.board ? String(room.opening.board) : undefined, f: room.opening && room.opening.side === 'b' ? 'black' : undefined,
           m: room.moves.map(m => [m.from.r, m.from.c, m.to.r, m.to.c, (m.captures || []).map(x => [x.r, x.c])])
         };
         const ids = new Set([room.white && room.white.uid, room.black && room.black.uid].filter(Boolean).map(String));

@@ -61,7 +61,7 @@
   }
   function review(g) {
     if (!g || !g.m || !window.spBoardOpen) return;
-    window.spBoardOpen({ white: g.w, black: g.b, winner: g.win, moves: g.m.map(function (x) { return { from: { r: x[0], c: x[1] }, to: { r: x[2], c: x[3] }, captures: (x[4] || []).map(function (y) { return { r: y[0], c: y[1] }; }) }; }) });
+    window.spBoardOpen({ white: g.w, black: g.b, winner: g.win, start: g.o, first: g.f, moves: g.m.map(function (x) { return { from: { r: x[0], c: x[1] }, to: { r: x[2], c: x[3] }, captures: (x[4] || []).map(function (y) { return { r: y[0], c: y[1] }; }) }; }) });
   }
   function el(id, html, before) {
     var e = $(id); if (!e) { e = document.createElement('div'); e.id = id; }

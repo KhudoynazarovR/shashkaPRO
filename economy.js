@@ -322,7 +322,7 @@ function handle(req, res, url) {
     const _id = String(_tg.id), _u = store.users()[_id] || {}, _dk = new Date(Date.now() + 5 * 3600e3).toISOString().slice(0, 10), _pd = store.db.pzDay;
     const arch = (_u.arch || []).slice(0, 5).map(g => {
       const me = g.wu === _id ? 'white' : g.bu === _id ? 'black' : (g.w && g.w === _u.name ? 'white' : g.b && g.b === _u.name ? 'black' : null);
-      return { id: g.id, at: g.at, w: g.w, b: g.b, win: g.win, tc: g.tc, me, oe: me === 'white' ? g.be : me === 'black' ? g.we : null, m: g.m };
+      return { id: g.id, at: g.at, w: g.w, b: g.b, win: g.win, tc: g.tc, me, oe: me === 'white' ? g.be : me === 'black' ? g.we : null, m: g.m, o: g.o, f: g.f };
     });
     let _rt = null; try { _rt = require('./glicko.js').view(_u); } catch (e) {}
     send(res, 200, { elo: _u.elo || 1500, rt: _rt, solved: (_u.solved || []).length, day: _pd && _pd.d === _dk ? (_pd.c[_id] || 0) : 0, arch });

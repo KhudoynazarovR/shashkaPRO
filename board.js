@@ -81,8 +81,50 @@
         else cb(null);
       }).catch(function () { cb(null); });
   }
+  // 🎨 o'yindagi doska: ☰ Menyu'da tanlangan (rc_menu_v1.board), bo'lmasa o'yin doskasining o'z ranglari
+  var RCB = [["#EFD9B1", "#B58863"], ["#DEE3E6", "#8CA2AD"], ["#FFFFDD", "#86A666"], ["#DDDDDD", "#A0A0A0"], ["#F1D5CC", "#B5685D"], ["#E3DAEE", "#8B72B5"], ["#D5F0EC", "#4A9A93"], ["#9AA5B8", "#3E4A5E"], ["#F7E7B4", "linear-gradient(135deg,#C9A227,#8A6508)"], ["linear-gradient(135deg,#FAFAFA,#E3E3E0 55%,#F5F5F3)", "linear-gradient(135deg,#4B5563,#1F2937)"], ["#D9F2E3", "linear-gradient(135deg,#0F766E,#064E3B)"], ["#1E1B4B", "linear-gradient(135deg,#7C3AED,#DB2777)"]];
+  var SQC = null;
+  function sqCol() {
+    if (SQC) return SQC;
+    var L = '#f3bb86', D = '#7b2f13';
+    try { var m = JSON.parse(localStorage.getItem('rc_menu_v1') || '{}'); if (m.board >= 0 && RCB[m.board]) { L = RCB[m.board][0]; D = RCB[m.board][1]; SQC = [L, D]; return SQC; } } catch (e) {}
+    try {   // o'yin/AI doskasidan haqiqiy rangni olamiz (S.th mavzusi: rose, classic, edeon…)
+      var th = (typeof S === 'object' && S && S.th) || (JSON.parse(localStorage.getItem('sp_s2') || '{}').th) || 'edeon', box = document.createElement('div');
+      box.id = 'board'; box.setAttribute('data-th', th); box.style.cssText = 'position:absolute;left:-9999px;top:0;width:40px;height:20px';
+      box.innerHTML = '<div class="sq l" style="width:20px;height:20px"></div><div class="sq d" style="width:20px;height:20px"></div>';
+      var host = document.createElement('div'); host.appendChild(box); document.body.appendChild(host);
+      var gl = function (e) { var cs = getComputedStyle(e); return cs.backgroundImage && cs.backgroundImage !== 'none' ? cs.backgroundImage : cs.backgroundColor; };
+      var l2 = gl(box.children[0]), d2 = gl(box.children[1]); host.remove();
+      if (l2 && !/rgba\(0, 0, 0, 0\)|transparent/.test(l2)) L = l2; if (d2 && !/rgba\(0, 0, 0, 0\)|transparent/.test(d2)) D = d2;
+    } catch (e) {}
+    SQC = [L, D]; return SQC;
+  }
+  // 🎨 o'yindagi ko'rinish: S.th (doska mavzusi), S.ps (dona uslubi), ☰ Menyu doskasi, Do'kon donasi — o'yin bilan bir xil CSS
+  var GSK = null;
+  function gameSkin() {
+    if (GSK) return GSK;
+    var o = { th: 'edeon', ps: 'img', pz: '90', km: '\u265B', rc: null };
+    try { var x = JSON.parse(localStorage.getItem('sp_s2') || '{}'); if (x.th) o.th = x.th; if (x.ps) o.ps = x.ps; if (x.pz) o.pz = x.pz; if (x.km) o.km = x.km; } catch (e) {}
+    if (!/^(classic|green|blue|gray|walnut|purple|sand|ocean|rose|olive|photo|edeon)$/.test(o.th)) o.th = 'edeon';
+    try { var m = JSON.parse(localStorage.getItem('rc_menu_v1') || '{}'); if (m.board >= 0 && RCB[m.board]) o.rc = RCB[m.board]; } catch (e) {}
+    try {   // #board[...] mavzu qoidalarini (edeon va b.) tahlil doskasiga ko'chiramiz — o'yin xonasi kabi
+      if (!document.getElementById('spBdTh')) {
+        var css = '';
+        for (var i = 0; i < document.styleSheets.length; i++) { var R; try { R = document.styleSheets[i].cssRules; } catch (e) { continue; } for (var j = 0; j < R.length; j++) { var t = R[j].cssText || ''; if (t.indexOf('#board[') === 0) css += t.replace(/#board\[/g, '#spBdB[') + '\n'; } }
+        var st = document.createElement('style'); st.id = 'spBdTh'; st.textContent = css + '#spBdB .sq{border:0!important}#spBdB .pc{pointer-events:none}'; document.head.appendChild(st);
+      }
+    } catch (e) {}
+    GSK = o; return o;
+  }
+  function gamePc(p) {
+    var w = W(p), k = p > 2, u = window.spEqId ? '/api/shop/img?id=' + encodeURIComponent(window.spEqId) + '&k=' + (w ? 'w' : 'b') + (k ? 'k' : '') : '';
+    return '<i class="piece pc ' + (w ? 'w' : 'b') + (k ? ' k' : '') + '"' + (u ? ' style="background-image:url(&quot;' + u + '&quot;)!important;background-size:contain!important;background-color:transparent!important;border:0!important;box-shadow:none!important"' : '') + '></i>';
+  }
   function pcH(p, sz) {
     var w = W(p);
+    if (window.spEqId) {   // 🪙 Do'kondan tanlangan donalar (o'yindagidek)
+      return '<div style="width:' + sz + ';height:' + sz + ';border-radius:50%;background:url(&quot;/api/shop/img?id=' + encodeURIComponent(window.spEqId) + '&amp;k=' + (w ? 'w' : 'b') + (p > 2 ? 'k' : '') + '&quot;) center/contain no-repeat;filter:drop-shadow(0 2px 2px rgba(0,0,0,.45))"></div>';
+    }
     return '<div style="width:' + sz + ';height:' + sz + ';border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;color:#f5b72b;border:2px solid ' + (w ? '#9a9a9a' : '#000') + ';background:' + (w ? 'radial-gradient(circle at 35% 28%,#fff,#bbb)' : 'radial-gradient(circle at 35% 28%,#888,#111)') + ';box-sizing:border-box">' + (p > 2 ? '♛' : '') + '</div>';
   }
   function pvWorkerBody() {
@@ -336,12 +378,19 @@
   }
 
   window.spBoard = function (g) {
-    var hist = [{ b: start(), t: 1, m: null }], cur = 0, flip = false, sel = null, EV = {}, busyK = {}, FAIL = {}, allRun = false, prog = '';
+    // ♟ o'yin IDF (yoki boshqa) pozitsiyadan boshlangan bo'lsa — o'sha pozitsiyadan (32 belgi: qora kataklar qatorma-qator)
+    var b0 = start(), t0 = 1, BAD = 0;
+    if (g && g.start && String(g.start).length === 32) { b0 = empty(); var k0 = 0; for (var r0 = 0; r0 < 8; r0++) for (var c0 = 0; c0 < 8; c0++) { if ((r0 + c0) % 2 !== 1) continue; var ch0 = String(g.start).charAt(k0++); b0[r0][c0] = ch0 === 'w' ? 1 : ch0 === 'b' ? 2 : ch0 === 'W' ? 3 : ch0 === 'B' ? 4 : 0; } }
+    if (g && g.first === 'black') t0 = -1;
+    var hist = [{ b: b0, t: t0, m: null }], cur = 0, flip = false, sel = null, EV = {}, busyK = {}, FAIL = {}, allRun = false, prog = '';
     var panel = null, E = null, PL = null, GI = null;
     if (g && g.moves && g.moves.length) {
       GI = g;
       g.moves.forEach(function (x) {
+        if (BAD) return;
         var h = hist[hist.length - 1], p = h.b[x.from.r][x.from.c], er = x.to.r;
+        if (!p) { BAD = hist.length; return; }   // yurish bu pozitsiyaga mos emas (eski arxiv: boshlang'ich pozitsiya saqlanmagan)
+        h.t = W(p) ? 1 : -1;   // navbat — yuradigan dona rangi (ko'p urishli yurish arxivda bosqichma-bosqich yoziladi)
         var m = { path: [[x.from.r, x.from.c], [x.to.r, x.to.c]], caps: (x.captures || []).map(function (y) { return [y.r, y.c]; }), king: p < 3 && (W(p) ? er === 0 : er === 7) };
         hist.push({ b: applyM(h.b, m), t: -h.t, m: m, n: note(m) });
       });
@@ -624,10 +673,12 @@
       var bst = 'border:0;border-radius:14px;padding:12px 16px;background:#6b5cf0;color:#fff;font-size:20px';
       var sm = 'border:0;border-radius:12px;padding:10px 12px;background:#262b66;color:#fff;font-size:14px;margin:3px';
       s += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b>🔬 Tahlil taxtasi</b><button id="bdX" style="border:0;border-radius:12px;padding:8px 14px;background:#262b66;color:#fff;font-size:16px">⬅️</button></div>';
+      if (BAD) s += '<div style="font-size:13px;margin-bottom:8px;padding:8px 10px;border-radius:10px;background:#5a1d1d;color:#ffd0d0">⚠️ Bu o‘yin boshqa pozitsiyadan (masalan IDF 780) boshlangan, lekin u arxivga saqlanmagan (eski o‘yin). Faqat ' + (BAD - 1) + ' ta yurish ko‘rsatildi.</div>';
       if (GI && GI.title) s += '<div style="font-size:14px;margin-bottom:6px">' + String(GI.title).replace(/</g, '&lt;') + '</div>';
       else if (GI) s += '<div style="font-size:14px;margin-bottom:6px">⚪ ' + String(GI.white || '') .replace(/</g, '&lt;') + ' — ⚫ ' + String(GI.black || '').replace(/</g, '&lt;') + '<br><span style="opacity:.8">' + (GI.winner === 'white' ? '🏆 Oq yutdi' : GI.winner === 'black' ? '🏆 Qora yutdi' : '🤝 Durang') + '</span></div>';
       if (S.bar) s += '<div style="width:min(94vw,480px);height:10px;margin:0 auto 8px;background:#222;border-radius:5px;overflow:hidden"><div style="width:' + pc + '%;height:100%;background:#eee"></div></div>';
-      s += '<div style="position:relative;width:min(94vw,480px);margin:0 auto;box-sizing:border-box;border:4px solid #8a4a1c;border-radius:6px"><div style="display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);aspect-ratio:1;overflow:hidden">';
+      var GS = gameSkin();
+      s += '<div style="position:relative;width:min(100%,520px);margin:0 auto;box-sizing:border-box"><div id="spBdB" data-th="' + GS.th + '" data-ps="' + GS.ps + '" style="--pz:' + GS.pz + '%;--km:\'' + GS.km + '\';display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);aspect-ratio:1;overflow:hidden;border:0!important;box-shadow:none!important">';
       var lm = (!ed && h.m) ? [h.m.path[0], h.m.path[h.m.path.length - 1]] : [], rr, cc, r, c, p, hl, dot;
       for (rr = 0; rr < 8; rr++) for (cc = 0; cc < 8; cc++) {
         r = flip ? 7 - rr : rr; c = flip ? 7 - cc : cc; p = B[r][c];
@@ -635,8 +686,10 @@
         lm.forEach(function (q) { if (q[0] === r && q[1] === c) hl = 'box-shadow:inset 0 0 0 3px #f5d92b;'; });
         if (sel && !ed && sel.r === r && sel.c === c) hl = 'box-shadow:inset 0 0 0 4px #4ade80;';
         if (sel && !ed) sel.moves.forEach(function (m) { var q = m.path[m.path.length - 1]; if (q[0] === r && q[1] === c) dot = true; });
-        s += '<div data-r="' + r + '" data-c="' + c + '" style="background:' + ((r + c) % 2 ? '#7b2f13' : '#f3bb86') + ';' + hl + 'display:flex;align-items:center;justify-content:center">';
-        if (p) s += pcH(p, '80%');
+        var isLm = hl.indexOf('#f5d92b') >= 0;
+        if (isLm) hl = '';
+        s += '<div data-r="' + r + '" data-c="' + c + '" class="sq ' + ((r + c) % 2 ? 'd' : 'l') + (isLm ? ' lm' : '') + '" style="' + (GS.rc ? 'background:' + ((r + c) % 2 ? GS.rc[1] : GS.rc[0]) + ';' : '') + hl + 'display:flex;align-items:center;justify-content:center">';
+        if (p) s += gamePc(p);
         else if (dot) s += '<div style="width:30%;height:30%;border-radius:50%;background:#4ade80;opacity:.8"></div>';
         s += '</div>';
       }
