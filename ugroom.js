@@ -24,7 +24,7 @@ function view(r, uid) {
     b: S ? S.b.join('') : '', turn: S ? S.turn : 1, ply: S ? S.ply : 0, last: S ? S.last : null, pend: S ? S.pend : false,
     res: S && S.over ? S.res : null, why: S ? S.why : '',
     players: r.p.map(x => ({ name: x.name, side: x.side || 0, on: !!x.ws })),
-    me: (r.p.find(x => x.uid === uid) || {}).side || 0,
+    me: (r.p.find(x => x.uid === uid) || {}).side || 0, mi: r.p.findIndex(x => x.uid === uid), inl: !!r.inline,
     clk: clocks(r), draw: r.draw || 0, tour: !!r.onEnd, again: r.again ? Object.keys(r.again).map(Number) : []
   };
 }
@@ -39,6 +39,7 @@ function end(r, res, why) {
   if (r.onEnd && !r.reported) { r.reported = 1; try { r.onEnd(res, { why, plies: r.S ? r.S.ply : 0 }); } catch (e) { console.log('[' + 'mix]', e.message); } }
   if (r.S && !r.S.over) { r.S.over = true; r.S.res = res; r.S.why = why; }
   r.at = Date.now(); r.draw = 0; push(r);
+  if (r.inline) { card(r); forget(r.code); }
 }
 function begin(r) {
   if (r.fixed) { r.p[0].side = 1; r.p[1].side = 2; r.fixed = false; r.games = 1; } else {
@@ -47,7 +48,8 @@ function begin(r) {
   r.games = (r.games || 0) + 1; }
   r.S = U.start(); r.status = 'play'; r.draw = 0; r.again = null;
   r.clk = [r.tc * 1000, r.tc * 1000]; r.runAt = Date.now(); r.at = Date.now();
-  arm(r);
+  clearTimeout(r.stmr); r.pinged = 0;
+  arm(r); if (r.inline) card(r);
 }
 function handle(c, m) {
   if (!m || typeof m.type !== 'string' || !m.type.startsWith('ug')) return false;
@@ -59,7 +61,8 @@ function handle(c, m) {
     rooms.set(k, r); byConn.set(c.id, k); push(r);
     return true;
   }
-  const r = rooms.get(String(m.code || '').toUpperCase());
+  let r = rooms.get(String(m.code || '').toUpperCase());
+  if (!r && m.type === 'ugJoin') r = revive(String(m.code || '').toUpperCase());   // 📣 guruh kartasi (server qayta yongan bo'lsa ham)
   if (!r) return send(c.ws, { type: 'ugErr', msg: 'O‘yin topilmadi yoki tugagan' }), true;
   if (m.type === 'ugJoin') {
     const u = who(m); if (!u) return send(c.ws, { type: 'ugErr', msg: 'O‘yinni Telegram ichida oching' }), true;
@@ -69,7 +72,8 @@ function handle(c, m) {
       p = { uid: u.uid, name: u.name }; r.p.push(p);
     }
     p.ws = c.ws; p.cid = c.id; p.offAt = 0; byConn.set(c.id, r.code);
-    if (r.p.length === 2 && r.status === 'wait' && (!r.onEnd || r.p.every(x => x.ws))) begin(r);   // turnirda — ikkalasi ham kirganda
+    if (r.p.length === 2 && r.status === 'wait' && (!(r.onEnd || r.inline) || r.p.every(x => x.ws))) begin(r);   // turnir / guruh kartasi — ikkalasi ham kirganda
+    else if (r.inline && r.status === 'wait' && r.p.length === 2 && !r.p[0].ws) { pingHost(r); card(r); }
     push(r);
     return true;
   }
@@ -101,6 +105,7 @@ function handle(c, m) {
   }
   if (m.type === 'ugLeave') {
     byConn.delete(c.id); me.ws = null; me.offAt = Date.now();
+    if (r.status === 'wait' && r.inline) { if (me === r.p[1]) { r.p.pop(); clearTimeout(r.stmr); r.pinged = 0; card(r); } push(r); return true; }   // guruh kartasi: raqib chiqdi — o'rin bo'sh
     if (r.status === 'wait') { if (r.onEnd) { push(r); return true; } clearTimeout(r.tmr); rooms.delete(r.code); return true; }
     if (r.status === 'play') end(r, me.side === 1 ? 2 : 1, 'left'); else push(r);
     return true;
@@ -119,6 +124,7 @@ setInterval(() => {
   const now = Date.now();
   for (const [k, r] of rooms) {
     if (r.status === 'play') { const off = r.p.find(x => !x.ws && x.offAt && now - x.offAt > 60e3); if (off) end(r, off.side === 1 ? 2 : 1, 'left'); }
+    if (r.inline && r.status === 'wait' && r.p.length === 2 && !r.p[1].ws && r.p[1].offAt && now - r.p[1].offAt > 60e3) { r.p.pop(); clearTimeout(r.stmr); r.pinged = 0; card(r); push(r); }
     const on = r.p.some(x => x.ws);
     if ((!on && now - r.at > 30 * 60e3) || now - r.at > 6 * 3600e3) { clearTimeout(r.tmr); rooms.delete(k); }
   }
@@ -140,4 +146,54 @@ function createPair(a, b, tcK, onEnd, noshowMs, g) {
   if (r.nsT.unref) r.nsT.unref();
   rooms.set(k, r); return r;
 }
-module.exports = { handle, onClose, rooms, createPair };
+// ================= 📣 GURUH KARTASI (inline): yuboruvchining o'rni band, guruhdan birinchi bosgan — raqib, ikkalasi kirganda boshlanadi.
+// Ma'lumot bazada 24 soat (server qayta yonsa yoki Telegram «tanlandi» xabarini yubormasa ham karta ishlaydi). Karta matni holatga qarab yangilanadi.
+const GN = { ug: '🏁 Ugolki', chess: '♟ Shaxmat', go: '⚪ Go 9×9', gomoku: '⭕ Gomoku', pod: '🔄 Poddavki' };
+function inl() { const d = require('./store.js').db; return d ? (d.ugInl || (d.ugInl = {})) : null; }
+function remember(codeX, o) {
+  const I = inl(); if (!I || !codeX) return;
+  const now = Date.now();
+  for (const k of Object.keys(I)) if (now - (I[k].at || 0) > 24 * 3600e3) delete I[k];
+  const ks = Object.keys(I); if (ks.length > 500) ks.sort((a, b) => I[a].at - I[b].at).slice(0, ks.length - 500).forEach(k => delete I[k]);
+  I[codeX] = Object.assign(I[codeX] || { at: now }, o);
+  const r = rooms.get(codeX); if (r && o.imid) { r.imid = o.imid; card(r); }
+  try { require('./store.js').save(); } catch (e) {}
+}
+function forget(codeX) { const I = inl(); if (I && I[codeX]) { delete I[codeX]; try { require('./store.js').save(); } catch (e) {} } }
+function revive(codeX) {
+  const I = inl(), o = I && I[codeX]; if (!o || !o.uid || Date.now() - (o.at || 0) > 24 * 3600e3) return null;
+  const tcK = TCS[o.tc] ? String(o.tc) : '3+2';
+  const r = { code: codeX, tcK, tc: TCS[tcK][0], inc: TCS[tcK][1], p: [{ uid: String(o.uid), name: String(o.name || 'O‘yinchi').slice(0, 20), ws: null, offAt: 0 }], status: 'wait', at: Date.now(), S: null, inline: true, imid: o.imid || '', link: o.link || '', img: o.img || '' };
+  if (o.g) r.g = o.g;
+  rooms.set(codeX, r); return r;
+}
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])); }
+function TG(method, params) { try { return require('./gcard.js').tg(method, params); } catch (e) { return null; } }
+function capOf(r) {
+  const T = '🏁 Ugolki', tc = r.tcK === '0' ? '∞' : r.tcK, A = r.p[0] ? esc(r.p[0].name) : '', B = r.p[1] ? esc(r.p[1].name) : '';
+  if (r.status === 'wait') return r.p.length < 2 ? T + ' · ⏱ ' + tc + '\n🎯 <b>' + A + '</b> raqib qidiryapti — bosing va o‘ynang! 👇' : T + ' · ⏱ ' + tc + '\n⏳ <b>' + B + '</b> qo‘shildi — <b>' + A + '</b> kirishi bilan boshlanadi';
+  const W = r.p.find(x => x.side === 1), Bk = r.p.find(x => x.side === 2);
+  if (r.status === 'play') return '🔴 <b>Jonli · ' + T + '</b> · ⏱ ' + tc + '\n' + esc(W ? W.name : '') + ' — ' + esc(Bk ? Bk.name : '') + '\n👁 Tomosha qilish uchun bosing';
+  const res = r.S ? r.S.res : null, win = res === 1 ? W : res === 2 ? Bk : null;
+  return T + ' — o‘yin tugadi\n' + (win ? '🏆 G‘olib — <b>' + esc(win.name) + '</b>' : '🤝 Durang') + '\n' + esc(W ? W.name : '') + ' — ' + esc(Bk ? Bk.name : '');
+}
+function card(r) {   // guruhdagi xabarni yangilash (imid — «tanlandi» xabaridan)
+  if (!r.inline || !r.imid) return;
+  const kb = r.status === 'over' ? { inline_keyboard: [[{ text: '🔁 Yana o‘ynash', switch_inline_query_current_chat: r.g || 'ugolki' }]] } : { inline_keyboard: [[{ text: r.status === 'play' ? '👁 Tomosha' : '▶ O‘yinga kirish', url: r.link }]] };
+  const p = { inline_message_id: r.imid, text: capOf(r), parse_mode: 'HTML', reply_markup: kb };
+  if (r.img) p.link_preview_options = { url: r.img, prefer_large_media: true, show_above_text: true };
+  TG('editMessageText', p);
+}
+// do'st qo'shildi, yuboruvchi esa ilovada emas: botdan xabar + 3 daqiqa kutish
+function pingHost(r) {
+  const now = Date.now(); if (r.pinged && now - r.pinged < 60e3) return; r.pinged = now;
+  TG('sendMessage', { chat_id: r.p[0].uid, parse_mode: 'HTML', text: '🏁 Ugolki' + ': <b>' + esc(r.p[1].name) + '</b> o‘yiningizga qo‘shildi!\nSiz kirishingiz bilan boshlanadi ⏳ (3 daqiqa kutadi)', reply_markup: { inline_keyboard: [[{ text: '▶ O‘yinga kirish', url: r.link || ('https://t.me/DraughtsPRObot/play?startapp=' + 'ug_' + r.code) }]] } });
+  clearTimeout(r.stmr);
+  r.stmr = setTimeout(() => {
+    if (r.status !== 'wait' || r.p.length !== 2 || r.p[0].ws) return;
+    const f = r.p.pop(); if (f.cid) byConn.delete(f.cid);
+    send(f.ws, { type: 'ugErr', msg: 'Raqib 3 daqiqada kirmadi — keyinroq qayta urinib ko‘ring' });
+    r.pinged = 0; card(r); push(r);
+  }, 180e3);
+}
+module.exports = { handle, onClose, rooms, createPair, remember, GN };

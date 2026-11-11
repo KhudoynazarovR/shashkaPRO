@@ -63,6 +63,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 </style></head><body>
 <div id="app"></div>
 <script src="/duocore.js?v=1"></script>
+<script src="/gsnd.js?v=1"></script>
 <script>
 (function () {
   var A = document.getElementById('app'), q = new URLSearchParams(location.search), GK = q.get('g') || 'gomoku', CORE = DUO.G[GK] || DUO.G.gomoku;
@@ -85,12 +86,13 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
   function menu() {
     stopNet(); G = null;
     var tc = LS.get('tc', META.tc);
-    A.innerHTML = '<div class="top"><b>' + META.ic + ' ' + META.t + '</b><small>👥 do‘st bilan</small></div>' +
+    A.innerHTML = '<div class="top"><b>' + META.ic + ' ' + META.t + '</b><small>👥 do‘st bilan</small>' + GSND.btn() + '</div>' +
       '<div class="cd" style="font-size:13px;line-height:1.6;color:#d6d3f5">' + META.rules + '</div>' +
       '<div class="sec">⏱ VAQT</div><div class="cd"><div class="chips" id="tc">' + TC.map(function (t) { return '<button data-v="' + t[0] + '"' + (t[0] === tc ? ' class="on"' : '') + '>' + t[1] + '</button>'; }).join('') + '</div>' +
       '<button class="go" id="ngo">📤 Do‘stga havola yuborish</button><div class="muted" style="margin-top:8px;text-align:center">Do‘stingiz havolani bosishi bilan o‘yin boshlanadi · ranglar tasodifiy</div></div>';
     var el = document.getElementById('tc');
     el.onclick = function (e) { var b = e.target.closest('button'); if (!b) return; [].forEach.call(el.children, function (x) { x.classList.toggle('on', x === b); }); LS.set('tc', b.getAttribute('data-v')); };
+    GSND.bind(A);
     document.getElementById('ngo').onclick = function () { NET = { create: 1 }; waitUi(null); net(function () { snd({ type: 'duCreate', g: GK, tc: LS.get('tc', META.tc), init: initData() }); }); };
   }
   function snd(o) { try { WS.send(JSON.stringify(o)); } catch (e) {} }
@@ -121,6 +123,12 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
     if (m.type !== 'duState') return;
     NET = NET || {}; NET.code = m.code;
     if (m.status === 'over' && !m.st) { A.innerHTML = '<div class="top"><b>' + META.ic + ' ' + META.t + '</b></div><div class="cd" style="text-align:center;line-height:1.6"><div style="font-size:42px">⌛</div>O‘yin bo‘lmadi — raqib vaqtida kirmadi.<br><span class="muted">Natija turnir jadvaliga yozildi.</span></div><button class="go g2" id="mn">☰ Menyu</button>'; document.getElementById('mn').onclick = menu; return; }   // 🔀 turnir: kelmaganlik
+    if (m.status === 'wait' && m.inl) {   // 📣 guruh kartasi orqali
+      var hn = m.players[0] ? m.players[0].name : '', fn = m.players[1] ? m.players[1].name : '';
+      var tx = m.mi === 0 ? (fn ? '<b>' + esc(fn) + '</b> qo‘shildi — boshlanmoqda…' : 'Guruhdagi do‘stingiz kartani bosishini kutyapmiz…') : m.mi === 1 ? '<b>' + esc(hn) + '</b> kirishini kutyapmiz.<br><span class="muted">Unga botdan xabar yuborildi · 3 daqiqa kutiladi</span>' : '👁 O‘yin boshlanishi kutilmoqda…';
+      A.innerHTML = '<div class="top"><button class="bk" id="bk">‹</button><b>⏳ Kutilmoqda</b></div><div class="cd" style="text-align:center;line-height:1.6"><div style="font-size:42px">' + META.ic + '</div>' + tx + '</div>';
+      document.getElementById('bk').onclick = menu; return;
+    }
     if (m.status === 'wait') { if (!NET.waitShown) { NET.waitShown = 1; waitUi(m.code); if (NET.create) share(m.code); } return; }
     var wasOver = G && G.st && G.st.over;
     if (!G || G.code !== m.code) G = { code: m.code, sel: -1, names: {} };
@@ -180,7 +188,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
   function draw() {
     if (!G) return;
     var st = G.st, me = G.me, s = '';
-    var h = '<div class="top"><button class="bk" id="bk">‹</button><b>' + META.ic + ' ' + META.t + '</b><small>' + (G.m && G.m.tc !== '0' ? G.m.tc : '∞') + '</small></div>';
+    var h = '<div class="top"><button class="bk" id="bk">‹</button><b>' + META.ic + ' ' + META.t + '</b><small>' + (G.m && G.m.tc !== '0' ? G.m.tc : '∞') + '</small>' + GSND.btn() + '</div>';
     h += bar(3 - me) + boardHtml() + bar(me);
     if (st.over) s = res();
     else if (G.watch) s = '👁 Tomosha';
@@ -190,7 +198,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
     h += '<div class="st">' + s + '</div><div class="btns">' +
       (GK === 'go' ? '<button id="ps"' + (myTurn() ? '' : ' disabled') + '>✋ Pas</button>' : '<button id="dr"' + (st.over || G.watch ? ' disabled' : '') + '>🤝 ' + (G.m && G.m.draw && G.m.draw !== me ? 'Qabul' : 'Durang') + '</button>') +
       '<button id="rs"' + (st.over || G.watch ? ' disabled' : '') + '>🏳 Taslim</button></div>';
-    A.innerHTML = h;
+    A.innerHTML = h; GSND.bind(A); sound(G.st);
     document.getElementById('bk').onclick = function () { if (!G.st.over && !G.watch && !confirm('O‘yindan chiqsangiz — mag‘lubiyat. Chiqasizmi?')) return; menu(); };
     document.getElementById('bd').onclick = function (e) { var el = e.target.closest('.c'); if (el) tap(+el.getAttribute('data-i')); };
     var b;
@@ -222,8 +230,14 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
   var WHY = { five: '5 tasi qatorda', full: 'doska to‘ldi', score: 'hisob bo‘yicha', mate: 'mat', stalemate: 'pat', fifty: '50 yurish qoidasi', repeat: '3 marta takror', material: 'mat qilishga kuch yetmaydi', empty: 'donalar tugadi', blocked: 'yurish qolmadi', quiet: 'urishsiz 15 yurish', resign: 'taslim', time: 'vaqt tugadi', left: 'raqib chiqib ketdi', agree: 'kelishuv bo‘yicha' };
   function why() { var st = G.st, w = WHY[st.why] || ''; if (st.why === 'score' && st.score) w += ' (' + st.score[0] + ' : ' + st.score[1] + ')'; return w; }
   function res() { var r = G.st.res; return (r === 0 ? '🤝 Durang' : G.watch ? CORE.sides[r - 1] + ' yutdi' : r === G.me ? '🏆 Siz yutdingiz!' : '😔 Siz yutqazdingiz') + ' — ' + why(); }
+  // 🔊 yangi yurishda: urish (dona/tosh olindi) yoki oddiy yurish
+  function sound(st) {
+    var n = 0; st.b.forEach(function (x) { if (x) n++; });
+    if (G.sndPly !== undefined && st.ply > G.sndPly && !(GK === 'go' && !st.last)) GSND.play(n < G.sndN || (GK === 'go' && st.capd && st.capd.length) ? 'cap' : 'move');
+    G.sndPly = st.ply; G.sndN = n;
+  }
   function fin() {
-    var r = G.st.res; hap(r === G.me ? 'success' : r === 0 ? 'warning' : 'error');
+    var r = G.st.res; hap(r === G.me ? 'success' : r === 0 ? 'warning' : 'error'); setTimeout(function () { GSND.play(r === 0 ? 'draw' : r === G.me && !G.watch ? 'win' : 'lose'); }, 250);
     var d = document.createElement('div'); d.className = 'mod'; d.id = 'fin';
     d.innerHTML = '<div class="cd"><div style="font-size:48px">' + (r === 0 ? '🤝' : r === G.me ? '🏆' : '😔') + '</div><h2>' + (r === 0 ? 'Durang' : G.watch ? 'O‘yin tugadi' : r === G.me ? 'G‘alaba!' : 'Mag‘lubiyat') + '</h2><div class="muted">' + esc(why()) + '</div>' +
       (G.watch || (G.m && G.m.tour) ? '' : '<button class="go" id="agn">🔁 Revansh</button>') + '<button class="go g2" id="fm">☰ Menyu</button><button class="go g2" id="fv">👁 Doskani ko‘rish</button></div>';

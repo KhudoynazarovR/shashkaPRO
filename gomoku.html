@@ -11,7 +11,8 @@ canvas{width:min(96vw,560px);aspect-ratio:1;border:2px solid var(--bd);border-ra
 .row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
 button{padding:10px 14px;border:1px solid var(--bd);background:var(--panel);color:var(--fg);border-radius:8px;font-size:14px}
 </style></head><body>
-<div id="st"></div><canvas id="cv"></canvas>
+<div style="display:flex;align-items:center;gap:10px;width:min(96vw,560px)"><div id="st" style="flex:1"></div><span id="snd"></span></div><canvas id="cv"></canvas>
+<script src="/gsnd.js?v=1"></script>
 <div class="row"><button id="new">Yangi o'yin</button><button id="undo">Qaytarish</button><button id="mode">Bot: yoqiq</button><button id="side">Men: qora</button></div>
 <script>
 (function(){
@@ -32,7 +33,8 @@ function botPlay(){if(over)return;var me=turn,op=me===1?2:1,best=-1,pick=null,an
   for(j=-2;j<=2&&!near;j++)for(i=-2;i<=2;i++)if(g(x+i,y+j)>0){near=true;break}
   if(!near)continue;any=true;var v=sc(x,y,me)*1.1+sc(x,y,op)+Math.random();if(v>best){best=v;pick=[x,y]}}
  if(!any)pick=[7,7];place(pick[0],pick[1])}
-function place(x,y){if(over||b[y*N+x])return;b[y*N+x]=turn;hist.push([x,y]);var w=line(x,y,turn);
+function place(x,y){if(over||b[y*N+x])return;b[y*N+x]=turn;hist.push([x,y]);var w=line(x,y,turn);try{GSND.play('move')}catch(e){}
+ if(w)setTimeout(function(){try{GSND.play(bot&&turn!==mine?'lose':'win')}catch(e){}},250);
  if(w){over=true;win=w;st.textContent=(turn===1?'Qora':'Oq')+' yutdi! 🎉'}
  else if(hist.length===N*N){over=true;st.textContent='Durang'}
  else{turn=turn===1?2:1;st.textContent=(turn===1?'Qora':'Oq')+' yuradi'}
@@ -55,5 +57,6 @@ document.getElementById('undo').onclick=function(){if(!hist.length)return;var n=
 document.getElementById('mode').onclick=function(){bot=!bot;this.textContent='Bot: '+(bot?'yoqiq':'o\'chiq');init()};
 document.getElementById('side').onclick=function(){mine=mine===1?2:1;this.textContent='Men: '+(mine===1?'qora':'oq');init()};
 addEventListener('resize',draw);init();
+try{document.getElementById('snd').innerHTML=GSND.btn();GSND.bind(document.getElementById('snd'))}catch(e){}
 })();
 </script></body></html>

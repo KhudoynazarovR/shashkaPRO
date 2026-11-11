@@ -36,6 +36,8 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 .p{width:78%;height:78%;border-radius:50%;z-index:2;box-shadow:inset 0 -3px 0 rgba(0,0,0,.3),0 2px 3px rgba(0,0,0,.45);transition:transform .12s}
 .p.w{background:radial-gradient(circle at 35% 30%,#fff,#e8e2d0)}.p.b{background:radial-gradient(circle at 35% 30%,#555,#111)}
 .c.sel .p{outline:3px solid #3fa34d;outline-offset:1px;transform:scale(1.06)}
+.p.hm{box-shadow:0 0 0 3px #e11d48,inset 0 -3px 0 rgba(0,0,0,.3)}
+.hb{margin-top:8px;padding:8px 12px;border-radius:12px;font-size:13.5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.hb small{margin-left:auto;opacity:.85;font-size:12px}
 .dot{width:30%;height:30%;border-radius:50%;background:rgba(40,150,60,.85);z-index:2}
 svg.path{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none}
 .info{margin-top:8px;padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.05);font-size:12.5px;line-height:1.55;color:#d6d3f5}
@@ -49,6 +51,7 @@ svg.path{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-even
 </style></head><body>
 <div id="app"></div>
 <script src="/ugcore.js?v=1"></script>
+<script src="/gsnd.js?v=1"></script>
 <script>
 (function () {
   var A = document.getElementById('app'), W = 1, B = 2;
@@ -67,7 +70,7 @@ svg.path{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-even
   function menu() {
     stopNet(); G = null;
     var lv = LS.get('lv', 2), side = LS.get('side', 1), tc = LS.get('tc', '3+2');
-    A.innerHTML = '<div class="top"><b>🏁 Ugolki</b></div>' +
+    A.innerHTML = '<div class="top"><b>🏁 Ugolki</b><span style="margin-left:auto"></span>' + GSND.btn() + '</div>' +
       '<div class="cd" style="font-size:13px;line-height:1.55;color:#d6d3f5">🎯 12 donani raqib burchagiga <b>birinchi</b> bo‘lib olib kiring.<br>↔ 1 katak yoki ⤴ dona ustidan sakrash (ketma-ket bir necha marta) · diagonal yo‘q · urish yo‘q<br>⚠️ 40-yurishdan keyin o‘z uyingizda dona qolsa — mag‘lubiyat</div>' +
       '<div class="sec">🤖 BOT BILAN</div><div class="cd"><div class="chips" id="lv">' + LV.map(function (l) { return '<button data-v="' + l[0] + '"' + (l[0] === lv ? ' class="on"' : '') + '>' + l[1] + '</button>'; }).join('') + '</div>' +
       '<div class="muted" id="lvd" style="margin:8px 2px 10px"></div>' +
@@ -77,7 +80,7 @@ svg.path{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-even
       '<button class="go" id="ngo">📤 Do‘stga havola yuborish</button><div class="muted" style="margin-top:8px;text-align:center">Do‘stingiz havolani bosishi bilan o‘yin boshlanadi</div></div>';
     function pick(id, key, num, cb) { var el = document.getElementById(id); el.onclick = function (e) { var b = e.target.closest('button'); if (!b) return; [].forEach.call(el.children, function (x) { x.classList.toggle('on', x === b); }); var v = b.getAttribute('data-v'); LS.set(key, num ? +v : v); if (cb) cb(); }; }
     function lvd() { var v = LS.get('lv', 2); document.getElementById('lvd').textContent = LV[v - 1][2]; }
-    pick('lv', 'lv', 1, lvd); pick('sd', 'side', 1); pick('tc', 'tc', 0); lvd();
+    pick('lv', 'lv', 1, lvd); pick('sd', 'side', 1); pick('tc', 'tc', 0); lvd(); GSND.bind(A);
     document.getElementById('bgo').onclick = function () { startBot(LS.get('lv', 2), LS.get('side', 1)); };
     document.getElementById('ngo').onclick = function () { NET = { create: 1 }; waitUi(null); net(function () { snd({ type: 'ugCreate', tc: LS.get('tc', '3+2'), init: initData() }); }); };
   }
@@ -128,6 +131,12 @@ svg.path{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-even
     if (m.type !== 'ugState') return;
     NET = NET || {}; NET.code = m.code;
     if (m.status === 'over' && !m.b) { A.innerHTML = '<div class="top"><b>🏁 Ugolki</b></div><div class="cd" style="text-align:center;line-height:1.6"><div style="font-size:42px">⌛</div>O‘yin bo‘lmadi — raqib vaqtida kirmadi.<br><span class="muted">Natija turnir jadvaliga yozildi.</span></div><button class="go g2" id="mn">☰ Menyu</button>'; document.getElementById('mn').onclick = menu; return; }   // 🔀 turnir: kelmaganlik
+    if (m.status === 'wait' && m.inl) {   // 📣 guruh kartasi orqali
+      var hn = m.players[0] ? m.players[0].name : '', fn = m.players[1] ? m.players[1].name : '';
+      var tx = m.mi === 0 ? (fn ? '<b>' + esc(fn) + '</b> qo‘shildi — boshlanmoqda…' : 'Guruhdagi do‘stingiz kartani bosishini kutyapmiz…') : m.mi === 1 ? '<b>' + esc(hn) + '</b> kirishini kutyapmiz.<br><span class="muted">Unga botdan xabar yuborildi · 3 daqiqa kutiladi</span>' : '👁 O‘yin boshlanishi kutilmoqda…';
+      A.innerHTML = '<div class="top"><button class="bk" id="bk">‹</button><b>⏳ Kutilmoqda</b></div><div class="cd" style="text-align:center;line-height:1.6"><div style="font-size:42px">' + '🏁' + '</div>' + tx + '</div>';
+      document.getElementById('bk').onclick = menu; return;
+    }
     if (m.status === 'wait') { if (!NET.waitShown) { NET.waitShown = 1; waitUi(m.code); if (NET.create) share(m.code); } return; }
     var was = G && G.mode === 'net' ? G.st : null, wasOver = was && was.over;
     var st = { b: m.b.split('').map(Number), turn: m.turn, ply: m.ply, last: m.last, pend: m.pend, over: m.res != null, res: m.res, why: m.why };
@@ -159,14 +168,15 @@ svg.path{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-even
     var canMove = !st.over && st.turn === me && !G.watch && !(G.mode === 'bot' && G.think);
     if (G.sel >= 0 && canMove) mv = UG.pieceMoves(st.b, G.sel);
     var tgt = {}; mv.forEach(function (m) { tgt[m.to] = m; });
-    var h = '<div class="top"><button class="bk" id="bk">‹</button><b>🏁 Ugolki</b><small>' + (G.mode === 'bot' ? '🤖 bot bilan' : (G.m && G.m.tc !== '0' ? G.m.tc : '∞') + ' · do‘st bilan') + '</small></div>';
+    var h = '<div class="top"><button class="bk" id="bk">‹</button><b>🏁 Ugolki</b><small>' + (G.mode === 'bot' ? '🤖 bot bilan' : (G.m && G.m.tc !== '0' ? G.m.tc : '∞') + ' · do‘st bilan') + '</small>' + GSND.btn() + '</div>';
     h += bar(op) + '<div class="bd" id="bd">';
     for (var v = 0; v < 64; v++) {
       var i = cellOf(v), r = i >> 3, c = i & 7, cls = 'c ' + ((r + c) % 2 ? 'd' : 'l');
       if (UG.goal(me, i)) cls += ' zm'; else if (UG.home(me, i)) cls += ' zh';
       if (lastSet[i] && (i === last[0] || i === last[last.length - 1])) cls += ' lm';
       if (i === G.sel) cls += ' sel';
-      h += '<div class="' + cls + '" data-i="' + i + '">' + (st.b[i] ? '<i class="p ' + (st.b[i] === W ? 'w' : 'b') + '"></i>' : tgt[i] ? '<i class="dot"></i>' : '') + '</div>';
+      var hmk = st.b[i] && !st.over && st.ply >= 50 && st.ply < UG.HOME * 2 && UG.home(st.b[i], i) ? ' hm' : '';   // 🏠 15 yurish qolganda — uydan chiqmaganlar qizil
+      h += '<div class="' + cls + '" data-i="' + i + '">' + (st.b[i] ? '<i class="p ' + (st.b[i] === W ? 'w' : 'b') + hmk + '"></i>' : tgt[i] ? '<i class="dot"></i>' : '') + '</div>';
     }
     h += '</div>' + bar(me);
     var s = '';
@@ -175,13 +185,11 @@ svg.path{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-even
     else if (st.pend) s = st.turn === me ? '⚡ Oxirgi imkoniyat: shu yurishda to‘ldirsangiz — durang!' : '⚡ Raqibga oxirgi yurish';
     else s = st.turn === me ? 'Sizning navbatingiz' : (G.mode === 'bot' ? '🤖 Bot o‘ylayapti…' : 'Raqib navbati');
     if (!st.over && G.mode === 'net' && G.m && G.m.draw && G.m.draw !== me) s = '🤝 Raqib durang taklif qildi';
-    var hm = UG.atHome(st.b, me), left = UG.HOME - Math.ceil(st.ply / 2);
-    if (!st.over && hm && left > 0 && left <= 10) s += ' · ⚠️ uyda ' + hm + ' dona, ' + left + ' yurish qoldi';
-    h += '<div class="st">' + s + '</div><div class="btns">' +
+    h += homeBar(st, me) + '<div class="st">' + s + '</div><div class="btns">' +
       (G.mode === 'net' ? '<button id="dr"' + (st.over || G.watch ? ' disabled' : '') + '>🤝 ' + (G.m && G.m.draw && G.m.draw !== me ? 'Qabul' : 'Durang') + '</button>' : '<button id="un"' + (G.hist.length && !st.over ? '' : ' disabled') + '>↩ Ortga</button>') +
       '<button id="rs"' + (st.over || G.watch ? ' disabled' : '') + '>🏳 Taslim</button>' +
       (G.mode === 'bot' ? '<button id="nw">🔄 Yangi</button>' : '') + '</div>';
-    A.innerHTML = h;
+    A.innerHTML = h; GSND.bind(A); sound(st);
     // oxirgi sakrash yo'li
     if (last.length > 2) {
       var bd = document.getElementById('bd'), pts = last.map(function (x) { var vv = G.me === W ? 63 - x : x; return ((vv & 7) + .5) + ',' + ((vv >> 3) + .5); }).join(' ');
@@ -194,6 +202,19 @@ svg.path{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-even
     if ((b = document.getElementById('rs'))) b.onclick = function () { if (!confirm('Taslim bo‘lasizmi?')) return; if (G.mode === 'bot') { G.st.over = true; G.st.res = op; G.st.why = 'resign'; draw(); fin(); } else snd({ type: 'ugResign', code: G.code }); };
     if ((b = document.getElementById('dr'))) b.onclick = function () { snd({ type: 'ugDraw', code: G.code }); b.disabled = true; b.textContent = '⏳'; };
     if ((b = document.getElementById('nw'))) b.onclick = function () { startBot(G.lv, G.me); };
+  }
+  // 🏠 40-yurish sanog'i: har kim 40 yurishgacha hamma donasini uyidan chiqarishi kerak
+  function homeBar(st, me) {
+    if (st.over || st.ply >= UG.HOME * 2) return '';
+    var my = me === W ? Math.ceil(st.ply / 2) : Math.floor(st.ply / 2), left = UG.HOME - my, hm = UG.atHome(st.b, me), oh = UG.atHome(st.b, 3 - me);
+    var col = !hm ? '#3fa34d' : left <= 3 ? '#e11d48' : left <= 10 ? '#d97706' : '#2a2470';
+    return '<div class="hb" style="background:' + col + '">' + (hm ? '🏠 Uydan chiqish: <b>' + left + '</b> yurish · uyda <b>' + hm + '</b> dona' : '✅ Hamma donalar uydan chiqdi') + '<small>raqib: ' + (oh ? oh + ' dona' : '✅') + '</small></div>';
+  }
+  // 🔊 yurish ovozi (yangi yurishda bir marta), o'yin oxiri — fin() da
+  function sound(st) {
+    if (G.sndPly === undefined) { G.sndPly = st.ply; return; }
+    if (st.ply > G.sndPly) GSND.play((st.last || []).length > 2 ? 'cap' : 'move');
+    G.sndPly = st.ply;
   }
   function tap(i, tgt) {
     var st = G.st;
@@ -212,7 +233,7 @@ svg.path{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-even
   var WHY = { goal: 'hamma donalar manzilda', both: 'ikkalasi ham manzilni to‘ldirdi', home: '40-yurish qoidasi (uyda dona qoldi)', limit: '80 yurish tugadi — manzildagi donalar soni', block: 'yurish qolmadi', resign: 'taslim', time: 'vaqt tugadi', left: 'raqib chiqib ketdi', agree: 'kelishuv bo‘yicha' };
   function res() { var r = G.st.res; return (r === 0 ? '🤝 Durang' : r === G.me ? '🏆 Siz yutdingiz!' : G.watch ? (r === W ? '⚪ Oq yutdi' : '⚫ Qora yutdi') : '😔 Siz yutqazdingiz') + ' — ' + (WHY[G.st.why] || ''); }
   function fin() {
-    var r = G.st.res; hap(r === G.me ? 'success' : r === 0 ? 'warning' : 'error');
+    var r = G.st.res; hap(r === G.me ? 'success' : r === 0 ? 'warning' : 'error'); setTimeout(function () { GSND.play(r === 0 ? 'draw' : r === G.me && !G.watch ? 'win' : 'lose'); }, 250);
     if (G.mode === 'bot' && r === G.me) { var w = LS.get('win', {}); w[G.lv] = (w[G.lv] || 0) + 1; LS.set('win', w); }
     var d = document.createElement('div'); d.className = 'mod'; d.id = 'fin';
     d.innerHTML = '<div class="cd"><div style="font-size:48px">' + (r === 0 ? '🤝' : r === G.me ? '🏆' : '😔') + '</div><h2>' + (r === 0 ? 'Durang' : r === G.me ? 'G‘alaba!' : G.watch ? 'O‘yin tugadi' : 'Mag‘lubiyat') + '</h2><div class="muted">' + esc(WHY[G.st.why] || '') + '</div>' +
