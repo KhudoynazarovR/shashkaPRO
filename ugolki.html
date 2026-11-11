@@ -81,6 +81,7 @@ svg.path{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-even
     function pick(id, key, num, cb) { var el = document.getElementById(id); el.onclick = function (e) { var b = e.target.closest('button'); if (!b) return; [].forEach.call(el.children, function (x) { x.classList.toggle('on', x === b); }); var v = b.getAttribute('data-v'); LS.set(key, num ? +v : v); if (cb) cb(); }; }
     function lvd() { var v = LS.get('lv', 2); document.getElementById('lvd').textContent = LV[v - 1][2]; }
     pick('lv', 'lv', 1, lvd); pick('sd', 'side', 1); pick('tc', 'tc', 0); lvd(); GSND.bind(A);
+    if (/[?&]m=net/.test(location.search) && !window.__ugNet) { window.__ugNet = 1; var nt = document.getElementById('tc'); if (nt) setTimeout(function () { nt.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100); }
     document.getElementById('bgo').onclick = function () { startBot(LS.get('lv', 2), LS.get('side', 1)); };
     document.getElementById('ngo').onclick = function () { NET = { create: 1 }; waitUi(null); net(function () { snd({ type: 'ugCreate', tc: LS.get('tc', '3+2'), init: initData() }); }); };
   }
