@@ -120,6 +120,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
     if (m.type === 'duErr') { NET = null; A.innerHTML = '<div class="top"><b>' + META.ic + ' ' + META.t + '</b></div><div class="cd" style="text-align:center">⚠️ ' + esc(m.msg) + '</div><button class="go g2" id="mn">☰ Menyu</button>'; document.getElementById('mn').onclick = menu; return; }
     if (m.type !== 'duState') return;
     NET = NET || {}; NET.code = m.code;
+    if (m.status === 'over' && !m.st) { A.innerHTML = '<div class="top"><b>' + META.ic + ' ' + META.t + '</b></div><div class="cd" style="text-align:center;line-height:1.6"><div style="font-size:42px">⌛</div>O‘yin bo‘lmadi — raqib vaqtida kirmadi.<br><span class="muted">Natija turnir jadvaliga yozildi.</span></div><button class="go g2" id="mn">☰ Menyu</button>'; document.getElementById('mn').onclick = menu; return; }   // 🔀 turnir: kelmaganlik
     if (m.status === 'wait') { if (!NET.waitShown) { NET.waitShown = 1; waitUi(m.code); if (NET.create) share(m.code); } return; }
     var wasOver = G && G.st && G.st.over;
     if (!G || G.code !== m.code) G = { code: m.code, sel: -1, names: {} };
@@ -225,7 +226,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
     var r = G.st.res; hap(r === G.me ? 'success' : r === 0 ? 'warning' : 'error');
     var d = document.createElement('div'); d.className = 'mod'; d.id = 'fin';
     d.innerHTML = '<div class="cd"><div style="font-size:48px">' + (r === 0 ? '🤝' : r === G.me ? '🏆' : '😔') + '</div><h2>' + (r === 0 ? 'Durang' : G.watch ? 'O‘yin tugadi' : r === G.me ? 'G‘alaba!' : 'Mag‘lubiyat') + '</h2><div class="muted">' + esc(why()) + '</div>' +
-      (G.watch ? '' : '<button class="go" id="agn">🔁 Revansh</button>') + '<button class="go g2" id="fm">☰ Menyu</button><button class="go g2" id="fv">👁 Doskani ko‘rish</button></div>';
+      (G.watch || (G.m && G.m.tour) ? '' : '<button class="go" id="agn">🔁 Revansh</button>') + '<button class="go g2" id="fm">☰ Menyu</button><button class="go g2" id="fv">👁 Doskani ko‘rish</button></div>';
     document.body.appendChild(d);
     var a = document.getElementById('agn'); if (a) a.onclick = function () { snd({ type: 'duAgain', code: G.code }); this.textContent = '⏳ Raqib kutilmoqda…'; };
     document.getElementById('fm').onclick = function () { d.remove(); menu(); };

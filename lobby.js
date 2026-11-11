@@ -67,6 +67,11 @@ const KEEP_FINISHED = 24 * 3600 * 1000;
 // ---- Arena sozlamalari ----
 const ARENA_DURATIONS = [10, 20, 25, 30, 40, 45, 50, 60, 70, 80, 90, 100, 120];   // daqiqa
 const ARENA_STARTS = [0, 2, 5, 10, 30];
+// 🔀 Miks turnir o'yinlari va vaqti
+const MIX_G = {
+  mm: { ic: '🧠', t: 'Xotira', tc: '-120', tcTxt: '⚡ 2 daq' }, sh: { ic: '⚫', t: 'Shashka', tc: '3+2' }, ug: { ic: '🏁', t: 'Ugolki', tc: '3+2' },
+  chess: { ic: '♟', t: 'Shaxmat', tc: '3+2' }, go: { ic: '⚪', t: 'Go 9×9', tc: '5+3' }, gomoku: { ic: '⭕', t: 'Gomoku', tc: '3+2' }, pod: { ic: '🔄', t: 'Poddavki', tc: '3+2' }
+};
 const validStart = v => { v = Number(v); const n = Date.now(); return v >= n + 60000 && v <= n + 183 * 86400000 ? Math.floor(v) : 0; };   // aniq boshlanish: 1 daqiqadan 6 oygacha             // boshlanishgacha kutish (daqiqa)
 const ARENA_MAX_PLAYERS = 200;
 const ARENA_FIRE_AFTER = 2;                          // ketma-ket shuncha g'alabadan keyin olov yonadi
@@ -319,12 +324,12 @@ function createLobby({ send, clients, roomsApi }) {
       round: t.round, rounds: t.rounds, nextAt: t.nextAt || 0,
       players: t.flag ? arenaStandings(t).map(p => Object.assign({}, p, require('./flags.js').badge(p.uid) || {})) : (t.type === 'arena' ? arenaStandings(t) : standings(t)),
       flag: !!t.flag, desc: t.desc || '', rec: t.rec || null, regs: t.flag ? require('./flags.js').regStandings(arenaStandings(t)).map(r => ({ r: r.r, k: r.k, c: r.c, n: r.n, score: r.score })) : [],
-      minGames: t.minGames || 0,
+      minGames: t.minGames || 0, mix: t.mix || null,
       boards: t.cur.map(b => ({
         board: b.board, roomId: b.roomId, white: b.white, black: b.black,
         whiteName: t.players.get(b.white).name, blackName: t.players.get(b.black).name,
         whiteElo: t.type === 'arena' ? olyElo(b.white) : 0, blackElo: t.type === 'arena' ? olyElo(b.black) : 0, bb: !!b.bb,
-        done: b.done, winner: b.winner || null
+        done: b.done, winner: b.winner || null, g: b.g || null
       })),
       bye: t.curBye || null, hist: (t.hist || []).slice(-40), chat: (t.chat || []).slice(-60)
     };
@@ -666,6 +671,24 @@ function createLobby({ send, clients, roomsApi }) {
     push();
   }
 
+  // 🔀 MIKS TURNIR: har turda boshqa o'yin. Shashka — oddiy xona, qolganlari — o'z modullarida (natija mixDone ga qaytadi)
+  function mixRoom(g, w, b, cb) {
+    const A = { uid: w.uid, name: w.name }, B = { uid: b.uid, name: b.name }, NS = NOSHOW_MS;
+    try {
+      if (g === 'mm') return 'mx:mm:' + require('./memroom.js').createTour(A, B, '4x6', -120, cb, NS).code;
+      if (g === 'ug') return 'mx:ug:' + require('./ugroom.js').createPair(A, B, MIX_G.ug.tc, cb, NS).code;
+      return 'mx:' + g + ':' + require('./duoroom.js').createPair(A, B, MIX_G[g].tc, cb, NS, g).code;
+    } catch (e) { console.log('[mix] xona:', e.message); return ''; }
+  }
+  function mixDone(t, b, res, info) {
+    if (b.done || t.status !== 'running') return;
+    info = info || {};
+    // shashka xonasidek «room» — onRoomFinished ochko, kelmaganlar va keyingi turni hal qiladi (reyting o'zgarmaydi, tanga — g'olibga)
+    const room = { id: b.roomId, winner: res === 1 ? 'white' : res === 2 ? 'black' : 'draw', plies: info.plies || 0, reason: info.noshow ? 'noshow' : (info.why || ''), noshowBoth: !!info.noshowBoth, unrated: true, tc: '' };
+    roomToBoard.set(b.roomId, { t, b });
+    onRoomFinished(room);
+    roomToBoard.delete(b.roomId);
+  }
   function startRound(t) {
     t.round++;
     if (t.type === 'olympic') return olyStartRound(t);
@@ -681,12 +704,24 @@ function createLobby({ send, clients, roomsApi }) {
       w.opps.push(b.uid); b.opps.push(w.uid);
       w.colors.w++; b.colors.b++;
       w.seq.push('w'); b.seq.push('b');
-      openRoom(roomId, t.tc, w, b, false, t.pos === 'idf' ? pickOpening() : null);
+      const mg = t.mix ? t.mix[t.round - 1] : null;
+      if (mg && mg !== 'sh') {   // 🔀 miks: boshqa o'yin xonasi (Xotira / Ugolki / Shaxmat / Go / Gomoku / Poddavki)
+        const board = { board: i + 1, roomId: '', white: w.uid, black: b.uid, done: false, winner: null, g: mg };
+        const xid = mixRoom(mg, w, b, (res, info) => mixDone(t, board, res, info));
+        if (!xid) { board.done = true; return; }
+        board.roomId = xid; t.cur.push(board);
+        const gt = MIX_G[mg];
+        sendUid(w.uid, { type: 'lbGo', roomId: xid, reason: 'tournament', tname: t.name + ' · ' + gt.ic + ' ' + gt.t, round: t.round, color: 'white', opponent: b.name, tc: gt.tcTxt || gt.tc });
+        sendUid(b.uid, { type: 'lbGo', roomId: xid, reason: 'tournament', tname: t.name + ' · ' + gt.ic + ' ' + gt.t, round: t.round, color: 'black', opponent: w.name, tc: gt.tcTxt || gt.tc });
+        return;
+      }
+      const tcR = mg ? MIX_G.sh.tc : t.tc;
+      openRoom(roomId, tcR, w, b, false, t.pos === 'idf' ? pickOpening() : null);
       const board = { board: i + 1, roomId, white: w.uid, black: b.uid, done: false, winner: null };
       t.cur.push(board);
       roomToBoard.set(roomId, { t, b: board });
-      sendUid(w.uid, { type: 'lbGo', roomId, reason: 'tournament', tname: t.name, round: t.round, color: 'white', opponent: b.name, tc: t.tc });
-      sendUid(b.uid, { type: 'lbGo', roomId, reason: 'tournament', tname: t.name, round: t.round, color: 'black', opponent: w.name, tc: t.tc });
+      sendUid(w.uid, { type: 'lbGo', roomId, reason: 'tournament', tname: t.name, round: t.round, color: 'white', opponent: b.name, tc: tcR });
+      sendUid(b.uid, { type: 'lbGo', roomId, reason: 'tournament', tname: t.name, round: t.round, color: 'black', opponent: w.name, tc: tcR });
     });
     const roundNo = t.round;
     t.timer = setTimeout(() => checkNoShows(t, roundNo), NOSHOW_MS);
@@ -797,6 +832,12 @@ function createLobby({ send, clients, roomsApi }) {
     }, extra);
     if (!sys) t.players.set(me.uid, newPlayer(me));
     if (m.kind === 'olympic') { t.type = 'olympic'; t.roundsWanted = 0; }
+    if (m.kind === 'mix') {   // 🔀 Miks: shveytsar, har tur — boshqa o'yin
+      if (!adm) return 'Miks turnirni faqat admin ochadi';
+      const L = (Array.isArray(m.mix) ? m.mix : []).map(String).filter(g => MIX_G[g]).slice(0, 9);
+      if (L.length < 2) return 'Kamida 2 ta o‘yin tanlang';
+      t.mix = L; t.roundsWanted = L.length; t.tc = MIX_G.sh.tc; t.pos = 'std';
+    }
     t.clubIds = cl.ids; tournaments.set(t.id, t);
     return t;
   }
@@ -1164,7 +1205,7 @@ function createLobby({ send, clients, roomsApi }) {
   function startT(t) {
     const n = t.players.size;
     const auto = Math.min(9, Math.max(3, Math.ceil(Math.log2(n))));
-    t.rounds = Math.max(1, Math.min(n - 1, t.roundsWanted || auto));
+    t.rounds = t.mix ? t.mix.length : Math.max(1, Math.min(n - 1, t.roundsWanted || auto));   // 🔀 miksda — har o'yin bitta tur
     t.startAt = 0;
     t.status = 'running';
     startRound(t);

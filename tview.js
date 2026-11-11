@@ -143,8 +143,10 @@
 
   function renderMain(t){
     var ar = t.type === 'arena';
-    g('tvName').textContent = (ar ? '⚔️ ' : t.type === 'olympic' ? '🏆 ' : '♟ ') + t.name;
-    var ch = ['🎯 ' + (ar ? 'Arena' : t.type === 'olympic' ? 'Olimpiya' : 'Shveytsar'), '⏱ ' + t.tc, '👥 ' + (t.players || []).length];
+    g('tvName').textContent = (t.mix ? '🔀 ' : ar ? '⚔️ ' : t.type === 'olympic' ? '🏆 ' : '♟ ') + t.name;
+    var MXN = { mm: '🧠 Xotira', sh: '⚫ Shashka', ug: '🏁 Ugolki', chess: '♟ Shaxmat', go: '⚪ Go', gomoku: '⭕ Gomoku', pod: '🔄 Poddavki' };
+    var ch = t.mix ? ['🎯 Miks · shveytsar', '👥 ' + (t.players || []).length].concat(t.mix.map(function (x, i) { var n = i + 1, cur = t.status === 'running' && t.round === n; return (cur ? '▶ ' : (t.status === 'finished' || (t.status !== 'reg' && n < t.round)) ? '✅ ' : n + '. ') + (MXN[x] || x); }))
+      : ['🎯 ' + (ar ? 'Arena' : t.type === 'olympic' ? 'Olimpiya' : 'Shveytsar'), '⏱ ' + t.tc, '👥 ' + (t.players || []).length];
     if (t.prize) ch.push('🪙 ' + t.prize + (t.places ? ' (' + t.places + ' o‘ringa)' : ''));
     if (ar && t.berserk) ch.push('⚡ Berserk');
     if (t.startAt && t.status === 'reg') ch.push('🕐 ' + hm(t.startAt));

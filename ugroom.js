@@ -25,7 +25,7 @@ function view(r, uid) {
     res: S && S.over ? S.res : null, why: S ? S.why : '',
     players: r.p.map(x => ({ name: x.name, side: x.side || 0, on: !!x.ws })),
     me: (r.p.find(x => x.uid === uid) || {}).side || 0,
-    clk: clocks(r), draw: r.draw || 0, again: r.again ? Object.keys(r.again).map(Number) : []
+    clk: clocks(r), draw: r.draw || 0, tour: !!r.onEnd, again: r.again ? Object.keys(r.again).map(Number) : []
   };
 }
 function push(r) { r.p.forEach(x => send(x.ws, view(r, x.uid))); if (r.watch) for (const ws of r.watch.values()) send(ws, view(r, '')); }
@@ -35,14 +35,16 @@ function arm(r) {
   r.tmr = setTimeout(() => { if (r.status === 'play' && r.S.turn === s) { r.clk[s - 1] = 0; end(r, s === 1 ? 2 : 1, 'time'); } }, Math.max(0, left) + 250);
 }
 function end(r, res, why) {
-  clearTimeout(r.tmr); r.status = 'over';
+  clearTimeout(r.tmr); clearTimeout(r.nsT); r.status = 'over';
+  if (r.onEnd && !r.reported) { r.reported = 1; try { r.onEnd(res, { why, plies: r.S ? r.S.ply : 0 }); } catch (e) { console.log('[' + 'mix]', e.message); } }
   if (r.S && !r.S.over) { r.S.over = true; r.S.res = res; r.S.why = why; }
   r.at = Date.now(); r.draw = 0; push(r);
 }
 function begin(r) {
+  if (r.fixed) { r.p[0].side = 1; r.p[1].side = 2; r.fixed = false; r.games = 1; } else {
   const flip = crypto.randomInt(2) === 1;   // ranglar tasodifiy (keyingi o'yinlarda almashadi)
   if (r.games) { r.p.forEach(x => { x.side = x.side === 1 ? 2 : 1; }); } else { r.p[0].side = flip ? 2 : 1; r.p[1].side = flip ? 1 : 2; }
-  r.games = (r.games || 0) + 1;
+  r.games = (r.games || 0) + 1; }
   r.S = U.start(); r.status = 'play'; r.draw = 0; r.again = null;
   r.clk = [r.tc * 1000, r.tc * 1000]; r.runAt = Date.now(); r.at = Date.now();
   arm(r);
@@ -67,7 +69,7 @@ function handle(c, m) {
       p = { uid: u.uid, name: u.name }; r.p.push(p);
     }
     p.ws = c.ws; p.cid = c.id; p.offAt = 0; byConn.set(c.id, r.code);
-    if (r.p.length === 2 && r.status === 'wait') begin(r);
+    if (r.p.length === 2 && r.status === 'wait' && (!r.onEnd || r.p.every(x => x.ws))) begin(r);   // turnirda — ikkalasi ham kirganda
     push(r);
     return true;
   }
@@ -90,7 +92,8 @@ function handle(c, m) {
     if (r.draw && r.draw !== me.side) { end(r, 0, 'agree'); return true; }
     r.draw = me.side; push(r); return true;
   }
-  if (m.type === 'ugAgain') {   // 🔁 revansh — ikkalasi ham bosganda
+  if (m.type === 'ugAgain') {
+    if (r.onEnd) return true;   // turnir o'yini — revansh yo'q   // 🔁 revansh — ikkalasi ham bosganda
     if (r.status !== 'over' || r.p.length !== 2) return true;
     r.again = r.again || {}; r.again[me.side] = 1;
     if (r.again[1] && r.again[2]) begin(r);
@@ -98,7 +101,7 @@ function handle(c, m) {
   }
   if (m.type === 'ugLeave') {
     byConn.delete(c.id); me.ws = null; me.offAt = Date.now();
-    if (r.status === 'wait') { clearTimeout(r.tmr); rooms.delete(r.code); return true; }
+    if (r.status === 'wait') { if (r.onEnd) { push(r); return true; } clearTimeout(r.tmr); rooms.delete(r.code); return true; }
     if (r.status === 'play') end(r, me.side === 1 ? 2 : 1, 'left'); else push(r);
     return true;
   }
@@ -120,4 +123,21 @@ setInterval(() => {
     if ((!on && now - r.at > 30 * 60e3) || now - r.at > 6 * 3600e3) { clearTimeout(r.tmr); rooms.delete(k); }
   }
 }, 30e3).unref();
-module.exports = { handle, onClose, rooms };
+// 🔀 Miks turnir: ikkala o'rin oldindan band (a — birinchi yuradi), natija onEnd(res 1|2|0, {why, plies, noshow, noshowBoth}) bilan qaytadi.
+// noshowMs ichida o'yin boshlanmasa: kirgan yutadi, hech kim kirmasa — ikkalasi ham kelmadi.
+function createPair(a, b, tcK, onEnd, noshowMs, g) {
+  tcK = TCS[tcK] ? String(tcK) : '3+2';
+  let k = code(); while (rooms.has(k)) k = code();
+  const r = { code: k, tcK, tc: TCS[tcK][0], inc: TCS[tcK][1], p: [{ uid: String(a.uid), name: a.name, ws: null, offAt: 0 }, { uid: String(b.uid), name: b.name, ws: null, offAt: 0 }], status: 'wait', at: Date.now(), S: null, fixed: true, onEnd };
+  if (g) r.g = g;
+  r.nsT = setTimeout(() => {
+    if (r.status !== 'wait') return;
+    const on = r.p.map(x => !!x.ws);
+    r.status = 'over'; r.at = Date.now();
+    if (!r.reported) { r.reported = 1; try { onEnd(on[0] && !on[1] ? 1 : on[1] && !on[0] ? 2 : 0, { why: 'noshow', plies: 0, noshow: true, noshowBoth: !on[0] && !on[1] }); } catch (e) { console.log('[mix]', e.message); } }
+    r.S = r.S || null; push(r);
+  }, noshowMs || 120000);
+  if (r.nsT.unref) r.nsT.unref();
+  rooms.set(k, r); return r;
+}
+module.exports = { handle, onClose, rooms, createPair };

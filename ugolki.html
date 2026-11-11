@@ -127,6 +127,7 @@ svg.path{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-even
     if (m.type === 'ugErr') { NET = null; A.innerHTML = '<div class="top"><b>🏁 Ugolki</b></div><div class="cd" style="text-align:center">⚠️ ' + esc(m.msg) + '</div><button class="go g2" id="mn">☰ Menyu</button>'; document.getElementById('mn').onclick = menu; return; }
     if (m.type !== 'ugState') return;
     NET = NET || {}; NET.code = m.code;
+    if (m.status === 'over' && !m.b) { A.innerHTML = '<div class="top"><b>🏁 Ugolki</b></div><div class="cd" style="text-align:center;line-height:1.6"><div style="font-size:42px">⌛</div>O‘yin bo‘lmadi — raqib vaqtida kirmadi.<br><span class="muted">Natija turnir jadvaliga yozildi.</span></div><button class="go g2" id="mn">☰ Menyu</button>'; document.getElementById('mn').onclick = menu; return; }   // 🔀 turnir: kelmaganlik
     if (m.status === 'wait') { if (!NET.waitShown) { NET.waitShown = 1; waitUi(m.code); if (NET.create) share(m.code); } return; }
     var was = G && G.mode === 'net' ? G.st : null, wasOver = was && was.over;
     var st = { b: m.b.split('').map(Number), turn: m.turn, ply: m.ply, last: m.last, pend: m.pend, over: m.res != null, res: m.res, why: m.why };
@@ -215,9 +216,9 @@ svg.path{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-even
     if (G.mode === 'bot' && r === G.me) { var w = LS.get('win', {}); w[G.lv] = (w[G.lv] || 0) + 1; LS.set('win', w); }
     var d = document.createElement('div'); d.className = 'mod'; d.id = 'fin';
     d.innerHTML = '<div class="cd"><div style="font-size:48px">' + (r === 0 ? '🤝' : r === G.me ? '🏆' : '😔') + '</div><h2>' + (r === 0 ? 'Durang' : r === G.me ? 'G‘alaba!' : G.watch ? 'O‘yin tugadi' : 'Mag‘lubiyat') + '</h2><div class="muted">' + esc(WHY[G.st.why] || '') + '</div>' +
-      '<button class="go" id="agn">🔁 ' + (G.mode === 'bot' ? 'Yana o‘ynash' : 'Revansh') + '</button><button class="go g2" id="fm">☰ Menyu</button><button class="go g2" id="fv">👁 Doskani ko‘rish</button></div>';
+      (G.mode === 'net' && G.m && G.m.tour ? '' : '<button class="go" id="agn">🔁 ' + (G.mode === 'bot' ? 'Yana o‘ynash' : 'Revansh') + '</button>') + '<button class="go g2" id="fm">☰ Menyu</button><button class="go g2" id="fv">👁 Doskani ko‘rish</button></div>';
     document.body.appendChild(d);
-    document.getElementById('agn').onclick = function () { if (G.mode === 'bot') { d.remove(); startBot(G.lv, G.me); } else { snd({ type: 'ugAgain', code: G.code }); this.textContent = '⏳ Raqib kutilmoqda…'; } };
+    if (document.getElementById('agn')) document.getElementById('agn').onclick = function () { if (G.mode === 'bot') { d.remove(); startBot(G.lv, G.me); } else { snd({ type: 'ugAgain', code: G.code }); this.textContent = '⏳ Raqib kutilmoqda…'; } };
     document.getElementById('fm').onclick = function () { d.remove(); menu(); };
     document.getElementById('fv').onclick = function () { d.remove(); };
   }

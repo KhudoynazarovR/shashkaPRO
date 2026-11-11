@@ -67,6 +67,7 @@ function finish(r, quit) {
     } catch (e) { console.log('[xotira]', e.message); }
   }
   try { require('./grp.js').mmFinished(r); } catch (e) { console.log('[grp]', e.message); }
+  if (r.onEnd && !r.reported) { r.reported = 1; clearTimeout(r.nsT); try { r.onEnd(r.winner === 0 ? 1 : r.winner === 1 ? 2 : 0, { why: quit != null ? 'resign' : 'game', plies: r.S ? 10 : 0 }); } catch (e) { console.log('[mix]', e.message); } }   // 🔀 Miks turnir
   push(r);
 }
 function deal(r) {
@@ -135,7 +136,7 @@ function handle(c, m, clients) {
       invGone(r, u.uid);
     }
     p.ws = c.ws; p.cid = c.id; p.offAt = 0; byConn.set(c.id, r.code);
-    if (r.p.length === 2 && r.status === 'wait' && (!(r.inline || r.gt) || r.p.every(x => x.ws))) deal(r);
+    if (r.p.length === 2 && r.status === 'wait' && (!(r.inline || r.gt || r.onEnd) || r.p.every(x => x.ws))) deal(r);
     push(r);
     return true;
   }
@@ -182,6 +183,7 @@ function handle(c, m, clients) {
     return true;
   }
   if (m.type === 'mmAgain') {   // qayta o'ynash (ikkalasi ham bosganda)
+    if (r.onEnd) return true;   // turnir o'yini — revansh yo'q
     if (r.status !== 'over') return true;
     r.again = r.again || {}; r.again[me] = 1;
     if (r.again[0] && r.again[1]) { r.again = {}; deal(r); push(r); return true; }
@@ -210,7 +212,7 @@ function handle(c, m, clients) {
     return true;
   }
   if (m.type === 'mmLeave') {
-    if (r.status === 'wait' && me === 0) { invGone(r); byConn.delete(c.id); clearTimeout(r.stmr); rooms.delete(r.code); if (r.inline) forget(r.code); return true; }   // bekor qilindi
+    if (r.status === 'wait' && me === 0 && !r.onEnd) { invGone(r); byConn.delete(c.id); clearTimeout(r.stmr); rooms.delete(r.code); if (r.inline) forget(r.code); return true; }   // bekor qilindi
     if (r.status === 'wait' && me === 1 && r.inline) { r.p.pop(); byConn.delete(c.id); clearTimeout(r.stmr); r.pinged = 0; push(r); return true; }   // guruh kartasi: qo'shilgan raqib chiqib ketdi — o'rin yana bo'sh
     r.p[me].ws = null; byConn.delete(c.id);
     if (r.status === 'play') finish(r, me); else push(r);
@@ -282,4 +284,16 @@ function pingHost(r, name) {
 // kubok: ikkala o'rin band, ikkalasi kirganda boshlanadi
 function createPair(a, b, size, tc, theme) { return newRoom({ size, tc, theme, p: [{ uid: a.uid, name: a.name, ws: null, offAt: 0 }, { uid: b.uid, name: b.name, ws: null, offAt: 0 }] }); }
 function again(r) { if (!r || r.status !== 'over' || r.p.length !== 2) return false; r.p.reverse(); r.again = {}; r.votes = {}; r.status = 'wait'; r.S = null; r.at = Date.now(); if (r.p.every(x => x.ws)) deal(r); push(r); return true; }
-module.exports = { handle, onClose, rooms, remember, createInline, createPair, again, finish, push, SIZES };
+// 🔀 Miks turnir: ikkala o'rin band, ikkalasi kirganda boshlanadi; natija onEnd(1|2|0, info) bilan
+function createTour(a, b, size, tc, onEnd, noshowMs) {
+  const r = createPair(a, b, size, tc, 'animals'); r.onEnd = onEnd;
+  r.nsT = setTimeout(() => {
+    if (r.status !== 'wait' || r.reported) return;
+    const on = r.p.map(x => !!x.ws); r.reported = 1; r.status = 'over'; r.winner = on[0] && !on[1] ? 0 : on[1] && !on[0] ? 1 : -1;
+    try { onEnd(on[0] && !on[1] ? 1 : on[1] && !on[0] ? 2 : 0, { why: 'noshow', plies: 0, noshow: true, noshowBoth: !on[0] && !on[1] }); } catch (e) { console.log('[mix]', e.message); }
+    push(r);
+  }, noshowMs || 120000);
+  if (r.nsT.unref) r.nsT.unref();
+  return r;
+}
+module.exports = { handle, onClose, rooms, remember, createTour, createInline, createPair, again, finish, push, SIZES };

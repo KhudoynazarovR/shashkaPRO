@@ -88,7 +88,18 @@
       });
     }
     function $(id) { return document.getElementById(id); }
-    function go(roomId) { location.href = location.pathname + "?room=" + encodeURIComponent(roomId); }
+    // 🔀 Miks turnir: boshqa o'yin xonasiga o'tish (mx:<o'yin>:<kod>) — ustma-ust oyna
+    window.mxOpen = window.mxOpen || function (id) {
+      var p = String(id).split(':'), gk = p[1], code = p[2]; if (!code) return;
+      if (gk === 'mm') { var j = function () { window.spMemori({ join: code }); }; if (window.spMemori) j(); else { var sm = document.createElement('script'); sm.src = '/memori.js?v=9'; sm.onload = j; document.head.appendChild(sm); } return; }
+      var old = document.getElementById('mxOv'); if (old) old.remove();
+      var url = gk === 'ug' ? '/ugolki.html?room=' + code : '/duo.html?g=' + encodeURIComponent(gk) + '&room=' + code;
+      var o = document.createElement('div'); o.id = 'mxOv'; o.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#100c33';
+      o.innerHTML = '<iframe src="' + url + '" style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe><button style="position:absolute;top:calc(10px + env(safe-area-inset-top,0px));right:10px;z-index:2;width:40px;height:40px;border:0;border-radius:50%;background:#000a;color:#fff;font-size:20px">✕</button>';
+      o.querySelector('button').onclick = function () { o.remove(); };
+      document.body.appendChild(o);
+    };
+    function go(roomId) { if (/^mx:/.test(String(roomId)) && window.mxOpen) return window.mxOpen(roomId); location.href = location.pathname + "?room=" + encodeURIComponent(roomId); }
 
     // ---------- ulanish ----------
     // 🎲 Stollar (playok kabi): stol ochish, bo'sh joyga o'tirish, ikkalasi «Tayyor» — o'yin; tikish stolda yozilgan

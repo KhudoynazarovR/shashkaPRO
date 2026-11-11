@@ -17,7 +17,8 @@ function hm(t) { const d = tz(t); return String(d.getUTCHours()).padStart(2, '0'
 function dayStr(t) { const d = tz(t); return DAYS[d.getUTCDay()] + ', ' + d.getUTCDate() + '-' + MON[d.getUTCMonth()]; }
 function tcCat(tc) { const m = /^([\d.]+)\+(\d+)/.exec(String(tc || '')); if (!m) return ''; const e = +m[1] * 60 + +m[2] * 40; return e < 180 ? 'Bullet' : e < 480 ? 'Blits' : 'Rapid'; }
 function tcTxt(tc) { const m = /^([\d.]+)\+(\d+)$/.exec(String(tc || '')); if (!m) return String(tc || ''); const b = +m[1]; const bs = b === 0.25 ? '¼' : b === 0.5 ? '½' : b === 0.75 ? '¾' : b === 1.5 ? '1½' : String(b); return bs + '+' + m[2]; }
-function kindTxt(t) { return t.type === 'arena' ? 'Arena' : t.type === 'olympic' ? 'Olimpiya' : 'Shveytsar'; }
+const MIXN = { mm: '🧠 Xotira', sh: '⚫ Shashka', ug: '🏁 Ugolki', chess: '♟ Shaxmat', go: '⚪ Go', gomoku: '⭕ Gomoku', pod: '🔄 Poddavki' };
+function kindTxt(t) { return t.mix ? 'Miks' : t.type === 'arena' ? 'Arena' : t.type === 'olympic' ? 'Olimpiya' : 'Shveytsar'; }
 function sharp() { try { return require('sharp'); } catch (e) { return null; } }
 async function png(svg) { const sh = sharp(); if (!sh) return null; try { return await sh(Buffer.from(svg)).png().toBuffer(); } catch (e) { console.log('[tposter] png', e.message); return null; } }
 async function tg(method, params) {
@@ -46,7 +47,7 @@ function coin(cx, cy, r) { return '<circle cx="' + cx + '" cy="' + cy + '" r="' 
 function chip(xp, y, txt, fill) { const w = 26 + txt.length * 15.5; return { w, s: '<rect x="' + xp + '" y="' + y + '" width="' + w + '" height="50" rx="14" fill="' + (fill || 'rgba(0,0,0,.28)') + '"/><text x="' + (xp + w / 2) + '" y="' + (y + 34) + '" font-family="' + F + '" font-size="25" font-weight="700" fill="#fff" text-anchor="middle">' + x(txt) + '</text>' }; }
 function regBadge(xp, y, k, c, w, hh, fs) { return '<rect x="' + xp + '" y="' + y + '" width="' + w + '" height="' + hh + '" rx="10" fill="' + c + '"/><text x="' + (xp + w / 2) + '" y="' + (y + hh * 0.7) + '" font-family="' + F + '" font-size="' + fs + '" font-weight="900" fill="#fff" text-anchor="middle">' + x(/^[A-Z]+$/.test(k) ? k : 'XORIJ') + '</text>'; }
 function annSvg(t) {
-  const name = noEmo(t.name).slice(0, 34), tags = [kindTxt(t), tcTxt(t.tc) + ' ' + tcCat(t.tc), t.pos === 'idf' ? 'IDF 780' : 'Standart', t.rated === false ? 'Reytingsiz' : 'Reytingli'].concat(t.flag ? ['Bayroqli'] : []);
+  const name = noEmo(t.name).slice(0, 34), tags = t.mix ? [kindTxt(t), t.mix.length + ' o‘yin', t.rated === false ? 'Reytingsiz' : 'Reytingli'] : [kindTxt(t), tcTxt(t.tc) + ' ' + tcCat(t.tc), t.pos === 'idf' ? 'IDF 780' : 'Standart', t.rated === false ? 'Reytingsiz' : 'Reytingli'].concat(t.flag ? ['Bayroqli'] : []);
   let s = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '">' + bg();
   s += '<circle cx="1000" cy="240" r="44" fill="#f5f5f5"/><circle cx="1130" cy="340" r="44" fill="#1f1f2e"/><circle cx="930" cy="410" r="44" fill="#1f1f2e"/>';
   s += '<text x="70" y="90" font-family="' + F + '" font-size="30" font-weight="900" fill="#fbbf24" letter-spacing="2">' + (t.rec ? 'HAFTALIK TURNIR' : 'YANGI TURNIR') + '</text>';
@@ -99,7 +100,7 @@ function resSvg(t, st, regs) {
 function joinKb(t) { return { inline_keyboard: [[{ text: '▶️ Turnirga qo‘shilish', url: APP() + '?startapp=lbt_' + t.id }]] }; }
 function annCap(t) {
   let c = '🏆 <b>' + h(t.name) + '</b>\n\n📅 ' + dayStr(t.startAt) + ' · ' + hm(t.startAt) + (t.endAt ? '–' + hm(t.endAt) : '') + '\n';
-  c += '⚡ ' + kindTxt(t) + ' · ' + tcTxt(t.tc) + ' ' + tcCat(t.tc) + ' · ' + (t.pos === 'idf' ? 'IDF 780 pozitsiyalari' : 'standart pozitsiya') + '\n';
+  c += t.mix ? '🔀 Miks: ' + t.mix.map(g => MIXN[g] || g).join(' → ') + '\n' : '⚡ ' + kindTxt(t) + ' · ' + tcTxt(t.tc) + ' ' + tcCat(t.tc) + ' · ' + (t.pos === 'idf' ? 'IDF 780 pozitsiyalari' : 'standart pozitsiya') + '\n';
   c += (t.rated === false ? '🤝 Reytingsiz' : '⭐ Reytingli') + '\n';
   if (t.flag) c += '🏳️ Viloyatingiz uchun o‘ynang — eng yaxshi 5 o‘yinchi ochkosi viloyatga!\n';
   if (t.prize > 0) c += '💰 Mukofot fondi: <b>' + fmt(t.prize) + '</b>\n';
