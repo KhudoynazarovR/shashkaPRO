@@ -610,6 +610,7 @@
       ['⚪', 'Go 9×9', 'Hudud uchun kurash', '#92400e,#d4a24c', '', 'go'],
       ['⭕', 'Gomoku', '5 talik', '#475569,#64748b', '/gomoku.html', 'gomoku'],
       ['🔄', 'Padavki shashka', 'Yutqazgan yutadi', '#0f766e,#14b8a6', '/?pad=1', 'pod'],
+      ['✊', 'Tosh-qaychi-qog‘oz', '2–8 kishi · ochko bo‘yicha', '#7c3aed,#db2777', '/rps.html', 'rp'],
     ];
     var h = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><button id="nvMiniX" style="width:44px;height:44px;border:0;border-radius:12px;background:rgba(255,255,255,.1);color:#fff;font-size:22px">‹</button><b style="font-size:22px">🎮 Mini o‘yinlar</b></div>';
     var BS = 'flex:1;text-align:center;padding:9px 6px;border-radius:10px;font-size:14px;font-weight:700';
@@ -628,6 +629,7 @@
         var dost = !r[4] || (e && e.target && e.target.closest && e.target.closest('[data-d]'));
         if (dost && r[5] === 'mem') { o.remove(); mem(); return; }   // Xotira: o'z oynasida do'st bilan bo'limi bor
         if (dost && r[5] === 'ug') { fr('/ugolki.html?m=net'); return; }
+        if (dost && r[5] === 'rp') { fr('/rps.html?m=net'); return; }
         if (dost && r[5]) { fr('/duo.html?g=' + r[5]); return; }   // 👥 do'st bilan (onlayn)
         if (r[4] === 'mem') { o.remove(); mem(); }
         else if (r[4] === 'lid') {

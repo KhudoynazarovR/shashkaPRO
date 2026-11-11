@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="uz"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Tosh-qaychi-qog'oz</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:#100c33;color:#fff;font:15px 'Segoe UI',Roboto,system-ui,sans-serif;min-height:100%}
+body{padding:calc(10px + env(safe-area-inset-top,0px)) 12px calc(16px + env(safe-area-inset-bottom,0px));max-width:520px;margin:0 auto}
+button{font:inherit;color:inherit;border:0;cursor:pointer}
+.top{display:flex;align-items:center;gap:10px;margin:0 52px 10px 0;min-height:44px}
+.top .bk{width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.08);font-size:22px;flex:none}
+.top b{font-size:18px}.top small{margin-left:auto;opacity:.7;font-size:12.5px;white-space:nowrap}
+.cd{background:#1d1858;border-radius:16px;padding:14px;margin-bottom:10px}
+.sec{font-size:12px;letter-spacing:.6px;color:#a9a4d8;font-weight:800;margin:14px 2px 8px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}.chips button{padding:9px 12px;border-radius:11px;background:#16124a;border:1px solid #3a33a0;font-size:14px;font-weight:600}
+.chips button.on{background:#3fa34d;border-color:#3fa34d}
+.go{width:100%;padding:13px;border-radius:13px;background:#3fa34d;font-weight:800;font-size:16px;margin-top:10px}
+.g2{background:#2a2470}.go:disabled{opacity:.45}
+.muted{opacity:.7;font-size:13px}
+.hd{text-align:center;margin:4px 0 10px}.hd b{font-size:20px}.hd .tm{font-size:34px;font-weight:900;color:#ffd257;font-family:ui-monospace,monospace}
+.pk{display:flex;gap:10px;margin:10px 0}.pk button{flex:1;aspect-ratio:1;border-radius:20px;background:linear-gradient(180deg,#3b2f9e,#251f6e);border:2px solid #4b40c0;font-size:min(15vw,64px);transition:transform .1s}
+.pk button.on{background:#3fa34d;border-color:#7ee08a;transform:scale(1.06)}.pk button:disabled:not(.on){opacity:.35}
+.pl{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;background:#1d1858;margin:5px 0;font-size:14.5px}
+.pl.me{box-shadow:inset 0 0 0 2px #3fa34d}.pl.out{opacity:.4}
+.pl .r{width:26px;text-align:center;font-weight:800}.pl .n{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl .c{font-size:26px;width:34px;text-align:center}.pl .g{width:40px;text-align:right;font-weight:800;color:#86efac}
+.pl .s{width:40px;text-align:right;font-weight:900;font-size:17px;color:#ffd257}
+.mod{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px}
+.mod .cd{width:100%;max-width:360px;text-align:center}.mod h2{font-size:24px;margin:6px 0}
+.pop{animation:pop .35s ease}@keyframes pop{0%{transform:scale(.4);opacity:0}100%{transform:scale(1);opacity:1}}
+</style></head><body>
+<div id="app"></div>
+<script src="/gsnd.js?v=1"></script>
+<script>
+(function () {
+  var A = document.getElementById('app'), IC = { r: '✊', s: '✌️', p: '✋' }, BEATS = { r: 's', s: 'p', p: 'r' }, NM = { r: 'Tosh', s: 'Qaychi', p: 'Qog‘oz' };
+  var BOTN = ['Shogird', 'Jangchi', 'Yo‘lbars', 'Arslon', 'Sulton', 'Legend', 'Monster'];
+  function tgw() { try { if (window.Telegram && Telegram.WebApp && Telegram.WebApp.initData) return Telegram.WebApp; if (window.parent !== window && parent.Telegram && parent.Telegram.WebApp) return parent.Telegram.WebApp; } catch (e) {} return null; }
+  function initData() { var w = tgw(); return w ? w.initData : ''; }
+  function myName() { try { var u = tgw().initDataUnsafe.user; return u.first_name || u.username || 'Siz'; } catch (e) { return 'Siz'; } }
+  function hap(t) { try { var h = tgw().HapticFeedback; if (t === 'sel') h.selectionChanged(); else h.notificationOccurred(t); } catch (e) {} }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  var LS = { get: function (k, d) { try { var v = localStorage.getItem('rp_' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }, set: function (k, v) { try { localStorage.setItem('rp_' + k, JSON.stringify(v)); } catch (e) {} } };
+  var WS = null, NET = null, S = null, tick = null, B = null;   // S — oxirgi holat (onlayn yoki bot), B — bot o'yini
+
+  function chips(id, vals, cur, fmt) { return '<div class="chips" id="' + id + '">' + vals.map(function (v) { return '<button data-v="' + v + '"' + (v === cur ? ' class="on"' : '') + '>' + fmt(v) + '</button>'; }).join('') + '</div>'; }
+  function pick(id, key) { var el = document.getElementById(id); el.onclick = function (e) { var b = e.target.closest('button'); if (!b) return; [].forEach.call(el.children, function (x) { x.classList.toggle('on', x === b); }); LS.set(key, +b.getAttribute('data-v')); }; }
+  function menu() {
+    stopNet(); B = null; S = null;
+    var rn = LS.get('rounds', 10), nb = LS.get('bots', 2);
+    A.innerHTML = '<div class="top"><b>✊✌️✋ Tosh-qaychi-qog‘oz</b><span style="margin-left:auto"></span>' + GSND.btn() + '</div>' +
+      '<div class="cd" style="font-size:13px;line-height:1.6;color:#d6d3f5">✊ tosh ✌️ qaychini, ✌️ qaychi ✋ qog‘ozni, ✋ qog‘oz ✊ toshni yutadi.<br>Har turda 10 soniya. Har bir yutgan raqibingiz uchun <b>+1 ochko</b>. Tanlamasangiz — 0, boshqalar sizni yutgan hisoblanadi (3 marta tanlamasangiz chiqasiz).<br>Ochkosi ko‘p — g‘olib; teng kelsa — qo‘shimcha tur.</div>' +
+      '<div class="sec">🔢 TURLAR SONI</div><div class="cd">' + chips('rn', [5, 10, 15], rn, function (v) { return v + ' tur'; }) + '</div>' +
+      '<div class="sec">🤖 BOT BILAN</div><div class="cd">' + chips('nb', [1, 2, 3, 5, 7], nb, function (v) { return v + ' bot'; }) + '<button class="go" id="bgo">▶ Boshlash</button></div>' +
+      '<div class="sec">👥 DO‘STLAR BILAN (2–8 kishi)</div><div class="cd"><button class="go" id="ngo" style="margin-top:0">📤 Xona ochish va havola yuborish</button><div class="muted" style="margin-top:8px;text-align:center">Havolani guruhga ham yuborsa bo‘ladi — kirganlar qo‘shiladi, siz «Boshlash» ni bosasiz</div></div>';
+    pick('rn', 'rounds'); pick('nb', 'bots'); GSND.bind(A);
+    document.getElementById('bgo').onclick = function () { botStart(LS.get('rounds', 10), LS.get('bots', 2)); };
+    document.getElementById('ngo').onclick = function () { NET = { create: 1 }; A.innerHTML = '<div class="cd" style="text-align:center">⏳ Xona ochilmoqda…</div>'; net(function () { snd({ type: 'rpCreate', rounds: LS.get('rounds', 10), init: initData() }); }); };
+    if (/[?&]m=net/.test(location.search) && !window.__rpNet) { window.__rpNet = 1; setTimeout(function () { var n = document.getElementById('ngo'); if (n) n.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100); }
+  }
+
+  // ---------- 🤖 bot bilan (telefonning o'zida)
+  function botStart(rounds, nb) {
+    var P = [{ name: myName(), me: true, score: 0, miss: 0 }];
+    for (var i = 0; i < nb; i++) P.push({ name: '🤖 ' + BOTN[i % BOTN.length], bot: true, score: 0, miss: 0 });
+    B = { rounds: rounds, round: 0, P: P, tb: null };
+    bNext();
+  }
+  function bAct() { return B.P.filter(function (x) { return !x.out && (!B.tb || B.tb.indexOf(x) >= 0); }); }
+  function bNext() {
+    if (!B) return;
+    if (!B.tb && B.round >= B.rounds) { var mx = Math.max.apply(null, B.P.map(function (x) { return x.score; })), top = B.P.filter(function (x) { return x.score === mx; }); if (top.length === 1) return bEnd(top[0]); B.tb = top; }
+    B.round++; B.phase = 'pick'; B.picks = new Map(); B.deadline = Date.now() + 10000;
+    bAct().forEach(function (x) { if (x.bot) setTimeout(function () { if (B && B.phase === 'pick') { B.picks.set(x, 'rsp'[Math.floor(Math.random() * 3)]); bCheck(); } }, 800 + Math.random() * 5000); });
+    clearTimeout(B.tmr); B.tmr = setTimeout(bResolve, 10200); bShow();
+  }
+  function bCheck() { if (bAct().every(function (x) { return B.picks.has(x); })) bResolve(); else bShow(); }
+  function bResolve() {
+    if (!B || B.phase !== 'pick') return; clearTimeout(B.tmr);
+    var Act = bAct(), rows = [];
+    Act.forEach(function (a) { var g = 0, pa = B.picks.get(a) || ''; Act.forEach(function (b) { if (a !== b) { var pb = B.picks.get(b) || ''; if (pa && (!pb || BEATS[pa] === pb)) g++; } }); a.g = g; rows.push({ name: a.name, c: pa, g: g, me: a.me }); });
+    Act.forEach(function (a) { if (B.tb) a.tbs = (a.tbs || 0) + a.g; else a.score += a.g; if (B.picks.get(a)) a.miss = 0; else if (++a.miss >= 3) a.out = true; });
+    B.last = { n: B.round, tb: !!B.tb, rows: rows }; B.phase = 'show'; B.deadline = Date.now() + 4500; bShow(true);
+    B.tmr = setTimeout(function () {
+      if (!B) return;
+      if (B.tb) { var T = B.tb.filter(function (x) { return !x.out; }), mx = Math.max.apply(null, T.map(function (x) { return x.tbs || 0; })), top = T.filter(function (x) { return (x.tbs || 0) === mx; }); T.forEach(function (x) { x.tbs = 0; }); if (top.length === 1) return bEnd(top[0]); B.tb = top; }
+      if (B.P.filter(function (x) { return !x.out; }).length < 2) return bEnd(B.P.filter(function (x) { return !x.out; })[0] || B.P[0]);
+      bNext();
+    }, 4500);
+  }
+  function bEnd(w) { B.phase = ''; B.over = true; B.winner = w.name; bShow(); }
+  function bShow(rev) {
+    var me = B.P[0];
+    S = { mode: 'bot', status: B.over ? 'over' : 'play', rounds: B.rounds, round: B.round, tb: B.tb ? B.tb.length : 0, phase: B.phase, deadline: B.deadline, winner: B.winner,
+      players: B.P.map(function (x) { return { name: x.name, score: x.score, out: !!x.out, me: !!x.me, picked: B.phase === 'pick' ? B.picks.has(x) : undefined, inTb: B.tb ? B.tb.indexOf(x) >= 0 : undefined }; }),
+      last: B.last || null, mine: B.phase === 'pick' ? B.picks.get(me) || '' : '' };
+    render(rev);
+  }
+
+  // ---------- 👥 onlayn
+  function snd(o) { try { WS.send(JSON.stringify(o)); } catch (e) {} }
+  function net(cb) {
+    if (!initData()) { alert('O‘yinni Telegram ichida (ShashkaPRO bot orqali) oching'); menu(); return; }
+    if (WS && WS.readyState === 1) return cb();
+    WS = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
+    WS.onopen = cb;
+    WS.onmessage = function (e) { var m; try { m = JSON.parse(e.data); } catch (x) { return; } onNet(m); };
+    WS.onclose = function () { WS = null; if (NET && NET.code && !NET.left) setTimeout(function () { if (NET && !NET.left) net(function () { snd({ type: 'rpJoin', code: NET.code, init: initData() }); }); }, 1500); };
+  }
+  function stopNet() { if (NET && NET.code && WS) snd({ type: 'rpLeave', code: NET.code }); if (NET) NET.left = true; NET = null; try { WS && WS.close(); } catch (e) {} WS = null; }
+  function link(code) { return 'https://t.me/DraughtsPRObot/play?startapp=rp_' + code; }
+  function share(code) { var u = 'https://t.me/share/url?url=' + encodeURIComponent(link(code)) + '&text=' + encodeURIComponent('✊✌️✋ Tosh-qaychi-qog‘oz o‘ynaymizmi? Bosing — qo‘shilasiz!'), w = tgw(); if (w && w.openTelegramLink) w.openTelegramLink(u); else window.open(u, '_blank'); }
+  function onNet(m) {
+    if (m.type === 'rpErr') { NET = null; A.innerHTML = '<div class="cd" style="text-align:center">⚠️ ' + esc(m.msg) + '</div><button class="go g2" id="mn">☰ Menyu</button>'; document.getElementById('mn').onclick = menu; return; }
+    if (m.type !== 'rpState') return;
+    NET = NET || {}; var first = !NET.code; NET.code = m.code;
+    if (first && NET.create) share(m.code);
+    var rev = S && S.phase === 'pick' && m.phase === 'show';
+    m.mode = 'net'; m.deadline = Date.now() + (m.left || 0); S = m; render(rev);
+  }
+
+  // ---------- ekran
+  function sortP(ps) { return ps.slice().sort(function (a, b) { return (a.out ? 1 : 0) - (b.out ? 1 : 0) || b.score - a.score; }); }
+  function table(ps, show) {
+    var L = show ? show.rows.slice().sort(function (a, b) { return b.g - a.g; }) : null;
+    if (L) return L.map(function (r) { return '<div class="pl pop' + (r.me || r.name === (myRow() || {}).name ? ' me' : '') + '"><span class="c">' + (r.c ? IC[r.c] : '💤') + '</span><span class="n">' + esc(r.name) + '</span><span class="g">' + (r.g ? '+' + r.g : '0') + '</span></div>'; }).join('');
+    return sortP(ps).map(function (p, i) { return '<div class="pl' + (p.me ? ' me' : '') + (p.out ? ' out' : '') + '"><span class="r">' + (p.out ? '💤' : p.score > 0 && ['🥇', '🥈', '🥉'][i] || (i + 1)) + '</span><span class="n">' + esc(p.name) + (S.tb && p.inTb ? ' ⚔️' : '') + '</span>' + (p.picked !== undefined && !p.out && (!S.tb || p.inTb) ? '<span class="c">' + (p.picked ? '✅' : '⏳') + '</span>' : '') + '<span class="s">' + p.score + '</span></div>'; }).join('');
+  }
+  function myRow() { return S && (S.players || []).filter(function (p) { return p.me; })[0]; }
+  function render(rev) {
+    if (!S) return;
+    var me = myRow(), h = '<div class="top"><button class="bk" id="bk">‹</button><b>✊✌️✋ ' + (S.mode === 'bot' ? 'Bot bilan' : 'Do‘stlar bilan') + '</b><small>' + S.rounds + ' tur</small>' + GSND.btn() + '</div>';
+    if (S.status === 'wait') {
+      h += '<div class="cd" style="text-align:center"><div style="font-size:40px">✊✌️✋</div><b>' + S.players.length + ' / 8 o‘yinchi</b><div class="muted" style="margin-top:4px">' + (S.host ? 'Do‘stlar qo‘shilgach «Boshlash» ni bosing' : '<b>' + esc(S.hostName) + '</b> boshlashini kuting…') + '</div></div>' + table(S.players) +
+        (S.host || S.players.length > 1 && !S.players[0].on ? '<button class="go" id="st"' + (S.players.length < 2 ? ' disabled' : '') + '>▶ Boshlash' + (S.players.length < 2 ? ' (kamida 2 kishi)' : '') + '</button>' : '') +
+        '<button class="go g2" id="sh">📤 Havola yuborish</button>';
+    } else if (S.status === 'play') {
+      var canPick = S.phase === 'pick' && me && !me.out && (!S.tb || me.inTb);
+      h += '<div class="hd"><b>' + (S.tb ? '⚔️ Qo‘shimcha tur' : S.round + ' / ' + S.rounds + '-tur') + '</b><div class="tm" id="tm">' + (S.phase === 'pick' ? '10' : '') + '</div><div class="muted">' + (S.phase === 'pick' ? (canPick ? (S.mine ? 'Tanlandi: ' + IC[S.mine] + ' — boshqalar kutilmoqda' : 'Tanlang!') : '👁 Tomosha') : 'Natija') + '</div></div>';
+      if (S.phase === 'pick') h += '<div class="pk">' + ['r', 's', 'p'].map(function (c) { return '<button data-c="' + c + '"' + (S.mine === c ? ' class="on"' : '') + (!canPick || S.mine ? ' disabled' : '') + '>' + IC[c] + '</button>'; }).join('') + '</div>';
+      h += S.phase === 'show' && S.last ? table(null, S.last) + '<div class="sec">🏆 JADVAL</div>' + table(S.players) : table(S.players);
+    } else {
+      h += '<div class="cd" style="text-align:center"><div style="font-size:48px">🏆</div><h2 style="margin:6px 0">' + esc(S.winner || '—') + '</h2><div class="muted">g‘olib</div></div>' + table(S.players) +
+        '<button class="go" id="ag">🔁 Yana o‘ynash</button><button class="go g2" id="mn">☰ Menyu</button>';
+    }
+    A.innerHTML = h; GSND.bind(A);
+    document.getElementById('bk').onclick = function () { if (S.status === 'play' && S.mode === 'bot') { clearTimeout(B && B.tmr); } menu(); };
+    [].forEach.call(A.querySelectorAll('[data-c]'), function (b) { b.onclick = function () { var c = b.getAttribute('data-c'); hap('sel'); GSND.play('move'); if (S.mode === 'bot') { B.picks.set(B.P[0], c); bCheck(); } else { snd({ type: 'rpPick', code: NET.code, c: c }); S.mine = c; render(); } }; });
+    var e;
+    if ((e = document.getElementById('st'))) e.onclick = function () { snd({ type: 'rpStart', code: NET.code }); };
+    if ((e = document.getElementById('sh'))) e.onclick = function () { share(NET.code); };
+    if ((e = document.getElementById('mn'))) e.onclick = menu;
+    if ((e = document.getElementById('ag'))) e.onclick = function () { if (S.mode === 'bot') botStart(B.rounds, B.P.length - 1); else snd({ type: 'rpAgain', code: NET.code }); };
+    if (rev) { GSND.play('cap'); var my = S.last && S.last.rows.filter(function (r) { return r.me || (me && r.name === me.name); })[0]; if (my) hap(my.g ? 'success' : 'warning'); }
+    if (S.status === 'over' && !S.__snd) { S.__snd = 1; GSND.play(me && S.winner === me.name ? 'win' : 'lose'); }
+  }
+  tick = setInterval(function () { var el = document.getElementById('tm'); if (!el || !S || S.phase !== 'pick') return; var s = Math.max(0, Math.ceil((S.deadline - Date.now()) / 1000)); if (el.textContent !== String(s)) { el.textContent = s; if (s <= 3 && s > 0 && !S.mine) GSND.play('tick'); } }, 200);
+  var room = new URLSearchParams(location.search).get('room');
+  if (room) { NET = { code: room.toUpperCase() }; A.innerHTML = '<div class="cd" style="text-align:center">⏳ Ulanmoqda…</div>'; net(function () { snd({ type: 'rpJoin', code: NET.code, init: initData() }); }); }
+  else menu();
+})();
+</script>
+</body></html>

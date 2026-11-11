@@ -402,6 +402,7 @@ wss.on("connection", (ws, req) => {
     if (require("./xochroom.js").handle(c, m, clients)) return;
     if (require("./ugroom.js").handle(c, m)) return;
     if (require("./duoroom.js").handle(c, m)) return;
+    if (require("./rpsroom.js").handle(c, m)) return;
 
     // Zal va turnir (lb...) xabarlari
     if (lobbyApi.handle(c, m)) return;
@@ -633,6 +634,7 @@ wss.on("connection", (ws, req) => {
     try { require("./xochroom.js").onClose(c); } catch (e) {}
     try { require("./ugroom.js").onClose(c); } catch (e) {}
     try { require("./duoroom.js").onClose(c); } catch (e) {}
+    try { require("./rpsroom.js").onClose(c); } catch (e) {}
     leaveClient(c);
     roomsApi.onClose(c);
     lobbyApi.onClose(c);
