@@ -44,7 +44,6 @@ svg.path{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-even
 .st{text-align:center;font-weight:700;margin:6px 0;min-height:20px;font-size:14px}
 .mod{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px}
 .mod .cd{width:100%;max-width:360px;text-align:center}.mod h2{font-size:24px;margin:6px 0}
-input{width:100%;padding:12px;border-radius:12px;border:1px solid #3a33a0;background:#16124a;color:#fff;font-size:17px;letter-spacing:3px;text-transform:uppercase;text-align:center}
 .code{font-size:30px;font-weight:900;letter-spacing:6px;color:#ffd257;margin:6px 0}
 .muted{opacity:.7;font-size:13px}
 </style></head><body>
@@ -75,14 +74,12 @@ input{width:100%;padding:12px;border-radius:12px;border:1px solid #3a33a0;backgr
       '<div class="chips" id="sd"><button data-v="1"' + (side === 1 ? ' class="on"' : '') + '>⚪ Oq (birinchi)</button><button data-v="2"' + (side === 2 ? ' class="on"' : '') + '>⚫ Qora</button></div>' +
       '<button class="go" id="bgo">▶ Boshlash</button></div>' +
       '<div class="sec">👥 DO‘ST BILAN</div><div class="cd"><div class="chips" id="tc">' + TC.map(function (t) { return '<button data-v="' + t[0] + '"' + (t[0] === tc ? ' class="on"' : '') + '>' + t[1] + '</button>'; }).join('') + '</div>' +
-      '<button class="go" id="ngo">📤 Xona ochish va do‘stga yuborish</button>' +
-      '<div style="display:flex;gap:8px;margin-top:10px"><input id="ci" maxlength="6" placeholder="KOD"><button class="go g2" id="jgo" style="margin:0;width:auto;padding:0 18px">Kirish</button></div></div>';
+      '<button class="go" id="ngo">📤 Do‘stga havola yuborish</button><div class="muted" style="margin-top:8px;text-align:center">Do‘stingiz havolani bosishi bilan o‘yin boshlanadi</div></div>';
     function pick(id, key, num, cb) { var el = document.getElementById(id); el.onclick = function (e) { var b = e.target.closest('button'); if (!b) return; [].forEach.call(el.children, function (x) { x.classList.toggle('on', x === b); }); var v = b.getAttribute('data-v'); LS.set(key, num ? +v : v); if (cb) cb(); }; }
     function lvd() { var v = LS.get('lv', 2); document.getElementById('lvd').textContent = LV[v - 1][2]; }
     pick('lv', 'lv', 1, lvd); pick('sd', 'side', 1); pick('tc', 'tc', 0); lvd();
     document.getElementById('bgo').onclick = function () { startBot(LS.get('lv', 2), LS.get('side', 1)); };
-    document.getElementById('ngo').onclick = function () { net(function () { snd({ type: 'ugCreate', tc: LS.get('tc', '3+2'), init: initData() }); }); waitUi(null); };
-    document.getElementById('jgo').onclick = function () { var c = document.getElementById('ci').value.trim().toUpperCase(); if (c.length < 4) return; join(c); };
+    document.getElementById('ngo').onclick = function () { NET = { create: 1 }; waitUi(null); net(function () { snd({ type: 'ugCreate', tc: LS.get('tc', '3+2'), init: initData() }); }); };
   }
 
   // ---------- bot bilan
@@ -113,23 +110,24 @@ input{width:100%;padding:12px;border-radius:12px;border:1px solid #3a33a0;backgr
     WS.onclose = function () { WS = null; if (NET && NET.code && !NET.left) setTimeout(function () { if (NET && !NET.left) net(function () { snd({ type: 'ugJoin', code: NET.code, init: initData() }); }); }, 1500); };
   }
   function stopNet() { if (NET && NET.code && WS) snd({ type: 'ugLeave', code: NET.code }); if (NET) NET.left = true; NET = null; try { WS && WS.close(); } catch (e) {} WS = null; }
-  function join(code) { NET = { code: code }; waitUi(code); net(function () { snd({ type: 'ugJoin', code: code, init: initData() }); }); }
+  function join(code) { NET = { code: code }; waitUi(code, 1); net(function () { snd({ type: 'ugJoin', code: code, init: initData() }); }); }
   function link(code) { return (window.TG_APP_LINK || (parent && parent.TG_APP_LINK) || 'https://t.me/DraughtsPRObot/play') + '?startapp=ug_' + code; }
   function share(code) {
     var t = '🏁 Ugolki o‘ynaymizmi? Bosing — o‘yinga kirasiz!', u = 'https://t.me/share/url?url=' + encodeURIComponent(link(code)) + '&text=' + encodeURIComponent(t), w = tgw();
     if (w && w.openTelegramLink) w.openTelegramLink(u); else window.open(u, '_blank');
   }
-  function waitUi(code) {
-    A.innerHTML = '<div class="top"><button class="bk" id="bk">‹</button><b>👥 Do‘st kutilmoqda</b></div>' +
-      '<div class="cd" style="text-align:center"><div style="font-size:42px">⏳</div>' + (code ? '<div class="muted">Xona kodi</div><div class="code">' + esc(code) + '</div><div class="muted">Do‘stingiz havolani bosishi bilan o‘yin boshlanadi</div><button class="go" id="sh">📤 Do‘stga yuborish</button>' : '<div class="muted">Xona ochilmoqda…</div>') + '</div>';
+  function waitUi(code, joining) {   // kod ko'rsatilmaydi — faqat havola
+    A.innerHTML = '<div class="top"><button class="bk" id="bk">‹</button><b>' + (joining ? '⏳ Ulanmoqda…' : '👥 Do‘st kutilmoqda') + '</b></div>' +
+      '<div class="cd" style="text-align:center"><div style="font-size:42px">🏁</div>' + (joining ? '<div class="muted">O‘yinga ulanmoqda…</div>' : code ? '<div class="muted" style="margin:6px 0">Havola do‘stingizga yuborildi. U bosishi bilan o‘yin boshlanadi.</div><button class="go" id="sh">📤 Yana yuborish</button><button class="go g2" id="cp">🔗 Havolani nusxalash</button>' : '<div class="muted">Xona ochilmoqda…</div>') + '</div>';
     document.getElementById('bk').onclick = menu;
     var sh = document.getElementById('sh'); if (sh) sh.onclick = function () { share(code); };
+    var cp = document.getElementById('cp'); if (cp) cp.onclick = function () { try { navigator.clipboard.writeText(link(code)); cp.textContent = '✅ Nusxalandi'; } catch (e) { prompt('Havola:', link(code)); } };
   }
   function onNet(m) {
     if (m.type === 'ugErr') { NET = null; A.innerHTML = '<div class="top"><b>🏁 Ugolki</b></div><div class="cd" style="text-align:center">⚠️ ' + esc(m.msg) + '</div><button class="go g2" id="mn">☰ Menyu</button>'; document.getElementById('mn').onclick = menu; return; }
     if (m.type !== 'ugState') return;
     NET = NET || {}; NET.code = m.code;
-    if (m.status === 'wait') { if (!NET.waitShown) { NET.waitShown = 1; waitUi(m.code); } return; }
+    if (m.status === 'wait') { if (!NET.waitShown) { NET.waitShown = 1; waitUi(m.code); if (NET.create) share(m.code); } return; }
     var was = G && G.mode === 'net' ? G.st : null, wasOver = was && was.over;
     var st = { b: m.b.split('').map(Number), turn: m.turn, ply: m.ply, last: m.last, pend: m.pend, over: m.res != null, res: m.res, why: m.why };
     G = G && G.mode === 'net' && G.code === m.code ? G : { mode: 'net', code: m.code, sel: -1, names: {} };

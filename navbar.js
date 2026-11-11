@@ -606,21 +606,24 @@
     var L = [
       ['🧠', 'Xotira', 'Juftliklarni toping · bot yoki do‘st bilan', '#0f6fb0,#0a3b6b', 'mem'],
       ['🏁', 'Ugolki', '12 dona · burchakdan burchakka · bot yoki do‘st bilan', '#b91c1c,#f97316', '/ugolki.html'],
-      ['⚫', 'Gomoku', '5 talik · bot yoki do‘st bilan', '#475569,#64748b', '/gomoku.html'],
+      ['⚫', 'Gomoku', '5 talik · bot yoki do‘st bilan', '#475569,#64748b', '/gomoku.html', 'gomoku'],
+      ['♟', 'Shaxmat', 'Klassik shaxmat · do‘st bilan', '#1e40af,#3b82f6', '', 'chess'],
+      ['⚪', 'Go 9×9', 'Hudud uchun kurash · do‘st bilan', '#92400e,#d4a24c', '', 'go'],
       ['♟', 'Xoch shashka', '4 kishilik · kompyuterga qarshi', '#b45309,#d97706', '/xoch.html'],
-      ['♙', 'Padavki shashka', 'Yutqazgan yutadi · kompyuterga qarshi', '#0f766e,#14b8a6', '/?pad=1'],
+      ['♙', 'Padavki shashka', 'Yutqazgan yutadi · bot yoki do‘st bilan', '#0f766e,#14b8a6', '/?pad=1', 'pod'],
     ];
     var h = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><button id="nvMiniX" style="width:44px;height:44px;border:0;border-radius:12px;background:rgba(255,255,255,.1);color:#fff;font-size:22px">‹</button><b style="font-size:22px">🎮 Mini o‘yinlar</b></div>';
     L.forEach(function (r, i) {
       var c = r[3].split(',');
-      h += '<div data-i="' + i + '" style="display:flex;align-items:center;gap:12px;padding:14px;margin-bottom:10px;border-radius:16px;background:linear-gradient(135deg,' + c[0] + '55,' + c[1] + '22);border:1px solid ' + c[0] + 'aa;cursor:pointer"><span style="font-size:34px;flex:none">' + r[0] + '</span><div style="flex:1;min-width:0"><b style="display:block;font-size:17px">' + r[1] + '</b><small style="opacity:.75;font-size:13px">' + r[2] + '</small></div><span style="font-size:26px;opacity:.7">›</span></div>';
+      h += '<div data-i="' + i + '" style="display:flex;align-items:center;gap:12px;padding:14px;margin-bottom:10px;border-radius:16px;background:linear-gradient(135deg,' + c[0] + '55,' + c[1] + '22);border:1px solid ' + c[0] + 'aa;cursor:pointer"><span style="font-size:34px;flex:none">' + r[0] + '</span><div style="flex:1;min-width:0"><b style="display:block;font-size:17px">' + r[1] + '</b><small style="opacity:.75;font-size:13px">' + r[2] + '</small>' + (r[5] ? '<div style="display:flex;gap:6px;margin-top:8px">' + (r[4] ? '<span data-b="1" style="padding:6px 10px;border-radius:9px;background:rgba(255,255,255,.12);font-size:13px;font-weight:700">🤖 Bot</span>' : '') + '<span data-d="1" style="padding:6px 10px;border-radius:9px;background:#3fa34d;font-size:13px;font-weight:700">👥 Do‘st bilan</span></div>' : '') + '</div><span style="font-size:26px;opacity:.7">›</span></div>';
     });
     o.innerHTML = h;
     document.body.appendChild(o);
     o.querySelector('#nvMiniX').onclick = function () { o.remove(); };
     [].forEach.call(o.querySelectorAll('[data-i]'), function (el) {
-      el.onclick = function () {
+      el.onclick = function (e) {
         var r = L[+el.getAttribute('data-i')];
+        if (r[5] && (!r[4] || (e && e.target && e.target.closest && e.target.closest('[data-d]')))) { fr('/duo.html?g=' + r[5]); return; }   // 👥 do'st bilan (onlayn)
         if (r[4] === 'mem') { o.remove(); mem(); }
         else if (r[4] === 'lid') {
           var u = 'https://lidraughts.org/analysis';
@@ -633,7 +636,7 @@
     var m = document.getElementById('nvMemRow');
     if (!m || m.dataset.mini) return;
     m.dataset.mini = '1';
-    m.innerHTML = '<span style="font-size:26px;flex:none">🎮</span><div><b style="display:block;font-size:15px">Mini o‘yinlar</b><div style="opacity:.8;font-size:12px">Xotira · Ugolki · Gomoku</div></div>';
+    m.innerHTML = '<span style="font-size:26px;flex:none">🎮</span><div><b style="display:block;font-size:15px">Mini o‘yinlar</b><div style="opacity:.8;font-size:12px">Xotira · Ugolki · Shaxmat · Go</div></div>';
     m.style.background = 'linear-gradient(110deg,#4c1d95,#7c3aed)';
     m.style.borderColor = '#a78bfa';
     m.onclick = hub;
