@@ -605,6 +605,7 @@
     o.style.cssText = 'position:fixed;inset:0;z-index:99998;background:radial-gradient(circle at 50% 0,#1a1450 0,#0b0e1a 60%);color:#fff;overflow:auto;padding:calc(14px + env(safe-area-inset-top,0px)) 14px calc(24px + env(safe-area-inset-bottom,0px))';
     var L = [
       ['🧠', 'Xotira', 'Juftliklarni toping · bot yoki do‘st bilan', '#0f6fb0,#0a3b6b', 'mem'],
+      ['🏁', 'Ugolki', '12 dona · burchakdan burchakka · bot yoki do‘st bilan', '#b91c1c,#f97316', '/ugolki.html'],
       ['⚫', 'Gomoku', '5 talik · bot yoki do‘st bilan', '#475569,#64748b', '/gomoku.html'],
       ['♟', 'Xoch shashka', '4 kishilik · kompyuterga qarshi', '#b45309,#d97706', '/xoch.html'],
       ['♙', 'Padavki shashka', 'Yutqazgan yutadi · kompyuterga qarshi', '#0f766e,#14b8a6', '/?pad=1'],
@@ -632,7 +633,7 @@
     var m = document.getElementById('nvMemRow');
     if (!m || m.dataset.mini) return;
     m.dataset.mini = '1';
-    m.innerHTML = '<span style="font-size:26px;flex:none">🎮</span><div><b style="display:block;font-size:15px">Mini o‘yinlar</b><div style="opacity:.8;font-size:12px">Xotira · Gomoku</div></div>';
+    m.innerHTML = '<span style="font-size:26px;flex:none">🎮</span><div><b style="display:block;font-size:15px">Mini o‘yinlar</b><div style="opacity:.8;font-size:12px">Xotira · Ugolki · Gomoku</div></div>';
     m.style.background = 'linear-gradient(110deg,#4c1d95,#7c3aed)';
     m.style.borderColor = '#a78bfa';
     m.onclick = hub;

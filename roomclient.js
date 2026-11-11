@@ -45,9 +45,10 @@
     var roomId = "";
     // ?room= (o'yinga o'tish) Telegram start_param dan ustun: aks holda eski havola/turnir havolasi o'yinni bosib ketadi
     // 🧠 Xotira havolasi (mm_KOD): shashka/AI doskasi emas — Xotira o'yinini ochamiz
-    try { var _sp = (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || ""; if (!q.get("room") && /^mm_[A-Z0-9]{6}$/i.test(_sp)) { if (!window.spMemori) { var _ms = document.createElement("script"); _ms.src = "/memori.js?v=9"; document.head.appendChild(_ms); } return; } } catch (e) {}
+    try { var _sp = (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || ""; if (!q.get("room") && /^ug_[A-Z0-9]{6}$/i.test(_sp)) { var _ugGo = function () { if (document.getElementById("ugOv")) return; var o = document.createElement("div"); o.id = "ugOv"; o.style.cssText = "position:fixed;inset:0;z-index:99999;background:#100c33"; o.innerHTML = '<iframe src="/ugolki.html?room=' + _sp.slice(3).toUpperCase() + '" style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe><button style="position:absolute;top:calc(10px + env(safe-area-inset-top,0px));right:10px;z-index:2;width:40px;height:40px;border:0;border-radius:50%;background:#000a;color:#fff;font-size:20px">✕</button>'; o.querySelector("button").onclick = function () { o.remove(); }; document.body.appendChild(o); }; if (document.body) setTimeout(_ugGo, 300); else document.addEventListener("DOMContentLoaded", function () { setTimeout(_ugGo, 300); }); return; }   // 🏁 Ugolki: do'st havolasi
+    if (!q.get("room") && /^mm_[A-Z0-9]{6}$/i.test(_sp)) { if (!window.spMemori) { var _ms = document.createElement("script"); _ms.src = "/memori.js?v=9"; document.head.appendChild(_ms); } return; } } catch (e) {}
     if (q.get("room")) roomId = q.get("room");
-    else if (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param && !/^(ref_|pz_|pf_|go_|shop_|pb_|pzt_|ntf_|mm_|prem$|corr_|lbt_|lbs_|lbf_)/.test(tg.initDataUnsafe.start_param)) roomId = String(tg.initDataUnsafe.start_param);
+    else if (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param && !/^(ref_|pz_|pf_|go_|shop_|pb_|pzt_|ntf_|mm_|ug_|prem$|corr_|lbt_|lbs_|lbf_)/.test(tg.initDataUnsafe.start_param)) roomId = String(tg.initDataUnsafe.start_param);
     var _nb = function () { var bt = document.getElementById("rcBoot"); if (bt) bt.remove(); };
     if (/^lb[ts]_/.test(roomId)) return _nb(); // turnir/sians havolasi - xona emas
     if (!ROOM_RE.test(roomId)) return _nb(); // xona rejimi emas
