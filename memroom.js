@@ -11,7 +11,7 @@ const rooms = new Map();       // code -> room
 const byConn = new Map();      // conn id -> code
 const R = () => crypto.randomInt(1e9) / 1e9;
 
-const ANIMALS = Array.from('🐶🐱🐭🐹🐰🦊🐻🐼🐨🐯🦁🐮🐷🐸🐵🐔🐧🐦🦆🦉🐴🦄🐝🦋🐢🐍🐙🦀🐬🐳🦒🐘');
+const ANIMALS = Array.from('🐶🐱🐭🐹🐰🦊🐻🐼🐨🐯🦁🐮🦓🐸🐵🐔🐧🐦🦆🦉🐴🦄🐝🦋🐢🦜🐙🦀🐬🐳🦒🐘');
 const ROMANTIC = (s => Array.from(s).reduce((a, c) => { if (/[\u200d\ufe0f]/.test(c) && a.length) a[a.length - 1] += c; else a.push(c); return a; }, []))('💖💘💝💞💗💓🌹🌷🌸🌺🌻💐🦋🦢🕊️🐞🌈⭐🧸🎀🎁💌💍💎🍓🍒🍫🧁🍭🎂🌙✨🕯️🎈🪷🌼');
 function hook(r) { if (r.inline || r.gt) { try { require('./gcard.js').mmTouch(r); } catch (e) {} } }
 function code() { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s = ''; const b = crypto.randomBytes(6); for (let i = 0; i < 6; i++) s += a[b[i] % a.length]; return s; }

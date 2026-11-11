@@ -33,7 +33,7 @@
   function hap(k) { try { if (tg && tg.HapticFeedback) { if (k === 'ok') tg.HapticFeedback.notificationOccurred('success'); else if (k === 'no') tg.HapticFeedback.impactOccurred('light'); else tg.HapticFeedback.selectionChanged(); } } catch (e) {} }
   var THEMES = {
     shashka: { ic: '♟', t: 'Shashka', s: '♟️👑🏆🥇🥈🥉🎯⭐🔥💎🎲🧩📖⏱️🛡️⚔️🦁🐯🦅🐺🦍🤖👹🦾🎓🏅🎖️🪙💰🧠⚡🌙' },
-    animals: { ic: '🐶', t: 'Hayvonlar', s: '🐶🐱🐭🐹🐰🦊🐻🐼🐨🐯🦁🐮🐷🐸🐵🐔🐧🐦🦆🦉🐴🦄🐝🦋🐢🐍🐙🦀🐬🐳🦒🐘' },
+    animals: { ic: '🐶', t: 'Hayvonlar', s: '🐶🐱🐭🐹🐰🦊🐻🐼🐨🐯🦁🐮🦓🐸🐵🐔🐧🐦🦆🦉🐴🦄🐝🦋🐢🦜🐙🦀🐬🐳🦒🐘' },
     fruits: { ic: '🍐', t: 'Mevalar', s: '🍏🍎🍐🍊🍋🍌🍉🍇🍓🥜🍈🍒🍑🥭🍍🥥🥝🍅🍆🥑🥦🥬🥒🌶️🌽🥕🧄🧅🥔🍠🥐🍯' },
     romantic: { ic: '🌹', t: 'Romantik', s: '💖💘💝💞💗💓🌹🌷🌸🌺🌻💐🦋🦢🕊️🐞🌈⭐🧸🎀🎁💌💍💎🍓🍒🍫🧁🍭🎂🌙✨🕯️🎈🪷🌼' },
     letters: { ic: '🔤', t: 'Harflar', s: 'A B C D E F G H I J K L M N O P Q R S T U V W X Y Z 1 2 3 4 5 6' }
