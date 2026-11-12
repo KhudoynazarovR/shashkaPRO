@@ -121,6 +121,10 @@ function move(j, cb) {
   if (!ready) return cb({ error: "notready", code: 503 });
   const b = j && j.board, side = (j && j.side > 0) ? 1 : -1;
   if (!Array.isArray(b) || b.length !== 64 || !b.every(v => Number.isInteger(v) && v >= -2 && v <= 2)) return cb({ error: "bad", code: 400 });
+  if (!j.arena && (j.kk || Number(j.time) >= 1) && !(Number(j.rem) > 0 && Number(j.rem) < 5)) {   // 🛡 qo'pol xato qo'riqchisi (kkadm.js) + King Kong yurishlari manbasi
+    const _cb = cb, gb = b.slice(), gs = side;
+    cb = r => { let out = r; try { const K = require('./kkadm.js'); out = K.guard(gb, gs, r); if (j.kk && j.room) K.note(j.room, gb, gs, out); } catch (e) {} _cb(out); };
+  }
   let secs = Math.min(30, Math.max(0.05, Number(j.time) || 1));
   // ♟ endshpil bazasi: kam dona qolganda kuchli botlar mukammal o'ynaydi (hisoblamasdan)
   if ((secs >= 2 || j.tbAlways) && TBP && TBP.ready()) {

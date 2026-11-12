@@ -27,6 +27,7 @@ function result(room, winner) {
   try {
     if (!room || !room.vsBot || !room.botCfg || room.botCfg.id !== 'bot_kingkong' || room.etude) return;
     const kkCol = room.white && /^bot/.test(String(room.white.uid)) ? 'white' : 'black', r = winner === 'draw' ? 'd' : winner === kkCol ? 'w' : 'l';
+    try { require('./kkadm.js').record(room, r); } catch (e) {}   // 🦍 King Kong xatolari paneli
     const S = used.get(room.id); if (S) { for (const k of S) { const x = B()[k]; if (x) x[r] = (x[r] || 0) + 1; } used.delete(room.id); store.save(); }
     if (r === 'l' && (room.moves || []).length >= 8) {   // adminlarga: King Kong yutqazdi
       const human = room[kkCol === 'white' ? 'black' : 'white'] || {};

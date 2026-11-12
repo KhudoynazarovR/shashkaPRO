@@ -135,7 +135,7 @@
     h += "<div class='mnm' id='mnMsg'></div>";
     SEC.forEach(function (s) { h += "<div class='mqS'><span>" + s[2] + "</span>" + s[0] + "</div><div class='mqGr'>" + s[1].map(cardHtml).join("") + "</div>"; });
     h += "<div class='mqS'><span>⚙️</span>ILOVA</div><div class='mqLs'>" + LIST.map(rowHtml).join("") + "</div>";
-    if (window.__isAdmin) h += "<div class='mqS'><span>🛡</span>ADMIN</div><div class='mqGr'>" + cardHtml(["📊", "Statistika", "Faollik, iqtisod, Premium, tikish", "@stats", "#0ea5e9,#22c55e"]) + (document.getElementById("bpBtn") ? cardHtml(["🤖", "Bot kuchi", "Botlar kuchini 1–100% belgilash", "@bpow", "#8e6ff0,#c58bf2"]) : "") + "</div>";
+    if (window.__isAdmin) h += "<div class='mqS'><span>🛡</span>ADMIN</div><div class='mqGr'>" + cardHtml(["📊", "Statistika", "Faollik, iqtisod, Premium, tikish", "@stats", "#0ea5e9,#22c55e"]) + cardHtml(["🦍", "King Kong xatolari", "O‘yinlardagi xatolarni topish va tuzatish", "@kkadm", "#b45309,#f59e0b"]) + (document.getElementById("bpBtn") ? cardHtml(["🤖", "Bot kuchi", "Botlar kuchini 1–100% belgilash", "@bpow", "#8e6ff0,#c58bf2"]) : "") + "</div>";
     h += "<div class='mqV'>ShashkaPRO · v" + (window.SP_VER || "10.1") + "</div>";
     panel.innerHTML = h + "<div class='mnp'></div>";
   }
@@ -210,6 +210,7 @@
     if (a === "@live") { close(); liveOpen(); return; }
     if (a === "@deb") { close(); if (window.spDebut) window.spDebut(); else { var _d = document.createElement('script'); _d.src = '/debyut.js?v=2'; _d.onload = function () { window.spDebut(); }; document.head.appendChild(_d); } return; }
     if (a === "@stats") { close(); if (window.spStats) window.spStats(); else { var _s = document.createElement('script'); _s.src = '/statsview.js?v=2'; _s.onload = function () { window.spStats(); }; document.head.appendChild(_s); } return; }
+    if (a === "@kkadm") { var _go = function () { window.kkPanel(); }; if (window.kkPanel) _go(); else { var _s = document.createElement("script"); _s.src = "/kkpanel.js?v=1"; _s.onload = _go; document.head.appendChild(_s); } return; }
     if (a === "@bpow") { var _bp = document.getElementById("bpBtn"); if (_bp) _bp.click(); return; }
     if (a === "@arena") { close(); if (window.avOpen) window.avOpen(); return; }
     if (a === "@arch") { close(); archOpen(); return; }
