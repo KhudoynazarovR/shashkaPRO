@@ -336,11 +336,11 @@ function createLobby({ send, clients, roomsApi }) {
     };
   }
 
-  function friendState(uid) {
+  function friendState(uid, onSet) {
     let st, us;
     try { st = require('./store'); us = st.users(); } catch (e) { return { friends: [], freqIn: [] }; }
     const u = us[String(uid)] || {};
-    const on = new Set(lbClients().map(x => String(x.lb.uid)));
+    const on = onSet || new Set(lbClients().map(x => String(x.lb.uid)));
     return {
       friends: (u.friends || []).map(id => { const f = us[id] || {}; return { uid: id, name: f.name || '?', elo: f.elo || 1000, gems: f.diamonds || 0, hasAv: !!st.avOf(f), online: on.has(id) }; }),
       freqIn: (u.fReq || []).map(id => { const f = us[id] || {}; return { uid: id, name: f.name || '?', hasAv: !!st.avOf(f) }; }),
@@ -348,12 +348,13 @@ function createLobby({ send, clients, roomsApi }) {
     };
   }
 
-  function stateFor(c) {
+  // ⚡ Holat yuborish: umumiy qism (turnirlar, o'yinchilar, simul, stollar) BIR MARTA hisoblanib, bir marta JSON qilinadi,
+  // har kishiga faqat o'zining kichik qismi qo'shiladi. Avval har bir mijoz uchun hammasi qaytadan hisoblanardi (N² — turnirda qotish sababi).
+  function statePer(c, onSet) {
     const uid = c.lb.uid;
     return {
       type: 'lbState', now: Date.now(),
-      me: { uid, name: c.lb.name, prem: (() => { try { const st = require('./store'); return !!st.isPremium(st.users()[String(uid)] || {}); } catch (e) { return false; } })() }, ...friendState(uid),
-      players: playersList(),
+      me: { uid, name: c.lb.name, prem: (() => { try { const st = require('./store'); return !!st.isPremium(st.users()[String(uid)] || {}); } catch (e) { return false; } })() }, ...friendState(uid, onSet),
       inQueue: queue.has(uid), myQueueTc: (queue.get(uid) || {}).tc || null,
       seekers: [...queue.values()].reduce((o, x) => { if (x.uid !== uid && connsOf(x.uid).length) { const k = x.tc + (x.voice ? 'v' : '') + (x.stake ? 's' + x.stake : ''); o[k] = (o[k] || 0) + 1; } return o; }, {}),
       myStake: (queue.get(uid) || {}).stake || 0,
@@ -361,20 +362,32 @@ function createLobby({ send, clients, roomsApi }) {
         .map(x => ({ id: x.id, fromName: x.fromName, tc: x.tc + describeOpts(x), stake: x.stake || 0, rm: !!x.rm })),
       outgoing: [...challenges.values()].filter(x => x.fromUid === uid)
         .map(x => ({ id: x.id, toUid: x.toUid, tc: x.tc })),
+      clubs: clubsApi.list(uid)
+    };
+  }
+  function sharedJson() {
+    const sh = {
+      players: playersList(),
       tournaments: [...tournaments.values()].map(pubT), promo: promoInfo(),
       simuls: [...simuls.values()].map(pubSimul),
       tables: [...tables.values()].map(pubTbl),
-      clubs: clubsApi.list(uid),
       appLink: process.env.TG_APP_LINK || process.env.APP_LINK || ''
     };
+    return JSON.stringify(sh).slice(1, -1);
   }
-
+  let pushMs = 0;   // oxirgi yuborish qancha vaqt oldi — og'ir bo'lsa keyingisi kechroq (yuk ostida server bo'g'ilmasin)
   function push() {
     if (pushTimer) return;
     pushTimer = setTimeout(() => {
       pushTimer = null;
-      for (const c of lbClients()) if (!c.isBot) send(c.ws, stateFor(c));
-    }, 200);
+      const t0 = Date.now();
+      const L = lbClients().filter(c => !c.isBot && c.ws && c.ws.readyState === 1);
+      if (!L.length) return;
+      const sh = sharedJson(), onSet = new Set(lbClients().map(x => String(x.lb.uid)));
+      for (const c of L) { try { c.ws.send('{' + JSON.stringify(statePer(c, onSet)).slice(1, -1) + ',' + sh + '}'); } catch (e) {} }
+      pushMs = Date.now() - t0;
+      if (pushMs > 300) console.log('[lobby] holat yuborish ' + pushMs + ' ms, ' + L.length + ' kishi, ' + Math.round(sh.length / 1024) + ' KB');
+    }, pushMs > 150 ? 1500 : pushMs > 50 ? 700 : 250);
   }
 
   // ---------- xona ochish ----------
