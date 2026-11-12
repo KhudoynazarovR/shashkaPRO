@@ -269,7 +269,7 @@
       ov.innerHTML = h;
       ov.querySelector("#mnLvX").onclick = stop;
       Array.prototype.forEach.call(ov.querySelectorAll("[data-r]"), function (b) {
-        b.onclick = function () { location.href = location.pathname + "?room=" + encodeURIComponent(b.getAttribute("data-r")); };
+        b.onclick = function () { var r = b.getAttribute("data-r"); if (window.rcOpen) { stop(); window.rcOpen(r); } else location.href = location.pathname + "?room=" + encodeURIComponent(r); };
       });
     }
     draw([]);

@@ -99,7 +99,27 @@
       o.querySelector('button').onclick = function () { o.remove(); };
       document.body.appendChild(o);
     };
-    function go(roomId) { if (/^mx:/.test(String(roomId)) && window.mxOpen) return window.mxOpen(roomId); location.href = location.pathname + "?room=" + encodeURIComponent(roomId); }
+    function go(roomId) { if (/^mx:/.test(String(roomId)) && window.mxOpen) return window.mxOpen(roomId); if (window.rcOpen) return window.rcOpen(roomId); location.href = location.pathname + "?room=" + encodeURIComponent(roomId); }
+    // 🪟 O'yin xonasi sahifa qayta yuklanmasdan — zal ustidagi oynada ochiladi va yopiladi (zal ulanishi uzilmaydi)
+    var EMB = false; try { EMB = !!window.__spEmb && window.parent !== window && !!window.parent.rcOpen; } catch (e) {}
+    if (EMB) {
+      window.rcOpen = function (id) { window.parent.rcOpen(id); };
+      window.rcClose = function () { window.parent.rcClose(); };
+    } else if (!inRoom && !/[?&]pad=1/.test(location.search)) {
+      window.rcOpen = function (id) {
+        id = String(id || ""); if (!ROOM_RE.test(id)) return;
+        var ov = $("rcFrameOv");
+        if (!ov) { ov = document.createElement("div"); ov.id = "rcFrameOv"; ov.style.cssText = "position:fixed;inset:0;z-index:2147480000;background:#0b1017"; document.body.appendChild(ov); }
+        ov.innerHTML = "<iframe src=\"" + location.pathname + "?room=" + encodeURIComponent(id) + "&emb=1\" allow=\"autoplay; microphone; clipboard-read; clipboard-write\" style=\"position:absolute;inset:0;width:100%;height:100%;border:0;background:#0b1017\"></iframe>";
+        sendMsg({ type: "lbInRoom", v: true });
+      };
+      window.rcClose = function () {
+        var ov = $("rcFrameOv"); if (!ov) return;
+        try { var f = ov.querySelector("iframe"); if (f) f.src = "about:blank"; } catch (e) {}
+        ov.remove(); sendMsg({ type: "lbInRoom", v: false });
+        try { if (window.lbAfterRoom) window.lbAfterRoom(); } catch (e) {}
+      };
+    }
 
     // ---------- ulanish ----------
     // 🎲 Stollar (playok kabi): stol ochish, bo'sh joyga o'tirish, ikkalasi «Tayyor» — o'yin; tikish stolda yozilgan
@@ -208,6 +228,7 @@
     };
     window.lbStakeRematch = function (rid) { sendMsg({ type: "lbStakeRematch", roomId: String(rid) }); };   // 🔁 2× tikish revansh
     window.lbEtude = function (id) { sendMsg({ type: "lbEtude", id: String(id) }); };   // ♔ etyudni King Kongga qarshi yechish
+    window.lbEtOpen = function () { try { if (!inRoom && localStorage.getItem("etOpen") === "1") { localStorage.removeItem("etOpen"); setTimeout(function () { var se = document.createElement("script"); se.src = "/etudeview.js?v=1"; se.onload = function () { window.spEtudes(); }; document.head.appendChild(se); }, 300); } } catch (e) {} };
     try { if (!inRoom && localStorage.getItem("etOpen") === "1") { localStorage.removeItem("etOpen"); setTimeout(function () { var se = document.createElement("script"); se.src = "/etudeview.js?v=1"; se.onload = function () { window.spEtudes(); }; document.head.appendChild(se); }, 900); } } catch (e) {}
     function sendMsg(m) {
       var s = JSON.stringify(m);
@@ -267,6 +288,7 @@
 
     function onGo(m) {
       if (m.roomId === curRoom) return;
+      if (!inRoom && $("rcFrameOv")) return;   // 🪟 o'yin oynasi ochiq: o'tishni oyna ichidagi zal boshqaradi
       if (m.reason === "series" && m.series) {
         var stx = "🔁 Seriya: " + m.series.game + "/" + m.series.total + "-o‘yin<br>" + esc(m.series.score) + "<br>Raqib: <b>" + esc(m.opponent) + "</b> (" + (m.color === "white" ? "oq" : "qora") + ")";
         var sleft = 3, st2;
@@ -368,6 +390,7 @@
       btn = document.createElement("a");
       btn.id = "lbBack";
       btn.href = location.pathname;
+      btn.onclick = function (e) { if (EMB) { e.preventDefault(); window.rcClose(); } };
       btn.textContent = "🏟 Zal";
       document.body.appendChild(btn);
     } else {
@@ -1522,7 +1545,7 @@ document.head.appendChild(_as); }
       box.onclick = function (e) {
         var t = e.target; while (t && t !== box && !(t.getAttribute && t.getAttribute("data-r"))) t = t.parentNode;
         var id = t && t.getAttribute ? t.getAttribute("data-r") : "";
-        if (id) location.href = location.pathname + "?room=" + encodeURIComponent(id);
+        if (id) { if (window.rcOpen) window.rcOpen(id); else location.href = location.pathname + "?room=" + encodeURIComponent(id); }
       };
       sig = ""; render();
     }
@@ -2641,12 +2664,17 @@ document.head.appendChild(_as); }
 
 /* ===== turnir o'yinidan keyin turnir oynasiga qaytish ===== */
 ;(function () {
-  var tid; try { tid = sessionStorage.getItem("spOpenT"); if (tid) sessionStorage.removeItem("spOpenT"); } catch (e) {}
-  if (!tid || /[?&]room=|startapp=/.test(location.search)) return;
-  var k = 0, iv = setInterval(function () {
-    if (window.tvOpen && window.__lb) { clearInterval(iv); setTimeout(function () { try { window.tvOpen(tid); } catch (e) {} }, 700); }
-    else if (++k > 60) clearInterval(iv);
-  }, 250);
+  function run(wait) {
+    var tid; try { tid = sessionStorage.getItem("spOpenT"); if (tid) sessionStorage.removeItem("spOpenT"); } catch (e) {}
+    if (!tid || /[?&]room=|startapp=/.test(location.search)) return;
+    var k = 0, iv = setInterval(function () {
+      if (window.tvOpen && window.__lb) { clearInterval(iv); setTimeout(function () { try { window.tvOpen(tid); } catch (e) {} }, wait); }
+      else if (++k > 60) clearInterval(iv);
+    }, 250);
+  }
+  // 🪟 o'yin oynasi yopilganda (qayta yuklanmasdan): turnir oynasi va etyudlar
+  window.lbAfterRoom = function () { run(50); try { if (window.lbEtOpen) window.lbEtOpen(); } catch (e) {} };
+  run(700);
 })();
 
 /* TVTABS — turnir sahifasida 3 ta tab: Juftliklar · Jadval · LIVE (jonli doskalar) */

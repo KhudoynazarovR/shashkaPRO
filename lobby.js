@@ -1316,6 +1316,7 @@ function createLobby({ send, clients, roomsApi }) {
     if (!m || typeof m.type !== 'string' || !m.type.startsWith('lb')) return false;
     if (m.type === 'lbHello') { hello(c, m); return true; }
     if (!c.lb) { err(c, 'Avval kirish kerak'); return true; }
+    if (m.type === 'lbInRoom') { c.lb.inRoom = !!m.v; return true; }   // 🪟 zal ichida o'yin oynasi ochildi/yopildi (band holati)
     const me = c.lb;
     {   // ⛔ o'yin taqiqi: odamlar bilan o'yin, turnir, simul yopiq (botlar va masalalar ochiq)
       const PB = ['lbQuick', 'lbChallenge', 'lbTblNew', 'lbTblSit', 'lbTblReady', 'lbFriendNew', 'lbFriendJoin', 'lbTJoin', 'lbTCreate', 'lbSJoin', 'lbSCreate'];

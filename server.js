@@ -178,6 +178,22 @@ const VER = String(process.env.RENDER_GIT_COMMIT || Date.now()).slice(0, 8);
 const _zlib = require("zlib"), _cr = require("crypto");
 const _gzc = new Map();
 const TXT = new Set([".html", ".js", ".css", ".svg", ".webmanifest"]);
+// ⚡ fayl mazmuni xeshi: index.html dagi skriptlar ?h=<xesh> bilan beriladi va telefonda 1 yil saqlanadi
+// (mazmun o'zgarsa xesh ham o'zgaradi — eski nusxa qolib ketmaydi). Takroriy kirishda bu fayllarga so'rov ketmaydi.
+const _fh = new Map();
+function fileHash(rel) {
+  rel = String(rel || "").replace(/^\/+/, "");
+  if (!/^[A-Za-z0-9_\-\/.]+$/.test(rel) || rel.includes("..")) return null;
+  for (const f of [path.join(__dirname, rel), path.join(__dirname, "public", rel)]) {
+    let st; try { st = fs.statSync(f); } catch (e) { continue; }
+    if (!st.isFile()) continue;
+    const k = st.size + "-" + st.mtimeMs, o = _fh.get(f);
+    if (o && o.k === k) return o.h;
+    const h = _cr.createHash("md5").update(fs.readFileSync(f)).digest("hex").slice(0, 10);
+    _fh.set(f, { k, h }); return h;
+  }
+  return null;
+}
 function sendSmart(req, res, headers, tag, getBuf) {
   const etag = 'W/"' + tag + '"';
   headers["ETag"] = etag; headers["Vary"] = "Accept-Encoding";
@@ -282,10 +298,14 @@ function serveFile(req, res) {
     }
     if (typeof req !== "undefined" && /[?&]pad=1/.test(req.url || "")) html = html.replace(/<script src="\/(navbar|menu|lobbyclient|roomclient|profile|ratings|dailyq|sharecard|voice)\.js[^"]*"><\/script>\n?/g, "");
     html = html.replace(/(lobbyclient|roomclient|sound)\.js(\?v=[0-9a-zA-Z]+)?/g, "$1.js?v=" + VER);
+    // ⚡ mahalliy skript/uslublar: ?h=<mazmun xeshi> (uzoq keshlanadi)
+    html = html.replace(/(src|href)="\/([A-Za-z0-9_\-\/]+\.(?:js|css))(\?[^"]*)?"/g, (m0, a, f) => { const h = fileHash(f); return h ? a + '="/' + f + "?h=" + h + '"' : m0; });
+    // 🪟 o'yin xonasi zal ichidagi oynada (emb=1): Telegram obyekti asosiy sahifadan olinadi (qayta yuklanmaydi, tebranish va h.k. ishlaydi)
+    if (/[?&]emb=1/.test(req.url || "")) html = html.replace('<script src="https://telegram.org/js/telegram-web-app.js"></script>', '<script>try{if(window.parent!==window&&window.parent.Telegram&&window.parent.Telegram.WebApp){window.Telegram=window.parent.Telegram;window.__spEmb=1}}catch(e){}</script>');
     return sendSmart(req, res, { "Content-Type": types[".html"], "Cache-Control": "no-cache" }, "h-" + _cr.createHash("md5").update(html).digest("hex"), () => Buffer.from(html));
   }
 
-  if (TXT.has(ext)) { const _st = fs.statSync(file); return sendSmart(req, res, { "Content-Type": types[ext], "Cache-Control": "no-cache" }, ext.slice(1) + "-" + _st.size + "-" + Math.floor(_st.mtimeMs), () => fs.readFileSync(file)); }
+  if (TXT.has(ext)) { const _st = fs.statSync(file), _hq = new URL(req.url, "http://localhost").searchParams.get("h"); return sendSmart(req, res, { "Content-Type": types[ext], "Cache-Control": (_hq && _hq === fileHash(requested)) ? "public, max-age=31536000, immutable" : "no-cache" }, ext.slice(1) + "-" + _st.size + "-" + Math.floor(_st.mtimeMs), () => fs.readFileSync(file)); }
   res.writeHead(200, { "Content-Type": types[ext], "Cache-Control": "no-cache" });
   fs.createReadStream(file).pipe(res);
 }
