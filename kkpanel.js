@@ -13,7 +13,7 @@
   function bdIdx() { var v = ls('kka_bd', null); if (v != null && BDS[v]) return v; var m = ls('rc_menu_v1', {}); return m && m.board >= 0 && BDS[m.board] ? m.board : 0; }
   var O, V = { tab: 'l', list: null, g: null, cur: 0, pick: null, sel: -1, safe: null, msg: '', busy: false };
   var css = document.createElement('style');
-  css.textContent = '#kkP{position:fixed;inset:0;z-index:99990;background:#100c33;color:#fff;overflow:auto;font:15px system-ui,-apple-system,Roboto,sans-serif;padding:calc(10px + env(safe-area-inset-top,0px)) 12px calc(20px + env(safe-area-inset-bottom,0px))}' +
+  css.textContent = '#kkP{position:fixed;inset:0;z-index:2147482000;background:#100c33;color:#fff;overflow:auto;font:15px system-ui,-apple-system,Roboto,sans-serif;padding:calc(10px + env(safe-area-inset-top,0px)) 12px calc(96px + env(safe-area-inset-bottom,0px))}' +
     '#kkP .in{max-width:520px;margin:0 auto}#kkP button{font:inherit;color:inherit;border:0;cursor:pointer}' +
     '#kkP .top{display:flex;align-items:center;gap:10px;margin-bottom:10px}#kkP .top b{flex:1;font-size:18px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#kkP .bk{width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.1);font-size:22px;flex:none}' +
     '#kkP .st{display:flex;gap:6px;margin-bottom:8px}#kkP .st div{flex:1;background:#1d1858;border-radius:12px;padding:8px 2px;text-align:center}#kkP .st b{display:block;font-size:19px}#kkP .st small{font-size:11px;opacity:.7}' +
@@ -30,6 +30,16 @@
     '#kkP .ch{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}#kkP .ch button{padding:8px 10px;border-radius:10px;background:#16124a;border:1px solid #3a33a0;font-weight:700;font-size:13px}#kkP .ch .on{background:#3fa34d;border-color:#3fa34d}#kkP .ch .bad{opacity:.55}' +
     '#kkP .go{width:100%;margin-top:8px;padding:13px;border-radius:13px;background:#3fa34d;font-weight:800;font-size:15.5px}#kkP .go:disabled{opacity:.45}#kkP .msg{text-align:center;margin:8px 0;font-weight:700}' +
     '#kkP .bdp{display:flex;gap:5px;overflow-x:auto;padding:2px 0 6px;scrollbar-width:none}#kkP .bdp button{flex:none;width:34px;height:34px;border-radius:8px;border:2px solid transparent;padding:0;overflow:hidden;display:grid;grid-template-columns:1fr 1fr}#kkP .bdp .on{border-color:#ffd257}#kkP .bdp i{display:block}';
+  css.textContent +=
+    '#kkP .hero{border-radius:18px;padding:14px;margin:4px 0 10px;background:linear-gradient(135deg,#7c2d12,#be123c);box-shadow:0 6px 18px rgba(190,18,60,.35)}#kkP .hero.ok{background:linear-gradient(135deg,#14532d,#15803d);box-shadow:none}#kkP .hero b{font-size:19px;display:block}#kkP .hero p{font-size:13px;opacity:.9;margin:4px 0 10px;line-height:1.4}#kkP .hero button{width:100%;background:#fff;color:#9f1239;border-radius:12px;padding:11px;font-weight:900;font-size:15px}' +
+    '#kkP .auto{background:#1d1858;border-radius:14px;padding:11px 12px;display:flex;align-items:center;gap:10px;font-size:13.5px;margin-bottom:6px;width:100%;text-align:left}#kkP .auto small{display:block;opacity:.7;font-size:12px}#kkP .sw{width:46px;height:27px;border-radius:14px;background:#4b4680;position:relative;flex:none}#kkP .sw:after{content:"";position:absolute;left:3px;top:3px;width:21px;height:21px;border-radius:50%;background:#fff;transition:.2s}#kkP .sw.on{background:#16a34a}#kkP .sw.on:after{left:22px}' +
+    '#kkP .sec{margin:14px 2px 4px;font-size:12px;color:#a9a4d8;font-weight:800;letter-spacing:.5px}' +
+    '#kkP .sb{position:fixed;left:0;right:0;bottom:0;z-index:5;display:flex;gap:8px;padding:10px 12px calc(12px + env(safe-area-inset-bottom,0px));background:#16124a;box-shadow:0 -6px 18px rgba(0,0,0,.35)}#kkP .sb button{flex:1;padding:13px 4px;border-radius:13px;font-weight:900;font-size:14.5px;background:#3a3480}#kkP .sb .y{background:#16a34a}#kkP .sb .o{background:#2563eb}#kkP .sb button:disabled{opacity:.45}' +
+    '#kkP .cmp{display:flex;gap:8px;margin-top:9px}#kkP .cmp div{flex:1;border-radius:12px;padding:8px;font-size:13px;text-align:center}#kkP .cmp .bad{background:#3b0d18;color:#fca5a5}#kkP .cmp .good{background:#0f3d22;color:#86efac}#kkP .cmp b{display:block;font-size:17px}' +
+    '#kkP .dots{display:flex;justify-content:center;gap:5px;flex-wrap:wrap;margin:2px 0 6px}#kkP .dots i{width:7px;height:7px;border-radius:50%;background:#3a3480}#kkP .dots i.on{background:#fbbf24;width:18px;border-radius:4px}' +
+    '#kkP .bdw{position:relative}#kkP svg.ar{position:absolute;left:5px;top:5px;width:calc(100% - 10px);height:calc(100% - 10px);pointer-events:none;z-index:4}' +
+    '#kkP .row{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:12px;background:#1d1858;margin:5px 0;font-size:13.5px}#kkP .row .f{flex:1;min-width:0}#kkP .row small{opacity:.7;display:block;font-size:12px}#kkP .row button{background:#3a3480;border-radius:9px;padding:6px 9px;font-size:12.5px;font-weight:700}' +
+    '#kkP .pill{display:inline-block;border-radius:8px;padding:2px 7px;font-size:11.5px;font-weight:800;background:#2a2470;margin-left:4px}';
   document.head.appendChild(css);
 
   // ♟ dona: Do'kondan tanlangan bo'lsa — o'sha rasm (damka ham), aks holda oddiy dona va tekis oltin toj
@@ -50,12 +60,121 @@
     if (window.spBoard) run(); else { var sc = document.createElement('script'); sc.src = '/board.js'; sc.onload = run; document.head.appendChild(sc); }
   }
   function close() { if (O) O.remove(); O = null; }
+  function sbar(html) { var o = O.querySelector('.sb'); if (o) o.remove(); if (!html) return null; O.insertAdjacentHTML('beforeend', '<div class="sb">' + html + '</div>'); return O.querySelector('.sb'); }
+  function heroHtml(d) {
+    var f = d.fx && d.fx.fix; if (!f) return '';
+    var h = f.pending ? '<div class="hero"><b>⚡ ' + f.pending + ' ta tuzatish' + (f.ready < f.pending ? ' (' + f.ready + ' tasi tayyor)' : ' tayyor') + '</b><p>King Kong xatolarini o‘zi topdi va har biriga dvigatel 15 s o‘ylab to‘g‘ri yurish tanladi' + (f.ready < f.pending ? ' (qolganlari server bo‘shaganda)' : '') + '.</p><button id="kkFx">👀 Ko‘rib chiqish (' + f.pending + ')</button></div>'
+      : '<div class="hero ok"><b>✅ Hamma xatolar ko‘rib chiqilgan</b><p style="margin-bottom:0">Yangi xato topilsa shu yerda chiqadi. Ertalab 08:00 da Telegram’da hisobot keladi.</p></div>';
+    return h + '<button class="auto" id="kkAu"><span style="flex:1">🤖 <b>Avto-tuzatish</b>' + (f.autoN ? ' <span class="pill">' + f.autoN + ' ta</span>' : '') + '<small>Aniq xatolar o‘zi o‘rgatiladi, sizga faqat shubhalilari qoladi</small></span><span class="sw' + (f.auto ? ' on' : '') + '"></span></button>';
+  }
+  // umumiy doska (strelkalar bilan): marks {i: 'fr'|'to'|'gf'|'gt'}, arrows [[from,to,color]]
+  function bdHtml(b, flip, marks, arrows) {
+    var BD = BDS[bdIdx()], h = '<div class="bdw"><div class="bd">';
+    for (var v = 0; v < 64; v++) { var i = flip ? 63 - v : v, r = i >> 3, c = i & 7, p = b[i], dark = (r + c) % 2 === 1; h += '<div class="c ' + ((marks && marks[i]) || '') + '" data-i="' + i + '" style="background:' + (dark ? BD[2] : BD[1]) + '">' + (p ? pcHtml(p) : '') + '</div>'; }
+    h += '</div>';
+    if (arrows && arrows.length) {
+      var xy = function (i) { var v = flip ? 63 - i : i; return [(v & 7) + 0.5, (v >> 3) + 0.5]; };
+      h += '<svg class="ar" viewBox="0 0 8 8"><defs><marker id="kkmr" markerWidth="3" markerHeight="3" refX="1.6" refY="1.5" orient="auto"><path d="M0,0 L3,1.5 L0,3z" fill="#e11d48"/></marker><marker id="kkmg" markerWidth="3" markerHeight="3" refX="1.6" refY="1.5" orient="auto"><path d="M0,0 L3,1.5 L0,3z" fill="#22c55e"/></marker></defs>';
+      arrows.forEach(function (a) { var p = xy(a[0]), q = xy(a[1]), dx = q[0] - p[0], dy = q[1] - p[1], L = Math.sqrt(dx * dx + dy * dy) || 1, e = [q[0] - dx / L * 0.32, q[1] - dy / L * 0.32]; h += '<line x1="' + p[0] + '" y1="' + p[1] + '" x2="' + e[0] + '" y2="' + e[1] + '" stroke="' + (a[2] === 'g' ? '#22c55e' : '#e11d48') + '" stroke-width=".18" stroke-linecap="round" opacity=".92" marker-end="url(#' + (a[2] === 'g' ? 'kkmg' : 'kkmr') + ')"/>'; });
+      h += '</svg>';
+    }
+    return h + '</div>';
+  }
+  function evs(v) { return v == null ? '—' : (v > 0 ? '+' : '') + (Math.round(v * 10) / 10).toFixed(1); }
+  var SRCN = { oyin: '🎮 o‘yindan', tun: '🌙 tungi tahlil', sinov: '🤖 sinov o‘yini' };
+
+  // ---------- ⚡ tuzatishlar (bittadan, bir bosishda)
+  var F = { list: [], i: 0, msg: '', busy: false };
+  function fixes() {
+    var C = shell('⚡ Tuzatishlar', list); sbar(null);
+    C.innerHTML = '<div class="msg">Yuklanmoqda…</div>';
+    post('/api/kkadm/fixes', {}).then(function (r) { F.list = r.list || []; F.i = 0; F.msg = ''; drawFix(); }).catch(function () { C.innerHTML = '<div class="msg">⚠️ Server bilan aloqa yo‘q</div>'; });
+  }
+  function drawFix() {
+    var C = O.querySelector('#kkC'), x = F.list[F.i];
+    O.querySelector('.top b').textContent = '⚡ Tuzatish ' + (F.list.length ? (F.i + 1) + ' / ' + F.list.length : '');
+    if (!x) { sbar(null); C.innerHTML = '<div class="hero ok"><b>🎉 Hammasi ko‘rib chiqildi</b><p style="margin-bottom:0">' + (F.msg || 'Yangi xatolar paydo bo‘lganda shu yerda chiqadi.') + '</p></div>'; return; }
+    var b = x.best, flip = x.s === -1, arr = [[x.from, x.to, 'r']], mk = {}; mk[x.from] = 'fr'; mk[x.to] = 'to';
+    if (b && !b.same) { arr.push([b.from, b.to, 'g']); mk[b.from] = 'gf'; mk[b.to] = 'gt'; }
+    var h = '<div class="dots">' + F.list.slice(0, 24).map(function (y, k) { return '<i' + (k === F.i ? ' class="on"' : '') + '></i>'; }).join('') + '</div>';
+    h += '<div class="box" style="padding:10px"><div class="h">KING KONG (' + (x.s === 1 ? 'OQ' : 'QORA') + ') · ' + (SRCN[x.src] || '') + (x.hits > 1 ? ' · 🔁 ' + x.hits + ' marta' + (x.opps > 1 ? ', ' + x.opps + ' o‘yinchi' : '') : '') + '</div>';
+    h += bdHtml(x.b, flip, mk, arr);
+    h += '<div class="cmp"><div class="bad">O‘ynadi<b>' + esc(x.t) + ' ??</b>' + (x.loss ? '−' + x.loss + ' dona' : x.drop ? 'baho −' + x.drop : '') + (x.playedEv != null ? ' · ' + evs(x.playedEv) : '') + '</div>';
+    h += b ? '<div class="good">' + (b.same ? 'Dvigatel ham' : 'To‘g‘risi') + '<b>' + esc(b.t) + '</b>' + evs(b.ev) + ' · 15 s' + (b.safe ? '' : ' ⚠️') + '</div>' : '<div class="good" style="opacity:.75">To‘g‘risi<b>⏳</b>server bo‘shaganda</div>';
+    h += '</div>';
+    if (x.line && x.line.length) h += '<div style="font-size:12.5px;opacity:.85;margin-top:8px">Nima uchun: ' + esc(x.line.join(' ')) + '</div>';
+    if (b && b.same) h += '<div style="font-size:12.5px;color:#fde68a;margin-top:6px">⚠️ Dvigatel ham shu yurishni tanladi — ehtimol qurbon ataylab. O‘tkazib yuborish tavsiya etiladi.</div>';
+    h += '</div>' + (F.msg ? '<div class="msg">' + F.msg + '</div>' : '');
+    if (b && !b.same) h += '<div class="box" style="background:#0f3d22;border:1px solid #16a34a;color:#bbf7d0;font-size:12.5px">✅ Tasdiqlansa — King Kong bu pozitsiyada endi doim <b>' + esc(b.t) + '</b> o‘ynaydi</div>';
+    C.innerHTML = h;
+    var bar = sbar('<button data-f="skip">✖ O‘tkazish</button><button class="o" data-f="own">♟ Boshqa</button><button class="y" data-f="ok"' + (b && !b.same && !F.busy ? '' : ' disabled') + '>✅ O‘rgat</button>');
+    [].forEach.call(bar.querySelectorAll('[data-f]'), function (el) {
+      el.onclick = function () {
+        var a = el.getAttribute('data-f');
+        if (a === 'own') { V.g = null; ownPick(x); return; }
+        F.busy = true; drawFix();
+        post('/api/kkadm/fix', { id: x.id, act: a }).then(function (r) {
+          F.busy = false; if (r.error) { F.msg = '⚠️ ' + esc(r.error); return drawFix(); }
+          if (a === 'ok') { F.msg = '✅ O‘rgatildi: ' + esc(b.t); try { window.Telegram.WebApp.HapticFeedback.notificationOccurred('success'); } catch (e) {} } else F.msg = '';
+          F.list.splice(F.i, 1); if (F.i >= F.list.length) F.i = Math.max(0, F.list.length - 1); drawFix();
+        }).catch(function () { F.busy = false; F.msg = '⚠️ Server bilan aloqa yo‘q'; drawFix(); });
+      };
+    });
+  }
+  // ♟ o'zim tanlayman: xavfsiz yurishlar ro'yxati
+  function ownPick(x) {
+    var C = O.querySelector('#kkC'); sbar('<button data-b="1">‹ Orqaga</button>'); O.querySelector('.sb [data-b]').onclick = drawFix;
+    C.innerHTML = '<div class="msg">⏳</div>';
+    post('/api/kkadm/safe', { board: x.b, side: x.s }).then(function (r) {
+      var L = r.list || [], best = L.length ? L[0].v : 0;
+      C.innerHTML = bdHtml(x.b, x.s === -1, (function () { var m = {}; m[x.from] = 'fr'; m[x.to] = 'to'; return m; })(), [[x.from, x.to, 'r']]) + '<div class="box"><div class="h">QAYSI YURISHNI O‘RGATAY?</div><div class="ch">' + L.map(function (m, k) { return '<button data-m="' + k + '"' + (m.v < best ? ' class="bad"' : '') + '>' + (m.v < best ? '⚠️ ' : '✅ ') + esc(m.t) + '</button>'; }).join('') + '</div></div>';
+      [].forEach.call(C.querySelectorAll('[data-m]'), function (el) {
+        el.onclick = function () { var m = L[+el.getAttribute('data-m')]; post('/api/kkadm/fix', { id: x.id, act: 'ok', from: m.from, to: m.to }).then(function (r) { F.msg = r.error ? '⚠️ ' + esc(r.error) : '✅ O‘rgatildi: ' + esc(m.t); if (!r.error) { F.list.splice(F.i, 1); if (F.i >= F.list.length) F.i = Math.max(0, F.list.length - 1); } drawFix(); }); };
+      });
+    });
+  }
+  // ---------- 📚 o'rgatilganlar (natijasi bilan)
+  function taught() {
+    var C = shell('📚 O‘rgatilgan yurishlar', list); sbar(null); C.innerHTML = '<div class="msg">Yuklanmoqda…</div>';
+    get('/api/kkbook').then(function (r) {
+      var L = r.list || [];
+      C.innerHTML = '<div style="opacity:.75;font-size:12.5px;margin:0 2px 6px">Jami ' + (r.total || L.length) + ' ta. Natija — shu yurish o‘ynalgan o‘yinlarda King Kong qanday tugatgani.</div>' + (L.length ? L.map(function (x) {
+        var n = x.w + x.l + x.d, res = n ? '✅ ' + x.w + ' · ❌ ' + x.l + ' · 🤝 ' + x.d : 'hali o‘ynalmagan';
+        return '<div class="row"><span class="f"><b>' + esc(x.n) + '</b>' + (x.auto ? ' <span class="pill">🤖 avto</span>' : '') + (x.l > x.w && n >= 3 ? ' <span class="pill" style="background:#7c2d12">⚠️ foyda yo‘q</span>' : '') + '<small>' + when(x.at) + ' · ' + x.used + ' marta · ' + res + '</small></span><button data-k="' + esc(x.k) + '">↩ Bekor</button></div>';
+      }).join('') : '<div class="msg" style="opacity:.7">Hali o‘rgatilmagan</div>');
+      [].forEach.call(C.querySelectorAll('[data-k]'), function (el) { el.onclick = function () { if (!confirm('Bu o‘rgatish bekor qilinsinmi?')) return; post('/api/kkbook/del', { k: el.getAttribute('data-k') }).then(function () { el.closest('.row').remove(); }); }; });
+    });
+  }
+  // ---------- 📈 aniqlik grafigi
+  function accView() {
+    var C = shell('📈 Aniqlik grafigi', list); sbar(null);
+    var D = (V.list && V.list.fx && V.list.fx.days) || [], P = D.filter(function (x) { return x.acc != null; });
+    if (!D.length) { C.innerHTML = '<div class="msg" style="opacity:.7">Hali ma’lumot yo‘q — o‘yinlar tahlil qilingan sari to‘planadi</div>'; return; }
+    var W = 340, H = 140, mn = Math.min.apply(null, P.map(function (x) { return x.acc; }).concat([90])), sx = function (i) { return 10 + i * (W - 20) / Math.max(1, D.length - 1); }, sy = function (v) { return H - 18 - (v - mn) / (100 - mn || 1) * (H - 34); };
+    var pts = D.map(function (x, i) { return x.acc == null ? null : sx(i).toFixed(1) + ',' + sy(x.acc).toFixed(1); }).filter(Boolean);
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%"><rect width="' + W + '" height="' + H + '" rx="12" fill="#1d1858"/>' + [mn, (mn + 100) / 2, 100].map(function (v) { return '<line x1="8" x2="' + (W - 8) + '" y1="' + sy(v) + '" y2="' + sy(v) + '" stroke="#3a3480" stroke-dasharray="3 4"/><text x="' + (W - 10) + '" y="' + (sy(v) - 3) + '" fill="#a9a4d8" font-size="10" text-anchor="end">' + Math.round(v) + '%</text>'; }).join('') +
+      '<polyline points="' + pts.join(' ') + '" fill="none" stroke="#fbbf24" stroke-width="2.4" stroke-linejoin="round"/>' + D.map(function (x, i) { return x.acc == null ? '' : '<circle cx="' + sx(i) + '" cy="' + sy(x.acc) + '" r="3" fill="#fbbf24"/>'; }).join('') +
+      '<text x="10" y="' + (H - 4) + '" fill="#a9a4d8" font-size="10">' + D[0].d + '</text><text x="' + (W - 10) + '" y="' + (H - 4) + '" fill="#a9a4d8" font-size="10" text-anchor="end">' + D[D.length - 1].d + '</text></svg>';
+    C.innerHTML = svg + '<div style="font-size:12.5px;opacity:.75;margin:6px 2px">Aniqlik = King Kong yurishlarining qancha qismi dona yo‘qotmagan (tahlil qilingan o‘yinlarda).</div>' + D.slice().reverse().map(function (x) { return '<div class="row"><span class="f"><b>' + x.d + '</b><small>' + x.n + ' o‘yin: ✅ ' + x.w + ' · ❌ ' + x.l + ' · 🤝 ' + x.dr + '</small></span><b style="color:#fbbf24">' + (x.acc == null ? '—' : x.acc + '%') + '</b></div>'; }).join('');
+  }
+  // ---------- 📖 debyutlar
+  function opsView() {
+    var C = shell('📖 Debyutlar', list); sbar(null);
+    var L = (V.list && V.list.fx && V.list.fx.ops) || [];
+    C.innerHTML = '<div style="font-size:12.5px;opacity:.75;margin:0 2px 6px">Birinchi 3 yurish bo‘yicha (kamida 2 o‘yin). Eng ko‘p yutqazilganlari tepada.</div>' + (L.length ? L.map(function (x) { var p = Math.round(x.l * 100 / x.n); return '<div class="row"><span class="f" style="font-family:ui-monospace,monospace;font-size:12.5px">' + esc(x.k) + '<small style="font-family:system-ui">' + x.n + ' o‘yin: ✅ ' + x.w + ' · ❌ ' + x.l + ' · 🤝 ' + x.d + '</small></span><b style="color:' + (p >= 50 ? '#fca5a5' : p >= 25 ? '#fdba74' : '#86efac') + '">' + p + '%</b></div>'; }).join('') : '<div class="msg" style="opacity:.7">Hali yetarli o‘yin yo‘q</div>');
+  }
+  // ---------- 🤖 sinov o'yinlari
+  function sparView() {
+    var C = shell('🤖 Tungi sinov o‘yinlari', list); sbar(null);
+    var L = (V.list && V.list.fx && V.list.fx.spar) || [];
+    C.innerHTML = '<div style="font-size:12.5px;opacity:.75;margin:0 2px 6px">Har kecha 01:00–07:00 da server bo‘sh bo‘lsa King Kong dvigatelga qarshi 4 tagacha o‘yin o‘ynaydi (tasodifiy debyut). Topilgan xatolar «⚡ Tuzatishlar»ga tushadi.</div>' + (L.length ? L.map(function (x) { return '<div class="row"><span style="font-size:20px">' + (x.res === 'w' ? '✅' : x.res === 'l' ? '❌' : '🤝') + '</span><span class="f">King Kong ' + (x.kk === 1 ? 'oq' : 'qora') + '<small>' + when(x.at) + ' · ' + Math.ceil(x.plies / 2) + ' yurish</small></span>' + (x.errs ? '<span class="tg">⚠️ ' + x.errs + '</span>' : '<span class="tg ok">✓</span>') + '</div>'; }).join('') : '<div class="msg" style="opacity:.7">Hali sinov o‘yini bo‘lmagan</div>');
+  }
   function shell(title, back) { O.innerHTML = '<div class="in"><div class="top"><button class="bk" id="kkB">‹</button><b>' + title + '</b></div><div id="kkC"></div></div>'; O.querySelector('#kkB').onclick = back; return O.querySelector('#kkC'); }
   function when(t) { var d = new Date(t), n = new Date(), hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); return (d.toDateString() === n.toDateString() ? 'bugun ' : d.toDateString() === new Date(Date.now() - 864e5).toDateString() ? 'kecha ' : d.getDate() + '.' + String(d.getMonth() + 1).padStart(2, '0') + ' ') + hm; }
 
   // ---------- 1) ro'yxat
   function list() {
-    V.g = null;
+    V.g = null; if (O) sbar(null);
     var C = shell('🦍 King Kong xatolari', close);
     C.innerHTML = '<div class="msg">Yuklanmoqda…</div>';
     get('/api/kkadm').then(function (d) {
@@ -66,15 +185,23 @@
   function drawList() {
     var C = O.querySelector('#kkC'), d = V.list, t = d.today || {};
     var L = d.games.filter(function (g) { return V.tab === 'a' ? true : V.tab === 'l' ? g.res !== 'w' : (g.errs || g.guard); });
-    C.innerHTML = '<div class="st"><div><b>' + t.n + '</b><small>bugun</small></div><div><b style="color:#86efac">' + t.w + '</b><small>yutdi</small></div><div><b style="color:#fca5a5">' + t.l + '</b><small>yutqazdi</small></div><div><b style="color:#fdba74">' + t.e + '</b><small>⚠️ xato</small></div></div>' +
+    C.innerHTML = heroHtml(d) + '<div class="st"><div><b>' + t.n + '</b><small>bugun</small></div><div><b style="color:#86efac">' + t.w + '</b><small>yutdi</small></div><div><b style="color:#fca5a5">' + t.l + '</b><small>yutqazdi</small></div><div><b style="color:#fdba74">' + t.e + '</b><small>⚠️ xato</small></div></div>' +
       (d.guard && d.guard.n ? '<div style="font-size:12.5px;opacity:.75;margin:-2px 2px 6px">🛡 Qo‘riqchi: ' + d.guard.n + ' tekshiruv, ' + d.guard.swap + ' marta yurishni almashtirdi (o‘rtacha ' + Math.round(d.guard.ms / d.guard.n) + ' ms)</div>' : '') +
       '<div class="tabs"><button data-t="l"' + (V.tab === 'l' ? ' class="on"' : '') + '>❌ Yutqazgan</button><button data-t="e"' + (V.tab === 'e' ? ' class="on"' : '') + '>⚠️ Xatoli</button><button data-t="a"' + (V.tab === 'a' ? ' class="on"' : '') + '>Hammasi</button></div>' +
       (L.length ? L.map(function (g) {
         var tag = g.errs == null ? '<span class="tg q">⏳ tekshirilmagan</span>' : g.errs && g.fixed >= g.errs ? '<span class="tg ok">✅ tuzatilgan</span>' : g.errs ? '<span class="tg">⚠️ ' + (g.errs - g.fixed) + '</span>' : '<span class="tg ok">✓ toza</span>';
         return '<button class="gm" data-id="' + esc(g.id) + '"><span class="r">' + (g.res === 'w' ? '✅' : g.res === 'l' ? '❌' : '🤝') + '</span><span class="n">' + esc(g.opp) + '<small>' + when(g.at) + ' · ' + esc(g.tc || '∞') + ' · ' + g.n + ' yurish' + (g.guard ? ' · 🛡 ' + g.guard : '') + '</small></span>' + tag + '</button>';
       }).join('') : '<div class="msg" style="opacity:.7">Bu yerda hozircha o‘yin yo‘q</div>');
+    C.insertAdjacentHTML('beforeend', '<div class="sec">BOSHQA</div>' +
+      '<button class="gm" data-x="taught"><span class="r">📚</span><span class="n">O‘rgatilgan yurishlar<small>natijasi bilan · bekor qilish mumkin</small></span>›</button>' +
+      '<button class="gm" data-x="acc"><span class="r">📈</span><span class="n">Aniqlik grafigi<small>kunlik aniqlik va natijalar (30 kun)</small></span>›</button>' +
+      '<button class="gm" data-x="ops"><span class="r">📖</span><span class="n">Debyutlar<small>King Kong qaysi debyutda ko‘p yutqazadi</small></span>›</button>' +
+      '<button class="gm" data-x="spar"><span class="r">🤖</span><span class="n">Tungi sinov o‘yinlari<small>King Kong ↔ dvigatel, xatolar tuzatishlarga tushadi</small></span>›</button>');
     [].forEach.call(C.querySelectorAll('[data-t]'), function (b) { b.onclick = function () { V.tab = b.getAttribute('data-t'); drawList(); }; });
     [].forEach.call(C.querySelectorAll('[data-id]'), function (b) { b.onclick = function () { game(b.getAttribute('data-id')); }; });
+    [].forEach.call(C.querySelectorAll('[data-x]'), function (b) { b.onclick = function () { var x = b.getAttribute('data-x'); if (x === 'taught') taught(); else if (x === 'acc') accView(); else if (x === 'ops') opsView(); else sparView(); }; });
+    var hf = C.querySelector('#kkFx'); if (hf) hf.onclick = fixes;
+    var au = C.querySelector('#kkAu'); if (au) au.onclick = function () { var v = !(d.fx && d.fx.auto); if (v && !confirm('Avto-tuzatish yoqilsinmi?\n\nAniq xatolar (dona yo‘qotish, dvigatel 15 s tasdiqlagan, qo‘riqchi xavfsiz degan) sizsiz o‘rgatiladi. Hammasi «O‘rgatilgan yurishlar»da ko‘rinadi va bekor qilinadi.')) return; post('/api/kkadm/auto', { v: v }).then(function (r) { if (d.fx) d.fx.auto = !!r.auto; drawList(); }); };
   }
 
   // ---------- 2) o'yin
@@ -105,7 +232,6 @@
       h += '<div class="c ' + (hl[i] || '') + '" data-i="' + i + '" style="background:' + (dark ? BD[2] : BD[1]) + '">' + (p ? pcHtml(p) : '') + (tgt[i] ? '<i class="dot"></i>' : '') + '</div>';
     }
     h += '</div><div class="mv">' + g.moves.map(function (m, k) { return '<span data-k="' + k + '" class="' + (m.kk ? 'k' : '') + (m.kk && m.err && !m.taught ? ' x' : '') + (m.taught ? ' t' : '') + (k === V.cur ? ' cur' : '') + '">' + (m.s === 1 || k === 0 ? num(k) : '') + m.t + (m.kk && m.err && !m.taught ? ' ⚠️' : '') + (m.g ? ' 🛡' : '') + '</span>'; }).join('') + '</div>';
-    h += '<button class="go" id="kkAn" style="background:#2563eb;margin:2px 0 6px">🔬 To‘liq tahlil (grafik, baho, aniqlik)</button>';
     h += '<div class="nav"><button data-n="0">⏮</button><button data-n="-1">◀</button><button class="er" data-n="e">⚠️ Keyingi xato</button><button data-n="1">▶</button></div>';
     // ma'lumot qutisi
     var who = x.kk ? 'KING KONG (' + (x.s === 1 ? 'OQ' : 'QORA') + ') O‘YNADI' : 'RAQIB O‘YNADI';
@@ -118,7 +244,7 @@
       if (opts && opts.length) h += '<div class="ch">' + opts.map(function (m, k) { return '<button data-a="' + k + '"' + (alt && alt.from === m.from && alt.to === m.to ? ' class="on"' : '') + '>✅ ' + m.t + '</button>'; }).join('') + '<button data-pick="1"' + (V.sel >= 0 || (alt && alt.own) ? ' class="on"' : '') + '>♟ Doskadan tanlash</button></div>';
       else h += '<div class="ch"><button data-pick="1"' + (V.sel >= 0 || (alt && alt.own) ? ' class="on"' : '') + '>♟ Boshqa yurish tanlash</button></div>';
       if (V.sel >= 0) h += '<div style="margin-top:6px;opacity:.8;font-size:12.5px">Yashil nuqtali katakni bosing (⚠️ — dona yo‘qotadigan yurish)</div>';
-      if (alt) h += '<button class="go" id="kkT"' + (V.busy ? ' disabled' : '') + '>✅ O‘rgatish: ' + x.t + ' o‘rniga ' + alt.t + '</button>';
+
     }
     h += '</div>' + (V.msg ? '<div class="msg">' + V.msg + '</div>' : '');
     C.innerHTML = h;
@@ -134,8 +260,9 @@
     [].forEach.call(C.querySelectorAll('[data-a]'), function (b) { b.onclick = function () { var m = x.err.safe[+b.getAttribute('data-a')]; V.pick = { from: m.from, to: m.to, t: m.t }; V.sel = -1; drawGame(); }; });
     var pk = C.querySelector('[data-pick]'); if (pk) pk.onclick = function () { V.pick = null; V.sel = -1; loadSafe(function () { V.msg = '♟ Donani bosing'; V.selMode = true; drawGame(); }); };
     C.querySelector('#kkBd').onclick = function (e) { var el = e.target.closest('[data-i]'); if (el) tap(+el.getAttribute('data-i')); };
-    var tb = C.querySelector('#kkT'); if (tb) tb.onclick = teach;
-    var an = C.querySelector('#kkAn'); if (an) an.onclick = openAna;
+    var bar = sbar('<button class="o" id="kkAn">🔬 To‘liq tahlil</button>' + (alt ? '<button class="y" id="kkT"' + (V.busy ? ' disabled' : '') + '>✅ ' + esc(alt.t.replace(' ⚠️', '')) + ' ni o‘rgat</button>' : ''));
+    var tb = bar.querySelector('#kkT'); if (tb) tb.onclick = teach;
+    bar.querySelector('#kkAn').onclick = openAna;
   }
   function go(k) { if (!V.g || k < 0 || k >= V.g.moves.length) return; V.cur = k; V.pick = null; V.sel = -1; V.safe = null; V.selMode = false; V.msg = ''; drawGame(); }
   function loadSafe(cb) { var x = V.g.moves[V.cur]; if (V.safe) return cb(); post('/api/kkadm/safe', { board: x.b, side: x.s }).then(function (r) { V.safe = r.list || []; cb(); }).catch(function () { V.msg = '⚠️ Server bilan aloqa yo‘q'; drawGame(); }); }
@@ -156,5 +283,5 @@
       drawGame();
     }).catch(function () { V.busy = false; V.msg = '⚠️ Server bilan aloqa yo‘q'; drawGame(); });
   }
-  window.kkPanel = function () { if (O) O.remove(); O = document.createElement('div'); O.id = 'kkP'; document.body.appendChild(O); list(); };
+  window.kkPanel = function (mode) { if (O) O.remove(); O = document.createElement('div'); O.id = 'kkP'; document.body.appendChild(O); if (mode === 'fix') { O.innerHTML = '<div class="in"><div class="top"><button class="bk" id="kkB">‹</button><b></b></div><div id="kkC"></div></div>'; fixes(); get('/api/kkadm').then(function (d) { if (!d.error) V.list = d; }); } else list(); };
 })();

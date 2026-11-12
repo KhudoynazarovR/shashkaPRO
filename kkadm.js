@@ -89,7 +89,9 @@ function record(room, res) {   // res: 'w' | 'l' | 'd' (King Kong nuqtai nazarid
     const st = startBoard(room), src = SRC.get(room.id); SRC.delete(room.id);
     const g = { id: room.id + '_' + Date.now().toString(36), at: Date.now(), opp: String(human.name || '?').slice(0, 24), tc: room.tc || '', res, kk: kkCol === 'white' ? 1 : -1, b0: st.b.join(','), s0: st.s, steps: room.moves.map(x => [x.from.r * 8 + x.from.c, x.to.r * 8 + x.to.c]), src: {}, errs: null };
     if (src) { let n = 0; const fm = fullMoves(st.b, st.s, room.moves); fm.forEach((x, k) => { const v = src.get(x.b.join('') + x.s); if (v) g.src[k] = v; }); void n; }
-    const L = G(); L.unshift(g); if (L.length > 80) L.length = 80;
+    if (!(room.opening && room.opening.board)) { try { const tk = require('./kkbook.js').notation(room.moves).split(' '), o = []; let n = 0; for (const t of tk) { o.push(t); if (!/^\d+\.$/.test(t) && ++n >= 6) break; } if (n >= 6) g.op = o.join(' '); } catch (e) {} }
+    const L = G(); L.unshift(g); if (L.length > 200) L.length = 200;
+    try { require('./kkfix.js').onRecord(g); } catch (e) {}
     store.save();
     if (res !== 'w') setTimeout(() => analyze(g), 3000);   // yutqazgan/durang — darhol tekshiramiz (yutganlari admin ochganda)
   } catch (e) { console.log('[kkadm]', e.message); }
@@ -107,7 +109,7 @@ function analyze(g) {
     const fm = movesOf(g), errs = []; let k = 0;
     const step = () => {
       while (k < fm.length && fm[k].s !== g.kk) k++;
-      if (k >= fm.length) { g.errs = errs; RUN.delete(g.id); try { store.save(); } catch (e) {} return done(g); }
+      if (k >= fm.length) { g.errs = errs; RUN.delete(g.id); try { require('./kkfix.js').onAnalyzed(g, fm.filter(y => y.s === g.kk).length); } catch (e) {} try { store.save(); } catch (e) {} return done(g); }
       const x = fm[k], c = check(x.b, x.s, x.from, x.to);
       if (c && c.loss >= 1) errs.push({ k, loss: c.loss, safe: c.safe, line: c.line, key: x.b.join('') + x.s });
       k++; setTimeout(step, 40);
@@ -137,7 +139,8 @@ function handle(req, res, p, h) {
   if (req.method === 'GET') {
     const L = G(), day = new Date(Date.now() + 5 * 3600e3).toISOString().slice(0, 10), td = L.filter(g => new Date(g.at + 5 * 3600e3).toISOString().slice(0, 10) === day);
     const games = L.map(g => ({ id: g.id, at: g.at, opp: g.opp, tc: g.tc, res: g.res, n: Math.ceil(g.steps.length / 2), errs: g.errs ? g.errs.length : null, fixed: fixedCnt(g), guard: Object.values(g.src || {}).filter(x => x && x.g).length }));
-    h.send(res, 200, { games, today: { n: td.length, w: td.filter(g => g.res === 'w').length, l: td.filter(g => g.res === 'l').length, d: td.filter(g => g.res === 'd').length, e: td.reduce((s, g) => s + (g.errs ? g.errs.length : 0), 0) }, guard: GSTAT });
+    let fx = {}; try { fx = require('./kkfix.js').summary(); } catch (e) {}
+    h.send(res, 200, { fx, games, today: { n: td.length, w: td.filter(g => g.res === 'w').length, l: td.filter(g => g.res === 'l').length, d: td.filter(g => g.res === 'd').length, e: td.reduce((s, g) => s + (g.errs ? g.errs.length : 0), 0) }, guard: GSTAT });
     return true;
   }
   h.readBody(req, 5000, async body => {
@@ -152,6 +155,7 @@ function handle(req, res, p, h) {
       });
       return h.send(res, 200, { id: g.id, opp: g.opp, tc: g.tc, res: g.res, kk: g.kk, moves: fm });
     }
+    try { const r = await require('./kkfix.js').http(p, j, res, h, t.id); if (r !== false) return; } catch (e) { console.log('[kkfix]', e.message); return h.send(res, 500, { error: 'xato' }); }
     if (p === '/api/kkadm/safe') {   // ixtiyoriy pozitsiya uchun xavfsiz yurishlar (doskadan tanlashda)
       if (!Array.isArray(j.board) || j.board.length !== 64) return h.send(res, 400, { error: 'Pozitsiya noto‘g‘ri' });
       const L = rank(j.board.map(Number), j.side > 0 ? 1 : -1) || [];
@@ -161,4 +165,4 @@ function handle(req, res, p, h) {
   });
   return true;
 }
-module.exports = { guard, note, record, check, rank, handle, analyze, GSTAT };
+module.exports = { guard, note, record, check, rank, handle, analyze, movesOf, GSTAT };

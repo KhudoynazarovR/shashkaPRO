@@ -210,7 +210,7 @@
     if (a === "@live") { close(); liveOpen(); return; }
     if (a === "@deb") { close(); if (window.spDebut) window.spDebut(); else { var _d = document.createElement('script'); _d.src = '/debyut.js?v=2'; _d.onload = function () { window.spDebut(); }; document.head.appendChild(_d); } return; }
     if (a === "@stats") { close(); if (window.spStats) window.spStats(); else { var _s = document.createElement('script'); _s.src = '/statsview.js?v=2'; _s.onload = function () { window.spStats(); }; document.head.appendChild(_s); } return; }
-    if (a === "@kkadm") { var _go = function () { window.kkPanel(); }; if (window.kkPanel) _go(); else { var _s = document.createElement("script"); _s.src = "/kkpanel.js?v=2"; _s.onload = _go; document.head.appendChild(_s); } return; }
+    if (a === "@kkadm") { var _go = function () { window.kkPanel(); }; if (window.kkPanel) _go(); else { var _s = document.createElement("script"); _s.src = "/kkpanel.js?v=3"; _s.onload = _go; document.head.appendChild(_s); } return; }
     if (a === "@bpow") { var _bp = document.getElementById("bpBtn"); if (_bp) _bp.click(); return; }
     if (a === "@arena") { close(); if (window.avOpen) window.avOpen(); return; }
     if (a === "@arch") { close(); archOpen(); return; }
@@ -1536,4 +1536,13 @@ window.spShop = open;
     var need = function () { if (window.spPzt) go(); else ld('/pztview.js?v=12', go); };
     if (window.spPzRules) need(); else ld('/rushview.js?v=4', need);
   }, 1200);
+})();
+
+/* 🦍 ertalabki hisobotdagi «Ko'rib chiqish» tugmasi: /?kk=fix — admin bo'lsa tuzatishlar darhol ochiladi */
+;(function () {
+  if (!/[?&]kk=fix/.test(location.search)) return;
+  var k = 0, iv = setInterval(function () {
+    if (window.__isAdmin) { clearInterval(iv); var go = function () { window.kkPanel('fix'); }; if (window.kkPanel) go(); else { var s = document.createElement("script"); s.src = "/kkpanel.js?v=3"; s.onload = go; document.head.appendChild(s); } }
+    else if (++k > 80) clearInterval(iv);
+  }, 250);
 })();

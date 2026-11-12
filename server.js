@@ -171,7 +171,7 @@ function leaveClient(c) {
 
 const BLOCKED = new Set([
   "quests.js", "leagues.js", "weblogin.js", "social.js", "elon.js", "eco.js", "vrules.js", "kanal.js", "tgcoin.js", "reelgen.js", "memguard.js",
-  "server.js", "rooms.js", "mod.js", "ref.js", "premium.js", "gift.js", "region.js", "ach.js", "season.js", "cheat.js", "endgame.js", "corr.js", "gif.js", "alert.js", "notify.js", "kkbook.js", "kkadm.js", "cpustat.js", "wager.js", "economy.js", "store.js", "payments.js", "etudes.js", "pzrush.js", "pzbattle.js", "pztour.js", "draw-rules.js", "lobby.js", "users.json", "package.json", "package-lock.json"
+  "server.js", "rooms.js", "mod.js", "ref.js", "premium.js", "gift.js", "region.js", "ach.js", "season.js", "cheat.js", "endgame.js", "corr.js", "gif.js", "alert.js", "notify.js", "kkbook.js", "kkadm.js", "cpustat.js", "kkfix.js", "wager.js", "economy.js", "store.js", "payments.js", "etudes.js", "pzrush.js", "pzbattle.js", "pztour.js", "draw-rules.js", "lobby.js", "users.json", "package.json", "package-lock.json"
 ]);
 
 const VER = String(process.env.RENDER_GIT_COMMIT || Date.now()).slice(0, 8);

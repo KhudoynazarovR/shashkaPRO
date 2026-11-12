@@ -102,6 +102,7 @@ function cpuRep() { try { return require('./cpustat.js').report(); } catch (e) {
 function start() {
   if (started) return; started = true;
   try { require('./cpustat.js').start(); } catch (e) { console.log('[cpu]', e.message); }
+  try { require('./kkfix.js').start(); } catch (e) { console.log('[kkfix]', e.message); }
   setInterval(async () => {
     const s = snap();
     if (MB(s.jami) < AUTO_MB || Date.now() - lastAuto < 10 * 60e3) return;
