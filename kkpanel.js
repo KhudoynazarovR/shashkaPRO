@@ -140,9 +140,10 @@
       var L = r.list || [];
       C.innerHTML = '<div style="opacity:.75;font-size:12.5px;margin:0 2px 6px">Jami ' + (r.total || L.length) + ' ta. Natija — shu yurish o‘ynalgan o‘yinlarda King Kong qanday tugatgani.</div>' + (L.length ? L.map(function (x) {
         var n = x.w + x.l + x.d, res = n ? '✅ ' + x.w + ' · ❌ ' + x.l + ' · 🤝 ' + x.d : 'hali o‘ynalmagan';
-        return '<div class="row"><span class="f"><b>' + esc(x.n) + '</b>' + (x.auto ? ' <span class="pill">🤖 avto</span>' : '') + (x.l > x.w && n >= 3 ? ' <span class="pill" style="background:#7c2d12">⚠️ foyda yo‘q</span>' : '') + '<small>' + when(x.at) + ' · ' + x.used + ' marta · ' + res + '</small></span><button data-k="' + esc(x.k) + '">↩ Bekor</button></div>';
+        return '<div class="row" data-tk="' + esc(x.k) + '"><span class="f"><b>' + esc(x.n) + '</b>' + (x.auto ? ' <span class="pill">🤖 avto</span>' : '') + (x.l > x.w && n >= 3 ? ' <span class="pill" style="background:#7c2d12">⚠️ foyda yo‘q</span>' : '') + '<small>' + when(x.at) + ' · ' + x.used + ' marta · ' + res + '</small></span><button data-k="' + esc(x.k) + '">↩ Bekor</button></div>';
       }).join('') : '<div class="msg" style="opacity:.7">Hali o‘rgatilmagan</div>');
-      [].forEach.call(C.querySelectorAll('[data-k]'), function (el) { el.onclick = function () { if (!confirm('Bu o‘rgatish bekor qilinsinmi?')) return; post('/api/kkbook/del', { k: el.getAttribute('data-k') }).then(function () { el.closest('.row').remove(); }); }; });
+      [].forEach.call(C.querySelectorAll('[data-k]'), function (el) { el.onclick = function (e) { e.stopPropagation(); if (!confirm('Bu o‘rgatish bekor qilinsinmi?')) return; post('/api/kkbook/del', { k: el.getAttribute('data-k') }).then(function () { el.closest('.row').remove(); }); }; });
+      [].forEach.call(C.querySelectorAll('[data-tk]'), function (el) { el.onclick = function () { var k = el.getAttribute('data-tk'), x = L.filter(function (y) { return y.k === k; })[0]; if (x) taughtOne(x); }; });
     });
   }
   // ---------- 📈 aniqlik grafigi
@@ -167,7 +168,8 @@
   function sparView() {
     var C = shell('🤖 Tungi sinov o‘yinlari', list); sbar(null);
     var L = (V.list && V.list.fx && V.list.fx.spar) || [];
-    C.innerHTML = '<div style="font-size:12.5px;opacity:.75;margin:0 2px 6px">Har kecha 01:00–07:00 da server bo‘sh bo‘lsa King Kong dvigatelga qarshi 4 tagacha o‘yin o‘ynaydi (tasodifiy debyut). Topilgan xatolar «⚡ Tuzatishlar»ga tushadi.</div>' + (L.length ? L.map(function (x) { return '<div class="row"><span style="font-size:20px">' + (x.res === 'w' ? '✅' : x.res === 'l' ? '❌' : '🤝') + '</span><span class="f">King Kong ' + (x.kk === 1 ? 'oq' : 'qora') + '<small>' + when(x.at) + ' · ' + Math.ceil(x.plies / 2) + ' yurish</small></span>' + (x.errs ? '<span class="tg">⚠️ ' + x.errs + '</span>' : '<span class="tg ok">✓</span>') + '</div>'; }).join('') : '<div class="msg" style="opacity:.7">Hali sinov o‘yini bo‘lmagan</div>');
+    var fx = (V.list && V.list.fx) || {}, J = fx.job, T = fx.test;
+    C.innerHTML = (J ? '<div class="hero ok" style="padding:10px"><b style="font-size:15px">🧪 Sinov ketyapti: ' + J.done + ' / ' + J.n + '</b><p style="margin:2px 0 0">✅ ' + J.w + ' · ❌ ' + J.l + ' · 🤝 ' + J.d + '</p></div>' : T ? '<div class="box">🧪 Oxirgi sinov (' + when(T.at) + '): ' + T.n + ' o‘yin — ✅ ' + T.w + ' · ❌ ' + T.l + ' · 🤝 ' + T.d + '</div>' : '') + '<div style="font-size:12.5px;opacity:.75;margin:0 2px 6px">Har kecha 01:00–07:00 da server bo‘sh bo‘lsa King Kong dvigatelga qarshi 4 tagacha o‘yin o‘ynaydi (tasodifiy debyut). Topilgan xatolar «⚡ Tuzatishlar»ga tushadi.</div>' + (L.length ? L.map(function (x) { return '<div class="row"><span style="font-size:20px">' + (x.res === 'w' ? '✅' : x.res === 'l' ? '❌' : '🤝') + '</span><span class="f">King Kong ' + (x.kk === 1 ? 'oq' : 'qora') + '<small>' + when(x.at) + ' · ' + Math.ceil(x.plies / 2) + ' yurish' + (x.tag ? ' · ' + esc(x.tag) : '') + '</small></span>' + (x.errs ? '<span class="tg">⚠️ ' + x.errs + '</span>' : '<span class="tg ok">✓</span>') + '</div>'; }).join('') : '<div class="msg" style="opacity:.7">Hali sinov o‘yini bo‘lmagan</div>');
   }
   function shell(title, back) { O.innerHTML = '<div class="in"><div class="top"><button class="bk" id="kkB">‹</button><b>' + title + '</b></div><div id="kkC"></div></div>'; O.querySelector('#kkB').onclick = back; return O.querySelector('#kkC'); }
   function when(t) { var d = new Date(t), n = new Date(), hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); return (d.toDateString() === n.toDateString() ? 'bugun ' : d.toDateString() === new Date(Date.now() - 864e5).toDateString() ? 'kecha ' : d.getDate() + '.' + String(d.getMonth() + 1).padStart(2, '0') + ' ') + hm; }
@@ -196,10 +198,16 @@
       '<button class="gm" data-x="taught"><span class="r">📚</span><span class="n">O‘rgatilgan yurishlar<small>natijasi bilan · bekor qilish mumkin</small></span>›</button>' +
       '<button class="gm" data-x="acc"><span class="r">📈</span><span class="n">Aniqlik grafigi<small>kunlik aniqlik va natijalar (30 kun)</small></span>›</button>' +
       '<button class="gm" data-x="ops"><span class="r">📖</span><span class="n">Debyutlar<small>King Kong qaysi debyutda ko‘p yutqazadi</small></span>›</button>' +
+      '<button class="gm" data-x="rep"><span class="r">📖</span><span class="n">Repertuar<small>har yurishga foiz: King Kong qaysi yurishni qanchalik tez-tez o‘ynaydi</small></span>›</button>' +
+      '<button class="gm" data-x="tree"><span class="r">🌳</span><span class="n">Debyut daraxti va sozlamalar<small>tarmoqlar natijasi, import, chuqurlik</small></span>›</button>' +
+      '<button class="gm" data-x="pos"><span class="r">♟</span><span class="n">Pozitsiya terish<small>istalgan pozitsiyada King Kong nima o‘ynaydi</small></span>›</button>' +
+      '<button class="gm" data-x="trap"><span class="r">🪤</span><span class="n">Tuzoqlar<small>raqiblar ko‘p xato qiladigan pozitsiyalar</small></span>›</button>' +
+      '<button class="gm" data-x="pdn"><span class="r">📥</span><span class="n">PDN import<small>ustalar partiyalari → repertuar</small></span>›</button>' +
+      '<button class="gm" data-x="hist"><span class="r">🕓</span><span class="n">O‘zgarishlar tarixi<small>orqaga qaytarish</small></span>›</button>' +
       '<button class="gm" data-x="spar"><span class="r">🤖</span><span class="n">Tungi sinov o‘yinlari<small>King Kong ↔ dvigatel, xatolar tuzatishlarga tushadi</small></span>›</button>');
     [].forEach.call(C.querySelectorAll('[data-t]'), function (b) { b.onclick = function () { V.tab = b.getAttribute('data-t'); drawList(); }; });
     [].forEach.call(C.querySelectorAll('[data-id]'), function (b) { b.onclick = function () { game(b.getAttribute('data-id')); }; });
-    [].forEach.call(C.querySelectorAll('[data-x]'), function (b) { b.onclick = function () { var x = b.getAttribute('data-x'); if (x === 'taught') taught(); else if (x === 'acc') accView(); else if (x === 'ops') opsView(); else sparView(); }; });
+    [].forEach.call(C.querySelectorAll('[data-x]'), function (b) { b.onclick = function () { var x = b.getAttribute('data-x'); if (x === 'taught') taught(); else if (x === 'acc') accView(); else if (x === 'ops') opsView(); else if (x === 'rep') repOpen(null, null, 'all'); else if (x === 'tree') treeView(); else if (x === 'pos') posEdit(); else if (x === 'trap') trapView(); else if (x === 'pdn') pdnView(); else if (x === 'hist') histView(); else sparView(); }; });
     var hf = C.querySelector('#kkFx'); if (hf) hf.onclick = fixes;
     var au = C.querySelector('#kkAu'); if (au) au.onclick = function () { var v = !(d.fx && d.fx.auto); if (v && !confirm('Avto-tuzatish yoqilsinmi?\n\nAniq xatolar (dona yo‘qotish, dvigatel 15 s tasdiqlagan, qo‘riqchi xavfsiz degan) sizsiz o‘rgatiladi. Hammasi «O‘rgatilgan yurishlar»da ko‘rinadi va bekor qilinadi.')) return; post('/api/kkadm/auto', { v: v }).then(function (r) { if (d.fx) d.fx.auto = !!r.auto; drawList(); }); };
   }
@@ -282,6 +290,154 @@
       try { window.Telegram.WebApp.HapticFeedback.notificationOccurred('success'); } catch (e) {}
       drawGame();
     }).catch(function () { V.busy = false; V.msg = '⚠️ Server bilan aloqa yo‘q'; drawGame(); });
+  }
+  // ---------- 📚 bitta o'rgatilgan yurish: pozitsiya, qaysi o'yindan, natija
+  function taughtOne(x) {
+    var C = shell('📚 ' + esc(x.n), taught), b = String(x.b).split(',').map(Number), s = +x.s, mk = {}, arr = [[x.f, x.t, 'g']];
+    mk[x.f] = 'gf'; mk[x.t] = 'gt';
+    var n = x.w + x.l + x.d, g = x.gid;
+    var h = bdHtml(b, s === -1, mk, arr) + '<div class="box"><div class="h">QAYERDAN</div>' + (g ? (SRCN[g.src] || '') + (g.was ? ' · <b style="color:#fca5a5">' + esc(g.was) + ' ??</b> o‘rniga ' : ' · ') + '<b style="color:#86efac">' + esc(x.n) + '</b> o‘rgatildi' : 'Qo‘lda o‘rgatilgan') + (x.auto ? ' <span class="pill">🤖 avto</span>' : '') + '<br><small style="opacity:.7">' + when(x.at) + '</small></div>';
+    h += '<div class="st"><div><b>' + x.used + '</b><small>o‘ynaldi</small></div><div><b style="color:#86efac">' + x.w + '</b><small>yutdi</small></div><div><b style="color:#fca5a5">' + x.l + '</b><small>yutqazdi</small></div><div><b>' + x.d + '</b><small>durang</small></div></div>';
+    if (n >= 3 && x.l > x.w) h += '<div class="msg" style="color:#fdba74">⚠️ Bu yurish foyda bermayapti — boshqasini o‘rgatish yoki bekor qilish tavsiya etiladi</div>';
+    C.innerHTML = h;
+    var bar = sbar((g && g.gid && !/^spar_/.test(g.gid) ? '<button class="o" id="tP">🔬 Partiya</button>' : '') + '<button id="tO">✏️ Boshqa</button><button id="tR" style="background:#7f1d1d">↩ Bekor</button>');
+    var tp = bar.querySelector('#tP'); if (tp) tp.onclick = function () { game(g.gid); };
+    bar.querySelector('#tR').onclick = function () { if (!confirm('Bekor qilinsinmi?')) return; post('/api/kkbook/del', { k: x.k }).then(taught); };
+    bar.querySelector('#tO').onclick = function () {
+      C.innerHTML = '<div class="msg">⏳</div>'; sbar('<button id="tB">‹ Orqaga</button>').querySelector('#tB').onclick = function () { taughtOne(x); };
+      post('/api/kkadm/safe', { board: b, side: s }).then(function (r) {
+        var L = r.list || [], best = L.length ? L[0].v : 0;
+        C.innerHTML = bdHtml(b, s === -1, mk, arr) + '<div class="box"><div class="h">QAYSI YURISHNI O‘RGATAY?</div><div class="ch">' + L.map(function (m, k) { return '<button data-m="' + k + '"' + (m.v < best ? ' class="bad"' : '') + '>' + (m.v < best ? '⚠️ ' : '✅ ') + esc(m.t) + '</button>'; }).join('') + '</div></div>';
+        [].forEach.call(C.querySelectorAll('[data-m]'), function (el) { el.onclick = function () { var m = L[+el.getAttribute('data-m')]; post('/api/kkbook/add', { board: b, side: s, from: m.from, to: m.to }).then(function () { taught(); }); }; });
+      });
+    };
+  }
+  // ---------- 📖 repertuar
+  var RP = { sc: 'all', path: [], b: null, s: 1, v: null, edit: {}, dirty: false, safe: null };
+  function initB() { var b = []; for (var i = 0; i < 64; i++) { var r = i >> 3, c = i & 7; b.push((r + c) % 2 ? (r < 3 ? -1 : r > 4 ? 1 : 0) : 0); } return b; }
+  function repOpen(b, s, sc) { RP.sc = sc || RP.sc || 'all'; RP.path = b ? [{ b: b, s: s, t: '♟ pozitsiya' }] : []; RP.b = b || initB(); RP.s = s || 1; repLoad(); }
+  function repLoad() {
+    var C = shell('📖 Repertuar', list); C.innerHTML = '<div class="msg">Yuklanmoqda…</div>'; RP.safe = null;
+    post('/api/kkrep/view', { sc: RP.sc, board: RP.b, side: RP.s }).then(function (v) { RP.v = v; RP.edit = {}; v.list.forEach(function (m) { RP.edit[m.id] = { w: m.w, note: m.note, mk: m.mk, lock: m.lock || !m.w ? true : m.lock }; }); RP.dirty = false; repDraw(); });
+  }
+  function repSum() { var t = 0; for (var k in RP.edit) t += RP.edit[k].w || 0; return t; }
+  function repDraw() {
+    var C = O.querySelector('#kkC'), v = RP.v; if (!v) return;
+    O.querySelector('.top b').textContent = '📖 Repertuar · ' + (RP.s === 1 ? 'oq' : 'qora') + ' yuradi';
+    var h = '<div class="tabs" style="flex-wrap:wrap">' + v.scopes.map(function (x) { return '<button data-sc="' + esc(x.id) + '"' + (x.id === RP.sc ? ' class="on"' : '') + ' style="flex:none;padding:7px 9px">' + esc(x.name) + ' <small style="opacity:.7">' + x.n + '</small></button>'; }).join('') + '<button data-sc="+" style="flex:none;padding:7px 9px">＋</button></div>';
+    h += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin:4px 0;font:12.5px ui-monospace,monospace"><button data-cr="-1" class="pill" style="font-size:12px">⌂ boshlanish</button>' + RP.path.map(function (p, i) { return '<button data-cr="' + i + '" class="pill" style="font-size:12px;background:#1d1858">' + esc(p.t) + '</button>'; }).join('') + '</div>';
+    var sum = repSum(), arr = [], mk = {};
+    v.list.forEach(function (m) { var e = RP.edit[m.id]; if (e.w > 0) { arr.push([m.from, m.to, 'g']); mk[m.from] = 'gf'; } });
+    h += bdHtml(RP.b, false, mk, arr);
+    if (v.taught) h += '<div class="msg" style="color:#fde68a;font-size:12.5px">📚 Bu pozitsiyada o‘rgatilgan yurish bor — u repertuardan ustun</div>';
+    h += v.list.map(function (m) {
+      var e = RP.edit[m.id], pct = sum ? Math.round(e.w * 100 / sum) : 0, z = m.st, sf = RP.safe && RP.safe[m.id];
+      return '<div class="row" style="flex-wrap:wrap;gap:6px"><button data-go="' + m.id + '" style="background:none;padding:0;font:800 15px ui-monospace,monospace;min-width:64px;text-align:left;color:' + (e.w ? '#86efac' : '#c7c2ff') + '">' + esc(m.t) + (e.mk ? ' ' + esc(e.mk) : '') + '</button>' +
+        '<input type="range" min="0" max="100" step="5" value="' + e.w + '" data-w="' + m.id + '" style="flex:1;min-width:110px;accent-color:#22c55e">' +
+        '<b style="width:42px;text-align:right">' + e.w + '<small style="display:block;font-size:10.5px;opacity:.7;font-weight:400">' + (e.w ? pct + '%' : '') + '</small></b>' +
+        '<button data-n="' + m.id + '" style="padding:5px 7px">✏️</button>' +
+        '<div style="flex-basis:100%;font-size:11.5px;opacity:.75;margin-top:-2px">' + (z ? '✅ ' + z.w + ' · ❌ ' + z.l + ' · 🤝 ' + z.d : 'natija yo‘q') + (m.trap ? ' · 🪤 raqiblar ' + m.trap.err + '/' + m.trap.n + ' xato qilgan' : '') + (m.allW != null ? ' · umumiyda ' + m.allW : '') + (sf != null ? ' · ' + (sf < 0 ? '⚠️ ' + sf + ' dona' : '🛡 xavfsiz') : '') + (e.lock && e.w ? ' · 🔒' : '') + (m.src && m.src !== 'admin' ? ' · ' + ({ colette: '📗 Colette', kitob: '📖 kitob', pdn: '📥 PDN' }[m.src] || m.src) : '') + (e.note ? '<br>📝 ' + esc(e.note) : '') + '</div></div>';
+    }).join('');
+    h += '<div style="font-size:11.5px;opacity:.7;margin:6px 2px">Yurish nomini bossangiz — keyingi pozitsiyaga o‘tasiz. 0 — o‘ynamaydi. Qo‘lda qo‘yilgan foizlar 🔒 qulflanadi (o‘z-o‘zidan moslashmaydi).</div>';
+    C.innerHTML = h;
+    var bar = sbar('<button id="rT">Sinab ko‘r</button><button class="o" id="rX">🧪 Sinash</button><button class="y" id="rS"' + (RP.dirty ? '' : ' disabled') + '>💾 Saqlash</button>');
+    [].forEach.call(C.querySelectorAll('[data-sc]'), function (el) { el.onclick = function () { var id = el.getAttribute('data-sc'); if (id === '+') { var nm = prompt('Raqib nomi (masalan coletteBOT yoki o‘yinchi ismi):'); if (!nm) return; id = 'opp:' + nm.toLowerCase().replace(/[^a-z0-9_\-]/g, '').slice(0, 40); post('/api/kkrep/scope', { id: id }).then(function () { RP.sc = id; repLoad(); }); return; } if (RP.dirty && !confirm('Saqlanmagan o‘zgarishlar yo‘qoladi. Davom etaymi?')) return; RP.sc = id; repLoad(); }; });
+    [].forEach.call(C.querySelectorAll('[data-cr]'), function (el) { el.onclick = function () { var i = +el.getAttribute('data-cr'); if (i < 0) { RP.path = []; RP.b = initB(); RP.s = 1; } else { var p = RP.path[i]; RP.path = RP.path.slice(0, i + 1); RP.b = p.after || p.b; RP.s = p.after ? -p.s : p.s; } repLoad(); }; });
+    [].forEach.call(C.querySelectorAll('[data-go]'), function (el) { el.onclick = function () { var m = v.list.filter(function (y) { return y.id === el.getAttribute('data-go'); })[0]; if (RP.dirty && !confirm('Saqlanmagan o‘zgarishlar yo‘qoladi. Davom etaymi?')) return; RP.path.push({ b: RP.b, s: RP.s, t: m.t, after: m.after }); RP.b = m.after; RP.s = -RP.s; repLoad(); }; });
+    [].forEach.call(C.querySelectorAll('[data-w]'), function (el) { el.oninput = function () { var e = RP.edit[el.getAttribute('data-w')]; e.w = +el.value; e.lock = true; RP.dirty = true; var b = el.nextElementSibling; b.firstChild.nodeValue = e.w; var sm = repSum(); [].forEach.call(C.querySelectorAll('[data-w]'), function (q) { var ee = RP.edit[q.getAttribute('data-w')]; q.nextElementSibling.querySelector('small').textContent = ee.w ? Math.round(ee.w * 100 / (sm || 1)) + '%' : ''; }); O.querySelector('#rS').disabled = false; }; el.onchange = repDraw; });
+    [].forEach.call(C.querySelectorAll('[data-n]'), function (el) { el.onclick = function () { var e = RP.edit[el.getAttribute('data-n')]; var mk = prompt('Belgi: !!  !  !?  ?!  ?  ??  (bo‘sh — yo‘q)', e.mk || ''); if (mk === null) return; var nt = prompt('Izoh (nima uchun):', e.note || ''); if (nt === null) return; e.mk = mk.trim(); e.note = nt.trim(); RP.dirty = true; repDraw(); }; });
+    bar.querySelector('#rS').onclick = function () { post('/api/kkrep/set', { sc: RP.sc, board: RP.b, side: RP.s, moves: RP.edit }).then(function (r) { if (r.error) return alert(r.error); try { Telegram.WebApp.HapticFeedback.notificationOccurred('success'); } catch (e) {} repLoad(); }); };
+    bar.querySelector('#rT').onclick = function () {
+      var L = v.list.filter(function (m) { return RP.edit[m.id].w > 0; }); if (!L.length) return alert('Foiz qo‘yilgan yurish yo‘q — King Kong bu yerda o‘zi o‘ylaydi (Colette, kitob, dvigatel).');
+      var cnt = {}, sm = repSum(); for (var i = 0; i < 20; i++) { var x = Math.random() * sm; for (var j = 0; j < L.length; j++) { x -= RP.edit[L[j].id].w; if (x <= 0) { cnt[L[j].t] = (cnt[L[j].t] || 0) + 1; break; } } }
+      alert('20 ta o‘yinda King Kong taxminan shunday o‘ynaydi:\n\n' + Object.keys(cnt).sort(function (a, b) { return cnt[b] - cnt[a]; }).map(function (k) { return k + ' — ' + cnt[k] + ' marta'; }).join('\n'));
+    };
+    bar.querySelector('#rX').onclick = function () {
+      if (!confirm('Shu pozitsiyadan King Kong Colette’ga qarshi 10 ta tez o‘yin o‘ynaydi (ranglar almashib). Natijalar «🤖 Sinov o‘yinlari»da, xatolar «⚡ Tuzatishlar»da. Boshlaymi?')) return;
+      post('/api/kkrep/test', { sc: RP.sc, board: RP.b, side: RP.s, kk: RP.s, n: 10 }).then(function (r) { alert(r.error ? '⚠️ ' + r.error : '🧪 Boshlandi: 10 ta o‘yin. Bir necha daqiqadan keyin «🤖 Sinov o‘yinlari»ni oching.'); });
+    };
+    if (!RP.safe) post('/api/kkadm/safe', { board: RP.b, side: RP.s }).then(function (r) { var L = r.list || [], best = L.length ? L[0].v : 0, o = {}; L.forEach(function (m) { o[m.from + '-' + m.to] = m.v - best; }); RP.safe = o; if (O && O.querySelector('#rS') && RP.v === v) repDraw(); });
+  }
+  // ---------- 🌳 daraxt va sozlamalar
+  function treeView() {
+    var C = shell('🌳 Debyut daraxti', list); sbar(null); C.innerHTML = '<div class="msg">Yuklanmoqda…</div>';
+    post('/api/kkrep/view', { sc: RP.sc }).then(function (v0) {
+      post('/api/kkrep/tree', { sc: RP.sc }).then(function (r) {
+        var cfg = r.cfg, L = r.list || [];
+        var h = '<div class="tabs" style="flex-wrap:wrap">' + v0.scopes.map(function (x) { return '<button data-sc="' + esc(x.id) + '"' + (x.id === RP.sc ? ' class="on"' : '') + ' style="flex:none;padding:7px 9px">' + esc(x.name) + '</button>'; }).join('') + '</div>';
+        h += L.length ? '<div class="box" style="font:12.5px ui-monospace,monospace;line-height:1.8;overflow-x:auto">' + L.map(function (x, i) {
+          var num = Math.floor(x.d / 2) + 1, z = x.st;
+          return '<div data-tr="' + i + '" style="white-space:nowrap;padding-left:' + (x.d * 12) + 'px;cursor:pointer">' + num + (x.s === 1 ? '. ' : '… ') + (x.opp ? '<span style="opacity:.6">' + esc(x.t) + '</span>' : '<b style="color:' + (x.bad ? '#fca5a5' : x.w >= 80 ? '#86efac' : '#fde68a') + '">' + esc(x.t) + (x.mk ? esc(x.mk) : '') + '</b> ' + x.w + (x.bad ? ' ⚠️' : '')) + (z ? ' <span style="font-family:system-ui;opacity:.65;font-size:11px">✅' + z.w + ' ❌' + z.l + ' 🤝' + z.d + '</span>' : '') + '</div>';
+        }).join('') + '</div>' : '<div class="msg" style="opacity:.7">Bu doirada hali repertuar yo‘q. «📗 Colette’dan import» yoki «📖 Repertuar»dan boshlang.</div>';
+        var sw = function (k, t, d) { return '<button class="auto" data-cf="' + k + '"><span style="flex:1">' + t + '<small>' + d + '</small></span><span class="sw' + (cfg[k] ? ' on' : '') + '"></span></button>'; };
+        h += '<div class="sec">SOZLAMALAR</div>' +
+          '<button class="auto" id="cD"><span style="flex:1">🎯 Repertuar chuqurligi<small>import va daraxt shu yurishgacha; keyin King Kong o‘zi o‘ylaydi</small></span><b>' + cfg.depth + ' yurish</b></button>' +
+          sw('tour100', '🏆 Turnirda faqat 100% lik yurishlar', 'turnir o‘yinlarida eng ishonchli yurishlar') +
+          sw('adapt', '📊 Foizlar o‘zi moslashsin', 'yutqazgan tarmoq pasayadi, yutgani ko‘tariladi (🔒 qulflanganlar tegilmaydi)') +
+          sw('traps', '🪤 Tuzoqlarga yo‘naltirish', 'repertuar bo‘lmagan joyda raqiblar ko‘p xato qilgan pozitsiyaga xavfsiz yo‘l') +
+          '<button class="auto" id="cI"><span style="flex:1">📗 Colette va kitobdan import<small>shu doiraga; mavjud qulflangan yozuvlarga tegilmaydi</small></span><b style="color:#93c5fd">Import</b></button>' +
+          '<button class="auto" id="cL"><span style="flex:1">🌐 Lidraughts’dagi eski o‘yinlar<small>yutqazgan/durang o‘yinlar → tahlil → ⚡ tuzatishlar (har kecha o‘zi ham)</small></span><b style="color:#93c5fd">Yuklash</b></button>' +
+          '<button class="auto" id="cE"><span style="flex:1">📤 Eksport<small>shu doira repertuari (JSON) — nusxa olish uchun</small></span>›</button>';
+        C.innerHTML = h;
+        sbar('<button class="o" id="tN">＋ Repertuarni ochish</button>').querySelector('#tN').onclick = function () { repOpen(null, null, RP.sc); };
+        [].forEach.call(C.querySelectorAll('[data-sc]'), function (el) { el.onclick = function () { RP.sc = el.getAttribute('data-sc'); treeView(); }; });
+        [].forEach.call(C.querySelectorAll('[data-tr]'), function (el) { el.onclick = function () { var x = L[+el.getAttribute('data-tr')]; RP.path = [{ b: x.b, s: x.s, t: (x.pre.length ? '…' : '') + x.pre.slice(-2).join(' ') || '♟' }]; RP.b = x.b; RP.s = x.s; repLoad(); }; });
+        [].forEach.call(C.querySelectorAll('[data-cf]'), function (el) { el.onclick = function () { var k = el.getAttribute('data-cf'), o = {}; o[k] = !cfg[k]; post('/api/kkrep/cfg', o).then(treeView); }; });
+        C.querySelector('#cD').onclick = function () { var n = prompt('Repertuar chuqurligi (yurishlar, 2–30):', cfg.depth); if (n) post('/api/kkrep/cfg', { depth: +n }).then(treeView); };
+        C.querySelector('#cI').onclick = function () { if (!confirm('Colette va kitob yurishlari «' + RP.sc + '» doirasiga foiz bilan qo‘shilsinmi?')) return; this.querySelector('b').textContent = '⏳'; post('/api/kkrep/import', { sc: RP.sc }).then(function (r) { alert('📗 ' + (r.add || 0) + ' ta yurish qo‘shildi'); treeView(); }); };
+        C.querySelector('#cL').onclick = function () { this.querySelector('b').textContent = '⏳'; post('/api/kkadm/ldimport', { n: 120 }).then(function (r) { alert(r.error ? '⚠️ ' + r.error : '🌐 ' + r.add + ' ta o‘yin yuklandi (' + r.seen + ' ta ko‘rildi). Xatolar tahlildan keyin «⚡ Tuzatishlar»da.'); treeView(); }); };
+        C.querySelector('#cE').onclick = function () { post('/api/kkrep/export', { sc: RP.sc }).then(function (r) { var C2 = shell('📤 Eksport · ' + esc(RP.sc), treeView); C2.innerHTML = '<textarea style="width:100%;height:60vh;background:#1d1858;color:#fff;border:0;border-radius:12px;padding:10px;font:11px ui-monospace,monospace">' + esc(JSON.stringify(r.data)) + '</textarea>'; }); };
+      });
+    });
+  }
+  // ---------- ♟ pozitsiya terish
+  var PE = { b: null, s: 1, pen: 1, res: null };
+  function posEdit() {
+    if (!PE.b) PE.b = initB();
+    var C = shell('♟ Pozitsiya terish', list), pens = [[0, '⬚ bo‘sh'], [1, '⚪'], [2, '⚪👑'], [-1, '⚫'], [-2, '⚫👑']];
+    var h = '<div class="ch" style="margin:0 0 6px">' + pens.map(function (p) { return '<button data-pen="' + p[0] + '"' + (PE.pen === p[0] ? ' class="on"' : '') + '>' + p[1] + '</button>'; }).join('') + '</div>';
+    h += bdHtml(PE.b, false, {}, PE.res && PE.res.f != null ? [[PE.res.f, PE.res.t, 'g']] : null);
+    h += '<div class="ch"><button id="pS">' + (PE.s === 1 ? '⚪ Oq yuradi' : '⚫ Qora yuradi') + '</button><button id="pI">↺ Boshlang‘ich</button><button id="pC">🧹 Tozalash</button></div>';
+    if (PE.res) h += '<div class="box"><div class="h">KING KONG BU YERDA</div>' + (PE.res.n ? '<b style="font-size:17px">' + esc(PE.res.n) + '</b> — ' + esc(({ tb: '🏁 endshpil bazasi', admin: '📚 o‘rgatilgan', etude: '🧩 etyud', colette: '📗 Colette', book: '📖 kitob', cache: '🧠 xotira', deep: '🎓 saboq', engine: '⚙️ dvigatel (o‘ylab topadi)', over: 'o‘yin tugagan' })[PE.res.src] || PE.res.src || '') : 'Yurish yo‘q') + '</div>';
+    C.innerHTML = h;
+    var bar = sbar('<button class="o" id="pK">🦍 Nima o‘ynaydi?</button><button class="y" id="pR">📖 Repertuarda</button>');
+    [].forEach.call(C.querySelectorAll('[data-pen]'), function (el) { el.onclick = function () { PE.pen = +el.getAttribute('data-pen'); posEdit(); }; });
+    C.querySelector('.bd').onclick = function (e) { var el = e.target.closest('[data-i]'); if (!el) return; var i = +el.getAttribute('data-i'); if (((i >> 3) + (i & 7)) % 2 !== 1) return; PE.b[i] = PE.b[i] === PE.pen ? 0 : PE.pen; PE.res = null; posEdit(); };
+    C.querySelector('#pS').onclick = function () { PE.s = -PE.s; PE.res = null; posEdit(); };
+    C.querySelector('#pI').onclick = function () { PE.b = initB(); PE.s = 1; PE.res = null; posEdit(); };
+    C.querySelector('#pC').onclick = function () { PE.b = Array(64).fill(0); PE.res = null; posEdit(); };
+    bar.querySelector('#pK').onclick = function () { post('/api/kkbook/peek', { list: [{ board: PE.b, side: PE.s }] }).then(function (r) { PE.res = (r.list || [])[0] || { n: null }; posEdit(); }); };
+    bar.querySelector('#pR').onclick = function () { repOpen(PE.b.slice(), PE.s, RP.sc); };
+  }
+  // ---------- 🪤 tuzoqlar
+  function trapView() {
+    var C = shell('🪤 Tuzoqlar', list); sbar(null); C.innerHTML = '<div class="msg">Yuklanmoqda…</div>';
+    post('/api/kkrep/traps', {}).then(function (r) {
+      var L = r.list || [];
+      C.innerHTML = '<div style="font-size:12.5px;opacity:.75;margin:0 2px 8px">Raqib yurishi kerak bo‘lgan pozitsiyalar, unda o‘yinchilar ko‘p xato qilgan (dona yo‘qotgan). ' + (r.on ? 'King Kong repertuar bo‘lmagan joyda bu pozitsiyalarga xavfsiz yo‘l bo‘lsa — o‘sha yurishni tanlaydi.' : '⚠️ Tuzoqlarga yo‘naltirish o‘chiq (🌳 sozlamalarda).') + '</div>' +
+        (L.length ? L.map(function (x, i) { return '<div class="row" data-tp="' + i + '"><span style="font-size:20px">🪤</span><span class="f"><b>' + x.err + ' / ' + x.n + '</b> marta xato · ' + x.rate + '%<small>' + (x.s === 1 ? 'oq' : 'qora') + ' yurishi kerak · bosing — ko‘rish</small></span></div>'; }).join('') : '<div class="msg" style="opacity:.7">Hali yetarli o‘yin tahlil qilinmagan</div>');
+      [].forEach.call(C.querySelectorAll('[data-tp]'), function (el) { el.onclick = function () { var x = L[+el.getAttribute('data-tp')], C2 = shell('🪤 ' + x.err + '/' + x.n + ' xato', trapView); C2.innerHTML = bdHtml(x.b, false, {}, null) + '<div class="msg">' + (x.s === 1 ? '⚪ Oq' : '⚫ Qora') + ' yurishi kerak — o‘yinchilar ' + x.rate + '% hollarda dona yo‘qotgan</div>'; }; });
+    });
+  }
+  // ---------- 📥 PDN import
+  function pdnView() {
+    var C = shell('📥 PDN import', list); sbar(null);
+    C.innerHTML = '<div style="font-size:12.5px;opacity:.75;margin:0 2px 6px">Bir yoki bir nechta partiyani qo‘ying (masalan: <code>1. c3-d4 f6-g5 2. g3-f4 …</code>). Har pozitsiyada qaysi yurish ko‘p o‘ynalgan bo‘lsa — shuncha katta foiz.</div>' +
+      '<textarea id="pT" style="width:100%;height:38vh;background:#1d1858;color:#fff;border:0;border-radius:12px;padding:10px;font:12.5px ui-monospace,monospace" placeholder="1. c3-d4 f6-g5 2. g3-f4 g7-f6 …"></textarea>' +
+      '<div class="ch"><button data-sd="both" class="on">Ikkala tomon</button><button data-sd="w">Faqat oq</button><button data-sd="b">Faqat qora</button></div>' +
+      '<div style="font-size:12.5px;opacity:.75;margin:6px 2px">Doira: <b>' + esc(RP.sc) + '</b> (📖 Repertuarda o‘zgartiriladi)</div>';
+    var sd = 'both';
+    [].forEach.call(C.querySelectorAll('[data-sd]'), function (el) { el.onclick = function () { sd = el.getAttribute('data-sd'); [].forEach.call(C.querySelectorAll('[data-sd]'), function (q) { q.classList.toggle('on', q === el); }); }; });
+    sbar('<button class="y" id="pG">📥 Import</button>').querySelector('#pG').onclick = function () { var t = C.querySelector('#pT').value; if (!t.trim()) return; post('/api/kkrep/pdn', { sc: RP.sc, text: t, sides: sd }).then(function (r) { alert(r.error ? '⚠️ ' + r.error : '📥 ' + r.games + ' ta partiya o‘qildi' + (r.bad ? ' (' + r.bad + ' tasida xato)' : '') + ', ' + r.add + ' ta yurish repertuarga qo‘shildi'); }); };
+  }
+  // ---------- 🕓 tarix
+  function histView() {
+    var C = shell('🕓 O‘zgarishlar tarixi', list); sbar(null); C.innerHTML = '<div class="msg">Yuklanmoqda…</div>';
+    post('/api/kkrep/hist', {}).then(function (r) {
+      var L = r.list || [];
+      C.innerHTML = L.length ? L.map(function (x) { return '<div class="row"><span class="f"><b>' + esc(x.why || x.nw) + '</b><small>' + when(x.at) + ' · ' + esc(x.sc) + (x.why ? '' : ' · avval ' + x.old + ' ta yozuv') + '</small></span>' + (x.b ? '<button data-u="' + x.i + '">↩ Qaytarish</button>' : '') + '</div>'; }).join('') : '<div class="msg" style="opacity:.7">Hali o‘zgarish yo‘q</div>';
+      [].forEach.call(C.querySelectorAll('[data-u]'), function (el) { el.onclick = function () { if (!confirm('Shu o‘zgarishdan oldingi holatga qaytarilsinmi?')) return; post('/api/kkrep/undo', { i: +el.getAttribute('data-u') }).then(histView); }; });
+    });
   }
   window.kkPanel = function (mode) { if (O) O.remove(); O = document.createElement('div'); O.id = 'kkP'; document.body.appendChild(O); if (mode === 'fix') { O.innerHTML = '<div class="in"><div class="top"><button class="bk" id="kkB">‹</button><b></b></div><div id="kkC"></div></div>'; fixes(); get('/api/kkadm').then(function (d) { if (!d.error) V.list = d; }); } else list(); };
 })();

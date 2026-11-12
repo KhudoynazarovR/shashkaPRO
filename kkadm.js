@@ -58,7 +58,7 @@ const SRC = new Map();   // roomId -> Map(kalit -> {src, g})
 function note(room, b, s, r) {
   if (!room || !r || r.from == null) return;
   if (!SRC.has(room)) { SRC.set(room, new Map()); if (SRC.size > 300) SRC.delete(SRC.keys().next().value); }
-  const src = r.tb ? 'baza' : r.admin ? 'admin' : r.colette ? 'Colette' : r.etude ? 'etyud' : r.book ? 'kitob' : r.cached ? 'xotira' : 'dvigatel';
+  const src = r.tb ? 'baza' : r.admin ? 'admin' : r.rep ? (r.rep === 'trap' ? 'tuzoq' : 'repertuar') : r.colette ? 'Colette' : r.etude ? 'etyud' : r.book ? 'kitob' : r.cached ? 'xotira' : 'dvigatel';
   SRC.get(room).set(b.join('') + s, { src, g: r.guard ? { from: r.guard.from, to: r.guard.to, loss: r.guard.loss } : null });
 }
 
@@ -92,8 +92,9 @@ function record(room, res) {   // res: 'w' | 'l' | 'd' (King Kong nuqtai nazarid
     if (!(room.opening && room.opening.board)) { try { const tk = require('./kkbook.js').notation(room.moves).split(' '), o = []; let n = 0; for (const t of tk) { o.push(t); if (!/^\d+\.$/.test(t) && ++n >= 6) break; } if (n >= 6) g.op = o.join(' '); } catch (e) {} }
     const L = G(); L.unshift(g); if (L.length > 200) L.length = 200;
     try { require('./kkfix.js').onRecord(g); } catch (e) {}
+    try { require('./kkrep.js').result(room.id, res); } catch (e) {}
     store.save();
-    if (res !== 'w') setTimeout(() => analyze(g), 3000);   // yutqazgan/durang — darhol tekshiramiz (yutganlari admin ochganda)
+    setTimeout(() => analyze(g), res !== 'w' ? 3000 : 20000);   // yutganlari ham (🪤 raqib xatolari — tuzoqlar uchun)   // yutqazgan/durang — darhol tekshiramiz (yutganlari admin ochganda)
   } catch (e) { console.log('[kkadm]', e.message); }
 }
 function movesOf(g) {
@@ -108,7 +109,7 @@ function analyze(g) {
   const p = new Promise(done => {
     const fm = movesOf(g), errs = []; let k = 0;
     const step = () => {
-      while (k < fm.length && fm[k].s !== g.kk) k++;
+      while (k < fm.length && fm[k].s !== g.kk) { const y = fm[k]; try { if (R.moves(y.b, y.s).length > 1) { const c2 = check(y.b, y.s, y.from, y.to); require('./kkrep.js').noteOpp(y.b, y.s, c2 ? c2.loss : 0); } } catch (e) {} k++; }
       if (k >= fm.length) { g.errs = errs; RUN.delete(g.id); try { require('./kkfix.js').onAnalyzed(g, fm.filter(y => y.s === g.kk).length); } catch (e) {} try { store.save(); } catch (e) {} return done(g); }
       const x = fm[k], c = check(x.b, x.s, x.from, x.to);
       if (c && c.loss >= 1) errs.push({ k, loss: c.loss, safe: c.safe, line: c.line, key: x.b.join('') + x.s });

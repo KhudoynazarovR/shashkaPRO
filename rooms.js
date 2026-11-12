@@ -466,7 +466,7 @@ const srvBotOn = room => !!(room && room.vsBot && room.botCfg && room.botCfg.id 
       if (base <= 30 || rem < 3) secs = 0.05;   // juda qisqa o'yin: tayyor bilim (kitob, Colette, xotira, baza) yoki eng qisqa hisob
       const fb = () => play(L[Math.floor(Math.random() * L.length)], "fallback");
       tm = setTimeout(fb, Math.max(600, Math.min(secs * 1000 + 2500, rem * 1000 * 0.3)));
-      const ask = (k) => require("./kestoai.js").move({ board: b, side, time: secs, maxTime: secs, kk: true, book: true, tbAlways: true, room: room.id, rem: Math.max(0.1, rem) }, r => {
+      const ask = (k) => require("./kestoai.js").move({ board: b, side, time: secs, maxTime: secs, kk: true, book: true, tbAlways: true, room: room.id, rem: Math.max(0.1, rem), opp: (room[bc === "white" ? "black" : "white"] || {}).name || "", oppElo: (() => { try { const u = require("./store").users()[String((room[bc === "white" ? "black" : "white"] || {}).uid)]; return (u && u.elo) || 0; } catch (e) { return 0; } })(), tcs: base + 40 * inc, tour: /^T.+R\d+B\d+|^A.+G\d+/.test(String(room.id)) || !!room.arena }, r => {
         if (done) return;
         if (r && typeof r.from === "number") return play(L.find(x => x.from === r.from && x.to === r.to) || L[0], "engine");
         if (r && (r.code === 429 || r.code === 503) && k < 6) return setTimeout(() => ask(k + 1), 120);

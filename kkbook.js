@@ -82,7 +82,7 @@ function handle(req, res, p, h) {
   const t = h.verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
   if (!t || !isAdmin(t.id)) { h.send(res, 403, { error: 'Faqat admin uchun' }); return true; }
   if (req.method === 'GET') {
-    const list = Object.entries(B()).map(([k, x]) => ({ k, n: x.n, b: x.b, s: x.s, at: x.at, used: x.used || 0, w: x.w || 0, l: x.l || 0, d: x.d || 0, auto: x.auto ? 1 : 0 })).sort((a, b) => b.at - a.at).slice(0, 300);
+    const list = Object.entries(B()).map(([k, x]) => ({ k, n: x.n, b: x.b, s: x.s, at: x.at, used: x.used || 0, w: x.w || 0, l: x.l || 0, d: x.d || 0, auto: x.auto ? 1 : 0, f: x.f, t: x.t, by: x.by || '', gid: (() => { try { const z = (store.db.kkFix || []).find(y => y.key === k); return z ? { gid: z.gid, was: z.t, src: z.src } : null; } catch (e) { return null; } })() })).sort((a, b) => b.at - a.at).slice(0, 300);
     let deep = 0; try { deep = require('./kestoai.js').mem().deep; } catch (e) {}
     h.send(res, 200, { list, total: Object.keys(B()).length, deep }); return true;
   }

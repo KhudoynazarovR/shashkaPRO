@@ -28,7 +28,7 @@ function kkMove(G, pos, state, moves) {
     const fin = (m, why) => { if (done) return; done = true; clearTimeout(tm); log('🦍 yurish', G.id, '#' + pos.plies, why, ((Date.now() - t0) / 1000).toFixed(2) + 's', '| o‘ylash', secs.toFixed(2) + 's', '| soat', my.toFixed(1) + 's'); res(m); };
     const tm = setTimeout(() => fin(null, '⏱ kechikdi — xavfsiz yurish'), cap);
     for (let i = 0; i < 30 && !done; i++) {
-      const r = await new Promise(rs => K.move({ board: to64(pos.board), side: pos.side === R.WHITE ? 1 : -1, time: secs, maxTime: secs, kk: true, book: true, tbAlways: true, room: 'ld_' + G.id, rem: Math.max(0.1, my) }, rs));
+      const r = await new Promise(rs => K.move({ board: to64(pos.board), side: pos.side === R.WHITE ? 1 : -1, time: secs, maxTime: secs, kk: true, book: true, tbAlways: true, room: 'ld_' + G.id, rem: Math.max(0.1, my), opp: G.opp, oppElo: G.oppElo || 0, tcs: base + 40 * inc, tour: false }, rs));
       if (done) return;
       if (r && !r.error) {
         const fr = r.from >> 3, fc = r.from & 7, tr = r.to >> 3, tc = r.to & 7; const c = moves.filter(m => m.from[0] === fr && m.from[1] === fc && m.to[0] === tr && m.to[1] === tc);
@@ -500,7 +500,7 @@ function playGame(id) {
       G.opp = (G.color === R.WHITE ? o.black : o.white) || {}; G.opp = G.opp.name || G.opp.id || '?';
       log('o‘yin boshlandi', id, G.color, 'vs', G.opp);
       if (G.bullet && !G.op && String(G.opp).toLowerCase() === 'colettebot' && !(o.state && o.state.moves)) { const v = pickOpening(G.opp, G.color); if (v) { G.op = v.id; log('🎯 debyut tanlandi:', v.name); } }
-      const ob = G.color === R.WHITE ? o.black : o.white; if (ob && /BOT/i.test(ob.title || '')) learnBot(G.opp);
+      const ob = G.color === R.WHITE ? o.black : o.white; G.oppElo = (ob && +ob.rating) || 0; if (ob && /BOT/i.test(ob.title || '')) learnBot(G.opp);
       if (!greeted) { greeted = true; post('/api/bot/game/' + id + '/chat', { room: 'player', text: KKMODE ? '🦍 ShashkaPRO King Kong — omad! Rus shashkasi: t.me/DraughtsPRObot' : '👹 ShashkaPRO Monster — omad! Rus shashkasi: t.me/DraughtsPRObot' }); }
       if (o.state) { if (o.state.status && o.state.status !== 'started' && o.state.status !== 'created') onEnd(o.state); else think(o.state); }
     } else if (o.type === 'gameState') {
@@ -570,10 +570,46 @@ async function start() {
   const base = process.env.RENDER_EXTERNAL_URL || process.env.PUBLIC_URL || '';
   if (base) setInterval(() => { try { https.get(base.replace(/\/$/, '') + '/api/auth/config', r => r.resume()).on('error', () => {}); } catch (e) {} }, 10 * 60 * 1000).unref();
 }
+// 🌐 eski o'yinlarni yuklash: lidraughts'dagi o'yinlarimiz (yutqazgan/durang) → King Kong paneli → ⚡ tuzatishlar
+async function importOld(max) {
+  if (!TOKEN || !ST.me) return { error: 'lidraughts ulanmagan' };
+  const st = require('./store.js'), imp = st.db.ldImp = st.db.ldImp || {};
+  const pdn = await fetchText('/api/games/user/' + encodeURIComponent(ST.me) + '?max=' + Math.max(10, Math.min(300, max || 120)), 60000);
+  if (!pdn) return { error: 'o‘yinlar yuklanmadi' };
+  let add = 0, seen = 0;
+  for (const g of String(pdn).split(/\n(?=\[Event )/)) {
+    if (!/\[GameType "25"\]/.test(g)) continue;
+    const fen = (g.match(/\[FEN "([^"]*)"\]/) || [])[1];
+    if (fen && !/^W:Wa3,c3,e3,g3,b2,d2,f2,h2,a1,c1,e1,g1:Bb8,d8,f8,h8,a7,c7,e7,g7,b6,d6,f6,h6/.test(fen)) continue;
+    const id = ((g.match(/\[Site "[^"]*\/([A-Za-z0-9]{8})[^"]*"\]/) || [])[1]) || ''; if (!id || imp[id]) continue;
+    const res0 = (g.match(/\[Result "([^"]*)"\]/) || [])[1]; if (!res0 || res0 === '*') continue;
+    const wn = String((g.match(/\[White "([^"]*)"\]/) || [])[1] || ''), bn = String((g.match(/\[Black "([^"]*)"\]/) || [])[1] || ''), meW = wn.toLowerCase() === ST.me;
+    const res = res0 === '1-1' ? 'd' : ((res0 === '2-0') === meW ? 'w' : 'l');
+    seen++; imp[id] = 1;
+    if (res === 'w') continue;   // faqat yutqazgan va durang — xatolar shu yerda
+    const mv = g.split(/\n\n/).slice(1).join(' ').match(/[a-h][1-8](?:[-x][a-h][1-8])+/g) || [];
+    let b = R.startPosition(), side = R.WHITE; const steps = [];
+    for (const t of mv) {
+      const ps = t.split(/[-x]/).map(sqA), f = ps[0], to = ps[ps.length - 1];
+      const lm = R.getAllMoves(b, side).find(x => x.from[0] === f[0] && x.from[1] === f[1] && x.to[0] === to[0] && x.to[1] === to[1]); if (!lm) break;
+      const pts = [lm.from].concat(lm.path && lm.path.length ? lm.path : [lm.to]);
+      for (let i = 1; i < pts.length; i++) steps.push({ from: { r: pts[i - 1][0], c: pts[i - 1][1] }, to: { r: pts[i][0], c: pts[i][1] } });
+      b = R.applyMove(b, lm); side = side === R.WHITE ? R.BLACK : R.WHITE;
+    }
+    if (steps.length < 8) continue;
+    const opp = meW ? bn : wn, kk = { uid: 'bot_kingkong', name: 'King Kong' }, op = { uid: 'ld_' + opp, name: '🌐 ' + opp };
+    const tc = (g.match(/\[TimeControl "(\d+)\+(\d+)"\]/) || []);
+    try { require('./kkadm.js').record({ id: 'ldold_' + id, moves: steps, white: meW ? kk : op, black: meW ? op : kk, tc: '🌐 ' + (tc[1] ? Math.round(tc[1] / 6) / 10 + '+' + tc[2] : '') + ' (eski)' }, res); add++; } catch (e) {}
+    if (add >= (max ? Math.ceil(max / 3) : 40)) break;
+  }
+  const ks = Object.keys(imp); if (ks.length > 5000) ks.slice(0, 1000).forEach(k => delete imp[k]);
+  st.save(); log('🌐 eski o‘yinlar yuklandi:', add, '(ko‘rildi', seen + ')');
+  return { add, seen };
+}
 function status() { return { on: ST.on, me: ST.me, games: Object.values(ST.games).map(g => ({ id: g.id, opp: g.opp, color: g.color })), results: ST.results.slice(0, 20), log: ST.log.slice(0, 30) }; }
 async function challenge(user, tc, rated) {
   const [lim, inc] = String(tc || '3+2').split('+').map(Number);
   return post('/api/challenge/' + encodeURIComponent(user), { rated: rated ? 'true' : 'false', 'clock.limit': String(Math.round((Number.isFinite(lim) ? lim : 3) * 60)), 'clock.increment': String(inc || 0), variant: 'russian', color: 'random' });
 }
 start();
-module.exports = { status, challenge, _t: { kkRecord, kkMove, pickOpening, opResult, analyzeLoss, fixMove, FIXES, OPEN: () => OPEN, treeMove, CT: () => CTREE, locToRC, rcToLoc, parseFen, position, antiRepeat, histKeys, buildAnti, LONG, noTrade, replayKeys, learnLoss, avoidCheck, AV: () => AVOID } };
+module.exports = { status, challenge, importOld, _t: { kkRecord, kkMove, pickOpening, opResult, analyzeLoss, fixMove, FIXES, OPEN: () => OPEN, treeMove, CT: () => CTREE, locToRC, rcToLoc, parseFen, position, antiRepeat, histKeys, buildAnti, LONG, noTrade, replayKeys, learnLoss, avoidCheck, AV: () => AVOID } };

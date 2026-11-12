@@ -79,32 +79,53 @@ async function deepGame(g) {
 // ---------- 🤖 sinov o'yinlari: King Kong (haqiqiy sozlamalar) ↔ dvigatel, tasodifiy debyut
 function initB() { const b = Array(64).fill(0); for (let i = 0; i < 64; i++) { const r = i >> 3, c = i & 7; if ((r + c) % 2 !== 1) continue; if (r < 3) b[i] = -1; if (r > 4) b[i] = 1; } return b; }
 const mat = b => b.reduce((t, v) => t + (v > 0 ? (v === 2 ? 3 : 1) : v < 0 ? -(v === -2 ? 3 : 1) : 0), 0);
-async function spar() {
-  const kk = Math.random() < 0.5 ? 1 : -1, id = 'spar_' + Date.now().toString(36);
-  let b = initB(), s = 1; const hist = [];
-  for (let i = 0; i < 4; i++) { const L = R.moves(b, s); const m = L[Math.floor(Math.random() * L.length)]; hist.push({ b: b.slice(), s, from: m.from, to: m.to }); b = m.board; s = -s; }
-  let res = null, rep = new Map();
-  for (let ply = 0; ply < 140; ply++) {
-    if (!nightOk()) return null;
+// bitta sinov o'yini: b0/s0 — boshlang'ich pozitsiya, kk — King Kong tomoni; raqib: Colette bazasi, bo'lmasa dvigatel (oppSec)
+async function sparGame(b0, s0, kk, o) {
+  o = o || {}; const id = 'spar_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), K = require('./kestoai.js');
+  let b = b0.slice(), s = s0; const hist = [], rep = new Map(); let res = null;
+  for (let ply = 0; ply < 160; ply++) {
+    if (o.stop && o.stop()) return null;
     const L = R.moves(b, s); if (!L.length) { res = s === kk ? 'l' : 'w'; break; }
     const k = b.join('') + s; rep.set(k, (rep.get(k) || 0) + 1); if (rep.get(k) >= 3) { res = 'd'; break; }
     let m = L.length === 1 ? L[0] : null;
+    if (!m && s !== kk) { try { const c = K.peek(b, s); if (c && c.colette) m = L.find(y => y.from === c.colette.from && y.to === c.colette.to) || null; } catch (e) {} }
     if (!m) {
-      const r = s === kk ? await ask(b, s, 1, { kk: true, book: true, room: id, tbAlways: true, arena: false }) : await ask(b, s, 1, { tbAlways: true });
+      const r = s === kk ? await ask(b, s, o.kkSec || 1, { kk: true, book: true, room: id, tbAlways: true, arena: false, opp: 'colettebot', tcs: o.tcs || 80 }) : await ask(b, s, o.oppSec || 1, { tbAlways: true });
       m = r && L.find(y => y.from === r.from && y.to === r.to); if (!m) m = L[0];
     }
     hist.push({ b: b.slice(), s, from: m.from, to: m.to }); b = m.board; s = -s;
   }
   if (!res) { const d = mat(b) * kk; res = d >= 2 ? 'w' : d <= -2 ? 'l' : 'd'; }
+  try { require('./kkrep.js').result(id, res); } catch (e) {}
   let errs = 0;
-  for (const x of hist.slice(4)) {
+  for (const x of hist) {
     if (x.s !== kk) continue;
     try { const c = kadm().check(x.b, x.s, x.from, x.to); if (c && c.loss >= 1) { errs++; add({ b: x.b, s: x.s, from: x.from, to: x.to, loss: c.loss, line: c.line, gid: id, src: 'sinov' }); } } catch (e) {}
   }
-  const SP = D().kkSpar = D().kkSpar || []; SP.unshift({ at: Date.now(), kk, res, plies: hist.length, errs }); if (SP.length > 40) SP.length = 40;
+  const SP = D().kkSpar = D().kkSpar || []; SP.unshift({ at: Date.now(), kk, res, plies: hist.length, errs, tag: o.tag || '' }); if (SP.length > 60) SP.length = 60;
   store.save(); return res;
 }
-
+async function spar() {
+  let b = initB(), s = 1;
+  for (let i = 0; i < 4; i++) { const L = R.moves(b, s); const m = L[Math.floor(Math.random() * L.length)]; b = m.board; s = -s; }
+  return sparGame(b, s, Math.random() < 0.5 ? 1 : -1, { stop: () => !nightOk(), oppSec: 1, tag: '🌙' });
+}
+// 🧪 tanlangan pozitsiyadan sinov (admin, fon): n ta o'yin, ranglar navbat bilan; 0+2 ga yaqin (har yurish ~1–2 s)
+let JOB = null;
+function sparFrom(b, s, kk, n, sc) {
+  if (JOB) return Promise.resolve({ error: 'Sinov allaqachon ketyapti (' + JOB.done + '/' + JOB.n + ')' });
+  if (global.__tRunning && global.__tRunning()) return Promise.resolve({ error: 'Turnir ketyapti — keyinroq' });
+  JOB = { n, done: 0, w: 0, l: 0, d: 0, at: Date.now() };
+  (async () => {
+    for (let i = 0; i < n; i++) {
+      if (global.__tRunning && global.__tRunning()) break;
+      const side = i % 2 === 0 ? kk : -kk, r = await sparGame(b, s, side, { oppSec: 2, kkSec: 1, tcs: 80, tag: '🧪 ' + (sc || '') });
+      if (!r) break; JOB.done++; JOB[r]++;
+    }
+    const J = JOB; JOB = null; D().kkTest = { at: Date.now(), n: J.done, w: J.w, l: J.l, d: J.d }; store.save();
+  })();
+  return Promise.resolve({ ok: true, started: n });
+}
 // ---------- 📊 kunlik aniqlik va debyutlar (kkadm.record / analyze dan)
 function dayAdd(t, f) { const M = D().kkDay = D().kkDay || {}, k = DAY(t), o = M[k] || (M[k] = { n: 0, w: 0, l: 0, d: 0, mv: 0, err: 0 }); f(o); const ks = Object.keys(M).sort(); while (ks.length > 60) delete M[ks.shift()]; }
 function onRecord(g) {
@@ -130,7 +151,8 @@ async function work() {
     }
     if (nightOk()) {
       const N = D().kkNight = D().kkNight || {}, day = DAY();
-      if (N.day !== day) { N.day = day; N.deep = 0; N.spar = 0; }
+      if (N.day !== day) { N.day = day; N.deep = 0; N.spar = 0; N.ld = 0; }
+      if (!N.ld) { N.ld = 1; try { await require('./lidraughts.js').importOld(60); } catch (e) {} }
       const g = (D().kkGames || []).find(x => x.res !== 'w' && !x.deep && x.errs && Date.now() - x.at < 36 * 3600e3);
       if (g && N.deep < 25) { N.deep++; await deepGame(g); }
       else if (N.spar < 4) { N.spar++; await spar(); }
@@ -168,7 +190,7 @@ function summary() {
   const P = pending();
   const days = Object.entries(D().kkDay || {}).sort().slice(-30).map(([k, o]) => ({ d: k.slice(5), n: o.n, w: o.w, l: o.l, dr: o.d, acc: o.mv ? Math.round(1000 - o.err * 1000 / o.mv) / 10 : null }));
   const O = D().kkOpen || {}, ops = Object.entries(O).map(([k, o]) => ({ k, w: o.w, l: o.l, d: o.d, n: o.w + o.l + o.d })).filter(x => x.n >= 2).sort((a, b) => (b.l / b.n) - (a.l / a.n) || b.n - a.n).slice(0, 15);
-  return { fix: { pending: P.length, ready: P.filter(x => x.best).length, auto: !!D().kkAuto, autoN: D().kkAutoN || 0 }, days, ops, spar: (D().kkSpar || []).slice(0, 10) };
+  return { job: JOB, test: D().kkTest || null, fix: { pending: P.length, ready: P.filter(x => x.best).length, auto: !!D().kkAuto, autoN: D().kkAutoN || 0 }, days, ops, spar: (D().kkSpar || []).slice(0, 10) };
 }
 async function http(p, j, res, h, adminId) {
   if (p === '/api/kkadm/fixes') {
@@ -186,7 +208,8 @@ async function http(p, j, res, h, adminId) {
     x.st = 'ok'; x.done = Date.now(); store.save();
     return h.send(res, 200, { ok: true, n: r.n });
   }
+  if (p === '/api/kkadm/ldimport') { try { const r = await require('./lidraughts.js').importOld(+j.n || 120); return h.send(res, r.error ? 400 : 200, r); } catch (e) { return h.send(res, 500, { error: e.message }); } }
   if (p === '/api/kkadm/auto') { D().kkAuto = !!j.v; store.save(); return h.send(res, 200, { ok: true, auto: D().kkAuto }); }
   return false;
 }
-module.exports = { add, start, onRecord, onAnalyzed, summary, http, pending, work };
+module.exports = { sparFrom, add, start, onRecord, onAnalyzed, summary, http, pending, work };
