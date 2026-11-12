@@ -32,6 +32,23 @@
     '#kkP .bdp{display:flex;gap:5px;overflow-x:auto;padding:2px 0 6px;scrollbar-width:none}#kkP .bdp button{flex:none;width:34px;height:34px;border-radius:8px;border:2px solid transparent;padding:0;overflow:hidden;display:grid;grid-template-columns:1fr 1fr}#kkP .bdp .on{border-color:#ffd257}#kkP .bdp i{display:block}';
   document.head.appendChild(css);
 
+  // ♟ dona: Do'kondan tanlangan bo'lsa — o'sha rasm (damka ham), aks holda oddiy dona va tekis oltin toj
+  var CROWN = '<svg viewBox="0 0 24 24" style="width:60%;height:60%;display:block"><path d="M3.5 17.5h17l-1.4-8.6-4.3 3.9L12 6l-2.8 6.8-4.3-3.9z" fill="#e3b21c" stroke="#7a5a00" stroke-width="1.1" stroke-linejoin="round"/><rect x="3.5" y="18.3" width="17" height="2.2" rx="1" fill="#e3b21c" stroke="#7a5a00" stroke-width=".8"/></svg>';
+  function pcHtml(p) {
+    var w = p > 0, k = Math.abs(p) === 2;
+    if (window.spEqId) return '<i class="pc" style="background:url(&quot;/api/shop/img?id=' + encodeURIComponent(window.spEqId) + '&amp;k=' + (w ? 'w' : 'b') + (k ? 'k' : '') + '&quot;) center/contain no-repeat;box-shadow:none;filter:drop-shadow(0 2px 2px rgba(0,0,0,.45))"></i>';
+    return '<i class="pc ' + (w ? 'w' : 'b') + '">' + (k ? CROWN : '') + '</i>';
+  }
+  // 🔬 to'liq tahlil (lichess kabi) — o'yinchilar tahlil taxtasi (board.js) bilan bir xil
+  function openAna() {
+    var g = V.g; if (!g || !g.moves.length) return;
+    var b0 = g.moves[0].b, st = '';
+    for (var i = 0; i < 64; i++) { if (((i >> 3) + (i & 7)) % 2 !== 1) continue; var v = b0[i]; st += v === 1 ? 'w' : v === 2 ? 'W' : v === -1 ? 'b' : v === -2 ? 'B' : '0'; }
+    var steps = [], at = 0; g.moves.forEach(function (m, k) { if (k === V.cur) at = steps.length; (m.st || []).forEach(function (x) { steps.push(x); }); });
+    var kkW = g.kk === 1, arg = { moves: steps, start: st, first: g.moves[0].s === -1 ? 'black' : 'white', white: kkW ? 'King Kong' : g.opp, black: kkW ? g.opp : 'King Kong', winner: g.res === 'd' ? 'draw' : (g.res === 'w') === kkW ? 'white' : 'black', at: at, flip: g.kk === -1 };
+    var run = function () { window.spBoard(arg); };
+    if (window.spBoard) run(); else { var sc = document.createElement('script'); sc.src = '/board.js'; sc.onload = run; document.head.appendChild(sc); }
+  }
   function close() { if (O) O.remove(); O = null; }
   function shell(title, back) { O.innerHTML = '<div class="in"><div class="top"><button class="bk" id="kkB">‹</button><b>' + title + '</b></div><div id="kkC"></div></div>'; O.querySelector('#kkB').onclick = back; return O.querySelector('#kkC'); }
   function when(t) { var d = new Date(t), n = new Date(), hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); return (d.toDateString() === n.toDateString() ? 'bugun ' : d.toDateString() === new Date(Date.now() - 864e5).toDateString() ? 'kecha ' : d.getDate() + '.' + String(d.getMonth() + 1).padStart(2, '0') + ' ') + hm; }
@@ -85,9 +102,10 @@
     h += '<div class="bd" id="kkBd">';
     for (var v = 0; v < 64; v++) {
       var i = flip ? 63 - v : v, r = i >> 3, c = i & 7, p = x.b[i], dark = (r + c) % 2 === 1;
-      h += '<div class="c ' + (hl[i] || '') + '" data-i="' + i + '" style="background:' + (dark ? BD[2] : BD[1]) + '">' + (p ? '<i class="pc ' + (p > 0 ? 'w' : 'b') + '">' + (Math.abs(p) === 2 ? '♛' : '') + '</i>' : '') + (tgt[i] ? '<i class="dot"></i>' : '') + '</div>';
+      h += '<div class="c ' + (hl[i] || '') + '" data-i="' + i + '" style="background:' + (dark ? BD[2] : BD[1]) + '">' + (p ? pcHtml(p) : '') + (tgt[i] ? '<i class="dot"></i>' : '') + '</div>';
     }
     h += '</div><div class="mv">' + g.moves.map(function (m, k) { return '<span data-k="' + k + '" class="' + (m.kk ? 'k' : '') + (m.kk && m.err && !m.taught ? ' x' : '') + (m.taught ? ' t' : '') + (k === V.cur ? ' cur' : '') + '">' + (m.s === 1 || k === 0 ? num(k) : '') + m.t + (m.kk && m.err && !m.taught ? ' ⚠️' : '') + (m.g ? ' 🛡' : '') + '</span>'; }).join('') + '</div>';
+    h += '<button class="go" id="kkAn" style="background:#2563eb;margin:2px 0 6px">🔬 To‘liq tahlil (grafik, baho, aniqlik)</button>';
     h += '<div class="nav"><button data-n="0">⏮</button><button data-n="-1">◀</button><button class="er" data-n="e">⚠️ Keyingi xato</button><button data-n="1">▶</button></div>';
     // ma'lumot qutisi
     var who = x.kk ? 'KING KONG (' + (x.s === 1 ? 'OQ' : 'QORA') + ') O‘YNADI' : 'RAQIB O‘YNADI';
@@ -117,6 +135,7 @@
     var pk = C.querySelector('[data-pick]'); if (pk) pk.onclick = function () { V.pick = null; V.sel = -1; loadSafe(function () { V.msg = '♟ Donani bosing'; V.selMode = true; drawGame(); }); };
     C.querySelector('#kkBd').onclick = function (e) { var el = e.target.closest('[data-i]'); if (el) tap(+el.getAttribute('data-i')); };
     var tb = C.querySelector('#kkT'); if (tb) tb.onclick = teach;
+    var an = C.querySelector('#kkAn'); if (an) an.onclick = openAna;
   }
   function go(k) { if (!V.g || k < 0 || k >= V.g.moves.length) return; V.cur = k; V.pick = null; V.sel = -1; V.safe = null; V.selMode = false; V.msg = ''; drawGame(); }
   function loadSafe(cb) { var x = V.g.moves[V.cur]; if (V.safe) return cb(); post('/api/kkadm/safe', { board: x.b, side: x.s }).then(function (r) { V.safe = r.list || []; cb(); }).catch(function () { V.msg = '⚠️ Server bilan aloqa yo‘q'; drawGame(); }); }

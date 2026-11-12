@@ -77,7 +77,7 @@ function fullMoves(b0, s0, steps) {
     const L = R.moves(b, s), f = steps[i].from.r * 8 + steps[i].from.c; let m = null, j = i;
     for (; j < steps.length && j < i + 12; j++) { const t = steps[j].to.r * 8 + steps[j].to.c; m = L.find(x => x.from === f && x.to === t && (x.path || [x.to]).length === j - i + 1); if (m) break; }
     if (!m) break;
-    out.push({ b: b.slice(), s, from: m.from, to: m.to, t: mtxt(m) });
+    out.push({ b: b.slice(), s, from: m.from, to: m.to, t: mtxt(m), path: [m.from].concat(m.path || [m.to]), caps: m.caps || [] });
     b = m.board; s = -s; i = j + 1;
   }
   return out;
@@ -117,6 +117,16 @@ function analyze(g) {
   RUN.set(g.id, p); return p;
 }
 
+// tahlil taxtasi (board.js) uchun: to'liq yurish → bosqichlar [{from:{r,c}, to:{r,c}, captures:[{r,c}]}]
+function hops(x) {
+  const out = [], P = x.path || [x.from, x.to];
+  for (let i = 1; i < P.length; i++) {
+    const a = P[i - 1], b = P[i], ar = a >> 3, ac = a & 7, br = b >> 3, bc = b & 7, dr = Math.sign(br - ar), dc = Math.sign(bc - ac), cap = [];
+    for (let r = ar + dr, c = ac + dc; r !== br; r += dr, c += dc) if ((x.caps || []).includes(r * 8 + c)) cap.push({ r, c });
+    out.push({ from: { r: ar, c: ac }, to: { r: br, c: bc }, captures: cap });
+  }
+  return out;
+}
 // ---------- HTTP: /api/kkadm (faqat admin)
 function fixedCnt(g) { const B = (store.db && store.db.kkBook) || {}; return (g.errs || []).filter(e => B[e.key]).length; }
 function handle(req, res, p, h) {
@@ -138,7 +148,7 @@ function handle(req, res, p, h) {
       const B = (store.db && store.db.kkBook) || {}, E = {}; (g.errs || []).forEach(e => { E[e.k] = e; });
       const fm = movesOf(g).map((x, k) => {
         const e = E[k], sr = (g.src || {})[k];
-        return { b: x.b, s: x.s, from: x.from, to: x.to, t: x.t, kk: x.s === g.kk, src: sr ? sr.src : null, g: sr && sr.g ? { t: SQ(sr.g.from) + '-' + SQ(sr.g.to), loss: sr.g.loss } : null, err: e ? { loss: e.loss, safe: e.safe, line: e.line } : null, taught: B[x.b.join('') + x.s] ? { from: B[x.b.join('') + x.s].f, to: B[x.b.join('') + x.s].t } : null };
+        return { b: x.b, s: x.s, from: x.from, to: x.to, t: x.t, st: hops(x), kk: x.s === g.kk, src: sr ? sr.src : null, g: sr && sr.g ? { t: SQ(sr.g.from) + '-' + SQ(sr.g.to), loss: sr.g.loss } : null, err: e ? { loss: e.loss, safe: e.safe, line: e.line } : null, taught: B[x.b.join('') + x.s] ? { from: B[x.b.join('') + x.s].f, to: B[x.b.join('') + x.s].t } : null };
       });
       return h.send(res, 200, { id: g.id, opp: g.opp, tc: g.tc, res: g.res, kk: g.kk, moves: fm });
     }

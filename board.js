@@ -384,18 +384,28 @@
     if (g && g.first === 'black') t0 = -1;
     var hist = [{ b: b0, t: t0, m: null }], cur = 0, flip = false, sel = null, EV = {}, busyK = {}, FAIL = {}, allRun = false, prog = '';
     var panel = null, E = null, PL = null, GI = null;
+    var s2h = [0];   // arxiv bosqichi → tarix indeksi (ko'p urishli yurish bitta yurish bo'lib birlashadi)
     if (g && g.moves && g.moves.length) {
       GI = g;
       g.moves.forEach(function (x) {
         if (BAD) return;
+        var L = hist[hist.length - 1], P = hist[hist.length - 2];
+        if (P && L.m && L.m.caps.length && (x.captures || []).length && P.t === (W(L.b[x.from.r][x.from.c]) ? 1 : -1)) {
+          var le = L.m.path[L.m.path.length - 1];
+          if (le[0] === x.from.r && le[1] === x.from.c) {
+            var p1 = L.b[x.from.r][x.from.c], m2 = { path: L.m.path.concat([[x.to.r, x.to.c]]), caps: L.m.caps.concat((x.captures || []).map(function (y) { return [y.r, y.c]; })), king: L.m.king || (p1 < 3 && (W(p1) ? x.to.r === 0 : x.to.r === 7)) };
+            L.b = applyM(P.b, m2); L.m = m2; L.n = note(m2); s2h.push(hist.length - 1); return;
+          }
+        }
         var h = hist[hist.length - 1], p = h.b[x.from.r][x.from.c], er = x.to.r;
         if (!p) { BAD = hist.length; return; }   // yurish bu pozitsiyaga mos emas (eski arxiv: boshlang'ich pozitsiya saqlanmagan)
         h.t = W(p) ? 1 : -1;   // navbat — yuradigan dona rangi (ko'p urishli yurish arxivda bosqichma-bosqich yoziladi)
         var m = { path: [[x.from.r, x.from.c], [x.to.r, x.to.c]], caps: (x.captures || []).map(function (y) { return [y.r, y.c]; }), king: p < 3 && (W(p) ? er === 0 : er === 7) };
         hist.push({ b: applyM(h.b, m), t: -h.t, m: m, n: note(m) });
+        s2h.push(hist.length - 1);
       });
     }
-    if (g && typeof g.at === 'number') cur = Math.max(0, Math.min(hist.length - 1, g.at));
+    if (g && typeof g.at === 'number') cur = Math.max(0, Math.min(hist.length - 1, g.at < s2h.length ? s2h[g.at] : hist.length - 1));
     if (g && g.flip) flip = true;
     var old = document.getElementById('spBd'); if (old) old.remove();
     var ov = document.createElement('div'); ov.id = 'spBd';
@@ -403,9 +413,10 @@
     document.body.appendChild(ov);
     function alive() { return document.body.contains(ov); }
     function evOf(i) {
-      var h = hist[i], k = kf(h);
+      var h = hist[i], k = kf(h), L = legal(h.b, h.t);
+      if (L.length === 1 && i + 1 < hist.length && hist[i + 1].m) { var nx = evOf(i + 1); if (nx != null) return nx; }   // majburiy yurish: dvigatel 0 qaytaradi — keyingi pozitsiya bahosi
       if (EV[k]) return EV[k].ev;
-      if (!legal(h.b, h.t).length) return h.t > 0 ? -9.9 : 9.9;
+      if (!L.length) return h.t > 0 ? -9.9 : 9.9;
       return null;
     }
     function go(i) { if (AU.run) auStop('⏸ To‘xtatildi'); cur = Math.max(0, Math.min(hist.length - 1, i)); sel = null; draw(); analyzeCur(); }
@@ -424,7 +435,7 @@
         if (i >= hist.length) { allRun = false; prog = ''; draw(); return; }
         var h = hist[i], k = kf(h); i++;
         if (EV[k] || !legal(h.b, h.t).length) { nx(); return; }
-        ask(h, function (r) { if (r) EV[k] = r; prog = i + '/' + hist.length; draw(); nx(); });
+        ask(h, function (r) { if (r) EV[k] = r; prog = i + '/' + hist.length; draw(); nx(); }, 0, 0.7);   // to'liq tahlil: har pozitsiyaga 0.7 s (server yengil)
       })();
     }
     function engMove() {
@@ -467,7 +478,66 @@
       } else sel = null;
       draw();
     }
+    // 📈 to'liq tahlil: hamma pozitsiya bahosi (dvigatel) + qo'pol xato tekshiruvi (telefonda, TX) — grafik, aniqlik, ?!/?/??
+    var BL = {}, blRun = false, blProg = '';
+    function blScan() {
+      if (blRun) return; blRun = true;
+      var go2 = function () {
+        var i = 0;
+        (function nx() {
+          if (!alive()) { blRun = false; return; }
+          while (i < hist.length - 1 && (BL[i] !== undefined || !hist[i + 1].m)) i++;
+          if (i >= hist.length - 1) { blRun = false; blProg = ''; draw(); return; }
+          var h = hist[i], m = hist[i + 1].m, f = m.path[0], e = m.path[m.path.length - 1];
+          try { BL[i] = window.TX.loss(toEng(h.b), h.t, f[0] * 8 + f[1], e[0] * 8 + e[1]); } catch (x) { BL[i] = null; }
+          i++; blProg = i + '/' + (hist.length - 1); if (i % 4 === 0) draw();
+          setTimeout(nx, 15);
+        })();
+      };
+      if (window.TX) go2(); else { var sc = document.createElement('script'); sc.src = '/tahlilx.js?v=1'; sc.onload = go2; sc.onerror = function () { blRun = false; }; document.head.appendChild(sc); }
+    }
+    function fullAna() { if (!S.engine) { S.engine = true; sv(); } runAll(); blScan(); draw(); }
+    function wc(e) { return 1 / (1 + Math.exp(-1.1 * Math.max(-9, Math.min(9, e)))); }   // yutish ehtimoli (oq uchun)
+    function anaHtml() {
+      var n = hist.length - 1; if (n < 2 || !S.engine || PL) return '';
+      var pts = [], ok = 0;
+      for (var i = 0; i <= n; i++) { var e = evOf(i); pts.push(e); if (e != null) ok++; }
+      var full = ok >= n * 0.9, h = '';
+      if (!full && !allRun && !blRun) return '<div style="margin-top:10px"><button id="bdFull" style="border:0;border-radius:12px;padding:11px 14px;background:#2e9d6b;color:#fff;font-size:15px;font-weight:700;width:100%">📈 To‘liq tahlil: grafik, xatolar va aniqlik</button></div>';
+      if (ok < 2) return '<div style="margin-top:10px;font-size:14px;opacity:.8">⏳ Tahlil qilinmoqda… ' + (prog || '') + '</div>';
+      // grafik
+      var Wd = 360, Ht = 64, path = '', area = '', last = null;
+      pts.forEach(function (e, i) { if (e == null) return; var x = n ? i / n * Wd : 0, y = Ht / 2 - Math.max(-5, Math.min(5, e)) * (Ht / 2 - 3) / 5; path += (path ? ' L' : 'M') + x.toFixed(1) + ',' + y.toFixed(1); last = [x, y]; });
+      if (path) area = path + ' L' + last[0].toFixed(1) + ',' + Ht + ' L0,' + Ht + ' Z';
+      var dots = '', cx = n ? cur / n * Wd : 0;
+      for (var j = 0; j < n; j++) { var mk = mark(j); if (mk === '??' || mk === '?') { var e2 = pts[j + 1]; if (e2 == null) continue; dots += '<circle cx="' + ((j + 1) / n * Wd).toFixed(1) + '" cy="' + (Ht / 2 - Math.max(-5, Math.min(5, e2)) * (Ht / 2 - 3) / 5).toFixed(1) + '" r="3.2" fill="' + (mk === '??' ? '#f87171' : '#fb923c') + '"/>'; } }
+      var hit = ''; for (var k = 0; k <= n; k++) hit += '<rect data-g="' + k + '" x="' + ((k - 0.5) / n * Wd).toFixed(1) + '" y="0" width="' + (Wd / n).toFixed(1) + '" height="' + Ht + '" fill="transparent"/>';
+      h += '<div style="margin-top:10px;background:#1d1858;border-radius:12px;padding:6px"><svg viewBox="0 0 ' + Wd + ' ' + Ht + '" style="width:100%;display:block"><rect width="' + Wd + '" height="' + Ht + '" fill="#2a2a2a"/><path d="' + area + '" fill="#e8e8e8"/><line x1="0" y1="' + Ht / 2 + '" x2="' + Wd + '" y2="' + Ht / 2 + '" stroke="#888" stroke-width=".6"/><line x1="' + cx + '" y1="0" x2="' + cx + '" y2="' + Ht + '" stroke="#f5d92b" stroke-width="1.4"/>' + dots + hit + '</svg></div>';
+      // xulosa: har tomon uchun ?!, ?, ?? va aniqlik
+      var T = { 1: { a: 0, b: 0, c: 0, acc: 0, n: 0 }, '-1': { a: 0, b: 0, c: 0, acc: 0, n: 0 } };
+      for (var q = 0; q < n; q++) {
+        var t = hist[q].t, A = pts[q], Bv = pts[q + 1], mk2 = mark(q), o = T[t > 0 ? 1 : '-1'];
+        if (mk2 === '?!') o.a++; else if (mk2 === '?') o.b++; else if (mk2 === '??') o.c++;
+        if (A != null && Bv != null) { var lw = Math.max(0, (t > 0 ? wc(A) - wc(Bv) : wc(Bv) - wc(A))) * 100; if (BL[q] >= 1) lw = Math.max(lw, 30); o.acc += Math.max(0, Math.min(100, 103.1668 * Math.exp(-0.04354 * lw) - 3.1669)); o.n++; }
+      }
+      var row = function (t, lb) { var o = T[t]; return '<tr><td style="text-align:left;padding:4px 6px">' + lb + '</td><td style="color:#fbbf24">' + o.a + '</td><td style="color:#fb923c">' + o.b + '</td><td style="color:#f87171;font-weight:700">' + o.c + '</td><td><b>' + (o.n ? Math.round(o.acc / o.n) + '%' : '–') + '</b></td></tr>'; };
+      h += '<table style="width:100%;margin-top:8px;border-collapse:collapse;background:#1d1858;border-radius:12px;font-size:14px;text-align:center"><tr style="opacity:.7;font-size:12px"><td></td><td>?! noaniq</td><td>? xato</td><td>?? qo‘pol</td><td>aniqlik</td></tr>' +
+        row(1, '⚪ ' + String((GI && GI.white) || 'Oq').replace(/</g, '&lt;').slice(0, 14)) + row('-1', '⚫ ' + String((GI && GI.black) || 'Qora').replace(/</g, '&lt;').slice(0, 14)) + '</table>';
+      if (allRun || blRun) h += '<div style="font-size:12.5px;opacity:.75;margin-top:4px">⏳ Tahlil davom etmoqda… ' + (prog || '') + (blRun ? ' · 🛡 ' + blProg : '') + '</div>';
+      // tanlangan yurish izohi
+      if (cur >= 1) {
+        var mk3 = mark(cur - 1);
+        if (mk3) {
+          var pe = evOf(cur - 1), pr = hist[cur - 1], be = EV[kf(pr)];
+          h += '<div style="margin-top:8px;padding:9px 11px;border-radius:12px;background:' + (mk3 === '??' ? '#4a0f1c' : mk3 === '?' ? '#4a2a0f' : '#3d3a10') + ';font-size:14px"><b>' + hist[cur].n + ' ' + mk3 + '</b> — ' + (mk3 === '??' ? 'qo‘pol xato' : mk3 === '?' ? 'xato' : 'noaniq yurish') +
+            (BL[cur - 1] >= 1 ? ' · ⚠️ <b>' + BL[cur - 1] + ' dona yo‘qotadi</b>' : '') +
+            (be && be.best ? '<br><span style="opacity:.85">Yaxshisi: <b>' + sq(be.best.from[0], be.best.from[1]) + '-' + sq(be.best.to[0], be.best.to[1]) + '</b> (' + evFmt(pe) + ')</span>' : '') + '</div>';
+        }
+      }
+      return h;
+    }
     function mark(i) {
+      if (BL[i] >= 1) return '??';   // 🛡 majburiy yo'l bilan dona yo'qotadi (dvigatel ko'rmasa ham)
       var a = evOf(i), b = evOf(i + 1);
       if (a == null || b == null) return '';
       var loss = (hist[i].t) * (a - b);
@@ -777,6 +847,7 @@
       }
       if (AU.run && panel !== 'auto') s += '<div style="margin-top:8px">🤖 ' + Math.ceil(cur / 2) + '-yurish… <button data-a="auoff" style="' + sm + ';background:#8a2b3a">⏸ To‘xtatish</button></div>';
       if (PL) s += '<div style="margin-top:8px"><button data-a="stop" style="' + sm + ';background:#8a2b3a">⏹ Mashqni to‘xtatish</button></div>';
+      if (!ed) s += anaHtml();
       s += '<div style="margin-top:12px;text-align:left;font-size:15px;line-height:2.2">';
       for (var i = 0; i < hist.length - 1; i++) {
         if (i % 2 === 0) s += '<span style="opacity:.6;margin-left:6px">' + (i / 2 + 1) + '.</span> ';
@@ -790,7 +861,7 @@
       on('#bdX', function () { ov.remove(); if (g && g.onClose) try { g.onClose(); } catch (e) {} });
       on('#bd0', function () { go(0); }); on('#bd1', function () { go(cur - 1); });
       on('#bd2', function () { go(cur + 1); }); on('#bd3', function () { go(hist.length - 1); });
-      on('#bdA', runAll);
+      on('#bdA', runAll); on('#bdFull', fullAna);
       on('#bdN', function () { newPos(start(), 1); });
       on('#bdRt', function () { delete FAIL[kf(hist[cur])]; analyzeCur(); draw(); });
       Array.prototype.forEach.call(ov.querySelectorAll('[data-a]'), function (el) { el.onclick = function () { act(el.getAttribute('data-a')); }; });
