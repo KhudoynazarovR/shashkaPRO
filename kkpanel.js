@@ -30,7 +30,7 @@
     '#kkP .ch{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}#kkP .ch button{padding:8px 10px;border-radius:10px;background:#16124a;border:1px solid #3a33a0;font-weight:700;font-size:13px}#kkP .ch .on{background:#3fa34d;border-color:#3fa34d}#kkP .ch .bad{opacity:.55}' +
     '#kkP .go{width:100%;margin-top:8px;padding:13px;border-radius:13px;background:#3fa34d;font-weight:800;font-size:15.5px}#kkP .go:disabled{opacity:.45}#kkP .msg{text-align:center;margin:8px 0;font-weight:700}' +
     '#kkP .bdp{display:flex;gap:5px;overflow-x:auto;padding:2px 0 6px;scrollbar-width:none}#kkP .bdp button{flex:none;width:34px;height:34px;border-radius:8px;border:2px solid transparent;padding:0;overflow:hidden;display:grid;grid-template-columns:1fr 1fr}#kkP .bdp .on{border-color:#ffd257}#kkP .bdp i{display:block}';
-  css.textContent +=
+  css.textContent += '#kkP .cl{position:absolute;font:800 9.5px system-ui,sans-serif;pointer-events:none;z-index:5;line-height:1}#kkP .cl.n{left:2px;top:2px}#kkP .cl.a{right:3px;bottom:2px}' +
     '#kkP .hero{border-radius:18px;padding:14px;margin:4px 0 10px;background:linear-gradient(135deg,#7c2d12,#be123c);box-shadow:0 6px 18px rgba(190,18,60,.35)}#kkP .hero.ok{background:linear-gradient(135deg,#14532d,#15803d);box-shadow:none}#kkP .hero b{font-size:19px;display:block}#kkP .hero p{font-size:13px;opacity:.9;margin:4px 0 10px;line-height:1.4}#kkP .hero button{width:100%;background:#fff;color:#9f1239;border-radius:12px;padding:11px;font-weight:900;font-size:15px}' +
     '#kkP .auto{background:#1d1858;border-radius:14px;padding:11px 12px;display:flex;align-items:center;gap:10px;font-size:13.5px;margin-bottom:6px;width:100%;text-align:left}#kkP .auto small{display:block;opacity:.7;font-size:12px}#kkP .sw{width:46px;height:27px;border-radius:14px;background:#4b4680;position:relative;flex:none}#kkP .sw:after{content:"";position:absolute;left:3px;top:3px;width:21px;height:21px;border-radius:50%;background:#fff;transition:.2s}#kkP .sw.on{background:#16a34a}#kkP .sw.on:after{left:22px}' +
     '#kkP .sec{margin:14px 2px 4px;font-size:12px;color:#a9a4d8;font-weight:800;letter-spacing:.5px}' +
@@ -70,7 +70,7 @@
   // umumiy doska (strelkalar bilan): marks {i: 'fr'|'to'|'gf'|'gt'}, arrows [[from,to,color]]
   function bdHtml(b, flip, marks, arrows) {
     var BD = BDS[bdIdx()], h = '<div class="bdw"><div class="bd">';
-    for (var v = 0; v < 64; v++) { var i = flip ? 63 - v : v, r = i >> 3, c = i & 7, p = b[i], dark = (r + c) % 2 === 1; h += '<div class="c ' + ((marks && marks[i]) || '') + '" data-i="' + i + '" style="background:' + (dark ? BD[2] : BD[1]) + '">' + (p ? pcHtml(p) : '') + '</div>'; }
+    for (var v = 0; v < 64; v++) { var i = flip ? 63 - v : v, r = i >> 3, c = i & 7, p = b[i], dark = (r + c) % 2 === 1; h += '<div class="c ' + ((marks && marks[i]) || '') + '" data-i="' + i + '" style="background:' + (dark ? BD[2] : BD[1]) + '">' + (p ? pcHtml(p) : '') + (((v & 7) === 0) ? '<span class="cl n" style="color:' + (dark ? 'rgba(255,255,255,.8)' : 'rgba(0,0,0,.55)') + '">' + (8 - r) + '</span>' : '') + (((v >> 3) === 7) ? '<span class="cl a" style="color:' + (dark ? 'rgba(255,255,255,.8)' : 'rgba(0,0,0,.55)') + '">' + 'abcdefgh'[c] + '</span>' : '') + '</div>'; }
     h += '</div>';
     if (arrows && arrows.length) {
       var xy = function (i) { var v = flip ? 63 - i : i; return [(v & 7) + 0.5, (v >> 3) + 0.5]; };
@@ -88,25 +88,39 @@
   function fixes() {
     var C = shell('⚡ Tuzatishlar', list); sbar(null);
     C.innerHTML = '<div class="msg">Yuklanmoqda…</div>';
-    post('/api/kkadm/fixes', {}).then(function (r) { F.list = r.list || []; F.i = 0; F.msg = ''; drawFix(); }).catch(function () { C.innerHTML = '<div class="msg">⚠️ Server bilan aloqa yo‘q</div>'; });
+    post('/api/kkadm/fixes', {}).then(function (r) { F.list = r.list || []; F.i = 0; F.msg = ''; F.step = 0; if (F.only == null) F.only = true; drawFix(); }).catch(function () { C.innerHTML = '<div class="msg">⚠️ Server bilan aloqa yo‘q</div>'; });
   }
+  function lossTxt(x) { return x.loss >= 10 ? '❌ o‘yin yutqaziladi' : x.loss ? '−' + x.loss + ' dona' : x.drop ? 'baho −' + x.drop : ''; }
+  function pathArrows(p, col) { var a = []; if (p) for (var i = 1; i < p.length; i++) a.push([p[i - 1], p[i], col]); return a; }
   function drawFix() {
-    var C = O.querySelector('#kkC'), x = F.list[F.i];
-    O.querySelector('.top b').textContent = '⚡ Tuzatish ' + (F.list.length ? (F.i + 1) + ' / ' + F.list.length : '');
+    var C = O.querySelector('#kkC'), all = F.list, L = F.only ? all.filter(function (y) { return y.main; }) : all;
+    if (F.only && !L.length && all.length) { F.only = false; L = all; }
+    if (F.i >= L.length) F.i = Math.max(0, L.length - 1);
+    var x = L[F.i], nMain = all.filter(function (y) { return y.main; }).length;
+    O.querySelector('.top b').textContent = '⚡ Tuzatish ' + (L.length ? (F.i + 1) + ' / ' + L.length : '');
     if (!x) { sbar(null); C.innerHTML = '<div class="hero ok"><b>🎉 Hammasi ko‘rib chiqildi</b><p style="margin-bottom:0">' + (F.msg || 'Yangi xatolar paydo bo‘lganda shu yerda chiqadi.') + '</p></div>'; return; }
-    var b = x.best, flip = x.s === -1, arr = [[x.from, x.to, 'r']], mk = {}; mk[x.from] = 'fr'; mk[x.to] = 'to';
-    if (b && !b.same) { arr.push([b.from, b.to, 'g']); mk[b.from] = 'gf'; mk[b.to] = 'gt'; }
-    var h = '<div class="dots">' + F.list.slice(0, 24).map(function (y, k) { return '<i' + (k === F.i ? ' class="on"' : '') + '></i>'; }).join('') + '</div>';
-    h += '<div class="box" style="padding:10px"><div class="h">KING KONG (' + (x.s === 1 ? 'OQ' : 'QORA') + ') · ' + (SRCN[x.src] || '') + (x.hits > 1 ? ' · 🔁 ' + x.hits + ' marta' + (x.opps > 1 ? ', ' + x.opps + ' o‘yinchi' : '') : '') + '</div>';
-    h += bdHtml(x.b, flip, mk, arr);
-    h += '<div class="cmp"><div class="bad">O‘ynadi<b>' + esc(x.t) + ' ??</b>' + (x.loss ? '−' + x.loss + ' dona' : x.drop ? 'baho −' + x.drop : '') + (x.playedEv != null ? ' · ' + evs(x.playedEv) : '') + '</div>';
-    h += b ? '<div class="good">' + (b.same ? 'Dvigatel ham' : 'To‘g‘risi') + '<b>' + esc(b.t) + '</b>' + evs(b.ev) + ' · 15 s' + (b.safe ? '' : ' ⚠️') + '</div>' : '<div class="good" style="opacity:.75">To‘g‘risi<b>⏳</b>server bo‘shaganda</div>';
+    var b = x.best, flip = x.s === -1, st = x.steps || [], si = F.step || 0, mk = {}, arr;
+    if (si > 0 && st[si]) { var cs = st[si]; arr = pathArrows(cs.p, cs.s === x.s ? 'r' : 'g'); if (cs.p) { mk[cs.p[0]] = cs.s === x.s ? 'fr' : 'gf'; mk[cs.p[cs.p.length - 1]] = cs.s === x.s ? 'to' : 'gt'; } }
+    else { arr = [[x.from, x.to, 'r']]; mk[x.from] = 'fr'; mk[x.to] = 'to'; if (b && !b.same) { arr.push([b.from, b.to, 'g']); mk[b.from] = 'gf'; mk[b.to] = 'gt'; } }
+    var h = '<div class="tabs" style="margin:0 0 6px"><button data-only="1"' + (F.only ? ' class="on"' : '') + '>⭐ Asosiy (' + nMain + ')</button><button data-only="0"' + (!F.only ? ' class="on"' : '') + '>Hammasi (' + all.length + ')</button></div>';
+    h += '<div class="box" style="padding:10px"><div class="h">' + (x.main ? '<span class="pill" style="background:#7c2d12;color:#fde68a;margin:0 4px 0 0">⭐ ASOSIY XATO</span>' : '<span class="pill" style="margin:0 4px 0 0">keyingi xato · o‘yin allaqachon og‘ir</span>') + 'KING KONG (' + (x.s === 1 ? 'OQ' : 'QORA') + ') · ' + (SRCN[x.src] || '') + (x.hits > 1 ? ' · 🔁 ' + x.hits + ' marta' + (x.opps > 1 ? ', ' + x.opps + ' o‘yinchi' : '') : '') + '</div>';
+    h += bdHtml(si > 0 && st[si] ? st[si].b : x.b, flip, mk, arr);
+    if (st.length > 2) h += '<div class="nav" style="margin:6px 0 0"><button data-st="-1">◀</button><button data-st="0" style="flex:3;font-size:13px">' + (si === 0 ? '🔎 Raddiyani ko‘rish (' + (st.length - 1) + ' yurish)' : si + ' / ' + (st.length - 1) + ' · ' + esc(st[si].t || 'yakuniy holat') + (st[si].s === x.s ? ' (King Kong)' : ' (raqib)')) + '</button><button data-st="1">▶</button></div>';
+    if (si === 0) {
+      h += '<div class="cmp"><div class="bad">O‘ynadi<b>' + esc(x.t) + ' ??</b>' + lossTxt(x) + (x.playedEv != null ? ' · ' + evs(x.playedEv) : '') + '</div>';
+      h += b ? '<div class="good">' + (b.same ? 'Dvigatel ham' : 'To‘g‘risi') + '<b>' + esc(b.t) + '</b>' + evs(b.ev) + ' · 15 s' + (b.safe ? '' : ' ⚠️') + '</div>' : '<div class="good" style="opacity:.75">To‘g‘risi<b>⏳</b>server bo‘shaganda</div>';
+      h += '</div>';
+      if (x.line && x.line.length) h += '<div style="font-size:12.5px;opacity:.85;margin-top:8px">Nima uchun: <b>' + esc(x.line.join(' ')) + '</b> — ▶ bilan doskada ko‘ring</div>';
+    }
+    if (b && b.same && si === 0) h += '<div style="font-size:12.5px;color:#fde68a;margin-top:6px">⚠️ Dvigatel ham shu yurishni tanladi — ehtimol qurbon ataylab. O‘tkazib yuborish tavsiya etiladi.</div>';
     h += '</div>';
-    if (x.line && x.line.length) h += '<div style="font-size:12.5px;opacity:.85;margin-top:8px">Nima uchun: ' + esc(x.line.join(' ')) + '</div>';
-    if (b && b.same) h += '<div style="font-size:12.5px;color:#fde68a;margin-top:6px">⚠️ Dvigatel ham shu yurishni tanladi — ehtimol qurbon ataylab. O‘tkazib yuborish tavsiya etiladi.</div>';
-    h += '</div>' + (F.msg ? '<div class="msg">' + F.msg + '</div>' : '');
-    if (b && !b.same) h += '<div class="box" style="background:#0f3d22;border:1px solid #16a34a;color:#bbf7d0;font-size:12.5px">✅ Tasdiqlansa — King Kong bu pozitsiyada endi doim <b>' + esc(b.t) + '</b> o‘ynaydi</div>';
+    if (x.ctx && x.ctx.length) h += '<div class="box" style="padding:8px 10px"><div class="h">O‘YINDA</div><div class="mv" style="margin:0">' + x.ctx.map(function (c) { return '<span data-cx="' + c.j + '"' + (c.me ? ' class="x cur"' : '') + '>' + (c.s === 1 ? c.n + '. ' : c.n + '… ') + esc(c.t) + '</span>'; }).join('') + '</div></div>';
+    h += (F.msg ? '<div class="msg">' + F.msg + '</div>' : '');
+    if (b && !b.same && si === 0) h += '<div class="box" style="background:#0f3d22;border:1px solid #16a34a;color:#bbf7d0;font-size:12.5px">✅ Tasdiqlansa — King Kong bu pozitsiyada endi doim <b>' + esc(b.t) + '</b> o‘ynaydi</div>';
     C.innerHTML = h;
+    [].forEach.call(C.querySelectorAll('[data-only]'), function (el) { el.onclick = function () { F.only = el.getAttribute('data-only') === '1'; F.i = 0; F.step = 0; drawFix(); }; });
+    [].forEach.call(C.querySelectorAll('[data-st]'), function (el) { el.onclick = function () { var d = +el.getAttribute('data-st'); F.step = d === 0 ? (si === 0 ? 1 : 0) : Math.max(0, Math.min(st.length - 1, si + d)); drawFix(); }; });
+    [].forEach.call(C.querySelectorAll('[data-cx]'), function (el) { el.onclick = function () { if (x.gid && !/^spar_/.test(x.gid)) game(x.gid, +el.getAttribute('data-cx')); }; });
     var bar = sbar('<button data-f="skip">✖ O‘tkazish</button><button class="o" data-f="own">♟ Boshqa</button><button class="y" data-f="ok"' + (b && !b.same && !F.busy ? '' : ' disabled') + '>✅ O‘rgat</button>');
     [].forEach.call(bar.querySelectorAll('[data-f]'), function (el) {
       el.onclick = function () {
@@ -114,9 +128,9 @@
         if (a === 'own') { V.g = null; ownPick(x); return; }
         F.busy = true; drawFix();
         post('/api/kkadm/fix', { id: x.id, act: a }).then(function (r) {
-          F.busy = false; if (r.error) { F.msg = '⚠️ ' + esc(r.error); return drawFix(); }
+          F.busy = false; F.step = 0; if (r.error) { F.msg = '⚠️ ' + esc(r.error); return drawFix(); }
           if (a === 'ok') { F.msg = '✅ O‘rgatildi: ' + esc(b.t); try { window.Telegram.WebApp.HapticFeedback.notificationOccurred('success'); } catch (e) {} } else F.msg = '';
-          F.list.splice(F.i, 1); if (F.i >= F.list.length) F.i = Math.max(0, F.list.length - 1); drawFix();
+          F.list.splice(F.list.indexOf(x), 1); drawFix();
         }).catch(function () { F.busy = false; F.msg = '⚠️ Server bilan aloqa yo‘q'; drawFix(); });
       };
     });
@@ -127,9 +141,9 @@
     C.innerHTML = '<div class="msg">⏳</div>';
     post('/api/kkadm/safe', { board: x.b, side: x.s }).then(function (r) {
       var L = r.list || [], best = L.length ? L[0].v : 0;
-      C.innerHTML = bdHtml(x.b, x.s === -1, (function () { var m = {}; m[x.from] = 'fr'; m[x.to] = 'to'; return m; })(), [[x.from, x.to, 'r']]) + '<div class="box"><div class="h">QAYSI YURISHNI O‘RGATAY?</div><div class="ch">' + L.map(function (m, k) { return '<button data-m="' + k + '"' + (m.v < best ? ' class="bad"' : '') + '>' + (m.v < best ? '⚠️ ' : '✅ ') + esc(m.t) + '</button>'; }).join('') + '</div></div>';
+      C.innerHTML = bdHtml(x.b, x.s === -1, (function () { var m = {}; m[x.from] = 'fr'; m[x.to] = 'to'; return m; })(), [[x.from, x.to, 'r']]) + '<div class="box"><div class="h">QAYSI YURISHNI O‘RGATAY?</div><div class="ch">' + L.map(function (m, k) { return '<button data-m="' + k + '"' + (m.v < best ? ' class="bad"' : '') + '>' + (m.v < best ? '⚠️ ' : '✅ ') + esc(m.t) + (m.v < best ? ' <small style="opacity:.8">(' + (best - m.v >= 10 ? 'yutqazadi' : '−' + (best - m.v) + ' dona') + ')</small>' : '') + '</button>'; }).join('') + '</div></div>';
       [].forEach.call(C.querySelectorAll('[data-m]'), function (el) {
-        el.onclick = function () { var m = L[+el.getAttribute('data-m')]; post('/api/kkadm/fix', { id: x.id, act: 'ok', from: m.from, to: m.to }).then(function (r) { F.msg = r.error ? '⚠️ ' + esc(r.error) : '✅ O‘rgatildi: ' + esc(m.t); if (!r.error) { F.list.splice(F.i, 1); if (F.i >= F.list.length) F.i = Math.max(0, F.list.length - 1); } drawFix(); }); };
+        el.onclick = function () { var m = L[+el.getAttribute('data-m')]; post('/api/kkadm/fix', { id: x.id, act: 'ok', from: m.from, to: m.to }).then(function (r) { F.msg = r.error ? '⚠️ ' + esc(r.error) : '✅ O‘rgatildi: ' + esc(m.t); if (!r.error) { F.list.splice(F.list.indexOf(x), 1); F.step = 0; } drawFix(); }); };
       });
     });
   }
@@ -213,14 +227,14 @@
   }
 
   // ---------- 2) o'yin
-  function game(id) {
+  function game(id, at) {
     var C = shell('🦍 …', list);
     C.innerHTML = '<div class="msg">⏳ King Kong yurishlari tekshirilmoqda…</div>';
     post('/api/kkadm/game', { id: id }).then(function (g) {
       if (g.error) { C.innerHTML = '<div class="msg">⚠️ ' + esc(g.error) + '</div>'; return; }
       V.g = g; V.pick = null; V.sel = -1; V.safe = null; V.msg = '';
       var e = g.moves.findIndex(function (x) { return x.kk && x.err && !x.taught; });
-      V.cur = e >= 0 ? e : Math.max(0, g.moves.length - 1);
+      V.cur = at != null && g.moves[at] ? at : e >= 0 ? e : Math.max(0, g.moves.length - 1);
       O.querySelector('.top b').textContent = (g.res === 'w' ? '✅ ' : g.res === 'l' ? '❌ ' : '🤝 ') + 'King Kong — ' + g.opp;
       drawGame();
     }).catch(function () { C.innerHTML = '<div class="msg">⚠️ Server bilan aloqa yo‘q</div>'; });
@@ -237,7 +251,7 @@
     h += '<div class="bd" id="kkBd">';
     for (var v = 0; v < 64; v++) {
       var i = flip ? 63 - v : v, r = i >> 3, c = i & 7, p = x.b[i], dark = (r + c) % 2 === 1;
-      h += '<div class="c ' + (hl[i] || '') + '" data-i="' + i + '" style="background:' + (dark ? BD[2] : BD[1]) + '">' + (p ? pcHtml(p) : '') + (tgt[i] ? '<i class="dot"></i>' : '') + '</div>';
+      h += '<div class="c ' + (hl[i] || '') + '" data-i="' + i + '" style="background:' + (dark ? BD[2] : BD[1]) + '">' + (p ? pcHtml(p) : '') + (tgt[i] ? '<i class="dot"></i>' : '') + (((v & 7) === 0) ? '<span class="cl n" style="color:' + (dark ? 'rgba(255,255,255,.8)' : 'rgba(0,0,0,.55)') + '">' + (8 - r) + '</span>' : '') + (((v >> 3) === 7) ? '<span class="cl a" style="color:' + (dark ? 'rgba(255,255,255,.8)' : 'rgba(0,0,0,.55)') + '">' + 'abcdefgh'[c] + '</span>' : '') + '</div>';
     }
     h += '</div><div class="mv">' + g.moves.map(function (m, k) { return '<span data-k="' + k + '" class="' + (m.kk ? 'k' : '') + (m.kk && m.err && !m.taught ? ' x' : '') + (m.taught ? ' t' : '') + (k === V.cur ? ' cur' : '') + '">' + (m.s === 1 || k === 0 ? num(k) : '') + m.t + (m.kk && m.err && !m.taught ? ' ⚠️' : '') + (m.g ? ' 🛡' : '') + '</span>'; }).join('') + '</div>';
     h += '<div class="nav"><button data-n="0">⏮</button><button data-n="-1">◀</button><button class="er" data-n="e">⚠️ Keyingi xato</button><button data-n="1">▶</button></div>';
@@ -245,7 +259,7 @@
     var who = x.kk ? 'KING KONG (' + (x.s === 1 ? 'OQ' : 'QORA') + ') O‘YNADI' : 'RAQIB O‘YNADI';
     h += '<div class="box"><div class="h">' + num(V.cur).replace('... ', '').replace('. ', '') + '-YURISH · ' + who + '</div>';
     h += '<b style="color:' + (x.err && !x.taught ? '#fca5a5' : '#fff') + '">' + x.t + '</b>' + (x.kk ? ' — ' + srcTxt(x) : '');
-    if (x.kk && x.err) h += '<br>⚠️ <b>' + x.err.loss + ' dona yo‘qotadi</b>' + (x.err.line && x.err.line.length ? ': ' + x.err.line.join(' ') : '');
+    if (x.kk && x.err) h += '<br>⚠️ <b>' + (x.err.loss >= 10 ? 'o‘yinni yutqazadi' : x.err.loss + ' dona yo‘qotadi') + '</b>' + (x.err.line && x.err.line.length ? ': ' + x.err.line.join(' ') : '');
     if (x.taught) h += '<br>✅ O‘rgatilgan: endi bu yerda <b>' + SQ(x.taught.from) + '-' + SQ(x.taught.to) + '</b> o‘ynaydi';
     if (x.kk) {
       var opts = x.err ? x.err.safe : null;
@@ -307,7 +321,7 @@
       C.innerHTML = '<div class="msg">⏳</div>'; sbar('<button id="tB">‹ Orqaga</button>').querySelector('#tB').onclick = function () { taughtOne(x); };
       post('/api/kkadm/safe', { board: b, side: s }).then(function (r) {
         var L = r.list || [], best = L.length ? L[0].v : 0;
-        C.innerHTML = bdHtml(b, s === -1, mk, arr) + '<div class="box"><div class="h">QAYSI YURISHNI O‘RGATAY?</div><div class="ch">' + L.map(function (m, k) { return '<button data-m="' + k + '"' + (m.v < best ? ' class="bad"' : '') + '>' + (m.v < best ? '⚠️ ' : '✅ ') + esc(m.t) + '</button>'; }).join('') + '</div></div>';
+        C.innerHTML = bdHtml(b, s === -1, mk, arr) + '<div class="box"><div class="h">QAYSI YURISHNI O‘RGATAY?</div><div class="ch">' + L.map(function (m, k) { return '<button data-m="' + k + '"' + (m.v < best ? ' class="bad"' : '') + '>' + (m.v < best ? '⚠️ ' : '✅ ') + esc(m.t) + (m.v < best ? ' <small style="opacity:.8">(' + (best - m.v >= 10 ? 'yutqazadi' : '−' + (best - m.v) + ' dona') + ')</small>' : '') + '</button>'; }).join('') + '</div></div>';
         [].forEach.call(C.querySelectorAll('[data-m]'), function (el) { el.onclick = function () { var m = L[+el.getAttribute('data-m')]; post('/api/kkbook/add', { board: b, side: s, from: m.from, to: m.to }).then(function () { taught(); }); }; });
       });
     };

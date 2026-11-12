@@ -24,9 +24,10 @@ function add(o) {
   if (x) {
     if (o.opp && x.opps.indexOf(o.opp) < 0) { x.opps.push(o.opp); if (x.opps.length > 12) x.opps.shift(); }
     x.hits++; x.last = Date.now(); if (x.st === 'skip' && x.hits >= 3) x.st = 'new';   // takrorlansa — qayta ko'rsatamiz
+    if (o.main) { x.main = true; if (o.ctx) { x.ctx = o.ctx; x.gid = o.gid; x.k = o.k; } }
     return x;
   }
-  x = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), key, b: o.b.join(','), s: o.s, from: o.from, to: o.to, t: mtxt(o.b, o.s, o.from, o.to), loss: o.loss || 0, drop: o.drop || 0, line: (o.line || []).slice(0, 6), src: o.src || 'oyin', gid: o.gid || '', opps: o.opp ? [o.opp] : [], hits: 1, at: Date.now(), last: Date.now(), st: 'new', best: null };
+  x = { main: o.main == null ? undefined : !!o.main, ctx: o.ctx || null, k: o.k == null ? null : o.k, id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), key, b: o.b.join(','), s: o.s, from: o.from, to: o.to, t: mtxt(o.b, o.s, o.from, o.to), loss: o.loss || 0, drop: o.drop || 0, line: (o.line || []).slice(0, 6), src: o.src || 'oyin', gid: o.gid || '', opps: o.opp ? [o.opp] : [], hits: 1, at: Date.now(), last: Date.now(), st: 'new', best: null };
   L.unshift(x); if (L.length > 400) L.length = 400;
   store.save(); kick();
   return x;
@@ -135,9 +136,38 @@ function onRecord(g) {
 function onAnalyzed(g, kkMoves) {
   if (g.dayDone) return; g.dayDone = 1;
   dayAdd(g.at, o => { o.mv += kkMoves; o.err += (g.errs || []).length; });
-  (g.errs || []).forEach(e => { const x = kadm().movesOf(g)[e.k]; if (x) add({ b: x.b, s: x.s, from: x.from, to: x.to, loss: e.loss, line: e.line, gid: g.id, opp: g.opp, src: 'oyin' }); });
+  const fm = kadm().movesOf(g), E = (g.errs || []).slice().sort((a, c) => a.k - c.k);
+  E.forEach((e, i) => { const x = fm[e.k]; if (x) add({ b: x.b, s: x.s, from: x.from, to: x.to, loss: e.loss, line: e.line, gid: g.id, opp: g.opp, src: 'oyin', k: e.k, main: mainOf(E, i, x), ctx: ctxOf(fm, e.k) }); });
 }
 
+// ⭐ asosiy xato: o'yindagi birinchi xato, yoki King Kong hali ortda qolmagan pozitsiyadagi xato (qolganlari — oqibat)
+function mainOf(E, i, x) { if (i === 0) return true; return mat(x.b) * x.s >= 0; }
+// o'yindagi o'rni: oldingi 3 va keyingi 3 yarim yurish
+function ctxOf(fm, k) {
+  const num = j => { const first = fm[0] ? fm[0].s : 1; return Math.floor((j + (first === -1 ? 1 : 0)) / 2) + 1; };
+  const out = []; for (let j = Math.max(0, k - 3); j <= Math.min(fm.length - 1, k + 3); j++) out.push({ j, n: num(j), s: fm[j].s, t: fm[j].t, me: j === k });
+  return out;
+}
+function isMain(x) {
+  if (x.main != null) return x.main;
+  try {
+    const g = (D().kkGames || []).find(y => y.id === x.gid); if (!g || !g.errs) return (x.main = true);
+    const fm = kadm().movesOf(g), E = g.errs.slice().sort((a, c) => a.k - c.k), i = E.findIndex(e => fm[e.k] && fm[e.k].b.join('') + fm[e.k].s === x.key);
+    if (i < 0) return (x.main = true);
+    x.k = E[i].k; x.ctx = ctxOf(fm, E[i].k); x.main = mainOf(E, i, fm[E[i].k]);
+  } catch (e) { x.main = true; }
+  return x.main;
+}
+// raddiya: o'ynalgan xato + raqibning javob yo'li — har qadam doska va yurish yo'li bilan
+const unsq = t => { const m = /^([a-h])([1-8])$/.exec(t); return m ? (8 - +m[2]) * 8 + 'abcdefgh'.indexOf(m[1]) : -1; };
+function stepsOf(x) {
+  const out = []; let b = board(x), s = x.s;
+  const play = (from, to, path) => { const L = R.moves(b, s), m = L.find(y => y.from === from && y.to === to && (!path || (y.path || [y.to]).join() === path.join())) || L.find(y => y.from === from && y.to === to); if (!m) return false; out.push({ b: b.slice(), p: [m.from].concat(m.path || [m.to]), t: [m.from].concat(m.path || [m.to]).map(SQ).join(m.caps.length ? ':' : '-'), s }); b = m.board; s = -s; return true; };
+  if (!play(x.from, x.to)) return out;
+  for (const t of (x.line || []).slice(0, 8)) { const q = String(t).split(/[-:]/).map(unsq); if (q.some(v => v < 0) || !play(q[0], q[q.length - 1], q.slice(1))) break; }
+  out.push({ b: b.slice(), p: null, s });
+  return out;
+}
 // ---------- ishchi: bo'sh paytda takliflarni yechadi; kechasi chuqur tahlil va sinov; ertalab hisobot
 const nightOk = () => { const h = HOUR(); return h >= 1 && h < 7 && idle(); };
 let working = false, kickT = null;
@@ -184,7 +214,7 @@ function start() {
 // ---------- HTTP (kkadm.handle dan, admin tekshirilgan)
 function view(x) {
   let line = x.line || [];
-  return { id: x.id, b: board(x), s: x.s, from: x.from, to: x.to, t: x.t, loss: x.loss, drop: x.drop, line, src: x.src, hits: x.hits, opps: x.opps.length, at: x.at, st: x.st, best: x.best, playedEv: x.playedEv == null ? null : x.playedEv };
+  return { main: isMain(x), ctx: x.ctx || null, gid: x.gid || '', k: x.k, steps: stepsOf(x), id: x.id, b: board(x), s: x.s, from: x.from, to: x.to, t: x.t, loss: x.loss, drop: x.drop, line, src: x.src, hits: x.hits, opps: x.opps.length, at: x.at, st: x.st, best: x.best, playedEv: x.playedEv == null ? null : x.playedEv };
 }
 function summary() {
   const P = pending();
@@ -194,7 +224,7 @@ function summary() {
 }
 async function http(p, j, res, h, adminId) {
   if (p === '/api/kkadm/fixes') {
-    const P = pending().sort((a, b) => (b.hits - a.hits) || (b.loss - a.loss) || (b.at - a.at)).slice(0, 60);
+    const P = pending().sort((a, b) => ((isMain(b) ? 1 : 0) - (isMain(a) ? 1 : 0)) || (b.hits - a.hits) || (Math.min(b.loss, 9) - Math.min(a.loss, 9)) || (b.at - a.at)).slice(0, 80);
     const doubt = FX().filter(x => x.st === 'doubt').slice(0, 20);
     return h.send(res, 200, { list: P.map(view), doubt: doubt.map(view) });
   }
