@@ -16,6 +16,8 @@ function spawnEngine() {
   buf = "";
   const ch = spawn(BIN, [], { cwd: DIR, stdio: ["pipe", "pipe", "ignore"] });
   child = ch; if (process.env.KKLOG) console.log("[KK] ENGINE SPAWN");
+  // ⚙️ dvigatel past ustuvorlikda: server (ulanishlar, yurishlar, turnir) protsessorni birinchi oladi
+  try { require("os").setPriority(ch.pid, 15); } catch (e) {}
   ch.on("error", () => { if (child === ch) { child = null; finish("spawn"); } });
   ch.on("close", () => { if (child === ch) { child = null; finish("noout"); } });
   ch.stdin.on("error", () => {});
@@ -31,6 +33,7 @@ function spawnEngine() {
 function finish(err, val) {
   if (!cur) return;
   const c = cur; cur = null; clearTimeout(c.tm);
+  if (c.t0) { const d = Date.now() - c.t0; ENG.ms += d; ENG.n++; if (c.ponder) ENG.pon += d; else if (c.low) ENG.low += d; }
   if (err && child && process.env.KKLOG) console.log("[KK] ENGINE KILL sabab:", err);
   if (err && child) { const o = child; child = null; try { o.kill("SIGKILL"); } catch (e) {} }
   c.cb(err, val);
@@ -39,16 +42,30 @@ function finish(err, val) {
 function next() {
   if (cur || !queue.length) return;
   cur = queue.shift();
+  if (queue.length > ENG.qmax) ENG.qmax = queue.length;
   if (cur.mk) {   // o'ylash vaqti navbatdan chiqqanda hisoblanadi: kutilgan vaqt soatdan ayiriladi
     let s = cur.secs;
     if (cur.due) s = Math.min(s, Math.max(0.08, (cur.due - Date.now()) / 1000));
+    // 🚦 server band (navbat uzun yoki server kechikyapti): o'ylash vaqti qisqaradi — hamma uchun qotish bo'lmasin
+    const f = loadFactor();
+    if (f < 1 && s > 0.3) { s = Math.max(0.3, s * f); ENG.cut++; }
     cur.secs = s; cur.input = cur.mk(s);
   }
   if (!child) spawnEngine();
+  cur.t0 = Date.now();
   cur.tm = setTimeout(() => finish("timeout"), (cur.secs + 8) * 1000);
   child.stdin.write(cur.input);
 }
 let LOWFLAG = false;
+// 📊 dvigatel statistikasi (cpustat.js har daqiqada oladi va nolga qaytaradi)
+const ENG = { ms: 0, n: 0, pon: 0, low: 0, cut: 0, qmax: 0 };
+let LAG = 0;   // server kechikishi (ms) — cpustat.js yangilaydi
+function loadFactor() {
+  const q = queue.filter(x => !x.ponder && !x.low).length;
+  let f = q >= 8 ? 0.35 : q >= 4 ? 0.5 : q >= 2 ? 0.75 : 1;
+  if (LAG > 300) f = Math.min(f, 0.4); else if (LAG > 120) f = Math.min(f, 0.6);
+  return f;
+}
 // navbat tartibi (pri — kichigi oldin): ⏱ vaqtli King Kong — javob kerak bo'lgan vaqt (due) bo'yicha, eng shoshilinchi birinchi;
 // oddiy so'rovlar; vaqtsiz King Kong; fon ishlari (arena, ponder) — eng oxirida
 function run(input, secs, cb, opt) {
@@ -321,4 +338,4 @@ function pv(b, side, secs, plies, cb) {
     });
   })();
 }
-module.exports = { qstat: () => ({ n: QS.n, avg: QS.n ? Math.round(QS.sum / QS.n) : 0, max: QS.max, slow: QS.slow, queue: queue.length }), pv, peek, clearDeep, move, learn, ponder, review, ponderStat: () => PONDER, load: () => busy, mem: () => ({ cache: CACHE.size, deep: DEEP.size }) };
+module.exports = { engStat: () => { const o = Object.assign({}, ENG, { q: queue.length, pid: child ? child.pid : 0 }); ENG.ms = ENG.n = ENG.pon = ENG.low = ENG.cut = ENG.qmax = 0; return o; }, setLag: v => { LAG = v; }, qstat: () => ({ n: QS.n, avg: QS.n ? Math.round(QS.sum / QS.n) : 0, max: QS.max, slow: QS.slow, queue: queue.length }), pv, peek, clearDeep, move, learn, ponder, review, ponderStat: () => PONDER, load: () => busy, mem: () => ({ cache: CACHE.size, deep: DEEP.size }) };

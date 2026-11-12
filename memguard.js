@@ -4,7 +4,9 @@
 // (rasm, GIF, gzip) — o'yinlar, foydalanuvchilar va tangalarga tegmaydi.
 // Avtomatik: jami xotira AUTO_MB dan oshsa (10 daqiqada bir martadan ko'p emas) keshlar tozalanadi va adminlarga xabar boradi.
 const fs = require('fs');
-const AUTO_MB = Number(process.env.MEM_AUTO_MB || 460);
+// konteyner xotira chegarasi (Render tarifi): cgroup dan o'qiladi; avtomatik tozalash chegaraning ~90% ida
+const LIMIT_MB = (() => { for (const f of ['/sys/fs/cgroup/memory.max', '/sys/fs/cgroup/memory/memory.limit_in_bytes']) { try { const v = Number(require('fs').readFileSync(f, 'utf8').trim()); if (v > 0 && v < 1e13) return Math.round(v / 1048576); } catch (e) {} } return 512; })();
+const AUTO_MB = Number(process.env.MEM_AUTO_MB || Math.round(LIMIT_MB * 0.9));
 const C = new Map();   // nom -> Map
 let GC = null;
 try { require('v8').setFlagsFromString('--expose_gc'); GC = require('vm').runInNewContext('gc'); } catch (e) { GC = typeof global.gc === 'function' ? global.gc : null; }
@@ -72,10 +74,10 @@ function fmtBots() {
   return t;
 }
 function fmtSnap(s) {
-  return 'RAM jami: <b>' + MB(s.jami) + ' MB</b> / 512 MB (' + Math.round(s.jami / 5368709.12) + '%)\n' +
+  return 'RAM jami: <b>' + MB(s.jami) + ' MB</b> / ' + LIMIT_MB + ' MB (' + Math.round(MB(s.jami) * 100 / LIMIT_MB) + '%)\n' +
     'Node: rss ' + MB(s.rss) + ' · heap ' + MB(s.heap) + ' · ext ' + MB(s.ext) + ' · ab ' + MB(s.ab) + ' MB' + (s.dv ? '\nDvigatel (KestoG): ' + MB(s.dv) + ' MB' : '') +
     '\nUlanishlar: ' + s.ws + (s.rooms ? ' · Xonalar: ' + s.rooms : '') +
-    '\n\n🗂 Keshlar:\n' + (s.c.length ? s.c.map(x => '• ' + x.n + ': ' + x.k + ' ta, ' + MB(x.b) + ' MB').join('\n') : '—') + fmtBots();
+    '\n\n🗂 Keshlar:\n' + (s.c.length ? s.c.map(x => '• ' + x.n + ': ' + x.k + ' ta, ' + MB(x.b) + ' MB').join('\n') : '—') + fmtBots() + cpuRep();
 }
 const KB = { inline_keyboard: [[{ text: '🧹 Keshni tozalash', callback_data: 'mg:clr' }, { text: '🔄 Yangilash', callback_data: 'mg:st' }]] };
 async function cmd(msg, text) {
@@ -96,8 +98,10 @@ async function onCallback(q) {
   return true;
 }
 let lastAuto = 0, started = false;
+function cpuRep() { try { return require('./cpustat.js').report(); } catch (e) { return ''; } }
 function start() {
   if (started) return; started = true;
+  try { require('./cpustat.js').start(); } catch (e) { console.log('[cpu]', e.message); }
   setInterval(async () => {
     const s = snap();
     if (MB(s.jami) < AUTO_MB || Date.now() - lastAuto < 10 * 60e3) return;
