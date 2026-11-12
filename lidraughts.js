@@ -11,6 +11,39 @@ const K = require('./kestoai.js');
 const TOKEN = process.env.LIDRAUGHTS_TOKEN || '';
 const HOST = 'lidraughts.org';
 const MAX_GAMES = Number(process.env.LIDRAUGHTS_MAX || 1);
+// 🦍 sukut bo'yicha lidraughts'da haqiqiy King Kong o'ynaydi (o'rgatilgan yurishlar, Colette, baza, qo'riqchi — serverdagi bilan bir xil).
+// Eski Monster rejimi: LIDRAUGHTS_BOT=monster
+const KKMODE = String(process.env.LIDRAUGHTS_BOT || '').toLowerCase() !== 'monster';
+const tRun = () => { try { return !!(global.__tRunning && global.__tRunning()); } catch (e) { return false; } };
+// King Kong yurishi — rooms.js dagi bilan bir xil vaqt hisobi (qisqa nazoratda qo'shimcha vaqtdan foydalanadi)
+function kkMove(G, pos, state, moves) {
+  return new Promise(async res => {
+    const my = ((G.color === R.WHITE ? state.wtime : state.btime) || 0) / 1000, inc = ((G.color === R.WHITE ? state.winc : state.binc) || 0) / 1000, base = G.base || 0;
+    let secs = Math.max(my < 4 ? 0.05 : 0.1, Math.min(Number(process.env.LIDRAUGHTS_KKSEC || 15), my / 60 + inc * 0.6, my / 12));
+    if (inc >= 1 && my > inc * 1.5) secs = Math.max(secs, Math.min(inc * 0.7, my * 0.35));
+    if (base + inc * 40 <= 30 || my < 1.2) secs = 0.05;
+    const until = Date.now() + Math.max(800, my * 1000 * 0.3);
+    for (let i = 0; i < 30 && Date.now() < until; i++) {
+      const r = await new Promise(rs => K.move({ board: to64(pos.board), side: pos.side === R.WHITE ? 1 : -1, time: secs, maxTime: secs, kk: true, book: true, tbAlways: true, room: 'ld_' + G.id, rem: Math.max(0.1, my) }, rs));
+      if (r && !r.error) { const fr = r.from >> 3, fc = r.from & 7, tr = r.to >> 3, tc = r.to & 7; const c = moves.filter(m => m.from[0] === fr && m.from[1] === fc && m.to[0] === tr && m.to[1] === tc); return res(c.find(m => (m.captures || []).length === r.jumps) || c[0] || null); }
+      if (r && (r.error === 'busy' || r.error === 'notready')) { await sleep(300); continue; }
+      break;
+    }
+    res(null);
+  });
+}
+// tugagan o'yin King Kong paneliga (tahlil → ⚡ tuzatishlar)
+function kkRecord(G, state, res) {
+  try {
+    const p0 = parseFen(G.fen); if (p0.side !== R.WHITE) return;
+    const moves = String(state.moves || '').trim().split(/\s+/).filter(Boolean).map(t => { const q = (t.match(/\d\d/g) || []).map(Number); const a = locToRC(q[0]), b = locToRC(q[1]); return { from: { r: a[0], c: a[1] }, to: { r: b[0], c: b[1] } }; });
+    let opening = null;
+    if (G.fen && G.fen !== 'startpos') { let s = ''; for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) { if ((r + c) % 2 !== 1) continue; const v = p0.board[r][c]; s += v === 'w' ? 'w' : v === 'W' ? 'W' : v === 'b' ? 'b' : v === 'B' ? 'B' : '0'; } opening = { board: s }; }
+    const kk = { uid: 'bot_kingkong', name: 'King Kong' }, op = { uid: 'ld_' + G.opp, name: '🌐 ' + G.opp };
+    const room = { id: 'ld_' + G.id, moves, white: G.color === R.WHITE ? kk : op, black: G.color === R.WHITE ? op : kk, tc: '🌐 ' + (G.tcTxt || ''), opening };
+    require('./kkadm.js').record(room, res);
+  } catch (e) { log('panelga yozilmadi', e.message); }
+}
 const ST = { on: false, me: null, games: {}, results: [], log: [], started: Date.now() };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 function log(...a) { const s = a.join(' '); console.log('[lidraughts]', s); ST.log.unshift(new Date().toISOString().slice(11, 19) + ' ' + s); ST.log.length = Math.min(ST.log.length, 60); }
@@ -382,8 +415,12 @@ function playGame(id) {
     try {
       let mv = moves[0];
       // tez o'yinda: umumiy kitob va anti-kitob ishlatilmaydi (ular sekin o'yinlardan — tez o'yinda bizni zaif tuzilmalarga olib kirdi); faqat oldindan hisoblangan daraxt va dvigatel
-      const am = moves.length > 1 ? (G.bullet ? (treeMove(G.opp, pos.board, pos.side, moves, G) || longMove(G.opp, pos.board, pos.side, moves)) : antiMove(G.opp, pos.board, pos.side, moves)) : null;
+      const am = KKMODE ? null : moves.length > 1 ? (G.bullet ? (treeMove(G.opp, pos.board, pos.side, moves, G) || longMove(G.opp, pos.board, pos.side, moves)) : antiMove(G.opp, pos.board, pos.side, moves)) : null;
       if (am) { mv = am; G.lastEv = null; log(G.bullet ? 'yurish (daraxt)' : 'yurish (anti-kitob)', id, '#' + pos.plies, 'vs', G.opp); }
+      else if (moves.length > 1 && KKMODE) {
+        const k = await kkMove(G, pos, state, moves);
+        mv = k || safeMove(pos.board, pos.side, moves);
+      }
       else if (moves.length > 1 && G.bullet) {
         // ⚡ tez rejim (½+0, 1+0): har yurishga 0,05–0,4 s; kitob va endshpil bazasi — darhol; soat juda oz qolsa — dvigatelsiz xavfsiz yurish
         const my = (G.color === R.WHITE ? state.wtime : state.btime) || 30000;
@@ -443,18 +480,19 @@ function playGame(id) {
     log('o‘yin tugadi', id, 'vs', G.opp, '→', res, '| sabab:', state && state.status, '| yurishlar:', String(state && state.moves || '').split(' ').filter(Boolean).length);
     if (w && w !== G.color && !/noStart|aborted/i.test(String(state && state.status)) && (G.bullet || !/outoftime|timeout/i.test(String(state && state.status)))) { try { K.learn('ld_' + id); } catch (e) {} if (!/outoftime|timeout/i.test(String(state && state.status)) || G.bullet) analyzeLoss(G, state, id); }   // yutqazdi — o'yinni chuqur tahlil qilib, haqiqiy xatoni topadi va faqat o'shani tuzatadi
     if (!/aborted|noStart/i.test(String(state && state.status))) opResult(G, !w ? 'd' : w === G.color ? 'w' : 'l');
+    if (KKMODE && !/aborted|noStart/i.test(String(state && state.status))) kkRecord(G, state, !w ? 'd' : w === G.color ? 'w' : 'l');
   };
   stream('/api/bot/game/stream/' + id, async o => {
     if (o.type === 'gameFull') {
       G.color = o.white && ST.me && String(o.white.id).toLowerCase() === ST.me ? R.WHITE : R.BLACK;
       G.fen = o.initialFen || 'startpos';
-      { const ck = o.clock || {}; G.bullet = Number(ck.initial) > 0 && Number(ck.initial) <= 60000; if (G.bullet) log('⚡ tez rejim', id, Math.round(ck.initial / 1000) + 's+' + Math.round((ck.increment || 0) / 1000)); }
+      { const ck = o.clock || {}; G.base = (Number(ck.initial) || 0) / 1000; G.tcTxt = Math.round(G.base / 60 * 10) / 10 + '+' + Math.round((ck.increment || 0) / 1000); G.bullet = Number(ck.initial) > 0 && Number(ck.initial) <= 60000; if (G.bullet) log('⚡ tez rejim', id, Math.round(ck.initial / 1000) + 's+' + Math.round((ck.increment || 0) / 1000)); }
       log('fen:', String(G.fen).slice(0, 120), '| variant:', o.variant && (o.variant.key || o.variant.name));
       G.opp = (G.color === R.WHITE ? o.black : o.white) || {}; G.opp = G.opp.name || G.opp.id || '?';
       log('o‘yin boshlandi', id, G.color, 'vs', G.opp);
       if (G.bullet && !G.op && String(G.opp).toLowerCase() === 'colettebot' && !(o.state && o.state.moves)) { const v = pickOpening(G.opp, G.color); if (v) { G.op = v.id; log('🎯 debyut tanlandi:', v.name); } }
       const ob = G.color === R.WHITE ? o.black : o.white; if (ob && /BOT/i.test(ob.title || '')) learnBot(G.opp);
-      if (!greeted) { greeted = true; post('/api/bot/game/' + id + '/chat', { room: 'player', text: '👹 ShashkaPRO Monster — omad! Rus shashkasi: t.me/DraughtsPRObot' }); }
+      if (!greeted) { greeted = true; post('/api/bot/game/' + id + '/chat', { room: 'player', text: KKMODE ? '🦍 ShashkaPRO King Kong — omad! Rus shashkasi: t.me/DraughtsPRObot' : '👹 ShashkaPRO Monster — omad! Rus shashkasi: t.me/DraughtsPRObot' }); }
       if (o.state) { if (o.state.status && o.state.status !== 'started' && o.state.status !== 'created') onEnd(o.state); else think(o.state); }
     } else if (o.type === 'gameState') {
       if (o.status && o.status !== 'started' && o.status !== 'created') onEnd(o); else think(o);
@@ -486,16 +524,16 @@ async function autoChallenge() {
   let i = 0;
   for (;;) {
     await sleep(4 * 60 * 1000);
-    if (Object.keys(ST.games).length || ST.analyzing) continue;
+    if (Object.keys(ST.games).length || ST.analyzing || tRun()) continue;   // turnir paytida dvigatel o'z o'yinchilarimizga
     // faqat hozir onlayn bo'lgan botlarni chaqiramiz
     let online = targets;
     try { const st = await get('/api/users/status?ids=' + encodeURIComponent(targets.join(','))); if (st.s === 200 && Array.isArray(st.j)) online = targets.filter(t => st.j.some(u => String(u.id || u.name).toLowerCase() === t.toLowerCase() && u.online)); } catch (e) {}
     if (!online.length) { if (!(i++ % 6)) log('hech qaysi bot onlayn emas:', targets.join(', ')); continue; }
     const who = online[i++ % online.length];
     // har bir raqib uchun alohida vaqt: LIDRAUGHTS_TC_COLETTEBOT=0.5+0 (coletteBOT uchun sukut bo'yicha ½+0 — u tez o'yinda vaqtini tejay olmaydi)
-    const tcs = process.env['LIDRAUGHTS_TC_' + who.toUpperCase()] || (who.toLowerCase() === 'colettebot' ? '0.5+0' : '');
+    const tcs = process.env['LIDRAUGHTS_TC_' + who.toUpperCase()] || (!KKMODE && who.toLowerCase() === 'colettebot' ? '0.5+0' : '');
     const [l2, i2] = tcs ? tcs.split('+').map(Number) : [lim, inc];
-    const x = await post('/api/challenge/' + who, { rated: process.env.LIDRAUGHTS_RATED === '0' ? 'false' : 'true', 'clock.limit': String(Math.round((l2 || 3) * 60)), 'clock.increment': String(i2 || 0), variant: 'russian', color: 'random' });
+    const x = await post('/api/challenge/' + who, { rated: process.env.LIDRAUGHTS_RATED === '0' ? 'false' : 'true', 'clock.limit': String(Math.round((Number.isFinite(l2) ? l2 : 3) * 60)), 'clock.increment': String(i2 || 0), variant: 'russian', color: 'random' });
     log('chaqiruv yuborildi →', who, x.s, x.s === 200 ? '' : (x.t || '').slice(0, 100));
   }
 }
@@ -526,7 +564,7 @@ async function start() {
 function status() { return { on: ST.on, me: ST.me, games: Object.values(ST.games).map(g => ({ id: g.id, opp: g.opp, color: g.color })), results: ST.results.slice(0, 20), log: ST.log.slice(0, 30) }; }
 async function challenge(user, tc, rated) {
   const [lim, inc] = String(tc || '3+2').split('+').map(Number);
-  return post('/api/challenge/' + encodeURIComponent(user), { rated: rated ? 'true' : 'false', 'clock.limit': String((lim || 3) * 60), 'clock.increment': String(inc || 0), variant: 'russian', color: 'random' });
+  return post('/api/challenge/' + encodeURIComponent(user), { rated: rated ? 'true' : 'false', 'clock.limit': String(Math.round((Number.isFinite(lim) ? lim : 3) * 60)), 'clock.increment': String(inc || 0), variant: 'russian', color: 'random' });
 }
 start();
-module.exports = { status, challenge, _t: { pickOpening, opResult, analyzeLoss, fixMove, FIXES, OPEN: () => OPEN, treeMove, CT: () => CTREE, locToRC, rcToLoc, parseFen, position, antiRepeat, histKeys, buildAnti, LONG, noTrade, replayKeys, learnLoss, avoidCheck, AV: () => AVOID } };
+module.exports = { status, challenge, _t: { kkRecord, kkMove, pickOpening, opResult, analyzeLoss, fixMove, FIXES, OPEN: () => OPEN, treeMove, CT: () => CTREE, locToRC, rcToLoc, parseFen, position, antiRepeat, histKeys, buildAnti, LONG, noTrade, replayKeys, learnLoss, avoidCheck, AV: () => AVOID } };

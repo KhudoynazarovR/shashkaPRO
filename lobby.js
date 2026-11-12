@@ -194,6 +194,7 @@ function createLobby({ send, clients, roomsApi }) {
   const tblOf = uid => [...tables.values()].find(t => t.host.uid === uid || (t.guest && t.guest.uid === uid));
   const pubTbl = t => ({ id: t.id, no: t.no, host: t.host, guest: t.guest, tc: t.tc, stake: t.stake, pos: t.pos, minElo: t.minElo, ready: Object.keys(t.ready), playing: !!t.playing, roomId: t.roomId || null, games: t.games });
   const tournaments = new Map(); // tid -> t
+  global.__tRunning = () => { for (const t of tournaments.values()) if (t.status === 'running') return true; return false; };   // 🌐 lidraughts: turnir paytida yangi chaqiruv yo'q
   // ---- Turnirlarni faylga saqlash (qayta ishga tushganda yo'qolmasligi uchun) ----
   const T_FILE = path.join(__dirname, 'tournaments.json');
   const _rep = (k, v) => v instanceof Map ? { __map: [...v] } : v instanceof Set ? { __set: [...v] } : v;
