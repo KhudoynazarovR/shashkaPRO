@@ -22,14 +22,23 @@ function kkMove(G, pos, state, moves) {
     let secs = Math.max(my < 4 ? 0.05 : 0.1, Math.min(Number(process.env.LIDRAUGHTS_KKSEC || 15), my / 60 + inc * 0.6, my / 12));
     if (inc >= 1 && my > inc * 1.5) secs = Math.max(secs, Math.min(inc * 0.7, my * 0.35));
     if (base + inc * 40 <= 30 || my < 1.2) secs = 0.05;
-    const until = Date.now() + Math.max(800, my * 1000 * 0.3);
-    for (let i = 0; i < 30 && Date.now() < until; i++) {
+    // ⏱ kafolat: javob kechiksa xavfsiz yurish (birinchi yurishda — 1 s; o'yin bekor qilinmasin)
+    const t0 = Date.now(), cap = pos.plies < 2 ? 1000 : Math.max(700, Math.min(my * 1000 * 0.3, secs * 1000 + 1500));
+    let done = false;
+    const fin = (m, why) => { if (done) return; done = true; clearTimeout(tm); log('🦍 yurish', G.id, '#' + pos.plies, why, ((Date.now() - t0) / 1000).toFixed(2) + 's', '| o‘ylash', secs.toFixed(2) + 's', '| soat', my.toFixed(1) + 's'); res(m); };
+    const tm = setTimeout(() => fin(null, '⏱ kechikdi — xavfsiz yurish'), cap);
+    for (let i = 0; i < 30 && !done; i++) {
       const r = await new Promise(rs => K.move({ board: to64(pos.board), side: pos.side === R.WHITE ? 1 : -1, time: secs, maxTime: secs, kk: true, book: true, tbAlways: true, room: 'ld_' + G.id, rem: Math.max(0.1, my) }, rs));
-      if (r && !r.error) { const fr = r.from >> 3, fc = r.from & 7, tr = r.to >> 3, tc = r.to & 7; const c = moves.filter(m => m.from[0] === fr && m.from[1] === fc && m.to[0] === tr && m.to[1] === tc); return res(c.find(m => (m.captures || []).length === r.jumps) || c[0] || null); }
-      if (r && (r.error === 'busy' || r.error === 'notready')) { await sleep(300); continue; }
-      break;
+      if (done) return;
+      if (r && !r.error) {
+        const fr = r.from >> 3, fc = r.from & 7, tr = r.to >> 3, tc = r.to & 7; const c = moves.filter(m => m.from[0] === fr && m.from[1] === fc && m.to[0] === tr && m.to[1] === tc);
+        const src = r.tb ? 'baza' : r.admin ? 'o‘rgatilgan' : r.colette ? 'Colette' : r.etude ? 'etyud' : r.book ? 'kitob' : r.cached ? 'xotira' : 'dvigatel';
+        return fin(c.find(m => (m.captures || []).length === r.jumps) || c[0] || null, src + (r.guard ? ' 🛡' : ''));
+      }
+      if (r && (r.error === 'busy' || r.error === 'notready')) { await sleep(150); continue; }
+      return fin(null, 'dvigatel xato: ' + (r && r.error));
     }
-    res(null);
+    fin(null, 'dvigatel band');
   });
 }
 // tugagan o'yin King Kong paneliga (tahlil → ⚡ tuzatishlar)
