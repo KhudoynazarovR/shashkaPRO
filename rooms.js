@@ -837,8 +837,22 @@ const srvBotOn = room => !!(room && room.vsBot && room.botCfg && room.botCfg.id 
             let ok = false;
             try { ok = !!(bc && room.dr && DRAW.botAcceptsDraw(room.dr.b, bc, room.dr.st)); } catch (e) { console.error("[botDraw]", e && e.message); }
                         if (ok && room.arena) { let nw = 0, nb = 0; for (const r of room.dr.b) for (const p of r) { if (p === "w" || p === "W") nw++; else if (p === "b" || p === "B") nb++; } if (nw > 3 || nb > 3) ok = false; }
-            if (ok) finish(room, "draw", "agreed");
-            else broadcast(room, { type: "roomDraw", roomId, offer: null, declined: true });
+            const reply = (yes) => { if (room.finished) return; if (yes) finish(room, "draw", "agreed"); else broadcast(room, { type: "roomDraw", roomId, offer: null, declined: true }); };
+            if (!ok) return reply(false);
+            // 📊 vaziyatga baho: donalar teng bo'lsa ham bot yutayotgan bo'lsa (endshpil bazasi yoki dvigatel bahosi) — rad etadi
+            try {
+              const fb = [], M = { w: 1, W: 2, b: -1, B: -2 }; for (const r of room.dr.b) for (const p of r) fb.push(M[p] || 0);
+              const tSide = room.turn === "white" ? 1 : -1, bSide = bc === "white" ? 1 : -1;
+              let answered = false; const tmo = setTimeout(() => { if (!answered) { answered = true; reply(true); } }, 4000);
+              require("./kestoai.js").move({ board: fb, side: tSide, time: 1, maxTime: 1, book: false, tbAlways: true, arena: true }, r => {
+                if (answered) return; answered = true; clearTimeout(tmo);
+                if (!r || r.error) return reply(true);
+                let ev = r.tb === "win" ? 3000 : r.tb === "loss" ? -3000 : r.tb === "draw" ? 0 : (r.ev != null ? r.ev : 0);
+                if (tSide !== bSide) ev = -ev;   // bot nuqtai nazaridan
+                if (ev > 60) console.log("[botDraw] rad etildi: baho " + ev + (r.tb ? " (baza: " + r.tb + ")" : ""));
+                reply(ev <= 60);
+              });
+            } catch (e) { reply(true); }
           }
         }, 1500);
       }
