@@ -763,12 +763,13 @@
     function repList(h) {   // saqlangan repertuar yurishlari, foiz bo'yicha kamayib
       if (!window.__isAdmin) return [];
       var E = BK.E[kf(h)], d = BK.D[kf(h) + '|rep']; if (!E || !d || !d.rows) return [];
-      return d.rows.filter(function (x) { return E[x.id] && E[x.id].w > 0 && !E[x.id].sug; }).sort(function (a, b) { return E[b.id].w - E[a.id].w; });
+      return d.rows.filter(function (x) { return E[x.id] && E[x.id].w > 0 && !E[x.id].sug; }).sort(function (a, b) { var M = { '!!': 3, '!': 2, '!?': 1, '?!': -1, '?': -2, '??': -3 }; return E[b.id].w - E[a.id].w || (M[E[b.id].mk] || 0) - (M[E[a.id].mk] || 0); });
     }
     function repArrows(h) {   // 🦍 Repertuar tabida: strelkalar foiz bo'yicha (eng kattasi yashil)
       var L = repList(h).slice(0, S.mpv || 3); if (!L.length) return '';
-      var E = BK.E[kf(h)], top = E[L[0].id].w, o = '';
-      L.forEach(function (x, i) { var q = E[x.id].w / 100; o += arrowEl(fl([x.from >> 3, x.from & 7]), fl([x.to >> 3, x.to & 7]), '#3fb950', i === 0 || E[x.id].w >= top ? .15 : (0.06 + 0.06 * q).toFixed(3), i === 0 || E[x.id].w >= top ? .85 : (0.3 + 0.3 * q).toFixed(2), 'rpAh'); });
+      var E = BK.E[kf(h)], top = E[L[0].id].w, MM = { '!!': 3, '!': 2, '!?': 1, '?!': -1, '?': -2, '??': -3 }, m0 = MM[E[L[0].id].mk] || 0, o = '';
+      var isTop = function (x) { return E[x.id].w >= top && (MM[E[x.id].mk] || 0) >= m0; };
+      L.forEach(function (x, i) { var q = E[x.id].w / 100; o += arrowEl(fl([x.from >> 3, x.from & 7]), fl([x.to >> 3, x.to & 7]), '#3fb950', i === 0 || isTop(x) ? .15 : (0.06 + 0.06 * q).toFixed(3), i === 0 || isTop(x) ? .85 : (0.3 + 0.3 * q).toFixed(2), 'rpAh'); });
       return '<svg viewBox="0 0 8 8" style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none"><defs>' + mkr('rpAh', '#3fb950') + '</defs>' + o + '</svg>';
     }
     function repTop(h) {

@@ -390,6 +390,7 @@
           sw('tour100', '🏆 Turnirda faqat 100% lik yurishlar', 'turnir o‘yinlarida eng ishonchli yurishlar') +
           sw('adapt', '📊 Foizlar o‘zi moslashsin', 'yutqazgan tarmoq pasayadi, yutgani ko‘tariladi (🔒 qulflanganlar tegilmaydi)') +
           sw('traps', '🪤 Tuzoqlarga yo‘naltirish', 'repertuar bo‘lmagan joyda raqiblar ko‘p xato qilgan pozitsiyaga xavfsiz yo‘l') +
+          '<button class="auto" id="cB"><span style="flex:1">Zaxiralar<small>repertuar har kuni alohida saqlanadi (30 kun); kerak bo‘lsa — tiklash</small></span><b style="color:#93c5fd">Ochish</b></button>' +
           '<button class="auto" id="cF"><span style="flex:1">Debyutlarni to‘ldirish<small>91 debyutning har pozitsiyasida hamma yurishlarga foiz va belgi (dvigatel + kitob). Qo‘lda saqlanganlarga tegilmaydi</small></span><b id="cFs" style="color:#93c5fd">Boshlash</b></button>' +
           '<button class="auto" id="cI"><span style="flex:1">📚 Nazariya bazasidan import<small>shu doiraga; mavjud qulflangan yozuvlarga tegilmaydi</small></span><b style="color:#93c5fd">Import</b></button>' +
           '<button class="auto" id="cL"><span style="flex:1">🌐 Onlayn eski o‘yinlar<small>yutqazgan/durang o‘yinlar → tahlil → ⚡ tuzatishlar (har kecha o‘zi ham)</small></span><b style="color:#93c5fd">Yuklash</b></button>' +
@@ -409,6 +410,16 @@
           });
           C.querySelector('#cF').onclick = function () { var run = /To‘xtatish/.test(b.textContent); if (!run && !confirm('Debyutlardagi barcha pozitsiyalarga dvigatel foiz va belgi qo‘ysinmi? ~30 daqiqa, fonda.')) return; fl(run ? { stop: 1 } : { start: 1 }); };
         })();
+        C.querySelector('#cB').onclick = function () {
+          var bt = this; bt.querySelector('b').textContent = '…';
+          post('/api/kkrep/bk', { now: 1 }).then(function (r) {
+            bt.querySelector('b').textContent = 'Ochish';
+            var L = (r.list || []).map(function (x) { return x.slot + ') ' + x.day + ' — ' + x.n + ' ta yurish'; }).join('\n');
+            var s = prompt('Hozir: ' + r.n + ' ta yurish. Zaxiralar:\n' + L + '\n\nTiklash uchun raqamni yozing (bekor — bo‘sh):'); if (s == null || s === '') return;
+            if (!confirm(s + '-zaxiradan tiklansinmi? Hozirgi holat ham alohida saqlanadi.')) return;
+            post('/api/kkrep/restore', { slot: +s }).then(function (x) { alert(x.ok ? 'Tiklandi: ' + x.n + ' ta yurish' : x.error); });
+          });
+        };
         C.querySelector('#cI').onclick = function () { if (!confirm('nazariya bazasi yurishlari «' + RP.sc + '» doirasiga foiz bilan qo‘shilsinmi?')) return; this.querySelector('b').textContent = '⏳'; post('/api/kkrep/import', { sc: RP.sc }).then(function (r) { alert('📗 ' + (r.add || 0) + ' ta yurish qo‘shildi'); treeView(); }); };
         C.querySelector('#cL').onclick = function () { this.querySelector('b').textContent = '⏳'; post('/api/kkadm/ldimport', { n: 120 }).then(function (r) { alert(r.error ? '⚠️ ' + r.error : '🌐 ' + r.add + ' ta o‘yin yuklandi (' + r.seen + ' ta ko‘rildi). Xatolar tahlildan keyin «⚡ Tuzatishlar»da.'); treeView(); }); };
         C.querySelector('#cE').onclick = function () { post('/api/kkrep/export', { sc: RP.sc }).then(function (r) { var C2 = shell('📤 Eksport · ' + esc(RP.sc), treeView); C2.innerHTML = '<textarea style="width:100%;height:60vh;background:#1d1858;color:#fff;border:0;border-radius:12px;padding:10px;font:11px ui-monospace,monospace">' + esc(JSON.stringify(r.data)) + '</textarea>'; }); };

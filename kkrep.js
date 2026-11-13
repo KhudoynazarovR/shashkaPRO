@@ -32,7 +32,7 @@ function pick(b, side, ctx) {
       let L = Object.entries(P).filter(([, v]) => v.w > 0);
       if (ctx.tour && r.cfg.tour100) { const t = L.filter(([, v]) => v.w >= 100); if (t.length) L = t; }
       if (!L.length) continue;
-      if (r.cfg.top !== false) { const mx = Math.max.apply(null, L.map(([, v]) => v.w)); L = L.filter(([, v]) => v.w >= mx); }   // 🥇 eng katta foiz doim birinchi (tenglar orasida tasodifiy)
+      if (r.cfg.top !== false) { const mx = Math.max.apply(null, L.map(([, v]) => v.w)); L = L.filter(([, v]) => v.w >= mx);  const MS = { '!!': 3, '!': 2, '!?': 1, '?!': -1, '?': -2, '??': -3 }, ms = v => MS[v.mk] || 0, mm = Math.max.apply(null, L.map(([, v]) => ms(v))); L = L.filter(([, v]) => ms(v) >= mm); }   // teng foizda: !! > ! > !? > belgisiz   // 🥇 eng katta foiz doim birinchi (tenglar orasida tasodifiy)
       const legal = R.moves(b, side); L = L.filter(([m]) => { const [f, t] = m.split('-').map(Number); return legal.some(x => x.from === f && x.to === t); });
       if (!L.length) continue;
       let sum = L.reduce((s, [, v]) => s + v.w, 0), x = Math.random() * sum, ch = L[0];
@@ -279,6 +279,8 @@ function handle(req, res, p, h) {
     if (p === '/api/kkrep/hist') return h.send(res, 200, { list: r.hist.slice(0, 120).map((x, i) => ({ i, at: x.at, sc: x.sc, why: x.why, b: x.b, s: x.s, old: x.old ? Object.keys(x.old).length : 0, nw: x.nw ? Object.entries(x.nw).map(([id, v]) => { const [f, tt] = id.split('-').map(Number); return SQ(f) + '-' + SQ(tt) + ' ' + v.w; }).join(', ') : '—' })) });
     if (p === '/api/kkrep/suggest') return suggest(b, s, x => h.send(res, 200, x));
     if (p === '/api/kkrep/fill') { if (j.stop) { FILL.run = false; store.save(); } else if (j.start) fillStart(t.id); return h.send(res, 200, { run: FILL.run, done: FILL.done, total: FILL.total, add: FILL.add, err: FILL.err }); }
+    if (p === '/api/kkrep/bk') { if (j.now) await repBackup(true); return h.send(res, 200, { list: store.db.kkRepBk || [], n: repCount() }); }
+    if (p === '/api/kkrep/restore') return h.send(res, 200, await repRestore(+j.slot, t.id));
     if (p === '/api/kkrep/undo') return h.send(res, undo(+j.i) ? 200 : 400, { ok: true });
     if (p === '/api/kkrep/import') return h.send(res, 200, { add: importBooks(sc, Math.max(2, Math.min(40, (+j.depth || r.cfg.depth) * 2)), t.id) });
     if (p === '/api/kkrep/pdn') return h.send(res, 200, importPdn(sc, j.text, j.sides === 'w' || j.sides === 'b' ? j.sides : 'both', Math.max(2, Math.min(60, (+j.depth || r.cfg.depth) * 2)), t.id));
@@ -290,4 +292,26 @@ function handle(req, res, p, h) {
   });
   return true;
 }
-module.exports = { pick, result, noteOpp, set, view, tree, importBooks, importPdn, traps, handle, SCOPES };
+// 🛡 Repertuar zaxirasi: har kuni alohida nusxa bazada (30 kunlik halqa), qisqarib ketsa — ogohlantirish. Asosiy saqlash: store (Postgres) + kunlik to'liq zaxira.
+const repCount = () => { const r = D(); let n = 0; for (const sc of Object.keys(r.sc)) for (const k of Object.keys(r.sc[sc])) n += Object.keys(r.sc[sc][k]).length; return n; };
+async function repBackup(force) {
+  const r = D(), day = new Date(Date.now() + 5 * 3600e3).toISOString().slice(0, 10), I = store.db.kkRepBk || (store.db.kkRepBk = []);
+  if (!force && I.length && I[0].day === day) return null;
+  const n = repCount(), last = I[0];
+  if (last && last.n > 50 && n < last.n * 0.7) { try { (process.env.ADMIN_IDS || '').split(',').map(x => x.trim()).filter(Boolean).forEach(a => require('./gcard.js').tg('sendMessage', { chat_id: a, text: '⚠️ Repertuar ' + last.n + ' dan ' + n + ' ta yurishga kamaydi. Tiklash: King Kong paneli → Repertuar → Zaxiralar.' })); } catch (e) {} }
+  const slot = (I.length ? (I[0].slot + 1) : 0) % 30;
+  const ok = await store.kvSet('kkrep:' + slot, { sc: r.sc, cfg: r.cfg, st: r.st, trap: r.trap });
+  if (!ok) return null;
+  const e = { slot, day, n, at: Date.now() }; store.db.kkRepBk = [e].concat(I.filter(x => x.slot !== slot)).slice(0, 30); store.save(); return e;
+}
+async function repRestore(slot, by) {
+  const I = store.db.kkRepBk || [], e = I.find(x => x.slot === slot); if (!e) return { error: 'Zaxira topilmadi' };
+  const v = await store.kvGet('kkrep:' + slot); let o = null; try { o = typeof v === 'string' ? JSON.parse(v) : v; } catch (x) {}
+  if (!o || !o.sc) return { error: 'Zaxirani o‘qib bo‘lmadi' };
+  await repBackup(true);   // hozirgi holat ham saqlanadi
+  const r = D(); r.sc = o.sc; if (o.cfg) r.cfg = o.cfg; if (o.st) r.st = o.st; if (o.trap) r.trap = o.trap;
+  r.hist.unshift({ at: Date.now(), by: String(by || ''), sc: 'all', k: null, why: 'Zaxiradan tiklandi: ' + e.day }); store.save();
+  return { ok: true, n: repCount() };
+}
+{ const tm = setInterval(() => { repBackup(false).catch(() => {}); }, 3 * 3600e3); if (tm.unref) tm.unref(); const t2 = setTimeout(() => repBackup(false).catch(() => {}), 5 * 60e3); if (t2.unref) t2.unref(); }
+module.exports = { repBackup, repCount, pick, result, noteOpp, set, view, tree, importBooks, importPdn, traps, handle, SCOPES };
