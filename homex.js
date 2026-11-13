@@ -100,8 +100,9 @@
       gh += '<div class="g"><span class="r hx' + r + '">' + (r === 'W' ? '✓' : r === 'L' ? '✕' : '½') + '</span><span class="nm">' + esc(opp) + (g.oe ? ' <small>(' + g.oe + ')</small>' : '') + '</span><span class="tc">' + esc(g.tc && g.tc !== '∞' ? g.tc : '∞') + '</span><button data-i="' + i + '">🔬 Tahlil</button></div>';
     });
     var gm = el('hxGm', '<div class="hxH">O‘yinlarim <a data-a="1">Arxiv ›</a></div><div class="gh">' + (gh || '<div class="e">Hali o‘yin yo‘q — ▶ O‘ynash tugmasini bosing!</div>') + '</div>');
-    if (gm.parentNode !== hero) {
-      hero.appendChild(gm);
+    if (!gm.parentNode) hero.appendChild(gm);
+    if (!gm.__oc) {
+      gm.__oc = 1;
       gm.onclick = function (e) {
         var t = e.target;
         if (t.getAttribute && t.getAttribute('data-a')) { if (window.mnArchOpen) window.mnArchOpen(); return; }
@@ -111,7 +112,8 @@
     // pastki qism: online ro'yxatdan keyin
     var pl = $('lbPl'); if (!pl || !pl.parentNode) return;
     var bot = $('hxBot'); if (!bot) { bot = document.createElement('div'); bot.id = 'hxBot'; }
-    if (bot.previousSibling !== pl) pl.parentNode.insertBefore(bot, pl.nextSibling);
+    if (gm.previousSibling !== pl) pl.parentNode.insertBefore(gm, pl.nextSibling);   // O'yinlarim — online ro'yxat ostida
+    if (bot.previousSibling !== gm) pl.parentNode.insertBefore(bot, gm.nextSibling);
     bot.style.display = pl.offsetParent ? '' : 'none';
     var vis = [].slice.call(pl.querySelectorAll('.lbp')).filter(function (x) { return x.offsetParent; }).length;
     var onTab = pl.querySelector('.lbtb.on'), fr = onTab && onTab.getAttribute('data-t') === 'f';
