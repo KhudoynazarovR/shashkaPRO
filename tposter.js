@@ -134,7 +134,8 @@ async function announce(t) {
     if (r && r.ok && r.result) t.annMsg = r.result.message_id;
     console.log('[tposter] e\'lon:', t.name, r && r.ok ? 'yuborildi' : JSON.stringify(r && r.description));
     let fid = ''; try { const a = r.result.photo; fid = a[a.length - 1].file_id; } catch (e) {}
-    for (const g of (process.env.T_GROUPS || '').split(',').map(z => z.trim()).filter(Boolean)) {   // 👥 guruhlarga ham (Render: T_GROUPS=@guruh1,-100123...)
+    const GR = Array.from(new Set((store.db.groups || []).map(String).concat(String(process.env.T_GROUPS || '').split(','), String(process.env.EXTRA_GROUP_IDS || '').split(',')).map(z => z.trim()).filter(Boolean)));
+    for (const g of GR) {   // 👥 bot admin bo'lgan barcha guruhlarga (avtomatik ro'yxat) + T_GROUPS
       try { const r2 = fid ? await tg('sendPhoto', { chat_id: g, photo: fid, caption: annCap(t), parse_mode: 'HTML', reply_markup: joinKb(t) }) : await sendPhoto(g, buf, annCap(t), joinKb(t)); console.log('[tposter] guruh', g, r2 && r2.ok ? 'ok' : JSON.stringify(r2 && r2.description)); } catch (e) {}
     }
     broadcast(t, fid, buf);
