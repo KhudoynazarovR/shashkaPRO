@@ -32,7 +32,7 @@ async function sendPhoto(chat, buf, caption, kb, extra) {
   fd.append('chat_id', String(chat)); fd.append('caption', caption.slice(0, 1024)); fd.append('parse_mode', 'HTML');
   if (kb) fd.append('reply_markup', JSON.stringify(kb));
   for (const [k, v] of Object.entries(extra || {})) fd.append(k, typeof v === 'object' ? JSON.stringify(v) : String(v));
-  fd.append('photo', new Blob([buf], { type: 'image/png' }), 't.png');
+  { const jp = buf[0] === 0xff && buf[1] === 0xd8; fd.append('photo', new Blob([buf], { type: jp ? 'image/jpeg' : 'image/png' }), jp ? 't.jpg' : 't.png'); }
   return fetch('https://api.telegram.org/bot' + T + '/sendPhoto', { method: 'POST', body: fd }).then(r => r.json()).catch(() => null);
 }
 // ---------- rasm qismlari
@@ -107,13 +107,36 @@ function annCap(t) {
   if (t.desc) c += '\n' + h(t.desc) + '\n';
   return c + '\n👇 Qo‘shilish uchun tugmani bosing';
 }
+// 🤖 «Insonlar va Botlar» jangi — tayyor rasm (admin tanlagan) ustiga turnir ma'lumotlari yoziladi
+function isHvb(t) { return (t.clubIds || []).includes('cbots') || /insonlar.*bot/i.test(String(t.name || '')); }
+async function hvbPng(t) {
+  const sh = sharp(); if (!sh) return null;
+  const fs = require('fs'), path = require('path'), f = path.join(__dirname, 'public', 'img', 'hvb_bg.jpg'); if (!fs.existsSync(f)) return null;
+  const d = tz(t.startAt), num = (/(?:#|jangi\s*)(\d+)/i.exec(String(t.name || '')) || /(\d+)\s*$/.exec(String(t.name || '')) || [])[1];
+  const date = d.getUTCDate() + '-' + MON[d.getUTCMonth()], time = hm(t.startAt) + (t.endAt ? ' - ' + hm(t.endAt) : '');
+  const tags = [kindTxt(t), tcTxt(t.tc) + ' ' + tcCat(t.tc), t.pos === 'idf' ? 'IDF 780' : 'Standart', t.rated === false ? 'Reytingsiz' : 'Reytingli'];
+  const tz2 = s0 => s0.length > 10 ? 24 : s0.length > 8 ? 27 : 30;
+  const T = (xx, y, txt, fs0, fill, anchor, w, st, extra) => '<text x="' + xx + '" y="' + y + '" font-family="' + F + '" font-size="' + fs0 + '" font-weight="' + (w || 900) + '" font-style="' + (st || 'italic') + '" fill="' + fill + '" text-anchor="' + (anchor || 'start') + '"' + (extra || '') + '>' + x(txt) + '</text>';
+  let o = '<svg xmlns="http://www.w3.org/2000/svg" width="1672" height="941"><defs><linearGradient id="gd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6c2"/><stop offset=".5" stop-color="#ffcf3a"/><stop offset="1" stop-color="#e08a00"/></linearGradient>' +
+    '<filter id="ds"><feDropShadow dx="0" dy="3" stdDeviation="2" flood-color="#000" flood-opacity=".5"/></filter></defs>';
+  o += T(885, 356, 'Jangi' + (num ? ' ' + num : ''), 70, '#0b1440', 'middle');
+  o += '<g filter="url(#ds)">' + T(735, 462, date, 64, '#ffffff') + T(812, 509, time, 36, '#ffffff', 'start', 700) + '</g>';
+  o += '<g filter="url(#ds)">' + T(565, 592, tags[0], tz2(tags[0]), '#fff', 'start', 700, 'normal') + T(775, 592, tags[1], tz2(tags[1]), '#fff', 'start', 700, 'normal') +
+    T(1035, 592, tags[2], tz2(tags[2]), '#fff', 'start', 700, 'normal') + T(805, 662, tags[3], tz2(tags[3]), '#fff', 'start', 700, 'normal') + '</g>';
+  if (t.prize > 0) { const pz = fmt(t.prize), fs1 = pz.length > 5 ? 62 : pz.length > 3 ? 80 : 110; o += '<g filter="url(#ds)">' + T(355, 858, pz, fs1, 'url(#gd)', 'middle', 900, 'italic', ' stroke="#7a4b00" stroke-width="2"') + '</g>'; }
+  o += '</svg>';
+  try { return await sh(f).composite([{ input: Buffer.from(o) }]).jpeg({ quality: 90 }).toBuffer(); } catch (e) { console.log('[tposter] hvb', e.message); return null; }
+}
 async function announce(t) {
   try {
-    const buf = await png(annSvg(t));
+    const buf = (isHvb(t) && await hvbPng(t)) || await png(annSvg(t));
     const r = await sendPhoto(CH(), buf, annCap(t), joinKb(t));
     if (r && r.ok && r.result) t.annMsg = r.result.message_id;
     console.log('[tposter] e\'lon:', t.name, r && r.ok ? 'yuborildi' : JSON.stringify(r && r.description));
     let fid = ''; try { const a = r.result.photo; fid = a[a.length - 1].file_id; } catch (e) {}
+    for (const g of (process.env.T_GROUPS || '').split(',').map(z => z.trim()).filter(Boolean)) {   // 👥 guruhlarga ham (Render: T_GROUPS=@guruh1,-100123...)
+      try { const r2 = fid ? await tg('sendPhoto', { chat_id: g, photo: fid, caption: annCap(t), parse_mode: 'HTML', reply_markup: joinKb(t) }) : await sendPhoto(g, buf, annCap(t), joinKb(t)); console.log('[tposter] guruh', g, r2 && r2.ok ? 'ok' : JSON.stringify(r2 && r2.description)); } catch (e) {}
+    }
     broadcast(t, fid, buf);
   } catch (e) { console.log('[tposter] e\'lon xato', e.message); }
 }
@@ -170,4 +193,4 @@ async function today(t) {
     await tg('sendMessage', Object.assign({ chat_id: CH(), parse_mode: 'HTML', text: '📣 <b>Bugun ' + hm(t.startAt) + ' da — ' + h(t.name) + '!</b>\n⏱ ' + tcTxt(t.tc) + ' ' + tcCat(t.tc) + (t.flag ? ' · 🏳️ viloyatingiz uchun' : '') + (t.prize > 0 ? ' · 💰 ' + fmt(t.prize) : '') + '\n👥 ' + t.players.size + ' kishi yozildi — siz ham qo‘shiling 👇', reply_markup: joinKb(t) }, extra));
   } catch (e) {}
 }
-module.exports = { today, announce, remind, result, annSvg, resSvg, png, dayStr, hm };
+module.exports = { hvbPng, isHvb, today, announce, remind, result, annSvg, resSvg, png, dayStr, hm };
