@@ -99,7 +99,7 @@
       o.querySelector('button').onclick = function () { o.remove(); };
       document.body.appendChild(o);
     };
-    function go(roomId) { if (/^mx:/.test(String(roomId)) && window.mxOpen) return window.mxOpen(roomId); if (window.rcOpen) return window.rcOpen(roomId); location.href = location.pathname + "?room=" + encodeURIComponent(roomId); }
+    function go(roomId) { try { if (window.taClose) window.taClose(); } catch (e) {} if (/^mx:/.test(String(roomId)) && window.mxOpen) return window.mxOpen(roomId); if (window.rcOpen) return window.rcOpen(roomId); location.href = location.pathname + "?room=" + encodeURIComponent(roomId); }
     // 🪟 O'yin xonasi sahifa qayta yuklanmasdan — zal ustidagi oynada ochiladi va yopiladi (zal ulanishi uzilmaydi)
     var EMB = false; try { EMB = !!window.__spEmb && window.parent !== window && !!window.parent.rcOpen; } catch (e) {}
     if (EMB) {
@@ -3386,7 +3386,7 @@ it.appendChild(ar);
 })();
 
 /* TARENA — arena turniri lidraughts uslubidagi sahifada (tarena.js) */
-;(function(){var s=document.createElement("script");s.src="/tarena.js?v=5";document.head.appendChild(s)})();
+;(function(){var s=document.createElement("script");s.src="/tarena.js?v=6";document.head.appendChild(s)})();
 
 ;(function () {
   if (window.__tvAddBots) return; window.__tvAddBots = 1;

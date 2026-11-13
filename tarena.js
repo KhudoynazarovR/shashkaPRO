@@ -36,6 +36,7 @@
     '#taP{position:fixed;inset:0;z-index:2147483050;display:none;flex-direction:column;background:#161244;color:#ecebff;font-family:-apple-system,system-ui,Roboto,"Segoe UI","Noto Sans",Arial,sans-serif;font-variant-numeric:tabular-nums}' +
     '#taP.on{display:flex}' +
     'body.taOn #lbPanel{visibility:hidden!important}' +
+    'body.taOn #lbToasts{z-index:2147483100!important}' +   // «yangi o'yin — 3 soniyada o'tasiz» xabari arena ustida ko'rinsin
     '#taP .taTop{display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 10px) 12px 10px;background:#1e1856;border-bottom:1px solid #2d2775}' +
     '#taP .taBk{border:0;background:#2d2775;color:#fff;border-radius:12px;width:40px;height:40px;font-size:18px;flex:none}' +
     '#taP .taTt{flex:1;min-width:0}#taP .taTt b{display:block;font-size:19px;color:#f5b72b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
