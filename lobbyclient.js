@@ -3386,7 +3386,7 @@ it.appendChild(ar);
 })();
 
 /* TARENA — arena turniri lidraughts uslubidagi sahifada (tarena.js) */
-;(function(){var s=document.createElement("script");s.src="/tarena.js?v=2";document.head.appendChild(s)})();
+;(function(){var s=document.createElement("script");s.src="/tarena.js?v=3";document.head.appendChild(s)})();
 
 ;(function () {
   if (window.__tvAddBots) return; window.__tvAddBots = 1;

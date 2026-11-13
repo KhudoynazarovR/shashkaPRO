@@ -258,28 +258,46 @@
     var pk = peek && peek.id === feat.roomId ? peek : null;
     var sig = feat.roomId + ':' + (pk ? (pk.moves || []).length + ':' + JSON.stringify(pk.clock) : '-');
     if (sig === sigFeat) return; sigFeat = sig;
-    var b = pk ? boardOf(pk) : null, cells = '';
+    var b = pk ? boardOf(pk) : null, cells = '', GS = skin();
     for (var r = 0; r < 8; r++) for (var c = 0; c < 8; c++) {
       var v = b ? b[r][c] : 0, pc = '';
-      if (v) pc = '<u class="' + (v === 1 || v === 3 ? 'w' : 'b') + (v > 2 ? ' k' : '') + '"></u>';
-      cells += '<i class="' + ((r + c) % 2 ? 'd' : 'l') + '">' + pc + '</i>';
+      if (v) { var w = v === 1 || v === 3, k = v > 2, u = window.spEqId ? '/api/shop/img?id=' + encodeURIComponent(window.spEqId) + '&k=' + (w ? 'w' : 'b') + (k ? 'k' : '') : '';
+        pc = '<i class="piece pc ' + (w ? 'w' : 'b') + (k ? ' k' : '') + '"' + (u ? ' style="background-image:url(&quot;' + u + '&quot;)!important;background-size:contain!important;background-color:transparent!important;border:0!important;box-shadow:none!important"' : '') + '></i>'; }
+      cells += '<div class="sq ' + ((r + c) % 2 ? 'd' : 'l') + '" style="' + (GS.rc ? 'background:' + ((r + c) % 2 ? GS.rc[1] : GS.rc[0]) + ';' : '') + 'position:relative;display:flex;align-items:center;justify-content:center;aspect-ratio:1">' + pc + '</div>';
     }
     var ck = pk && pk.clock ? pk.clock : {};
     function line(col) {
       var uid = col === 'w' ? feat.white : feat.black, n = col === 'w' ? feat.whiteName : feat.blackName, e = col === 'w' ? feat.whiteElo : feat.blackElo, t = col === 'w' ? ck.white : ck.black;
       return '<div class="taFp"><span><small>#' + (featRk[String(uid)] || '–') + '</small> <b>' + nm(n) + '</b> <small>' + (e || '') + '</small></span><span class="c">' + clk(t) + '</span></div>';
     }
-    g('taFeat').innerHTML = line('b') + '<div class="taFt">' + cells + '</div>' + line('w') + (feat.bb ? '<div style="text-align:center;color:#a9a4d8;font-size:13px;margin-top:8px">🤖 Botlar o‘yini — jonli</div>' : '<button class="taW" data-a="watch" data-room="' + esc(feat.roomId) + '">👁 Tomosha qilish</button>');
+    g('taFeat').innerHTML = line('b') + '<div class="taFt" id="taFtB" data-th="' + GS.th + '" data-ps="' + GS.ps + '" style="--pz:' + GS.pz + '%;--km:\'' + GS.km + '\'">' + cells + '</div>' + line('w') + (feat.bb ? '<div style="text-align:center;color:#a9a4d8;font-size:13px;margin-top:8px">🤖 Botlar o‘yini — jonli</div>' : '<button class="taW" data-a="watch" data-room="' + esc(feat.roomId) + '">👁 Tomosha qilish</button>');
   }
 
   function open(id) {
     build(); cur = String(id); window.__tvCur = cur; page = -1; sigMain = ''; sigChat = ''; sigFeat = ''; peek = null;
-    document.body.classList.add('taOn'); P.classList.add('on'); g('taSc').scrollTop = 0; render();
+    GSK = null; document.body.classList.add('taOn'); P.classList.add('on'); g('taSc').scrollTop = 0; render();
     if (timer) clearInterval(timer);
     var k = 0; timer = setInterval(function () { render(); if (++k % 3 === 0) askPeek(); }, 1000);
     setTimeout(askPeek, 300);
   }
   var pinR = '';
+  // 🎨 o'yinchining doska va donalari (do'kon / sozlamalar) — o'yin xonasidagidek
+  var RCB = [["#EFD9B1", "#B58863"], ["#DEE3E6", "#8CA2AD"], ["#FFFFDD", "#86A666"], ["#DDDDDD", "#A0A0A0"], ["#F1D5CC", "#B5685D"], ["#E3DAEE", "#8B72B5"], ["#D5F0EC", "#4A9A93"], ["#9AA5B8", "#3E4A5E"], ["#F7E7B4", "linear-gradient(135deg,#C9A227,#8A6508)"], ["linear-gradient(135deg,#FAFAFA,#E3E3E0 55%,#F5F5F3)", "linear-gradient(135deg,#4B5563,#1F2937)"], ["#D9F2E3", "linear-gradient(135deg,#0F766E,#064E3B)"], ["#1E1B4B", "linear-gradient(135deg,#7C3AED,#DB2777)"]];
+  var GSK = null;
+  function skin() {
+    if (GSK) return GSK;
+    var o = { th: 'edeon', ps: 'img', pz: '90', km: '\u265B', rc: null };
+    try { var x = JSON.parse(localStorage.getItem('sp_s2') || '{}'); if (x.th) o.th = x.th; if (x.ps) o.ps = x.ps; if (x.pz) o.pz = x.pz; if (x.km) o.km = x.km; } catch (e) {}
+    try { var m = JSON.parse(localStorage.getItem('rc_menu_v1') || '{}'); if (m.board >= 0 && RCB[m.board]) o.rc = RCB[m.board]; } catch (e) {}
+    try {
+      if (!document.getElementById('taFtTh')) {
+        var css = '';
+        for (var i = 0; i < document.styleSheets.length; i++) { var Rl; try { Rl = document.styleSheets[i].cssRules; } catch (e) { continue; } for (var j = 0; j < Rl.length; j++) { var t = Rl[j].cssText || ''; if (t.indexOf('#board[') === 0) css += t.replace(/#board\[/g, '#taFtB[') + '\n'; } }
+        var st = document.createElement('style'); st.id = 'taFtTh'; st.textContent = css + '#taFtB .sq{border:0!important}#taFtB .pc{pointer-events:none}'; document.head.appendChild(st);
+      }
+    } catch (e) {}
+    GSK = o; return o;
+  }
   // 🎮 o'yinga tushganda (xona ochilsa) arena sahifasi yopiladi — aks holda o'yin orqada qoladi
   setInterval(function () { if (P && P.classList.contains('on') && document.getElementById('lbBack')) close(); }, 300);
   function close() {
