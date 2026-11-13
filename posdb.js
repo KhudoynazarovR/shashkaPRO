@@ -112,10 +112,10 @@ const MPV = new Map();
 function multipv(b, s, cb, o) {
   o = o || {}; const secs = Math.min(2, Math.max(0.3, Number(o.t) || 0.8)), N = Math.min(3, Math.max(1, Number(o.n) || 3)), PL = Math.min(12, Math.max(4, Number(o.pl) || 8));
   const key = b.join('') + s + '|' + secs + '|' + N + '|' + PL, c = MPV.get(key); if (c) return cb(c);
-  const K = require('./kestoai.js'), L = R.moves(b, s);
+  const K0 = require('./kestoai.js'), K = { pv: (bb, ss, t, p, cb) => K0.pv(bb, ss, t, p, cb, 0.1) }, L = R.moves(b, s);
   if (!L.length) return cb({ lines: [] });
   const busy = global.__tRunning && global.__tRunning();
-  K.pv(b, s, secs, PL, r0 => {
+  K.pv(b, s, secs, PL, r0 => {   // davomi tez: har yurish 0.1 s
     if (!r0 || r0.error || !r0.pv || !r0.pv.length) return cb({ lines: [] });
     const lines = [{ ev: r0.ev, pv: r0.pv }];
     if (busy || L.length < 2 || N < 2) { const o = { lines }; MPV.set(key, o); return cb(o); }
@@ -124,7 +124,7 @@ function multipv(b, s, cb, o) {
     let left = alt.length; if (!left) { const o = { lines }; MPV.set(key, o); return cb(o); }
     alt.forEach(a => {
       const m = L.find(x => x.from === a.from && x.to === a.to);
-      K.pv(m.board, -s, Math.min(secs, 0.5), PL - 2, r => {
+      K.pv(m.board, -s, 0.3, PL - 2, r => {
         lines.push({ ev: r && r.ev != null ? r.ev : null, pv: [{ path: [m.from].concat(m.path || [m.to]), caps: m.caps.length }].concat((r && r.pv) || []) });
         if (--left === 0) { lines.sort((x, y) => s * ((y.ev == null ? -99 * s : y.ev) - (x.ev == null ? -99 * s : x.ev))); const o = { lines }; MPV.set(key, o); if (MPV.size > 2000) MPV.delete(MPV.keys().next().value); cb(o); }
       });

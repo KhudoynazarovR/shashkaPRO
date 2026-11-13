@@ -340,17 +340,22 @@
     var tok = ++PVT;
     setTimeout(function () {   // 🧠 telefon dvigateli o'rniga — serverdagi KestoG
       if (tok !== PVT) return;
-      fetch('/api/ai/multipv', { method: 'POST', headers: hd(), body: JSON.stringify({ board: toEng(h.b), side: h.t, time: Math.min(2, S.t || 1), n: S.mpv || 3, plies: S.pl || 8 }) })
+      var NN = S.mpv || 3;
+      (function req(n) {   // avval 1 ta variant (tez), keyin qolganlari
+      fetch('/api/ai/multipv', { method: 'POST', headers: hd(), body: JSON.stringify({ board: toEng(h.b), side: h.t, time: Math.min(2, S.t || 1), n: n, plies: S.pl || 8 }) })
         .then(function (r) { return r.json(); })
         .then(function (j) {
           if (!document.getElementById('spBd')) return;
+          if (n < NN && tok === PVT) setTimeout(function () { if (tok === PVT) req(NN); }, 0);
+          if (n < NN && PVC[k] && PVC[k].lines && PVC[k].lines.length > 1) return;
           if (j && j.lines && j.lines.length) j = { pv: j.lines[0].pv, d: j.lines[0].pv.length, ev: j.lines[0].ev, lines: j.lines };
           if (!j || j.error || !j.pv) { PVC[k] = { err: 1, done: true }; }
           else PVC[k] = { pv: j.pv, d: j.d, done: true, side: h.t, sc: j.ev == null ? null : evFmt(j.ev), lines: j.lines || null };
           var el = document.getElementById('spPV');
           if (el && el.getAttribute('data-k') === k) el.innerHTML = pvBox(k);
           if (PVREDRAW) PVREDRAW();
-        }).catch(function () { PVC[k] = { err: 1, done: true }; });
+        }).catch(function () { if (!PVC[k] || !PVC[k].pv) PVC[k] = { err: 1, done: true }; });
+      })(1);
     }, 250);
   }
   function pvStartWorker(h, k) {   // eski telefon dvigateli — endi ishlatilmaydi
@@ -823,7 +828,7 @@
         o += '<div style="display:flex;font-size:11.5px;opacity:.6;padding:0 4px 4px"><span style="width:70px">Yurish</span><span style="width:86px">King Kong</span><span style="flex:1;text-align:right">natija</span></div>';
         o += rows.map(function (x) {
           var e = E[x.id] || { w: 0 }, pct = sum ? Math.round(e.w * 100 / sum) : 0;
-          return '<div data-a="bked:' + x.id + '" style="display:flex;align-items:center;gap:6px;padding:7px 4px;border-bottom:1px solid #22264d;cursor:pointer;' + (BK.ed === x.id ? 'background:#2c4a1c;' : '') + '"><b style="width:70px;font-family:ui-monospace,monospace;color:' + (e.w ? '#9be89b' : '#c7c2ff') + '">' + x.t + (e.mk ? ' ' + e.mk : '') + opSm(x) + '</b><span style="width:86px;flex:none;font-size:12px;white-space:nowrap">' + (e.w ? (e.sug ? '<span style="color:#fde68a">' : '') + e.w + (e.sug ? '</span>' : '') : '—') + '<i style="display:block;height:4px;border-radius:2px;background:#22c55e;margin-top:3px;width:' + e.w + '%"></i></span><span style="flex:1;text-align:right;font-size:11.5px;opacity:.8">' + (x.st ? '✅' + x.st.w + ' ❌' + x.st.l + ' 🤝' + x.st.d : '') + (x.trap ? ' 🪤' : '') + (e.note ? ' 📝' : '') + '</span></div>';
+          return '<div data-a="bked:' + x.id + '" style="display:flex;align-items:center;gap:6px;padding:7px 4px;border-bottom:1px solid #22264d;cursor:pointer;' + (BK.ed === x.id ? 'background:#2c4a1c;' : '') + '"><b style="width:70px;font-family:ui-monospace,monospace;color:' + (e.w ? '#9be89b' : '#c7c2ff') + '">' + x.t + opSm(x) + '</b><span style="width:86px;flex:none;font-size:12px;white-space:nowrap">' + (e.w ? (e.sug ? '<span style="color:#fde68a">' : '') + e.w + (e.sug ? '</span>' : '') : '—') + '<i style="display:block;height:4px;border-radius:2px;background:#22c55e;margin-top:3px;width:' + e.w + '%"></i></span><b style="width:34px;flex:none;text-align:center;font-size:17px;color:' + ({ '!!': '#22c55e', '!': '#86efac', '!?': '#fde047', '?!': '#fbbf24', '?': '#f87171', '??': '#ef4444' }[e.mk] || '#fff') + '">' + (e.mk || '') + '</b><span style="flex:1;text-align:right;font-size:11.5px;opacity:.8">' + (x.st ? '✅' + x.st.w + ' ❌' + x.st.l + ' 🤝' + x.st.d : '') + (x.trap ? ' 🪤' : '') + (e.note ? ' 📝' : '') + '</span></div>';
         }).join('');
         var anySug = Object.keys(E).some(function (id) { return E[id].sug; }), sgl = BK.sg && BK.sg[kf(h)] && BK.sg[kf(h)].load;
         if (anySug) o += '<div style="font-size:12.5px;color:#fde68a;margin-top:8px">Sariq foizlar — dvigatel taklifi, hali saqlanmagan. Tekshirib, kerak bo‘lsa to‘g‘rilang va saqlang.</div>';
