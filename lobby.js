@@ -190,6 +190,32 @@ function createLobby({ send, clients, roomsApi }) {
   // 🎲 Stollar (playok kabi): egasi stol ochadi (vaqt, tikish), boshqasi bo'sh joyga o'tiradi, ikkalasi «Tayyor» — o'yin
   const tables = new Map(); let tblNo = 0;
   const TBL_ELO = [0, 1100, 1200, 1300, 1500, 1800];
+  // 📨 oflayn do'stga bot orqali taklif: Telegram xabar + «O'ynash» tugmasi (startapp=lbf_<id>), 10 daqiqa amal qiladi
+  const BINV_TTL = 10 * 60000, binvCd = new Map();
+  async function botInvite(c, me, m) {
+    const st = require('./store'), us = st.users(), to = String(m.toUid), mine = String(me.uid);
+    const a = us[mine] || {}, b = us[to];
+    if (!b) return err(c, 'O‘yinchi topilmadi');
+    if (!(a.friends || []).includes(to)) return err(c, 'O‘yinchi hozir onlayn emas. Bot orqali taklifni faqat do‘stlarga yuborish mumkin');
+    if ((a.blocked || []).includes(to)) return err(c, 'Avval blokdan chiqaring');
+    if ((b.blocked || []).includes(mine)) return err(c, 'Bu o‘yinchi takliflarni qabul qilmaydi');
+    { const cd = rejCd.get(mine + '>' + to); if (cd && cd > Date.now()) return err(c, (b.name || 'O‘yinchi') + ' taklifingizni rad etdi. Qayta taklif ' + Math.ceil((cd - Date.now()) / 60000) + ' daqiqadan keyin'); }
+    { const cd = binvCd.get(mine + '>' + to); if (cd && cd > Date.now()) return err(c, 'Bu do‘stingizga bot orqali taklif ' + Math.ceil((cd - Date.now()) / 60000) + ' daqiqadan keyin yuborish mumkin'); }
+    const appLink = (process.env.TG_APP_LINK || process.env.APP_LINK || 'https://t.me/DraughtsPRObot/play').replace(/\/$/, '');
+    const fr = { id: 'f' + hex(4), fromUid: me.uid, fromName: me.name, toUid: to, tc: tcOf(m.tc), opts: cleanOpts(m), at: Date.now() };
+    if (fr.opts && fr.opts.stake) fr.opts.stake = 0;   // bot orqali taklifda tikish yo'q
+    binvCd.set(mine + '>' + to, Date.now() + BINV_TTL);
+    friends.set(fr.id, fr);
+    let r = null;
+    try {
+      r = await tgCall('sendMessage', { chat_id: Number(to), text: me.name + ' sizni shashka o‘yiniga taklif qilyapti · ' + fr.tc + describeOpts(fr.opts || {}) + '\nTaklif 10 daqiqa amal qiladi.', reply_markup: { inline_keyboard: [[{ text: 'O‘ynash', url: appLink + '?startapp=lbf_' + fr.id }]] } });
+    } catch (e) {}
+    if (!r || !r.ok) { friends.delete(fr.id); binvCd.delete(mine + '>' + to); push(); return err(c, 'Xabar yetib bormadi: do‘stingiz botni ishga tushirmagan yoki bloklagan'); }
+    fr.msgId = r.result && r.result.message_id;
+    toast(me.uid, 'Taklif bot orqali yuborildi. ' + (b.name || 'Do‘stingiz') + ' kirishini kuting (10 daqiqa)');
+    setTimeout(() => { if (friends.get(fr.id) === fr) { friends.delete(fr.id); toast(fr.fromUid, (b.name || 'Do‘stingiz') + ' taklifga javob bermadi'); if (fr.msgId) tgCall('deleteMessage', { chat_id: Number(to), message_id: fr.msgId }).catch(() => {}); push(); } }, BINV_TTL);
+    push();
+  }
   const rejCd = new Map();   // 🚫 rad etilgan taklif: o'sha o'yinchiga 5 daqiqa qayta taklif yo'q
   setInterval(() => { const n = Date.now(); for (const [k, v] of rejCd) if (v < n) rejCd.delete(k); }, 10 * 60000).unref();
   const eloOf = uid => { try { return Number((require('./store').users()[String(uid)] || {}).elo) || 1000; } catch (e) { return 1000; } };
@@ -344,9 +370,10 @@ function createLobby({ send, clients, roomsApi }) {
     let st, us;
     try { st = require('./store'); us = st.users(); } catch (e) { return { friends: [], freqIn: [] }; }
     const u = us[String(uid)] || {};
+    if (us[String(uid)] && Date.now() - (u.lastSeen || 0) > 60000) u.lastSeen = Date.now();   // 🕒 lobbida turgan — oxirgi kirish
     const on = onSet || new Set(lbClients().map(x => String(x.lb.uid)));
     return {
-      friends: (u.friends || []).map(id => { const f = us[id] || {}; return { uid: id, name: f.name || '?', elo: f.elo || 1000, gems: f.diamonds || 0, hasAv: !!st.avOf(f), online: on.has(id) }; }),
+      friends: (u.friends || []).map(id => { const f = us[id] || {}; return { uid: id, name: f.name || '?', elo: f.elo || 1000, gems: f.diamonds || 0, hasAv: !!st.avOf(f), online: on.has(id), ls: f.lastSeen || 0 }; }),
       freqIn: (u.fReq || []).map(id => { const f = us[id] || {}; return { uid: id, name: f.name || '?', hasAv: !!st.avOf(f) }; }),
       blocked: (u.blocked || []).slice()
     };
@@ -365,7 +392,8 @@ function createLobby({ send, clients, roomsApi }) {
       incoming: [...challenges.values()].filter(x => x.toUid === uid)
         .map(x => ({ id: x.id, fromName: x.fromName, fromUid: x.fromUid, elo: eloOf(x.fromUid), av: (() => { try { const st = require('./store'); return !!st.avOf(st.users()[String(x.fromUid)] || {}); } catch (e) { return false; } })(), at: x.at || 0, tc: x.tc + describeOpts(x), stake: x.stake || 0, rm: !!x.rm, grp: !!x.grp })),
       outgoing: [...challenges.values()].filter(x => x.fromUid === uid)
-        .map(x => ({ id: x.id, toUid: x.toUid, tc: x.tc })),
+        .map(x => ({ id: x.id, toUid: x.toUid, tc: x.tc }))
+        .concat([...friends.values()].filter(f => f.fromUid === uid && f.toUid && Date.now() - f.at < BINV_TTL).map(f => ({ id: f.id, toUid: f.toUid, tc: f.tc, bot: 1 }))),
       clubs: clubsApi.list(uid)
     };
   }
@@ -1429,6 +1457,7 @@ function createLobby({ send, clients, roomsApi }) {
       case 'lbQuickCancel': queue.delete(me.uid); for (const [cid, x] of challenges) if (x.fromUid === me.uid && x.grp) challenges.delete(cid); push(); break;
       case 'lbCancelTo': {
         const tu = String(m.toUid);
+        for (const [k, f] of friends) if (f.fromUid === me.uid && f.toUid === tu) { friends.delete(k); if (f.msgId) tgCall('deleteMessage', { chat_id: Number(tu), message_id: f.msgId }).catch(() => {}); }
         [...challenges.entries()].forEach(([cid, x]) => { if (x.fromUid === me.uid && x.toUid === tu) challenges.delete(cid); });
         push(); break;
       }
@@ -1476,6 +1505,7 @@ function createLobby({ send, clients, roomsApi }) {
       }
       case 'lbChallenge': {
         const to = connsOf(String(m.toUid))[0];
+        if (!to && /^\d+$/.test(String(m.toUid)) && String(m.toUid) !== String(me.uid)) { botInvite(c, me, m); break; }   // 📨 oflayn do'st — bot orqali
         if (!to || to.lb.uid === me.uid) return err(c, 'O‘yinchi topilmadi'), true;
         try { const us = require('./store').users(), a = us[String(me.uid)] || {}, b = us[String(to.lb.uid)] || {};
           if ((a.blocked || []).includes(String(to.lb.uid))) return err(c, 'Avval blokdan chiqaring'), true;
@@ -1767,7 +1797,7 @@ function createLobby({ send, clients, roomsApi }) {
         break;
       }
       case 'lbFriendNew': {
-        for (const [k, f] of friends) if (f.fromUid === me.uid || Date.now() - f.at > 1800000) friends.delete(k);
+        for (const [k, f] of friends) if ((f.fromUid === me.uid && !f.toUid) || Date.now() - f.at > 1800000) friends.delete(k);
         const fr = { id: 'f' + hex(4), fromUid: me.uid, fromName: me.name, tc: tcOf(m.tc), opts: cleanOpts(m), at: Date.now() };
         friends.set(fr.id, fr);
         send(c.ws, { type: 'lbFriendLink', id: fr.id });
@@ -1777,8 +1807,11 @@ function createLobby({ send, clients, roomsApi }) {
         const fr = friends.get(String(m.id || ''));
         if (!fr || Date.now() - fr.at > 1800000) return err(c, 'Havola eskirgan. Do‘stingizdan yangisini so‘rang'), true;
         if (fr.fromUid === me.uid) return err(c, 'Bu sizning havolangiz'), true;
-        if (!connsOf(fr.fromUid)[0]) return err(c, 'Do‘stingiz hozir onlayn emas'), true;
+        if (fr.toUid && fr.toUid !== me.uid) return err(c, 'Bu taklif sizga yuborilmagan'), true;
+        if (fr.toUid && Date.now() - fr.at > BINV_TTL) { friends.delete(fr.id); return err(c, 'Taklif eskirdi'), true; }
+        if (!connsOf(fr.fromUid)[0]) { if (fr.toUid) friends.delete(fr.id); return err(c, fr.toUid ? 'Taklif eskirdi — ' + fr.fromName + ' hozir onlayn emas' : 'Do‘stingiz hozir onlayn emas'), true; }
         friends.delete(fr.id);
+        if (fr.msgId) tgCall('deleteMessage', { chat_id: Number(me.uid), message_id: fr.msgId }).catch(() => {});
         const ch = { id: 'c' + hex(4), fromUid: fr.fromUid, fromName: fr.fromName, toUid: me.uid, tc: fr.tc, ...fr.opts, at: Date.now() };
         challenges.set(ch.id, ch);
         return handleInner(c, { type: 'lbRespond', id: ch.id, accept: true });
