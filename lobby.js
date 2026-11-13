@@ -190,6 +190,8 @@ function createLobby({ send, clients, roomsApi }) {
   // 🎲 Stollar (playok kabi): egasi stol ochadi (vaqt, tikish), boshqasi bo'sh joyga o'tiradi, ikkalasi «Tayyor» — o'yin
   const tables = new Map(); let tblNo = 0;
   const TBL_ELO = [0, 1100, 1200, 1300, 1500, 1800];
+  const rejCd = new Map();   // 🚫 rad etilgan taklif: o'sha o'yinchiga 5 daqiqa qayta taklif yo'q
+  setInterval(() => { const n = Date.now(); for (const [k, v] of rejCd) if (v < n) rejCd.delete(k); }, 10 * 60000).unref();
   const eloOf = uid => { try { return Number((require('./store').users()[String(uid)] || {}).elo) || 1000; } catch (e) { return 1000; } };
   const tblOf = uid => [...tables.values()].find(t => t.host.uid === uid || (t.guest && t.guest.uid === uid));
   const pubTbl = t => ({ id: t.id, no: t.no, host: t.host, guest: t.guest, tc: t.tc, stake: t.stake, pos: t.pos, minElo: t.minElo, ready: Object.keys(t.ready), playing: !!t.playing, roomId: t.roomId || null, games: t.games });
@@ -361,7 +363,7 @@ function createLobby({ send, clients, roomsApi }) {
       seekers: [...queue.values()].reduce((o, x) => { if (x.uid !== uid && connsOf(x.uid).length) { const k = x.tc + (x.voice ? 'v' : '') + (x.stake ? 's' + x.stake : ''); o[k] = (o[k] || 0) + 1; } return o; }, {}),
       myStake: (queue.get(uid) || {}).stake || 0,
       incoming: [...challenges.values()].filter(x => x.toUid === uid)
-        .map(x => ({ id: x.id, fromName: x.fromName, tc: x.tc + describeOpts(x), stake: x.stake || 0, rm: !!x.rm })),
+        .map(x => ({ id: x.id, fromName: x.fromName, fromUid: x.fromUid, elo: eloOf(x.fromUid), av: (() => { try { const st = require('./store'); return !!st.avOf(st.users()[String(x.fromUid)] || {}); } catch (e) { return false; } })(), at: x.at || 0, tc: x.tc + describeOpts(x), stake: x.stake || 0, rm: !!x.rm, grp: !!x.grp })),
       outgoing: [...challenges.values()].filter(x => x.fromUid === uid)
         .map(x => ({ id: x.id, toUid: x.toUid, tc: x.tc })),
       clubs: clubsApi.list(uid)
@@ -1479,6 +1481,7 @@ function createLobby({ send, clients, roomsApi }) {
           if ((a.blocked || []).includes(String(to.lb.uid))) return err(c, 'Avval blokdan chiqaring'), true;
           if ((b.blocked || []).includes(String(me.uid))) return err(c, 'Bu o‘yinchi takliflarni qabul qilmaydi'), true; } catch (e) {}
         if ([...challenges.values()].some(x => x.fromUid === me.uid && x.toUid === to.lb.uid)) return err(c, 'Chaqiruv allaqachon yuborilgan'), true;
+        { const cd = rejCd.get(me.uid + '>' + to.lb.uid); if (cd && cd > Date.now()) return err(c, (to.lb.name || 'O‘yinchi') + ' taklifingizni rad etdi. Qayta taklif ' + Math.ceil((cd - Date.now()) / 60000) + ' daqiqadan keyin'), true; }
         if (challenges.size > 500) return err(c, 'Hozir band, keyinroq urinib ko‘ring'), true;
         const ch = { id: 'c' + hex(4), fromUid: me.uid, fromName: me.name, toUid: to.lb.uid, tc: tcOf(m.tc), ...cleanOpts(m), at: Date.now() };
         if (botByUid(ch.toUid)) ch.stake = 0;   // botga tikib bo'lmaydi
@@ -1493,6 +1496,7 @@ function createLobby({ send, clients, roomsApi }) {
         }
         challenges.set(ch.id, ch);
         sendUid(ch.toUid, { type: 'lbChallengeIn', id: ch.id, fromName: ch.fromName, tc: ch.tc + describeOpts(ch) });
+        setTimeout(() => { if (challenges.get(ch.id) === ch) { challenges.delete(ch.id); toast(ch.fromUid, (to.lb.name || 'O‘yinchi') + ' taklifga javob bermadi'); push(); } }, 60000);   // ⏱ taklif 60 soniya amal qiladi
         push();
         break;
       }
@@ -1577,7 +1581,7 @@ function createLobby({ send, clients, roomsApi }) {
           queue.delete(ch.fromUid); queue.delete(ch.toUid);
           if (connsOf(ch.fromUid).length) makeMatch({ uid: ch.fromUid, name: ch.fromName }, { uid: me.uid, name: me.name }, ch.tc, 'challenge', ch);
           else toast(me.uid, 'Chaqiruvchi chiqib ketgan');
-        } else if (mine && !ch.grp) toast(ch.fromUid, me.name + ' chaqiruvni rad etdi');
+        } else if (mine && !ch.grp) { rejCd.set(ch.fromUid + '>' + ch.toUid, Date.now() + 5 * 60000); toast(ch.fromUid, me.name + ' chaqiruvni rad etdi. Qayta taklif 5 daqiqadan keyin'); }
         push();
         break;
       }

@@ -230,6 +230,7 @@
     window.lbEtude = function (id) { sendMsg({ type: "lbEtude", id: String(id) }); };   // ♔ etyudni King Kongga qarshi yechish
     window.lbEtOpen = function () { try { if (!inRoom && localStorage.getItem("etOpen") === "1") { localStorage.removeItem("etOpen"); setTimeout(function () { var se = document.createElement("script"); se.src = "/etudeview.js?v=1"; se.onload = function () { window.spEtudes(); }; document.head.appendChild(se); }, 300); } } catch (e) {} };
     try { if (!inRoom && localStorage.getItem("etOpen") === "1") { localStorage.removeItem("etOpen"); setTimeout(function () { var se = document.createElement("script"); se.src = "/etudeview.js?v=1"; se.onload = function () { window.spEtudes(); }; document.head.appendChild(se); }, 900); } } catch (e) {}
+    window.__lbSend = function (m) { sendMsg(m); };
     function sendMsg(m) {
       var s = JSON.stringify(m);
       if (ws && ws.readyState === 1 && ready) ws.send(s); else outbox.push(s);
@@ -373,11 +374,13 @@
 
     var shownIncoming = {};
     function renderIncoming() {
+      try { if (window.spChSync) window.spChSync(S.incoming || []); } catch (e) {}
       (S.incoming || []).forEach(function (c) {
         if (shownIncoming[c.id]) return;
         shownIncoming[c.id] = 1;
         try { if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred("success"); else if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch (e) {}
         if (panelOpen && curTab === "pl" && !c.grp) return;
+        if (!inRoom && !$("rcFrameOv") && !c.grp && !c.rm && window.spChIn) { window.spChIn(c); return; }   // ⚔️ katta karta / oyna
         toast((c.rm ? "🔁 <b>" + esc(c.fromName) + "</b> revansh so‘rayapti — tikish 2 barobar! (" + esc(String(c.tc).split(" · ")[0]) + ")" : "⚔️ <b>" + esc(c.fromName) + "</b> sizni o‘yinga chaqirdi (" + esc(c.stake ? String(c.tc).split(" · ")[0] : c.tc) + ")") + (c.stake ? "<br>💰 Tikish: <b>" + c.stake + " 🪙</b> · g‘olibga " + Math.floor(c.stake * 1.8) + " 🪙" : ""), [
           ["Qabul", function () { sendMsg({ type: "lbRespond", id: c.id, accept: true }); }],
           ["Rad etish", function () { sendMsg({ type: "lbRespond", id: c.id, accept: false }); }, "no"]
@@ -3484,3 +3487,57 @@ if(document.readyState==='complete')setTimeout(init,1500);else window.addEventLi
 ;(function(){var s=document.createElement("script");s.src="/homex.js?v=2";document.head.appendChild(s)})();
 /* DRAGONBOT — «tez kunda» banner va kutayotganlar (dragon.js) */
 ;(function(){var s=document.createElement("script");s.src="/dragon.js?v=2";document.head.appendChild(s)})();
+/* CHIN — kelgan o'yin taklifi: bosh sahifada katta karta, boshqa joyda oyna o'rtada; 60 soniya chiziqcha, ovoz, tebranish */
+;(function () {
+  if (window.spChIn) return;
+  var CUR = {}, TTL = 60000;
+  var st = document.createElement('style');
+  st.textContent = '#chCard{flex:1 1 100%;width:100%;box-sizing:border-box;position:relative;overflow:hidden;border-radius:20px;padding:14px;margin:0 0 12px;color:#fff;background:linear-gradient(135deg,#ff7a18,#e8417a);box-shadow:0 0 0 3px rgba(255,255,255,.25),0 10px 30px rgba(232,65,122,.45);font-family:system-ui,Roboto,sans-serif;animation:chIn .35s ease-out}' +
+    '@keyframes chIn{from{transform:scale(.92);opacity:0}to{transform:none;opacity:1}}' +
+    '#chCard .t{font-size:12px;font-weight:900;letter-spacing:2px;opacity:.92}#chCard .r{display:flex;align-items:center;gap:12px;margin-top:8px}' +
+    '.chAv{width:54px;height:54px;border-radius:50%;flex:none;border:3px solid #fff;background:linear-gradient(135deg,#60a5fa,#1d4ed8);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:22px;color:#fff;object-fit:cover;box-sizing:border-box}' +
+    '#chCard .n{font-size:18px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#chCard .s{font-size:13px;opacity:.95;margin-top:2px}' +
+    '.chB{display:flex;gap:8px;margin-top:12px}.chB button{flex:1;border:0;border-radius:12px;padding:12px 0;font-weight:900;font-size:16px;cursor:pointer}' +
+    '#chCard .y{background:#fff;color:#2b8a3e}#chCard .no{background:rgba(0,0,0,.25);color:#fff}#chCard .bar{position:absolute;left:0;bottom:0;height:5px;background:rgba(255,255,255,.9)}' +
+    '#chOv{position:fixed;inset:0;z-index:2147483200;background:rgba(5,4,20,.65);display:flex;align-items:center;justify-content:center;padding:18px;box-sizing:border-box;font-family:system-ui,Roboto,sans-serif}' +
+    '#chOv .bx{width:100%;max-width:400px;background:#141b2e;border-radius:24px;padding:24px 18px 0;text-align:center;overflow:hidden;color:#fff;animation:chIn .3s ease-out}' +
+    '#chOv .chAv{width:84px;height:84px;margin:0 auto;font-size:32px}#chOv .h{font-size:20px;font-weight:900;margin-top:12px}#chOv .e{opacity:.7;margin-top:6px}' +
+    '#chOv .tc{display:inline-block;margin-top:10px;border:2px solid #4f7dff;border-radius:14px;padding:6px 14px;color:#8fb0ff;font-weight:800}' +
+    '#chOv .chB{margin:18px 0}#chOv .no{background:transparent;border:2px solid #3a425a;color:#fff}#chOv .y{background:#4f7dff;color:#fff}#chOv .bw{height:6px;background:#2a3147;margin:0 -18px}#chOv .bar{height:100%;background:#4f7dff}';
+  document.head.appendChild(st);
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function send(o) { try { if (window.__lbSend) return window.__lbSend(o); } catch (e) {} }
+  function ini(n) { var m = String(n || '').match(/[A-Za-zА-Яа-яЁёЎўҚқҒғҲҳ0-9]/); return (m ? m[0] : '?').toUpperCase(); }
+  function av(c) { return c.av && c.fromUid ? '<img class="chAv" src="/api/av/' + encodeURIComponent(c.fromUid) + '" onerror="this.outerHTML=\'<div class=chAv>' + ini(c.fromName) + '</div>\'">' : '<div class="chAv">' + ini(c.fromName) + '</div>'; }
+  function beep() {
+    try { var T = window.Telegram && Telegram.WebApp; if (T && T.HapticFeedback) T.HapticFeedback.notificationOccurred('warning'); else if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch (e) {}
+    try { var A = window.__chAc || (window.__chAc = new (window.AudioContext || window.webkitAudioContext)()); [0, .18].forEach(function (d, i) { var o = A.createOscillator(), g = A.createGain(); o.frequency.value = i ? 990 : 740; g.gain.setValueAtTime(.0001, A.currentTime + d); g.gain.exponentialRampToValueAtTime(.25, A.currentTime + d + .02); g.gain.exponentialRampToValueAtTime(.0001, A.currentTime + d + .16); o.connect(g); g.connect(A.destination); o.start(A.currentTime + d); o.stop(A.currentTime + d + .18); }); } catch (e) {}
+  }
+  function homeVisible() { var h = document.getElementById('hzHero'), p = document.getElementById('lbPanel'); if (!h || !h.offsetParent) return false; if (document.body.classList.contains('taOn')) return false; return !p || getComputedStyle(p).visibility !== 'hidden'; }
+  function close(id) { var c = CUR[id]; if (!c) return; clearInterval(c.t); if (c.el && c.el.parentNode) c.el.parentNode.removeChild(c.el); delete CUR[id]; }
+  function answer(id, yes) { send({ type: 'lbRespond', id: id, accept: !!yes }); close(id); }
+  function show(c) {
+    if (CUR[c.id]) return;
+    var tc = String(c.tc || '').split(' · '), t0 = c.at || Date.now(), el, home = homeVisible();
+    var info = (c.elo ? c.elo + ' reyting · ' : '') + esc(tc[0]) + (tc[1] ? ' · ' + esc(tc.slice(1).join(' · ')) : '') + (c.stake ? ' · ' + c.stake + ' tanga tikish' : '');
+    if (home) {
+      el = document.createElement('div'); el.id = 'chCard';
+      el.innerHTML = '<div class="t">SIZNI O‘YINGA TAKLIF QILISHDI</div><div class="r">' + av(c) + '<div style="min-width:0"><div class="n">' + esc(c.fromName) + '</div><div class="s">' + info + '</div></div></div><div class="chB"><button class="no">Rad etish</button><button class="y">Qabul qilish</button></div><div class="bar"></div>';
+      var hero = document.getElementById('hzHero'), pz = document.getElementById('hxPz');
+      if (pz && pz.parentNode === hero) { el.style.order = getComputedStyle(pz).order; hero.insertBefore(el, pz); } else hero.insertBefore(el, hero.firstChild);
+      try { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
+    } else {
+      el = document.createElement('div'); el.id = 'chOv';
+      el.innerHTML = '<div class="bx">' + av(c) + '<div class="h">' + esc(c.fromName) + ' siz bilan o‘ynashni xohlaydi</div>' + (c.elo ? '<div class="e">Reyting ' + c.elo + '</div>' : '') + '<div class="tc">' + esc(tc[0]) + (tc[1] ? ' · ' + esc(tc.slice(1).join(' · ')) : '') + (c.stake ? ' · ' + c.stake + ' tanga' : '') + '</div><div class="chB"><button class="no">Rad etish</button><button class="y">O‘ynash</button></div><div class="bw"><div class="bar"></div></div></div>';
+      document.body.appendChild(el);
+    }
+    el.querySelector('.no').onclick = function () { answer(c.id, false); };
+    el.querySelector('.y').onclick = function () { answer(c.id, true); };
+    var bar = el.querySelector('.bar');
+    var o = CUR[c.id] = { el: el, t: setInterval(function () { var left = Math.max(0, TTL - (Date.now() - t0)); if (bar) bar.style.width = (left / TTL * 100) + '%'; if (left <= 0) close(c.id); }, 200) };
+    if (bar) bar.style.width = '100%';
+    beep();
+  }
+  window.spChIn = show;
+  window.spChSync = function (L) { var ids = {}; L.forEach(function (c) { ids[c.id] = 1; }); Object.keys(CUR).forEach(function (id) { if (!ids[id]) close(id); }); };
+})();
