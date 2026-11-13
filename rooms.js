@@ -323,6 +323,7 @@ function createRooms({ send, clients, onFinish }) {
           const u = us[uid]; if (!u) continue;
           u.arch = u.arch || []; u.arch.unshift(g); if (u.arch.length > 30) u.arch.length = 30;
         }
+        try { require('./posdb.js').onGame(g); } catch (e) {}
         st.save();
       }
     } catch (e) { console.log('Arxiv xatosi:', e.message); }

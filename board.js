@@ -330,7 +330,7 @@
     if (!r.pv || !r.d) return '<div style="font-size:12px;opacity:.7;margin-top:6px">⏳ KestoG tahlil qilyapti...</div>';
     return '<div style="margin-top:8px;text-align:left;background:#1d1f3a;border-radius:12px;padding:8px 10px">' +
       '<div style="font-size:12px;opacity:.75">🧠 KestoG · ' + r.d + ' yarim yurish' + (r.sc != null ? ' · baho ' + r.sc : '') + '</div>' +
-      '<div style="font-size:14px;line-height:1.6;margin-top:4px">' + pvLine(r.pv, r.side) + '</div></div>';
+      (r.lines && r.lines.length > 1 ? r.lines.map(function (L, i) { return '<div style="font-size:13.5px;line-height:1.5;margin-top:4px;' + (i ? 'border-top:1px solid #2b2f55;padding-top:4px' : '') + '"><b style="display:inline-block;min-width:44px;color:' + (L.ev == null ? '#ccc' : L.ev > 0.3 ? '#9be89b' : L.ev < -0.3 ? '#ff9b9b' : '#ddd') + '">' + (L.ev == null ? '–' : evFmt(L.ev)) + '</b>' + pvLine(L.pv, r.side) + '</div>'; }).join('') : '<div style="font-size:14px;line-height:1.6;margin-top:4px">' + pvLine(r.pv, r.side) + '</div>') + '</div>';
   }
   function pvStart(h, k) {
     if (PVW) { try { PVW.terminate(); } catch (e) {} PVW = null; }
@@ -338,12 +338,13 @@
     var tok = ++PVT;
     setTimeout(function () {   // 🧠 telefon dvigateli o'rniga — serverdagi KestoG
       if (tok !== PVT) return;
-      fetch('/api/ai/pv', { method: 'POST', headers: hd(), body: JSON.stringify({ board: toEng(h.b), side: h.t, time: Math.min(2, S.t || 1), plies: 10 }) })
+      fetch('/api/ai/multipv', { method: 'POST', headers: hd(), body: JSON.stringify({ board: toEng(h.b), side: h.t }) })
         .then(function (r) { return r.json(); })
         .then(function (j) {
           if (!document.getElementById('spBd')) return;
+          if (j && j.lines && j.lines.length) j = { pv: j.lines[0].pv, d: j.lines[0].pv.length, ev: j.lines[0].ev, lines: j.lines };
           if (!j || j.error || !j.pv) { PVC[k] = { err: 1, done: true }; }
-          else PVC[k] = { pv: j.pv, d: j.d, done: true, side: h.t, sc: j.ev == null ? null : evFmt(j.ev) };
+          else PVC[k] = { pv: j.pv, d: j.d, done: true, side: h.t, sc: j.ev == null ? null : evFmt(j.ev), lines: j.lines || null };
           var el = document.getElementById('spPV');
           if (el && el.getAttribute('data-k') === k) el.innerHTML = pvBox(k);
           if (PVREDRAW) PVREDRAW();
@@ -697,7 +698,8 @@
         KK.text = txt; KK.msg = '⏳ Kiritilmoqda…';
         kkPost('/api/kkbook/pdn', { text: txt, sides: KK.sides }).then(function (r) { KK.msg = (r.added ? '✅ ' + r.added + ' ta yurish o‘rgatildi (jami ' + r.total + ')' : '') + (r.error ? ' ⚠️ ' + r.error : ''); draw(); }).catch(function () { KK.msg = '⚠️ Server bilan aloqa yo‘q'; draw(); });
       },
-      menu: function () { panel = panel ? null : 'menu'; E = null; },
+      menu: function () { panel = panel && panel !== 'book' ? null : 'menu'; E = null; },
+      book: function () { panel = panel === 'book' ? null : 'book'; E = null; },
       eng: function () { S.engine = !S.engine; sv(); },
       flip: function () { flip = !flip; },
       edit: function () { var h = hist[cur]; E = { b: cp(h.b), t: h.t, tool: 1, msg: '' }; panel = 'edit'; PL = null; },
@@ -719,6 +721,7 @@
     };
     function act(a) {
       var p = a.split(':'), n = p[0], v = p[1], r;
+      if (n.indexOf('bk') === 0) return bkAct(n, v);
       if (n === 'au') { if (+v > 1 && !window.__prem && !window.__isAdmin) { if (window.premGo) window.premGo(); return; } AU.t = +v; }
       else if (n === 'kks') { KK.sides = v; var _ta = document.getElementById('kkPdn'); if (_ta) KK.text = _ta.value; }
       else if (n === 'tool') { E.tool = +v; }
@@ -733,6 +736,85 @@
       else if (A[n]) { r = A[n](); if (r) return; if (n === 'eng' || n === 'cancel') analyzeCur(); }
       draw();
       if (n === 'eng' || n === 'tog') analyzeCur();
+    }
+    // ---------- 📖 Baza (lichess Explorer kabi): ShashkaPRO o'yinlari, Colette/kitob, lidraughts, repertuar (admin)
+    var BK = { src: window.__isAdmin ? 'rep' : 'sp', D: {}, ed: null, E: {}, msg: '' };
+    function bkKey(h) { return kf(h) + '|' + BK.src; }
+    function bkLoad(h) {
+      var k = bkKey(h); if (BK.D[k]) return BK.D[k];
+      BK.D[k] = { load: 1 };
+      fetch('/api/explore', { method: 'POST', headers: hd(), body: JSON.stringify({ board: toEng(h.b), side: h.t, src: BK.src, sc: 'all' }) }).then(function (r) { return r.json(); })
+        .then(function (j) { BK.D[k] = j || { rows: [] }; if (j && j.building) setTimeout(function () { delete BK.D[k]; }, 15000); if (BK.src === 'rep' && j && j.rows) { BK.E[kf(h)] = {}; j.rows.forEach(function (x) { BK.E[kf(h)][x.id] = { w: x.w, mk: x.mk || '', note: x.note || '', lock: x.lock || !x.w }; }); } if (document.getElementById('spBd')) draw(); })
+        .catch(function () { BK.D[k] = { err: 1 }; });
+      return BK.D[k];
+    }
+    function bkArrows(h, flip) {
+      var d = BK.D[bkKey(h)]; if (!d || !d.rows || !d.rows.length) return '';
+      var rows = d.rows.slice(0, 5), mx = 0;
+      rows.forEach(function (x) { mx = Math.max(mx, BK.src === 'rep' ? (x.w || 0) : (x.n || 1)); });
+      var o = '<svg viewBox="0 0 8 8" style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none"><defs><marker id="bkAh" markerWidth="3" markerHeight="3" refX="1.6" refY="1.5" orient="auto"><path d="M0,0 L3,1.5 L0,3z" fill="#3b82f6"/></marker></defs>';
+      rows.forEach(function (x) {
+        var v = BK.src === 'rep' ? (x.w || 0) : (x.n || 1); if (!v) return; var q = v / (mx || 1);
+        var f = [x.from >> 3, x.from & 7], t = [x.to >> 3, x.to & 7];
+        var x1 = (flip ? 7 - f[1] : f[1]) + .5, y1 = (flip ? 7 - f[0] : f[0]) + .5, x2 = (flip ? 7 - t[1] : t[1]) + .5, y2 = (flip ? 7 - t[0] : t[0]) + .5, dx = x2 - x1, dy = y2 - y1, L = Math.sqrt(dx * dx + dy * dy) || 1; x2 -= dx / L * .3; y2 -= dy / L * .3;
+        o += '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="#3b82f6" stroke-width="' + (0.07 + 0.15 * q).toFixed(3) + '" stroke-linecap="round" opacity="' + (0.35 + 0.55 * q).toFixed(2) + '" marker-end="url(#bkAh)"/>';
+      });
+      return o + '</svg>';
+    }
+    function wdl(x) {
+      var n = x.n || 0; if (!n) return '<span style="flex:1"></span>';
+      var a = Math.round(x.w * 100 / n), z = Math.round(x.l * 100 / n), m = 100 - a - z;
+      var seg = function (p, bg, fg) { return p > 0 ? '<i style="font-style:normal;width:' + p + '%;background:' + bg + ';color:' + fg + ';display:flex;align-items:center;justify-content:center;overflow:hidden">' + (p >= 14 ? p + '%' : '') + '</i>' : ''; };
+      return '<span style="flex:1;display:flex;height:18px;border-radius:9px;overflow:hidden;font-size:10.5px;font-weight:700">' + seg(a, '#f2f2f2', '#222') + seg(m, '#8a8a8a', '#fff') + seg(z, '#2a2a2a', '#ddd') + '</span>';
+    }
+    function bookHtml() {
+      var h = hist[cur], d = bkLoad(h), adm = !!window.__isAdmin, sm = 'border:0;border-radius:10px;padding:7px 10px;color:#fff;font-size:13px;margin:2px;';
+      var tabs = (adm ? [['rep', '📖 Repertuar']] : []).concat([['sp', '🎮 ShashkaPRO'], ['col', '📗 Colette']]).concat(adm ? [['ld', '🌐 Lidraughts']] : []);
+      var o = '<div style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:8px">' + tabs.map(function (t) { return '<button data-a="bksrc:' + t[0] + '" style="' + sm + 'background:' + (BK.src === t[0] ? '#6aa22a' : '#1d1f3a') + '">' + t[1] + '</button>'; }).join('') + '</div>';
+      if (!d || d.load) return o + '<div style="opacity:.7">⏳ Yuklanmoqda…</div>';
+      if (d.err || d.error) return o + '<div style="opacity:.7">⚠️ ' + (d.error || 'Server bilan aloqa yo‘q') + '</div>';
+      var rows = d.rows || [];
+      if (BK.src === 'sp' && d.building) o += '<div style="font-size:12px;opacity:.7;margin-bottom:6px">⏳ Baza yig‘ilmoqda (' + (d.games || 0) + ' partiya)…</div>';
+      if (BK.src === 'rep') {
+        var E = BK.E[kf(h)] || {}, sum = 0; Object.keys(E).forEach(function (id) { sum += E[id].w || 0; });
+        if (d.taught) o += '<div style="font-size:12.5px;color:#fde68a;margin-bottom:6px">📚 Bu pozitsiyada o‘rgatilgan yurish bor — u repertuardan ustun</div>';
+        if (BK.ed && E[BK.ed]) {
+          var e = E[BK.ed], r0 = rows.filter(function (x) { return x.id === BK.ed; })[0] || {};
+          o += '<div style="background:#1d1f3a;border-radius:12px;padding:10px;margin-bottom:8px"><div style="display:flex;align-items:center;gap:8px"><b style="font:800 16px ui-monospace,monospace">' + r0.t + '</b><input id="bkW" type="range" min="0" max="100" step="5" value="' + e.w + '" oninput="var q=document.getElementById(\'bkWv\');if(q)q.textContent=this.value" style="flex:1;accent-color:#22c55e"><b id="bkWv" style="min-width:30px;text-align:right">' + e.w + '</b></div>' +
+            '<div style="font-size:12px;opacity:.75;margin-top:4px">' + (sum ? Math.round(e.w * 100 / sum) : 0) + '% ulush' + (r0.st ? ' · ✅ ' + r0.st.w + ' · ❌ ' + r0.st.l + ' · 🤝 ' + r0.st.d : '') + (e.lock && e.w ? ' · 🔒 qo‘lda' : '') + '</div>' +
+            '<div style="margin-top:6px">' + ['!!', '!', '!?', '?!', '?', '??'].map(function (k2) { return '<button data-a="bkmk:' + k2 + '" style="' + sm + 'background:' + (e.mk === k2 ? '#6aa22a' : '#262b66') + '">' + k2 + '</button>'; }).join('') + '</div>' +
+            '<input id="bkN" placeholder="📝 izoh" value="' + String(e.note || '').replace(/"/g, '&quot;') + '" style="width:100%;margin-top:6px;border:0;border-radius:10px;padding:8px;background:#262b66;color:#fff;font-size:13px">' +
+            '<div style="display:flex;gap:6px;margin-top:8px"><button data-a="bkplay:' + BK.ed + '" style="' + sm + 'background:#262b66;flex:1">▶ O‘ynash</button><button data-a="bkclose" style="' + sm + 'background:#262b66;flex:1">Yopish</button><button data-a="bksave" style="' + sm + 'background:#16a34a;flex:1;font-weight:800">💾 Saqlash</button></div>' + (BK.msg ? '<div style="margin-top:6px;font-size:13px">' + BK.msg + '</div>' : '') + '</div>';
+        }
+        o += '<div style="display:flex;font-size:11.5px;opacity:.6;padding:0 4px 4px"><span style="width:70px">Yurish</span><span style="width:70px">King Kong</span><span style="flex:1;text-align:right">natija</span></div>';
+        o += rows.map(function (x) {
+          var e = E[x.id] || { w: 0 }, pct = sum ? Math.round(e.w * 100 / sum) : 0;
+          return '<div data-a="bked:' + x.id + '" style="display:flex;align-items:center;gap:6px;padding:7px 4px;border-bottom:1px solid #22264d;cursor:pointer;' + (BK.ed === x.id ? 'background:#2c4a1c;' : '') + '"><b style="width:70px;font-family:ui-monospace,monospace;color:' + (e.w ? '#9be89b' : '#c7c2ff') + '">' + x.t + (e.mk ? ' ' + e.mk : '') + '</b><span style="width:70px;font-size:12px">' + (e.w ? e.w + ' · ' + pct + '%' : '—') + '<i style="display:block;height:4px;border-radius:2px;background:#22c55e;margin-top:3px;width:' + e.w + '%"></i></span><span style="flex:1;text-align:right;font-size:11.5px;opacity:.8">' + (x.st ? '✅' + x.st.w + ' ❌' + x.st.l + ' 🤝' + x.st.d : '') + (x.trap ? ' 🪤' : '') + (e.note ? ' 📝' : '') + '</span></div>';
+        }).join('');
+        return o + '<div style="font-size:11.5px;opacity:.65;margin-top:6px">Yurishni bossangiz — foiz, belgi va izoh. Doskada yurib keyingi pozitsiyaga o‘tasiz.</div>';
+      }
+      if (!rows.length) return o + '<div style="opacity:.7;padding:6px 2px">' + (BK.src === 'col' ? 'Colette va kitobda bu pozitsiya yo‘q' : 'Bu pozitsiyada hali partiya yo‘q') + '</div>';
+      if (BK.src === 'col') return o + rows.map(function (x) { return '<div data-a="bkplay:' + x.id + '" style="display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid #22264d;cursor:pointer"><b style="width:70px;font-family:ui-monospace,monospace">' + x.t + '</b><span style="flex:1">' + x.tag + '</span><span style="opacity:.7;font-size:12px">' + (x.n ? x.n.toLocaleString() + ' marta' : '') + '</span></div>'; }).join('');
+      var tot = 0; rows.forEach(function (x) { tot += x.n; });
+      o += '<div style="display:flex;font-size:11.5px;opacity:.6;padding:0 4px 4px"><span style="width:62px">Yurish</span><span style="width:84px">O‘yinlar</span><span style="flex:1;text-align:center">Oq / Durang / Qora</span></div>';
+      return o + rows.map(function (x) { return '<div data-a="bkplay:' + x.id + '" style="display:flex;align-items:center;gap:6px;padding:7px 4px;border-bottom:1px solid #22264d;cursor:pointer"><b style="width:62px;font-family:ui-monospace,monospace">' + x.t + '</b><span style="width:84px;font-size:12px;opacity:.85">' + Math.round(x.n * 100 / (tot || 1)) + '% · ' + x.n + '</span>' + wdl(x) + '</div>'; }).join('');
+    }
+    function bkAct(n, v) {
+      var h = hist[cur], E = BK.E[kf(h)] || {};
+      var rd = function () { var w = document.getElementById('bkW'), nt = document.getElementById('bkN'); if (BK.ed && E[BK.ed]) { if (w) E[BK.ed].w = +w.value; if (nt) E[BK.ed].note = nt.value; } };
+      if (n === 'bksrc') { BK.src = v; BK.ed = null; BK.msg = ''; }
+      else if (n === 'bked') { rd(); BK.ed = BK.ed === v ? null : v; BK.msg = ''; if (BK.ed && !E[v]) E[v] = { w: 0, mk: '', note: '' }; }
+      else if (n === 'bkclose') { BK.ed = null; BK.msg = ''; }
+      else if (n === 'bkmk') { rd(); if (E[BK.ed]) E[BK.ed].mk = E[BK.ed].mk === v ? '' : v; }
+      else if (n === 'bksave') {
+        rd(); if (E[BK.ed]) E[BK.ed].lock = true; BK.msg = '⏳';
+        fetch('/api/kkrep/set', { method: 'POST', headers: hd(), body: JSON.stringify({ sc: 'all', board: toEng(h.b), side: h.t, moves: E }) }).then(function (r) { return r.json(); }).then(function (j) { BK.msg = j && j.ok ? '✅ Saqlandi' : '⚠️ ' + ((j && j.error) || 'xato'); delete BK.D[bkKey(h)]; try { Telegram.WebApp.HapticFeedback.notificationOccurred('success'); } catch (e) {} draw(); });
+      }
+      else if (n === 'bkplay') {
+        var ft = v.split('-').map(Number), ms = legal(h.b, h.t), m = ms.filter(function (x) { var a = x.path[0], z = x.path[x.path.length - 1]; return a[0] * 8 + a[1] === ft[0] && z[0] * 8 + z[1] === ft[1]; })[0];
+        if (m) { BK.ed = null; BK.msg = ''; play(m); return; }
+      }
+      draw();
     }
     function draw() {
       var st = ov.scrollTop, h = hist[cur], k = kf(h), e = EV[k], ed = panel === 'edit';
@@ -764,6 +846,7 @@
         s += '</div>';
       }
       s += '</div>';
+      if (panel === 'book' && !ed) s += bkArrows(h, flip);
       if (en && S.arrow && e && e.best && !over) {
         var f = e.best.from, t2 = e.best.to;
         var x1 = (flip ? 7 - f[1] : f[1]) + .5, y1 = (flip ? 7 - f[0] : f[0]) + .5, x2 = (flip ? 7 - t2[1] : t2[1]) + .5, y2 = (flip ? 7 - t2[0] : t2[0]) + .5;
@@ -785,11 +868,12 @@
       s += '<div style="margin:8px 0;font-size:15px">' + info + '</div>';
       s += '<div style="display:flex;gap:8px;justify-content:center"><button id="bd0" style="' + bst + '">⏮</button><button id="bd1" style="' + bst + '">◀</button><button id="bd2" style="' + bst + '">▶</button><button id="bd3" style="' + bst + '">⏭</button></div>';
       var tg = '<span data-a="eng" style="display:inline-block;width:46px;height:26px;border-radius:13px;background:' + (S.engine ? '#6aa22a' : '#555') + ';position:relative;vertical-align:middle"><span style="position:absolute;top:3px;' + (S.engine ? 'right:3px' : 'left:3px') + ';width:20px;height:20px;border-radius:50%;background:#fff"></span></span>';
-      s += '<div style="display:flex;gap:8px;margin-top:10px"><div style="flex:1;background:#2c4a1c;border-radius:12px 12px 0 0;padding:10px;display:flex;justify-content:space-between;align-items:center">' + tg + '<b style="font-size:22px">' + (en ? evFmt(x) : '–') + '</b></div><div data-a="menu" style="flex:1;background:' + (panel ? '#6aa22a' : '#1d1f3a') + ';border-radius:12px 12px 0 0;padding:10px;font-size:22px;cursor:pointer">☰</div></div>';
+      s += '<div style="display:flex;gap:8px;margin-top:10px"><div style="flex:1;background:#2c4a1c;border-radius:12px 12px 0 0;padding:10px;display:flex;justify-content:space-between;align-items:center">' + tg + '<b style="font-size:22px">' + (en ? evFmt(x) : '–') + '</b></div><div data-a="book" style="flex:1;background:' + (panel === 'book' ? '#6aa22a' : '#1d1f3a') + ';border-radius:12px 12px 0 0;padding:10px;font-size:22px;cursor:pointer;text-align:center">📖</div><div data-a="menu" style="flex:1;background:' + (panel && panel !== 'book' ? '#6aa22a' : '#1d1f3a') + ';border-radius:12px 12px 0 0;padding:10px;font-size:22px;cursor:pointer;text-align:center">☰</div></div>';
       if (panel) {
         s += '<div style="background:#2a3b22;border-radius:0 0 12px 12px;padding:12px;text-align:left">';
         var mi = function (a, ic, tx) { return '<div data-a="' + a + '" style="display:flex;align-items:center;gap:10px;padding:10px 4px;cursor:pointer;font-size:15px"><span style="font-size:24px;width:32px;text-align:center">' + ic + '</span>' + tx + '</div>'; };
-        if (panel === 'menu') {
+        if (panel === 'book') s += bookHtml();
+        else if (panel === 'menu') {
           s += '<div style="display:grid;grid-template-columns:1fr 1fr">' + mi('flip', '🔄', 'Taxtani aylantirish') + mi('edit', '✏️', 'Taxta muharriri') + mi('play', '🎯', 'Kompyuter bilan mashq qilish') + mi('cont', '♟', 'Shu pozitsiyadan davom etish') + mi('auto', '🤖', 'Kompyuter vs Kompyuter') + mi('learn', '📚', 'O‘rganish') + mi('set', '⚙️', 'Sozlamalar') + ((window.__isAdmin || (window.hzIsAdmin && window.hzIsAdmin())) ? mi('kk', '🦍', 'King Kong ustaxonasi') : '') + '</div>';
           s += '<div style="text-align:center;margin-top:6px"><button id="bdA" style="' + sm + ';background:#2e9d6b">📊 Hammasini baholash' + (prog ? ' ' + prog : '') + '</button><button id="bdN" style="' + sm + ';background:#8a2b3a">🗑 Yangi o‘yin</button></div>';
         } else if (panel === 'kk') {

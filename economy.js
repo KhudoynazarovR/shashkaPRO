@@ -155,6 +155,7 @@ function handle(req, res, url) {
   if (p === '/api/wager' && req.method === 'GET') { const W = require('./wager.js'); send(res, 200, { stakes: W.STAKES, fee: W.FEE, top: W.top() }); return true; }
   if (p === '/api/reel') { if (require('./reelgen.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }   // 🎬 masaladan Reel (admin)
   if (p.startsWith('/api/kkadm')) { if (require('./kkadm.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }
+  if (p === '/api/explore' || p === '/api/ai/multipv') { if (require('./posdb.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }
   if (p.startsWith('/api/kkrep')) { if (require('./kkrep.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }
   if (p.startsWith('/api/kkbook')) { if (require('./kkbook.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }
   if (p === '/api/notify') { if (require('./notify.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }
