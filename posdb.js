@@ -94,21 +94,22 @@ function explore(src, b, s, admin, sc) {
 
 // ⚙️ dvigatelning 3 varianti: eng yaxshisi + 2 ta keyingi (moddiy tartib), har biri davomi bilan
 const MPV = new Map();
-function multipv(b, s, cb) {
-  const key = b.join('') + s, c = MPV.get(key); if (c) return cb(c);
+function multipv(b, s, cb, o) {
+  o = o || {}; const secs = Math.min(2, Math.max(0.3, Number(o.t) || 0.8)), N = Math.min(3, Math.max(1, Number(o.n) || 3)), PL = Math.min(12, Math.max(4, Number(o.pl) || 8));
+  const key = b.join('') + s + '|' + secs + '|' + N + '|' + PL, c = MPV.get(key); if (c) return cb(c);
   const K = require('./kestoai.js'), L = R.moves(b, s);
   if (!L.length) return cb({ lines: [] });
   const busy = global.__tRunning && global.__tRunning();
-  K.pv(b, s, 0.8, 8, r0 => {
+  K.pv(b, s, secs, PL, r0 => {
     if (!r0 || r0.error || !r0.pv || !r0.pv.length) return cb({ lines: [] });
     const lines = [{ ev: r0.ev, pv: r0.pv }];
-    if (busy || L.length < 2) { const o = { lines }; MPV.set(key, o); return cb(o); }
+    if (busy || L.length < 2 || N < 2) { const o = { lines }; MPV.set(key, o); return cb(o); }
     const f0 = r0.pv[0].path[0], t0 = r0.pv[0].path[r0.pv[0].path.length - 1];
-    let alt = []; try { alt = (require('./kkadm.js').rank(b, s, 4) || []).map(x => x.m).filter(x => !(x.from === f0 && x.to === t0)).slice(0, 2); } catch (e) { alt = L.filter(x => !(x.from === f0 && x.to === t0)).slice(0, 2); }
+    let alt = []; try { alt = (require('./kkadm.js').rank(b, s, 4) || []).map(x => x.m).filter(x => !(x.from === f0 && x.to === t0)).slice(0, N - 1); } catch (e) { alt = L.filter(x => !(x.from === f0 && x.to === t0)).slice(0, N - 1); }
     let left = alt.length; if (!left) { const o = { lines }; MPV.set(key, o); return cb(o); }
     alt.forEach(a => {
       const m = L.find(x => x.from === a.from && x.to === a.to);
-      K.pv(m.board, -s, 0.5, 6, r => {
+      K.pv(m.board, -s, Math.min(secs, 0.5), PL - 2, r => {
         lines.push({ ev: r && r.ev != null ? r.ev : null, pv: [{ path: [m.from].concat(m.path || [m.to]), caps: m.caps.length }].concat((r && r.pv) || []) });
         if (--left === 0) { lines.sort((x, y) => s * ((y.ev == null ? -99 * s : y.ev) - (x.ev == null ? -99 * s : x.ev))); const o = { lines }; MPV.set(key, o); if (MPV.size > 2000) MPV.delete(MPV.keys().next().value); cb(o); }
       });
@@ -124,7 +125,7 @@ function handle(req, res, p, h) {
     let j = {}; try { j = JSON.parse(body || '{}'); } catch (e) {}
     const b = j.board, s = j.side === -1 ? -1 : 1;
     if (!Array.isArray(b) || b.length !== 64 || !b.every(v => Number.isInteger(v) && v >= -2 && v <= 2)) return h.send(res, 400, { error: 'bad' });
-    if (p === '/api/ai/multipv') return multipv(b, s, r => h.send(res, 200, r));
+    if (p === '/api/ai/multipv') return multipv(b, s, r => h.send(res, 200, r), { t: j.time, n: j.n, pl: j.plies });
     let adm = false; try { adm = require('./kkbook.js').isAdmin(t.id); } catch (e) {}
     const src = ['sp', 'ld', 'col', 'rep'].includes(j.src) ? j.src : 'sp';
     if ((src === 'rep' || src === 'ld') && !adm) return h.send(res, 403, { error: 'Faqat admin' });

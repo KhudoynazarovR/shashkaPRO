@@ -68,7 +68,7 @@
   function note(m) { return m.path.map(function (x) { return sq(x[0], x[1]); }).join(m.caps.length ? ':' : '-'); }
   try { fetch('/api/balance', { headers: { 'x-init-data': (window.Telegram && Telegram.WebApp && Telegram.WebApp.initData) || '' } }).then(function (r) { return r.json(); }).then(function (d) { window.__prem = !!(d && d.premium); }).catch(function () {}); } catch (e) {}
   function hd() { return { 'Content-Type': 'application/json', 'x-init-data': (window.Telegram && Telegram.WebApp && Telegram.WebApp.initData) || '' }; }
-  var S = { t: 2, arrow: true, bar: true, engine: true };
+  var S = { t: 2, arrow: true, bar: true, engine: true, mpv: 3, pl: 8, aa: true, abk: true, alm: true };
   try { var _s = JSON.parse(localStorage.getItem('spBdS') || '{}'); for (var _k in _s) if (_k !== "t") S[_k] = _s[_k]; } catch (e) {}
   function sv() { try { localStorage.setItem('spBdS', JSON.stringify(S)); } catch (e) {} }
   function ask(h, cb, tries, tm) {
@@ -340,7 +340,7 @@
     var tok = ++PVT;
     setTimeout(function () {   // 🧠 telefon dvigateli o'rniga — serverdagi KestoG
       if (tok !== PVT) return;
-      fetch('/api/ai/multipv', { method: 'POST', headers: hd(), body: JSON.stringify({ board: toEng(h.b), side: h.t }) })
+      fetch('/api/ai/multipv', { method: 'POST', headers: hd(), body: JSON.stringify({ board: toEng(h.b), side: h.t, time: Math.min(2, S.t || 1), n: S.mpv || 3, plies: S.pl || 8 }) })
         .then(function (r) { return r.json(); })
         .then(function (j) {
           if (!document.getElementById('spBd')) return;
@@ -700,7 +700,10 @@
         KK.text = txt; KK.msg = '⏳ Kiritilmoqda…';
         kkPost('/api/kkbook/pdn', { text: txt, sides: KK.sides }).then(function (r) { KK.msg = (r.added ? '✅ ' + r.added + ' ta yurish o‘rgatildi (jami ' + r.total + ')' : '') + (r.error ? ' ⚠️ ' + r.error : ''); draw(); }).catch(function () { KK.msg = '⚠️ Server bilan aloqa yo‘q'; draw(); });
       },
-      menu: function () { panel = panel && panel !== 'book' ? null : 'menu'; E = null; },
+      menu: function () { panel = panel && panel !== 'book' && panel !== 'engp' ? null : 'menu'; E = null; },
+      engp: function () { panel = panel === 'engp' ? null : 'engp'; E = null; },
+      drw: function () { DR.on = !DR.on; DR.from = null; },
+      drclr: function () { delete SH[kf(hist[cur])]; DR.from = null; },
       book: function () { panel = panel === 'book' ? null : 'book'; E = null; },
       eng: function () { S.engine = !S.engine; sv(); },
       flip: function () { flip = !flip; },
@@ -728,7 +731,8 @@
       else if (n === 'kks') { KK.sides = v; var _ta = document.getElementById('kkPdn'); if (_ta) KK.text = _ta.value; }
       else if (n === 'tool') { E.tool = +v; }
       else if (n === 'st') { if (+v > 2 && !window.__prem) { if (window.premGo) window.premGo(); return; } S.t = +v; sv(); }
-      else if (n === 'tog') { S[v] = !S[v]; sv(); }
+      else if (n === 'tog') { S[v] = S[v] === false ? true : !S[v]; sv(); }
+      else if (n === 'drc') { DR.col = +v; DR.on = true; }
       else if (n === 'me') {
         PL = { me: +v, th: false, err: false }; panel = null;
         hist = hist.slice(0, cur + 1); sel = null; draw();
@@ -818,6 +822,105 @@
       }
       draw();
     }
+    // ---------- ⚙️ Dvigatel sozlamalari, strelkalar, chizish, FEN/PDN (lichess kabi)
+    var DR = { on: false, col: 0, from: null }, SH = {}, DCOL = ['#15781b', '#b0302a', '#2f6fd6', '#e6a700'];
+    var TV = [0.5, 1, 2, 3, 5, 10], PLV = [4, 6, 8, 10, 12];
+    function rgTxt(n, v) { return n === 't' ? TV[v] + 's' : n === 'mpv' ? v + ' / 3' : PLV[v] + ''; }
+    function rgSet(n, v) {
+      if (n === 't') { var t = TV[v]; if (t > 3 && !window.__prem && !window.__isAdmin) { if (window.premGo) window.premGo(); draw(); return; } S.t = t; }
+      else if (n === 'mpv') S.mpv = v; else if (n === 'pl') S.pl = PLV[v];
+      sv(); PVC = {}; if (n === 't') EV = {}; draw(); analyzeCur();
+    }
+    function engHtml(sm) {
+      var row = function (lb, inner) { return '<div style="display:flex;align-items:center;gap:10px;margin:9px 0;font-size:14px"><span style="width:118px;flex:none">' + lb + '</span>' + inner + '</div>'; };
+      var rg = function (n, mx, v) { return '<input type="range" data-rg="' + n + '" min="0" max="' + mx + '" step="1" value="' + v + '" style="flex:1;accent-color:#3b82f6"><b style="width:44px;text-align:right">' + rgTxt(n, v) + '</b>'; };
+      var tg = function (k2, on) { return '<span data-a="tog:' + k2 + '" style="flex:none;display:inline-block;width:42px;height:24px;border-radius:12px;background:' + (on ? '#6aa22a' : '#555') + ';position:relative;cursor:pointer"><span style="position:absolute;top:3px;' + (on ? 'right:3px' : 'left:3px') + ';width:18px;height:18px;border-radius:50%;background:#fff"></span></span>'; };
+      var ti = Math.max(0, TV.indexOf(S.t)); if (TV.indexOf(S.t) < 0) ti = 2;
+      var o = row('Dvigatel', '<span style="flex:1;border:2px solid #3b82f6;border-radius:8px;padding:6px 10px;background:#1d1f3a">🐉 Dragon · server</span>' + tg('engine', S.engine));
+      o += row('Qidiruv vaqti', rg('t', TV.length - 1, ti));
+      o += row('Variantlar soni', '<input type="range" data-rg="mpv" min="1" max="3" step="1" value="' + (S.mpv || 3) + '" style="flex:1;accent-color:#3b82f6"><b style="width:44px;text-align:right">' + (S.mpv || 3) + ' / 3</b>');
+      o += row('Variant uzunligi', rg('pl', PLV.length - 1, Math.max(0, PLV.indexOf(S.pl || 8))));
+      if (!window.__prem && !window.__isAdmin) o += '<div style="font-size:12px;color:#ffd54a">👑 5 va 10 soniya — Premium uchun</div>';
+      o += '<div style="font-size:12px;opacity:.65;margin:12px 0 2px;letter-spacing:.5px">STRELKALAR</div>';
+      o += row('Eng yaxshi yurish', '<span style="flex:1"></span>' + tg('arrow', S.arrow));
+      o += row('2–3-variantlar', '<span style="flex:1;font-size:12px;opacity:.7">xira strelka</span>' + tg('aa', S.aa !== false));
+      o += row('📖 Baza yurishlari', '<span style="flex:1"></span>' + tg('abk', S.abk !== false));
+      o += row('Oxirgi yurish', '<span style="flex:1"></span>' + tg('alm', S.alm !== false));
+      o += '<div style="font-size:12px;opacity:.65;margin:12px 0 2px;letter-spacing:.5px">O‘Z STRELKALARIM</div>';
+      o += row('✏️ Chizish', '<span style="flex:1;display:flex;gap:8px">' + DCOL.map(function (c, i) { return '<span data-a="drc:' + i + '" style="cursor:pointer;width:26px;height:26px;border-radius:50%;background:' + c + ';' + (DR.on && DR.col === i ? 'outline:3px solid #fff' : '') + '"></span>'; }).join('') + '</span>' + '<span data-a="drw" style="flex:none;display:inline-block;width:42px;height:24px;border-radius:12px;background:' + (DR.on ? '#6aa22a' : '#555') + ';position:relative;cursor:pointer"><span style="position:absolute;top:3px;' + (DR.on ? 'right:3px' : 'left:3px') + ';width:18px;height:18px;border-radius:50%;background:#fff"></span></span>');
+      o += '<div style="font-size:12px;opacity:.75">Katakdan katakka bosing — strelka, bir katakni ikki marta — doira. ' + (DR.on ? '<b style="color:#9be89b">Chizish yoqiq</b> — yurish uchun o‘chiring.' : '') + '</div><div style="margin-top:6px"><button data-a="drclr" style="' + sm + '">🧽 Tozalash</button></div>';
+      return o;
+    }
+    function arrowEl(f, t, col, w, op, id) {
+      var x1 = f[1] + .5, y1 = f[0] + .5, x2 = t[1] + .5, y2 = t[0] + .5, dx = x2 - x1, dy = y2 - y1, L = Math.sqrt(dx * dx + dy * dy) || 1; x2 -= dx / L * .3; y2 -= dy / L * .3;
+      return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + col + '" stroke-width="' + w + '" stroke-linecap="round" opacity="' + op + '" marker-end="url(#' + id + ')"/>';
+    }
+    function mkr(id, col) { return '<marker id="' + id + '" markerWidth="3" markerHeight="3" refX="1.6" refY="1.5" orient="auto"><path d="M0,0 L3,1.5 L0,3z" fill="' + col + '"/></marker>'; }
+    function fl(q) { return flip ? [7 - q[0], 7 - q[1]] : q; }
+    function altArrows(r) {
+      if (!r || !r.lines || r.lines.length < 2) return '';
+      var o = '';
+      r.lines.slice(1).forEach(function (L) { var P = L.pv && L.pv[0] && L.pv[0].path; if (!P || P.length < 2) return; o += arrowEl(fl([P[0] >> 3, P[0] & 7]), fl([P[P.length - 1] >> 3, P[P.length - 1] & 7]), '#3fb950', .1, .4, 'bdAh2'); });
+      return o ? '<svg viewBox="0 0 8 8" style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none"><defs>' + mkr('bdAh2', '#3fb950') + '</defs>' + o + '</svg>' : '';
+    }
+    function shapesSvg(k) {
+      var L = SH[k] || [], o = '', d = '';
+      DCOL.forEach(function (c, i) { d += mkr('drA' + i, c); });
+      L.forEach(function (z) {
+        var f = fl(z.f), t = fl(z.t);
+        if (f[0] === t[0] && f[1] === t[1]) o += '<circle cx="' + (f[1] + .5) + '" cy="' + (f[0] + .5) + '" r=".44" fill="none" stroke="' + DCOL[z.c] + '" stroke-width=".07" opacity=".85"/>';
+        else o += arrowEl(f, t, DCOL[z.c], .13, .8, 'drA' + z.c);
+      });
+      if (DR.on && DR.from) { var q = fl(DR.from); o += '<rect x="' + q[1] + '" y="' + q[0] + '" width="1" height="1" fill="' + DCOL[DR.col] + '" opacity=".35"/>'; }
+      return o ? '<svg viewBox="0 0 8 8" style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none"><defs>' + d + '</defs>' + o + '</svg>' : '';
+    }
+    function drClick(r, c) {
+      var k = kf(hist[cur]);
+      if (!DR.from) { DR.from = [r, c]; draw(); return; }
+      var f = DR.from, L = SH[k] = SH[k] || []; DR.from = null;
+      var i = L.findIndex(function (z) { return z.f[0] === f[0] && z.f[1] === f[1] && z.t[0] === r && z.t[1] === c; });
+      if (i >= 0) { if (L[i].c === DR.col) L.splice(i, 1); else L[i].c = DR.col; } else L.push({ f: f, t: [r, c], c: DR.col });
+      draw();
+    }
+    // FEN (Wa1,Kc3 kabi) va PDN
+    function fenOf(h) {
+      var w = [], bl = [];
+      for (var r = 0; r < 8; r++) for (var c = 0; c < 8; c++) { var p = h.b[r][c]; if (!p) continue; var t = (p > 2 ? 'K' : '') + sq(r, c); (W(p) ? w : bl).push(t); }
+      return (h.t > 0 ? 'W' : 'B') + ':W' + w.join(',') + ':B' + bl.join(',');
+    }
+    function pdnOf() {
+      var o = '', h0 = hist[0];
+      for (var i = 1; i < hist.length; i++) { var wm = hist[i - 1].t > 0; if (wm || i === 1) o += Math.ceil((i + (h0.t > 0 ? 0 : 1)) / 2) + (wm ? '. ' : '... '); o += hist[i].n + ' '; }
+      return o.trim();
+    }
+    function cpTxt(t, id) { try { navigator.clipboard.writeText(t); } catch (e) {} var el = ov.querySelector(id); if (el) { el.textContent = '✅'; setTimeout(function () { if (el) el.textContent = '📋'; }, 1200); } }
+    var FP = { msg: '' };
+    function fpLoad(txt) {
+      txt = String(txt || '').trim(); if (!txt) return;
+      var m = /^\s*\[?FEN\s*"?([WB]):([WB][^:"]*):([WB][^:"\]]*)/i.exec(txt) || /^([WB]):([WB][^:]*):([WB][^:\s]*)/i.exec(txt);
+      if (m) {
+        var b = empty(), ok = true;
+        [m[2], m[3]].forEach(function (part) {
+          var white = part[0].toUpperCase() === 'W';
+          part.slice(1).split(',').forEach(function (x) { x = x.trim(); if (!x) return; var k2 = /^K/i.test(x); x = x.replace(/^K/i, ''); var c = 'abcdefgh'.indexOf(x[0].toLowerCase()), r = 8 - parseInt(x.slice(1), 10); if (c < 0 || !(r >= 0 && r < 8) || (r + c) % 2 !== 1) { ok = false; return; } b[r][c] = white ? (k2 ? 3 : 1) : (k2 ? 4 : 2); });
+        });
+        if (!ok) { FP.msg = '⚠️ FEN tushunarsiz'; draw(); return; }
+        FP.msg = ''; newPos(b, m[1].toUpperCase() === 'W' ? 1 : -1); return;
+      }
+      var ta = document.createElement('textarea'); ta.id = 'kkPdn'; ta.value = txt; ta.style.display = 'none'; document.body.appendChild(ta);
+      var keep = panel; A.kkload(); ta.remove();
+      if (panel === 'kk') { panel = keep === 'kk' ? 'kk' : null; FP.msg = KK.msg && KK.msg.indexOf('⚠️') === 0 ? KK.msg : ''; KK.msg = ''; }
+      else FP.msg = KK.msg || ''; draw();
+    }
+    function fpHtml() {
+      var st = 'flex:1;min-width:0;background:#262b66;border-radius:8px;padding:8px;font:12px ui-monospace,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left';
+      var cb = 'border:0;background:none;font-size:18px;cursor:pointer;color:#fff';
+      return '<div style="margin:8px -8px 0;background:#1d1f3a;border-radius:10px;padding:8px 10px;font-size:13px">' +
+        '<div style="display:flex;gap:6px;align-items:center;margin:4px 0"><b style="width:40px;text-align:left">FEN</b><div style="' + st + '">' + fenOf(hist[cur]) + '</div><button id="fpCopyF" style="' + cb + '">📋</button></div>' +
+        '<div style="display:flex;gap:6px;align-items:center;margin:4px 0"><b style="width:40px;text-align:left">PDN</b><div style="' + st + '">' + (pdnOf() || '—') + '</div><button id="fpCopyP" style="' + cb + '">📋</button></div>' +
+        '<div style="display:flex;gap:6px;margin-top:6px"><input id="fpIn" placeholder="FEN yoki PDN qo‘ying…" style="flex:1;min-width:0;border:0;border-radius:8px;padding:8px;background:#262b66;color:#fff;font-size:13px"><button id="fpLoad" style="border:0;border-radius:8px;padding:8px 12px;background:#2e9d6b;color:#fff">Yuklash</button></div>' +
+        (FP.msg ? '<div style="margin-top:6px">' + FP.msg + '</div>' : '') + '</div>';
+    }
     function draw() {
       var st = ov.scrollTop, h = hist[cur], k = kf(h), e = EV[k], ed = panel === 'edit';
       var _pf = pvFirst(PVC[k]); if (_pf && e && e.best) e = Object.assign({}, e, { best: _pf }); PVREDRAW = draw;
@@ -832,7 +935,7 @@
       else if (GI) s += '<div style="font-size:14px;margin-bottom:6px">⚪ ' + String(GI.white || '') .replace(/</g, '&lt;') + ' — ⚫ ' + String(GI.black || '').replace(/</g, '&lt;') + '<br><span style="opacity:.8">' + (GI.winner === 'white' ? '🏆 Oq yutdi' : GI.winner === 'black' ? '🏆 Qora yutdi' : '🤝 Durang') + '</span></div>';
       var GS = gameSkin();
       s += '<div style="position:relative;width:min(calc(100% + 24px),520px);margin-left:calc((100% - min(calc(100% + 24px),520px)) / 2);box-sizing:border-box"><div id="spBdB" data-th="' + GS.th + '" data-ps="' + GS.ps + '" style="--pz:' + GS.pz + '%;--km:\'' + GS.km + '\';display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);aspect-ratio:1;overflow:hidden;border:0!important;box-shadow:none!important">';
-      var lm = (!ed && h.m) ? [h.m.path[0], h.m.path[h.m.path.length - 1]] : [], rr, cc, r, c, p, hl, dot;
+      var lm = (!ed && h.m && S.alm !== false) ? [h.m.path[0], h.m.path[h.m.path.length - 1]] : [], rr, cc, r, c, p, hl, dot;
       for (rr = 0; rr < 8; rr++) for (cc = 0; cc < 8; cc++) {
         r = flip ? 7 - rr : rr; c = flip ? 7 - cc : cc; p = B[r][c];
         hl = ''; dot = false;
@@ -849,7 +952,9 @@
         s += '</div>';
       }
       s += '</div>';
-      if (panel === 'book' && !ed) s += bkArrows(h, flip);
+      if (panel === 'book' && !ed && S.abk !== false) s += bkArrows(h, flip);
+      if (en && S.aa !== false && !over && !ed) s += altArrows(PVC[k], flip);
+      if (!ed) s += shapesSvg(k, flip);
       if (en && S.arrow && e && e.best && !over) {
         var f = e.best.from, t2 = e.best.to;
         var x1 = (flip ? 7 - f[1] : f[1]) + .5, y1 = (flip ? 7 - f[0] : f[0]) + .5, x2 = (flip ? 7 - t2[1] : t2[1]) + .5, y2 = (flip ? 7 - t2[0] : t2[0]) + .5;
@@ -871,12 +976,13 @@
       s = s.replace('@@INFO@@', info);
       var nb = 'flex:1;border:0;border-radius:6px;padding:9px 0;background:rgba(255,255,255,.09);color:#e6e6e6;font-size:18px';
       s += '<div style="display:flex;gap:4px;margin:4px -8px 0"><button id="bd0" style="' + nb + '">⏮</button><button id="bd1" style="' + nb + '">‹</button><button id="bd2" style="' + nb + '">›</button><button id="bd3" style="' + nb + '">⏭</button></div>';
-      var tg = '<span data-a="eng" style="display:inline-block;width:46px;height:26px;border-radius:13px;background:' + (S.engine ? '#6aa22a' : '#555') + ';position:relative;vertical-align:middle"><span style="position:absolute;top:3px;' + (S.engine ? 'right:3px' : 'left:3px') + ';width:20px;height:20px;border-radius:50%;background:#fff"></span></span>';
-      s += '<div style="display:flex;gap:4px;margin:6px -8px 0"><div style="flex:1;background:#2c4a1c;border-radius:10px 10px 0 0;padding:8px 10px;display:flex;justify-content:space-between;align-items:center">' + tg + '<b style="font-size:22px">' + (en ? evFmt(x) : '–') + '</b></div><div data-a="book" style="flex:1;background:' + (panel === 'book' ? '#6aa22a' : '#1d1f3a') + ';border-radius:10px 10px 0 0;padding:8px;font-size:20px;cursor:pointer;text-align:center">📖</div><div data-a="menu" style="flex:1;background:' + (panel && panel !== 'book' ? '#6aa22a' : '#1d1f3a') + ';border-radius:10px 10px 0 0;padding:8px;font-size:20px;cursor:pointer;text-align:center">☰</div></div>';
+      var tg = '<span data-a="eng" style="display:inline-block;width:46px;height:26px;border-radius:13px;background:' + (S.engine ? (panel === 'engp' ? '#2c4a1c' : '#6aa22a') : '#555') + ';position:relative;vertical-align:middle"><span style="position:absolute;top:3px;' + (S.engine ? 'right:3px' : 'left:3px') + ';width:20px;height:20px;border-radius:50%;background:#fff"></span></span>';
+      s += '<div style="display:flex;gap:4px;margin:6px -8px 0"><div data-a="engp" style="cursor:pointer;flex:1;background:' + (panel === 'engp' ? '#6aa22a' : '#2c4a1c') + ';border-radius:10px 10px 0 0;padding:8px 10px;display:flex;justify-content:space-between;align-items:center">' + tg + '<span style="font-size:15px;opacity:.75">⚙️</span><b style="font-size:22px">' + (en ? evFmt(x) : '–') + '</b></div><div data-a="book" style="flex:1;background:' + (panel === 'book' ? '#6aa22a' : '#1d1f3a') + ';border-radius:10px 10px 0 0;padding:8px;font-size:20px;cursor:pointer;text-align:center">📖</div><div data-a="menu" style="flex:1;background:' + (panel && panel !== 'book' && panel !== 'engp' ? '#6aa22a' : '#1d1f3a') + ';border-radius:10px 10px 0 0;padding:8px;font-size:20px;cursor:pointer;text-align:center">☰</div></div>';
       if (panel) {
         s += '<div style="background:#2a3b22;border-radius:0 0 10px 10px;padding:10px;margin:0 -8px;text-align:left">';
         var mi = function (a, ic, tx) { return '<div data-a="' + a + '" style="display:flex;align-items:center;gap:10px;padding:10px 4px;cursor:pointer;font-size:15px"><span style="font-size:24px;width:32px;text-align:center">' + ic + '</span>' + tx + '</div>'; };
         if (panel === 'book') s += bookHtml();
+        else if (panel === 'engp') s += engHtml(sm);
         else if (panel === 'menu') {
           s += '<div style="display:grid;grid-template-columns:1fr 1fr">' + mi('flip', '🔄', 'Taxtani aylantirish') + mi('edit', '✏️', 'Taxta muharriri') + mi('play', '🎯', 'Kompyuter bilan mashq qilish') + mi('cont', '♟', 'Shu pozitsiyadan davom etish') + mi('auto', '🤖', 'Kompyuter vs Kompyuter') + mi('learn', '📚', 'O‘rganish') + mi('set', '⚙️', 'Sozlamalar') + ((window.__isAdmin || (window.hzIsAdmin && window.hzIsAdmin())) ? mi('kk', '🦍', 'King Kong ustaxonasi') : '') + '</div>';
           s += '<div style="text-align:center;margin-top:6px"><button id="bdA" style="' + sm + ';background:#2e9d6b">📊 Hammasini baholash' + (prog ? ' ' + prog : '') + '</button><button id="bdN" style="' + sm + ';background:#8a2b3a">🗑 Yangi o‘yin</button></div>';
@@ -934,6 +1040,7 @@
         s += '</div>';
       }
       if (en && e && e.best && !over) s += '<div style="margin:0 -8px">' + pvHtml(h) + '</div>';
+      if (!ed && !PL) s += fpHtml();
       if (AU.run && panel !== 'auto') s += '<div style="margin-top:8px">🤖 ' + Math.ceil(cur / 2) + '-yurish… <button data-a="auoff" style="' + sm + ';background:#8a2b3a">⏸ To‘xtatish</button></div>';
       if (PL) s += '<div style="margin-top:8px"><button data-a="stop" style="' + sm + ';background:#8a2b3a">⏹ Mashqni to‘xtatish</button></div>';
       if (!ed) s += anaHtml();
@@ -953,8 +1060,11 @@
       on('#bdA', runAll); on('#bdFull', fullAna);
       on('#bdN', function () { newPos(start(), 1); });
       on('#bdRt', function () { delete FAIL[kf(hist[cur])]; analyzeCur(); draw(); });
-      Array.prototype.forEach.call(ov.querySelectorAll('[data-a]'), function (el) { el.onclick = function () { act(el.getAttribute('data-a')); }; });
-      Array.prototype.forEach.call(ov.querySelectorAll('[data-r]'), function (el) { el.onclick = function () { click(+el.getAttribute('data-r'), +el.getAttribute('data-c')); }; });
+      Array.prototype.forEach.call(ov.querySelectorAll('[data-a]'), function (el) { el.onclick = function (ev) { if (ev) ev.stopPropagation(); act(el.getAttribute('data-a')); }; });
+      Array.prototype.forEach.call(ov.querySelectorAll('[data-rg]'), function (el) { el.oninput = function () { var o = el.nextElementSibling; if (o) o.textContent = rgTxt(el.getAttribute('data-rg'), +el.value); }; el.onchange = function () { rgSet(el.getAttribute('data-rg'), +el.value); }; });
+      on('#fpCopyF', function () { cpTxt(fenOf(hist[cur]), '#fpCopyF'); }); on('#fpCopyP', function () { cpTxt(pdnOf(), '#fpCopyP'); });
+      on('#fpLoad', function () { var ta = document.getElementById('fpIn'); fpLoad(ta ? ta.value : ''); });
+      Array.prototype.forEach.call(ov.querySelectorAll('[data-r]'), function (el) { el.onclick = function () { if (DR.on && panel !== 'edit') drClick(+el.getAttribute('data-r'), +el.getAttribute('data-c')); else click(+el.getAttribute('data-r'), +el.getAttribute('data-c')); }; });
       Array.prototype.forEach.call(ov.querySelectorAll('[data-g]'), function (el) { el.onclick = function () { go(+el.getAttribute('data-g')); }; });
       ov.scrollTop = st;
     }
