@@ -64,7 +64,7 @@
   }
   function toEng(b) { var a = [], r, c, p; for (r = 0; r < 8; r++) for (c = 0; c < 8; c++) { p = b[r][c]; a.push(p === 1 ? 1 : p === 2 ? -1 : p === 3 ? 2 : p === 4 ? -2 : 0); } return a; }
   function kf(h) { return toEng(h.b).join('') + h.t; }
-  function evFmt(x) { if (x == null) return '–'; x = Math.max(-9.9, Math.min(9.9, x)); return (x > 0 ? '+' : '') + x.toFixed(1); }
+  function evFmt(x) { if (x == null) return '–'; x = Math.round(Math.max(-9.9, Math.min(9.9, x)) * 10) / 10; return x === 0 ? '0.0' : (x > 0 ? '+' : '') + x.toFixed(1); }
   function note(m) { return m.path.map(function (x) { return sq(x[0], x[1]); }).join(m.caps.length ? ':' : '-'); }
   try { fetch('/api/balance', { headers: { 'x-init-data': (window.Telegram && Telegram.WebApp && Telegram.WebApp.initData) || '' } }).then(function (r) { return r.json(); }).then(function (d) { window.__prem = !!(d && d.premium); }).catch(function () {}); } catch (e) {}
   function hd() { return { 'Content-Type': 'application/json', 'x-init-data': (window.Telegram && Telegram.WebApp && Telegram.WebApp.initData) || '' }; }
@@ -327,10 +327,12 @@
   function pvBox(k) {
     var r = PVC[k];
     if (!r || r.err) return '';
-    if (!r.pv || !r.d) return '<div style="font-size:12px;opacity:.7;margin-top:6px">⏳ KestoG tahlil qilyapti...</div>';
-    return '<div style="margin-top:8px;text-align:left;background:#1d1f3a;border-radius:12px;padding:8px 10px">' +
-      '<div style="font-size:12px;opacity:.75">🧠 KestoG · ' + r.d + ' yarim yurish' + (r.sc != null ? ' · baho ' + r.sc : '') + '</div>' +
-      (r.lines && r.lines.length > 1 ? r.lines.map(function (L, i) { return '<div style="font-size:13.5px;line-height:1.5;margin-top:4px;' + (i ? 'border-top:1px solid #2b2f55;padding-top:4px' : '') + '"><b style="display:inline-block;min-width:44px;color:' + (L.ev == null ? '#ccc' : L.ev > 0.3 ? '#9be89b' : L.ev < -0.3 ? '#ff9b9b' : '#ddd') + '">' + (L.ev == null ? '–' : evFmt(L.ev)) + '</b>' + pvLine(L.pv, r.side) + '</div>'; }).join('') : '<div style="font-size:14px;line-height:1.6;margin-top:4px">' + pvLine(r.pv, r.side) + '</div>') + '</div>';
+    if (!r.pv || !r.d) return '<div style="margin-top:8px;text-align:left;background:#1d1f3a;border-radius:10px;padding:8px 10px;font-size:13px;opacity:.75">🐉 DragonBot tahlil qilyapti…</div>';
+    window.__pvT = function () { S.pvc = !S.pvc; sv(); if (PVREDRAW) PVREDRAW(); };
+    var NW = 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+    return '<div style="margin-top:8px;text-align:left;background:#1d1f3a;border-radius:10px;padding:6px 10px">' +
+      '<div onclick="window.__pvT()" style="font-size:12.5px;opacity:.8;display:flex;justify-content:space-between;cursor:pointer;padding:2px 0"><span>🐉 DragonBot · chuqurlik ' + r.d + '</span><span>' + (S.pvc ? '▶' : '▼') + '</span></div>' + (S.pvc ? '' :
+      (r.lines && r.lines.length > 1 ? r.lines.map(function (L, i) { return '<div style="' + NW + 'font-size:13.5px;line-height:1.5;margin-top:4px;border-top:1px solid #2b2f55;padding-top:4px"><b style="display:inline-block;min-width:44px;color:' + (L.ev == null ? '#ccc' : L.ev > 0.3 ? '#9be89b' : L.ev < -0.3 ? '#ff9b9b' : '#ddd') + '">' + (L.ev == null ? '–' : evFmt(L.ev)) + '</b>' + pvLine(L.pv, r.side) + '</div>'; }).join('') : '<div style="' + NW + 'font-size:13.5px;line-height:1.5;margin-top:4px;border-top:1px solid #2b2f55;padding-top:4px"><b style="display:inline-block;min-width:44px">' + (r.sc != null ? r.sc : '') + '</b>' + pvLine(r.pv, r.side) + '</div>')) + '</div>';
   }
   function pvStart(h, k) {
     if (PVW) { try { PVW.terminate(); } catch (e) {} PVW = null; }
@@ -599,11 +601,11 @@
       if (cur < 1 || KK.busy) return;
       var h0 = hist[cur - 1], m = hist[cur].m, f = m.path[0], e = m.path[m.path.length - 1];
       var body = { board: toEng(h0.b), side: h0.t, from: f[0] * 8 + f[1], to: e[0] * 8 + e[1] };
-      KK.busy = true; KK.msg = '⏳ KestoG tekshiryapti…'; draw();
+      KK.busy = true; KK.msg = '⏳ DragonBot tekshiryapti…'; draw();
       kkPost('/api/kkbook/check', body).then(function (c) {
         if (c.error) { KK.busy = false; KK.msg = '⚠️ ' + c.error; draw(); return; }
         if (!c.same && c.evBest != null && c.evMove != null && c.evBest - c.evMove > 0.5 &&
-          !confirm('⚠️ KestoG bu yurishni yomonroq deb baholayapti.\n\nSiznikiga: ' + evFmt(c.evMove) + '\nEng yaxshisi ' + (c.best || '?') + ': ' + evFmt(c.evBest) + '\n\nBaribir King Kongga o‘rgatamizmi?')) { KK.busy = false; KK.msg = 'Bekor qilindi'; draw(); return; }
+          !confirm('⚠️ DragonBot bu yurishni yomonroq deb baholayapti.\n\nSiznikiga: ' + evFmt(c.evMove) + '\nEng yaxshisi ' + (c.best || '?') + ': ' + evFmt(c.evBest) + '\n\nBaribir King Kongga o‘rgatamizmi?')) { KK.busy = false; KK.msg = 'Bekor qilindi'; draw(); return; }
         return kkPost('/api/kkbook/add', body).then(function (r) { KK.busy = false; KK.msg = r.error ? '⚠️ ' + r.error : '✅ O‘rgatildi: ' + r.n + ' (jami ' + r.total + ')'; draw(); });
       }).catch(function () { KK.busy = false; KK.msg = '⚠️ Server bilan aloqa yo‘q'; draw(); });
     }
@@ -622,7 +624,7 @@
       if (KK.busy) return;
       var L = kkGameMoves(); if (!L.length) { KK.msg = 'Doskada ' + (KK.sides === 'w' ? 'oq' : KK.sides === 'b' ? 'qora' : '') + ' yurish yo‘q — avval o‘ynang'; draw(); return; }
       var body = L.map(function (x) { return { board: x.board, side: x.side, from: x.from, to: x.to }; });
-      KK.busy = true; KK.pend = null; KK.msg = '⏳ KestoG ' + L.length + ' ta yurishni tekshiryapti… (~' + Math.max(2, Math.round(L.length * 0.7)) + ' s)'; draw();
+      KK.busy = true; KK.pend = null; KK.msg = '⏳ DragonBot ' + L.length + ' ta yurishni tekshiryapti… (~' + Math.max(2, Math.round(L.length * 0.7)) + ' s)'; draw();
       kkPost('/api/kkbook/game', { moves: body }).then(function (c) {
         KK.busy = false;
         if (c.error) { KK.msg = '⚠️ ' + c.error; draw(); return; }
@@ -752,12 +754,12 @@
       var d = BK.D[bkKey(h)]; if (!d || !d.rows || !d.rows.length) return '';
       var rows = d.rows.slice(0, 5), mx = 0;
       rows.forEach(function (x) { mx = Math.max(mx, BK.src === 'rep' ? (x.w || 0) : (x.n || 1)); });
-      var o = '<svg viewBox="0 0 8 8" style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none"><defs><marker id="bkAh" markerWidth="3" markerHeight="3" refX="1.6" refY="1.5" orient="auto"><path d="M0,0 L3,1.5 L0,3z" fill="#3b82f6"/></marker></defs>';
+      var o = '<svg viewBox="0 0 8 8" style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none"><defs><marker id="bkAh" markerWidth="3" markerHeight="3" refX="1.6" refY="1.5" orient="auto"><path d="M0,0 L3,1.5 L0,3z" fill="#2f6fd6"/></marker></defs>';
       rows.forEach(function (x) {
         var v = BK.src === 'rep' ? (x.w || 0) : (x.n || 1); if (!v) return; var q = v / (mx || 1);
         var f = [x.from >> 3, x.from & 7], t = [x.to >> 3, x.to & 7];
         var x1 = (flip ? 7 - f[1] : f[1]) + .5, y1 = (flip ? 7 - f[0] : f[0]) + .5, x2 = (flip ? 7 - t[1] : t[1]) + .5, y2 = (flip ? 7 - t[0] : t[0]) + .5, dx = x2 - x1, dy = y2 - y1, L = Math.sqrt(dx * dx + dy * dy) || 1; x2 -= dx / L * .3; y2 -= dy / L * .3;
-        o += '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="#3b82f6" stroke-width="' + (0.07 + 0.15 * q).toFixed(3) + '" stroke-linecap="round" opacity="' + (0.35 + 0.55 * q).toFixed(2) + '" marker-end="url(#bkAh)"/>';
+        o += '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="#2f6fd6" stroke-width="' + (0.05 + 0.09 * q).toFixed(3) + '" stroke-linecap="round" opacity="' + (0.4 + 0.4 * q).toFixed(2) + '" marker-end="url(#bkAh)"/>';
       });
       return o + '</svg>';
     }
@@ -769,7 +771,7 @@
     }
     function bookHtml() {
       var h = hist[cur], d = bkLoad(h), adm = !!window.__isAdmin, sm = 'border:0;border-radius:10px;padding:7px 10px;color:#fff;font-size:13px;margin:2px;';
-      var tabs = (adm ? [['rep', '📖 Repertuar']] : []).concat([['sp', '🎮 ShashkaPRO'], ['col', '📚 Nazariya']]);
+      var tabs = (adm ? [['rep', '📖 Repertuar']] : []).concat([['col', '🐉 DragonBot'], ['sp', '🎮 O‘yinchilar']]);
       var o = '<div style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:8px">' + tabs.map(function (t) { return '<button data-a="bksrc:' + t[0] + '" style="' + sm + 'background:' + (BK.src === t[0] ? '#6aa22a' : '#1d1f3a') + '">' + t[1] + '</button>'; }).join('') + '</div>';
       if (!d || d.load) return o + '<div style="opacity:.7">⏳ Yuklanmoqda…</div>';
       if (d.err || d.error) return o + '<div style="opacity:.7">⚠️ ' + (d.error || 'Server bilan aloqa yo‘q') + '</div>';
@@ -824,13 +826,12 @@
       var x = en ? evOf(cur) : null, pc = 50 + Math.max(-5, Math.min(5, x == null ? 0 : x)) * 10, s = '';
       var bst = 'border:0;border-radius:14px;padding:12px 16px;background:#6b5cf0;color:#fff;font-size:20px';
       var sm = 'border:0;border-radius:12px;padding:10px 12px;background:#262b66;color:#fff;font-size:14px;margin:3px';
-      s += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b>🔬 Tahlil taxtasi</b><button id="bdX" style="border:0;border-radius:12px;padding:8px 14px;background:#262b66;color:#fff;font-size:16px">⬅️</button></div>';
+      s += '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin:-4px 0 6px"><b style="white-space:nowrap">🔬 Tahlil</b><span id="bdInfo" style="flex:1;font-size:13px;opacity:.9;text-align:center;line-height:1.3">@@INFO@@</span><button id="bdX" style="border:0;border-radius:10px;padding:6px 12px;background:#262b66;color:#fff;font-size:16px">⬅️</button></div>';
       if (BAD) s += '<div style="font-size:13px;margin-bottom:8px;padding:8px 10px;border-radius:10px;background:#5a1d1d;color:#ffd0d0">⚠️ Bu o‘yin boshqa pozitsiyadan (masalan IDF 780) boshlangan, lekin u arxivga saqlanmagan (eski o‘yin). Faqat ' + (BAD - 1) + ' ta yurish ko‘rsatildi.</div>';
       if (GI && GI.title) s += '<div style="font-size:14px;margin-bottom:6px">' + String(GI.title).replace(/</g, '&lt;') + '</div>';
       else if (GI) s += '<div style="font-size:14px;margin-bottom:6px">⚪ ' + String(GI.white || '') .replace(/</g, '&lt;') + ' — ⚫ ' + String(GI.black || '').replace(/</g, '&lt;') + '<br><span style="opacity:.8">' + (GI.winner === 'white' ? '🏆 Oq yutdi' : GI.winner === 'black' ? '🏆 Qora yutdi' : '🤝 Durang') + '</span></div>';
-      if (S.bar) s += '<div style="width:min(94vw,480px);height:10px;margin:0 auto 8px;background:#222;border-radius:5px;overflow:hidden"><div style="width:' + pc + '%;height:100%;background:#eee"></div></div>';
       var GS = gameSkin();
-      s += '<div style="position:relative;width:min(100%,520px);margin:0 auto;box-sizing:border-box"><div id="spBdB" data-th="' + GS.th + '" data-ps="' + GS.ps + '" style="--pz:' + GS.pz + '%;--km:\'' + GS.km + '\';display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);aspect-ratio:1;overflow:hidden;border:0!important;box-shadow:none!important">';
+      s += '<div style="position:relative;width:min(calc(100% + 24px),520px);margin-left:calc((100% - min(calc(100% + 24px),520px)) / 2);box-sizing:border-box"><div id="spBdB" data-th="' + GS.th + '" data-ps="' + GS.ps + '" style="--pz:' + GS.pz + '%;--km:\'' + GS.km + '\';display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);aspect-ratio:1;overflow:hidden;border:0!important;box-shadow:none!important">';
       var lm = (!ed && h.m) ? [h.m.path[0], h.m.path[h.m.path.length - 1]] : [], rr, cc, r, c, p, hl, dot;
       for (rr = 0; rr < 8; rr++) for (cc = 0; cc < 8; cc++) {
         r = flip ? 7 - rr : rr; c = flip ? 7 - cc : cc; p = B[r][c];
@@ -840,7 +841,9 @@
         if (sel && !ed) sel.moves.forEach(function (m) { var q = m.path[m.path.length - 1]; if (q[0] === r && q[1] === c) dot = true; });
         var isLm = hl.indexOf('#f5d92b') >= 0;
         if (isLm) hl = '';
-        s += '<div data-r="' + r + '" data-c="' + c + '" class="sq ' + ((r + c) % 2 ? 'd' : 'l') + (isLm ? ' lm' : '') + '" style="' + (GS.rc ? 'background:' + ((r + c) % 2 ? GS.rc[1] : GS.rc[0]) + ';' : '') + hl + 'display:flex;align-items:center;justify-content:center">';
+        s += '<div data-r="' + r + '" data-c="' + c + '" class="sq ' + ((r + c) % 2 ? 'd' : 'l') + (isLm ? ' lm' : '') + '" style="' + (GS.rc ? 'background:' + ((r + c) % 2 ? GS.rc[1] : GS.rc[0]) + ';' : '') + hl + 'position:relative;display:flex;align-items:center;justify-content:center">';
+        if (cc === 0) s += '<span style="position:absolute;top:1px;left:3px;font:700 10px Arial;pointer-events:none;color:' + ((r + c) % 2 ? '#f0d9cf' : '#9a5a4c') + ';opacity:.9;z-index:2">' + (8 - r) + '</span>';
+        if (rr === 7) s += '<span style="position:absolute;bottom:0;right:3px;font:700 10px Arial;pointer-events:none;color:' + ((r + c) % 2 ? '#f0d9cf' : '#9a5a4c') + ';opacity:.9;z-index:2">' + 'abcdefgh'[c] + '</span>';
         if (p) s += gamePc(p);
         else if (dot) s += '<div style="width:30%;height:30%;border-radius:50%;background:#4ade80;opacity:.8"></div>';
         s += '</div>';
@@ -851,7 +854,7 @@
         var f = e.best.from, t2 = e.best.to;
         var x1 = (flip ? 7 - f[1] : f[1]) + .5, y1 = (flip ? 7 - f[0] : f[0]) + .5, x2 = (flip ? 7 - t2[1] : t2[1]) + .5, y2 = (flip ? 7 - t2[0] : t2[0]) + .5;
         var dx = x2 - x1, dy = y2 - y1, L = Math.sqrt(dx * dx + dy * dy) || 1; x2 -= dx / L * .3; y2 -= dy / L * .3;
-        s += '<svg viewBox="0 0 8 8" style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none"><defs><marker id="bdAh" markerWidth="3" markerHeight="3" refX="1.6" refY="1.5" orient="auto"><path d="M0,0 L3,1.5 L0,3z" fill="#3fb950"/></marker></defs><line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="#3fb950" stroke-width=".2" stroke-linecap="round" opacity=".85" marker-end="url(#bdAh)"/></svg>';
+        s += '<svg viewBox="0 0 8 8" style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none"><defs><marker id="bdAh" markerWidth="3" markerHeight="3" refX="1.6" refY="1.5" orient="auto"><path d="M0,0 L3,1.5 L0,3z" fill="#3fb950"/></marker></defs><line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="#3fb950" stroke-width=".15" stroke-linecap="round" opacity=".8" marker-end="url(#bdAh)"/></svg>';
       }
       s += '</div>';
       var info = '';
@@ -859,18 +862,19 @@
       else {
         info = (h.t > 0 ? '⚪ Oq yuradi' : '⚫ Qora yuradi') + ' · ';
         if (over) info = '🏁 O‘yin tugadi: ' + (h.t > 0 ? '⚫ Qora' : '⚪ Oq') + ' yutdi';
-        else if (PL) info += PL.err ? 'Dvigatel javob bermadi <button data-a="retry" style="border:0;border-radius:10px;padding:6px 10px;background:#2e9d6b;color:#fff">Qayta</button>' : PL.th ? '⏳ KestoG o‘ylayapti...' : (h.t === PL.me ? 'Sizning yurishingiz' : '');
+        else if (PL) info += PL.err ? 'Dvigatel javob bermadi <button data-a="retry" style="border:0;border-radius:10px;padding:6px 10px;background:#2e9d6b;color:#fff">Qayta</button>' : PL.th ? '⏳ DragonBot o‘ylayapti...' : (h.t === PL.me ? 'Sizning yurishingiz' : '');
         else if (!S.engine) info += 'Dvigatel o‘chiq';
-        else if (e && e.best) info += (e.bk ? '📖 Kitob: <b>' + sq(e.bk.from >> 3, e.bk.from & 7) + '-' + sq(e.bk.to >> 3, e.bk.to & 7) + '</b> · ' : '') + 'Eng yaxshi: <b>' + sq(e.best.from[0], e.best.from[1]) + ((e.best.cap !== undefined ? e.best.cap : (ms[0] && ms[0].caps.length)) ? ':' : '-') + sq(e.best.to[0], e.best.to[1]) + '</b>' + pvHtml(h);
+        else if (e && e.best) info += (e.bk ? '📖 Kitob: <b>' + sq(e.bk.from >> 3, e.bk.from & 7) + '-' + sq(e.bk.to >> 3, e.bk.to & 7) + '</b> · ' : '') + 'Eng yaxshi: <b>' + sq(e.best.from[0], e.best.from[1]) + ((e.best.cap !== undefined ? e.best.cap : (ms[0] && ms[0].caps.length)) ? ':' : '-') + sq(e.best.to[0], e.best.to[1]) + '</b>';
         else if (busyK[k]) info += '⏳ Dvigatel o‘ylayapti...';
         else if (FAIL[k]) info += 'Baho olinmadi <button data-a="eng" style="display:none"></button><button id="bdRt" style="border:0;border-radius:10px;padding:6px 10px;background:#2e9d6b;color:#fff">Qayta</button>';
       }
-      s += '<div style="margin:8px 0;font-size:15px">' + info + '</div>';
-      s += '<div style="display:flex;gap:8px;justify-content:center"><button id="bd0" style="' + bst + '">⏮</button><button id="bd1" style="' + bst + '">◀</button><button id="bd2" style="' + bst + '">▶</button><button id="bd3" style="' + bst + '">⏭</button></div>';
+      s = s.replace('@@INFO@@', info);
+      var nb = 'flex:1;border:0;border-radius:6px;padding:9px 0;background:rgba(255,255,255,.09);color:#e6e6e6;font-size:18px';
+      s += '<div style="display:flex;gap:4px;margin:4px -8px 0"><button id="bd0" style="' + nb + '">⏮</button><button id="bd1" style="' + nb + '">‹</button><button id="bd2" style="' + nb + '">›</button><button id="bd3" style="' + nb + '">⏭</button></div>';
       var tg = '<span data-a="eng" style="display:inline-block;width:46px;height:26px;border-radius:13px;background:' + (S.engine ? '#6aa22a' : '#555') + ';position:relative;vertical-align:middle"><span style="position:absolute;top:3px;' + (S.engine ? 'right:3px' : 'left:3px') + ';width:20px;height:20px;border-radius:50%;background:#fff"></span></span>';
-      s += '<div style="display:flex;gap:8px;margin-top:10px"><div style="flex:1;background:#2c4a1c;border-radius:12px 12px 0 0;padding:10px;display:flex;justify-content:space-between;align-items:center">' + tg + '<b style="font-size:22px">' + (en ? evFmt(x) : '–') + '</b></div><div data-a="book" style="flex:1;background:' + (panel === 'book' ? '#6aa22a' : '#1d1f3a') + ';border-radius:12px 12px 0 0;padding:10px;font-size:22px;cursor:pointer;text-align:center">📖</div><div data-a="menu" style="flex:1;background:' + (panel && panel !== 'book' ? '#6aa22a' : '#1d1f3a') + ';border-radius:12px 12px 0 0;padding:10px;font-size:22px;cursor:pointer;text-align:center">☰</div></div>';
+      s += '<div style="display:flex;gap:4px;margin:6px -8px 0"><div style="flex:1;background:#2c4a1c;border-radius:10px 10px 0 0;padding:8px 10px;display:flex;justify-content:space-between;align-items:center">' + tg + '<b style="font-size:22px">' + (en ? evFmt(x) : '–') + '</b></div><div data-a="book" style="flex:1;background:' + (panel === 'book' ? '#6aa22a' : '#1d1f3a') + ';border-radius:10px 10px 0 0;padding:8px;font-size:20px;cursor:pointer;text-align:center">📖</div><div data-a="menu" style="flex:1;background:' + (panel && panel !== 'book' ? '#6aa22a' : '#1d1f3a') + ';border-radius:10px 10px 0 0;padding:8px;font-size:20px;cursor:pointer;text-align:center">☰</div></div>';
       if (panel) {
-        s += '<div style="background:#2a3b22;border-radius:0 0 12px 12px;padding:12px;text-align:left">';
+        s += '<div style="background:#2a3b22;border-radius:0 0 10px 10px;padding:10px;margin:0 -8px;text-align:left">';
         var mi = function (a, ic, tx) { return '<div data-a="' + a + '" style="display:flex;align-items:center;gap:10px;padding:10px 4px;cursor:pointer;font-size:15px"><span style="font-size:24px;width:32px;text-align:center">' + ic + '</span>' + tx + '</div>'; };
         if (panel === 'book') s += bookHtml();
         else if (panel === 'menu') {
@@ -916,7 +920,7 @@
           if (E.msg) s += '<div style="color:#ff8a8a;text-align:center;margin:6px">' + E.msg + '</div>';
           s += '<div style="text-align:center;margin-top:6px"><button data-a="ok" style="' + sm + ';background:#2e9d6b">✔ Tayyor</button><button data-a="cancel" style="' + sm + ';background:#8a2b3a">✖ Bekor</button></div>';
         } else if (panel === 'play') {
-          s += '<div style="text-align:center"><div style="margin-bottom:8px">Shu pozitsiyadan KestoG ga qarshi o‘ynang. Siz kim bilan?</div><button data-a="me:1" style="' + sm + '">⚪ Oq bilan</button><button data-a="me:-1" style="' + sm + '">⚫ Qora bilan</button><button data-a="menu" style="' + sm + '">Orqaga</button></div>';
+          s += '<div style="text-align:center"><div style="margin-bottom:8px">Shu pozitsiyadan DragonBot’ga qarshi o‘ynang. Siz kim bilan?</div><button data-a="me:1" style="' + sm + '">⚪ Oq bilan</button><button data-a="me:-1" style="' + sm + '">⚫ Qora bilan</button><button data-a="menu" style="' + sm + '">Orqaga</button></div>';
         } else if (panel === 'learn') {
           s += '<div style="font-size:14px;line-height:1.6"><b>Rus shashkasi qoidalari</b><br>• Taxta 8×8, donalar faqat to‘q kataklarda.<br>• Oddiy dona oldinga diagonal yuradi.<br>• Urish <b>majburiy</b>, ham oldinga, ham orqaga. Ko‘p urish imkoni bo‘lsa, zanjirni oxirigacha urish kerak.<br>• Dona oxirgi qatorga yetsa <b>damka</b> bo‘ladi.<br>• Damka diagonal bo‘ylab istalgan masofaga yuradi va uradi.<br>• Urish paytida damka bo‘lgan dona o‘sha yurishda damka kabi davom etadi.<br>• Dona qolmasa yoki yura olmasa, o‘yinchi yutqazadi.<br><b>Baho:</b> +1.0 ≈ oq tomonda bitta dona ustunlik. <b>?!</b> noaniq, <b>?</b> xato, <b>??</b> qo‘pol xato.</div><div style="text-align:center;margin-top:8px"><button data-a="menu" style="' + sm + '">Orqaga</button></div>';
         } else if (panel === 'set') {
@@ -924,11 +928,12 @@
           [0.2, 0.3, 0.5, 1, 2].forEach(function (v) { s += '<button data-a="st:' + v + '" style="' + sm + ';background:' + (S.t === v ? '#6aa22a' : '#262b66') + '">' + v + '</button>'; });
           [5, 10].forEach(function (v) { s += '<button data-a="st:' + v + '" style="' + sm + ';background:' + (S.t === v ? '#6aa22a' : window.__prem ? '#5a4a00' : '#262b66') + ';opacity:' + (window.__prem ? 1 : 0.55) + '">👑 ' + v + '</button>'; });
           if (!window.__prem) s += '<div style="font-size:12px;color:#ffd54a;margin-top:4px">👑 5 va 10 soniya — faqat Premium uchun</div>';
-          s += '</div><div style="margin-top:6px"><button data-a="tog:arrow" style="' + sm + ';background:' + (S.arrow ? '#6aa22a' : '#262b66') + '">Strelka: ' + (S.arrow ? 'yoniq' : 'o‘chiq') + '</button><button data-a="tog:bar" style="' + sm + ';background:' + (S.bar ? '#6aa22a' : '#262b66') + '">Baho chizig‘i: ' + (S.bar ? 'yoniq' : 'o‘chiq') + '</button></div>';
+          s += '</div><div style="margin-top:6px"><button data-a="tog:arrow" style="' + sm + ';background:' + (S.arrow ? '#6aa22a' : '#262b66') + '">Strelka: ' + (S.arrow ? 'yoniq' : 'o‘chiq') + '</button></div>';
           s += '<div style="font-size:12px;opacity:.7;margin-top:4px">Vaqt oshsa, baho aniqroq, lekin sekinroq.</div><div style="text-align:center;margin-top:8px"><button data-a="menu" style="' + sm + '">Orqaga</button></div>';
         }
         s += '</div>';
       }
+      if (en && e && e.best && !over) s += '<div style="margin:0 -8px">' + pvHtml(h) + '</div>';
       if (AU.run && panel !== 'auto') s += '<div style="margin-top:8px">🤖 ' + Math.ceil(cur / 2) + '-yurish… <button data-a="auoff" style="' + sm + ';background:#8a2b3a">⏸ To‘xtatish</button></div>';
       if (PL) s += '<div style="margin-top:8px"><button data-a="stop" style="' + sm + ';background:#8a2b3a">⏹ Mashqni to‘xtatish</button></div>';
       if (!ed) s += anaHtml();
