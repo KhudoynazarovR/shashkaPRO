@@ -386,6 +386,7 @@
         var sw = function (k, t, d) { return '<button class="auto" data-cf="' + k + '"><span style="flex:1">' + t + '<small>' + d + '</small></span><span class="sw' + (cfg[k] ? ' on' : '') + '"></span></button>'; };
         h += '<div class="sec">SOZLAMALAR</div>' +
           '<button class="auto" id="cD"><span style="flex:1">🎯 Repertuar chuqurligi<small>import va daraxt shu yurishgacha; keyin King Kong o‘zi o‘ylaydi</small></span><b>' + cfg.depth + ' yurish</b></button>' +
+          sw('top', '🥇 Eng katta foiz doim birinchi', 'o‘chirilsa — foizlar ulush bo‘yicha aralashtiriladi') +
           sw('tour100', '🏆 Turnirda faqat 100% lik yurishlar', 'turnir o‘yinlarida eng ishonchli yurishlar') +
           sw('adapt', '📊 Foizlar o‘zi moslashsin', 'yutqazgan tarmoq pasayadi, yutgani ko‘tariladi (🔒 qulflanganlar tegilmaydi)') +
           sw('traps', '🪤 Tuzoqlarga yo‘naltirish', 'repertuar bo‘lmagan joyda raqiblar ko‘p xato qilgan pozitsiyaga xavfsiz yo‘l') +

@@ -755,12 +755,22 @@
       return BK.D[k];
     }
     // 🐉 Dragon taklifi: foizlarni dvigatel bo'yicha to'ldirish (saqlanmaydi — admin tekshirib 💾 bosadi)
+    function repList(h) {   // saqlangan repertuar yurishlari, foiz bo'yicha kamayib
+      if (!window.__isAdmin) return [];
+      var E = BK.E[kf(h)], d = BK.D[kf(h) + '|rep']; if (!E || !d || !d.rows) return [];
+      return d.rows.filter(function (x) { return E[x.id] && E[x.id].w > 0 && !E[x.id].sug; }).sort(function (a, b) { return E[b.id].w - E[a.id].w; });
+    }
+    function repArrows(h) {   // 🦍 Repertuar tabida: strelkalar foiz bo'yicha (eng kattasi yashil)
+      var L = repList(h).slice(0, S.mpv || 3); if (!L.length) return '';
+      var E = BK.E[kf(h)], top = E[L[0].id].w, o = '';
+      L.forEach(function (x, i) { var q = E[x.id].w / 100; o += arrowEl(fl([x.from >> 3, x.from & 7]), fl([x.to >> 3, x.to & 7]), '#3fb950', i === 0 || E[x.id].w >= top ? .15 : (0.06 + 0.06 * q).toFixed(3), i === 0 || E[x.id].w >= top ? .85 : (0.3 + 0.3 * q).toFixed(2), 'rpAh'); });
+      return '<svg viewBox="0 0 8 8" style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none"><defs>' + mkr('rpAh', '#3fb950') + '</defs>' + o + '</svg>';
+    }
     function repTop(h) {
       if (!window.__isAdmin) return '';
       var E = BK.E[kf(h)], d = BK.D[kf(h) + '|rep']; if (!E || !d || !d.rows) return '';
-      var L = d.rows.filter(function (x) { return E[x.id] && E[x.id].w > 0 && !E[x.id].sug; }); if (!L.length) return '';
-      var sum = 0; L.forEach(function (x) { sum += E[x.id].w; }); L.sort(function (a, b) { return E[b.id].w - E[a.id].w; });
-      return '🦍 KK: <b style="color:#9be89b">' + L.slice(0, 2).map(function (x) { return x.t + ' ' + Math.round(E[x.id].w * 100 / sum) + '%'; }).join(', ') + '</b> · ';
+      var L = repList(h); if (!L.length) return '';
+      return '🦍 KK: <b style="color:#9be89b">' + L[0].t + ' (' + E[L[0].id].w + ')</b> · ';
     }
     function bkSug(h, force) {
       var kk = kf(h); BK.sg = BK.sg || {}; if (BK.sg[kk] && !force) return; BK.sg[kk] = { load: 1 };
@@ -800,12 +810,12 @@
       var rows = d.rows || [];
       if (BK.src === 'sp' && d.building) o += '<div style="font-size:12px;opacity:.7;margin-bottom:6px">⏳ Baza yig‘ilmoqda (' + (d.games || 0) + ' partiya)…</div>';
       if (BK.src === 'rep') {
-        var E = BK.E[kf(h)] || {}, sum = 0; Object.keys(E).forEach(function (id) { sum += E[id].w || 0; });
-        if (d.taught) o += '<div style="font-size:12.5px;color:#fde68a;margin-bottom:6px">📚 Bu pozitsiyada o‘rgatilgan yurish bor — u repertuardan ustun</div>';
+        var E = BK.E[kf(h)] || {}, sum = 0, mxw = 0; Object.keys(E).forEach(function (id) { sum += E[id].w || 0; mxw = Math.max(mxw, E[id].w || 0); });
+        if (d.taught) o += '<div style="font-size:12.5px;color:#fde68a;margin-bottom:6px">📚 Bu pozitsiyada o‘rgatilgan yurish ham bor — foiz qo‘yilgan bo‘lsa, repertuar undan ustun</div>';
         if (BK.ed && E[BK.ed]) {
           var e = E[BK.ed], r0 = rows.filter(function (x) { return x.id === BK.ed; })[0] || {};
           o += '<div style="background:#1d1f3a;border-radius:12px;padding:10px;margin-bottom:8px"><div style="display:flex;align-items:center;gap:8px"><b style="font:800 16px ui-monospace,monospace">' + r0.t + '</b><input id="bkW" type="range" min="0" max="100" step="5" value="' + e.w + '" oninput="var q=document.getElementById(\'bkWv\');if(q)q.textContent=this.value" style="flex:1;accent-color:#22c55e"><b id="bkWv" style="min-width:30px;text-align:right">' + e.w + '</b></div>' +
-            '<div style="font-size:12px;opacity:.75;margin-top:4px">' + (sum ? Math.round(e.w * 100 / sum) : 0) + '% ulush' + (r0.st ? ' · ✅ ' + r0.st.w + ' · ❌ ' + r0.st.l + ' · 🤝 ' + r0.st.d : '') + (e.lock && e.w ? ' · 🔒 qo‘lda' : '') + '</div>' +
+            '<div style="font-size:12px;opacity:.75;margin-top:4px">' + (e.w && e.w >= mxw ? '🥇 King Kong shuni o‘ynaydi' : 'zaxira yurish') + (r0.st ? ' · ✅ ' + r0.st.w + ' · ❌ ' + r0.st.l + ' · 🤝 ' + r0.st.d : '') + (e.lock && e.w ? ' · 🔒 qo‘lda' : '') + '</div>' +
             '<div style="margin-top:6px">' + ['!!', '!', '!?', '?!', '?', '??'].map(function (k2) { return '<button data-a="bkmk:' + k2 + '" style="' + sm + 'background:' + (e.mk === k2 ? '#6aa22a' : '#262b66') + '">' + k2 + '</button>'; }).join('') + '</div>' +
             '<input id="bkN" placeholder="📝 izoh" value="' + String(e.note || '').replace(/"/g, '&quot;') + '" style="width:100%;margin-top:6px;border:0;border-radius:10px;padding:8px;background:#262b66;color:#fff;font-size:13px">' +
             '<div style="display:flex;gap:6px;margin-top:8px"><button data-a="bkplay:' + BK.ed + '" style="' + sm + 'background:#262b66;flex:1">▶ O‘ynash</button><button data-a="bkclose" style="' + sm + 'background:#262b66;flex:1">Yopish</button><button data-a="bksave" style="' + sm + 'background:#16a34a;flex:1;font-weight:800">💾 Saqlash</button></div>' + (BK.msg ? '<div style="margin-top:6px;font-size:13px">' + BK.msg + '</div>' : '') + '</div>';
@@ -813,13 +823,13 @@
         o += '<div style="display:flex;font-size:11.5px;opacity:.6;padding:0 4px 4px"><span style="width:70px">Yurish</span><span style="width:86px">King Kong</span><span style="flex:1;text-align:right">natija</span></div>';
         o += rows.map(function (x) {
           var e = E[x.id] || { w: 0 }, pct = sum ? Math.round(e.w * 100 / sum) : 0;
-          return '<div data-a="bked:' + x.id + '" style="display:flex;align-items:center;gap:6px;padding:7px 4px;border-bottom:1px solid #22264d;cursor:pointer;' + (BK.ed === x.id ? 'background:#2c4a1c;' : '') + '"><b style="width:70px;font-family:ui-monospace,monospace;color:' + (e.w ? '#9be89b' : '#c7c2ff') + '">' + x.t + (e.mk ? ' ' + e.mk : '') + opSm(x) + '</b><span style="width:86px;flex:none;font-size:12px;white-space:nowrap">' + (e.w ? (e.sug ? '<span style="color:#fde68a">' : '') + e.w + ' · ' + pct + '%' + (e.sug ? '</span>' : '') : '—') + '<i style="display:block;height:4px;border-radius:2px;background:#22c55e;margin-top:3px;width:' + e.w + '%"></i></span><span style="flex:1;text-align:right;font-size:11.5px;opacity:.8">' + (x.st ? '✅' + x.st.w + ' ❌' + x.st.l + ' 🤝' + x.st.d : '') + (x.trap ? ' 🪤' : '') + (e.note ? ' 📝' : '') + '</span></div>';
+          return '<div data-a="bked:' + x.id + '" style="display:flex;align-items:center;gap:6px;padding:7px 4px;border-bottom:1px solid #22264d;cursor:pointer;' + (BK.ed === x.id ? 'background:#2c4a1c;' : '') + '"><b style="width:70px;font-family:ui-monospace,monospace;color:' + (e.w ? '#9be89b' : '#c7c2ff') + '">' + x.t + (e.mk ? ' ' + e.mk : '') + opSm(x) + '</b><span style="width:86px;flex:none;font-size:12px;white-space:nowrap">' + (e.w ? (e.sug ? '<span style="color:#fde68a">' : '') + e.w + (e.w >= mxw ? ' 🥇' : '') + (e.sug ? '</span>' : '') : '—') + '<i style="display:block;height:4px;border-radius:2px;background:#22c55e;margin-top:3px;width:' + e.w + '%"></i></span><span style="flex:1;text-align:right;font-size:11.5px;opacity:.8">' + (x.st ? '✅' + x.st.w + ' ❌' + x.st.l + ' 🤝' + x.st.d : '') + (x.trap ? ' 🪤' : '') + (e.note ? ' 📝' : '') + '</span></div>';
         }).join('');
         var anySug = Object.keys(E).some(function (id) { return E[id].sug; }), sgl = BK.sg && BK.sg[kf(h)] && BK.sg[kf(h)].load;
         if (anySug) o += '<div style="font-size:12.5px;color:#fde68a;margin-top:8px">Sariq foizlar — dvigatel taklifi, hali saqlanmagan. Tekshirib, kerak bo‘lsa to‘g‘rilang va saqlang.</div>';
         o += '<div style="display:flex;gap:6px;margin-top:8px"><button data-a="bksug" style="' + sm + 'background:#262b66;flex:1">' + (sgl ? '⏳ Dragon baholayapti…' : '🐉 Dragon bilan to‘ldirish') + '</button>' + (anySug ? '<button data-a="bksaveall" style="' + sm + 'background:#16a34a;flex:1;font-weight:800">💾 Hammasini saqlash</button>' : '') + '</div>';
         if (BK.msg && !BK.ed) o += '<div style="margin-top:6px;font-size:13px">' + BK.msg + '</div>';
-        return o + '<div style="font-size:11.5px;opacity:.65;margin-top:6px">Yurishni bossangiz — foiz, belgi va izoh. King Kong faqat foizi 0 dan katta yurishlardan tanlaydi.</div>';
+        return o + '<div style="font-size:11.5px;opacity:.65;margin-top:6px">Yurishni bossangiz — foiz, belgi va izoh. King Kong eng katta foizli yurishni (🥇) o‘ynaydi; tenglar bo‘lsa — ular orasidan.</div>';
       }
       if (!rows.length) return o + '<div style="opacity:.7;padding:6px 2px">' + (BK.src === 'col' ? 'nazariya bazasida bu pozitsiya yo‘q' : 'Bu pozitsiyada hali partiya yo‘q') + '</div>';
       if (BK.src === 'col') return o + rows.map(function (x) { return '<div data-a="bkplay:' + x.id + '" style="display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid #22264d;cursor:pointer"><b style="width:70px;font-family:ui-monospace,monospace">' + x.t + opSm(x) + '</b><span style="flex:1">' + x.tag + '</span><span style="opacity:.7;font-size:12px">' + (x.n ? x.n.toLocaleString() + ' marta' : '') + '</span></div>'; }).join('');
@@ -983,9 +993,11 @@
       }
       s += '</div>';
       if (panel === 'book' && !ed && S.bka) s += bkArrows(h, flip);
-      if (en && S.aa !== false && !over && !ed) s += altArrows(PVC[k], flip);
+      var RPA = panel === 'book' && BK.src === 'rep' && !ed && !over ? repArrows(h) : '';
+      if (RPA) s += RPA;
+      else if (en && S.aa !== false && !over && !ed) s += altArrows(PVC[k], flip);
       if (!ed) s += shapesSvg(k, flip);
-      if (en && S.arrow && e && e.best && !over) {
+      if (en && S.arrow && e && e.best && !over && !RPA) {
         var f = e.best.from, t2 = e.best.to;
         var x1 = (flip ? 7 - f[1] : f[1]) + .5, y1 = (flip ? 7 - f[0] : f[0]) + .5, x2 = (flip ? 7 - t2[1] : t2[1]) + .5, y2 = (flip ? 7 - t2[0] : t2[0]) + .5;
         var dx = x2 - x1, dy = y2 - y1, L = Math.sqrt(dx * dx + dy * dy) || 1; x2 -= dx / L * .3; y2 -= dy / L * .3;

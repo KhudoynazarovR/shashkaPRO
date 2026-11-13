@@ -7,7 +7,7 @@ const store = require('./store.js');
 const R = require('./kkrules.js');
 const SQ = i => 'abcdefgh'[i & 7] + (8 - (i >> 3));
 const unsq = s => { const m = /^([a-h])([1-8])$/.exec(String(s || '').trim()); return m ? (8 - +m[2]) * 8 + 'abcdefgh'.indexOf(m[1]) : -1; };
-const D = () => { const d = store.db; d.kkRep = d.kkRep || {}; const r = d.kkRep; r.sc = r.sc || { all: {} }; r.cfg = Object.assign({ depth: 12, tour100: false, adapt: true, traps: true }, r.cfg || {}); r.hist = r.hist || []; r.st = r.st || {}; r.trap = r.trap || {}; return r; };
+const D = () => { const d = store.db; d.kkRep = d.kkRep || {}; const r = d.kkRep; r.sc = r.sc || { all: {} }; r.cfg = Object.assign({ depth: 12, tour100: false, adapt: true, traps: true, top: true }, r.cfg || {}); r.hist = r.hist || []; r.st = r.st || {}; r.trap = r.trap || {}; return r; };
 const init = () => { const b = Array(64).fill(0); for (let i = 0; i < 64; i++) { const r = i >> 3, c = i & 7; if ((r + c) % 2 !== 1) continue; if (r < 3) b[i] = -1; if (r > 4) b[i] = 1; } return b; };
 const keyOf = (b, s) => b.join('') + s;
 const mvTxt = m => [m.from].concat(m.path || [m.to]).map(SQ).join(m.caps.length ? ':' : '-');
@@ -32,6 +32,7 @@ function pick(b, side, ctx) {
       let L = Object.entries(P).filter(([, v]) => v.w > 0);
       if (ctx.tour && r.cfg.tour100) { const t = L.filter(([, v]) => v.w >= 100); if (t.length) L = t; }
       if (!L.length) continue;
+      if (r.cfg.top !== false) { const mx = Math.max.apply(null, L.map(([, v]) => v.w)); L = L.filter(([, v]) => v.w >= mx); }   // 🥇 eng katta foiz doim birinchi (tenglar orasida tasodifiy)
       const legal = R.moves(b, side); L = L.filter(([m]) => { const [f, t] = m.split('-').map(Number); return legal.some(x => x.from === f && x.to === t); });
       if (!L.length) continue;
       let sum = L.reduce((s, [, v]) => s + v.w, 0), x = Math.random() * sum, ch = L[0];
@@ -210,7 +211,7 @@ function handle(req, res, p, h) {
     if (p === '/api/kkrep/view') return h.send(res, 200, Object.assign(view(sc, b, s), { cfg: r.cfg, scopes: Object.keys(r.sc).map(x => ({ id: x, n: Object.keys(r.sc[x]).length, name: SCOPES[x] || ('🎯 ' + x.slice(4)) })) }));
     if (p === '/api/kkrep/set') { const x = set(sc, b, s, j.moves, t.id, j.why); return h.send(res, x ? 200 : 400, x ? { ok: true } : { error: 'Xato' }); }
     if (p === '/api/kkrep/tree') return h.send(res, 200, { list: tree(sc, Math.max(2, Math.min(40, +j.depth || r.cfg.depth * 2))), cfg: r.cfg });
-    if (p === '/api/kkrep/cfg') { ['depth'].forEach(k => { if (j[k] != null) r.cfg[k] = Math.max(1, Math.min(30, +j[k] || 12)); }); ['tour100', 'adapt', 'traps'].forEach(k => { if (j[k] != null) r.cfg[k] = !!j[k]; }); store.save(); return h.send(res, 200, { cfg: r.cfg }); }
+    if (p === '/api/kkrep/cfg') { ['depth'].forEach(k => { if (j[k] != null) r.cfg[k] = Math.max(1, Math.min(30, +j[k] || 12)); }); ['tour100', 'adapt', 'traps', 'top'].forEach(k => { if (j[k] != null) r.cfg[k] = !!j[k]; }); store.save(); return h.send(res, 200, { cfg: r.cfg }); }
     if (p === '/api/kkrep/hist') return h.send(res, 200, { list: r.hist.slice(0, 120).map((x, i) => ({ i, at: x.at, sc: x.sc, why: x.why, b: x.b, s: x.s, old: x.old ? Object.keys(x.old).length : 0, nw: x.nw ? Object.entries(x.nw).map(([id, v]) => { const [f, tt] = id.split('-').map(Number); return SQ(f) + '-' + SQ(tt) + ' ' + v.w; }).join(', ') : '—' })) });
     if (p === '/api/kkrep/suggest') return suggest(b, s, x => h.send(res, 200, x));
     if (p === '/api/kkrep/undo') return h.send(res, undo(+j.i) ? 200 : 400, { ok: true });
