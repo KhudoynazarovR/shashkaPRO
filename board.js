@@ -772,8 +772,8 @@
     }
     function bkArrows(h, flip) {
       var d = BK.D[bkKey(h)]; if (!d || !d.rows || !d.rows.length) return '';
-      var rows = d.rows.slice(0, 5), mx = 0;
-      var EE = BK.src === 'rep' ? (BK.E[kf(h)] || {}) : null; if (EE) rows = d.rows.filter(function (x) { return EE[x.id] && EE[x.id].w > 0; }).sort(function (a, b) { return EE[b.id].w - EE[a.id].w; }).slice(0, 5).map(function (x) { return Object.assign({}, x, { w: EE[x.id].w }); });
+      var NA = S.mpv || 3, rows = d.rows.slice(0, NA), mx = 0;
+      var EE = BK.src === 'rep' ? (BK.E[kf(h)] || {}) : null; if (EE) rows = d.rows.filter(function (x) { return EE[x.id] && EE[x.id].w > 0; }).sort(function (a, b) { return EE[b.id].w - EE[a.id].w; }).slice(0, NA).map(function (x) { return Object.assign({}, x, { w: EE[x.id].w }); });
       rows.forEach(function (x) { mx = Math.max(mx, BK.src === 'rep' ? (x.w || 0) : (x.n || 1)); });
       var o = '<svg viewBox="0 0 8 8" style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none"><defs><marker id="bkAh" markerWidth="3" markerHeight="3" refX="1.6" refY="1.5" orient="auto"><path d="M0,0 L3,1.5 L0,3z" fill="#2f6fd6"/></marker></defs>';
       rows.forEach(function (x) {
@@ -874,7 +874,7 @@
       o += '<div style="font-size:12px;opacity:.65;margin:12px 0 2px;letter-spacing:.5px">STRELKALAR</div>';
       o += row('Eng yaxshi yurish', '<span style="flex:1"></span>' + tg('arrow', S.arrow));
       o += row('2–3-variantlar', '<span style="flex:1;font-size:12px;opacity:.7">xira strelka</span>' + tg('aa', S.aa !== false));
-      o += row('📖 Baza yurishlari', '<span style="flex:1"></span>' + tg('abk', S.abk !== false));
+      o += row('📖 Baza yurishlari', '<span style="flex:1;font-size:12px;opacity:.7">ko‘k, ' + (S.mpv || 3) + ' ta</span>' + tg('bka', !!S.bka));
       o += row('Oxirgi yurish', '<span style="flex:1"></span>' + tg('alm', S.alm !== false));
       o += '<div style="font-size:12px;opacity:.65;margin:12px 0 2px;letter-spacing:.5px">O‘Z STRELKALARIM</div>';
       o += row('✏️ Chizish', '<span style="flex:1;display:flex;gap:8px">' + DCOL.map(function (c, i) { return '<span data-a="drc:' + i + '" style="cursor:pointer;width:26px;height:26px;border-radius:50%;background:' + c + ';' + (DR.on && DR.col === i ? 'outline:3px solid #fff' : '') + '"></span>'; }).join('') + '</span>' + '<span data-a="drw" style="flex:none;display:inline-block;width:42px;height:24px;border-radius:12px;background:' + (DR.on ? '#6aa22a' : '#555') + ';position:relative;cursor:pointer"><span style="position:absolute;top:3px;' + (DR.on ? 'right:3px' : 'left:3px') + ';width:18px;height:18px;border-radius:50%;background:#fff"></span></span>');
@@ -982,7 +982,7 @@
         s += '</div>';
       }
       s += '</div>';
-      if (panel === 'book' && !ed && S.abk !== false) s += bkArrows(h, flip);
+      if (panel === 'book' && !ed && S.bka) s += bkArrows(h, flip);
       if (en && S.aa !== false && !over && !ed) s += altArrows(PVC[k], flip);
       if (!ed) s += shapesSvg(k, flip);
       if (en && S.arrow && e && e.best && !over) {
