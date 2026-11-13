@@ -516,6 +516,7 @@
       bt.onclick = function () { sheet.style.display = 'none'; botSetup(b); };
       r.appendChild(bt); L.appendChild(r);
     });
+    if (window.spDragonRow) { try { L.appendChild(window.spDragonRow(function () { sheet.style.display = 'none'; })); } catch (e) {} }
     sheet.style.display = 'flex';
   }
   setInterval(function () {
