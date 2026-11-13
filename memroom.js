@@ -199,7 +199,7 @@ function handle(c, m, clients) {
     send(c.ws, { type: 'mmInviteRes', toUid: to, ok: true });
     return true;
   }
-  if (m.type === 'mmInviteAll') {   // 🎲 tasodifiy raqib: zaldagi hammaga so'rov, kim birinchi qabul qilsa
+  if (m.type === 'mmInviteAll') {   // tasodifiy raqib: zaldagi hammaga so'rov, kim birinchi qabul qilsa
     if (r.status !== 'wait' || me !== 0) return true;
     r.inv = r.inv || {}; const seen = new Set(); let n = 0;
     if (CL) for (const x of CL.values()) {

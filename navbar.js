@@ -453,8 +453,8 @@
       '<div class="lb">⏱ Vaqt nazorati</div><div class="bsg" data-g="t"><b data-v="inf">∞ Vaqtsiz</b><b data-v="clk">⏱ Vaqtli</b></div>' +
       '<div data-clk><div class="lb">Daqiqa: <b data-mv></b></div><div class="sl" data-s="m"><span class="pm" data-d="-1">−</span><div class="tr"><i></i><u></u><s></s></div><span class="pm" data-d="1">+</span></div>' +
       '<div class="lb">Har yurishga qo‘shimcha soniya: <b data-iv></b></div><div class="sl" data-s="i"><span class="pm" data-d="-1">−</span><div class="tr"><i></i><u></u><s></s></div><span class="pm" data-d="1">+</span></div></div>' +
-      '<div class="lb">📖 Boshlang‘ich holat</div><div class="bsg" data-g="pos"><b data-v="std">📋 Standart</b><b data-v="idf">🎲 IDF 780</b></div>' +
-      '<div class="lb">🎨 Rangingiz</div><div class="bsg" data-g="c"><b data-v="white">⚪ Oq</b><b data-v="random">🎲 Tasodifiy</b><b data-v="black">⚫ Qora</b></div>' +
+      '<div class="lb">📖 Boshlang‘ich holat</div><div class="bsg" data-g="pos"><b data-v="std">📋 Standart</b><b data-v="idf">IDF 780</b></div>' +
+      '<div class="lb">🎨 Rangingiz</div><div class="bsg" data-g="c"><b data-v="white">⚪ Oq</b><b data-v="random">Tasodifiy</b><b data-v="black">⚫ Qora</b></div>' +
       '<button class="go" data-go>▶ O‘YNASH</button></div>';
     document.body.appendChild(ov);
     var q = function (x) { return ov.querySelector(x); };
@@ -673,7 +673,7 @@ document.addEventListener('click', function (e) {
   if (t && t.closest && t.closest('#nvBar')) { var h = document.getElementById('nvMiniHub'); if (h) h.remove(); }
 }, true);
 
-/* nvStol: 🎲 Stollar — bosh sahifada Botlar kartasidan keyin */
+/* nvStol: Stollar — bosh sahifada Botlar kartasidan keyin */
 (function () {
   var st = document.createElement('style');
   st.textContent = '#nvDuo #nvMemRow{flex:0 0 27%!important}#nvDuo #nvBotRow{flex:1 1 0!important}' +

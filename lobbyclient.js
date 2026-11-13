@@ -122,7 +122,7 @@
     }
 
     // ---------- ulanish ----------
-    // 🎲 Stollar (playok kabi): stol ochish, bo'sh joyga o'tirish, ikkalasi «Tayyor» — o'yin; tikish stolda yozilgan
+    // Stollar (playok kabi): stol ochish, bo'sh joyga o'tirish, ikkalasi «Tayyor» — o'yin; tikish stolda yozilgan
     var TB = { form: false, tc: "3+2", stake: 0, pos: "std", minElo: 0 };
     try { var _tb = JSON.parse(localStorage.getItem("tblForm") || "{}"); ["tc", "stake", "pos", "minElo"].forEach(function (k) { if (_tb[k] != null) TB[k] = _tb[k]; }); } catch (e) {}
     window.lbTblCount = function () { return ((S && S.tables) || []).filter(function (t) { return !t.guest; }).length; };
@@ -276,7 +276,7 @@
       } else if (m.type === "mmInviteIn") {   // 🧠 Xotira o'yiniga taklif
         var _mc = m.code; window.__mmInvT = window.__mmInvT || {};
         if (window.__mmInvT[_mc] && window.__mmInvT[_mc].parentNode) window.__mmInvT[_mc].parentNode.removeChild(window.__mmInvT[_mc]);
-        window.__mmInvT[_mc] = toast((m.all ? "🎲 <b>" + esc(m.fromName) + "</b> <b>Xotira</b> o‘yini uchun raqib qidiryapti — birinchi qabul qilgan o‘ynaydi!" : "🧠 <b>" + esc(m.fromName) + "</b> sizni <b>Xotira</b> o‘yiniga taklif qilyapti") + (m.size ? " (" + esc(m.size.replace("x", "×")) + ")" : ""),
+        window.__mmInvT[_mc] = toast((m.all ? "<b>" + esc(m.fromName) + "</b> <b>Xotira</b> o‘yini uchun raqib qidiryapti — birinchi qabul qilgan o‘ynaydi!" : "🧠 <b>" + esc(m.fromName) + "</b> sizni <b>Xotira</b> o‘yiniga taklif qilyapti") + (m.size ? " (" + esc(m.size.replace("x", "×")) + ")" : ""),
           [["▶ Qabul qilish", function () { var go = function () { window.spMemori({ join: _mc }); }; if (window.spMemori) go(); else { var sm = document.createElement("script"); sm.src = "/memori.js?v=9"; sm.onload = go; document.head.appendChild(sm); } }],
            ["Rad etish", function () { sendMsg({ type: "mmDecline", code: _mc, init: (tg && tg.initData) || "" }); }, "no"]], 30000);
       } else if (m.type === "lbRec") { if (window.tfRec) window.tfRec(m.list || []);
@@ -1439,7 +1439,7 @@ document.head.appendChild(_as); }
         if (arena) _ex.push(t.berserk === false ? "⚡ Berserk yo‘q" : "⚡ Berserk");
         _ex.push(t.rated === false ? "🤝 Reytingsiz" : "⭐ Reytingli");
         if (_ex.length) st += (st ? "<br>" : "") + _ex.join(" · ");
-        h += "<div class=\"card lbtk " + (arena ? "lbta" : "lbts") + "\" id=\"lbtc_" + esc(t.id) + "\"><div style=\"cursor:pointer\" onclick=\"lbTog('" + esc(t.id) + "')\"><b>" + (arena ? "⚔️" : "🏆") + " " + esc(t.name) + " ▾</b><span class=\"tkb tkb_" + t.status + "\">" + (t.status === "reg" ? "Ro‘yxat ochiq" : (t.status === "running" ? "O‘ynalmoqda" : "Tugagan")) + "</span></div><div class=\"muted\">⏱ " + esc(t.tc) + " · " + (t.pos === "idf" ? "🎲 IDF 780" : "♟ Standart") + "</div><div class=\"tkd\">" + st + "</div><div class=\"tkd\">👥 Ishtirokchilar: <b>" + t.players.length + "</b></div><div class=\"tkd\">👤 Yaratuvchi: <b>" + esc(t.creatorName) + "</b>" + "</div><div class=\"row\">";
+        h += "<div class=\"card lbtk " + (arena ? "lbta" : "lbts") + "\" id=\"lbtc_" + esc(t.id) + "\"><div style=\"cursor:pointer\" onclick=\"lbTog('" + esc(t.id) + "')\"><b>" + (arena ? "⚔️" : "🏆") + " " + esc(t.name) + " ▾</b><span class=\"tkb tkb_" + t.status + "\">" + (t.status === "reg" ? "Ro‘yxat ochiq" : (t.status === "running" ? "O‘ynalmoqda" : "Tugagan")) + "</span></div><div class=\"muted\">⏱ " + esc(t.tc) + " · " + (t.pos === "idf" ? "IDF 780" : "♟ Standart") + "</div><div class=\"tkd\">" + st + "</div><div class=\"tkd\">👥 Ishtirokchilar: <b>" + t.players.length + "</b></div><div class=\"tkd\">👤 Yaratuvchi: <b>" + esc(t.creatorName) + "</b>" + "</div><div class=\"row\">";
         h += "<button class=\"sec\" data-a=\"tlink\" data-id=\"" + esc(t.id) + "\" data-n=\"" + esc(t.name) + "\">🔗 Havola</button>";
         if (t.status === "reg") {
           if (!joined) h += "<button data-a=\"tj\" data-id=\"" + t.id + "\">Qo‘shilish</button>";

@@ -62,7 +62,7 @@
       '<div class="sub">' + (loading && !items.length ? 'Yuklanmoqda…' : 'Topildi: ' + fmt(total)) + '</div><div id="bzL">';
     var _pk = null;
     _pk = null;
-    items.forEach(function (g) { if (bset === 'd' && _pk !== g.q) { _pk = g.q; h += '<div class="sub"><b>' + (g.q ? '🎲 Qura' : '📋 Standart') + '</b></div>'; } if (g.t === 'Dasturlar partiyalari · 09.02.2011') { if (_pk !== g.q) { _pk = g.q; h += '<div class="sub"><b>' + (g.q ? '🎲 Qura' : '📋 Standart') + '</b></div>'; } } else _pk = null;
+    items.forEach(function (g) { if (bset === 'd' && _pk !== g.q) { _pk = g.q; h += '<div class="sub"><b>' + (g.q ? 'Qura' : '📋 Standart') + '</b></div>'; } if (g.t === 'Dasturlar partiyalari · 09.02.2011') { if (_pk !== g.q) { _pk = g.q; h += '<div class="sub"><b>' + (g.q ? 'Qura' : '📋 Standart') + '</b></div>'; } } else _pk = null;
       h += '<button class="it" data-id="' + g.id + '"><span class="rs ' + rsCls(g.r) + '">' + esc(g.r) + '</span><span class="tx"><b>' + esc(g.w) + ' – ' + esc(g.b) + '</b><small>' +
         esc([g.t, g.s, g.y].filter(Boolean).join(' · ') || 'Turnir ko‘rsatilmagan') + ' · ' + Math.ceil(g.n / 2) + ' yurish</small></span>›</button>';
     });

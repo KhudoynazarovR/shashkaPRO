@@ -109,7 +109,7 @@
       for (var k in THEMES) h += '<option value="' + k + '"' + (CFG.theme === k ? ' selected' : '') + '>' + THEMES[k].ic + '  ' + T(THEMES[k].t) + '</option>';
       h += '</select></div>';
     }
-    h += '<div class="row" style="margin-top:4px"><button class="go" data-rnd style="flex:1;margin-top:0">🎲 ' + T('Tasodifiy raqib') + '</button><button class="go g2" data-bot style="flex:1;margin-top:0;font-size:18px">🤖 ' + T('Bot bilan') + '</button></div>';
+    h += '<div class="row" style="margin-top:4px"><button class="go" data-rnd style="flex:1;margin-top:0">' + T('Tasodifiy raqib') + '</button><button class="go g2" data-bot style="flex:1;margin-top:0;font-size:18px">🤖 ' + T('Bot bilan') + '</button></div>';
     h += '<div data-hmsg></div>';
     h += '<div class="lb" style="display:flex;justify-content:space-between"><span>🟢 ' + T('O‘yin zali') + ' <span data-pn></span></span><span style="opacity:.7;font-size:12px">' + T('o‘yinchini taklif qiling') + '</span></div><div data-pl class="cd" style="padding:4px 10px;margin-top:0"><div style="text-align:center;padding:10px;opacity:.7">⏳</div></div>';
     h += '<button class="go g2" data-sh style="margin-top:4px">📤 ' + T('Guruhga yoki do‘stga yuborish') + '</button>';
@@ -386,10 +386,10 @@
   function bgUi(extra) {   // zal ekranidagi holat qatori
     if (!ov || !HALL) return;
     var rb = ov.querySelector('[data-rnd]'), hm = ov.querySelector('[data-hmsg]');
-    if (rb) rb.innerHTML = NET && NET.bg && NET.pend.all ? '⏳ ' + T('Raqib qidirilmoqda…') + '<br><small style="font-size:12px;font-weight:600;opacity:.85">' + T('bekor qilish uchun bosing') + '</small>' : '🎲 ' + T('Tasodifiy raqib');
+    if (rb) rb.innerHTML = NET && NET.bg && NET.pend.all ? '⏳ ' + T('Raqib qidirilmoqda…') + '<br><small style="font-size:12px;font-weight:600;opacity:.85">' + T('bekor qilish uchun bosing') + '</small>' : '' + T('Tasodifiy raqib');
     if (hm) {
       var t = '';
-      if (NET && NET.bg) t = NET.pend.all ? '🎲 ' + T('Zaldagi hammaga so‘rov yuborildi — kim birinchi qabul qilsa, o‘yin o‘zi boshlanadi.') : NET.pend.share ? '🔗 ' + T('Havola yuborildi — do‘stingiz kirishi bilan o‘yin boshlanadi.') : '📨 ' + T('Taklif yuborildi — qabul qilinishi bilan o‘yin o‘zi boshlanadi.');
+      if (NET && NET.bg) t = NET.pend.all ? '' + T('Zaldagi hammaga so‘rov yuborildi — kim birinchi qabul qilsa, o‘yin o‘zi boshlanadi.') : NET.pend.share ? '🔗 ' + T('Havola yuborildi — do‘stingiz kirishi bilan o‘yin boshlanadi.') : '📨 ' + T('Taklif yuborildi — qabul qilinishi bilan o‘yin o‘zi boshlanadi.');
       hm.innerHTML = (t ? '<div class="cd" style="display:flex;gap:8px;align-items:center;margin:8px 0 0;border:1px solid #ffd54f55"><span style="flex:1;font-size:14px;line-height:1.4">' + t + (extra ? '<br>' + extra : '') + '</span><button class="op" data-bgx style="flex:none;min-width:0;padding:8px 10px;background:#5b2330">✕</button></div>' : (extra ? '<div class="cd" style="margin:8px 0 0;font-size:14px">' + extra + '</div>' : ''));
       var bx = hm.querySelector('[data-bgx]'); if (bx) bx.onclick = bgCancel;
     }
@@ -471,7 +471,7 @@
         if (pd.all) sendN({ type: 'mmInviteAll', code: m.code });
         if (pd.share) setTimeout(function () { var b = ov && ov.querySelector('[data-sh]'); if (b) b.click(); }, 200);
       }
-      var stx = pd.all ? '🎲 ' + T('Zaldagi barcha o‘yinchilarga so‘rov yuborildi. Kim birinchi qabul qilsa — o‘sha bilan o‘ynaysiz!') + ' <span data-an></span>'
+      var stx = pd.all ? '' + T('Zaldagi barcha o‘yinchilarga so‘rov yuborildi. Kim birinchi qabul qilsa — o‘sha bilan o‘ynaysiz!') + ' <span data-an></span>'
         : pd.to ? '📨 <b>' + esc(pd.name || '') + '</b> ' + T('ga taklif yuborildi. Javobini kuting…') : '⏳ ' + T('Do‘stingiz kutilmoqda…');
       ov.innerHTML = '<div class="top"><button class="bk" data-x>‹</button><h2>⏳ ' + T('Raqib kutilmoqda') + '</h2></div>' +
         '<div class="cd" style="text-align:center;line-height:1.5"><div style="font-size:38px">🧠</div>' + stx + '<div style="opacity:.7;font-size:13px;margin-top:6px">' + z.t + ' · ' + (m.tc > 0 ? '⏱ ' + m.tc + ' s' : m.tc < 0 ? '⚡ ' + (-m.tc / 60) + ' ' + T('daqiqa') : '∞') + rulesTxt(m.rules) + '</div></div>' +

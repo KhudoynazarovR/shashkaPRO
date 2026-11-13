@@ -207,7 +207,7 @@
     }).join('');
     g('taRows').innerHTML = rows || '<div class="taEm">Hali hech kim qo‘shilmadi. Birinchi bo‘ling!</div>';
     // ma'lumot
-    var tc = tcInfo(t.tc), inf = '<div class="taInf"><span class="ic">' + tc.icon + '</span><div><b>' + tc.txt + '</b> · ' + tc.name + ' · ' + (t.durationMin || 0) + ' daq<br>' + (t.rated === false ? '🤝 Reytingsiz' : '⭐ Reytingli') + ' · Arena' + (t.flag ? ' · 🏳️ Bayroqli' : '') + (t.berserk ? ' · ⚡ Berserk' : '') + (t.pos === 'idf' ? ' · 🎲 IDF pozitsiyalar' : '') + '</div></div>' + (t.desc ? '<div class="taLn">📝 ' + esc(t.desc) + '</div>' : '');
+    var tc = tcInfo(t.tc), inf = '<div class="taInf"><span class="ic">' + tc.icon + '</span><div><b>' + tc.txt + '</b> · ' + tc.name + ' · ' + (t.durationMin || 0) + ' daq<br>' + (t.rated === false ? '🤝 Reytingsiz' : '⭐ Reytingli') + ' · Arena' + (t.flag ? ' · 🏳️ Bayroqli' : '') + (t.berserk ? ' · ⚡ Berserk' : '') + (t.pos === 'idf' ? ' · IDF pozitsiyalar' : '') + '</div></div>' + (t.desc ? '<div class="taLn">📝 ' + esc(t.desc) + '</div>' : '');
     if (t.prize > 0) inf += '<div class="taLn">🏆 Mukofot jamg‘armasi: <b>' + t.prize + '</b> tanga · ' + (t.places || 3) + ' o‘ringa</div>';
     if (t.minGames > 0) {
       var s = St(), mg = s && s.me && s.me.games != null ? Number(s.me.games) : null, ok = mp ? true : mg == null ? null : mg >= t.minGames;

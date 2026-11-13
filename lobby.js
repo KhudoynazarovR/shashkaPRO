@@ -187,7 +187,7 @@ function createLobby({ send, clients, roomsApi }) {
 
   const queue = new Map();       // uid -> { uid, tc }
   const challenges = new Map();  // id -> { id, fromUid, fromName, toUid, tc, at }
-  // 🎲 Stollar (playok kabi): egasi stol ochadi (vaqt, tikish), boshqasi bo'sh joyga o'tiradi, ikkalasi «Tayyor» — o'yin
+  // Stollar (playok kabi): egasi stol ochadi (vaqt, tikish), boshqasi bo'sh joyga o'tiradi, ikkalasi «Tayyor» — o'yin
   const tables = new Map(); let tblNo = 0;
   const TBL_ELO = [0, 1100, 1200, 1300, 1500, 1800];
   // 📨 oflayn do'stga bot orqali taklif: Telegram xabar + «O'ynash» tugmasi (startapp=lbf_<id>), 10 daqiqa amal qiladi
@@ -1530,7 +1530,7 @@ function createLobby({ send, clients, roomsApi }) {
         push();
         break;
       }
-      case 'lbTblNew': {   // 🎲 stol ochish
+      case 'lbTblNew': {   // stol ochish
         const tr = text => (toast(me.uid, text), true);
         if (tblOf(me.uid)) return tr('Siz allaqachon stoldasiz');
         if (tables.size >= 150) return tr('Stollar juda ko‘p, keyinroq urinib ko‘ring');
@@ -1923,7 +1923,7 @@ function createLobby({ send, clients, roomsApi }) {
     const now = Date.now();
     let changed = false;
     for (const [id, ch] of challenges) if (now - ch.at > CHALLENGE_TTL) { challenges.delete(id); changed = true; }
-    for (const [id, t] of tables) {   // 🎲 egasi chiqib ketgan (90 s) yoki 60 daqiqa harakatsiz stollar yopiladi
+    for (const [id, t] of tables) {   // egasi chiqib ketgan (90 s) yoki 60 daqiqa harakatsiz stollar yopiladi
       if (t.playing) continue;
       const hOn = connsOf(t.host.uid).length > 0;
       t.hGone = hOn ? 0 : (t.hGone || now);
