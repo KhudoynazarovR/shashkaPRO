@@ -231,7 +231,7 @@
           return;
         }
         if (k === 'deb') {
-          if (window.spDebut) window.spDebut(); else { var sd = document.createElement('script'); sd.src = '/debyut.js?v=2'; sd.onload = function () { window.spDebut(); }; document.head.appendChild(sd); }
+          if (window.spDebut) window.spDebut(); else { var sd = document.createElement('script'); sd.src = '/debyut.js?v=3'; sd.onload = function () { window.spDebut(); }; document.head.appendChild(sd); }
           return;
         }
         if (k === 'baza') {

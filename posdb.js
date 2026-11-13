@@ -71,6 +71,21 @@ function ldIdx() {
 let BOOK = null;
 function book() { if (BOOK) return BOOK; try { BOOK = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'book.json'), 'utf8')); } catch (e) { BOOK = {}; } return BOOK; }
 
+// 📖 Debyut nomlari: debyut.js dagi kutubxonadan — har debyutning yakuniy pozitsiyasi → nomi (yurish tartibidan qat'i nazar)
+let OPN = null;
+function opIdx() {
+  if (OPN) return OPN; OPN = new Map();
+  try {
+    const t = require('fs').readFileSync(require('path').join(__dirname, 'debyut.js'), 'utf8'), m = /var DATA = (\[.*?\]);\n/.exec(t), D = JSON.parse(m[1]);
+    D.forEach((d, i) => [d.steps].concat(d.alts || []).forEach(st => {
+      let b = init(), s = 1;
+      for (const x of st) { const h = x.p, f = h[0][0] * 8 + h[0][1], e = h[h.length - 1][2] * 8 + h[h.length - 1][3]; const mv = R.moves(b, s).find(q => { const P = q.path && q.path.length ? q.path : [q.to]; return q.from === f && P[P.length - 1] === e; }); if (!mv) return; b = mv.board; s = -s; }
+      const k = b.join('') + s; if (!OPN.has(k)) OPN.set(k, { i, uz: d.uz, ru: d.ru });
+    }));
+  } catch (e) { console.log('[posdb] debyutlar:', e.message); }
+  return OPN;
+}
+function opOf(keys) { const I = opIdx(); for (let i = keys.length - 1; i >= 0; i--) { const o = I.get(keys[i]); if (o) return o; } return null; }
 function rowsFrom(M, b, s) {
   const L = R.moves(b, s), out = [];
   if (M) for (const [id, v] of M) { const [f, t] = id.split('-').map(Number), m = L.find(x => x.from === f && x.to === t); if (m) out.push({ id, from: f, to: t, t: mtxt(m), n: v[0] + v[1] + v[2], w: v[0], d: v[1], l: v[2] }); }
@@ -129,8 +144,11 @@ function handle(req, res, p, h) {
     let adm = false; try { adm = require('./kkbook.js').isAdmin(t.id); } catch (e) {}
     const src = ['sp', 'ld', 'col', 'rep'].includes(j.src) ? j.src : 'sp';
     if ((src === 'rep' || src === 'ld') && !adm) return h.send(res, 403, { error: 'Faqat admin' });
-    h.send(res, 200, Object.assign({ src, admin: adm }, explore(src, b, s, adm, j.sc)));
+    const ex = explore(src, b, s, adm, j.sc), I = opIdx(), L = R.moves(b, s);
+    (ex.rows || []).forEach(r => { const m = L.find(x => x.from === r.from && x.to === r.to); const o = m && I.get(m.board.join('') + (-s)); if (o) r.op = o.uz; });
+    const hk = Array.isArray(j.hk) ? j.hk.slice(-60).filter(x => typeof x === 'string' && x.length < 80) : [];
+    h.send(res, 200, Object.assign({ src, admin: adm, op: opOf(hk.concat([b.join('') + s])) }, ex));
   });
   return true;
 }
-module.exports = { handle, onGame, explore, multipv, addGame, build };
+module.exports = { handle, onGame, explore, multipv, addGame, build, opOf, opIdx };
