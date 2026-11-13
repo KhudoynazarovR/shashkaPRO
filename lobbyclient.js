@@ -3482,4 +3482,4 @@ if(document.readyState==='complete')setTimeout(init,1500);else window.addEventLi
 /* HOMEX — bosh sahifa: kunlik masala, reytinglar, o'yinlarim, do'stlar (homex.js) */
 ;(function(){var s=document.createElement("script");s.src="/homex.js?v=2";document.head.appendChild(s)})();
 /* DRAGONBOT — «tez kunda» banner va kutayotganlar (dragon.js) */
-;(function(){var s=document.createElement("script");s.src="/dragon.js?v=1";document.head.appendChild(s)})();
+;(function(){var s=document.createElement("script");s.src="/dragon.js?v=2";document.head.appendChild(s)})();

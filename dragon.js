@@ -32,6 +32,11 @@
     '#drOv .k{width:26px;height:26px;flex:none;border-radius:50%;background:#2a1d45;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}#drOv .g .k{background:#ffd34d;color:#1a0500}' +
     '#drOv .tg{border:1px solid #ff7a3d;color:#ffb38a;border-radius:8px;padding:1px 6px;font-size:11px;white-space:nowrap}' +
     '#drOv .ad{margin:0 14px 16px;padding:10px;border:1px dashed #6d5cf0;border-radius:14px}#drOv .ad b{display:block;font-size:12px;letter-spacing:1px;opacity:.75;margin-bottom:6px}' +
+    '#drOv .ds{margin:2px 18px 4px;font-size:14px;line-height:1.5;opacity:.88;text-align:center}' +
+    '#drOv .cmI{display:flex;gap:6px;margin:0 0 10px}#drOv .cmI input{flex:1;min-width:0;border:1px solid #3a2d5a;border-radius:12px;padding:10px;background:#120a22;color:#fff;font-size:14px}#drOv .cmI button{border:0;border-radius:12px;padding:0 14px;background:#ff7a3d;color:#1a0500;font-weight:800}' +
+    '#drOv .cm{padding:9px 0;border-bottom:1px solid #2a1d45}#drOv .cm .hd{display:flex;align-items:center;gap:8px;font-size:13px}#drOv .cm .hd b{font-size:13.5px}#drOv .cm .hd span{opacity:.55;font-size:11.5px}' +
+    '#drOv .cm .lk{margin-left:auto;border:0;background:#2a1d45;color:#ffb38a;border-radius:10px;padding:3px 9px;font-size:13px;cursor:pointer}#drOv .cm .lk.on{background:#ff7a3d;color:#1a0500}' +
+    '#drOv .cm .del{border:0;background:none;color:#ff8a8a;font-size:12px;cursor:pointer}#drOv .cm p{margin:4px 0 0;font-size:14px;line-height:1.4;word-break:break-word}' +
     '#drOv .ad button{border:0;border-radius:10px;padding:9px 12px;margin:3px;background:#262b66;color:#fff;font-size:14px}';
   document.head.appendChild(st);
   function api(path, body) {
@@ -76,7 +81,7 @@
     var s = S || { n: 0, first: [], me: false };
     var w = img('wide') || img('sq');
     var h = '<div class="bx"><div class="cl" data-c="1">×</div><div class="tp"' + (w ? ' style="background-image:url(&quot;' + w + '&quot;)"' : '') + '><div class="sh"><b>DragonBOT</b><small>' + SUB + '. Tez kunda ShashkaPRO’da</small></div></div>' +
-      '<div class="cnt">' + fmt(s.n) + '<small>kishi kutmoqda</small></div>' +
+      '<div class="cnt">' + fmt(s.n) + '<small>kishi kutmoqda</small></div>' + (s.desc ? '<div class="ds">' + esc(s.desc) + '</div>' : '') +
       '<button class="go' + (s.me ? ' on' : '') + '" data-t="1">' + (busy ? '…' : s.me ? 'Siz kutyapsiz · ' + s.my + '-o‘rin (bekor qilish)' : 'Men ham kutaman') + '</button>';
     if (s.first && s.first.length) {
       h += '<div class="ls"><h4>BIRINCHI KUTGANLAR</h4>' + s.first.map(function (x) {
@@ -84,11 +89,23 @@
         return '<div class="it' + (x.i <= 3 ? ' g' : '') + '"><div class="k">' + x.i + '</div>' + esc(x.name) + (x.i <= 100 ? ' <em class="tg" style="font-style:normal">Birinchi 100</em>' : '') + '<span>' + t + '</span></div>';
       }).join('') + '</div>';
     }
-    if (s.admin) h += '<div class="ad"><b>ADMIN</b><button data-a="sq">Avatar rasmi (kvadrat)</button><button data-a="wide">Keng rasm</button><button data-a="nt">Kutganlarga xabar yuborish</button><input type="file" accept="image/*" id="drF" style="display:none"></div>';
+    var my = (s.cm || []).filter(function (c) { return c.mine; })[0];
+    h += '<div class="ls"><h4>IZOHLAR' + ((s.cm || []).length ? ' · ' + s.cm.length : '') + '</h4><div class="cmI"><input id="drC" maxlength="120" placeholder="' + (my ? 'Izohingizni o‘zgartiring…' : 'Izoh qoldiring…') + '" value="' + esc(my ? my.t : '') + '"><button data-cs="1">' + (my ? 'Saqlash' : 'Yuborish') + '</button></div>' +
+      ((s.cm || []).map(function (c) {
+        var d = new Date(c.at + 5 * 3600e3), t = d.getUTCDate() + '-' + ['yan', 'fev', 'mar', 'apr', 'may', 'iyn', 'iyl', 'avg', 'sen', 'okt', 'noy', 'dek'][d.getUTCMonth()] + ', ' + String(d.getUTCHours()).padStart(2, '0') + ':' + String(d.getUTCMinutes()).padStart(2, '0');
+        return '<div class="cm"><div class="hd"><b>' + esc(c.name) + '</b><span>' + t + '</span>' + (s.admin || c.mine ? '<button class="del" data-cd="' + esc(c.uid) + '">o‘chirish</button>' : '') + '<button class="lk' + (c.liked ? ' on' : '') + '" data-lk="' + esc(c.uid) + '">♥ ' + c.n + '</button></div><p>' + esc(c.t) + '</p></div>';
+      }).join('') || '<div style="opacity:.6;font-size:13px;padding:6px 0">Hali izoh yo‘q — birinchi bo‘ling</div>') + '</div>';
+    if (s.admin) h += '<div class="ad"><b>ADMIN</b><button data-a="ds">Tavsifni tahrirlash</button><button data-a="sq">Avatar rasmi (kvadrat)</button><button data-a="wide">Keng rasm</button><button data-a="nt">Kutganlarga xabar yuborish</button><input type="file" accept="image/*" id="drF" style="display:none"></div>';
     ov.innerHTML = h + '</div>';
     ov.querySelector('[data-c]').onclick = closeOv;
     ov.querySelector('[data-t]').onclick = function () { if (busy) return; busy = true; render(); api('/api/dragon/toggle', {}).then(function (j) { busy = false; if (j && !j.error) { S = j; paint(); } render(); try { Telegram.WebApp.HapticFeedback.notificationOccurred('success'); } catch (e) {} }); };
+    var cs = function () { var v = ov.querySelector('#drC').value; api('/api/dragon/comment', { text: v }).then(function (j) { if (j && !j.error) { S = j; render(); } else alert((j && j.error) || 'Xato'); }); };
+    ov.querySelector('[data-cs]').onclick = cs;
+    ov.querySelector('#drC').onkeydown = function (e) { if (e.key === 'Enter') cs(); };
+    [].forEach.call(ov.querySelectorAll('[data-lk]'), function (b) { b.onclick = function () { api('/api/dragon/like', { uid: b.getAttribute('data-lk') }).then(function (j) { if (j && !j.error) { S = j; render(); } }); }; });
+    [].forEach.call(ov.querySelectorAll('[data-cd]'), function (b) { b.onclick = function () { if (!confirm('Izoh o‘chirilsinmi?')) return; var u = b.getAttribute('data-cd'), mine = (S.cm || []).some(function (c) { return c.mine && c.uid === u; }); api(mine ? '/api/dragon/comment' : '/api/dragon/cdel', mine ? { text: '' } : { uid: u }).then(function (j) { if (j && !j.error) { S = j; render(); } }); }; });
     if (s.admin) {
+      ov.querySelector('[data-a="ds"]').onclick = function () { var t = prompt('DragonBOT tavsifi (400 belgigacha):', s.desc || ''); if (t == null) return; api('/api/dragon/desc', { text: t }).then(function (j) { if (j && !j.error) { S = j; render(); } }); };
       var f = ov.querySelector('#drF'), kind = 'sq';
       [].forEach.call(ov.querySelectorAll('[data-a="sq"],[data-a="wide"]'), function (b) { b.onclick = function () { kind = b.getAttribute('data-a'); f.value = ''; f.click(); }; });
       f.onchange = function () { var fl = f.files && f.files[0]; if (fl) upload(fl, kind); };
@@ -113,7 +130,7 @@
     };
     rd.readAsDataURL(file);
   }
-  function paint() { banner(); if (ov) render(); }
+  function paint() { banner(); if (ov && !(document.activeElement && document.activeElement.id === 'drC')) render(); }
   load();
   setInterval(function () { if ($('hzHero') && !$('drBan') && S) banner(); }, 1500);
   setInterval(function () { if (document.visibilityState === 'visible') load(); }, 60000);
