@@ -299,7 +299,7 @@
     GSK = o; return o;
   }
   // 🎮 o'yinga tushganda (xona ochilsa) arena sahifasi yopiladi — aks holda o'yin orqada qoladi
-  setInterval(function () { if (P && P.classList.contains('on') && document.getElementById('lbBack')) close(); }, 300);
+  setInterval(function () { if (P && P.classList.contains('on') && (document.getElementById('lbBack') || document.getElementById('rcFrameOv'))) close(); }, 300);   // o'yin xonasi ochildi (o'zida yoki oyna ichida)
   function close() {
     pinR = '';
     document.body.classList.remove('taOn'); if (P) P.classList.remove('on'); cur = null; window.__tvCur = null;
