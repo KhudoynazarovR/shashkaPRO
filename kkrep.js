@@ -178,6 +178,24 @@ function traps(n) {
   return Object.entries(r.trap).filter(([, T]) => T.err >= 2).map(([k, T]) => ({ k, b: (k.endsWith('-1') ? k.slice(0, -2) : k.slice(0, -1)).match(/-?\d/g).map(Number), s: k.endsWith('-1') ? -1 : 1, n: T.n, err: T.err, rate: Math.round(T.err * 100 / Math.max(1, T.n)) })).sort((a, b) => b.err - a.err || b.rate - a.rate).slice(0, n || 40);
 }
 
+// 🐉 Dragon taklifi: har yurish baholanadi → foiz (eng yaxshisi 100, har 0.1 dona farq −10, dona yo'qotadigani 0)
+const SUG = new Map();
+function suggest(b, s, cb) {
+  const key = b.join('') + s; if (SUG.has(key)) return cb(SUG.get(key));
+  const L = R.moves(b, s); if (!L.length) return cb({ list: [] });
+  if (L.length === 1) return cb({ list: [{ id: L[0].from + '-' + L[0].to, w: 100, ev: null }] });
+  let lose = {}; try { const rk = require('./kkadm.js').rank(b, s, 4); if (rk && rk.length) rk.forEach(x => { lose[x.m.from + '-' + x.m.to] = rk[0].v - x.v; }); } catch (e) {}
+  const K = require('./kestoai.js'), out = []; let i = 0;
+  (function next() {
+    if (i >= L.length) {
+      const sc = out.filter(x => x.sc != null).map(x => x.sc), best = sc.length ? Math.max.apply(null, sc) : 0;
+      const list = out.map(x => { let w = x.sc == null ? 0 : Math.round(Math.max(0, 100 - (best - x.sc) * 100) / 5) * 5; if ((lose[x.id] || 0) >= 1) w = 0; if (w < 20) w = 0; return { id: x.id, w, ev: x.sc == null ? null : Math.round(x.sc * 100) / 100 }; });
+      const o = { list }; SUG.set(key, o); if (SUG.size > 1000) SUG.delete(SUG.keys().next().value); return cb(o);
+    }
+    const m = L[i++];
+    K.pv(m.board, -s, 0.3, 1, r => { out.push({ id: m.from + '-' + m.to, sc: r && typeof r.ev === 'number' ? s * r.ev : null }); next(); });
+  })();
+}
 // ---------- HTTP: /api/kkrep (faqat admin)
 function handle(req, res, p, h) {
   if (!p.startsWith('/api/kkrep')) return false;
@@ -194,6 +212,7 @@ function handle(req, res, p, h) {
     if (p === '/api/kkrep/tree') return h.send(res, 200, { list: tree(sc, Math.max(2, Math.min(40, +j.depth || r.cfg.depth * 2))), cfg: r.cfg });
     if (p === '/api/kkrep/cfg') { ['depth'].forEach(k => { if (j[k] != null) r.cfg[k] = Math.max(1, Math.min(30, +j[k] || 12)); }); ['tour100', 'adapt', 'traps'].forEach(k => { if (j[k] != null) r.cfg[k] = !!j[k]; }); store.save(); return h.send(res, 200, { cfg: r.cfg }); }
     if (p === '/api/kkrep/hist') return h.send(res, 200, { list: r.hist.slice(0, 120).map((x, i) => ({ i, at: x.at, sc: x.sc, why: x.why, b: x.b, s: x.s, old: x.old ? Object.keys(x.old).length : 0, nw: x.nw ? Object.entries(x.nw).map(([id, v]) => { const [f, tt] = id.split('-').map(Number); return SQ(f) + '-' + SQ(tt) + ' ' + v.w; }).join(', ') : '—' })) });
+    if (p === '/api/kkrep/suggest') return suggest(b, s, x => h.send(res, 200, x));
     if (p === '/api/kkrep/undo') return h.send(res, undo(+j.i) ? 200 : 400, { ok: true });
     if (p === '/api/kkrep/import') return h.send(res, 200, { add: importBooks(sc, Math.max(2, Math.min(40, (+j.depth || r.cfg.depth) * 2)), t.id) });
     if (p === '/api/kkrep/pdn') return h.send(res, 200, importPdn(sc, j.text, j.sides === 'w' || j.sides === 'b' ? j.sides : 'both', Math.max(2, Math.min(60, (+j.depth || r.cfg.depth) * 2)), t.id));
