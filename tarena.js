@@ -129,6 +129,7 @@
       else if (a === 'pause') { send({ type: 'lbTLeave', tid: cur }); }
       else if (a === 'leave') { if (confirm('Arenadan chiqasizmi?')) send({ type: 'lbTLeave', tid: cur }); }
       else if (a === 'start') { send({ type: 'lbTStart', tid: cur }); }
+      else if (a === 'bbw') { pinR = b.getAttribute('data-room'); sigMain = ''; render(); askPeek(); var fc = g('taFeatC'); if (fc) fc.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
       else if (a === 'watch') { var r = b.getAttribute('data-room'), l = L(); close(); if (l && l.go) l.go(r); return; }
       sigMain = ''; render();
     });
@@ -216,12 +217,13 @@
     // TOP o'yinlar (eng yuqori o'rinlar bo'yicha)
     var rk = {}; ps.forEach(function (p, i) { rk[String(p.uid)] = i + 1; });
     var live = (t.boards || []).filter(function (b) { return !b.done; }).map(function (b) { return { b: b, r: Math.min(rk[String(b.white)] || 999, rk[String(b.black)] || 999) }; }).sort(function (a, b) { return (a.b.bb ? 1 : 0) - (b.b.bb ? 1 : 0) || a.r - b.r; });
-    feat = live.length ? live[0].b : null;
+    var pinB = pinR ? live.filter(function (x) { return x.b.roomId === pinR; })[0] : null; if (!pinB) pinR = '';
+    feat = pinB ? pinB.b : live.length ? live[0].b : null;
     g('taFeatC').style.display = feat ? '' : 'none';
     g('taTopC').style.display = live.length > 1 ? '' : 'none';
     g('taTop').innerHTML = live.slice(1, 9).map(function (x) {
       var b = x.b;
-      return '<div class="taTg"><div><span><i class="rk">#' + (rk[String(b.white)] || '–') + '</i>⚪ ' + nm(b.whiteName) + ' <small>' + (b.whiteElo || '') + '</small></span><span><i class="rk">#' + (rk[String(b.black)] || '–') + '</i>⚫ ' + nm(b.blackName) + ' <small>' + (b.blackElo || '') + '</small></span></div>' + (b.bb ? '<small>🤖 bot o‘yini</small>' : '<button data-a="watch" data-room="' + esc(b.roomId) + '">👁 Tomosha</button>') + '</div>';
+      return '<div class="taTg"><div><span><i class="rk">#' + (rk[String(b.white)] || '–') + '</i>⚪ ' + nm(b.whiteName) + ' <small>' + (b.whiteElo || '') + '</small></span><span><i class="rk">#' + (rk[String(b.black)] || '–') + '</i>⚫ ' + nm(b.blackName) + ' <small>' + (b.blackElo || '') + '</small></span></div>' + (b.bb ? '<button data-a="bbw" data-room="' + esc(b.roomId) + '">👁 Ko‘rish</button>' : '<button data-a="watch" data-room="' + esc(b.roomId) + '">👁 Tomosha</button>') + '</div>';
     }).join('');
     featRk = rk; renderFeat();
   }
@@ -277,7 +279,11 @@
     var k = 0; timer = setInterval(function () { render(); if (++k % 3 === 0) askPeek(); }, 1000);
     setTimeout(askPeek, 300);
   }
+  var pinR = '';
+  // 🎮 o'yinga tushganda (xona ochilsa) arena sahifasi yopiladi — aks holda o'yin orqada qoladi
+  setInterval(function () { if (P && P.classList.contains('on') && document.getElementById('lbBack')) close(); }, 300);
   function close() {
+    pinR = '';
     document.body.classList.remove('taOn'); if (P) P.classList.remove('on'); cur = null; window.__tvCur = null;
     if (timer) { clearInterval(timer); timer = null; }
     try { if (ws) ws.close(); } catch (e) {} ws = null;
