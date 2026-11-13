@@ -305,7 +305,7 @@ function handle(req, res, url) {
       wins: _u.wins || 0, losses: _u.losses || 0, draws: _u.draws || 0, games: _u.games || 0,
       bestStreak: _u.bestStreak || 0, tournWins: _u.tournWins || 0,
       rt: (function () { try { return require('./glicko.js').view(_u); } catch (e) { return null; } })(),
-      bio: _u.bio || '', hasAv: !!store.avOf(_u), premium: !!store.isPremium(_u), lastSeen: _u.lastSeen || 0, elchi: require('./ref.js').elchi(_u), region: _u.region || '', titles: (_u.titles || []).slice(-3).reverse().map(x => x.t), ach: (require('./ach.js').sync(_id, { quiet: true }), require('./ach.js').list(_id, false)),
+      bio: _u.bio || '', hasAv: !!store.avOf(_u), premium: !!store.isPremium(_u), lastSeen: _u.lastSeen || 0, elchi: require('./ref.js').elchi(_u), region: _u.region || '', titles: (_u.titles || []).slice(-3).reverse().map(x => x.t), bhunt: (_u.bhunt || []).slice(-20).reverse(), ach: (require('./ach.js').sync(_id, { quiet: true }), require('./ach.js').list(_id, false)),
       stones: (() => { const S = store.db.shop || [], eq = _u.equipped === '-' ? '' : (_u.equipped || ((S.find(x => x.def) || {}).id) || ''); return S.filter(x => x.def || (_u.owned || []).includes(x.id)).slice(0, 24).map(x => ({ id: x.id, name: x.name, eq: x.id === eq })); })(),
       myDiamonds: ((store.users()[String(_tg.id)] || {}).diamonds) || 0, giftFee: [require('./gift.js').FEE_PCT, require('./gift.js').FEE_MIN],
       ...(isAdmin(_tg.id) ? { adm: true, sanc: require('./mod.js').info(_id), cheat: require('./cheat.js').stats(_id) } : {})

@@ -200,7 +200,7 @@
       var dh = d > 0 ? ' <span class="u">↗' + d + '</span>' : d < 0 ? ' <span class="dn">↘' + (-d) + '</span>' : '';
       return '<div class="taRow' + (String(p.uid) === u ? ' me' : '') + '">' +
         '<div class="taRk' + (p.withdrawn ? ' ps' : '') + '">' + (p.withdrawn ? 'II' : (i + 1)) + '</div>' +
-        '<div class="taNm"><b>' + (p.rg ? bdg(p.rg, p.rc, p.rn) : '') + nm(p.name) + '</b><small>' + (p.elo || '') + dh + (p.busy ? '<span class="pl">⚔ o‘ynamoqda</span>' : '') + '</small></div>' +
+        '<div class="taNm"><b>' + (p.rg ? bdg(p.rg, p.rc, p.rn) : '') + nm(p.name) + (p.bh ? ' <img src="/img/bhunt_s.png" title="Botlar ovchisi ×' + p.bh + '" style="width:18px;height:20px;vertical-align:-3px">' : '') + '</b><small>' + (p.elo || '') + dh + (p.busy ? '<span class="pl">⚔ o‘ynamoqda</span>' : '') + '</small></div>' +
         '<div class="taSh"><span>' + sheetHtml(p.sheet) + '</span></div>' +
         '<div class="taPt' + (p.fire ? ' f' : '') + '">' + (p.fire ? '🔥' : '') + p.score + '</div></div>';
     }).join('');

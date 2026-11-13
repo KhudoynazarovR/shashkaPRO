@@ -290,11 +290,12 @@ function createLobby({ send, clients, roomsApi }) {
 
   // turnirdagi samaradorlik: raqiblar o'rtacha reytingi + 400·(G−M)/O
   function arenaPerf(p) { const n = p.games || 0; if (!n || !p.oppSum) return 0; return Math.round(p.oppSum / n + 400 * ((p.wins || 0) - (p.losses || 0)) / n); }
+  function bhN(uid) { try { const u = require('./store').users()[String(uid)]; return u && u.bhunt ? u.bhunt.length : 0; } catch (e) { return 0; } }
   function arenaStandings(t) {
     const arr = [...t.players.values()].map(p => ({
       uid: p.uid, name: p.name, score: p.score, buch: 0, withdrawn: p.withdrawn, bot: !!p.bot,
       games: p.games, wins: p.wins, fire: p.streak >= ARENA_FIRE_AFTER, busy: p.busy, at: p.lastScoreAt,
-      elo: olyElo(p.uid), d: p.elo0 ? olyElo(p.uid) - p.elo0 : 0, sheet: (p.sheet || '').slice(-40), perf: arenaPerf(p)
+      elo: olyElo(p.uid), d: p.elo0 ? olyElo(p.uid) - p.elo0 : 0, sheet: (p.sheet || '').slice(-40), perf: arenaPerf(p), bh: bhN(p.uid)
     }));
     // lidraughts: ochko, teng bo'lsa turnirdagi samaradorlik (performance), keyin shu ochkoga birinchi yetgan
     arr.sort((a, b) => b.score - a.score || b.perf - a.perf || a.at - b.at || a.name.localeCompare(b.name));
@@ -947,6 +948,17 @@ function createLobby({ send, clients, roomsApi }) {
         if (_u) { _u.tournWins = (_u.tournWins || 0) + 1; _st.save(); }
       }
     } catch (e) {}
+    try {   // 🎖 «Botlar ovchisi»: Botlar va Insonlar turnirida umumiy 1-o'rin inson bo'lsa
+      const P = require('./tposter.js'), w0 = st.find(x => x.games > 0);
+      if (P.isHvb(t) && w0 && !w0.bot && /^\d+$/.test(String(w0.uid)) && w0.score > 0) {
+        const _st = require('./store'), _u = _st.users()[String(w0.uid)];
+        if (_u) {
+          _u.bhunt = (_u.bhunt || []).concat([{ at: Date.now(), tid: t.id, n: String(t.name || '').slice(0, 60), s: w0.score }]).slice(-50); _st.save();
+          toast(w0.uid, '🎖 Tabriklaymiz! Siz barcha botlarni ortda qoldirdingiz — «Botlar ovchisi» nishoni sizniki!');
+          tgCall('sendMessage', { chat_id: Number(w0.uid), text: '🎖 Tabriklaymiz!\n\n' + t.name + ' turnirida barcha botlarni ortda qoldirib, 1-o‘rinni oldingiz.\n«Botlar ovchisi» nishoni profilingizga qo‘shildi (' + _u.bhunt.length + '-marta).' });
+        }
+      }
+    } catch (e) { console.log('[bhunt]', e.message); }
     let regsF = [];
     if (t.flag) { try { regsF = require('./flags.js').regStandings(st); } catch (e) {} }
     for (const p of t.players.values()) {
@@ -958,7 +970,7 @@ function createLobby({ send, clients, roomsApi }) {
       }
     }
     if (t.announce || t.flag) {   // 📣 natija kanalga (e'longa javob sifatida)
-      try { const stB = st.filter(x => x.games > 0 && !x.bot).map(x => Object.assign({}, x, require('./flags.js').badge(x.uid) || {})); require('./tposter.js').result(t, stB, regsF.filter(r => r.score > 0), { reg: t.payReg || [], top: t.payTop || [] }); } catch (e) { console.log('[tposter]', e.message); }
+      try { const stB = st.filter(x => x.games > 0 && !x.bot).map(x => Object.assign({}, x, require('./flags.js').badge(x.uid) || {})); require('./tposter.js').result(t, stB, regsF.filter(r => r.score > 0), { reg: t.payReg || [], top: t.payTop || [] }, st.filter(x => x.games > 0)); } catch (e) { console.log('[tposter]', e.message); }
     }
     push();
   }

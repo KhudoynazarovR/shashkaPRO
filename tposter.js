@@ -168,7 +168,81 @@ async function remind(t) {
   } catch (e) {}
 }
 // st: o'yinchilar (o'rin tartibida, rg/rc bilan), regs: viloyatlar hisobi, pay: { reg: [{name, amt}], top: [{name, amt}] }
-async function result(t, st, regs, pay) {
+// 🤖 Botlar va Insonlar: natija — umumiy g'olib (bot ham bo'lishi mumkin) + mukofot olgan insonlar; inson 1-o'rinda bo'lsa — «Botlar ovchisi»
+async function avBuf(uid, isBot) {   // ishtirokchi rasmi: profil rasmi → Telegram rasmi
+  try {
+    const u = require('./store.js').users()[String(uid)] || {};
+    const m = /^data:image\/(?:jpeg|png|webp);base64,(.+)$/.exec(isBot ? (u.avatar || '') : (require('./store.js').avOf(u) || ''));
+    if (m) return Buffer.from(m[1], 'base64');
+    if (!isBot && /^\d+$/.test(String(uid))) {
+      const p = await tg('getUserProfilePhotos', { user_id: Number(uid), limit: 1 }), ph = p && p.ok && p.result.photos[0];
+      if (ph) { const f = await tg('getFile', { file_id: ph[ph.length - 1].file_id }); if (f && f.ok) { const r = await fetch('https://api.telegram.org/file/bot' + process.env.BOT_TOKEN + '/' + f.result.file_path); if (r.ok) return Buffer.from(await r.arrayBuffer()); } }
+    }
+  } catch (e) {}
+  return null;
+}
+async function hvbResPng(t, all, hum, hunter) {
+  const sh = sharp(); if (!sh) return null;
+  const fs = require('fs'), path = require('path'), d = tz(t.startAt || Date.now()), w0 = all[0];
+  const name = noEmo(t.name).slice(0, 30), dl = dayStr(t.startAt || Date.now()) + ' ' + d.getUTCFullYear() + ' · ' + hm(t.startAt || Date.now()) + (t.endAt ? '–' + hm(t.endAt) : '');
+  const T = (xx, y, s0, fs0, fill, w, a, ex) => '<text x="' + xx + '" y="' + y + '" font-family="' + F + '" font-size="' + fs0 + '" font-weight="' + (w || 700) + '" fill="' + fill + '"' + (a ? ' text-anchor="' + a + '"' : '') + (ex || '') + '>' + x(s0) + '</text>';
+  let s = '<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720"><defs><radialGradient id="bgr" cx=".25" cy=".5" r=".85"><stop offset="0" stop-color="#1e5bff"/><stop offset=".4" stop-color="#0b2a9a"/><stop offset="1" stop-color="#071042"/></radialGradient>' +
+    '<pattern id="ck" width="80" height="80" patternUnits="userSpaceOnUse"><rect width="40" height="40" fill="#fff"/><rect x="40" y="40" width="40" height="40" fill="#fff"/></pattern><linearGradient id="fd" x1="0" x2="1"><stop offset=".35" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity=".12"/></linearGradient><mask id="mk"><rect width="1280" height="720" fill="url(#fd)"/></mask>' +
+    '<linearGradient id="gw" x1="0" x2="1"><stop offset="0" stop-color="' + (hunter ? '#ffcf3a' : '#b8c6e6') + '"/><stop offset="1" stop-color="' + (hunter ? '#ff9f1a' : '#7f93c4') + '"/></linearGradient><clipPath id="ca"><circle cx="642" cy="252" r="44"/></clipPath></defs>' +
+    '<rect width="1280" height="720" fill="url(#bgr)"/><rect width="1280" height="720" fill="url(#ck)" mask="url(#mk)"/>';
+  s += T(560, 78, 'TURNIR NATIJASI', 20, '#ffd34d', 900, '', ' letter-spacing="4"') + T(560, 126, name, 38, '#fff', 900) + T(560, 160, dl, 20, '#fff', 400, '', ' opacity=".85"');
+  s += '<rect x="560" y="186" width="674" height="132" rx="20" fill="url(#gw)"/><circle cx="642" cy="252" r="47" fill="#fff" opacity=".9"/>';
+  const tc = hunter ? '#1a0d00' : '#0a1430';
+  s += T(706, 220, hunter ? 'G‘OLIB · BARCHA BOTLARNI ORTDA QOLDIRDI' : 'TURNIR G‘OLIBI', 15, tc, 800, '', ' letter-spacing="2" opacity=".85"');
+  s += T(706, 268, noEmo(w0.name).slice(0, 22), 40, tc, 900);
+  s += T(706, 300, w0.score + ' ochko' + (hunter ? ' · «Botlar ovchisi» nishoni' : ' · «Botlar ovchisi» bu safar hech kimga nasib qilmadi'), hunter ? 20 : 15, tc, 700);
+  const rows = (hunter ? all : hum).slice(0, 3);
+  s += '<rect x="560" y="340" width="674" height="' + (52 + rows.length * 56) + '" rx="20" fill="#050c32" fill-opacity=".6" stroke="#fff" stroke-opacity=".18" stroke-width="2"/>';
+  s += T(584, 372, hunter ? 'JADVAL' : 'ENG YAXSHI INSONLAR · MUKOFOT', 16, '#9fc0ff', 800, '', ' letter-spacing="2"');
+  rows.forEach((p, i) => {
+    const y = 412 + i * 56;
+    s += '<circle cx="602" cy="' + (y - 8) + '" r="17" fill="' + (i === 0 ? '#ffcf3a' : '#2c3c99') + '"/>' + T(602, y - 1, String(i + 1), 18, i === 0 ? '#1a0d00' : '#fff', 900, 'middle');
+    const nm0 = noEmo(p.name).replace(/\s*BOT$/i, '').slice(0, 24);
+    s += T(634, y, nm0, 24, '#fff', 600) + (p.bot ? T(634 + nm0.length * 15.5 + 10, y - 1, 'BOT', 15, '#fff', 600, '', ' opacity=".7"') : '') + T(1212, y, String(p.score), 24, '#ffd34d', 900, 'end');
+  });
+  s += T(160 + 120, 690, hunter ? 'BOTLAR OVCHISI!' : 'BOTLAR G‘OLIB CHIQDI', hunter ? 44 : 34, hunter ? '#ffd34d' : '#cfe0ff', 900, 'middle', hunter ? ' stroke="#6a3d00" stroke-width="2"' : '');
+  if (t.prize > 0) s += T(560, 690, 'Mukofot fondi: ' + fmt(t.prize) + ' tanga', 18, '#fff', 400, '', ' opacity=".75"');
+  s += T(1234, 690, '@' + BOT(), 18, '#fff', 400, 'end', ' opacity=".75"') + '</svg>';
+  const comp = [];
+  try { let b = await sh(path.join(__dirname, 'public', 'img', 'bhunt_r.png')).resize(440, 485, { fit: 'inside' }); if (!hunter) b = b.modulate({ saturation: 0.55, brightness: 0.85 }); comp.push({ input: await b.png().toBuffer(), left: 60, top: 120 }); } catch (e) {}
+  try {
+    const ab = await avBuf(w0.uid, w0.bot);
+    if (ab) { const mask = Buffer.from('<svg width="88" height="88"><circle cx="44" cy="44" r="44" fill="#fff"/></svg>'); comp.push({ input: await sh(ab).resize(88, 88, { fit: 'cover' }).composite([{ input: mask, blend: 'dest-in' }]).png().toBuffer(), left: 598, top: 208 }); }
+    else s = s.replace('</svg>', T(642, 266, (noEmo(w0.name).trim()[0] || '?').toUpperCase(), 40, tc, 900, 'middle') + '</svg>');
+  } catch (e) {}
+  try { return await sh(Buffer.from(s)).composite(comp).jpeg({ quality: 90 }).toBuffer(); } catch (e) { console.log('[tposter] hvb natija', e.message); return null; }
+}
+async function hvbResult(t, all, hum, pay) {
+  try {
+    const med = ['🥇', '🥈', '🥉'], w0 = all[0]; if (!w0) return;
+    const hunter = !w0.bot && /^\d+$/.test(String(w0.uid)), d = tz(t.startAt || Date.now());
+    let c = '🏁 <b>' + h(t.name) + ' ' + String(d.getUTCDate()).padStart(2, '0') + '.' + String(d.getUTCMonth() + 1).padStart(2, '0') + '</b> yakunlandi!\n\n';
+    c += '🏆 Turnir g‘olibi: <b>' + h(w0.name) + '</b> — ' + w0.score + ' ochko\n';
+    if (hunter) c += '🎖 <b>' + h(w0.name) + '</b> barcha botlarni ortda qoldirib, «Botlar ovchisi» nishonini oldi!\n';
+    all.slice(1, 3).forEach((p, i) => { c += (i + 2) + '. ' + h(p.name) + ' — ' + p.score + '\n'; });
+    if (t.prize > 0) c += '\n💰 Mukofot fondi: ' + fmt(t.prize) + '\n';
+    c += '\n👤 Eng yaxshi insonlar (mukofot):\n';
+    hum.slice(0, 3).forEach((p, i) => { const a = pay && pay.top && pay.top[i]; c += med[i] + ' ' + h(p.name) + ' — ' + p.score + ' ochko' + (a && a.amt ? ' · ' + fmt(a.amt) + ' 💰' : '') + '\n'; });
+    const games = Math.round(all.reduce((a, p) => a + (p.games || 0), 0) / 2);
+    c += '\n🎮 ' + games + ' o‘yin · ' + all.length + ' o‘yinchi';
+    const buf = await hvbResPng(t, all, hum, hunter);
+    const kb = { inline_keyboard: [[{ text: '🎮 ShashkaPRO', url: APP() }]] };
+    const r = await sendPhoto(CH(), buf, c, kb, t.annMsg ? { reply_parameters: { message_id: t.annMsg, allow_sending_without_reply: true } } : {});
+    let fid = ''; try { const a = r.result.photo; fid = a[a.length - 1].file_id; } catch (e) {}
+    const GR = Array.from(new Set((require('./store.js').db.groups || []).map(String).concat(String(process.env.T_GROUPS || '').split(',')).map(z => z.trim()).filter(Boolean)));
+    for (const g of GR) {
+      const mid = t.annGrp && t.annGrp[g], ex = mid ? { reply_parameters: { message_id: mid, allow_sending_without_reply: true } } : {};
+      try { if (fid) await tg('sendPhoto', Object.assign({ chat_id: g, photo: fid, caption: c.slice(0, 1024), parse_mode: 'HTML', reply_markup: kb }, ex)); else await sendPhoto(g, buf, c, kb, ex); } catch (e) {}
+    }
+  } catch (e) { console.log('[tposter] hvb natija xato', e.message); }
+}
+async function result(t, st, regs, pay, all) {
+  if (all && all.length && isHvb(t)) return hvbResult(t, all, st, pay);
   try {
     const med = ['🥇', '🥈', '🥉'];
     const d = tz(t.startAt || Date.now());
@@ -199,4 +273,4 @@ async function cancelAnn(t) {   // ❌ turnir bekor qilindi — kanal va guruhla
   try { if (t.annMsg) await tg('deleteMessage', { chat_id: CH(), message_id: t.annMsg }); } catch (e) {}
   for (const [g, mid] of Object.entries(t.annGrp || {})) { try { await tg('deleteMessage', { chat_id: g, message_id: mid }); } catch (e) {} }
 }
-module.exports = { cancelAnn, hvbPng, isHvb, today, announce, remind, result, annSvg, resSvg, png, dayStr, hm };
+module.exports = { hvbResPng, hvbResult, cancelAnn, hvbPng, isHvb, today, announce, remind, result, annSvg, resSvg, png, dayStr, hm };
