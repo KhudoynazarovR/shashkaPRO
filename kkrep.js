@@ -75,6 +75,28 @@ function noteOpp(b, s, loss) {
   const ks = Object.keys(r.trap); if (ks.length > 20000) ks.sort((a, c) => r.trap[a].n - r.trap[c].n).slice(0, 4000).forEach(x => delete r.trap[x]);
 }
 
+// ---------- 🛡 Admin o'zgarishlari yo'qolmasin (deploy paytida eski va yangi server bir vaqtda ishlaydi):
+// har o'zgarish vaqti bilan alohida «live» qatorga darhol yoziladi; yangi server ishga tushgach 15 daqiqa davomida
+// shu qatorni o'qib, yangiroq o'zgarishlarni o'ziga qo'shadi (eski server oxirgi daqiqalarda saqlaganlari ham).
+let liveT = null;
+function touch(sc, k) {
+  const r = D(); r.tm = r.tm || {}; r.tm[sc + '|' + k] = Date.now();
+  if (!liveT) liveT = setTimeout(() => { liveT = null; const x = D(); store.kvSet('kkrep:live', { sc: x.sc, tm: x.tm || {} }).catch(() => {}); }, 1500);
+}
+async function liveMerge() {
+  const v = await store.kvGet('kkrep:live'); let o = null; try { o = typeof v === 'string' ? JSON.parse(v) : v; } catch (e) {}
+  if (!o || !o.tm || !o.sc) return 0;
+  const r = D(); r.tm = r.tm || {}; let n = 0;
+  for (const [key, t] of Object.entries(o.tm)) {
+    if (t <= (r.tm[key] || 0)) continue;
+    const i = key.indexOf('|'), sc = key.slice(0, i), k = key.slice(i + 1), S = r.sc[sc] || (r.sc[sc] = {}), P = o.sc[sc] && o.sc[sc][k];
+    if (P) S[k] = P; else delete S[k];
+    r.tm[key] = t; n++;
+  }
+  if (n) { console.log('[kkrep] live dan qo‘shildi:', n); store.save(); }
+  return n;
+}
+{ const t0 = Date.now(); const tick = () => { liveMerge().catch(() => {}).then(() => { if (Date.now() - t0 < 15 * 60e3) { const t = setTimeout(tick, 30e3); if (t.unref) t.unref(); } }); }; const t = setTimeout(tick, 20e3); if (t.unref) t.unref(); }
 // ---------- tahrirlash
 function set(sc, b, s, moves, by, why) {   // moves: {"from-to": {w, note, mk, lock}}
   const r = D(); if (!okScope(sc)) return null;
@@ -86,12 +108,12 @@ function set(sc, b, s, moves, by, why) {   // moves: {"from-to": {w, note, mk, l
   }
   if (Object.keys(nw).length) S[k] = nw; else delete S[k];
   r.hist.unshift({ at: Date.now(), by: String(by || ''), sc, k, b: b.join(','), s, old, nw: S[k] || null, why: why || '' }); if (r.hist.length > 300) r.hist.length = 300;
-  store.save(); return S[k] || {};
+  touch(sc, k); store.save(); return S[k] || {};
 }
 function undo(i) {
   const r = D(), h = r.hist[i]; if (!h) return false;
   const S = r.sc[h.sc] || (r.sc[h.sc] = {}); if (h.old) S[h.k] = h.old; else delete S[h.k];
-  r.hist.splice(i, 1); store.save(); return true;
+  r.hist.splice(i, 1); touch(h.sc, h.k); store.save(); return true;
 }
 // pozitsiya ko'rinishi: barcha qonuniy yurishlar + vazn, ulush, natija
 function view(sc, b, s) {

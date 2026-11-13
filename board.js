@@ -822,6 +822,7 @@
       var rows = d.rows || [];
       if (BK.src === 'sp' && d.building) o += '<div style="font-size:12px;opacity:.7;margin-bottom:6px">⏳ Baza yig‘ilmoqda (' + (d.games || 0) + ' partiya)…</div>';
       if (BK.src === 'rep') {
+        if (d.rows && !d.rows.some(function (x) { return x.w > 0; })) bkSug(h, false);   // foiz yo'q — Dragon taklifi
         var E = BK.E[kf(h)] || {}, sum = 0, mxw = 0; Object.keys(E).forEach(function (id) { sum += E[id].w || 0; mxw = Math.max(mxw, E[id].w || 0); });
         if (d.taught) o += '<div style="font-size:12.5px;color:#fde68a;margin-bottom:6px">📚 Bu pozitsiyada o‘rgatilgan yurish ham bor — foiz qo‘yilgan bo‘lsa, repertuar undan ustun</div>';
         if (BK.ed && E[BK.ed]) {
