@@ -1979,7 +1979,8 @@ function createLobby({ send, clients, roomsApi }) {
       }, i * 120));
     }
   }
-  setInterval(() => { try { schedTick(); } catch (e) { console.log("[jadval] xato:", e.message); } }, 30000).unref();
+  // 📅 kunlik jadval o'chirilgan (admin so'rovi): turnirlar endi faqat qo'lda yoki 🔁 doimiy andozadan yaratiladi
+  // setInterval(() => { try { schedTick(); } catch (e) { console.log("[jadval] xato:", e.message); } }, 30000).unref();
   setInterval(remindTick, 5000).unref();
   setInterval(arenaTick, 2000).unref();
 
