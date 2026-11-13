@@ -86,7 +86,7 @@ textarea{width:100%;height:120px;font:12px ui-monospace,monospace}
 <div class="g"><button class="p" onclick="kOpen()" data-i="new"></button><button onclick="undo()" data-i="undo"></button><button onclick="redo()" data-i="redo"></button>
 <button onclick="hint()" data-i="hint"></button><button onclick="G.flip=!G.flip;render()" data-i="flip"></button><button onclick="analyze()" data-i="analyze"></button>
 <button onclick="offerDraw()" data-i="draw"></button><button onclick="resign()" data-i="resign"></button><button onclick="clearStats()">Σ 0</button></div>
-<button class="p" style="width:100%;margin:6px 0;padding:12px" onclick="kOpen()">&#9823; KestoG bilan o'ynash</button><div class="row"><span>AI</span><select data-s="lvl"><option value="2">KestoG</option></select></div>
+<button class="p" style="width:100%;margin:6px 0;padding:12px" onclick="kOpen()">&#9823; Dragon bilan o'ynash</button><div class="row"><span>AI</span><select data-s="lvl"><option value="2">Dragon</option></select></div>
 <div class="row"><span>Mode</span><select data-s="mode"><option value="ai">vs AI</option><option value="local">2 players</option></select></div>
 <div class="row"><span>Color</span><select data-s="col"><option value="w">⚪</option><option value="b">⚫</option><option value="r">🎲</option></select></div>
 <div class="row"><span>⏱</span><select data-s="tc"><option value="0">∞</option><option value="60+0">1+0</option><option value="180+2">3+2</option><option value="300+3">5+3</option><option value="600+5">10+5</option><option value="900+10">15+10</option></select></div>
@@ -622,7 +622,7 @@ function padMove(b,side){const ms=legal(b,side);if(!ms.length)return null;let be
 if(window.PAD){document.title='Padavki shashka';const run=()=>setTimeout(()=>{try{const bk=document.createElement('button');bk.textContent='←';bk.style.cssText='position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:8px;z-index:99999;width:40px;height:40px;border:0;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;font-size:20px';bk.onclick=()=>{location.href='/'};document.body.appendChild(bk);newGame();tab('play');render();kick()}catch(e){}},700);document.readyState==='complete'?run():window.addEventListener('load',run)}
 function aiMove(){const tok=++G.tok,side=sideAt(G.cur);G.busy=true;render();const b0=G.pos[G.cur].slice();if(G.pad){setTimeout(()=>{if(tok!==G.tok||G.over){G.busy=false;return}const m=padMove(G.pos[G.cur],side);G.busy=false;if(m)doMove(m)},350);return}
 const local=()=>setTimeout(()=>{if(tok!==G.tok||G.over){G.busy=false;return}const r=bestMove(G.pos[G.cur],side,+S.lvl);G.busy=false;if(!r)return;$('an').textContent=`[${window.__kWhy||'?'}] d${r.d} · ${nodes} nodes · ${(r.v/100).toFixed(2)}`;doMove(r.m)},40);
-kestoMove(b0,side).then(m=>{if(tok!==G.tok||G.over){G.busy=false;return}if(m){G.busy=false;$('an').textContent='KestoG '+(window.__kMs||'?')+'ms';doMove(m)}else{$('an').textContent='local: '+(window.__kWhy||'?');local()}}).catch(local)}
+kestoMove(b0,side).then(m=>{if(tok!==G.tok||G.over){G.busy=false;return}if(m){G.busy=false;$('an').textContent='Dragon '+(window.__kMs||'?')+'ms';doMove(m)}else{$('an').textContent='local: '+(window.__kWhy||'?');local()}}).catch(local)}
 function checkEnd(){if(!atEnd())return;const b=G.pos[G.cur],side=sideAt(G.cur);
  if(!legal(b,side).length)return end(G.pad?(side>0?'w':'b'):(side>0?'b':'w'));
  let n=0;for(let i=G.mv.length-1;i>=0;i--){if(G.mv[i].caps.length||G.mv[i].man)break;n++}
@@ -684,7 +684,7 @@ function render(){
   h+=`<div class="${cl}" data-i="${i}">${S.co&&vc===0?`<b class="rk">${8-r}</b>`:''}${S.co&&vr===7?`<b class="fl">${'abcdefgh'[c]}</b>`:''}${p?`<i class="pc ${p>0?'w':'b'}${Math.abs(p)===2?' k':''}"></i>`:''}</div>`}
  B.innerHTML=h;drawArrow(B);
  let wc=0,bc=0;bd.forEach(p=>{if(p>0)wc++;else if(p<0)bc++});const top=G.flip?1:-1;
- const nm=s=>(s>0?'⚪ ':'⚫ ')+(G.mode==='ai'?(s===G.me?'You':'KestoG'):(s>0?'White':'Black'));
+ const nm=s=>(s>0?'⚪ ':'⚫ ')+(G.mode==='ai'?(s===G.me?'You':'Dragon'):(s>0?'White':'Black'));
  $('tn').textContent=nm(top);$('bn').textContent=nm(-top);$('tcn').textContent=(top>0?wc:bc);$('bcn').textContent=(top>0?bc:wc);clk();
  const e=ev(bd);$('evf').style.width=Math.max(4,Math.min(96,50+e/8))+'%';$('evt').textContent=(e/100).toFixed(1);
  $('st').textContent=G.edit?T('editor'):G.over?(G.res==='d'?T('drw'):G.res==='w'?T('winW'):T('winB')):G.busy?T('think'):side>0?T('turnW'):T('turnB');
@@ -731,12 +731,12 @@ $('dt-fmjd').value=DT.fmjd;$('dt-idf').value=DT.idf;(function(){var st=document.
 #kdlg .ks{width:100%;margin-top:16px;padding:14px;border:2px solid #629924;border-radius:10px;background:#1f2a14;color:#fff;font-size:17px;font-weight:600}
 #kdlg .kx{float:right;border:0;background:#3a3835;color:#fff;border-radius:8px;padding:4px 10px;font-size:18px}
 </style>
-<div id="kdlg"><div class="kb"><button class="kx" onclick="kClose()">&#10005;</button><h3>KestoG</h3>
+<div id="kdlg"><div class="kb"><button class="kx" onclick="kClose()">&#10005;</button><h3>🐉 Dragon</h3>
 <div class="kt">Qiyinlik</div><div class="kg" id="kd-d"></div>
 <div class="kt">Rang</div><div class="kg" id="kd-c"></div>
 <div class="kt">Vaqt</div><div class="kg" id="kd-t"></div>
 <div class="kt">Pozitsiya</div><div class="kg" id="kd-o"></div>
-<button class="ks" onclick="kStart()">KestoG bilan o'ynash</button></div></div>
+<button class="ks" onclick="kStart()">Dragon bilan o'ynash</button></div></div>
 <script>
 var KD={d:+(window.S&&S.kd)||6,c:(window.S&&S.col)||'r',t:(window.S&&S.tc)||'180+2',o:(window.S&&S.open)==='i780'?'i780':'std',n:''};
 var KO={

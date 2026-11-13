@@ -327,11 +327,11 @@
   function pvBox(k) {
     var r = PVC[k];
     if (!r || r.err) return '';
-    if (!r.pv || !r.d) return '<div style="margin-top:8px;text-align:left;background:#1d1f3a;border-radius:10px;padding:8px 10px;font-size:13px;opacity:.75">🐉 DragonBot tahlil qilyapti…</div>';
+    if (!r.pv || !r.d) return '<div style="margin-top:8px;text-align:left;background:#1d1f3a;border-radius:10px;padding:8px 10px;font-size:13px;opacity:.75">🐉 Dragon tahlil qilyapti…</div>';
     window.__pvT = function () { S.pvc = !S.pvc; sv(); if (PVREDRAW) PVREDRAW(); };
     var NW = 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
     return '<div style="margin-top:8px;text-align:left;background:#1d1f3a;border-radius:10px;padding:6px 10px">' +
-      '<div onclick="window.__pvT()" style="font-size:12.5px;opacity:.8;display:flex;justify-content:space-between;cursor:pointer;padding:2px 0"><span>🐉 DragonBot · chuqurlik ' + r.d + '</span><span>' + (S.pvc ? '▶' : '▼') + '</span></div>' + (S.pvc ? '' :
+      '<div onclick="window.__pvT()" style="font-size:12.5px;opacity:.8;display:flex;justify-content:space-between;cursor:pointer;padding:2px 0"><span>🐉 Dragon · chuqurlik ' + r.d + '</span><span>' + (S.pvc ? '▶' : '▼') + '</span></div>' + (S.pvc ? '' :
       (r.lines && r.lines.length > 1 ? r.lines.map(function (L, i) { return '<div style="' + NW + 'font-size:13.5px;line-height:1.5;margin-top:4px;border-top:1px solid #2b2f55;padding-top:4px"><b style="display:inline-block;min-width:44px;color:' + (L.ev == null ? '#ccc' : L.ev > 0.3 ? '#9be89b' : L.ev < -0.3 ? '#ff9b9b' : '#ddd') + '">' + (L.ev == null ? '–' : evFmt(L.ev)) + '</b>' + pvLine(L.pv, r.side) + '</div>'; }).join('') : '<div style="' + NW + 'font-size:13.5px;line-height:1.5;margin-top:4px;border-top:1px solid #2b2f55;padding-top:4px"><b style="display:inline-block;min-width:44px">' + (r.sc != null ? r.sc : '') + '</b>' + pvLine(r.pv, r.side) + '</div>')) + '</div>';
   }
   function pvStart(h, k) {
@@ -601,11 +601,11 @@
       if (cur < 1 || KK.busy) return;
       var h0 = hist[cur - 1], m = hist[cur].m, f = m.path[0], e = m.path[m.path.length - 1];
       var body = { board: toEng(h0.b), side: h0.t, from: f[0] * 8 + f[1], to: e[0] * 8 + e[1] };
-      KK.busy = true; KK.msg = '⏳ DragonBot tekshiryapti…'; draw();
+      KK.busy = true; KK.msg = '⏳ Dragon tekshiryapti…'; draw();
       kkPost('/api/kkbook/check', body).then(function (c) {
         if (c.error) { KK.busy = false; KK.msg = '⚠️ ' + c.error; draw(); return; }
         if (!c.same && c.evBest != null && c.evMove != null && c.evBest - c.evMove > 0.5 &&
-          !confirm('⚠️ DragonBot bu yurishni yomonroq deb baholayapti.\n\nSiznikiga: ' + evFmt(c.evMove) + '\nEng yaxshisi ' + (c.best || '?') + ': ' + evFmt(c.evBest) + '\n\nBaribir King Kongga o‘rgatamizmi?')) { KK.busy = false; KK.msg = 'Bekor qilindi'; draw(); return; }
+          !confirm('⚠️ Dragon bu yurishni yomonroq deb baholayapti.\n\nSiznikiga: ' + evFmt(c.evMove) + '\nEng yaxshisi ' + (c.best || '?') + ': ' + evFmt(c.evBest) + '\n\nBaribir King Kongga o‘rgatamizmi?')) { KK.busy = false; KK.msg = 'Bekor qilindi'; draw(); return; }
         return kkPost('/api/kkbook/add', body).then(function (r) { KK.busy = false; KK.msg = r.error ? '⚠️ ' + r.error : '✅ O‘rgatildi: ' + r.n + ' (jami ' + r.total + ')'; draw(); });
       }).catch(function () { KK.busy = false; KK.msg = '⚠️ Server bilan aloqa yo‘q'; draw(); });
     }
@@ -624,7 +624,7 @@
       if (KK.busy) return;
       var L = kkGameMoves(); if (!L.length) { KK.msg = 'Doskada ' + (KK.sides === 'w' ? 'oq' : KK.sides === 'b' ? 'qora' : '') + ' yurish yo‘q — avval o‘ynang'; draw(); return; }
       var body = L.map(function (x) { return { board: x.board, side: x.side, from: x.from, to: x.to }; });
-      KK.busy = true; KK.pend = null; KK.msg = '⏳ DragonBot ' + L.length + ' ta yurishni tekshiryapti… (~' + Math.max(2, Math.round(L.length * 0.7)) + ' s)'; draw();
+      KK.busy = true; KK.pend = null; KK.msg = '⏳ Dragon ' + L.length + ' ta yurishni tekshiryapti… (~' + Math.max(2, Math.round(L.length * 0.7)) + ' s)'; draw();
       kkPost('/api/kkbook/game', { moves: body }).then(function (c) {
         KK.busy = false;
         if (c.error) { KK.msg = '⚠️ ' + c.error; draw(); return; }
@@ -771,7 +771,7 @@
     }
     function bookHtml() {
       var h = hist[cur], d = bkLoad(h), adm = !!window.__isAdmin, sm = 'border:0;border-radius:10px;padding:7px 10px;color:#fff;font-size:13px;margin:2px;';
-      var tabs = (adm ? [['rep', '📖 Repertuar']] : []).concat([['col', '🐉 DragonBot'], ['sp', '🎮 O‘yinchilar']]);
+      var tabs = (adm ? [['rep', '📖 Repertuar']] : []).concat([['col', '🐉 Dragon'], ['sp', '🎮 O‘yinchilar']]);
       var o = '<div style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:8px">' + tabs.map(function (t) { return '<button data-a="bksrc:' + t[0] + '" style="' + sm + 'background:' + (BK.src === t[0] ? '#6aa22a' : '#1d1f3a') + '">' + t[1] + '</button>'; }).join('') + '</div>';
       if (!d || d.load) return o + '<div style="opacity:.7">⏳ Yuklanmoqda…</div>';
       if (d.err || d.error) return o + '<div style="opacity:.7">⚠️ ' + (d.error || 'Server bilan aloqa yo‘q') + '</div>';
@@ -862,7 +862,7 @@
       else {
         info = (h.t > 0 ? '⚪ Oq yuradi' : '⚫ Qora yuradi') + ' · ';
         if (over) info = '🏁 O‘yin tugadi: ' + (h.t > 0 ? '⚫ Qora' : '⚪ Oq') + ' yutdi';
-        else if (PL) info += PL.err ? 'Dvigatel javob bermadi <button data-a="retry" style="border:0;border-radius:10px;padding:6px 10px;background:#2e9d6b;color:#fff">Qayta</button>' : PL.th ? '⏳ DragonBot o‘ylayapti...' : (h.t === PL.me ? 'Sizning yurishingiz' : '');
+        else if (PL) info += PL.err ? 'Dvigatel javob bermadi <button data-a="retry" style="border:0;border-radius:10px;padding:6px 10px;background:#2e9d6b;color:#fff">Qayta</button>' : PL.th ? '⏳ Dragon o‘ylayapti...' : (h.t === PL.me ? 'Sizning yurishingiz' : '');
         else if (!S.engine) info += 'Dvigatel o‘chiq';
         else if (e && e.best) info += (e.bk ? '📖 Kitob: <b>' + sq(e.bk.from >> 3, e.bk.from & 7) + '-' + sq(e.bk.to >> 3, e.bk.to & 7) + '</b> · ' : '') + 'Eng yaxshi: <b>' + sq(e.best.from[0], e.best.from[1]) + ((e.best.cap !== undefined ? e.best.cap : (ms[0] && ms[0].caps.length)) ? ':' : '-') + sq(e.best.to[0], e.best.to[1]) + '</b>';
         else if (busyK[k]) info += '⏳ Dvigatel o‘ylayapti...';
@@ -920,7 +920,7 @@
           if (E.msg) s += '<div style="color:#ff8a8a;text-align:center;margin:6px">' + E.msg + '</div>';
           s += '<div style="text-align:center;margin-top:6px"><button data-a="ok" style="' + sm + ';background:#2e9d6b">✔ Tayyor</button><button data-a="cancel" style="' + sm + ';background:#8a2b3a">✖ Bekor</button></div>';
         } else if (panel === 'play') {
-          s += '<div style="text-align:center"><div style="margin-bottom:8px">Shu pozitsiyadan DragonBot’ga qarshi o‘ynang. Siz kim bilan?</div><button data-a="me:1" style="' + sm + '">⚪ Oq bilan</button><button data-a="me:-1" style="' + sm + '">⚫ Qora bilan</button><button data-a="menu" style="' + sm + '">Orqaga</button></div>';
+          s += '<div style="text-align:center"><div style="margin-bottom:8px">Shu pozitsiyadan Dragon’ga qarshi o‘ynang. Siz kim bilan?</div><button data-a="me:1" style="' + sm + '">⚪ Oq bilan</button><button data-a="me:-1" style="' + sm + '">⚫ Qora bilan</button><button data-a="menu" style="' + sm + '">Orqaga</button></div>';
         } else if (panel === 'learn') {
           s += '<div style="font-size:14px;line-height:1.6"><b>Rus shashkasi qoidalari</b><br>• Taxta 8×8, donalar faqat to‘q kataklarda.<br>• Oddiy dona oldinga diagonal yuradi.<br>• Urish <b>majburiy</b>, ham oldinga, ham orqaga. Ko‘p urish imkoni bo‘lsa, zanjirni oxirigacha urish kerak.<br>• Dona oxirgi qatorga yetsa <b>damka</b> bo‘ladi.<br>• Damka diagonal bo‘ylab istalgan masofaga yuradi va uradi.<br>• Urish paytida damka bo‘lgan dona o‘sha yurishda damka kabi davom etadi.<br>• Dona qolmasa yoki yura olmasa, o‘yinchi yutqazadi.<br><b>Baho:</b> +1.0 ≈ oq tomonda bitta dona ustunlik. <b>?!</b> noaniq, <b>?</b> xato, <b>??</b> qo‘pol xato.</div><div style="text-align:center;margin-top:8px"><button data-a="menu" style="' + sm + '">Orqaga</button></div>';
         } else if (panel === 'set') {

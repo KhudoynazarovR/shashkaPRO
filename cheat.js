@@ -72,7 +72,7 @@ function record(g, pct, n) {
   C.flagAt = Date.now(); store.save();
   const opp = users()[g.opp] || {};
   const txt = '🕵️ <b>Shubhali o‘yinchi</b>\n\n👤 <b>' + esc(u.name || g.uid) + '</b> (<code>' + g.uid + '</code>) · ELO ' + (u.elo || 1000) + '\n' +
-    '🤖 Oxirgi ' + LAST + ' ta g‘alabada KestoG bilan moslik: <b>' + avg + '%</b>\n' +
+    '🤖 Oxirgi ' + LAST + ' ta g‘alabada Dragon bilan moslik: <b>' + avg + '%</b>\n' +
     last.map(x => '• ' + x.p + '% (' + x.n + ' yurish)').join('\n') +
     '\n\nOxirgi raqib: ' + esc(opp.name || g.opp) + '\n<i>Kuchli o‘yinchilarda ham moslik yuqori bo‘lishi mumkin — o‘yinlarini ko‘rib, keyin qaror qiling.</i>';
   for (const a of ADM()) tg('sendMessage', { chat_id: a, text: txt, parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '🎮 O‘yinni yopish', callback_data: 'md:cp:' + g.uid }, { text: '✅ Toza', callback_data: 'md:cx:' + g.uid }]] } });

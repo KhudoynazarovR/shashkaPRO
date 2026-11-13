@@ -12,7 +12,7 @@
     ["🪙", "G‘alabadan 2× tanga", "kunlik limit ham 2 barobar"],
     ["🔥", "Kunlik seriya bonusi 2×", "har kuni kirganda"],
     ["🏆", "Turnirga kirish −50%", "chegirma bilan qatnashing"],
-    ["🔬", "Kuchli tahlil", "tahlil taxtasida KestoG 5–10 soniya o‘ylaydi"]
+    ["🔬", "Kuchli tahlil", "tahlil taxtasida Dragon dvigateli 5–10 soniya o‘ylaydi"]
   ];
   function tgw() { return window.Telegram && Telegram.WebApp; }
   function initData() { var t = tgw(); return (t && t.initData) || ""; }

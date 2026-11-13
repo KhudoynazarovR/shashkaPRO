@@ -96,7 +96,7 @@
     ["TOMOSHA VA TAHLIL", [
       ["📺", "Jonli efir", "Hozirgi o‘yinlarni kuzating", "@live", "#ff4d6d,#ff8fa3"],
       ["📁", "Arxiv", "O‘tgan o‘yinlar tarixi", "@arch", "#2fd27f,#1ea36a"],
-      ["🔬", "Tahlil taxtasi", "DragonBot bilan pozitsiya tahlili", "@board", "#3b82f6,#06b6d4"]], "📺"],
+      ["🔬", "Tahlil taxtasi", "Dragon dvigateli bilan pozitsiya tahlili", "@board", "#3b82f6,#06b6d4"]], "📺"],
     ["DO‘KON VA SOVRINLAR", [
       ["👑", "Premium", "2× tanga, chegirmalar va boshqalar", "@prem", "#b8860b,#ffd54a"],
       ["🪙", "Tosh do‘koni", "Donalar va o‘z donangiz", "@shop", "#7b3ff2,#d62f8f"],
