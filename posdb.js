@@ -83,7 +83,7 @@ function explore(src, b, s, admin, sc) {
     const L = R.moves(b, s), k = b.join('') + s, rows = [];
     let c = null; try { c = require('./kestoai.js').peek(b, s).colette; } catch (e) {}
     const bk = book()[k];
-    if (c) { const m = L.find(x => x.from === c.from && x.to === c.to); if (m) rows.push({ id: c.from + '-' + c.to, from: c.from, to: c.to, t: mtxt(m), tag: '📗 Colette' }); }
+    if (c) { const m = L.find(x => x.from === c.from && x.to === c.to); if (m) rows.push({ id: c.from + '-' + c.to, from: c.from, to: c.to, t: mtxt(m), tag: '📚 Nazariya' }); }
     if (bk) { const m = L.find(x => x.from === bk.from && x.to === bk.to); if (m) { const ex = rows.find(r => r.id === bk.from + '-' + bk.to); if (ex) { ex.tag += ' · 📖 kitob'; ex.n = bk.n; } else rows.push({ id: bk.from + '-' + bk.to, from: bk.from, to: bk.to, t: mtxt(m), tag: '📖 kitob', n: bk.n }); } }
     return { rows };
   }

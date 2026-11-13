@@ -240,7 +240,7 @@
     }).catch(function () { C.innerHTML = '<div class="msg">⚠️ Server bilan aloqa yo‘q</div>'; });
   }
   function num(k) { var g = V.g, first = g.moves[0] ? g.moves[0].s : 1, n = Math.floor((k + (first === -1 ? 1 : 0)) / 2) + 1; return n + (g.moves[k].s === 1 ? '. ' : '... '); }
-  function srcTxt(x) { return x.g ? '🛡 qo‘riqchi (' + x.g.t + ' o‘rniga)' : ({ 'dvigatel': '⚙️ dvigatel', 'Colette': '📘 Colette', 'kitob': '📖 kitob', 'admin': '🦍 o‘rgatilgan', 'baza': '♟ baza', 'etyud': '🧩 etyud', 'xotira': '💾 xotira' })[x.src] || '⚙️ dvigatel'; }
+  function srcTxt(x) { return x.g ? '🛡 qo‘riqchi (' + x.g.t + ' o‘rniga)' : ({ 'dvigatel': '⚙️ dvigatel', 'Colette': '📚 Nazariya', 'kitob': '📖 kitob', 'admin': '🦍 o‘rgatilgan', 'baza': '♟ baza', 'etyud': '🧩 etyud', 'xotira': '💾 xotira' })[x.src] || '⚙️ dvigatel'; }
   function drawGame() {
     var g = V.g, x = g.moves[V.cur], C = O.querySelector('#kkC'); if (!x) return;
     var flip = g.kk === -1, bi = bdIdx(), BD = BDS[bi], hl = {}, alt = V.pick, tgt = {};
@@ -350,24 +350,24 @@
         '<input type="range" min="0" max="100" step="5" value="' + e.w + '" data-w="' + m.id + '" style="flex:1;min-width:110px;accent-color:#22c55e">' +
         '<b style="width:42px;text-align:right">' + e.w + '<small style="display:block;font-size:10.5px;opacity:.7;font-weight:400">' + (e.w ? pct + '%' : '') + '</small></b>' +
         '<button data-n="' + m.id + '" style="padding:5px 7px">✏️</button>' +
-        '<div style="flex-basis:100%;font-size:11.5px;opacity:.75;margin-top:-2px">' + (z ? '✅ ' + z.w + ' · ❌ ' + z.l + ' · 🤝 ' + z.d : 'natija yo‘q') + (m.trap ? ' · 🪤 raqiblar ' + m.trap.err + '/' + m.trap.n + ' xato qilgan' : '') + (m.allW != null ? ' · umumiyda ' + m.allW : '') + (sf != null ? ' · ' + (sf < 0 ? '⚠️ ' + sf + ' dona' : '🛡 xavfsiz') : '') + (e.lock && e.w ? ' · 🔒' : '') + (m.src && m.src !== 'admin' ? ' · ' + ({ colette: '📗 Colette', kitob: '📖 kitob', pdn: '📥 PDN' }[m.src] || m.src) : '') + (e.note ? '<br>📝 ' + esc(e.note) : '') + '</div></div>';
+        '<div style="flex-basis:100%;font-size:11.5px;opacity:.75;margin-top:-2px">' + (z ? '✅ ' + z.w + ' · ❌ ' + z.l + ' · 🤝 ' + z.d : 'natija yo‘q') + (m.trap ? ' · 🪤 raqiblar ' + m.trap.err + '/' + m.trap.n + ' xato qilgan' : '') + (m.allW != null ? ' · umumiyda ' + m.allW : '') + (sf != null ? ' · ' + (sf < 0 ? '⚠️ ' + sf + ' dona' : '🛡 xavfsiz') : '') + (e.lock && e.w ? ' · 🔒' : '') + (m.src && m.src !== 'admin' ? ' · ' + ({ colette: '📚 Nazariya', kitob: '📖 kitob', pdn: '📥 PDN' }[m.src] || m.src) : '') + (e.note ? '<br>📝 ' + esc(e.note) : '') + '</div></div>';
     }).join('');
     h += '<div style="font-size:11.5px;opacity:.7;margin:6px 2px">Yurish nomini bossangiz — keyingi pozitsiyaga o‘tasiz. 0 — o‘ynamaydi. Qo‘lda qo‘yilgan foizlar 🔒 qulflanadi (o‘z-o‘zidan moslashmaydi).</div>';
     C.innerHTML = h;
     var bar = sbar('<button id="rT">Sinab ko‘r</button><button class="o" id="rX">🧪 Sinash</button><button class="y" id="rS"' + (RP.dirty ? '' : ' disabled') + '>💾 Saqlash</button>');
-    [].forEach.call(C.querySelectorAll('[data-sc]'), function (el) { el.onclick = function () { var id = el.getAttribute('data-sc'); if (id === '+') { var nm = prompt('Raqib nomi (masalan coletteBOT yoki o‘yinchi ismi):'); if (!nm) return; id = 'opp:' + nm.toLowerCase().replace(/[^a-z0-9_\-]/g, '').slice(0, 40); post('/api/kkrep/scope', { id: id }).then(function () { RP.sc = id; repLoad(); }); return; } if (RP.dirty && !confirm('Saqlanmagan o‘zgarishlar yo‘qoladi. Davom etaymi?')) return; RP.sc = id; repLoad(); }; });
+    [].forEach.call(C.querySelectorAll('[data-sc]'), function (el) { el.onclick = function () { var id = el.getAttribute('data-sc'); if (id === '+') { var nm = prompt('Raqib nomi (bot yoki o‘yinchi ismi):'); if (!nm) return; id = 'opp:' + nm.toLowerCase().replace(/[^a-z0-9_\-]/g, '').slice(0, 40); post('/api/kkrep/scope', { id: id }).then(function () { RP.sc = id; repLoad(); }); return; } if (RP.dirty && !confirm('Saqlanmagan o‘zgarishlar yo‘qoladi. Davom etaymi?')) return; RP.sc = id; repLoad(); }; });
     [].forEach.call(C.querySelectorAll('[data-cr]'), function (el) { el.onclick = function () { var i = +el.getAttribute('data-cr'); if (i < 0) { RP.path = []; RP.b = initB(); RP.s = 1; } else { var p = RP.path[i]; RP.path = RP.path.slice(0, i + 1); RP.b = p.after || p.b; RP.s = p.after ? -p.s : p.s; } repLoad(); }; });
     [].forEach.call(C.querySelectorAll('[data-go]'), function (el) { el.onclick = function () { var m = v.list.filter(function (y) { return y.id === el.getAttribute('data-go'); })[0]; if (RP.dirty && !confirm('Saqlanmagan o‘zgarishlar yo‘qoladi. Davom etaymi?')) return; RP.path.push({ b: RP.b, s: RP.s, t: m.t, after: m.after }); RP.b = m.after; RP.s = -RP.s; repLoad(); }; });
     [].forEach.call(C.querySelectorAll('[data-w]'), function (el) { el.oninput = function () { var e = RP.edit[el.getAttribute('data-w')]; e.w = +el.value; e.lock = true; RP.dirty = true; var b = el.nextElementSibling; b.firstChild.nodeValue = e.w; var sm = repSum(); [].forEach.call(C.querySelectorAll('[data-w]'), function (q) { var ee = RP.edit[q.getAttribute('data-w')]; q.nextElementSibling.querySelector('small').textContent = ee.w ? Math.round(ee.w * 100 / (sm || 1)) + '%' : ''; }); O.querySelector('#rS').disabled = false; }; el.onchange = repDraw; });
     [].forEach.call(C.querySelectorAll('[data-n]'), function (el) { el.onclick = function () { var e = RP.edit[el.getAttribute('data-n')]; var mk = prompt('Belgi: !!  !  !?  ?!  ?  ??  (bo‘sh — yo‘q)', e.mk || ''); if (mk === null) return; var nt = prompt('Izoh (nima uchun):', e.note || ''); if (nt === null) return; e.mk = mk.trim(); e.note = nt.trim(); RP.dirty = true; repDraw(); }; });
     bar.querySelector('#rS').onclick = function () { post('/api/kkrep/set', { sc: RP.sc, board: RP.b, side: RP.s, moves: RP.edit }).then(function (r) { if (r.error) return alert(r.error); try { Telegram.WebApp.HapticFeedback.notificationOccurred('success'); } catch (e) {} repLoad(); }); };
     bar.querySelector('#rT').onclick = function () {
-      var L = v.list.filter(function (m) { return RP.edit[m.id].w > 0; }); if (!L.length) return alert('Foiz qo‘yilgan yurish yo‘q — King Kong bu yerda o‘zi o‘ylaydi (Colette, kitob, dvigatel).');
+      var L = v.list.filter(function (m) { return RP.edit[m.id].w > 0; }); if (!L.length) return alert('Foiz qo‘yilgan yurish yo‘q — King Kong bu yerda o‘zi o‘ylaydi (nazariya, kitob, dvigatel).');
       var cnt = {}, sm = repSum(); for (var i = 0; i < 20; i++) { var x = Math.random() * sm; for (var j = 0; j < L.length; j++) { x -= RP.edit[L[j].id].w; if (x <= 0) { cnt[L[j].t] = (cnt[L[j].t] || 0) + 1; break; } } }
       alert('20 ta o‘yinda King Kong taxminan shunday o‘ynaydi:\n\n' + Object.keys(cnt).sort(function (a, b) { return cnt[b] - cnt[a]; }).map(function (k) { return k + ' — ' + cnt[k] + ' marta'; }).join('\n'));
     };
     bar.querySelector('#rX').onclick = function () {
-      if (!confirm('Shu pozitsiyadan King Kong Colette’ga qarshi 10 ta tez o‘yin o‘ynaydi (ranglar almashib). Natijalar «🤖 Sinov o‘yinlari»da, xatolar «⚡ Tuzatishlar»da. Boshlaymi?')) return;
+      if (!confirm('Shu pozitsiyadan King Kong nazariya bazasiga qarshi 10 ta tez o‘yin o‘ynaydi (ranglar almashib). Natijalar «🤖 Sinov o‘yinlari»da, xatolar «⚡ Tuzatishlar»da. Boshlaymi?')) return;
       post('/api/kkrep/test', { sc: RP.sc, board: RP.b, side: RP.s, kk: RP.s, n: 10 }).then(function (r) { alert(r.error ? '⚠️ ' + r.error : '🧪 Boshlandi: 10 ta o‘yin. Bir necha daqiqadan keyin «🤖 Sinov o‘yinlari»ni oching.'); });
     };
     if (!RP.safe) post('/api/kkadm/safe', { board: RP.b, side: RP.s }).then(function (r) { var L = r.list || [], best = L.length ? L[0].v : 0, o = {}; L.forEach(function (m) { o[m.from + '-' + m.to] = m.v - best; }); RP.safe = o; if (O && O.querySelector('#rS') && RP.v === v) repDraw(); });
@@ -382,15 +382,15 @@
         h += L.length ? '<div class="box" style="font:12.5px ui-monospace,monospace;line-height:1.8;overflow-x:auto">' + L.map(function (x, i) {
           var num = Math.floor(x.d / 2) + 1, z = x.st;
           return '<div data-tr="' + i + '" style="white-space:nowrap;padding-left:' + (x.d * 12) + 'px;cursor:pointer">' + num + (x.s === 1 ? '. ' : '… ') + (x.opp ? '<span style="opacity:.6">' + esc(x.t) + '</span>' : '<b style="color:' + (x.bad ? '#fca5a5' : x.w >= 80 ? '#86efac' : '#fde68a') + '">' + esc(x.t) + (x.mk ? esc(x.mk) : '') + '</b> ' + x.w + (x.bad ? ' ⚠️' : '')) + (z ? ' <span style="font-family:system-ui;opacity:.65;font-size:11px">✅' + z.w + ' ❌' + z.l + ' 🤝' + z.d + '</span>' : '') + '</div>';
-        }).join('') + '</div>' : '<div class="msg" style="opacity:.7">Bu doirada hali repertuar yo‘q. «📗 Colette’dan import» yoki «📖 Repertuar»dan boshlang.</div>';
+        }).join('') + '</div>' : '<div class="msg" style="opacity:.7">Bu doirada hali repertuar yo‘q. «📚 Nazariyadan import» yoki «📖 Repertuar»dan boshlang.</div>';
         var sw = function (k, t, d) { return '<button class="auto" data-cf="' + k + '"><span style="flex:1">' + t + '<small>' + d + '</small></span><span class="sw' + (cfg[k] ? ' on' : '') + '"></span></button>'; };
         h += '<div class="sec">SOZLAMALAR</div>' +
           '<button class="auto" id="cD"><span style="flex:1">🎯 Repertuar chuqurligi<small>import va daraxt shu yurishgacha; keyin King Kong o‘zi o‘ylaydi</small></span><b>' + cfg.depth + ' yurish</b></button>' +
           sw('tour100', '🏆 Turnirda faqat 100% lik yurishlar', 'turnir o‘yinlarida eng ishonchli yurishlar') +
           sw('adapt', '📊 Foizlar o‘zi moslashsin', 'yutqazgan tarmoq pasayadi, yutgani ko‘tariladi (🔒 qulflanganlar tegilmaydi)') +
           sw('traps', '🪤 Tuzoqlarga yo‘naltirish', 'repertuar bo‘lmagan joyda raqiblar ko‘p xato qilgan pozitsiyaga xavfsiz yo‘l') +
-          '<button class="auto" id="cI"><span style="flex:1">📗 Colette va kitobdan import<small>shu doiraga; mavjud qulflangan yozuvlarga tegilmaydi</small></span><b style="color:#93c5fd">Import</b></button>' +
-          '<button class="auto" id="cL"><span style="flex:1">🌐 Lidraughts’dagi eski o‘yinlar<small>yutqazgan/durang o‘yinlar → tahlil → ⚡ tuzatishlar (har kecha o‘zi ham)</small></span><b style="color:#93c5fd">Yuklash</b></button>' +
+          '<button class="auto" id="cI"><span style="flex:1">📚 Nazariya bazasidan import<small>shu doiraga; mavjud qulflangan yozuvlarga tegilmaydi</small></span><b style="color:#93c5fd">Import</b></button>' +
+          '<button class="auto" id="cL"><span style="flex:1">🌐 Onlayn eski o‘yinlar<small>yutqazgan/durang o‘yinlar → tahlil → ⚡ tuzatishlar (har kecha o‘zi ham)</small></span><b style="color:#93c5fd">Yuklash</b></button>' +
           '<button class="auto" id="cE"><span style="flex:1">📤 Eksport<small>shu doira repertuari (JSON) — nusxa olish uchun</small></span>›</button>';
         C.innerHTML = h;
         sbar('<button class="o" id="tN">＋ Repertuarni ochish</button>').querySelector('#tN').onclick = function () { repOpen(null, null, RP.sc); };
@@ -398,7 +398,7 @@
         [].forEach.call(C.querySelectorAll('[data-tr]'), function (el) { el.onclick = function () { var x = L[+el.getAttribute('data-tr')]; RP.path = [{ b: x.b, s: x.s, t: (x.pre.length ? '…' : '') + x.pre.slice(-2).join(' ') || '♟' }]; RP.b = x.b; RP.s = x.s; repLoad(); }; });
         [].forEach.call(C.querySelectorAll('[data-cf]'), function (el) { el.onclick = function () { var k = el.getAttribute('data-cf'), o = {}; o[k] = !cfg[k]; post('/api/kkrep/cfg', o).then(treeView); }; });
         C.querySelector('#cD').onclick = function () { var n = prompt('Repertuar chuqurligi (yurishlar, 2–30):', cfg.depth); if (n) post('/api/kkrep/cfg', { depth: +n }).then(treeView); };
-        C.querySelector('#cI').onclick = function () { if (!confirm('Colette va kitob yurishlari «' + RP.sc + '» doirasiga foiz bilan qo‘shilsinmi?')) return; this.querySelector('b').textContent = '⏳'; post('/api/kkrep/import', { sc: RP.sc }).then(function (r) { alert('📗 ' + (r.add || 0) + ' ta yurish qo‘shildi'); treeView(); }); };
+        C.querySelector('#cI').onclick = function () { if (!confirm('nazariya bazasi yurishlari «' + RP.sc + '» doirasiga foiz bilan qo‘shilsinmi?')) return; this.querySelector('b').textContent = '⏳'; post('/api/kkrep/import', { sc: RP.sc }).then(function (r) { alert('📗 ' + (r.add || 0) + ' ta yurish qo‘shildi'); treeView(); }); };
         C.querySelector('#cL').onclick = function () { this.querySelector('b').textContent = '⏳'; post('/api/kkadm/ldimport', { n: 120 }).then(function (r) { alert(r.error ? '⚠️ ' + r.error : '🌐 ' + r.add + ' ta o‘yin yuklandi (' + r.seen + ' ta ko‘rildi). Xatolar tahlildan keyin «⚡ Tuzatishlar»da.'); treeView(); }); };
         C.querySelector('#cE').onclick = function () { post('/api/kkrep/export', { sc: RP.sc }).then(function (r) { var C2 = shell('📤 Eksport · ' + esc(RP.sc), treeView); C2.innerHTML = '<textarea style="width:100%;height:60vh;background:#1d1858;color:#fff;border:0;border-radius:12px;padding:10px;font:11px ui-monospace,monospace">' + esc(JSON.stringify(r.data)) + '</textarea>'; }); };
       });
@@ -412,7 +412,7 @@
     var h = '<div class="ch" style="margin:0 0 6px">' + pens.map(function (p) { return '<button data-pen="' + p[0] + '"' + (PE.pen === p[0] ? ' class="on"' : '') + '>' + p[1] + '</button>'; }).join('') + '</div>';
     h += bdHtml(PE.b, false, {}, PE.res && PE.res.f != null ? [[PE.res.f, PE.res.t, 'g']] : null);
     h += '<div class="ch"><button id="pS">' + (PE.s === 1 ? '⚪ Oq yuradi' : '⚫ Qora yuradi') + '</button><button id="pI">↺ Boshlang‘ich</button><button id="pC">🧹 Tozalash</button></div>';
-    if (PE.res) h += '<div class="box"><div class="h">KING KONG BU YERDA</div>' + (PE.res.n ? '<b style="font-size:17px">' + esc(PE.res.n) + '</b> — ' + esc(({ tb: '🏁 endshpil bazasi', admin: '📚 o‘rgatilgan', etude: '🧩 etyud', colette: '📗 Colette', book: '📖 kitob', cache: '🧠 xotira', deep: '🎓 saboq', engine: '⚙️ dvigatel (o‘ylab topadi)', over: 'o‘yin tugagan' })[PE.res.src] || PE.res.src || '') : 'Yurish yo‘q') + '</div>';
+    if (PE.res) h += '<div class="box"><div class="h">KING KONG BU YERDA</div>' + (PE.res.n ? '<b style="font-size:17px">' + esc(PE.res.n) + '</b> — ' + esc(({ tb: '🏁 endshpil bazasi', admin: '📚 o‘rgatilgan', etude: '🧩 etyud', colette: '📚 Nazariya', book: '📖 kitob', cache: '🧠 xotira', deep: '🎓 saboq', engine: '⚙️ dvigatel (o‘ylab topadi)', over: 'o‘yin tugagan' })[PE.res.src] || PE.res.src || '') : 'Yurish yo‘q') + '</div>';
     C.innerHTML = h;
     var bar = sbar('<button class="o" id="pK">🦍 Nima o‘ynaydi?</button><button class="y" id="pR">📖 Repertuarda</button>');
     [].forEach.call(C.querySelectorAll('[data-pen]'), function (el) { el.onclick = function () { PE.pen = +el.getAttribute('data-pen'); posEdit(); }; });

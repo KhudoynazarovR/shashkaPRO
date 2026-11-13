@@ -570,7 +570,7 @@
     }
     var KK = { msg: '', sides: 'w', busy: false };
     // 🦍 King Kong ko'rinishi: har pozitsiyada u nima o'ynaydi va qayerdan (TB / siz / etyud / Colette / kitob / dvigatel)
-    var KKP = {}, KKSRC = { tb: '🏁 endshpil bazasi', admin: '🎓 siz o‘rgatgansiz', etude: '🧩 etyud', colette: '📗 Colette', book: '📖 kitob', cache: '🧠 oldindan hisoblangan', engine: '🧠 o‘zi o‘ylaydi (dvigatel)', over: '🏁 o‘yin tugagan' };
+    var KKP = {}, KKSRC = { tb: '🏁 endshpil bazasi', admin: '🎓 siz o‘rgatgansiz', etude: '🧩 etyud', colette: '📚 Nazariya', book: '📖 kitob', cache: '🧠 oldindan hisoblangan', engine: '🧠 o‘zi o‘ylaydi (dvigatel)', over: '🏁 o‘yin tugagan' };
     function kkPeekLoad() {
       var need = [], keys = [];
       hist.forEach(function (h) { var k = kf(h); if (KKP[k] === undefined && keys.indexOf(k) < 0) { keys.push(k); need.push({ board: toEng(h.b), side: h.t }); } });
@@ -583,8 +583,8 @@
       if (P === 0 || P === undefined) return '🦍 King Kong: ⏳';
       if (!P) return '';
       var s = '🦍 King Kong bu yerda: ' + (P.n ? '<b>' + P.n + '</b> · ' : '') + (KKSRC[P.src] || P.src) + (P.res ? ' (' + (P.res === 'win' ? 'yutadi' : P.res === 'loss' ? 'yutqazadi' : 'durang') + ')' : '') + (P.forced ? ' · majburiy' : '');
-      if (P.src === 'admin' && P.col && P.col !== P.n) s += '<br><span style="font-size:12px;opacity:.75">Colette: ' + P.col + ' edi</span>';
-      else if (P.src !== 'colette' && P.src !== 'admin' && P.col && P.col !== P.n) s += '<br><span style="font-size:12px;opacity:.75">Colette: ' + P.col + '</span>';
+      if (P.src === 'admin' && P.col && P.col !== P.n) s += '<br><span style="font-size:12px;opacity:.75">Nazariya: ' + P.col + ' edi</span>';
+      else if (P.src !== 'colette' && P.src !== 'admin' && P.col && P.col !== P.n) s += '<br><span style="font-size:12px;opacity:.75">Nazariya: ' + P.col + '</span>';
       if (P.deep) s += '<br><span style="font-size:12px;opacity:.75">⚠️ Bu yerda avval yutqazgan — chuqurroq o‘ylaydi</span>';
       return s;
     }
@@ -664,7 +664,7 @@
       aunew: function () { newPos(start(), 1); panel = 'auto'; AU.run = true; setTimeout(auStep, 30); },
       kkgame: function () { kkGame(); },
       kkdeep: function () {
-        if (!confirm('King Kong yutqazgan o‘yinlardan olgan hamma «saboq»larni o‘chiramizmi?\n\nBu joylarda u yana odatdagidek (Colette, kitob, oddiy vaqt) o‘ynaydi. O‘zingiz o‘rgatgan yurishlar o‘chmaydi.')) return;
+        if (!confirm('King Kong yutqazgan o‘yinlardan olgan hamma «saboq»larni o‘chiramizmi?\n\nBu joylarda u yana odatdagidek (nazariya, oddiy vaqt) o‘ynaydi. O‘zingiz o‘rgatgan yurishlar o‘chmaydi.')) return;
         KK.msg = '⏳ Tozalanmoqda…';
         kkPost('/api/kkbook/deepclear', {}).then(function (r) { KK.msg = '✅ ' + (r.n || 0) + ' ta saboq o‘chirildi'; KKP = {}; draw(); }).catch(function () { KK.msg = '⚠️ Server bilan aloqa yo‘q'; draw(); });
       },
@@ -769,7 +769,7 @@
     }
     function bookHtml() {
       var h = hist[cur], d = bkLoad(h), adm = !!window.__isAdmin, sm = 'border:0;border-radius:10px;padding:7px 10px;color:#fff;font-size:13px;margin:2px;';
-      var tabs = (adm ? [['rep', '📖 Repertuar']] : []).concat([['sp', '🎮 ShashkaPRO'], ['col', '📗 Colette']]).concat(adm ? [['ld', '🌐 Lidraughts']] : []);
+      var tabs = (adm ? [['rep', '📖 Repertuar']] : []).concat([['sp', '🎮 ShashkaPRO'], ['col', '📚 Nazariya']]);
       var o = '<div style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:8px">' + tabs.map(function (t) { return '<button data-a="bksrc:' + t[0] + '" style="' + sm + 'background:' + (BK.src === t[0] ? '#6aa22a' : '#1d1f3a') + '">' + t[1] + '</button>'; }).join('') + '</div>';
       if (!d || d.load) return o + '<div style="opacity:.7">⏳ Yuklanmoqda…</div>';
       if (d.err || d.error) return o + '<div style="opacity:.7">⚠️ ' + (d.error || 'Server bilan aloqa yo‘q') + '</div>';
@@ -793,7 +793,7 @@
         }).join('');
         return o + '<div style="font-size:11.5px;opacity:.65;margin-top:6px">Yurishni bossangiz — foiz, belgi va izoh. Doskada yurib keyingi pozitsiyaga o‘tasiz.</div>';
       }
-      if (!rows.length) return o + '<div style="opacity:.7;padding:6px 2px">' + (BK.src === 'col' ? 'Colette va kitobda bu pozitsiya yo‘q' : 'Bu pozitsiyada hali partiya yo‘q') + '</div>';
+      if (!rows.length) return o + '<div style="opacity:.7;padding:6px 2px">' + (BK.src === 'col' ? 'nazariya bazasida bu pozitsiya yo‘q' : 'Bu pozitsiyada hali partiya yo‘q') + '</div>';
       if (BK.src === 'col') return o + rows.map(function (x) { return '<div data-a="bkplay:' + x.id + '" style="display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid #22264d;cursor:pointer"><b style="width:70px;font-family:ui-monospace,monospace">' + x.t + '</b><span style="flex:1">' + x.tag + '</span><span style="opacity:.7;font-size:12px">' + (x.n ? x.n.toLocaleString() + ' marta' : '') + '</span></div>'; }).join('');
       var tot = 0; rows.forEach(function (x) { tot += x.n; });
       o += '<div style="display:flex;font-size:11.5px;opacity:.6;padding:0 4px 4px"><span style="width:62px">Yurish</span><span style="width:84px">O‘yinlar</span><span style="flex:1;text-align:center">Oq / Durang / Qora</span></div>';
@@ -889,7 +889,7 @@
               '<button data-a="kkgood" style="' + sm + ';background:#2e9d6b">⏭ Xatolarsiz o‘rgatish</button><button data-a="kkall" style="' + sm + ';background:#b45309">Hammasini</button><button data-a="kkno" style="' + sm + ';background:#5a2a35">Bekor</button>';
           } else s += '<button data-a="kkgame" style="' + sm + ';background:#b45309;margin-top:6px"' + (KK.busy || !_gn ? ' disabled' : '') + '>🦍 Partiyani o‘rgatish (' + _gn + ' yurish)</button>';
           s += '</div><div style="font-size:13px;opacity:.75;margin-bottom:4px">Yoki faqat oxirgi yurish:</div>';
-          if (cur >= 1 && hist[cur].m) s += '<div style="font-size:14px;margin-bottom:8px">Oxirgi yurish: <b>' + note(hist[cur].m) + '</b> (' + (hist[cur - 1].t > 0 ? '⚪ oq' : '⚫ qora') + ')<br><span style="opacity:.7;font-size:12px">King Kong shu pozitsiyaga tushsa, aynan shu yurishni qiladi (Colette va kitobdan oldin).</span></div><button data-a="kkteach" style="' + sm + ';background:#b45309">🦍 Shu yurishni o‘rgatish</button>';
+          if (cur >= 1 && hist[cur].m) s += '<div style="font-size:14px;margin-bottom:8px">Oxirgi yurish: <b>' + note(hist[cur].m) + '</b> (' + (hist[cur - 1].t > 0 ? '⚪ oq' : '⚫ qora') + ')<br><span style="opacity:.7;font-size:12px">King Kong shu pozitsiyaga tushsa, aynan shu yurishni qiladi (nazariya bazasidan oldin).</span></div><button data-a="kkteach" style="' + sm + ';background:#b45309">🦍 Shu yurishni o‘rgatish</button>';
           else s += '<div style="font-size:14px;opacity:.8;margin-bottom:8px">Doskada kerakli yurishni qiling — keyin shu yerda uni King Kongga o‘rgatasiz.</div>';
           s += '<div style="margin-top:6px"><button data-a="kkpdn" style="' + sm + '">📋 Partiyani kiritish</button><button data-a="kklist" style="' + sm + '">📚 O‘rgatilganlar</button><button data-a="kkdeep" style="' + sm + ';background:#5a2a35">🧹 Saboqlarni tozalash</button><button data-a="menu" style="' + sm + '">Orqaga</button></div>';
           if (KK.msg) s += '<div style="margin-top:8px;font-size:14px">' + KK.msg + '</div>';

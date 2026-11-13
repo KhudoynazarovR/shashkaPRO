@@ -144,7 +144,7 @@ function importBooks(sc, depthPly, by) {
       } else for (const m of L) q.push([m.board, -s, ply + 1]);
     }
   }
-  r.hist.unshift({ at: Date.now(), by: String(by || ''), sc, k: null, why: '📗 Colette/kitob importi: ' + add + ' ta yurish' }); store.save();
+  r.hist.unshift({ at: Date.now(), by: String(by || ''), sc, k: null, why: '📚 Nazariya importi: ' + add + ' ta yurish' }); store.save();
   return add;
 }
 // 📥 PDN: bir yoki ko'p partiya → chastota bo'yicha vaznlar
