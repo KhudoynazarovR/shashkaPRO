@@ -582,23 +582,37 @@
         RM.el.style.cssText = 'position:fixed;inset:0;z-index:2147481000;background:rgba(5,4,20,.55);display:flex;align-items:center;justify-content:center;padding:18px;box-sizing:border-box';
         document.body.appendChild(RM.el);
       }
-      var me = st.color, op = me === 'white' ? 'black' : 'white', win = st.winner, res = win === 'draw' || !win ? 'Durang' : win === me ? 'Siz yutdingiz!' : 'Siz yutqazdingiz';
-      var col = win === me ? '#fff' : win === 'draw' || !win ? '#ffd34d' : '#ff8a8a';
-      var nm = function (c) { return String(st[c] || '').replace(/[<>&]/g, ''); }, ini = function (c) { var s = nm(c).replace(/[^\p{L}\p{N}]/gu, ''); return (s[0] || '?').toUpperCase(); };
-      var ed = st.eloD || null, dl = function (c) { var v = ed && ed[c]; return v ? '<div style="font-size:12px;color:' + (v > 0 ? '#7ee08a' : '#ff8a8a') + '">' + (v > 0 ? '+' : '') + v + '</div>' : ''; };
-      var av = function (c, bg) { return '<div style="text-align:center;min-width:90px"><div style="width:58px;height:58px;margin:0 auto;border-radius:50%;background:' + bg + ';display:flex;align-items:center;justify-content:center;font-weight:900;font-size:22px;color:#fff">' + ini(c) + '</div><div style="font-size:13px;margin-top:5px;opacity:.85;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (c === me ? 'Siz' : nm(c)) + '</div>' + dl(c) + '</div>'; };
-      var bs = 'flex:1;border-radius:14px;padding:14px 0;font-size:16px;font-weight:800;color:#fff;cursor:pointer;';
+      var me = st.color, op = me === 'white' ? 'black' : 'white', win = st.winner, dr = win === 'draw' || !win, iw = win === me;
+      var nm = function (c) { return String(st[c] || '').replace(/[<>&"]/g, ''); };
+      var ini = function (c) { var m0 = nm(c).match(/[A-Za-zА-Яа-яЁёЎўҚқҒғҲҳ0-9]/); return (m0 ? m0[0] : (Array.from(nm(c))[0] || '?')).toUpperCase(); };
+      var avH = function (c) { var inf = c === 'white' ? st.wInfo : st.bInfo, w = !dr && win === c, bd = 'width:66px;height:66px;margin:0 auto;border-radius:50%;position:relative;border:3px solid ' + (w ? '#ffd34d;box-shadow:0 0 16px rgba(255,211,77,.5)' : '#2f3a5c') + ';';
+        var inner = inf && inf.uid && inf.av ? '<img src="/api/av/' + encodeURIComponent(inf.uid) + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block" onerror="this.outerHTML=\'<span style=&quot;display:flex;width:100%;height:100%;align-items:center;justify-content:center;font-weight:900;font-size:24px&quot;>' + ini(c).replace(/'/g, '') + '</span>\'">' : '<span style="display:flex;width:100%;height:100%;align-items:center;justify-content:center;font-weight:900;font-size:24px;border-radius:50%;background:' + (c === me ? 'linear-gradient(135deg,#8b5cf6,#3b82f6)' : 'linear-gradient(135deg,#f97316,#be123c)') + '">' + ini(c) + '</span>';
+        return '<div style="' + bd + '">' + (w ? '<span style="position:absolute;top:-17px;left:50%;transform:translateX(-50%);font-size:20px">👑</span>' : '') + inner + '</div>'; };
+      var ed = st.eloD, elH = function (c) { if (!ed || ed[c] == null) return '<div style="font-size:12px;margin-top:3px;opacity:.5">' + (st.unrated ? 'reytingsiz' : '…') + '</div>'; var d = ed[c], nw = c === 'white' ? ed.we : ed.be; return '<div style="font-size:13px;margin-top:3px;opacity:.9">' + (nw ? (nw - d) + ' → ' : '') + '<b style="color:' + (d >= 0 ? '#7ee08a' : '#ff8a8a') + '">' + (nw ? nw + ' ' : '') + '(' + (d > 0 ? '+' : d < 0 ? '−' : '±') + Math.abs(d) + ')</b></div>'; };
+      var pl = function (c) { return '<div style="width:140px">' + avH(c) + '<div style="font-size:14px;margin-top:7px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (c === me ? nm(c) + ' (siz)' : nm(c)) + '</div>' + elH(c) + '</div>'; };
+      var R = st.reason, why = dr ? (R === 'agreed' ? 'Kelishilgan durang' : R === 'abort' ? 'O‘yin bekor qilindi' : 'Durang') : R === 'timeout' ? (iw ? 'Raqib vaqti tugadi' : 'Vaqtingiz tugadi') : R === 'resign' ? (iw ? 'Raqib taslim bo‘ldi' : 'Siz taslim bo‘ldingiz') : R === 'abandon' ? (iw ? 'Raqib o‘yindan chiqib ketdi' : 'Siz o‘yindan chiqib ketdingiz') : R === 'noshow' ? 'Birinchi yurish qilinmadi' : (iw ? 'Raqibning yurishi qolmadi' : 'Yurishingiz qolmadi');
+      why += st.tc ? ' · ' + st.tc : '';
+      var hd = dr ? 'radial-gradient(circle at 50% 0,#7a641f 0,#3b3214 55%,#141b2e 100%)' : iw ? 'radial-gradient(circle at 50% 0,#3d7a1f 0,#1f3b14 55%,#141b2e 100%)' : 'radial-gradient(circle at 50% 0,#7a1f2a 0,#3b141b 55%,#141b2e 100%)';
+      var h2 = '', H = st.h2h;
+      if (H && H.n) {
+        var f = function (x) { var k = Math.floor(x), fr = x - k > 0.01; return (k || !fr ? String(k) : '') + (fr ? '½' : ''); }, L = H.last || [], wl = dr ? '' : (win === 'white' ? 'w' : 'b'), sk = 0;
+        for (var q = L.length - 1; q >= 0 && wl && L[q] === wl; q--) sk++;
+        h2 = '<div style="margin:8px 0 0;font-size:13px;background:#1c2540;border-radius:12px;padding:8px">O‘zaro hisob: <b>' + f(H[me] || 0) + ' – ' + f(H[op] || 0) + '</b>' + (sk >= 2 ? ' · ' + (iw ? 'Siz' : nm(op)) + ': ' + sk + ' ta g‘alaba ketma-ket' : '') + '</div>';
+      }
+      var bs = 'flex:1;border-radius:14px;padding:13px 0;font-size:16px;font-weight:800;color:#fff;cursor:pointer;';
       var msg = '', b1 = '', b2 = '<button data-rm="leave" style="' + bs + 'background:transparent;border:2px solid #3a425a">Stolga qaytish</button>';
-      if (st.rematch === 'done') { msg = 'Yangi o‘yin ochilmoqda…'; b1 = ''; b2 = ''; }
+      if (st.rematch === 'done') { msg = 'Yangi o‘yin ochilmoqda…'; b2 = ''; }
       else if (st.rematch === me) { msg = 'Revansh taklifi yuborildi — raqib javobi kutilmoqda…'; b1 = '<button data-rm="no" style="' + bs + 'background:transparent;border:2px solid #3a425a">Bekor qilish</button>'; }
       else if (st.rematch) { msg = '<b>' + nm(op) + '</b> revansh taklif qilyapti (ranglar almashadi)'; b1 = '<button data-rm="no" style="' + bs + 'background:transparent;border:2px solid #3a425a">Rad etish</button>'; b2 = '<button data-rm="yes" style="' + bs + 'background:#4f7dff;border:0">Qabul qilish</button>'; }
       else b1 = '<button data-rm="yes" style="' + bs + 'background:#5c9a2e;border:0">Revansh</button>';
-      var h = '<div style="width:100%;max-width:420px;background:#141b2e;border-radius:22px;padding:22px 18px 0;text-align:center;overflow:hidden;color:#fff;font-family:Roboto,system-ui,sans-serif;box-shadow:0 20px 60px rgba(0,0,0,.6)">' +
-        '<div style="font-size:28px;font-weight:900;color:' + col + '">' + res + '</div>' +
-        '<div style="display:flex;justify-content:center;align-items:center;gap:14px;margin:18px 0 6px">' + av(me, '#6b5cf0') + '<div style="font-size:13px;opacity:.6">' + (win === me ? '1 : 0' : win === op ? '0 : 1' : '½ : ½') + '</div>' + av(op, '#e5484d') + '</div>' +
-        (msg ? '<div style="font-size:15px;margin:14px 0 4px">' + msg + '</div>' : '') +
-        '<div style="display:flex;gap:10px;margin:16px 0 18px">' + b1 + b2 + '</div>' +
-        '<div style="height:6px;background:#2a3147;margin:0 -18px"><i id="rcRmBar" style="display:block;height:100%;background:#4f7dff;width:100%"></i></div></div>';
+      var ss = 'flex:1;border-radius:12px;padding:9px 0;font-size:14px;background:#1c2540;border:0;color:#fff;cursor:pointer';
+      var sm = '<div style="display:flex;gap:8px;margin:0 0 14px"><button data-rm="an" style="' + ss + '">🔍 Tahlil</button>' + (iw && window.spShareCard ? '<button data-rm="sh" style="' + ss + '">📸 Ulashish</button>' : '') + '</div>';
+      var h = '<div style="width:100%;max-width:420px;background:#141b2e;border-radius:24px;text-align:center;overflow:hidden;color:#fff;font-family:Roboto,system-ui,sans-serif;box-shadow:0 20px 60px rgba(0,0,0,.6)">' +
+        '<div style="padding:20px 16px 16px;background:' + hd + '"><div style="font-size:40px;line-height:1">' + (dr ? '🤝' : iw ? '🏆' : '😔') + '</div><div style="font-size:28px;font-weight:900;margin-top:6px;color:' + (dr ? '#ffe08a' : iw ? '#fff' : '#ffb3b3') + '">' + (dr ? 'Durang' : iw ? 'G‘alaba!' : 'Mag‘lubiyat') + '</div><div style="font-size:14px;opacity:.78;margin-top:4px">' + why + '</div></div>' +
+        '<div style="padding:4px 16px 0"><div style="display:flex;justify-content:space-around;align-items:flex-start;padding:14px 0 4px">' + pl(me) + '<div style="font-size:' + (dr ? 24 : 30) + 'px;font-weight:900;padding-top:18px;letter-spacing:1px;white-space:nowrap">' + (dr ? '½ : ½' : iw ? '1 : 0' : '0 : 1') + '</div>' + pl(op) + '</div>' + h2 +
+        (msg ? '<div style="font-size:15px;margin:12px 0 0">' + msg + '</div>' : '') +
+        '<div style="display:flex;gap:10px;margin:14px 0 10px">' + b1 + b2 + '</div>' + sm + '</div>' +
+        '<div style="height:6px;background:#2a3147"><i id="rcRmBar" style="display:block;height:100%;background:#4f7dff;width:100%"></i></div></div>';
       if (RM.el._h !== h) {
         RM.el.innerHTML = h; RM.el._h = h;
         [].forEach.call(RM.el.querySelectorAll('[data-rm]'), function (b) {
@@ -606,6 +620,8 @@
             var a = b.getAttribute('data-rm');
             if (a === 'yes') send({ type: "roomRematch", roomId: roomId });
             else if (a === 'no') send({ type: "roomRematchNo", roomId: roomId });
+            else if (a === 'an') { RM.hid = true; RM.done = true; if (RM.el) { RM.el.remove(); RM.el = null; } var x = document.getElementById('rcAn'); if (x) x.click(); }
+            else if (a === 'sh') { var o2 = nm(op); try { window.spShareCard({ theme: "win", title: "G‘ALABA!", big: "🏆", sub: "Raqib: " + o2, sub2: (st.tc ? "⏱ " + st.tc : "") + (st.reason === "timeout" ? " · vaqt bo‘yicha" : ""), cap: "🏆 ShashkaPRO’da " + o2 + "ni yutdim!" }); } catch (e) {} }
             else if (a === 'leave') { RM.done = true; if (st.rematch) send({ type: "roomRematchNo", roomId: roomId }); rcLeave(); }
           };
         });
@@ -1436,6 +1452,7 @@
       }, 1000);
     }
     function onMessage(m) {
+      if (m && m.type === "roomElo" && m.roomId === roomId) { st.eloD = m.eloD || null; try { rmPanel(); } catch (e) {} }
       if (m.type === "error" && (st.optim || m.resync)) { st.optim = false; st.optN = 0; st.pending = false; st.forced = null; if (m.resync) { st.needRebuild = true; botGen++; botBusy = false; } send({ type: "roomSync", roomId: roomId }); }
       if (m.type === "roomState" && m.roomId === roomId && !m.finished) { try { window.__coinClear(); } catch (e) {} }
       if (m.type === "roomState" && m.roomId === roomId) {
@@ -1450,7 +1467,7 @@
         st.spectators = m.spectators || 0;
         st.specNames = m.spectatorNames || [];
         st.gamesTotal = m.gamesTotal || 1; st.played = m.played || 0; st.seriesScore = m.seriesScore || null;
-        st.seriesDone = !!m.seriesDone; st.nextIn = !!m.nextIn; st.rematch = m.rematch || null; st.casual = !!m.casual; st.rmOk = !!m.rmOk; st.voice = !!m.voice; st.botUid = m.botUid || null; st.voiceSaid = m.voiceSaid || null; st.vsBot = !!m.vsBot; st.etude = m.etude || null; st.h2h = m.h2h || null; try { var _bk = "spBotRoom:" + roomId; if (st.vsBot) localStorage.setItem(_bk, "1"); else if (localStorage.getItem(_bk) === "1") { localStorage.removeItem(_bk); alert("Server qayta ishga tushdi, bot bilan o‘yin uzildi. Zalga qaytasiz."); rcLeave(); return; } } catch (e) {} try { renderChat(); } catch (e) {} st.botStarted = !!m.botStarted; st.srvBot = !!m.srvBot; st.botColor = m.botColor || null; st.botSecs = Number(m.botSecs) > 0 ? Number(m.botSecs) : 1.2; st.botBlunder = Number(m.botBlunder) || 0;
+        st.seriesDone = !!m.seriesDone; st.nextIn = !!m.nextIn; st.rematch = m.rematch || null; st.casual = !!m.casual; st.rmOk = !!m.rmOk; if (!m.finished) st.eloD = null; st.voice = !!m.voice; st.botUid = m.botUid || null; st.voiceSaid = m.voiceSaid || null; st.vsBot = !!m.vsBot; st.etude = m.etude || null; st.h2h = m.h2h || null; try { var _bk = "spBotRoom:" + roomId; if (st.vsBot) localStorage.setItem(_bk, "1"); else if (localStorage.getItem(_bk) === "1") { localStorage.removeItem(_bk); alert("Server qayta ishga tushdi, bot bilan o‘yin uzildi. Zalga qaytasiz."); rcLeave(); return; } } catch (e) {} try { renderChat(); } catch (e) {} st.botStarted = !!m.botStarted; st.srvBot = !!m.srvBot; st.botColor = m.botColor || null; st.botSecs = Number(m.botSecs) > 0 ? Number(m.botSecs) : 1.2; st.botBlunder = Number(m.botBlunder) || 0;
         var openNew = (m.opening ? m.opening.id : null) !== (st.opening ? st.opening.id : null);
         st.opening = m.opening || null;
         var same = !openNew && st.moves.length === (m.moves || []).length && st.turn === m.turn;
