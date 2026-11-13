@@ -450,6 +450,15 @@ function createLobby({ send, clients, roomsApi }) {
     return true;
   }
 
+  // 🔁 zal o'yinida revansh (rooms.js chaqiradi): yangi match, ranglar almashadi
+  global.__lbRematch = function (room) {
+    try {
+      const a = { uid: String(room.black.uid), name: room.black.name }, b = { uid: String(room.white.uid), name: room.white.name };
+      const s = { id: hex(4), p: [a, b], tc: room.tc || '3+2', pos: room.opening ? 'idf' : 'std', total: 1, voice: false, played: 0, pts: {}, opening: null, reason: 'rematch', stake: 0, tbl: null };
+      s.pts[a.uid] = 0; s.pts[b.uid] = 0;
+      startSeriesGame(s); push();
+    } catch (e) { console.log('[revansh]', e.message); }
+  };
   function startSeriesGame(s) {
     const g = s.played;                                   // 0 dan boshlanadi
     if (g % 2 === 0) s.opening = s.pos === 'idf' ? pickOpening() : null;   // har matchga yangi pozitsiya

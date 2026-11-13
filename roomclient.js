@@ -569,8 +569,56 @@
       elMsgs.scrollTop = elMsgs.scrollHeight;
     }
 
+    // 🔁 O'yin tugagach 10 soniyalik panel: Revansh / Stolga qaytish; vaqt tugasa — stolga
+    var RM = { end: 0, key: '', el: null, t: null, done: false };
+    function rmPanel() {
+      var on = st.rmOk && st.finished && st.white && st.black && st.color && st.color !== "spectator";
+      var key = on ? String(roomId) + '|' + (st.moves || []).length + '|' + (st.winner || '') : '';
+      if (!on) { if (RM.el) { RM.el.remove(); RM.el = null; } if (RM.t) { clearInterval(RM.t); RM.t = null; } RM.key = ''; return; }
+      if (RM.key !== key) { RM.key = key; RM.end = Date.now() + 10000; RM.done = false; RM.hid = false; }
+      if (RM.hid) return;
+      if (!RM.el) {
+        RM.el = document.createElement('div'); RM.el.id = 'rcRm';
+        RM.el.style.cssText = 'position:fixed;inset:0;z-index:2147481000;background:rgba(5,4,20,.55);display:flex;align-items:center;justify-content:center;padding:18px;box-sizing:border-box';
+        document.body.appendChild(RM.el);
+      }
+      var me = st.color, op = me === 'white' ? 'black' : 'white', win = st.winner, res = win === 'draw' || !win ? 'Durang' : win === me ? 'Siz yutdingiz!' : 'Siz yutqazdingiz';
+      var col = win === me ? '#fff' : win === 'draw' || !win ? '#ffd34d' : '#ff8a8a';
+      var nm = function (c) { return String(st[c] || '').replace(/[<>&]/g, ''); }, ini = function (c) { var s = nm(c).replace(/[^\p{L}\p{N}]/gu, ''); return (s[0] || '?').toUpperCase(); };
+      var ed = st.eloD || null, dl = function (c) { var v = ed && ed[c]; return v ? '<div style="font-size:12px;color:' + (v > 0 ? '#7ee08a' : '#ff8a8a') + '">' + (v > 0 ? '+' : '') + v + '</div>' : ''; };
+      var av = function (c, bg) { return '<div style="text-align:center;min-width:90px"><div style="width:58px;height:58px;margin:0 auto;border-radius:50%;background:' + bg + ';display:flex;align-items:center;justify-content:center;font-weight:900;font-size:22px;color:#fff">' + ini(c) + '</div><div style="font-size:13px;margin-top:5px;opacity:.85;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (c === me ? 'Siz' : nm(c)) + '</div>' + dl(c) + '</div>'; };
+      var bs = 'flex:1;border-radius:14px;padding:14px 0;font-size:16px;font-weight:800;color:#fff;cursor:pointer;';
+      var msg = '', b1 = '', b2 = '<button data-rm="leave" style="' + bs + 'background:transparent;border:2px solid #3a425a">Stolga qaytish</button>';
+      if (st.rematch === 'done') { msg = 'Yangi o‘yin ochilmoqda…'; b1 = ''; b2 = ''; }
+      else if (st.rematch === me) { msg = 'Revansh taklifi yuborildi — raqib javobi kutilmoqda…'; b1 = '<button data-rm="no" style="' + bs + 'background:transparent;border:2px solid #3a425a">Bekor qilish</button>'; }
+      else if (st.rematch) { msg = '<b>' + nm(op) + '</b> revansh taklif qilyapti (ranglar almashadi)'; b1 = '<button data-rm="no" style="' + bs + 'background:transparent;border:2px solid #3a425a">Rad etish</button>'; b2 = '<button data-rm="yes" style="' + bs + 'background:#4f7dff;border:0">Qabul qilish</button>'; }
+      else b1 = '<button data-rm="yes" style="' + bs + 'background:#5c9a2e;border:0">Revansh</button>';
+      var h = '<div style="width:100%;max-width:420px;background:#141b2e;border-radius:22px;padding:22px 18px 0;text-align:center;overflow:hidden;color:#fff;font-family:Roboto,system-ui,sans-serif;box-shadow:0 20px 60px rgba(0,0,0,.6)">' +
+        '<div style="font-size:28px;font-weight:900;color:' + col + '">' + res + '</div>' +
+        '<div style="display:flex;justify-content:center;align-items:center;gap:14px;margin:18px 0 6px">' + av(me, '#6b5cf0') + '<div style="font-size:13px;opacity:.6">' + (win === me ? '1 : 0' : win === op ? '0 : 1' : '½ : ½') + '</div>' + av(op, '#e5484d') + '</div>' +
+        (msg ? '<div style="font-size:15px;margin:14px 0 4px">' + msg + '</div>' : '') +
+        '<div style="display:flex;gap:10px;margin:16px 0 18px">' + b1 + b2 + '</div>' +
+        '<div style="height:6px;background:#2a3147;margin:0 -18px"><i id="rcRmBar" style="display:block;height:100%;background:#4f7dff;width:100%"></i></div></div>';
+      if (RM.el._h !== h) {
+        RM.el.innerHTML = h; RM.el._h = h;
+        [].forEach.call(RM.el.querySelectorAll('[data-rm]'), function (b) {
+          b.onclick = function () {
+            var a = b.getAttribute('data-rm');
+            if (a === 'yes') send({ type: "roomRematch", roomId: roomId });
+            else if (a === 'no') send({ type: "roomRematchNo", roomId: roomId });
+            else if (a === 'leave') { RM.done = true; if (st.rematch) send({ type: "roomRematchNo", roomId: roomId }); rcLeave(); }
+          };
+        });
+      }
+      if (!RM.t) RM.t = setInterval(function () {
+        if (!RM.el) { clearInterval(RM.t); RM.t = null; return; }
+        var left = Math.max(0, RM.end - Date.now()), bar = document.getElementById('rcRmBar'); if (bar) bar.style.width = (left / 100) + '%';
+        if (left <= 0 && !RM.done && st.finished && st.rematch !== 'done') { RM.done = true; if (st.rematch) send({ type: "roomRematchNo", roomId: roomId }); rcLeave(); }
+      }, 100);
+    }
     // vaqt rejimi tugmalari (faqat o'yin boshlanmaguncha, faqat oq tanlaydi)
     function renderExtra() {
+      try { rmPanel(); } catch (e) {}
       var ex = root.querySelector("#rcEx");
       if (!ex) {
         ex = document.createElement("div"); ex.id = "rcEx";
@@ -587,7 +635,7 @@
         line("🏁 Seriya " + (st.seriesDone ? "tugadi" : no + "/" + st.gamesTotal) + " · ⚪ " + sc.white + " – " + sc.black + " ⚫");
         if (st.finished && !st.seriesDone && st.nextIn) line("Keyingi o‘yin 5 soniyadan so‘ng, ranglar almashadi");
       }
-      if (!spec && !st.etude && (st.casual || st.vsBot) && st.finished && st.white && st.black && (!ser || st.seriesDone)) {
+      if (!spec && !st.etude && st.vsBot && !st.rmOk && st.finished && st.white && st.black && (!ser || st.seriesDone)) {
         if (st.rematch === st.color) {
           line("⏳ Raqib javobi kutilmoqda…");
           btn("Bekor qilish", function () { send({ type: "roomRematchNo", roomId: roomId }); });

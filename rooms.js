@@ -54,6 +54,8 @@ function createRooms({ send, clients, onFinish }) {
   const other = col => (col === "white" ? "black" : "white");
   const botColorOf = room => (room.vsBot ? (room.white && isBotUid(room.white.uid) ? "white" : (room.black && isBotUid(room.black.uid) ? "black" : null)) : null);
   // vaqt/pozitsiya/rangni kim tanlaydi: oddiy xonada oq, bot xonasida odam (qaysi rangda bo'lmasin)
+  // 🔁 o'yin tugagach 10 soniyalik revansh paneli: do'stlar xonasi (casual) va zaldagi oddiy o'yin (L…), tikishsiz, turnir/arena emas
+  const rmOk = room => !!((room.casual || /^L/.test(String(room.id))) && !room.vsBot && !room.arena && !room.locked && !room.etude && !room.stake && !((room.gamesTotal || 1) > 1 && (room.played || 0) < room.gamesTotal));
   const isOwner = (room, col) => !!col && (room.vsBot ? col !== botColorOf(room) : col === "white");
 
   function colorOf(room, c) {
@@ -156,7 +158,7 @@ function createRooms({ send, clients, onFinish }) {
       tcs: room.vsBot ? BOT_TCS : Object.keys(TCS).filter(k => k !== "0.5+0" && k !== "7+5"),
       vsBot: !!room.vsBot, etude: room.etude || null, botUid: (room.vsBot ? ((botColorOf(room) === 'white' ? room.white : room.black) || {}).uid : null) || null, botStarted: !!room.botStarted, botColor: botColorOf(room),
       srvBot: srvBotOn(room), botSecs: botSecsFor(room), botBlunder: room.botCfg ? room.botCfg.blunder : 0,
-      arena: !!room.arena, noBerserk: !!room.noBerserk, voice: !!room.voice, voiceSaid: room.voiceSaid || null,
+      rmOk: rmOk(room), arena: !!room.arena, noBerserk: !!room.noBerserk, voice: !!room.voice, voiceSaid: room.voiceSaid || null,
       opening: room.opening,
       berserk: room.berserk,
       drawOffer: room.drawOffer,
@@ -803,11 +805,14 @@ const srvBotOn = room => !!(room && room.vsBot && room.botCfg && room.botCfg.id 
 
     if (m.type === "roomRematch") {
       if (!col) return err(c, "Siz tomoshabinsiz"), true;
-      if ((!room.casual && !room.vsBot) || room.arena || room.locked || !room.finished || room.nextTimer) return true;
+      if ((!room.casual && !room.vsBot && !rmOk(room)) || room.arena || room.locked || !room.finished || room.nextTimer) return true;
       if ((room.gamesTotal || 1) > 1 && (room.played || 0) < room.gamesTotal) return true;
       if (!room.white || !room.black) return err(c, "Raqib yo‘q"), true;
       if (room.vsBot) { startNextGame(room, true, true); return true; }   // bot darhol rozi, ranglar almashadi
-      if (room.rematch && room.rematch !== col) { startNextGame(room, true, true); return true; }
+      if (room.rematch && room.rematch !== col) {
+        if (!room.casual && typeof global.__lbRematch === 'function') { room.rematch = 'done'; pushState(room); global.__lbRematch(room); return true; }   // zal o'yini: yangi xona (ranglar almashadi)
+        startNextGame(room, true, true); return true;
+      }
       room.rematch = col;
       pushState(room);
       return true;

@@ -300,6 +300,7 @@
         }, 1000);
         return;
       }
+      if (m.reason === "rematch") { go(m.roomId); return; }   // 🔁 revansh qabul qilindi — darhol yangi o'yin
       if (m.reason === "tournament" || m.reason === "arena") {
         var txt = "🏆 <b>" + esc(m.tname) + "</b> — " + (m.reason === "arena" ? "yangi o‘yin" : m.round + "-tur boshlandi") + ".<br>Raqib: <b>" + esc(m.opponent) + "</b> (" + (m.color === "white" ? "oq" : "qora") + ")";
         if (!inRoom) {
