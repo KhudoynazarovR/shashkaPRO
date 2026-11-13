@@ -579,7 +579,7 @@
         else if (act === "tj") sendMsg({ type: "lbTJoin", tid: id });
         else if (act === "tl") sendMsg({ type: "lbTLeave", tid: id });
         else if (act === "ts") sendMsg({ type: "lbTStart", tid: id });
-        else if (act === "tc") sendMsg({ type: "lbTCancel", tid: id });
+        else if (act === "tc") { if (confirm("Turnir bekor qilinsinmi? E\u2019lon kanal va guruhlardan o\u2018chiriladi.")) sendMsg({ type: "lbTCancel", tid: id }); }
         else if (act === "go") go(id);
         else if (act === "acc") sendMsg({ type: "lbRespond", id: id, accept: true });
         else if (act === "rej") sendMsg({ type: "lbRespond", id: id, accept: false });
@@ -1440,7 +1440,7 @@ document.head.appendChild(_as); }
           else if (t.creatorUid !== me) h += "<button class=\"sec\" data-a=\"tl\" data-id=\"" + t.id + "\">Chiqish</button>";
           if (t.creatorUid === me) {
             if (!t.startAt) h += "<button class=\"grn\" data-a=\"ts\" data-id=\"" + t.id + "\">▶ Boshlash</button>"; h += "<button class=\"red\" data-a=\"tc\" data-id=\"" + t.id + "\">Bekor qilish</button>";
-          }
+          } else if (window.__isAdmin) h += "<button class=\"red\" data-a=\"tc\" data-id=\"" + t.id + "\">Bekor qilish</button>";
         }
         if (!arena && t.status === "running") {
           var meS = t.players.filter(function (p) { return p.uid === me; })[0];

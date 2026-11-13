@@ -1303,10 +1303,10 @@ function createLobby({ send, clients, roomsApi }) {
       if (!t0.players.has(uid)) { t0.paid.delete(uid); economy.refund(uid, (t0.fee && t0.fee[uid]) || FEE.JOIN_FEE, 'refund_leave'); }
       return ret;
     }
-    if (m.type === 'lbTCancel' && t0 && t0.status === 'reg' && t0.creatorUid === uid) {
+    if (m.type === 'lbTCancel' && t0 && t0.status === 'reg' && (t0.creatorUid === uid || economy.isAdmin(uid))) {
       const ret = handleInner(c, m);
       if (!tournaments.has(t0.id)) {
-        if (t0.prizePaid) economy.refund(uid, t0.prizePaid, 'refund_create');
+        if (t0.prizePaid && t0.creatorUid !== 'sys') economy.refund(t0.creatorUid, t0.prizePaid, 'refund_create');
         for (const p of (t0.paid || [])) economy.refund(p, (t0.fee && t0.fee[p]) || FEE.JOIN_FEE, 'refund_join');
       }
       return ret;
@@ -1761,8 +1761,9 @@ function createLobby({ send, clients, roomsApi }) {
       case 'lbShare': { handleShare(c, m); break; }
       case 'lbTCancel': {
         const t = tournaments.get(String(m.tid));
-        if (!t || t.creatorUid !== me.uid || t.status !== 'reg') break;
+        if (!t || (t.creatorUid !== me.uid && !economy.isAdmin(me.uid)) || t.status !== 'reg') break;
         console.log('[turnir] bekor qilindi:', t.id, t.name); tournaments.delete(t.id);
+        if (t.announce) { try { require('./tposter.js').cancelAnn(t); } catch (e) {} }
         for (const p of t.players.values()) toast(p.uid, t.name + ' bekor qilindi');
         push();
         break;

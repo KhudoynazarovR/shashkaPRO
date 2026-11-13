@@ -108,22 +108,23 @@ function annCap(t) {
   return c + '\n👇 Qo‘shilish uchun tugmani bosing';
 }
 // 🤖 «Insonlar va Botlar» jangi — tayyor rasm (admin tanlagan) ustiga turnir ma'lumotlari yoziladi
-function isHvb(t) { return (t.clubIds || []).includes('cbots') || /insonlar.*bot/i.test(String(t.name || '')); }
+function isHvb(t) { return (t.clubIds || []).includes('cbots') || /inson.*bot|bot.*inson/i.test(String(t.name || '')); }
 async function hvbPng(t) {
   const sh = sharp(); if (!sh) return null;
   const fs = require('fs'), path = require('path'), f = path.join(__dirname, 'public', 'img', 'hvb_bg.jpg'); if (!fs.existsSync(f)) return null;
   const d = tz(t.startAt), num = (/(?:#|jangi\s*)(\d+)/i.exec(String(t.name || '')) || /(\d+)\s*$/.exec(String(t.name || '')) || [])[1];
   const date = d.getUTCDate() + '-' + MON[d.getUTCMonth()], time = hm(t.startAt) + (t.endAt ? ' - ' + hm(t.endAt) : '');
   const tags = [kindTxt(t), tcTxt(t.tc) + ' ' + tcCat(t.tc), t.pos === 'idf' ? 'IDF 780' : 'Standart', t.rated === false ? 'Reytingsiz' : 'Reytingli'];
-  const tz2 = s0 => s0.length > 10 ? 24 : s0.length > 8 ? 27 : 30;
+  const tz2 = s0 => s0.length > 10 ? 25 : s0.length > 8 ? 28 : 32;
   const T = (xx, y, txt, fs0, fill, anchor, w, st, extra) => '<text x="' + xx + '" y="' + y + '" font-family="' + F + '" font-size="' + fs0 + '" font-weight="' + (w || 900) + '" font-style="' + (st || 'italic') + '" fill="' + fill + '" text-anchor="' + (anchor || 'start') + '"' + (extra || '') + '>' + x(txt) + '</text>';
   let o = '<svg xmlns="http://www.w3.org/2000/svg" width="1672" height="941"><defs><linearGradient id="gd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6c2"/><stop offset=".5" stop-color="#ffcf3a"/><stop offset="1" stop-color="#e08a00"/></linearGradient>' +
     '<filter id="ds"><feDropShadow dx="0" dy="3" stdDeviation="2" flood-color="#000" flood-opacity=".5"/></filter></defs>';
-  o += T(885, 356, 'Jangi' + (num ? ' ' + num : ''), 70, '#0b1440', 'middle');
-  o += '<g filter="url(#ds)">' + T(735, 462, date, 64, '#ffffff') + T(812, 509, time, 36, '#ffffff', 'start', 700) + '</g>';
-  o += '<g filter="url(#ds)">' + T(565, 592, tags[0], tz2(tags[0]), '#fff', 'start', 700, 'normal') + T(775, 592, tags[1], tz2(tags[1]), '#fff', 'start', 700, 'normal') +
-    T(1035, 592, tags[2], tz2(tags[2]), '#fff', 'start', 700, 'normal') + T(805, 662, tags[3], tz2(tags[3]), '#fff', 'start', 700, 'normal') + '</g>';
-  if (t.prize > 0) { const pz = fmt(t.prize), fs1 = pz.length > 5 ? 62 : pz.length > 3 ? 80 : 110; o += '<g filter="url(#ds)">' + T(355, 858, pz, fs1, 'url(#gd)', 'middle', 900, 'italic', ' stroke="#7a4b00" stroke-width="2"') + '</g>'; }
+  const dayLine = dayStr(t.startAt);
+  o += T(850, 372, 'Jangi' + (num ? ' ' + num : ''), 72, '#0b1440', 'middle');
+  o += '<g filter="url(#ds)">' + T(843, 486, dayLine, dayLine.length > 20 ? 50 : 56, '#ffffff', 'middle', 800, 'normal') + T(843, 534, time, 38, '#ffffff', 'middle', 400, 'normal') + '</g>';
+  const cx = [537, 739, 947, 1148];
+  o += '<g filter="url(#ds)">' + tags.map((g, k) => T(cx[k], 622, g, tz2(g), '#fff', 'middle', 700, 'normal')).join('') + '</g>';
+  if (t.prize > 0) { const pz = fmt(t.prize), fs1 = pz.length > 5 ? 38 : pz.length > 3 ? 50 : 80; o += '<g filter="url(#ds)">' + T(272, 846, pz, fs1, 'url(#gd)', 'middle', 900, 'italic', ' stroke="#7a4b00" stroke-width="2"') + '</g>'; }
   o += '</svg>';
   try { return await sh(f).composite([{ input: Buffer.from(o) }]).jpeg({ quality: 90 }).toBuffer(); } catch (e) { console.log('[tposter] hvb', e.message); return null; }
 }
@@ -136,7 +137,7 @@ async function announce(t) {
     let fid = ''; try { const a = r.result.photo; fid = a[a.length - 1].file_id; } catch (e) {}
     const GR = Array.from(new Set((store.db.groups || []).map(String).concat(String(process.env.T_GROUPS || '').split(','), String(process.env.EXTRA_GROUP_IDS || '').split(',')).map(z => z.trim()).filter(Boolean)));
     for (const g of GR) {   // 👥 bot admin bo'lgan barcha guruhlarga (avtomatik ro'yxat) + T_GROUPS
-      try { const r2 = fid ? await tg('sendPhoto', { chat_id: g, photo: fid, caption: annCap(t), parse_mode: 'HTML', reply_markup: joinKb(t) }) : await sendPhoto(g, buf, annCap(t), joinKb(t)); console.log('[tposter] guruh', g, r2 && r2.ok ? 'ok' : JSON.stringify(r2 && r2.description)); } catch (e) {}
+      try { const r2 = fid ? await tg('sendPhoto', { chat_id: g, photo: fid, caption: annCap(t), parse_mode: 'HTML', reply_markup: joinKb(t) }) : await sendPhoto(g, buf, annCap(t), joinKb(t)); if (r2 && r2.ok && r2.result) { t.annGrp = t.annGrp || {}; t.annGrp[g] = r2.result.message_id; } console.log('[tposter] guruh', g, r2 && r2.ok ? 'ok' : JSON.stringify(r2 && r2.description)); } catch (e) {}
     }
     broadcast(t, fid, buf);
   } catch (e) { console.log('[tposter] e\'lon xato', e.message); }
@@ -194,4 +195,8 @@ async function today(t) {
     await tg('sendMessage', Object.assign({ chat_id: CH(), parse_mode: 'HTML', text: '📣 <b>Bugun ' + hm(t.startAt) + ' da — ' + h(t.name) + '!</b>\n⏱ ' + tcTxt(t.tc) + ' ' + tcCat(t.tc) + (t.flag ? ' · 🏳️ viloyatingiz uchun' : '') + (t.prize > 0 ? ' · 💰 ' + fmt(t.prize) : '') + '\n👥 ' + t.players.size + ' kishi yozildi — siz ham qo‘shiling 👇', reply_markup: joinKb(t) }, extra));
   } catch (e) {}
 }
-module.exports = { hvbPng, isHvb, today, announce, remind, result, annSvg, resSvg, png, dayStr, hm };
+async function cancelAnn(t) {   // ❌ turnir bekor qilindi — kanal va guruhlardagi e'lon o'chiriladi
+  try { if (t.annMsg) await tg('deleteMessage', { chat_id: CH(), message_id: t.annMsg }); } catch (e) {}
+  for (const [g, mid] of Object.entries(t.annGrp || {})) { try { await tg('deleteMessage', { chat_id: g, message_id: mid }); } catch (e) {} }
+}
+module.exports = { cancelAnn, hvbPng, isHvb, today, announce, remind, result, annSvg, resSvg, png, dayStr, hm };
