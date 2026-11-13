@@ -746,11 +746,11 @@
     // ---------- 📖 Baza (lichess Explorer kabi): ShashkaPRO o'yinlari, Colette/kitob, lidraughts, repertuar (admin)
     var BK = { src: window.__isAdmin ? 'rep' : 'sp', D: {}, ed: null, E: {}, msg: '' };
     function bkKey(h) { return kf(h) + '|' + BK.src; }
-    function bkLoad(h) {
-      var k = bkKey(h); if (BK.D[k]) return BK.D[k];
+    function bkLoad(h, src0, quiet) {
+      src0 = src0 || BK.src; var k = kf(h) + '|' + src0; if (BK.D[k]) return BK.D[k];
       BK.D[k] = { load: 1 };
-      fetch('/api/explore', { method: 'POST', headers: hd(), body: JSON.stringify({ board: toEng(h.b), side: h.t, src: BK.src, sc: 'all', hk: hist.slice(Math.max(0, cur - 59), cur + 1).map(function (x) { return toEng(x.b).join('') + x.t; }) }) }).then(function (r) { return r.json(); })
-        .then(function (j) { BK.D[k] = j || { rows: [] }; if (j && j.building) setTimeout(function () { delete BK.D[k]; }, 15000); if (BK.src === 'rep' && j && j.rows) { BK.E[kf(h)] = {}; j.rows.forEach(function (x) { BK.E[kf(h)][x.id] = { w: x.w, mk: x.mk || '', note: x.note || '', lock: x.lock || !x.w }; }); if (!j.rows.some(function (x) { return x.w > 0; })) bkSug(h, false); } if (document.getElementById('spBd')) draw(); })
+      fetch('/api/explore', { method: 'POST', headers: hd(), body: JSON.stringify({ board: toEng(h.b), side: h.t, src: src0, sc: 'all', hk: hist.slice(Math.max(0, cur - 59), cur + 1).map(function (x) { return toEng(x.b).join('') + x.t; }) }) }).then(function (r) { return r.json(); })
+        .then(function (j) { BK.D[k] = j || { rows: [] }; if (j && j.building) setTimeout(function () { delete BK.D[k]; }, 15000); if (src0 === 'rep' && j && j.rows) { BK.E[kf(h)] = {}; j.rows.forEach(function (x) { BK.E[kf(h)][x.id] = { w: x.w, mk: x.mk || '', note: x.note || '', lock: x.lock || !x.w }; }); if (!j.rows.some(function (x) { return x.w > 0; })) if (!quiet) bkSug(h, false); } if (document.getElementById('spBd')) draw(); })
         .catch(function () { BK.D[k] = { err: 1 }; });
       return BK.D[k];
     }
@@ -993,7 +993,8 @@
       }
       s += '</div>';
       if (panel === 'book' && !ed && S.bka) s += bkArrows(h, flip);
-      var RPA = panel === 'book' && BK.src === 'rep' && !ed && !over ? repArrows(h) : '';
+      if (window.__isAdmin && !ed && !over && !BK.D[kf(h) + '|rep']) bkLoad(h, 'rep', true);
+      var RPA = window.__isAdmin && !ed && !over ? repArrows(h) : '';
       if (RPA) s += RPA;
       else if (en && S.aa !== false && !over && !ed) s += altArrows(PVC[k], flip);
       if (!ed) s += shapesSvg(k, flip);
