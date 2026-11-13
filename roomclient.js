@@ -1416,6 +1416,7 @@
     function autoZalStart() {
       autoZalStop();
       if (st.vsBot || st.gamesTotal > 1) return;
+      if (st.rmOk) { setTimeout(function () { try { rmPanel(); } catch (e) {} }, 0); return; }   // 🔁 10 soniyalik revansh paneli o'zi stolga qaytaradi
       if (/^A.+?G\d+/.test(String(roomId))) { spArenaEnd(); return; }   // bot bilan o'yinda zalga avtomatik qaytmaymiz (qayta o'ynash bor)
       if (typeof elZal === "undefined" || !elZal || !elZal.onclick) return;
       var n = /^T.+?R\d+B\d+|^A.+?G\d+/.test(String(roomId)) ? 3 : 10;
@@ -1449,7 +1450,7 @@
         st.spectators = m.spectators || 0;
         st.specNames = m.spectatorNames || [];
         st.gamesTotal = m.gamesTotal || 1; st.played = m.played || 0; st.seriesScore = m.seriesScore || null;
-        st.seriesDone = !!m.seriesDone; st.nextIn = !!m.nextIn; st.rematch = m.rematch || null; st.casual = !!m.casual; st.voice = !!m.voice; st.botUid = m.botUid || null; st.voiceSaid = m.voiceSaid || null; st.vsBot = !!m.vsBot; st.etude = m.etude || null; st.h2h = m.h2h || null; try { var _bk = "spBotRoom:" + roomId; if (st.vsBot) localStorage.setItem(_bk, "1"); else if (localStorage.getItem(_bk) === "1") { localStorage.removeItem(_bk); alert("Server qayta ishga tushdi, bot bilan o‘yin uzildi. Zalga qaytasiz."); rcLeave(); return; } } catch (e) {} try { renderChat(); } catch (e) {} st.botStarted = !!m.botStarted; st.srvBot = !!m.srvBot; st.botColor = m.botColor || null; st.botSecs = Number(m.botSecs) > 0 ? Number(m.botSecs) : 1.2; st.botBlunder = Number(m.botBlunder) || 0;
+        st.seriesDone = !!m.seriesDone; st.nextIn = !!m.nextIn; st.rematch = m.rematch || null; st.casual = !!m.casual; st.rmOk = !!m.rmOk; st.voice = !!m.voice; st.botUid = m.botUid || null; st.voiceSaid = m.voiceSaid || null; st.vsBot = !!m.vsBot; st.etude = m.etude || null; st.h2h = m.h2h || null; try { var _bk = "spBotRoom:" + roomId; if (st.vsBot) localStorage.setItem(_bk, "1"); else if (localStorage.getItem(_bk) === "1") { localStorage.removeItem(_bk); alert("Server qayta ishga tushdi, bot bilan o‘yin uzildi. Zalga qaytasiz."); rcLeave(); return; } } catch (e) {} try { renderChat(); } catch (e) {} st.botStarted = !!m.botStarted; st.srvBot = !!m.srvBot; st.botColor = m.botColor || null; st.botSecs = Number(m.botSecs) > 0 ? Number(m.botSecs) : 1.2; st.botBlunder = Number(m.botBlunder) || 0;
         var openNew = (m.opening ? m.opening.id : null) !== (st.opening ? st.opening.id : null);
         st.opening = m.opening || null;
         var same = !openNew && st.moves.length === (m.moves || []).length && st.turn === m.turn;
@@ -1511,8 +1512,8 @@
         else if (!_blk) { st.unread++; renderChat(); }
       } else if (m.type === "botCoins" && m.roomId === roomId) { try { window.__coinFx(m.n); } catch (e) {}
       } else if (m.type === "roomFinished" && m.roomId === roomId) {
-        autoZalStart();
         st.finished = true;
+        autoZalStart();
         st.drawOffer = null;
         st.drawInfo = null; st.drawText = m.text || null;
         st.winner = m.winner;
