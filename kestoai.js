@@ -138,7 +138,7 @@ function move(j, cb) {
   if (!ready) return cb({ error: "notready", code: 503 });
   const b = j && j.board, side = (j && j.side > 0) ? 1 : -1;
   if (!Array.isArray(b) || b.length !== 64 || !b.every(v => Number.isInteger(v) && v >= -2 && v <= 2)) return cb({ error: "bad", code: 400 });
-  if (!j.arena && (j.kk || (j.room && Number(j.time) >= 1)) && !(Number(j.rem) > 0 && Number(j.rem) < 5)) {   // faqat botlar o'yini (tahlil so'rovlariga tegmaydi)   // 🛡 qo'pol xato qo'riqchisi (kkadm.js) + King Kong yurishlari manbasi
+  if (!j.arena && (j.kk || j.safe || (j.room && Number(j.time) >= 1)) && !(Number(j.rem) > 0 && Number(j.rem) < 5)) {   // faqat botlar o'yini (tahlil so'rovlariga tegmaydi)   // 🛡 qo'pol xato qo'riqchisi (kkadm.js) + King Kong yurishlari manbasi
     const _cb = cb, gb = b.slice(), gs = side;
     cb = r => { let out = r; try { const K = require('./kkadm.js'); out = K.guard(gb, gs, r); if (j.kk && j.room) K.note(j.room, gb, gs, out); } catch (e) {} _cb(out); };
   }

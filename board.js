@@ -71,13 +71,13 @@
   var S = { t: 2, arrow: true, bar: true, engine: true, mpv: 3, pl: 8, aa: true, abk: true, alm: true };
   try { var _s = JSON.parse(localStorage.getItem('spBdS') || '{}'); for (var _k in _s) if (_k !== "t") S[_k] = _s[_k]; } catch (e) {}
   function sv() { try { localStorage.setItem('spBdS', JSON.stringify(S)); } catch (e) {} }
-  function ask(h, cb, tries, tm) {
+  function ask(h, cb, tries, tm, xo) {
     tries = tries || 0;
-    fetch('/api/ai/move', { method: 'POST', headers: hd(), body: JSON.stringify({ board: toEng(h.b), side: h.t, time: tm || S.t }) })
+    fetch('/api/ai/move', { method: 'POST', headers: hd(), body: JSON.stringify(Object.assign({ board: toEng(h.b), side: h.t, time: tm || S.t }, xo || {})) })
       .then(function (r) { return r.json(); })
       .then(function (j) {
         if (j && j.from != null) cb({ ev: typeof j.ev === 'number' ? h.t * j.ev / 200 : null, best: { from: [j.from >> 3, j.from & 7], to: [j.to >> 3, j.to & 7] }, bk: j.bk || null });
-        else if (j && j.error === 'busy' && tries < 5) setTimeout(function () { ask(h, cb, tries + 1, tm); }, 800);
+        else if (j && j.error === 'busy' && tries < 5) setTimeout(function () { ask(h, cb, tries + 1, tm, xo); }, 800);
         else cb(null);
       }).catch(function () { cb(null); });
   }
@@ -556,6 +556,11 @@
     // 🦍 King Kong ustaxonasi (faqat admin): yurish o'rgatish, partiya kiritish, ro'yxat
     // 🤖 Kompyuter vs Kompyuter: dvigatel o'zi bilan tez o'ynaydi — yurishlar baholanadi, xatolar ?!/?/?? bilan ko'rinadi
     var AU = { t: 0.5, run: false, msg: '' };
+    function auDraw() {   // 🤝 durang partiya — admin repertuariga (debyut qismi)
+      if (!window.__isAdmin || hist.length < 6) return;
+      var o = ''; for (var i = 1; i < hist.length; i++) { if (i % 2 === 1) o += ((i + 1) / 2) + '. '; o += hist[i].n + ' '; }
+      try { kkPost('/api/kkrep/draw', { text: o.trim() }); } catch (e) {}
+    }
     function auStop(msg) { AU.run = false; AU.msg = msg || ''; if (alive()) draw(); }
     function auStep() {
       if (!AU.run || !alive()) return;
@@ -563,17 +568,18 @@
       if (!ms.length) return auStop('🏁 O‘yin tugadi: ' + (h.t > 0 ? '⚫ Qora' : '⚪ Oq') + ' yutdi');
       if (cur >= 160) return auStop('⏹ 80 yurishdan keyin to‘xtatildi');
       var k = kf(h), rep = 0; for (var i = 0; i < cur; i++) if (kf(hist[i]) === k) rep++;
-      if (rep >= 2) return auStop('🤝 Durang: pozitsiya 3 marta takrorlandi');
+      if (rep >= 2) { auDraw(); return auStop('🤝 Durang: pozitsiya 3 marta takrorlandi' + (window.__isAdmin ? ' — repertuarga yozildi' : '')); }
       AU.th = true; draw();
       ask(h, function (r) {
         AU.th = false;
         if (!AU.run || hist[cur] !== h || !alive()) return;
         if (!r) return auStop('⚠️ Dvigatel javob bermadi');
         EV[k] = r;
-        var m = ms.filter(function (x) { var e = x.path[x.path.length - 1]; return x.path[0][0] === r.best.from[0] && x.path[0][1] === r.best.from[1] && e[0] === r.best.to[0] && e[1] === r.best.to[1]; })[0] || ms[0];
+        var m = ms.filter(function (x) { var e = x.path[x.path.length - 1]; return x.path[0][0] === r.best.from[0] && x.path[0][1] === r.best.from[1] && e[0] === r.best.to[0] && e[1] === r.best.to[1]; })[0];
+        if (!m) return auStop('⚠️ Dvigatel javobi doskadagi yurishga mos kelmadi');
         play(m, true);
         setTimeout(auStep, 120);
-      }, 0, AU.t);
+      }, 0, AU.t, { safe: 1, book: 1, tbAlways: 1, kk: window.__isAdmin ? 1 : 0 });   // King Kong kabi: qo'riqchi, endshpil bazasi, kitob (admin — repertuar ham)
     }
     var KK = { msg: '', sides: 'w', busy: false };
     // 🦍 King Kong ko'rinishi: har pozitsiyada u nima o'ynaydi va qayerdan (TB / siz / etyud / Colette / kitob / dvigatel)

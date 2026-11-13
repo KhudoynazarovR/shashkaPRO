@@ -149,7 +149,8 @@ function importBooks(sc, depthPly, by) {
   return add;
 }
 // 📥 PDN: bir yoki ko'p partiya → chastota bo'yicha vaznlar
-function importPdn(sc, text, sides, depthPly, by) {
+function importPdn(sc, text, sides, depthPly, by, wmax, src) {
+  wmax = wmax || 100; src = src || 'pdn';
   const r = D(); if (!okScope(sc)) return { error: 'Doira noto‘g‘ri' };
   const games = String(text || '').split(/\n\s*\n(?=\s*(\[|1\.))|(?<=\s(?:1-0|0-1|2-0|0-2|1-1|1\/2-1\/2|\*))\s+(?=1\.)/).filter(g => g && /\d\.\s*[a-h][1-8]/.test(g));
   const cnt = {}; let ok = 0, bad = 0;
@@ -169,9 +170,9 @@ function importPdn(sc, text, sides, depthPly, by) {
   for (const [k, e] of Object.entries(cnt)) {
     const mx = Math.max(...Object.values(e.m)), P = S[k] || (S[k] = {});
     if (Object.values(P).some(v => v.lock)) continue;
-    for (const [id, n] of Object.entries(e.m)) { const w = Math.max(10, Math.round(100 * n / mx)); if (!P[id] || (P[id].src !== 'admin' && P[id].w < w)) { P[id] = { w, note: '', mk: '', lock: false, src: 'pdn' }; add++; } }
+    for (const [id, n] of Object.entries(e.m)) { const w = Math.max(10, Math.round(wmax * n / mx)); if (!P[id] || (P[id].src !== 'admin' && P[id].w < w)) { P[id] = { w, note: P[id] && P[id].note || '', mk: P[id] && P[id].mk || '', lock: false, src }; add++; } }
   }
-  r.hist.unshift({ at: Date.now(), by: String(by || ''), sc, k: null, why: '📥 PDN importi: ' + ok + ' partiya, ' + add + ' ta yurish' }); store.save();
+  r.hist.unshift({ at: Date.now(), by: String(by || ''), sc, k: null, why: (src === 'durang' ? 'Durang partiya (kompyuter-kompyuter): ' : '📥 PDN importi: ') + ok + ' partiya, ' + add + ' ta yurish' }); store.save();
   return { games: ok, bad, add };
 }
 function traps(n) {
@@ -281,6 +282,7 @@ function handle(req, res, p, h) {
     if (p === '/api/kkrep/fill') { if (j.stop) { FILL.run = false; store.save(); } else if (j.start) fillStart(t.id); return h.send(res, 200, { run: FILL.run, done: FILL.done, total: FILL.total, add: FILL.add, err: FILL.err }); }
     if (p === '/api/kkrep/bk') { if (j.now) await repBackup(true); return h.send(res, 200, { list: store.db.kkRepBk || [], n: repCount() }); }
     if (p === '/api/kkrep/restore') return h.send(res, 200, await repRestore(+j.slot, t.id));
+    if (p === '/api/kkrep/draw') return h.send(res, 200, importPdn('all', j.text, 'both', Math.max(2, Math.min(60, r.cfg.depth * 2)), t.id, 90, 'durang'));
     if (p === '/api/kkrep/undo') return h.send(res, undo(+j.i) ? 200 : 400, { ok: true });
     if (p === '/api/kkrep/import') return h.send(res, 200, { add: importBooks(sc, Math.max(2, Math.min(40, (+j.depth || r.cfg.depth) * 2)), t.id) });
     if (p === '/api/kkrep/pdn') return h.send(res, 200, importPdn(sc, j.text, j.sides === 'w' || j.sides === 'b' ? j.sides : 'both', Math.max(2, Math.min(60, (+j.depth || r.cfg.depth) * 2)), t.id));
