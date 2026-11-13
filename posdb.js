@@ -102,7 +102,7 @@ function explore(src, b, s, admin, sc) {
     if (bk) { const m = L.find(x => x.from === bk.from && x.to === bk.to); if (m) { const ex = rows.find(r => r.id === bk.from + '-' + bk.to); if (ex) { ex.tag += ' · 📖 kitob'; ex.n = bk.n; } else rows.push({ id: bk.from + '-' + bk.to, from: bk.from, to: bk.to, t: mtxt(m), tag: '📖 kitob', n: bk.n }); } }
     return { rows };
   }
-  if (src === 'rep' && admin) { const v = require('./kkrep.js').view(sc || 'all', b, s); return { rows: v.list.map(m => ({ id: m.id, from: m.from, to: m.to, t: m.t, w: m.w, pct: m.pct, mk: m.mk, note: m.note, lock: m.lock, st: m.st, trap: m.trap })), taught: v.taught, sc: v.sc };
+  if (src === 'rep' && admin) { const v = require('./kkrep.js').view(sc || 'all', b, s); return { rows: v.list.map(m => ({ id: m.id, from: m.from, to: m.to, t: m.t, w: m.w, pct: m.pct, mk: m.mk, note: m.note, lock: m.lock, src: m.src, st: m.st, trap: m.trap })), taught: v.taught, sc: v.sc };
   }
   return { rows: [] };
 }

@@ -197,6 +197,70 @@ function suggest(b, s, cb) {
     K.pv(m.board, -s, 0.3, 1, r => { out.push({ id: m.from + '-' + m.to, sc: r && typeof r.ev === 'number' ? s * r.ev : null }); next(); });
   })();
 }
+// 📖 Debyutlarni to'ldirish: debyutlar kutubxonasidagi har pozitsiyada hamma yurishlarga foiz + belgi (Dragon bahosi + kitob/nazariya).
+// Qo'lda saqlangan (🔒) pozitsiyalarga tegilmaydi. Natija qulflanmagan (src: dragon) — admin tekshirib saqlaydi.
+const FILL = { run: false, done: 0, total: 0, add: 0, q: [], at: 0, err: '' };
+function fillQueue() {
+  const t = require('fs').readFileSync(require('path').join(__dirname, 'debyut.js'), 'utf8'), D0 = JSON.parse(/var DATA = (\[.*?\]);\n/.exec(t)[1]);
+  const seen = new Set(), q = [];
+  D0.forEach(d => [d.steps].concat(d.alts || []).forEach(st => {
+    let b = init(), s = 1;
+    for (const x of st) {
+      const k = keyOf(b, s); if (!seen.has(k)) { seen.add(k); q.push([b, s]); }
+      const h = x.p, f = h[0][0] * 8 + h[0][1], e = h[h.length - 1][2] * 8 + h[h.length - 1][3];
+      const m = R.moves(b, s).find(z => { const P = z.path && z.path.length ? z.path : [z.to]; return z.from === f && P[P.length - 1] === e; }); if (!m) break;
+      b = m.board; s = -s;
+    }
+    const k = keyOf(b, s); if (!seen.has(k)) { seen.add(k); q.push([b, s]); }   // debyutdan keyingi pozitsiya ham
+  }));
+  return q;
+}
+function fillOne(b, s, cb) {
+  const r = D(), k = keyOf(b, s), S = r.sc.all || (r.sc.all = {}), P = S[k];
+  if (P && Object.values(P).some(v => v.lock)) return cb(0);   // admin qo'lda saqlagan — tegilmaydi
+  const L = R.moves(b, s); if (L.length < 2) return cb(0);
+  let C = null, B = null; try { C = colette()[k] || null; } catch (e) {} try { B = bookJ()[k] || null; } catch (e) {}
+  let lose = {}; try { const rk = require('./kkadm.js').rank(b, s, 4); if (rk && rk.length) rk.forEach(x => { lose[x.m.from + '-' + x.m.to] = rk[0].v - x.v; }); } catch (e) {}
+  const K = require('./kestoai.js'), out = []; let i = 0;
+  (function next() {
+    if (!FILL.run) return cb(0);
+    if (i >= L.length) {
+      const sc = out.filter(x => x.sc != null).map(x => x.sc), best = sc.length ? Math.max.apply(null, sc) : 0;
+      const nw = {}; let n = 0; const near = out.filter(x => x.sc != null && best - x.sc <= 0.15).length, uniq = near === 1;   // '!' — faqat yagona eng yaxshi yurish
+      out.forEach(x => {
+        const d = x.sc == null ? 9 : best - x.sc, ls = lose[x.id] || 0, isC = C && C[0] + '-' + C[1] === x.id, isB = B && B.from != null && B.from + '-' + B.to === x.id;
+        let w = Math.round(Math.max(0, 100 - d * 100) / 5) * 5; if (ls >= 1) w = 0; if (w < 20) w = 0;
+        const th = isC || isB;   // nazariya/kitob yurishi: nazariyaga ishonamiz (gambit bo'lishi mumkin)
+        if (th) w = ls >= 2 ? 0 : Math.max(w, w >= 80 ? 95 : 60);
+        let mk = '';
+        if (!th && (ls >= 1 || d >= 1)) mk = '??'; else if (!th && d >= 0.5) mk = '?'; else if (d >= 0.25) mk = '?!';
+        else if (d <= 0.05 && uniq) mk = th ? '!!' : '!'; else if (th && d <= 0.1) mk = '!';
+        const note = isC && isB ? 'nazariya, kitob' : isC ? 'nazariya' : isB ? 'kitob' : '';
+        if (w > 0 || mk) { nw[x.id] = { w, note, mk, lock: false, src: 'dragon' }; n++; }
+      });
+      if (n) S[k] = nw;
+      return cb(n);
+    }
+    const m = L[i++];
+    K.pv(m.board, -s, 0.3, 1, rr => { out.push({ id: m.from + '-' + m.to, sc: rr && typeof rr.ev === 'number' ? s * rr.ev : null }); next(); });
+  })();
+}
+let _C = null, _B = null;
+function colette() { if (!_C) try { _C = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'partiyalar', 'colette_moves.json'), 'utf8')); } catch (e) { _C = {}; } return _C; }
+function bookJ() { if (!_B) try { _B = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'book.json'), 'utf8')); } catch (e) { _B = {}; } return _B; }
+function fillStart(by) {
+  if (FILL.run) return FILL;
+  try { FILL.q = fillQueue(); } catch (e) { FILL.err = e.message; return FILL; }
+  Object.assign(FILL, { run: true, done: 0, total: FILL.q.length, add: 0, at: Date.now(), err: '' });
+  (function step() {
+    if (!FILL.run) return;
+    if (global.__tRunning && global.__tRunning()) return setTimeout(step, 30000);   // turnir paytida kutadi
+    const x = FILL.q.shift();
+    if (!x) { FILL.run = false; const r = D(); r.hist.unshift({ at: Date.now(), by: String(by || ''), sc: 'all', k: null, why: 'Debyutlarni to‘ldirish: ' + FILL.add + ' ta yurish, ' + FILL.total + ' pozitsiya' }); store.save(); return; }
+    fillOne(x[0], x[1], n => { FILL.done++; FILL.add += n; if (FILL.done % 20 === 0) store.save(); setTimeout(step, 300); });
+  })();
+  return FILL;
+}
 // ---------- HTTP: /api/kkrep (faqat admin)
 function handle(req, res, p, h) {
   if (!p.startsWith('/api/kkrep')) return false;
@@ -214,6 +278,7 @@ function handle(req, res, p, h) {
     if (p === '/api/kkrep/cfg') { ['depth'].forEach(k => { if (j[k] != null) r.cfg[k] = Math.max(1, Math.min(30, +j[k] || 12)); }); ['tour100', 'adapt', 'traps', 'top'].forEach(k => { if (j[k] != null) r.cfg[k] = !!j[k]; }); store.save(); return h.send(res, 200, { cfg: r.cfg }); }
     if (p === '/api/kkrep/hist') return h.send(res, 200, { list: r.hist.slice(0, 120).map((x, i) => ({ i, at: x.at, sc: x.sc, why: x.why, b: x.b, s: x.s, old: x.old ? Object.keys(x.old).length : 0, nw: x.nw ? Object.entries(x.nw).map(([id, v]) => { const [f, tt] = id.split('-').map(Number); return SQ(f) + '-' + SQ(tt) + ' ' + v.w; }).join(', ') : '—' })) });
     if (p === '/api/kkrep/suggest') return suggest(b, s, x => h.send(res, 200, x));
+    if (p === '/api/kkrep/fill') { if (j.stop) { FILL.run = false; store.save(); } else if (j.start) fillStart(t.id); return h.send(res, 200, { run: FILL.run, done: FILL.done, total: FILL.total, add: FILL.add, err: FILL.err }); }
     if (p === '/api/kkrep/undo') return h.send(res, undo(+j.i) ? 200 : 400, { ok: true });
     if (p === '/api/kkrep/import') return h.send(res, 200, { add: importBooks(sc, Math.max(2, Math.min(40, (+j.depth || r.cfg.depth) * 2)), t.id) });
     if (p === '/api/kkrep/pdn') return h.send(res, 200, importPdn(sc, j.text, j.sides === 'w' || j.sides === 'b' ? j.sides : 'both', Math.max(2, Math.min(60, (+j.depth || r.cfg.depth) * 2)), t.id));
