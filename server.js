@@ -267,6 +267,9 @@ function serveFile(req, res) {
     if (!html.includes("sound.js")) {
       html = html.replace("</body>", '<script src="/sound.js"></script>\n</body>');
     }
+    // ⚡ keyin yuklanadigan skriptlar (homex.js, dragon.js, tarena.js …) ham telefonda saqlanadi: manziliga &d=<deploy> qo'shiladi,
+    // server uni o'zgarmas deb beradi — takroriy ochilishda bu fayllar uchun serverga so'rov ketmaydi. /api/botadmin bir marta so'raladi.
+    if (!html.includes("__spD")) html = html.replace("<head>", '<head><script>(function(){var D=window.__spD="' + VER + '";function fx(u){try{var a=new URL(u,location.href);if(a.origin!==location.origin||!/\\.js$/.test(a.pathname)||a.searchParams.has("h")||a.searchParams.has("d"))return u;a.searchParams.set("d",D);return a.pathname+a.search}catch(e){return u}}try{var P=HTMLScriptElement.prototype,ds=Object.getOwnPropertyDescriptor(P,"src");if(ds&&ds.set)Object.defineProperty(P,"src",{get:ds.get,set:function(v){ds.set.call(this,fx(v))},configurable:true,enumerable:ds.enumerable});var sa=Element.prototype.setAttribute;Element.prototype.setAttribute=function(n,v){if(this.tagName==="SCRIPT"&&String(n).toLowerCase()==="src")v=fx(v);return sa.call(this,n,v)}}catch(e){}try{var F=window.fetch,C={};if(F)window.fetch=function(u,o){if(u==="/api/botadmin"&&!(o&&o.method&&o.method!=="GET")){var p=C[u]||(C[u]=F.call(window,u,o));return p.then(function(r){return r.clone()})}return F.apply(this,arguments)}}catch(e){}})();</script>');
     if (!html.includes("theme.js")) html = html.replace("</head>", '<script src="/theme.js"></script>\n</head>');   // 🎨 mavzu: shrift va fon — sahifa chizilishidan oldin
     if (!html.includes("rules-bridge.js")) {
       html = html.replace("</body>", '<script src="/rules-bridge.js"></script>\n</body>');
@@ -305,8 +308,9 @@ function serveFile(req, res) {
     return sendSmart(req, res, { "Content-Type": types[".html"], "Cache-Control": "no-cache" }, "h-" + _cr.createHash("md5").update(html).digest("hex"), () => Buffer.from(html));
   }
 
-  if (TXT.has(ext)) { const _st = fs.statSync(file), _hq = new URL(req.url, "http://localhost").searchParams.get("h"); return sendSmart(req, res, { "Content-Type": types[ext], "Cache-Control": (_hq && _hq === fileHash(requested)) ? "public, max-age=31536000, immutable" : "no-cache" }, ext.slice(1) + "-" + _st.size + "-" + Math.floor(_st.mtimeMs), () => fs.readFileSync(file)); }
-  res.writeHead(200, { "Content-Type": types[ext], "Cache-Control": "no-cache" });
+  if (TXT.has(ext)) { const _st = fs.statSync(file), _hq = new URL(req.url, "http://localhost").searchParams.get("h"); return sendSmart(req, res, { "Content-Type": types[ext], "Cache-Control": ((_hq && _hq === fileHash(requested)) || new URL(req.url, "http://localhost").searchParams.get("d") === VER) ? "public, max-age=31536000, immutable" : "no-cache" }, ext.slice(1) + "-" + _st.size + "-" + Math.floor(_st.mtimeMs), () => fs.readFileSync(file)); }
+  { const _sp = new URL(req.url, "http://localhost").searchParams;   // ⚡ versiyali rasm/ovoz (?v=…) — 30 kun telefonda saqlanadi
+    res.writeHead(200, { "Content-Type": types[ext], "Cache-Control": (_sp.get("v") || _sp.get("d") === VER) ? "public, max-age=2592000" : "no-cache" }); }
   fs.createReadStream(file).pipe(res);
 }
 

@@ -213,7 +213,7 @@ function handle(req, res, url) {
     const a = ((store.db.botAv || {})[decodeURIComponent(p.slice(8))]) || '';
     const m = /^data:image\/jpeg;base64,(.+)$/.exec(a);
     if (!m) { res.writeHead(404); res.end(); return true; }
-    res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'no-cache' }); res.end(Buffer.from(m[1], 'base64')); return true;
+    res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=3600' }); res.end(Buffer.from(m[1], 'base64')); return true;   // ⚡ bot rasmlari 1 soat saqlanadi
   }
   if (p.startsWith('/api/av/') && req.method === 'GET') {
     const _u = store.users()[decodeURIComponent(p.slice(8))];
