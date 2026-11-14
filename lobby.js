@@ -1987,7 +1987,7 @@ function createLobby({ send, clients, roomsApi }) {
     // oldingi kunlik arenalarda qatnashganlarga taklif
     const appLink = (process.env.TG_APP_LINK || process.env.APP_LINK || '').replace(/\/$/, '');
     const fans = Object.keys(st.db.dailyFans || {}).filter(u => now - st.db.dailyFans[u] < 14 * 86400e3);
-    fans.forEach((u, i) => setTimeout(() => {
+    if (false) fans.forEach((u, i) => setTimeout(() => {   // o'yinchilarga shaxsiy xabar o'chirilgan (kanal va guruh yetarli)
       try { if (!require('./notify.js').allowed(u, 'arena')) return; } catch (e) {}
       const msg = { chat_id: Number(u), parse_mode: 'HTML', text: '🌙 <b>Bugun soat 20:00 da — Kunlik arena!</b>\n\n⏱ 3+2 · 30 daqiqa\n💰 Sovrin fondi: <b>' + DAILY.prize + ' 🪙</b>\n🥇 G‘olibga qo‘shimcha <b>7 kunlik 👑 Premium</b>\n\nOldindan ro‘yxatdan o‘ting 👇' };
       if (appLink) msg.reply_markup = { inline_keyboard: [[{ text: '⚔️ Arenaga yozilish', url: appLink + '?startapp=lbt_' + t.id }]] };
@@ -2030,7 +2030,7 @@ function createLobby({ send, clients, roomsApi }) {
       const appLink = (process.env.TG_APP_LINK || process.env.APP_LINK || "").replace(/\/$/, "");
       const fans = Object.keys(st.db.dailyFans || {}).filter(u => now - st.db.dailyFans[u] < 14 * 86400e3);
       const text = "📅 <b>Bugungi turnirlar</b>\n\n🏁 14:00 · Shveytsar · 2+1\n⚡ 15:15 · Mikro match IDF 780 · 1+1\n🌱 18:00 · Havaskorlar · 5+3\n⚔️ 19:00 · Blits · 3+2\n🎯 20:00 · Bullet IDF 780 · 2+2\n🎯 21:00 · Bullet IDF 780 · 1+1\n👑 22:00 · Super Arena · 45 soniya\n\n💰 Har arenada 100 🪙 sovrin fondi";
-      fans.forEach((u, i) => setTimeout(() => {
+      if (false) fans.forEach((u, i) => setTimeout(() => {   // o'yinchilarga shaxsiy xabar o'chirilgan
         try { if (!require("./notify.js").allowed(u, "arena")) return; } catch (e) {}
         const msg = { chat_id: Number(u), parse_mode: "HTML", text: text };
         if (appLink) msg.reply_markup = { inline_keyboard: [[{ text: "⚔️ Ochish", url: appLink }]] };

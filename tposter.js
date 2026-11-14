@@ -139,7 +139,7 @@ async function announce(t) {
     for (const g of GR) {   // 👥 bot admin bo'lgan barcha guruhlarga (avtomatik ro'yxat) + T_GROUPS
       try { const r2 = fid ? await tg('sendPhoto', { chat_id: g, photo: fid, caption: annCap(t), parse_mode: 'HTML', reply_markup: joinKb(t) }) : await sendPhoto(g, buf, annCap(t), joinKb(t)); if (r2 && r2.ok && r2.result) { t.annGrp = t.annGrp || {}; t.annGrp[g] = r2.result.message_id; } console.log('[tposter] guruh', g, r2 && r2.ok ? 'ok' : JSON.stringify(r2 && r2.description)); } catch (e) {}
     }
-    broadcast(t, fid, buf);
+    // o'yinchilarga shaxsiy xabar yuborilmaydi — e'lon faqat kanal va guruhlarda
   } catch (e) { console.log('[tposter] e\'lon xato', e.message); }
 }
 // 📨 platformadagi o'yinchilarga botda shaxsiy xabar (rasm bilan). Oxirgi 60 kunda kirganlar, «turnir xabarlari»ni o'chirmaganlar.
