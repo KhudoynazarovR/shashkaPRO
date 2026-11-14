@@ -154,6 +154,7 @@ function handle(req, res, url) {
   } catch (e) {}
   if (p === '/api/season' && req.method === 'GET') { const _t = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN); if (!_t) { send(res, 401, { error: 'auth' }); return true; } send(res, 200, require('./season.js').view(_t.id)); return true; }
   if (p === '/api/wager' && req.method === 'GET') { const W = require('./wager.js'); send(res, 200, { stakes: W.STAKES, fee: W.FEE, top: W.top() }); return true; }
+  if (p === '/api/tuzoq/reel') { if (require('./tuzoqreel.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }   // 🎬 tuzoqdan Reel (admin)
   if (p === '/api/reel') { if (require('./reelgen.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }   // 🎬 masaladan Reel (admin)
   if (p.startsWith('/api/kkadm')) { if (require('./kkadm.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }
   if (p.startsWith('/api/dragon')) { if (require('./dragonsrv.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }

@@ -38,15 +38,22 @@
     document.head.appendChild(s);
   }
   function stop() { if (timer) { clearTimeout(timer); timer = null; } }
+  // daraja: 1 oson (kombinatsiya ≤5 yurish), 3 murakkab (11+ yurish va 3+ qurbon), qolganlari 2 o'rta
+  function info(x) { if (!x._i) { var sac = x.z.filter(function (m, k) { return k % 2 === 1 && Math.abs(m[0][0] - m[0][2]) > 1; }).length, zl = x.z.length; x._i = { lv: zl >= 11 && sac >= 3 ? 3 : zl <= 5 ? 1 : 2, sac: sac, zl: zl }; } return x._i; }
+  var LVN = { 1: 'Oson', 2: 'O‘rta', 3: 'Murakkab' }, LVC = { 1: '#22c55e', 2: '#f59e0b', 3: '#ef4444' };
+  var ADMIN = false, VB = false;
+  function ini() { try { return (tg && tg.initData) || ''; } catch (e) { return ''; } }
+  try { fetch('/api/botadmin', { headers: { 'x-init-data': ini() } }).then(function (r) { return r.json(); }).then(function (j) { ADMIN = !!(j && j.admin); if (ADMIN && cur && phase !== 'list') draw(); }).catch(function () {}); } catch (e) {}
 
   // ---------- ro'yxat
   function list() {
     stop(); cur = null; phase = 'list';
-    var S = solved(), n = D.filter(function (x) { return S[x.n]; }).length, groups = [], gi = {};
-    D.forEach(function (x) { if (!(x.u in gi)) { gi[x.u] = groups.length; groups.push({ u: x.u, d: x.d, a: [] }); } groups[gi[x.u]].a.push(x); });
+    var S = solved(), n = D.filter(function (x) { return S[x.n]; }).length, groups = [], gi = {}, LV = ls('trapLv') || 1, DL = D.filter(function (x) { return info(x).lv === LV; });
+    DL.forEach(function (x) { if (!(x.u in gi)) { gi[x.u] = groups.length; groups.push({ u: x.u, d: x.d, a: [] }); } groups[gi[x.u]].a.push(x); });
     var h = '<div class="tp"><button id="tX">✕</button><b>🪤 Debyut tuzoqlari</b></div>';
     h += '<div class="hero">Yu.N. Kozirevning “<b>Ловушки и комбинации в начале партии</b>” kitobidan <b>' + D.length + '</b> ta partiya. Har birida debyutda bir tomon xato qiladi — siz uning raqibi sifatida <b>g‘alaba kombinatsiyasini</b> topasiz.<br>✅ Yechildi: <b>' + n + ' / ' + D.length + '</b></div>';
-    var nx = D.filter(function (x) { return !S[x.n]; })[0];
+    h += '<div style="display:flex;gap:6px;margin-bottom:10px">' + [1, 2, 3].map(function (k) { var A = D.filter(function (x) { return info(x).lv === k; }), d = A.filter(function (x) { return S[x.n]; }).length; return '<button data-lv="' + k + '" style="flex:1;border:0;border-radius:12px;padding:9px 4px;color:#fff;font:800 14px system-ui;background:' + (k === LV ? LVC[k] : 'rgba(255,255,255,.1)') + '">' + LVN[k] + '<br><small style="font-weight:600;opacity:.85">' + d + '/' + A.length + '</small></button>'; }).join('') + '</div>';
+    var nx = DL.filter(function (x) { return !S[x.n]; })[0];
     if (nx) h += '<button class="go" id="tNext">▶ ' + (n ? 'Davom etish' : 'Boshlash') + ' · №' + nx.n + '</button>';
     groups.forEach(function (g, i) {
       var k = g.a.filter(function (x) { return S[x.n]; }).length;
@@ -57,6 +64,7 @@
     h += '<div style="font-size:11px;color:#ffb4c0;opacity:.7;margin-top:12px;line-height:1.4">Manba: Ю.Н. Козырев, 2003. Kitobdagi bir nechta bosma xatolar o‘yin qoidalari bo‘yicha tuzatilgan; tushunarsiz partiyalar kiritilmagan.</div>';
     ov.innerHTML = h;
     ov.querySelector('#tX').onclick = close;
+    Array.prototype.forEach.call(ov.querySelectorAll('[data-lv]'), function (b) { b.onclick = function () { ls('trapLv', +b.getAttribute('data-lv')); openG = null; list(); }; });
     var e = ov.querySelector('#tNext'); if (e) e.onclick = function () { open(nx); };
     Array.prototype.forEach.call(ov.querySelectorAll('[data-g]'), function (b) { b.onclick = function () { var i = +b.getAttribute('data-g'); openG = openG === i ? null : i; list(); }; });
     Array.prototype.forEach.call(ov.querySelectorAll('[data-n]'), function (b) { b.onclick = function () { var n2 = +b.getAttribute('data-n'); open(D.filter(function (x) { return x.n === n2; })[0]); }; });
@@ -155,7 +163,8 @@
   function draw(o) {
     o = o || {};
     var x = cur, S = solver(), Sn = S === 'w' ? '⚪ Oqlar' : '⚫ Qoralar', On = S === 'w' ? 'Qoralar' : 'Oqlar';
-    var h = '<div class="tp"><button id="tBk">‹</button><b>№' + x.n + ' · ' + esc(x.u) + '</b></div>';
+    var h = '<div class="tp"><button id="tBk">‹</button><b>№' + x.n + ' · ' + esc(x.u) + '</b></div>', I = info(x);
+    h += '<div style="margin:-4px 0 8px;font:700 13px system-ui;color:#ffd9de"><span style="background:' + LVC[I.lv] + ';color:#fff;border-radius:8px;padding:2px 8px;margin-right:6px">' + LVN[I.lv] + '</span>' + I.zl + ' yurish · ' + I.sac + ' qurbon</div>';
     if (phase === 'intro') h += '<div class="msg i">📖 Debyut: ' + ply + ' / ' + x.m.length + ' yurish…</div>';
     else if (phase === 'solve' && vw != null) h += '<div class="msg i">👀 Ko‘rish rejimi: ' + vw + ' / ' + ply + '<br><small>Davom etish uchun ⏭ ni bosing</small></div>';
     else if (phase === 'solve') h += '<div class="msg ' + (msg && msg.charAt(0) === '❌' ? 'e' : 'i') + '">' + (msg || ('⚠️ ' + On + ' xato qildi: <b>' + nota(x.m[x.m.length - 1]) + '??</b><br>🎯 ' + Sn + ' — g‘alaba kombinatsiyasini toping!')) + '</div>';
@@ -170,11 +179,19 @@
       var S2 = solved(), nx = D.filter(function (y) { return !S2[y.n] && y.n !== x.n; })[0];
       h += '<div class="row2">' + (nx ? '<button class="bt g" id="tNx">➡️ Keyingi tuzoq</button>' : '') + '<button class="bt" id="tRe">🔄 Qayta</button><button class="bt" id="tLs">📋 Ro‘yxat</button></div>';
     }
+    if (ADMIN) { var TH = [['purple', 'Binafsha'], ['pink', 'Ilovadagi'], ['wood', 'Yog‘och'], ['green', 'Turnir yashil'], ['marble', 'Qora marmar'], ['blue', 'Ko‘k shisha']], th0 = ls('trapTh') || 'purple';
+      h += '<div style="margin-top:14px;padding:10px;border-radius:14px;background:rgba(0,0,0,.3);display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span style="font:700 13px system-ui;opacity:.8">Admin · video</span><select id="tVth" style="flex:1;min-width:120px;background:#2a0f1a;color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:10px;padding:8px">' + TH.map(function (t) { return '<option value="' + t[0] + '"' + (t[0] === th0 ? ' selected' : '') + '>' + t[1] + '</option>'; }).join('') + '</select><button class="bt" id="tVid"' + (VB ? ' disabled' : '') + '>' + (VB ? 'Video yasalmoqda…' : 'Video yasash') + '</button></div>'; }
     var y0 = ov.scrollTop;
     ov.innerHTML = h; ov.scrollTop = y0;
     ov.querySelector('#tBk').onclick = list;
     var e;
     if ((e = ov.querySelector('#tSk'))) e.onclick = skip;
+    if ((e = ov.querySelector('#tVth'))) e.onchange = function () { ls('trapTh', this.value); };
+    if ((e = ov.querySelector('#tVid'))) e.onclick = function () {
+      if (VB) return; if (!confirm('Video 1–2 daqiqada yasaladi va botga keladi. Turnir ketayotgan bo‘lsa, keyinroq yasang. Boshlansinmi?')) return;
+      VB = true; var n0 = cur.n, th = (ov.querySelector('#tVth') || {}).value || 'purple'; draw();
+      fetch('/api/tuzoq/reel', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-init-data': ini() }, body: JSON.stringify({ n: n0, th: th }) }).then(function (r) { return r.json(); }).then(function (j) { msg = j && j.ok ? 'Video yasalmoqda — 1–2 daqiqada botga keladi' : '❌ ' + ((j && j.error) || 'Xato'); }).catch(function () { msg = '❌ Server bilan aloqa yo‘q'; }).then(function () { setTimeout(function () { VB = false; if (cur && cur.n === n0) draw(); }, 90000); if (cur && cur.n === n0) draw(); });
+    };
     if ((e = ov.querySelector('#tRe'))) e.onclick = function () { open(cur); };
     if ((e = ov.querySelector('#tLs'))) e.onclick = list;
     if ((e = ov.querySelector('#tAn'))) e.onclick = analysis;
