@@ -28,6 +28,7 @@ function S() {
   if (!Array.isArray(s.prz) || s.prz.length !== 3) s.prz = [10, 7, 5];
   if (s.rest === undefined) s.rest = 1;
   if (s.chOn === undefined) s.chOn = true;
+  if (!s.th) s.th = 'pink';
   s.q = s.q || []; s.opts = s.opts || {}; s.pend = s.pend || {}; s.used = s.used || [];
   return s;
 }
@@ -70,7 +71,13 @@ function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.fl
 function wrongs(p, cor) { const s = S(), man = s.opts[p.id]; if (Array.isArray(man) && man.length) return man.filter(x => x && x !== cor).slice(0, 9); return shuffle(pool(p, cor)).slice(0, 4); }
 
 // ---------- doska rasmi: faqat doska, do'kon toshlari bilan
-const LC = '#f1d4cc', DC = '#b6695f';
+const TH = {
+  pink: ['Pushti', '#f1d4cc', '#b6695f'], classic: ['Klassik', '#f0d9b5', '#b58863'], green: ['Yashil', '#eeeed2', '#769656'], blue: ['Ko‘k', '#dee3e6', '#8ca2ad'],
+  gray: ['Kulrang', '#d8d8d8', '#6f6f6f'], walnut: ['Yong‘oq', '#e8cb9a', '#7a4a26'], purple: ['Binafsha', '#e6dcf0', '#8a6bb1'], sand: ['Qum', '#f3e9d2', '#c9a66b'],
+  ocean: ['Okean', '#d6eaf2', '#3a7ca5'], rose: ['Atirgul', '#f6e1e6', '#b5667a'], olive: ['Zaytun', '#e9ecd0', '#6b7b3a'], edeon: ['Yog‘och', 'url(#lt)', 'url(#dk)', '#f6c493', '#7b2f13'], photo: ['Fotodoska', 'none', 'none', '#f0d9b5', '#8a5a33']
+};
+let PHOTO = null;
+function photo() { if (PHOTO === null) { try { PHOTO = 'data:image/jpeg;base64,' + require('fs').readFileSync(require('path').join(__dirname, 'board_photo.jpg')).toString('base64'); } catch (e) { PHOTO = ''; } } return PHOTO; }
 async function imgs(sharp) {
   try {
     const s = S(), sh = store.db.shop || [], it = (s.skin && sh.find(x => x.id === s.skin)) || sh.find(x => x.def);
@@ -83,16 +90,20 @@ async function imgs(sharp) {
     return o;
   } catch (e) { return null; }
 }
-function svg(p, IM) {
-  const Z = 100, W = Z * 8, flip = p.side === 'b';
+function svg(p, IM, th) {
+  let t = TH[th || S().th] || TH.pink; if (t[0] === 'Fotodoska' && !photo()) t = TH.classic;
+  const Z = 100, W = Z * 8, flip = p.side === 'b', LC = t[1], DC = t[2], LT = t[3] || t[1], DT = t[4] || t[2];
   let s = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + W + '" height="' + W + '" viewBox="0 0 ' + W + ' ' + W + '">'
     + '<defs><radialGradient id="wp" cx=".38" cy=".32" r=".8"><stop offset="0" stop-color="#fff"/><stop offset=".55" stop-color="#ececec"/><stop offset="1" stop-color="#b9b9b9"/></radialGradient>'
-    + '<radialGradient id="bp" cx=".38" cy=".32" r=".8"><stop offset="0" stop-color="#555"/><stop offset=".55" stop-color="#1c1c1c"/><stop offset="1" stop-color="#000"/></radialGradient></defs>';
+    + '<radialGradient id="bp" cx=".38" cy=".32" r=".8"><stop offset="0" stop-color="#555"/><stop offset=".55" stop-color="#1c1c1c"/><stop offset="1" stop-color="#000"/></radialGradient>'
+    + '<linearGradient id="dk" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7b2f13"/><stop offset=".5" stop-color="#702a10"/><stop offset="1" stop-color="#7d3114"/></linearGradient>'
+    + '<linearGradient id="lt" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f3bb86"/><stop offset=".5" stop-color="#f6c493"/><stop offset="1" stop-color="#eaa874"/></linearGradient></defs>';
+  if (t[0] === 'Fotodoska') s += '<image xlink:href="' + photo() + '" x="0" y="0" width="' + W + '" height="' + W + '" preserveAspectRatio="none"/>';
   for (let vr = 0; vr < 8; vr++) for (let vc = 0; vc < 8; vc++) {
     const r = flip ? 7 - vr : vr, c = flip ? 7 - vc : vc, x = vc * Z, y = vr * Z, dk = (r + c) % 2 === 1;
     s += '<rect x="' + x + '" y="' + y + '" width="' + Z + '" height="' + Z + '" fill="' + (dk ? DC : LC) + '"/>';
-    if (vc === 0) s += '<text x="' + (x + 6) + '" y="' + (y + 20) + '" font-size="17" font-weight="700" font-family="DejaVu Sans, sans-serif" fill="' + (dk ? LC : DC) + '">' + (8 - r) + '</text>';
-    if (vr === 7) s += '<text x="' + (x + Z - 6) + '" y="' + (y + Z - 7) + '" font-size="17" font-weight="700" text-anchor="end" font-family="DejaVu Sans, sans-serif" fill="' + (dk ? LC : DC) + '">' + 'abcdefgh'[c] + '</text>';
+    if (vc === 0) s += '<text x="' + (x + 6) + '" y="' + (y + 20) + '" font-size="17" font-weight="700" font-family="DejaVu Sans, sans-serif" fill="' + (dk ? LT : DT) + '">' + (8 - r) + '</text>';
+    if (vr === 7) s += '<text x="' + (x + Z - 6) + '" y="' + (y + Z - 7) + '" font-size="17" font-weight="700" text-anchor="end" font-family="DejaVu Sans, sans-serif" fill="' + (dk ? LT : DT) + '">' + 'abcdefgh'[c] + '</text>';
     const v = p.board[r][c]; if (!v) continue;
     const cx = x + Z / 2, cy = y + Z / 2, w = v === 1 || v === 3;
     if (IM) { s += '<image xlink:href="' + IM[v === 1 ? 'w' : v === 2 ? 'b' : v === 3 ? 'wk' : 'bk'] + '" x="' + (cx - 44) + '" y="' + (cy - 44) + '" width="88" height="88"/>'; continue; }
@@ -265,7 +276,7 @@ function view() {
     const p = pz(id), cor = p ? correct(p) : null, d = Math.floor(i / s.n) + start0;
     return { id, t: p ? titleOf(p) : '(o‘chirilgan)', side: p && p.side, cor, man: !!(s.opts[id] && s.opts[id].length), w: p && cor ? (s.opts[id] && s.opts[id].length ? s.opts[id] : pool(p, cor)) : [], d };
   });
-  return { cfg: { on: s.on, hm: s.hm, n: s.n, sec: s.sec, prz: s.prz, rest: s.rest, chOn: s.chOn, skin: s.skin || '' }, q, skins: (store.db.shop || []).map(x => ({ id: x.id, name: x.name || x.id, def: !!x.def })), chats: chats().length, run: s.run ? { qi: s.run.qi, n: s.run.pids.length } : null, hist: (s.hist || []).slice(-7) };
+  return { cfg: { on: s.on, hm: s.hm, n: s.n, sec: s.sec, prz: s.prz, rest: s.rest, chOn: s.chOn, skin: s.skin || '', th: s.th }, ths: Object.keys(TH).map(k => ({ id: k, name: TH[k][0] })), q, skins: (store.db.shop || []).map(x => ({ id: x.id, name: x.name || x.id, def: !!x.def })), chats: chats().length, run: s.run ? { qi: s.run.qi, n: s.run.pids.length } : null, hist: (s.hist || []).slice(-7) };
 }
 function handle(req, res, url) {
   const p = url.pathname; if (!p.startsWith('/api/quiz')) return false;
@@ -307,6 +318,7 @@ function handle(req, res, url) {
         if (j.rest !== undefined) s.rest = Math.min(100, Math.max(0, Math.round(+j.rest || 0)));
         if (j.chOn !== undefined) s.chOn = !!j.chOn;
         if (j.skin !== undefined) s.skin = String(j.skin || '');
+        if (j.th !== undefined && TH[j.th]) s.th = j.th;
         S(); store.save(); return send(res, 200, view());
       }
       if (p === '/api/quiz/test') {   // navbatdagi 1-savol adminning o'ziga (shaxsiy chat)
@@ -326,4 +338,4 @@ function handle(req, res, url) {
 const ids = () => S().q.slice();
 // yangi foydalanuvchi ilovaga kirganda viktorinada yutgan tangasi
 function claim(u) { try { const s = S(), n = s.pend[String(u.id)]; if (n) { u.diamonds = (u.diamonds || 0) + n; delete s.pend[String(u.id)]; } } catch (e) {} }
-module.exports = { start, tick, onAnswer, handle, ids, claim, _t: { correct, pool, svg, png, T, hmAdd, S, finish, startRun, view } };
+module.exports = { start, tick, onAnswer, handle, ids, claim, _t: { TH, correct, pool, svg, png, T, hmAdd, S, finish, startRun, view } };

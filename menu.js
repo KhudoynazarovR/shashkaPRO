@@ -503,9 +503,10 @@
     }).catch(function () { cb({ error: 'Server bilan aloqa yo‘q' }); });
   }
   function qzPanel() {
-    var Q = null, qm = '';
+    var Q = null, qm = '', pf = 'Kombinatsiyalar', pq = '', pn = 24, keep = 0;
+    function mb(b) { var h = '<div style="width:84px;height:84px;flex:none;display:grid;grid-template-columns:repeat(8,1fr);border-radius:4px;overflow:hidden">'; for (var r = 0; r < 8; r++) for (var c = 0; c < 8; c++) { var v = b[r][c], d = (r + c) % 2 === 1; h += '<div style="background:' + (d ? '#b6695f' : '#f1d4cc') + ';display:flex;align-items:center;justify-content:center">' + (v ? '<i style="width:78%;height:78%;border-radius:50%;background:' + (v === 1 || v === 3 ? '#fff' : '#111') + ';box-shadow:inset 0 0 0 ' + (v > 2 ? '2px #f5b72b' : '1px #777') + '"></i>' : '') + '</div>'; } return h + '</div>'; }
     var IN = 'background:#0f1330;color:#fff;border:1px solid #2c3370;border-radius:10px;padding:8px;font-size:15px;width:70px;text-align:center';
-    function ld() { api('/api/quiz').then(function (d) { if (d && !d.error) { Q = d; S.qz = d.q.map(function (x) { return x.id; }); } else qm = (d && d.error) || 'Xato'; dr(); }).catch(function () { qm = 'Server bilan aloqa yo‘q'; dr(); }); }
+    function ld(k) { api('/api/quiz').then(function (d) { if (d && !d.error) { Q = d; S.qz = d.q.map(function (x) { return x.id; }); } else qm = (d && d.error) || 'Xato'; keep = k ? ov.scrollTop : 0; dr(); }).catch(function () { qm = 'Server bilan aloqa yo‘q'; dr(); }); }
     function dr() {
       var h = head('Viktorina');
       if (qm) h += '<div style="margin:0 0 10px;padding:8px;border-radius:10px;background:#2a2560">' + esc(qm) + '</div>';
@@ -517,6 +518,7 @@
         + '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px"><span>Mukofot 1/2/3</span><input id="qzP0" type="number" value="' + c.prz[0] + '" style="' + IN + '"><input id="qzP1" type="number" value="' + c.prz[1] + '" style="' + IN + '"><input id="qzP2" type="number" value="' + c.prz[2] + '" style="' + IN + '"><span>Qolganlarga</span><input id="qzR" type="number" value="' + c.rest + '" style="' + IN + '"></div>'
         + '<label style="display:flex;gap:10px;align-items:center;margin-bottom:10px"><input id="qzCh" type="checkbox" ' + (c.chOn ? 'checked' : '') + ' style="width:20px;height:20px">Kanalga ham yuborish (natijasiz)</label>'
         + '<div style="display:flex;gap:10px;align-items:center;margin-bottom:10px"><span>Tosh</span><select id="qzSk" style="' + IN + ';width:auto;flex:1"><option value="">Asosiy tosh</option>' + Q.skins.map(function (k) { return '<option value="' + esc(k.id) + '"' + (c.skin === k.id ? ' selected' : '') + '>' + esc(k.name) + (k.def ? ' (asosiy)' : '') + '</option>'; }).join('') + '</select></div>'
+        + '<div style="display:flex;gap:10px;align-items:center;margin-bottom:10px"><span>Doska</span><select id="qzTh" style="' + IN + ';width:auto;flex:1">' + (Q.ths || []).map(function (k) { return '<option value="' + esc(k.id) + '"' + (c.th === k.id ? ' selected' : '') + '>' + esc(k.name) + '</option>'; }).join('') + '</select></div>'
         + '<button id="qzSave" style="' + BS + '">Saqlash</button>'
         + '<div style="font-size:13px;opacity:.7;margin-top:8px">Yuboriladi: ' + Q.chats + ' ta guruh/kanal' + (Q.run ? ' · Hozir ketyapti: ' + (Q.run.qi + 1) + '/' + Q.run.n : '') + '</div></div>';
       h += '<div style="margin-bottom:10px"><button id="qzNum" style="' + BG + '">Raqam bilan qo‘shish</button><button id="qzTest" style="' + BG + '">Sinov (o‘zimga)</button>' + (Q.run ? '<button id="qzStop" style="' + BG + ';background:#8a2b2b">To‘xtatish</button>' : '<button id="qzNow" style="' + BG + '">Hozir boshlash</button>') + '</div>';
@@ -528,11 +530,30 @@
           + '<div style="font-size:13px;opacity:.8;margin-top:4px">Noto‘g‘ri' + (x.man ? ' (qo‘lda)' : ' (avtomatik, 4 tasi tanlanadi)') + ': ' + esc(x.w.join(', ')) + '</div>'
           + '<div style="margin-top:6px"><button data-qu="' + esc(x.id) + '" style="' + BG + ';padding:6px 12px">↑</button><button data-qd="' + esc(x.id) + '" style="' + BG + ';padding:6px 12px">↓</button><button data-qo="' + esc(x.id) + '" style="' + BG + ';padding:6px 12px">Variantlar</button><button data-qx="' + esc(x.id) + '" style="' + BG + ';padding:6px 12px">Olib tashlash</button><button data-qt="' + esc(x.id) + '" style="' + BG + ';padding:6px 12px">Sinov</button></div></div>';
       });
-      ov.innerHTML = h; ov.scrollTop = 0;
+      // masalalarni shu yerda tanlash
+      var fos = (S.folders || []).filter(function (f) { return S.list.some(function (x) { return x.folder === f; }); });
+      if (fos.indexOf(pf) < 0) pf = fos[0] || '';
+      var all = S.list.filter(function (x) { return x.folder === pf && !x.et && x.board; });
+      if (pq) all = all.filter(function (x) { var m = /(\d+)\s*$/.exec(x.title || ''); return (m && m[1].indexOf(pq) === 0) || String(x.title || '').toLowerCase().indexOf(pq.toLowerCase()) >= 0; });
+      h += '<div style="text-align:left;font-weight:700;margin:16px 0 8px">Masalalardan tanlash</div>'
+        + '<div style="display:flex;gap:8px;margin-bottom:10px"><select id="qzFo" style="' + IN + ';width:auto;flex:1">' + fos.map(function (f) { return '<option' + (f === pf ? ' selected' : '') + '>' + esc(f) + '</option>'; }).join('') + '</select><input id="qzQ" placeholder="Raqam" value="' + esc(pq) + '" style="' + IN + ';width:90px"></div>'
+        + '<div style="font-size:13px;opacity:.65;text-align:left;margin-bottom:8px">' + all.length + ' ta masala</div>';
+      all.slice(0, pn).forEach(function (x) {
+        var a = qzIn(x.id);
+        h += '<div style="' + CARD + ';cursor:default;display:flex;gap:10px;align-items:center">' + mb(x.board) + '<div style="flex:1;min-width:0"><b>' + esc(x.title) + '</b><div style="font-size:12px;opacity:.65;margin-top:4px">' + (x.side === 'b' ? 'Qora yuradi' : 'Oq yuradi') + '</div></div><button data-qa="' + esc(x.id) + '" style="' + BG + ';padding:8px 10px;font-size:13px' + (a ? ';background:#2b8a3e' : '') + '">' + (a ? 'Viktorinada' : 'Viktorinaga') + '</button></div>';
+      });
+      if (all.length > pn) h += '<button id="qzMore" style="' + BG + '">Yana ' + Math.min(24, all.length - pn) + ' ta</button>';
+      ov.innerHTML = h; ov.scrollTop = keep; keep = 0;
       on('#pzBack', function () { list(); });
       var g = function (id) { return ov.querySelector(id); };
+      var fo = g('#qzFo'); if (fo) fo.onchange = function () { pf = fo.value; pn = 24; keep = 0; dr(); };
+      var qi = g('#qzQ'); if (qi) qi.onchange = function () { pq = qi.value.trim(); pn = 24; keep = ov.scrollTop; dr(); };
+      on('#qzMore', function () { pn += 24; keep = ov.scrollTop; dr(); });
+      Array.prototype.forEach.call(ov.querySelectorAll('[data-qa]'), function (b) {
+        b.onclick = function () { var id = b.getAttribute('data-qa'); b.disabled = true; qzTog(id, function (d) { if (d.error) { qm = d.error; } else qm = ''; ld(1); }); };
+      });
       var post = function (path, b, okMsg) { qm = '…'; api(path, b).then(function (d) { if (d && d.error) qm = d.error; else { if (d && d.cfg) { Q = d; S.qz = d.q.map(function (x) { return x.id; }); } qm = okMsg || ''; } if (d && d.ok && !d.cfg) return ld(); dr(); }).catch(function () { qm = 'Server bilan aloqa yo‘q'; dr(); }); };
-      on('#qzSave', function () { post('/api/quiz/cfg', { on: g('#qzOn').checked, hm: g('#qzHm').value, n: +g('#qzN').value, sec: +g('#qzSec').value, prz: [+g('#qzP0').value, +g('#qzP1').value, +g('#qzP2').value], rest: +g('#qzR').value, chOn: g('#qzCh').checked, skin: g('#qzSk').value }, 'Saqlandi'); });
+      on('#qzSave', function () { post('/api/quiz/cfg', { on: g('#qzOn').checked, hm: g('#qzHm').value, n: +g('#qzN').value, sec: +g('#qzSec').value, prz: [+g('#qzP0').value, +g('#qzP1').value, +g('#qzP2').value], rest: +g('#qzR').value, chOn: g('#qzCh').checked, skin: g('#qzSk').value, th: g('#qzTh') ? g('#qzTh').value : undefined }, 'Saqlandi'); });
       on('#qzNum', function () { var v = prompt('Kombinatsiyalar raqamlari (masalan: 12, 15-20):', ''); if (!v) return; api('/api/quiz/nums', { nums: v }).then(function (d) { qm = d.error || ('Qo‘shildi: ' + d.add + ' ta' + (d.bad ? ' · yechimi o‘qilmadi: ' + d.bad : '')); ld(); }); });
       on('#qzTest', function () { post('/api/quiz/test', {}, 'Sinov savoli botda sizga yuborildi'); });
       on('#qzNow', function () { if (!confirm('Viktorina hozir barcha guruhlarda boshlansinmi?')) return; post('/api/quiz/now', {}, 'Boshlandi'); });
