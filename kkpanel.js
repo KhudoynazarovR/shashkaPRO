@@ -11,7 +11,7 @@
   function ls(k, d) { try { var v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }
   function lss(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   function bdIdx() { var v = ls('kka_bd', null); if (v != null && BDS[v]) return v; var m = ls('rc_menu_v1', {}); return m && m.board >= 0 && BDS[m.board] ? m.board : 0; }
-  var O, V = { tab: 'l', list: null, g: null, cur: 0, pick: null, sel: -1, safe: null, msg: '', busy: false };
+  var O, V = { tab: 'e', list: null, g: null, cur: 0, pick: null, sel: -1, safe: null, msg: '', busy: false };
   var css = document.createElement('style');
   css.textContent = '#kkP{position:fixed;inset:0;z-index:2147482000;background:#100c33;color:#fff;overflow:auto;font:15px system-ui,-apple-system,Roboto,sans-serif;padding:calc(10px + env(safe-area-inset-top,0px)) 12px calc(96px + env(safe-area-inset-bottom,0px))}' +
     '#kkP .in{max-width:520px;margin:0 auto}#kkP button{font:inherit;color:inherit;border:0;cursor:pointer}' +
@@ -19,7 +19,7 @@
     '#kkP .st{display:flex;gap:6px;margin-bottom:8px}#kkP .st div{flex:1;background:#1d1858;border-radius:12px;padding:8px 2px;text-align:center}#kkP .st b{display:block;font-size:19px}#kkP .st small{font-size:11px;opacity:.7}' +
     '#kkP .tabs{display:flex;gap:6px;margin:8px 0}#kkP .tabs button{flex:1;padding:9px 4px;border-radius:11px;background:#1d1858;font-size:13px;font-weight:700}#kkP .tabs .on{background:#3fa34d}' +
     '#kkP .gm{display:flex;align-items:center;gap:10px;margin:6px 0;padding:10px 12px;border-radius:14px;background:#1d1858;width:100%;text-align:left}#kkP .gm .r{font-size:22px}#kkP .gm .n{flex:1;min-width:0}#kkP .gm .n small{display:block;opacity:.65;font-size:12px}' +
-    '#kkP .tg{border-radius:9px;padding:4px 8px;font-size:12px;font-weight:800;background:#7c2d12;color:#fed7aa;white-space:nowrap}#kkP .tg.ok{background:#14532d;color:#bbf7d0}#kkP .tg.q{background:#2a2470;color:#c7c2ff}' +
+    '#kkP .kbg{border-radius:9px;padding:4px 8px;font-size:12px;font-weight:800;background:#7c2d12;color:#fed7aa;white-space:nowrap}#kkP .kbg.ok{background:#14532d;color:#bbf7d0}#kkP .kbg.q{background:#2a2470;color:#c7c2ff}' +
     '#kkP .bd{display:grid;grid-template-columns:repeat(8,1fr);border:5px solid #6b3a1e;border-radius:8px;overflow:hidden;margin:6px 0;touch-action:manipulation}#kkP .c{aspect-ratio:1;position:relative;display:flex;align-items:center;justify-content:center}' +
     '#kkP .c.fr::after,#kkP .c.to::after{content:"";position:absolute;inset:0;background:rgba(225,29,72,.45)}#kkP .c.gf::after,#kkP .c.gt::after{content:"";position:absolute;inset:0;background:rgba(63,163,77,.6)}#kkP .c.sl::after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 0 3px #ffd257}' +
     '#kkP .pc{width:80%;height:80%;border-radius:50%;z-index:2;display:flex;align-items:center;justify-content:center;font-size:min(5vw,22px);box-shadow:inset 0 -3px 0 rgba(0,0,0,.3),0 2px 3px rgba(0,0,0,.45)}#kkP .pc.w{background:radial-gradient(circle at 35% 30%,#fff,#d9d3c3);color:#b8860b}#kkP .pc.b{background:radial-gradient(circle at 35% 30%,#555,#111);color:#ffd257}' +
@@ -40,6 +40,16 @@
     '#kkP .bdw{position:relative}#kkP svg.ar{position:absolute;left:5px;top:5px;width:calc(100% - 10px);height:calc(100% - 10px);pointer-events:none;z-index:4}' +
     '#kkP .row{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:12px;background:#1d1858;margin:5px 0;font-size:13.5px}#kkP .row .f{flex:1;min-width:0}#kkP .row small{opacity:.7;display:block;font-size:12px}#kkP .row button{background:#3a3480;border-radius:9px;padding:6px 9px;font-size:12.5px;font-weight:700}' +
     '#kkP .pill{display:inline-block;border-radius:8px;padding:2px 7px;font-size:11.5px;font-weight:800;background:#2a2470;margin-left:4px}';
+  css.textContent += '#kkP .gm .rs{width:7px;align-self:stretch;border-radius:4px;flex:none;background:#a3a3a3}#kkP .gm .rs.w{background:#16a34a}#kkP .gm .rs.l{background:#e11d48}' +
+    '#kkP .stl{display:flex;align-items:center;gap:10px;border-radius:14px;padding:10px 12px;margin:2px 0 8px;background:#14532d;width:100%;text-align:left;font-size:13.5px}#kkP .stl.p{background:linear-gradient(135deg,#7c2d12,#be123c)}#kkP .stl b{flex:1;min-width:0}#kkP .stl small{opacity:.85;font-size:12px;white-space:nowrap}' +
+    '#kkP .stl .go2{background:#fff;color:#7c2d12;border-radius:10px;padding:7px 10px;font-weight:900;font-size:13px}' +
+    '#kkP .plr{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:14px;margin:2px 2px 5px}#kkP .plr span{opacity:.7;font-size:12.5px;white-space:nowrap}' +
+    '#kkP .scr{position:relative;margin:8px 0 2px;display:flex;align-items:center;gap:8px}#kkP .scr span{font-size:12px;opacity:.8;min-width:48px}#kkP .scr .tr{flex:1;position:relative;height:22px}' +
+    '#kkP .scr input{position:absolute;inset:0;width:100%;margin:0;accent-color:#6b5cf0;z-index:2;background:transparent}#kkP .scr em{position:absolute;top:2px;width:4px;height:18px;margin-left:-2px;border-radius:2px;background:#e11d48;z-index:1}#kkP .scr em.t{background:#16a34a}' +
+    '#kkP .nav5{display:flex;gap:6px;margin:6px 0}#kkP .nav5 button{flex:1;padding:11px 2px;border-radius:11px;background:#2a2470;font-weight:800;font-size:15px}#kkP .nav5 .er{flex:2.4;background:#be123c;font-size:13px}#kkP .nav5 .er.done{background:#14532d}' +
+    '#kkP .mvt{background:#1d1858;border-radius:12px;padding:4px 6px;margin:8px 0;font:13px ui-monospace,monospace;max-height:230px;overflow:auto}#kkP .mvt .r{display:grid;grid-template-columns:34px 1fr 1fr;align-items:center;padding:1px 0}#kkP .mvt u{text-decoration:none;opacity:.5;font-size:12px}' +
+    '#kkP .mvt button{text-align:left;padding:4px 6px;border-radius:7px;background:none;font:inherit}#kkP .mvt .k{color:#c7c2ff}#kkP .mvt .x{background:#be123c;color:#fff;font-weight:800}#kkP .mvt .t{background:#14532d;color:#bbf7d0}#kkP .mvt .cur{outline:2px solid #ffd257}' +
+    '#kkP .inf{font-size:12.5px;opacity:.8;margin:2px 2px 0}#kkP .alts{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;font-size:12.5px;align-items:center}#kkP .alts button{padding:6px 9px;border-radius:9px;background:#16124a;border:1px solid #3a33a0;font-weight:700;font-size:12.5px}#kkP .alts .on{background:#3fa34d;border-color:#3fa34d}';
   document.head.appendChild(css);
 
   // ♟ dona: Do'kondan tanlangan bo'lsa — o'sha rasm (damka ham), aks holda oddiy dona va tekis oltin toj
@@ -63,9 +73,9 @@
   function sbar(html) { var o = O.querySelector('.sb'); if (o) o.remove(); if (!html) return null; O.insertAdjacentHTML('beforeend', '<div class="sb">' + html + '</div>'); return O.querySelector('.sb'); }
   function heroHtml(d) {
     var f = d.fx && d.fx.fix; if (!f) return '';
-    var h = f.pending ? '<div class="hero"><b>⚡ ' + f.pending + ' ta tuzatish' + (f.ready < f.pending ? ' (' + f.ready + ' tasi tayyor)' : ' tayyor') + '</b><p>King Kong xatolarini o‘zi topdi va har biriga dvigatel 15 s o‘ylab to‘g‘ri yurish tanladi' + (f.ready < f.pending ? ' (qolganlari server bo‘shaganda)' : '') + '.</p><button id="kkFx">👀 Ko‘rib chiqish (' + f.pending + ')</button></div>'
-      : '<div class="hero ok"><b>✅ Hamma xatolar ko‘rib chiqilgan</b><p style="margin-bottom:0">Yangi xato topilsa shu yerda chiqadi. Ertalab 08:00 da Telegram’da hisobot keladi.</p></div>';
-    return h + '<button class="auto" id="kkAu"><span style="flex:1">🤖 <b>Avto-tuzatish</b>' + (f.autoN ? ' <span class="pill">' + f.autoN + ' ta</span>' : '') + '<small>Aniq xatolar o‘zi o‘rgatiladi, sizga faqat shubhalilari qoladi</small></span><span class="sw' + (f.auto ? ' on' : '') + '"></span></button>';
+    var sw = '<span class="sw' + (f.auto ? ' on' : '') + '" id="kkAu"></span>';
+    if (f.pending) return '<div class="stl p"><b>' + f.pending + ' ta tuzatish' + (f.ready < f.pending ? ' (' + f.ready + ' tayyor)' : ' tayyor') + '</b><button class="go2" id="kkFx">Ko‘rib chiqish</button><small>Avto' + (f.autoN ? ' · ' + f.autoN : '') + '</small>' + sw + '</div>';
+    return '<div class="stl"><b>Hamma xatolar ko‘rib chiqilgan</b><small>Avto' + (f.autoN ? ' · ' + f.autoN : '') + '</small>' + sw + '</div>';
   }
   // umumiy doska (strelkalar bilan): marks {i: 'fr'|'to'|'gf'|'gt'}, arrows [[from,to,color]]
   function bdHtml(b, flip, marks, arrows) {
@@ -183,7 +193,7 @@
     var C = shell('🤖 Tungi sinov o‘yinlari', list); sbar(null);
     var L = (V.list && V.list.fx && V.list.fx.spar) || [];
     var fx = (V.list && V.list.fx) || {}, J = fx.job, T = fx.test;
-    C.innerHTML = (J ? '<div class="hero ok" style="padding:10px"><b style="font-size:15px">🧪 Sinov ketyapti: ' + J.done + ' / ' + J.n + '</b><p style="margin:2px 0 0">✅ ' + J.w + ' · ❌ ' + J.l + ' · 🤝 ' + J.d + '</p></div>' : T ? '<div class="box">🧪 Oxirgi sinov (' + when(T.at) + '): ' + T.n + ' o‘yin — ✅ ' + T.w + ' · ❌ ' + T.l + ' · 🤝 ' + T.d + '</div>' : '') + '<div style="font-size:12.5px;opacity:.75;margin:0 2px 6px">Har kecha 01:00–07:00 da server bo‘sh bo‘lsa King Kong dvigatelga qarshi 4 tagacha o‘yin o‘ynaydi (tasodifiy debyut). Topilgan xatolar «⚡ Tuzatishlar»ga tushadi.</div>' + (L.length ? L.map(function (x) { return '<div class="row"><span style="font-size:20px">' + (x.res === 'w' ? '✅' : x.res === 'l' ? '❌' : '🤝') + '</span><span class="f">King Kong ' + (x.kk === 1 ? 'oq' : 'qora') + '<small>' + when(x.at) + ' · ' + Math.ceil(x.plies / 2) + ' yurish' + (x.tag ? ' · ' + esc(x.tag) : '') + '</small></span>' + (x.errs ? '<span class="tg">⚠️ ' + x.errs + '</span>' : '<span class="tg ok">✓</span>') + '</div>'; }).join('') : '<div class="msg" style="opacity:.7">Hali sinov o‘yini bo‘lmagan</div>');
+    C.innerHTML = (J ? '<div class="hero ok" style="padding:10px"><b style="font-size:15px">🧪 Sinov ketyapti: ' + J.done + ' / ' + J.n + '</b><p style="margin:2px 0 0">✅ ' + J.w + ' · ❌ ' + J.l + ' · 🤝 ' + J.d + '</p></div>' : T ? '<div class="box">🧪 Oxirgi sinov (' + when(T.at) + '): ' + T.n + ' o‘yin — ✅ ' + T.w + ' · ❌ ' + T.l + ' · 🤝 ' + T.d + '</div>' : '') + '<div style="font-size:12.5px;opacity:.75;margin:0 2px 6px">Har kecha 01:00–07:00 da server bo‘sh bo‘lsa King Kong dvigatelga qarshi 4 tagacha o‘yin o‘ynaydi (tasodifiy debyut). Topilgan xatolar «⚡ Tuzatishlar»ga tushadi.</div>' + (L.length ? L.map(function (x) { return '<div class="row"><span style="font-size:20px">' + (x.res === 'w' ? '✅' : x.res === 'l' ? '❌' : '🤝') + '</span><span class="f">King Kong ' + (x.kk === 1 ? 'oq' : 'qora') + '<small>' + when(x.at) + ' · ' + Math.ceil(x.plies / 2) + ' yurish' + (x.tag ? ' · ' + esc(x.tag) : '') + '</small></span>' + (x.errs ? '<span class="kbg">⚠️ ' + x.errs + '</span>' : '<span class="kbg ok">✓</span>') + '</div>'; }).join('') : '<div class="msg" style="opacity:.7">Hali sinov o‘yini bo‘lmagan</div>');
   }
   function shell(title, back) { O.innerHTML = '<div class="in"><div class="top"><button class="bk" id="kkB">‹</button><b>' + title + '</b></div><div id="kkC"></div></div>'; O.querySelector('#kkB').onclick = back; return O.querySelector('#kkC'); }
   function when(t) { var d = new Date(t), n = new Date(), hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); return (d.toDateString() === n.toDateString() ? 'bugun ' : d.toDateString() === new Date(Date.now() - 864e5).toDateString() ? 'kecha ' : d.getDate() + '.' + String(d.getMonth() + 1).padStart(2, '0') + ' ') + hm; }
@@ -202,14 +212,24 @@
     var C = O.querySelector('#kkC'), d = V.list, t = d.today || {};
     var L = d.games.filter(function (g) { return V.tab === 'a' ? true : V.tab === 'l' ? g.res !== 'w' : (g.errs || g.guard); });
     C.innerHTML = heroHtml(d) + '<div class="st"><div><b>' + t.n + '</b><small>bugun</small></div><div><b style="color:#86efac">' + t.w + '</b><small>yutdi</small></div><div><b style="color:#fca5a5">' + t.l + '</b><small>yutqazdi</small></div><div><b style="color:#fdba74">' + t.e + '</b><small>⚠️ xato</small></div></div>' +
-      (d.guard && d.guard.n ? '<div style="font-size:12.5px;opacity:.75;margin:-2px 2px 6px">🛡 Qo‘riqchi: ' + d.guard.n + ' tekshiruv, ' + d.guard.swap + ' marta yurishni almashtirdi (o‘rtacha ' + Math.round(d.guard.ms / d.guard.n) + ' ms)</div>' : '') +
-      '<div class="tabs"><button data-t="l"' + (V.tab === 'l' ? ' class="on"' : '') + '>❌ Yutqazgan</button><button data-t="e"' + (V.tab === 'e' ? ' class="on"' : '') + '>⚠️ Xatoli</button><button data-t="a"' + (V.tab === 'a' ? ' class="on"' : '') + '>Hammasi</button></div>' +
+      '<div class="tabs"><button data-t="e"' + (V.tab === 'e' ? ' class="on"' : '') + '>Xatoli</button><button data-t="l"' + (V.tab === 'l' ? ' class="on"' : '') + '>Yutqazgan</button><button data-t="a"' + (V.tab === 'a' ? ' class="on"' : '') + '>Hammasi</button></div>' +
       (L.length ? L.map(function (g) {
-        var tag = g.errs == null ? '<span class="tg q">⏳ tekshirilmagan</span>' : g.errs && g.fixed >= g.errs ? '<span class="tg ok">✅ tuzatilgan</span>' : g.errs ? '<span class="tg">⚠️ ' + (g.errs - g.fixed) + '</span>' : '<span class="tg ok">✓ toza</span>';
-        return '<button class="gm" data-id="' + esc(g.id) + '"><span class="r">' + (g.res === 'w' ? '✅' : g.res === 'l' ? '❌' : '🤝') + '</span><span class="n">' + esc(g.opp) + '<small>' + when(g.at) + ' · ' + esc(g.tc || '∞') + ' · ' + g.n + ' yurish' + (g.guard ? ' · 🛡 ' + g.guard : '') + '</small></span>' + tag + '</button>';
+        var tag = g.errs == null ? '<span class="kbg q">⏳ tekshirilmagan</span>' : g.errs && g.fixed >= g.errs ? '<span class="kbg ok">✅ tuzatilgan</span>' : g.errs ? '<span class="kbg">' + (g.errs - g.fixed) + ' xato</span>' : '<span class="kbg ok">toza</span>';
+        return '<button class="gm" data-id="' + esc(g.id) + '"><span class="rs ' + (g.res === 'w' ? 'w' : g.res === 'l' ? 'l' : '') + '"></span><span class="n">' + esc(g.opp) + '<small>' + when(g.at) + ' · ' + esc(g.tc || '∞') + ' · ' + g.n + ' yurish' + (g.guard ? ' · 🛡 ' + g.guard : '') + '</small></span>' + tag + '</button>';
       }).join('') : '<div class="msg" style="opacity:.7">Bu yerda hozircha o‘yin yo‘q</div>');
-    C.insertAdjacentHTML('beforeend', '<div class="sec">BOSHQA</div>' +
-      '<button class="gm" data-x="taught"><span class="r">📚</span><span class="n">O‘rgatilgan yurishlar<small>natijasi bilan · bekor qilish mumkin</small></span>›</button>' +
+    C.insertAdjacentHTML('beforeend', '<button class="gm" data-x="tools" style="margin-top:10px;background:#16124a;border:1px dashed #3a33a0"><span class="n"><b>Asboblar</b><small>o‘rgatilganlar, repertuar, debyutlar, tarix…</small></span>›</button>');
+    [].forEach.call(C.querySelectorAll('[data-t]'), function (b) { b.onclick = function () { V.tab = b.getAttribute('data-t'); drawList(); }; });
+    [].forEach.call(C.querySelectorAll('[data-id]'), function (b) { b.onclick = function () { game(b.getAttribute('data-id')); }; });
+    C.querySelector('[data-x="tools"]').onclick = toolsView;
+    [].forEach.call(C.querySelectorAll('[data-x]:not([data-x="tools"])'), function (b) { b.onclick = function () { var x = b.getAttribute('data-x'); if (x === 'taught') taught(); else if (x === 'acc') accView(); else if (x === 'ops') opsView(); else if (x === 'rep') repOpen(null, null, 'all'); else if (x === 'tree') treeView(); else if (x === 'pos') posEdit(); else if (x === 'trap') trapView(); else if (x === 'pdn') pdnView(); else if (x === 'hist') histView(); else sparView(); }; });
+    var hf = C.querySelector('#kkFx'); if (hf) hf.onclick = fixes;
+    var au = C.querySelector('#kkAu'); if (au) au.onclick = function (e) { if (e) e.stopPropagation(); var v = !(d.fx && d.fx.auto); if (v && !confirm('Avto-tuzatish yoqilsinmi?\n\nAniq xatolar (dona yo‘qotish, dvigatel 15 s tasdiqlagan, qo‘riqchi xavfsiz degan) sizsiz o‘rgatiladi. Hammasi «O‘rgatilgan yurishlar»da ko‘rinadi va bekor qilinadi.')) return; post('/api/kkadm/auto', { v: v }).then(function (r) { if (d.fx) d.fx.auto = !!r.auto; drawList(); }); };
+  }
+
+  // 🧰 asboblar (avval ro'yxat ostida edi)
+  function toolsView() {
+    var C = shell('Asboblar', list); sbar(null);
+    C.innerHTML = '<button class="gm" data-x="taught"><span class="r">📚</span><span class="n">O‘rgatilgan yurishlar<small>natijasi bilan · bekor qilish mumkin</small></span>›</button>' +
       '<button class="gm" data-x="acc"><span class="r">📈</span><span class="n">Aniqlik grafigi<small>kunlik aniqlik va natijalar (30 kun)</small></span>›</button>' +
       '<button class="gm" data-x="ops"><span class="r">📖</span><span class="n">Debyutlar<small>King Kong qaysi debyutda ko‘p yutqazadi</small></span>›</button>' +
       '<button class="gm" data-x="rep"><span class="r">📖</span><span class="n">Repertuar<small>har yurishga foiz: King Kong qaysi yurishni qanchalik tez-tez o‘ynaydi</small></span>›</button>' +
@@ -218,14 +238,9 @@
       '<button class="gm" data-x="trap"><span class="r">🪤</span><span class="n">Tuzoqlar<small>raqiblar ko‘p xato qiladigan pozitsiyalar</small></span>›</button>' +
       '<button class="gm" data-x="pdn"><span class="r">📥</span><span class="n">PDN import<small>ustalar partiyalari → repertuar</small></span>›</button>' +
       '<button class="gm" data-x="hist"><span class="r">🕓</span><span class="n">O‘zgarishlar tarixi<small>orqaga qaytarish</small></span>›</button>' +
-      '<button class="gm" data-x="spar"><span class="r">🤖</span><span class="n">Tungi sinov o‘yinlari<small>King Kong ↔ dvigatel, xatolar tuzatishlarga tushadi</small></span>›</button>');
-    [].forEach.call(C.querySelectorAll('[data-t]'), function (b) { b.onclick = function () { V.tab = b.getAttribute('data-t'); drawList(); }; });
-    [].forEach.call(C.querySelectorAll('[data-id]'), function (b) { b.onclick = function () { game(b.getAttribute('data-id')); }; });
+      '<button class="gm" data-x="spar"><span class="r">🤖</span><span class="n">Tungi sinov o‘yinlari<small>King Kong ↔ dvigatel, xatolar tuzatishlarga tushadi</small></span>›</button>';
     [].forEach.call(C.querySelectorAll('[data-x]'), function (b) { b.onclick = function () { var x = b.getAttribute('data-x'); if (x === 'taught') taught(); else if (x === 'acc') accView(); else if (x === 'ops') opsView(); else if (x === 'rep') repOpen(null, null, 'all'); else if (x === 'tree') treeView(); else if (x === 'pos') posEdit(); else if (x === 'trap') trapView(); else if (x === 'pdn') pdnView(); else if (x === 'hist') histView(); else sparView(); }; });
-    var hf = C.querySelector('#kkFx'); if (hf) hf.onclick = fixes;
-    var au = C.querySelector('#kkAu'); if (au) au.onclick = function () { var v = !(d.fx && d.fx.auto); if (v && !confirm('Avto-tuzatish yoqilsinmi?\n\nAniq xatolar (dona yo‘qotish, dvigatel 15 s tasdiqlagan, qo‘riqchi xavfsiz degan) sizsiz o‘rgatiladi. Hammasi «O‘rgatilgan yurishlar»da ko‘rinadi va bekor qilinadi.')) return; post('/api/kkadm/auto', { v: v }).then(function (r) { if (d.fx) d.fx.auto = !!r.auto; drawList(); }); };
   }
-
   // ---------- 2) o'yin
   function game(id, at) {
     var C = shell('🦍 …', list);
@@ -241,50 +256,69 @@
   }
   function num(k) { var g = V.g, first = g.moves[0] ? g.moves[0].s : 1, n = Math.floor((k + (first === -1 ? 1 : 0)) / 2) + 1; return n + (g.moves[k].s === 1 ? '. ' : '... '); }
   function srcTxt(x) { return x.g ? '🛡 qo‘riqchi (' + x.g.t + ' o‘rniga)' : ({ 'dvigatel': '⚙️ dvigatel', 'Colette': '📚 Nazariya', 'kitob': '📖 kitob', 'admin': '🦍 o‘rgatilgan', 'baza': '♟ baza', 'etyud': '🧩 etyud', 'xotira': '💾 xotira' })[x.src] || '⚙️ dvigatel'; }
+  function errIdx() { var r = []; V.g.moves.forEach(function (m, k) { if (m.kk && m.err) r.push(k); }); return r; }
   function drawGame() {
     var g = V.g, x = g.moves[V.cur], C = O.querySelector('#kkC'); if (!x) return;
-    var flip = g.kk === -1, bi = bdIdx(), BD = BDS[bi], hl = {}, alt = V.pick, tgt = {};
+    var flip = g.kk === -1, BD = BDS[bdIdx()], hl = {}, tgt = {}, N = g.moves.length, E = errIdx();
+    var isErr = x.kk && x.err && !x.taught, opts = (x.kk && x.err && x.err.safe) || [];
+    if (isErr && !V.pick && opts.length) V.pick = { from: opts[0].from, to: opts[0].to, t: opts[0].t };
+    var alt = V.pick;
     hl[x.from] = 'fr'; hl[x.to] = 'to';
-    if (alt) { hl[alt.from] = 'gf'; hl[alt.to] = 'gt'; }
+    if (alt && x.kk) { hl[alt.from] = 'gf'; hl[alt.to] = 'gt'; }
     if (V.sel >= 0) { hl[V.sel] = (hl[V.sel] || '') + ' sl'; (V.safe || []).forEach(function (m) { if (m.from === V.sel) tgt[m.to] = m; }); }
-    var h = '<div class="bdp">' + BDS.map(function (b, i) { return '<button data-bd="' + i + '" title="' + b[0] + '"' + (i === bi ? ' class="on"' : '') + '><i style="background:' + b[1] + '"></i><i style="background:' + b[2] + '"></i></button>'; }).join('') + '</div>';
+    var kkW = g.kk === 1, opp = esc(g.opp), res = g.res === 'w' ? 'King Kong yutdi' : g.res === 'l' ? 'King Kong yutqazdi' : 'durang';
+    var h = '<div class="plr"><b>' + (flip ? 'King Kong' : opp) + '</b><span>' + (flip ? 'oq' : 'qora') + '</span></div>';
     h += '<div class="bd" id="kkBd">';
     for (var v = 0; v < 64; v++) {
       var i = flip ? 63 - v : v, r = i >> 3, c = i & 7, p = x.b[i], dark = (r + c) % 2 === 1;
-      h += '<div class="c ' + (hl[i] || '') + '" data-i="' + i + '" style="background:' + (dark ? BD[2] : BD[1]) + '">' + (p ? pcHtml(p) : '') + (tgt[i] ? '<i class="dot"></i>' : '') + (((v & 7) === 0) ? '<span class="cl n" style="color:' + (dark ? 'rgba(255,255,255,.8)' : 'rgba(0,0,0,.55)') + '">' + (8 - r) + '</span>' : '') + (((v >> 3) === 7) ? '<span class="cl a" style="color:' + (dark ? 'rgba(255,255,255,.8)' : 'rgba(0,0,0,.55)') + '">' + 'abcdefgh'[c] + '</span>' : '') + '</div>';
+      h += '<div class="c ' + (hl[i] || '') + '" data-i="' + i + '" style="background:' + (dark ? BD[2] : BD[1]) + '">' + (p ? pcHtml(p) : '') + (tgt[i] ? '<i class="dot"></i>' : '') + (((v & 7) === 0) ? '<span class="cl n" style="color:' + (dark ? 'rgba(255,255,255,.8)' : 'rgba(0,0,0,.55)') + '">' + (8 - r) + '</span>' : '') + ((v >> 3) === 7 ? '<span class="cl a" style="color:' + (dark ? 'rgba(255,255,255,.8)' : 'rgba(0,0,0,.55)') + '">' + 'abcdefgh'[c] + '</span>' : '') + '</div>';
     }
-    h += '</div><div class="mv">' + g.moves.map(function (m, k) { return '<span data-k="' + k + '" class="' + (m.kk ? 'k' : '') + (m.kk && m.err && !m.taught ? ' x' : '') + (m.taught ? ' t' : '') + (k === V.cur ? ' cur' : '') + '">' + (m.s === 1 || k === 0 ? num(k) : '') + m.t + (m.kk && m.err && !m.taught ? ' ⚠️' : '') + (m.g ? ' 🛡' : '') + '</span>'; }).join('') + '</div>';
-    h += '<div class="nav"><button data-n="0">⏮</button><button data-n="-1">◀</button><button class="er" data-n="e">⚠️ Keyingi xato</button><button data-n="1">▶</button></div>';
-    // ma'lumot qutisi
-    var who = x.kk ? 'KING KONG (' + (x.s === 1 ? 'OQ' : 'QORA') + ') O‘YNADI' : 'RAQIB O‘YNADI';
-    h += '<div class="box"><div class="h">' + num(V.cur).replace('... ', '').replace('. ', '') + '-YURISH · ' + who + '</div>';
-    h += '<b style="color:' + (x.err && !x.taught ? '#fca5a5' : '#fff') + '">' + x.t + '</b>' + (x.kk ? ' — ' + srcTxt(x) : '');
-    if (x.kk && x.err) h += '<br>⚠️ <b>' + (x.err.loss >= 10 ? 'o‘yinni yutqazadi' : x.err.loss + ' dona yo‘qotadi') + '</b>' + (x.err.line && x.err.line.length ? ': ' + x.err.line.join(' ') : '');
-    if (x.taught) h += '<br>✅ O‘rgatilgan: endi bu yerda <b>' + SQ(x.taught.from) + '-' + SQ(x.taught.to) + '</b> o‘ynaydi';
-    if (x.kk) {
-      var opts = x.err ? x.err.safe : null;
-      if (opts && opts.length) h += '<div class="ch">' + opts.map(function (m, k) { return '<button data-a="' + k + '"' + (alt && alt.from === m.from && alt.to === m.to ? ' class="on"' : '') + '>✅ ' + m.t + '</button>'; }).join('') + '<button data-pick="1"' + (V.sel >= 0 || (alt && alt.own) ? ' class="on"' : '') + '>♟ Doskadan tanlash</button></div>';
-      else h += '<div class="ch"><button data-pick="1"' + (V.sel >= 0 || (alt && alt.own) ? ' class="on"' : '') + '>♟ Boshqa yurish tanlash</button></div>';
-      if (V.sel >= 0) h += '<div style="margin-top:6px;opacity:.8;font-size:12.5px">Yashil nuqtali katakni bosing (⚠️ — dona yo‘qotadigan yurish)</div>';
-
+    h += '</div><div class="plr" style="margin-top:6px"><b>' + (flip ? opp : 'King Kong') + '</b><span>' + (flip ? 'qora' : 'oq') + ' · ' + res + ' · ' + N + ' yurish</span></div>';
+    // shkala: qizil — xato, yashil — tuzatilgan
+    h += '<div class="scr"><span>' + (V.cur + 1) + ' / ' + N + '</span><div class="tr">' + E.map(function (k) { return '<em class="' + (g.moves[k].taught ? 't' : '') + '" style="left:' + (N > 1 ? k / (N - 1) * 100 : 0) + '%"></em>'; }).join('') + '<input type="range" id="kkSl" min="0" max="' + (N - 1) + '" value="' + V.cur + '"></div></div>';
+    var open = E.filter(function (k) { return !g.moves[k].taught; }), pos = open.indexOf(V.cur);
+    h += '<div class="nav5"><button data-n="0">⏮</button><button data-n="-1">◀</button><button class="er' + (open.length ? '' : ' done') + '" data-n="e">' + (open.length ? 'Keyingi xato (' + (pos >= 0 ? pos + 1 : open.filter(function (k) { return k < V.cur; }).length) + '/' + open.length + ')' : 'Xato qolmadi') + '</button><button data-n="1">▶</button><button data-n="9">⏭</button></div>';
+    // joriy yurish
+    if (isErr) {
+      h += '<div class="cmp" style="margin-top:4px"><div class="bad">O‘ynadi<b>' + esc(x.t) + ' ??</b>' + (x.err.loss >= 10 ? 'o‘yin yutqaziladi' : '−' + x.err.loss + ' dona') + '</div><div class="good">' + (alt && alt.own ? 'Siz tanladingiz' : 'To‘g‘risi') + '<b>' + esc(alt ? alt.t.replace(' ⚠️', '') : '—') + '</b>' + (alt && / ⚠️/.test(alt.t) ? 'dona yo‘qotadi' : 'xavfsiz') + '</div></div>';
+      if (opts.length > 1) h += '<div class="alts"><span style="opacity:.7">Teng variantlar:</span>' + opts.map(function (m, k) { return '<button data-a="' + k + '"' + (alt && alt.from === m.from && alt.to === m.to ? ' class="on"' : '') + '>' + esc(m.t) + '</button>'; }).join('') + '</div>';
+      if (x.err.line && x.err.line.length) h += '<div class="inf">Nima uchun: ' + esc(x.err.line.join(' ')) + '</div>';
+      if (V.selMode) h += '<div class="inf" style="color:#fde68a">Donani, keyin yashil nuqtali katakni bosing</div>';
+    } else {
+      if (alt && alt.own) h += '<div class="cmp" style="margin-top:4px"><div class="bad">O‘ynadi<b>' + esc(x.t) + '</b>&nbsp;</div><div class="good">Siz tanladingiz<b>' + esc(alt.t.replace(' ⚠️', '')) + '</b>' + (/ ⚠️/.test(alt.t) ? 'dona yo‘qotadi' : 'xavfsiz') + '</div></div>';
+      if (V.selMode) h += '<div class="inf" style="color:#fde68a">Donani, keyin yashil nuqtali katakni bosing</div>';
+      h += '<div class="inf">' + num(V.cur).replace(/\.+ $/, '') + '-yurish · ' + (x.kk ? 'King Kong' : opp) + ': <b>' + esc(x.t) + '</b>' + (x.kk ? ' · ' + srcTxt(x) : '') + (x.taught ? ' · <span style="color:#86efac">o‘rgatilgan: ' + SQ(x.taught.from) + '-' + SQ(x.taught.to) + '</span>' : '') + '</div>';
     }
-    h += '</div>' + (V.msg ? '<div class="msg">' + V.msg + '</div>' : '');
+    // butun partiya: 1-yurishdan oxirigacha
+    var rows = [], row = null, first = g.moves[0] ? g.moves[0].s : 1;
+    g.moves.forEach(function (m, k) { if (m.s === 1 || !row || row[2] != null) { row = [Math.floor((k + (first === -1 ? 1 : 0)) / 2) + 1, null, null]; rows.push(row); } if (m.s === 1) row[1] = k; else row[2] = k; });
+    var cell = function (k) { if (k == null) return '<span></span>'; var m = g.moves[k], cl = (m.kk ? 'k' : '') + (m.kk && m.err && !m.taught ? ' x' : '') + (m.taught ? ' t' : '') + (k === V.cur ? ' cur' : ''); return '<button data-k="' + k + '" class="' + cl + '">' + esc(m.t) + (m.kk && m.err && !m.taught ? ' ??' : '') + '</button>'; };
+    h += (V.msg ? '<div class="msg">' + V.msg + '</div>' : '');
+    h += '<div class="mvt" id="kkMv">' + rows.map(function (r) { return '<div class="r"><u>' + r[0] + '.</u>' + cell(r[1]) + cell(r[2]) + '</div>'; }).join('') + '</div>';
     C.innerHTML = h;
-    [].forEach.call(C.querySelectorAll('[data-bd]'), function (b) { b.onclick = function () { lss('kka_bd', +b.getAttribute('data-bd')); drawGame(); }; });
+    var cur = C.querySelector('#kkMv .cur'); if (cur) { var mv = C.querySelector('#kkMv'); mv.scrollTop = Math.max(0, cur.offsetTop - mv.offsetTop - 60); }
+    C.querySelector('#kkSl').oninput = function () { go(+this.value); };
     [].forEach.call(C.querySelectorAll('[data-k]'), function (b) { b.onclick = function () { go(+b.getAttribute('data-k')); }; });
     [].forEach.call(C.querySelectorAll('[data-n]'), function (b) {
       b.onclick = function () {
         var n = b.getAttribute('data-n');
-        if (n === 'e') { var L = g.moves, k = L.findIndex(function (m, j) { return j > V.cur && m.kk && m.err && !m.taught; }); if (k < 0) k = L.findIndex(function (m) { return m.kk && m.err && !m.taught; }); if (k < 0) { V.msg = '✅ Bu o‘yinda tuzatilmagan xato qolmadi'; drawGame(); return; } return go(k); }
-        go(n === '0' ? 0 : V.cur + +n);
+        if (n === 'e') { var k = open.filter(function (j) { return j > V.cur; })[0]; if (k == null) k = open[0]; if (k == null) return; return go(k); }
+        go(n === '0' ? 0 : n === '9' ? N - 1 : V.cur + +n);
       };
     });
-    [].forEach.call(C.querySelectorAll('[data-a]'), function (b) { b.onclick = function () { var m = x.err.safe[+b.getAttribute('data-a')]; V.pick = { from: m.from, to: m.to, t: m.t }; V.sel = -1; drawGame(); }; });
-    var pk = C.querySelector('[data-pick]'); if (pk) pk.onclick = function () { V.pick = null; V.sel = -1; loadSafe(function () { V.msg = '♟ Donani bosing'; V.selMode = true; drawGame(); }); };
+    [].forEach.call(C.querySelectorAll('[data-a]'), function (b) { b.onclick = function () { var m = opts[+b.getAttribute('data-a')]; V.pick = { from: m.from, to: m.to, t: m.t }; V.sel = -1; V.selMode = false; drawGame(); }; });
     C.querySelector('#kkBd').onclick = function (e) { var el = e.target.closest('[data-i]'); if (el) tap(+el.getAttribute('data-i')); };
-    var bar = sbar('<button class="o" id="kkAn">🔬 To‘liq tahlil</button>' + (alt ? '<button class="y" id="kkT"' + (V.busy ? ' disabled' : '') + '>✅ ' + esc(alt.t.replace(' ⚠️', '')) + ' ni o‘rgat</button>' : ''));
-    var tb = bar.querySelector('#kkT'); if (tb) tb.onclick = teach;
-    bar.querySelector('#kkAn').onclick = openAna;
+    var bar;
+    if (isErr || (x.kk && (V.selMode || (alt && alt.own)))) {
+      bar = sbar('<button id="kkSk">O‘tkazish</button><button class="o" id="kkOw">Boshqa yurish</button><button class="y" id="kkT"' + (alt && !V.busy ? '' : ' disabled') + '>O‘rgatish</button>');
+      bar.querySelector('#kkSk').onclick = function () { var k = open.filter(function (j) { return j > V.cur; })[0]; if (k != null) go(k); else { V.msg = 'Bu o‘yinda keyingi xato yo‘q'; drawGame(); } };
+      bar.querySelector('#kkOw').onclick = function () { V.pick = null; V.sel = -1; loadSafe(function () { V.selMode = true; V.msg = ''; drawGame(); }); };
+      bar.querySelector('#kkT').onclick = teach;
+    } else {
+      bar = sbar('<button class="o" id="kkAn">To‘liq tahlil</button>' + (x.kk ? '<button id="kkOw">Boshqa yurish o‘rgatish</button>' : ''));
+      bar.querySelector('#kkAn').onclick = openAna;
+      var ow = bar.querySelector('#kkOw'); if (ow) ow.onclick = function () { V.pick = null; V.sel = -1; loadSafe(function () { V.selMode = true; V.msg = ''; drawGame(); }); };
+    }
   }
   function go(k) { if (!V.g || k < 0 || k >= V.g.moves.length) return; V.cur = k; V.pick = null; V.sel = -1; V.safe = null; V.selMode = false; V.msg = ''; drawGame(); }
   function loadSafe(cb) { var x = V.g.moves[V.cur]; if (V.safe) return cb(); post('/api/kkadm/safe', { board: x.b, side: x.s }).then(function (r) { V.safe = r.list || []; cb(); }).catch(function () { V.msg = '⚠️ Server bilan aloqa yo‘q'; drawGame(); }); }
