@@ -276,6 +276,8 @@ function serveFile(req, res) {
     }
     // 🔗 guruhdagi havola orqali xonaga kirilganda: bosh ekran/boshqa doska ko'rinib o'tmasin — darhol "ulanmoqda" pardasi
     if (!html.includes("rcBoot")) html = html.replace(/<body([^>]*)>/i, '<body$1><script>(function(){try{var s=new URLSearchParams(location.search).get("tgWebAppStartParam")||"";if(!s){var h=new URLSearchParams(location.hash.slice(1)).get("tgWebAppData");if(h)s=new URLSearchParams(h).get("start_param")||"";}if(!new URLSearchParams(location.search).get("room")&&!/^[A-Za-z0-9-]{6,32}$/.test(s))return;var d=document.createElement("div");d.id="rcBoot";d.style.cssText="position:fixed;inset:0;z-index:2147483646;background:#0b1026;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font:600 18px system-ui,sans-serif;gap:14px";d.innerHTML="<div style=\\"font-size:54px;animation:rcB 1s ease-in-out infinite alternate\\">♟</div><div>O‘yinga ulanmoqda…</div><style>@keyframes rcB{to{transform:translateY(-10px) scale(1.1)}}</style>";(document.body||document.documentElement).appendChild(d);setTimeout(function(){if(d.parentNode)d.parentNode.removeChild(d)},9000);}catch(e){}})();</script>');
+    // 🖼 bosh sahifa ochilishda sakramasin: oxirgi ko'rinish darhol, haqiqiysi tayyor bo'lgach almashadi (homesnap.js ichki skript)
+    if (!html.includes("spSnapOv")) { try { const _hs = fs.readFileSync(path.join(__dirname, "homesnap.js"), "utf8"); html = html.replace(/<body([^>]*)>/i, m0 => m0 + "<script>" + _hs + "</script>"); } catch (e) {} }
     if (!html.includes("roomclient.js")) {
       html = html.replace("</body>", '<script src="/roomclient.js?v=' + String(process.env.RENDER_GIT_COMMIT || Date.now()).slice(0, 8) + '"></script>\n</body>');
     }
