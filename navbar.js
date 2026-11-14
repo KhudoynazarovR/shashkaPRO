@@ -362,7 +362,7 @@
   var cf4 = document.createElement('style');
   cf4.id = 'nvFlat4';
   cf4.textContent =
-    'body.nvT #hzHero,body.nvT #hzMe,body.nvT #promoBar,body.nvT #lbPanel .lbhb,body.nvT #lbPanel .lbdr{display:none!important}';
+    'body.nvT #hzHero,body.nvT #hzMe,body.nvT #promoBar,body.nvT #hxGm,body.nvT #hxBot,body.nvT #lbPanel .lbhb,body.nvT #lbPanel .lbdr{display:none!important}';
   document.head.appendChild(cf4);
   setInterval(function () {
     document.body.classList.toggle('nvT', window.nvK === 't');
