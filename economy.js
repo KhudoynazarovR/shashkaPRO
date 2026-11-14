@@ -29,6 +29,8 @@ function note(u, d, why) {
   if (u.log.length > 30) u.log.shift();
   try { require('./eco.js').coin(d, why); } catch (e) {}
 }
+const SHOP_MAKE = 600;   // o'yinchi toshini yaratish narxi
+function shopTg(id, text) { try { require('./gcard.js').tg('sendMessage', { chat_id: id, text }).catch(() => {}); } catch (e) {} }
 function add(id, n, why) {
   const u = user(id);
   if (!u || n <= 0) return false;
@@ -791,7 +793,7 @@ function handle(req, res, url) {
     const _adm = (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(_tg.id));
     const _all = Object.values(store.users());
     send(res, 200, { admin: _adm, link: process.env.TG_APP_LINK || '', diamonds: _u.diamonds || 0, owned: _u.owned || [], equipped: _u.equipped || '', def: (store.db.shop.find(x => x.def) || {}).id || '',
-      list: store.db.shop.map(x => ({ id: x.id, name: x.name, price: x.price, by: x.by || '', def: !!x.def, sold: _all.filter(v => (v.owned || []).includes(x.id)).length })) });
+      cost: SHOP_MAKE, list: store.db.shop.map(x => ({ id: x.id, name: x.name, price: x.price, by: x.by || '', author: x.by ? ((store.users()[x.by] || {}).name || '') : '', def: !!x.def, sold: _all.filter(v => (v.owned || []).includes(x.id)).length })) });
     return true;
   }
   if (['/api/shop/buy', '/api/shop/equip', '/api/shop/add', '/api/shop/del', '/api/shop/default'].includes(p) && req.method === 'POST') {
@@ -811,6 +813,10 @@ function handle(req, res, url) {
         if ((u.diamonds || 0) < it.price) return send(res, 400, { error: 'Tanga yetarli emas' });
         u.diamonds = (u.diamonds || 0) - it.price;
         u.owned.push(it.id);
+        if (it.by && it.by !== String(_tg.id) && it.price > 0) {   // o'yinchi toshi: narxning 50% muallifga
+          const part = Math.floor(it.price / 2);
+          if (part > 0 && add(it.by, part, 'tosh sotildi: ' + it.name)) shopTg(it.by, (u.name || 'O‘yinchi') + ' «' + it.name + '» toshingizni sotib oldi · +' + part + ' tanga');
+        }
         store.save();
         return send(res, 200, { ok: true, diamonds: u.diamonds });
       }
@@ -823,7 +829,8 @@ function handle(req, res, url) {
         store.save();
         return send(res, 200, { ok: true, equipped: u.equipped });
       }
-      if (!adm) return send(res, 403, { error: 'admin emassiz' });
+      const usr = p === '/api/shop/add' && (!adm || !!j.usr);   // o'yinchi toshi (hamma uchun ochiq)
+      if (!adm && !usr) return send(res, 403, { error: 'admin emassiz' });
       if (p === '/api/shop/default') {
         arr.forEach(x => { delete x.def; });
         const t = arr.find(x => x.id === j.id);
@@ -833,7 +840,7 @@ function handle(req, res, url) {
       }
       if (p === '/api/shop/del') {
         const i = arr.findIndex(x => x.id === j.id);
-        if (i >= 0) { arr.splice(i, 1); store.save(); }
+        if (i >= 0) { const it = arr[i]; arr.splice(i, 1); store.save(); if (it.by) shopTg(it.by, '«' + it.name + '» toshingiz do‘kondan olib tashlandi.'); }
         return send(res, 200, { ok: true });
       }
       const nm = String(j.name || '').replace(/[<>]/g, '').trim().slice(0, 30);
@@ -844,11 +851,23 @@ function handle(req, res, url) {
         if (typeof v === 'string' && /^data:image\/(png|webp|jpeg);base64,[A-Za-z0-9+\/=]+$/.test(v) && v.length <= 150000) imgs[k] = v; else ok = false;
       });
       if (!ok) return send(res, 400, { error: 'Ma‘lumot noto‘g‘ri' });
-      if (arr.length >= 200) return send(res, 400, { error: 'Do‘kon to‘ldi' });
+      if (arr.filter(x => !!x.by === usr).length >= (usr ? 300 : 200)) return send(res, 400, { error: 'Do‘kon to‘ldi' });
+      const uid = String(_tg.id);
+      if (usr) {
+        if (arr.filter(x => x.by === uid).length >= 10) return send(res, 400, { error: 'Bitta o‘yinchi 10 tagacha tosh yarata oladi' });
+        if (!adm) {
+          if ((u.diamonds || 0) < SHOP_MAKE) return send(res, 400, { error: 'Tanga yetarli emas (' + SHOP_MAKE + ' kerak)' });
+          u.diamonds -= SHOP_MAKE; note(u, -SHOP_MAKE, 'tosh yaratish');
+        }
+      }
       const id = 's' + Date.now().toString(36);
-      arr.push({ id, name: nm, price: j.price, imgs, by: '', at: Date.now() });
+      arr.push({ id, name: nm, price: j.price, imgs, by: usr ? uid : '', at: Date.now() });
       store.save();
-      send(res, 200, { ok: true, id });
+      if (usr) {
+        shopTg(uid, '«' + nm + '» toshingiz do‘konga chiqdi. Har sotuvdan narxning 50% sizga tushadi.');
+        (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(x => x && x !== uid).forEach(a => shopTg(a, 'Yangi tosh: «' + nm + '» · muallif: ' + (u.name || uid) + ' (' + uid + ') · narx ' + j.price + '. Nomaqbul bo‘lsa: Tosh do‘koni → Userlar donalari → O‘chirish.'));
+      }
+      send(res, 200, { ok: true, id, diamonds: u.diamonds || 0 });
     });
     return true;
   }

@@ -1397,6 +1397,7 @@
   function card(it) {
     var own = S.owned.indexOf(it.id) >= 0 || !!it.def, eq = (S.equipped === '-' ? '' : (S.equipped || S.def)) === it.id;
     var h = '<div style="background:#161a3a;border:1px solid #262b5a;border-radius:16px;padding:10px"><b style="font-size:13px">' + esc(it.name) + '</b>';
+    if (it.by) h += '<div style="font-size:12px;opacity:.7;margin-top:2px">muallif: ' + esc(it.author || 'o‘yinchi') + '</div>';
     h += '<div style="display:grid;grid-template-columns:1fr 1fr;aspect-ratio:1;margin:8px 0;border-radius:10px;overflow:hidden">';
     KS.forEach(function (k, i) {
       var dark = (i === 1 || i === 2);
@@ -1415,12 +1416,13 @@
     var h = head();
     h += '<div style="display:flex;justify-content:center;margin-bottom:10px"><button data-tab="app" style="' + (tab === 'app' ? BS : BG) + '">🤖 Dastur donalari</button><button data-tab="usr" style="' + (tab === 'usr' ? BS : BG) + '">👥 Userlar donalari</button></div>';
     if (S.admin && tab === 'app') h += '<button id="shNew" style="' + BS + '">➕ Yangi dona</button>';
+    if (tab === 'usr') h += '<button id="shNew" data-usr="1" style="' + BS + '">➕ Yangi dona' + (S.admin ? '' : ' · ' + (S.cost || 600) + ' 🪙') + '</button>';
     if (msg) h += '<div style="margin:8px 0;color:#ffd27a">' + esc(msg) + '</div>';
-    if (!items.length) h += '<div style="padding:30px;opacity:.7">' + (tab === 'app' ? 'Hozircha dona yo‘q' : 'Userlar donalari tez orada') + '</div>';
+    if (!items.length) h += '<div style="padding:30px;opacity:.7">' + 'Hozircha dona yo‘q' + '</div>';
     h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">' + items.map(card).join('') + '</div>';
     ov.innerHTML = h;
     ov.querySelector('#shBack').onclick = close;
-    var nb = ov.querySelector('#shNew'); if (nb) nb.onclick = function () { form = { name: '', price: '150', pics: {} }; msg = ''; draw(); };
+    var nb = ov.querySelector('#shNew'); if (nb) nb.onclick = function () { form = { name: '', price: '150', pics: {}, usr: !!nb.getAttribute('data-usr') }; msg = ''; draw(); };
     Array.prototype.forEach.call(ov.querySelectorAll('[data-tab]'), function (e) { e.onclick = function () { tab = e.getAttribute('data-tab'); msg = ''; draw(); }; });
     Array.prototype.forEach.call(ov.querySelectorAll('[data-a]'), function (e) { e.onclick = function () { act(e.getAttribute('data-a'), e.getAttribute('data-id')); }; });
   }
@@ -1467,7 +1469,9 @@
     });
     h += '</div>';
     if (msg) h += '<div style="margin:8px 0;color:#ffb3b3">' + esc(msg) + '</div>';
-    h += '<button id="fC" style="' + BG + '">Bekor</button><button id="fS" style="' + BS + '">💾 Saqlash</button>';
+    var pay = form.usr && !S.admin;
+    if (form.usr) h += '<div style="margin:6px 0 10px;font-size:13px;color:#ffd27a">' + (pay ? 'Yaratish ' + (S.cost || 600) + ' 🪙. ' : '') + 'Har sotuvdan narxning 50% sizga tushadi.</div>';
+    h += '<button id="fC" style="' + BG + '">Bekor</button><button id="fS" style="' + BS + '">💾 Saqlash' + (pay ? ' · ' + (S.cost || 600) + ' 🪙' : '') + '</button>';
     ov.innerHTML = h;
     ov.querySelector('#shBack').onclick = function () { form = null; msg = ''; draw(); };
     ov.querySelector('#fC').onclick = function () { form = null; msg = ''; draw(); };
@@ -1560,8 +1564,12 @@
     var pics = {}, bad = false;
     KS.forEach(function (k) { pics[k] = exportK(k); if (pics[k].length > 150000) bad = true; });
     if (bad) { msg = '⚠️ Rasm juda og‘ir'; return draw(); }
+    if (form.usr && !S.admin) {
+      if ((S.diamonds || 0) < (S.cost || 600)) { msg = '⚠️ Tanga yetarli emas (' + (S.cost || 600) + ' kerak)'; return draw(); }
+      if (!confirm('Tosh yaratish ' + (S.cost || 600) + ' 🪙 turadi. Davom etasizmi?')) return;
+    }
     msg = 'Saqlanmoqda…'; draw();
-    api('/api/shop/add', { name: nm, price: pr, imgs: pics }).then(function (d) {
+    api('/api/shop/add', { name: nm, price: pr, imgs: pics, usr: !!form.usr }).then(function (d) {
       if (d && d.ok) { form = null; msg = '✅ Dona qo‘shildi'; return reload().then(draw); }
       msg = '⚠️ ' + ((d && d.error) || 'Saqlanmadi'); draw();
     }).catch(function () { msg = '⚠️ Server bilan aloqa yo‘q'; draw(); });
