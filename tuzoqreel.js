@@ -283,18 +283,25 @@ async function sendVideo(chat, file, cap, r) {
   return fetch('https://api.telegram.org/bot' + T0 + '/sendVideo', { method: 'POST', body: fd }).then(x => x.json()).catch(e => ({ ok: false, description: e.message }));
 }
 let busy = false;
-async function produce(n, th, to, snd) {
+// masala reelslari uslubida (reelgen.js): xatodan keyingi holat — masala, kombinatsiya — yechim
+function asPuzzle(T) {
+  const b = init(); T.m.forEach(m => apply(b, m));
+  const sol = []; T.z.forEach(m => m.forEach(s => sol.push(s.slice())));
+  return { id: 'tz' + T.n, title: 'Tuzoq №' + T.n + ' · ' + T.u, board: b, side: T.s === 'b' ? 'b' : 'w', sol, level: level(T).lv >= 3 ? 3 : 2, goal: 'win' };
+}
+async function produce(n, th, to) {
   if (busy) return 'Boshqa video yasalmoqda, biroz kuting';
   busy = true; const t0 = Date.now();
   try {
-    const r = await make(n, th, null, snd);
-    const a = await sendVideo(to, r.files[0], 'Tuzoq №' + r.T.n + ' · ' + r.T.u + ' · musiqali · ' + Math.round(r.dur) + ' s', r);
-    const b = await sendVideo(to, r.files[1], 'Tuzoq №' + r.T.n + ' · faqat ovoz effektlari — Instagram’da trenddagi musiqani qo‘shing', r);
-    if ((a && a.ok) || (b && b.ok)) await tg('sendMessage', { chat_id: to, text: '<pre>' + x(caption(r)) + '</pre>', parse_mode: 'HTML' });
-    for (const f of r.files) { try { fs.unlinkSync(f); } catch (e) {} }
-    const s = store().db; s.tzReel = s.tzReel || {}; s.tzReel[r.T.n] = Date.now(); store().save();
-    console.log('[tzreel] №' + r.T.n, Math.round(r.dur) + 's video,', Math.round((Date.now() - t0) / 1000) + 's da yasaldi');
-    return (a && a.ok) || (b && b.ok) ? '' : 'Video yasaldi, lekin botga yuborib bo‘lmadi: ' + ((a && a.description) || '');
+    const T = traps().find(z => z.n === Number(n)); if (!T) throw new Error('Tuzoq topilmadi: №' + n);
+    const RG = require('./reelgen.js'), I = RG.infoPz(asPuzzle(T)); if (!I) throw new Error('Tuzoq yechimini o‘qib bo‘lmadi');
+    const r = await RG.make(I, path.join(os.tmpdir(), 'tuzoq_' + T.n + '.mp4'), 2e9);
+    const a = await sendVideo(to, r.file, 'Tuzoq №' + T.n + ' · ' + T.u + ' · ' + Math.round(r.dur) + ' s', r);
+    if (a && a.ok) await tg('sendMessage', { chat_id: to, text: '<pre>' + x(caption({ T, P: plan(T) })) + '</pre>', parse_mode: 'HTML' });
+    try { fs.unlinkSync(r.file); } catch (e) {}
+    const s = store().db; s.tzReel = s.tzReel || {}; s.tzReel[T.n] = Date.now(); store().save();
+    console.log('[tzreel] №' + T.n, Math.round(r.dur) + 's video,', Math.round((Date.now() - t0) / 1000) + 's da yasaldi');
+    return a && a.ok ? '' : 'Video yasaldi, lekin botga yuborib bo‘lmadi: ' + ((a && a.description) || '');
   } catch (e) { console.log('[tzreel]', e.message); return 'Video xatosi: ' + e.message.slice(0, 300); }
   finally { busy = false; }
 }
@@ -311,8 +318,8 @@ function handle(req, res, p, h) {
     if (!traps().find(z => z.n === n)) return h.send(res, 404, { error: 'Tuzoq topilmadi' });
     if (busy) return h.send(res, 409, { error: 'Boshqa video yasalmoqda, 1–2 daqiqadan keyin urinib ko‘ring' });
     h.send(res, 200, { ok: 1 });
-    produce(n, th, String(t.id), snd).then(m => { if (m) tg('sendMessage', { chat_id: String(t.id), text: m }); });
+    produce(n, th, String(t.id)).then(m => { if (m) tg('sendMessage', { chat_id: String(t.id), text: m }); });
   });
   return true;
 }
-module.exports = { handle, make, traps, level, TH, _t: { plan, scene, audio, bgSvg } };
+module.exports = { handle, make, traps, level, TH, asPuzzle, _t: { plan, scene, audio, bgSvg } };

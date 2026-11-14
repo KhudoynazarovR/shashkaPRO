@@ -179,19 +179,16 @@
       var S2 = solved(), nx = D.filter(function (y) { return !S2[y.n] && y.n !== x.n; })[0];
       h += '<div class="row2">' + (nx ? '<button class="bt g" id="tNx">➡️ Keyingi tuzoq</button>' : '') + '<button class="bt" id="tRe">🔄 Qayta</button><button class="bt" id="tLs">📋 Ro‘yxat</button></div>';
     }
-    if (ADMIN) { var TH = [['purple', 'Binafsha'], ['pink', 'Ilovadagi'], ['wood', 'Yog‘och'], ['green', 'Turnir yashil'], ['marble', 'Qora marmar'], ['blue', 'Ko‘k shisha']], th0 = ls('trapTh') || 'purple';
-      h += '<div style="margin-top:14px;padding:10px;border-radius:14px;background:rgba(0,0,0,.3);display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span style="font:700 13px system-ui;opacity:.8">Admin · video</span><select id="tVth" style="flex:1;min-width:120px;background:#2a0f1a;color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:10px;padding:8px">' + TH.map(function (t) { return '<option value="' + t[0] + '"' + (t[0] === th0 ? ' selected' : '') + '>' + t[1] + '</option>'; }).join('') + '</select><select id="tVsn" style="flex:1;min-width:110px;background:#2a0f1a;color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:10px;padding:8px">' + [['A', 'Ovoz: Yog‘och'], ['B', 'Ovoz: Kino'], ['C', 'Ovoz: Billur']].map(function (t) { return '<option value="' + t[0] + '"' + (t[0] === (ls('trapSnd') || 'A') ? ' selected' : '') + '>' + t[1] + '</option>'; }).join('') + '</select><button class="bt" id="tVid"' + (VB ? ' disabled' : '') + '>' + (VB ? 'Video yasalmoqda…' : 'Video yasash') + '</button></div>'; }
+    if (ADMIN) h += '<div style="margin-top:14px;padding:10px;border-radius:14px;background:rgba(0,0,0,.3);display:flex;gap:8px;align-items:center"><span style="flex:1;font:700 13px system-ui;opacity:.8">Admin · masala uslubida Reel</span><button class="bt" id="tVid"' + (VB ? ' disabled' : '') + '>' + (VB ? 'Video yasalmoqda…' : 'Video yasash') + '</button></div>';
     var y0 = ov.scrollTop;
     ov.innerHTML = h; ov.scrollTop = y0;
     ov.querySelector('#tBk').onclick = list;
     var e;
     if ((e = ov.querySelector('#tSk'))) e.onclick = skip;
-    if ((e = ov.querySelector('#tVth'))) e.onchange = function () { ls('trapTh', this.value); };
-    if ((e = ov.querySelector('#tVsn'))) e.onchange = function () { ls('trapSnd', this.value); };
     if ((e = ov.querySelector('#tVid'))) e.onclick = function () {
       if (VB) return; if (!confirm('Video 1–2 daqiqada yasaladi va botga keladi. Turnir ketayotgan bo‘lsa, keyinroq yasang. Boshlansinmi?')) return;
-      VB = true; var n0 = cur.n, th = (ov.querySelector('#tVth') || {}).value || 'purple'; draw();
-      fetch('/api/tuzoq/reel', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-init-data': ini() }, body: JSON.stringify({ n: n0, th: th, snd: (ov.querySelector('#tVsn') || {}).value || 'A' }) }).then(function (r) { return r.json(); }).then(function (j) { msg = j && j.ok ? 'Video yasalmoqda — 1–2 daqiqada botga keladi' : '❌ ' + ((j && j.error) || 'Xato'); }).catch(function () { msg = '❌ Server bilan aloqa yo‘q'; }).then(function () { setTimeout(function () { VB = false; if (cur && cur.n === n0) draw(); }, 90000); if (cur && cur.n === n0) draw(); });
+      VB = true; var n0 = cur.n; draw();
+      fetch('/api/tuzoq/reel', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-init-data': ini() }, body: JSON.stringify({ n: n0 }) }).then(function (r) { return r.json(); }).then(function (j) { msg = j && j.ok ? 'Video yasalmoqda — 1–2 daqiqada botga keladi' : '❌ ' + ((j && j.error) || 'Xato'); }).catch(function () { msg = '❌ Server bilan aloqa yo‘q'; }).then(function () { setTimeout(function () { VB = false; if (cur && cur.n === n0) draw(); }, 90000); if (cur && cur.n === n0) draw(); });
     };
     if ((e = ov.querySelector('#tRe'))) e.onclick = function () { open(cur); };
     if ((e = ov.querySelector('#tLs'))) e.onclick = list;
