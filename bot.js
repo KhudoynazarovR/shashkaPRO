@@ -288,6 +288,7 @@ async function start() {
   } catch (e) {}
   console.log("[bot] ishga tushdi: @" + BOT);
   try { require("./kanal.js").start(); } catch (e) { console.log("[kanal] start:", e.message); }
+  try { require("./quiz.js").start(); } catch (e) { console.log("[quiz] start:", e.message); }
   try { require("./reelgen.js").start(); } catch (e) { console.log("[reel] start:", e.message); }
 
   function onMyChat(m) {
@@ -341,7 +342,7 @@ async function start() {
       const r = await api("getUpdates", {
         offset: offset,
         timeout: 30,
-        allowed_updates: ["message", "inline_query", "chosen_inline_result", "pre_checkout_query", "callback_query", "my_chat_member"]
+        allowed_updates: ["message", "inline_query", "chosen_inline_result", "pre_checkout_query", "callback_query", "my_chat_member", "poll_answer"]
       });
       if (!r.ok) throw new Error(r.description || "getUpdates xato");
       for (const u of r.result) {
@@ -354,6 +355,7 @@ async function start() {
           else if (u.chosen_inline_result) { try { const cr = u.chosen_inline_result, pr = String(cr.result_id || '').split('_'); if (pr[0] === 'm' && pr[1]) { const MRm = require('./memroom.js'), nm0 = (cr.from && (cr.from.first_name || cr.from.username)) || ''; if (!MRm.rooms.has(pr[1])) { const r = MRm.createInline(cr.from.id, nm0, pr[2], +pr[3] || 0, pr[4] === 'r' ? 'romantic' : 'animals'); MRm.rooms.delete(r.code); r.code = pr[1]; MRm.rooms.set(pr[1], r); } require('./gcard.js').mmChosen(pr[1], cr.inline_message_id, nm0, roomLink('mm_' + pr[1])); MRm.remember(pr[1], { uid: String(cr.from.id), name: String(nm0).slice(0, 20), size: pr[2], tc: +pr[3] || 0, theme: pr[4] === 'r' ? 'romantic' : 'animals', imid: cr.inline_message_id, from: nm0, link: roomLink('mm_' + pr[1]) }); } if (pr[0] === 'u' && pr[1] && pr[2]) { try { require(pr[1] === 'ug' ? './ugroom.js' : pr[1] === 'rp' ? './rpsroom.js' : './duoroom.js').remember(pr[2], { imid: cr.inline_message_id }); } catch (e) {} } if (pr[0] === 'g' && pr[1]) { const tc = pr[2] && pr[2] !== '0' ? pr[2].replace('p', '+').replace('d', '.') : ''; require('./gcard.js').chosen(pr[1], cr.inline_message_id, (cr.from && (cr.from.first_name || cr.from.username)) || '', roomLink(pr[1]), cr.from && cr.from.id, tc, pr[3] || 'w'); } } catch (e) { console.log('[gcard]', e.message); } }
           else if (u.callback_query) await onCallback(u.callback_query);
           else if (u.my_chat_member) onMyChat(u.my_chat_member);
+          else if (u.poll_answer) require('./quiz.js').onAnswer(u.poll_answer);   // 🧠 viktorina javobi
         } catch (e) {
           console.log("[bot] xato:", e.message);
         }

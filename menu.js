@@ -494,6 +494,60 @@
       .then(function (r) { return r.json(); });
   }
   function on(sel, fn) { var e = ov.querySelector(sel); if (e) e.onclick = fn; }
+  // 🧠 Viktorina navbati (admin): sozlamalar, navbat, javob variantlari
+  function qzIn(id) { return (S.qz || []).indexOf(id) >= 0; }
+  function qzTog(id, cb) {
+    api('/api/quiz/tog', { id: id }).then(function (d) {
+      if (d && d.ok) { S.qz = S.qz || []; var i = S.qz.indexOf(id); if (d.on && i < 0) S.qz.push(id); if (!d.on && i >= 0) S.qz.splice(i, 1); }
+      cb(d || { error: 'Xato' });
+    }).catch(function () { cb({ error: 'Server bilan aloqa yo‘q' }); });
+  }
+  function qzPanel() {
+    var Q = null, qm = '';
+    var IN = 'background:#0f1330;color:#fff;border:1px solid #2c3370;border-radius:10px;padding:8px;font-size:15px;width:70px;text-align:center';
+    function ld() { api('/api/quiz').then(function (d) { if (d && !d.error) { Q = d; S.qz = d.q.map(function (x) { return x.id; }); } else qm = (d && d.error) || 'Xato'; dr(); }).catch(function () { qm = 'Server bilan aloqa yo‘q'; dr(); }); }
+    function dr() {
+      var h = head('Viktorina');
+      if (qm) h += '<div style="margin:0 0 10px;padding:8px;border-radius:10px;background:#2a2560">' + esc(qm) + '</div>';
+      if (!Q) { ov.innerHTML = h + '<div style="padding:24px;opacity:.7">Yuklanmoqda…</div>'; on('#pzBack', function () { list(); }); return; }
+      var c = Q.cfg, dl = function (d) { return d === 0 ? 'bugun' : d === 1 ? 'ertaga' : (d + 1) + '-kun'; };
+      h += '<div style="' + CARD + ';cursor:default">'
+        + '<label style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><b>Har kuni avtomatik</b><input id="qzOn" type="checkbox" ' + (c.on ? 'checked' : '') + ' style="width:22px;height:22px"></label>'
+        + '<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px"><span>Boshlanish</span><input id="qzHm" type="time" value="' + c.hm + '" style="' + IN + ';width:110px"><span>Savol</span><input id="qzN" type="number" min="1" max="20" value="' + c.n + '" style="' + IN + '"><span>Soniya</span><input id="qzSec" type="number" min="10" max="600" value="' + c.sec + '" style="' + IN + '"></div>'
+        + '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px"><span>Mukofot 1/2/3</span><input id="qzP0" type="number" value="' + c.prz[0] + '" style="' + IN + '"><input id="qzP1" type="number" value="' + c.prz[1] + '" style="' + IN + '"><input id="qzP2" type="number" value="' + c.prz[2] + '" style="' + IN + '"><span>Qolganlarga</span><input id="qzR" type="number" value="' + c.rest + '" style="' + IN + '"></div>'
+        + '<label style="display:flex;gap:10px;align-items:center;margin-bottom:10px"><input id="qzCh" type="checkbox" ' + (c.chOn ? 'checked' : '') + ' style="width:20px;height:20px">Kanalga ham yuborish (natijasiz)</label>'
+        + '<div style="display:flex;gap:10px;align-items:center;margin-bottom:10px"><span>Tosh</span><select id="qzSk" style="' + IN + ';width:auto;flex:1"><option value="">Asosiy tosh</option>' + Q.skins.map(function (k) { return '<option value="' + esc(k.id) + '"' + (c.skin === k.id ? ' selected' : '') + '>' + esc(k.name) + (k.def ? ' (asosiy)' : '') + '</option>'; }).join('') + '</select></div>'
+        + '<button id="qzSave" style="' + BS + '">Saqlash</button>'
+        + '<div style="font-size:13px;opacity:.7;margin-top:8px">Yuboriladi: ' + Q.chats + ' ta guruh/kanal' + (Q.run ? ' · Hozir ketyapti: ' + (Q.run.qi + 1) + '/' + Q.run.n : '') + '</div></div>';
+      h += '<div style="margin-bottom:10px"><button id="qzNum" style="' + BG + '">Raqam bilan qo‘shish</button><button id="qzTest" style="' + BG + '">Sinov (o‘zimga)</button>' + (Q.run ? '<button id="qzStop" style="' + BG + ';background:#8a2b2b">To‘xtatish</button>' : '<button id="qzNow" style="' + BG + '">Hozir boshlash</button>') + '</div>';
+      h += '<div style="text-align:left;font-weight:700;margin:6px 0 8px">Navbat: ' + Q.q.length + ' ta' + (Q.q.length < c.n ? ' <span style="color:#ff8a8a">(kuniga ' + c.n + ' ta kerak)</span>' : '') + '</div>';
+      if (!Q.q.length) h += '<div style="padding:20px;opacity:.7">Navbat bo‘sh. Masalani ochib «Viktorinaga» tugmasini bosing yoki raqam bilan qo‘shing.</div>';
+      Q.q.forEach(function (x, i) {
+        h += '<div style="' + CARD + ';cursor:default"><div style="display:flex;justify-content:space-between;gap:6px"><b>' + (i + 1) + '. ' + esc(x.t) + '</b><span style="opacity:.6;font-size:13px;white-space:nowrap">' + dl(x.d) + '</span></div>'
+          + '<div style="font-size:13px;margin-top:6px">' + (x.side === 'b' ? 'Qora yuradi' : 'Oq yuradi') + ' · To‘g‘ri: <b style="color:#5ee08a">' + esc(x.cor || '?') + '</b></div>'
+          + '<div style="font-size:13px;opacity:.8;margin-top:4px">Noto‘g‘ri' + (x.man ? ' (qo‘lda)' : ' (avtomatik, 4 tasi tanlanadi)') + ': ' + esc(x.w.join(', ')) + '</div>'
+          + '<div style="margin-top:6px"><button data-qu="' + esc(x.id) + '" style="' + BG + ';padding:6px 12px">↑</button><button data-qd="' + esc(x.id) + '" style="' + BG + ';padding:6px 12px">↓</button><button data-qo="' + esc(x.id) + '" style="' + BG + ';padding:6px 12px">Variantlar</button><button data-qx="' + esc(x.id) + '" style="' + BG + ';padding:6px 12px">Olib tashlash</button><button data-qt="' + esc(x.id) + '" style="' + BG + ';padding:6px 12px">Sinov</button></div></div>';
+      });
+      ov.innerHTML = h; ov.scrollTop = 0;
+      on('#pzBack', function () { list(); });
+      var g = function (id) { return ov.querySelector(id); };
+      var post = function (path, b, okMsg) { qm = '…'; api(path, b).then(function (d) { if (d && d.error) qm = d.error; else { if (d && d.cfg) { Q = d; S.qz = d.q.map(function (x) { return x.id; }); } qm = okMsg || ''; } if (d && d.ok && !d.cfg) return ld(); dr(); }).catch(function () { qm = 'Server bilan aloqa yo‘q'; dr(); }); };
+      on('#qzSave', function () { post('/api/quiz/cfg', { on: g('#qzOn').checked, hm: g('#qzHm').value, n: +g('#qzN').value, sec: +g('#qzSec').value, prz: [+g('#qzP0').value, +g('#qzP1').value, +g('#qzP2').value], rest: +g('#qzR').value, chOn: g('#qzCh').checked, skin: g('#qzSk').value }, 'Saqlandi'); });
+      on('#qzNum', function () { var v = prompt('Kombinatsiyalar raqamlari (masalan: 12, 15-20):', ''); if (!v) return; api('/api/quiz/nums', { nums: v }).then(function (d) { qm = d.error || ('Qo‘shildi: ' + d.add + ' ta' + (d.bad ? ' · yechimi o‘qilmadi: ' + d.bad : '')); ld(); }); });
+      on('#qzTest', function () { post('/api/quiz/test', {}, 'Sinov savoli botda sizga yuborildi'); });
+      on('#qzNow', function () { if (!confirm('Viktorina hozir barcha guruhlarda boshlansinmi?')) return; post('/api/quiz/now', {}, 'Boshlandi'); });
+      on('#qzStop', function () { if (!confirm('Viktorina to‘xtatilib, natija e’lon qilinsinmi?')) return; post('/api/quiz/stop', {}, 'To‘xtatildi'); });
+      Array.prototype.forEach.call(ov.querySelectorAll('[data-qu],[data-qd],[data-qx],[data-qo],[data-qt]'), function (b) {
+        b.onclick = function () {
+          var id = b.getAttribute('data-qu') || b.getAttribute('data-qd') || b.getAttribute('data-qx') || b.getAttribute('data-qo') || b.getAttribute('data-qt');
+          if (b.hasAttribute('data-qt')) return post('/api/quiz/test', { id: id }, 'Sinov savoli botda sizga yuborildi');
+          if (b.hasAttribute('data-qo')) { var x = Q.q.filter(function (y) { return y.id === id; })[0]; var v = prompt('Noto‘g‘ri variantlar, vergul bilan (masalan: g5-f6, h6-g7). Bo‘sh qoldirsangiz — avtomatik:', x && x.man ? x.w.join(', ') : ''); if (v === null) return; return post('/api/quiz/opts', { id: id, opts: v.split(',') }, 'Saqlandi'); }
+          post('/api/quiz/mv', { id: id, d: b.hasAttribute('data-qu') ? -1 : b.hasAttribute('data-qd') ? 1 : 0 });
+        };
+      });
+    }
+    dr(); ld();
+  }
   function head(t, extra) {
     return '<div style="display:flex;justify-content:space-between;align-items:center;font-size:20px;font-weight:700;margin-bottom:12px"><span>' + t + '</span><span>' + (extra || '') + '<button id="pzBack" style="' + BG + '">⬅️</button></span></div>';
   }
@@ -563,7 +617,7 @@
   function nDone(arr) { return arr.filter(function (p) { return (S.solved || []).indexOf(p.id) >= 0; }).length; }
   function cleanName(t) { return String(t || '').replace(/[<>]/g, '').trim().slice(0, 30); }
   function newPz(lv, fo) { edLv = lv || 0; edFolder = fo || ''; editor(); }
-  function topBtns() { return '<button id="pzTop" style="' + BG + '">🏆 TOP</button>' + (S.admin ? '<button id="pzNew" style="' + BS + '">➕ Yangi</button>' : ''); }
+  function topBtns() { return '<button id="pzTop" style="' + BG + '">🏆 TOP</button>' + (S.admin ? '<button id="pzNew" style="' + BS + '">➕ Yangi</button><button id="pzQzP" style="' + BG + '">Viktorina</button>' : ''); }
   function moveDlg(p) {
     var fl = S.folders || [];
     var t = prompt('Papka nomi (bo‘sh qoldirsangiz papkadan chiqariladi).\nMavjud: ' + (fl.join(', ') || 'yo‘q'), foOf(p));
@@ -640,7 +694,7 @@
     });
     if (!S.admin) h += '<div style="font-size:11px;opacity:.4;margin-top:16px">ID: ' + esc(S.myId) + '</div>';
     ov.innerHTML = h;
-    on('#pzBack', function () { hub = 1; view = ''; list(); }); on('#pzTop', pzTop);
+    on('#pzBack', function () { hub = 1; view = ''; list(); }); on('#pzTop', pzTop); on('#pzQzP', qzPanel);
     on('#pzGo', function () { var mo = mainOrder(), nx = mo.filter(function (p) { return (S.solved || []).indexOf(p.id) < 0; })[0] || mo[0]; window.__pzMapKey = ''; if (nx) play(nx); }); on('#pzNew', function () { newPz(0, ''); });
     on('#pzNF', function () {
       var n = cleanName(prompt('Yangi papka nomi:'));
@@ -800,7 +854,7 @@
       h += '<div class="pzBfs">' + _bf + '</div>'; }
     ov.innerHTML = h;
     on('#pzBack', function () { curLv = 0; curFo = ''; bulk.on = false; bulk.sel = {}; list(); });
-    on('#pzTop', pzTop);
+    on('#pzTop', pzTop); on('#pzQzP', qzPanel);
     try { bulkUi(); } catch (e) {}
     // masaladan qaytganda ro'yxat oxirgi ochilgan masala yonida tursin
     try {
@@ -851,6 +905,12 @@
           e.addEventListener('click', function (ev) { ev.stopImmediatePropagation(); var m = '🔒 Avval oldingi masalani yeching'; if (tg && tg.showAlert) tg.showAlert(m); else alert(m); }, true);
         }
         if (!ok) blocked = true;
+        if (S.admin && !q.et) {
+          var qb = document.createElement('button'), qs = function () { var a = qzIn(q.id); qb.textContent = a ? 'Viktorinada' : 'Viktorinaga'; qb.style.background = a ? '#2b8a3e' : '#262b5a'; };
+          qb.setAttribute('style', 'float:right;color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:13px;margin-left:6px'); qs();
+          qb.onclick = function (ev) { ev.stopPropagation(); qzTog(q.id, function (d) { if (d.error) alert(d.error); qs(); }); };
+          e.insertBefore(qb, e.firstChild);
+        }
         if (S.admin) {
           [['dn', '⬇️'], ['up', '⬆️']].forEach(function (x) {
             var bb = document.createElement('button');
@@ -1044,7 +1104,7 @@
       if (_a.length > 1 && !(_day && _i >= _a.length - 1) && window.__pzMapKey !== '') h += done ? ('<div style="text-align:center"><span class="pzWrap"><span class="pzO">' + [0,1,2,3,4,5,6,7].map(function (k) { return '<i style="animation-delay:-' + (k * 0.375) + 's"></i>'; }).join('') + '</span><button id="pzNext" class="pzBig" style="' + BS + '">➡️ Keyingi masala</button></span></div>') : '<button id="pzNext" style="' + BG + '">➡️ Keyingi</button>';
       if (_i > 0) h += '<button id="pzPrev" style="' + BG + '">⬅️ Oldingi</button>';
       h += '<button id="pzR" style="' + BG + '">🔄 Qayta</button><button id="pzH" style="' + BS + '">💡 Ko‘rsatma</button>';
-      if (S.link) h += '<button id="pzS" style="' + BS + '">📤 Yuborish</button>'; if (S.admin && !p.et) h += '<button id="pzE" style="' + BS + '">🛠 Tahrirlash</button>'; if (S.admin && !p.et) h += '<button id="pzN" style="' + BG + '">✏️ Nomi</button>'; if (S.admin && !p.et) h += '<button id="pzD" style="' + BG + '">🗑 O‘chirish</button>'; if (S.admin) h += '<button id="pzRl" style="' + BG + '">🎬 Reel' + ((S.reels || []).indexOf(p.id) >= 0 ? ' ✓' : '') + '</button>';
+      if (S.link) h += '<button id="pzS" style="' + BS + '">📤 Yuborish</button>'; if (S.admin && !p.et) h += '<button id="pzE" style="' + BS + '">🛠 Tahrirlash</button>'; if (S.admin && !p.et) h += '<button id="pzN" style="' + BG + '">✏️ Nomi</button>'; if (S.admin && !p.et) h += '<button id="pzD" style="' + BG + '">🗑 O‘chirish</button>'; if (S.admin && !p.et) h += '<button id="pzQz" style="' + BG + (qzIn(p.id) ? ';background:#2b8a3e' : '') + '">' + (qzIn(p.id) ? 'Viktorinada' : 'Viktorinaga') + '</button>'; if (S.admin) h += '<button id="pzRl" style="' + BG + '">🎬 Reel' + ((S.reels || []).indexOf(p.id) >= 0 ? ' ✓' : '') + '</button>';
       ov.innerHTML = h;
       on('#pzBack', function () { dayIds = null; list(); });
       on('#pzDayEnd', function () { dayIds = null; close(); if (window.dqOpen) window.dqOpen(); });
@@ -1057,6 +1117,7 @@
         var sh = 'https://t.me/share/url?url=' + encodeURIComponent(u) + '&text=' + encodeURIComponent(t);
         if (tg && tg.openTelegramLink) tg.openTelegramLink(sh); else window.open(sh, '_blank');
       });
+      on('#pzQz', function () { qzTog(p.id, function (d) { msg = d.error ? d.error : d.on ? 'Viktorina navbatiga qo‘shildi (' + d.pos + '-o‘rin)' : 'Viktorina navbatidan olindi'; draw(); }); });
       on('#pzRl', function () {   // 🎬 shu masaladan Instagram Reel videosi — bot Telegram'ga yuboradi
         if ((S.reels || []).indexOf(p.id) >= 0 && !confirm('Bu masaladan Reel avval yasalgan. Yana yasalsinmi?')) return;
         msg = '⏳ So‘rov yuborilmoqda…'; draw();
