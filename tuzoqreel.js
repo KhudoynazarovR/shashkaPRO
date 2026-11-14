@@ -104,6 +104,10 @@ function scene(T, P, TT, th, flip) {
   let tx = BS / 2 - cx * zs, ty = BS / 2 - cy * zs; tx = Math.max(BS - BS * zs, Math.min(0, tx)); ty = Math.max(BS - BS * zs, Math.min(0, ty));
   let shk = 0; for (const o of caps) { const e2 = tt - o.tc; if (e2 >= 0 && e2 < 0.45) shk = Math.max(shk, (o.big ? 5 : 3) * (1 - e2 / 0.45)); }
   const sx = shk ? (Math.sin(TT * 91) * shk) : 0, sy = shk ? (Math.cos(TT * 77) * shk) : 0;
+  // 🎥 doska sekin suzadi, savolda kamera yaqinlashadi, urishda chayqaladi
+  const GX = BX + BS / 2, GY = BY + BS / 2, push = tt >= P.tQ && tt < P.tZ ? 1 + 0.06 * ease((tt - P.tQ) / (P.tZ - P.tQ)) : (tt >= P.tZ && tt < P.tZ + 0.4 ? 1 + 0.06 * (1 - ease((tt - P.tZ) / 0.4)) : 1);
+  const DS = (1 + 0.012 * Math.sin(TT * 0.45)) * push, DR = 0.9 * Math.sin(TT * 0.6) + shk * 0.25 * Math.sin(TT * 40);
+  s += `<g transform="translate(${GX},${GY}) rotate(${DR.toFixed(3)}) scale(${DS.toFixed(4)}) translate(${-GX},${-GY})">`;
   s += `<rect x="${BX - 13}" y="${BY - 13}" width="${BS + 26}" height="${BS + 26}" rx="18" fill="${t1[4]}"/><rect x="${BX - 7}" y="${BY - 7}" width="${BS + 14}" height="${BS + 14}" rx="13" fill="${t1[3]}"/>`;
   s += `<g transform="translate(${BX},${BY})" clip-path="url(#clip)"><g transform="translate(${tx + sx},${ty + sy}) scale(${zs})">`;
   s += `<rect width="${BS}" height="${BS}" fill="${t1[1]}"/>`;
@@ -116,7 +120,7 @@ function scene(T, P, TT, th, flip) {
   s += arrows;
   for (const o of caps) { const e2 = tt - o.tc; if (e2 < 0.45) { const A2 = e2 / 0.45, [R, C] = D(o.r, o.c); s += `<circle cx="${(C + .5) * Q}" cy="${(R + .5) * Q}" r="${(35 + A2 * 55).toFixed(1)}" fill="none" stroke="#fff" stroke-width="${(4 * (1 - A2)).toFixed(2)}" stroke-opacity="${(0.8 * (1 - A2)).toFixed(2)}"/>`; } }
   if (mv) { const [R, C] = D(mv.r, mv.c), X = (C + .5) * Q, Y = (R + .5) * Q; s += `<circle cx="${X}" cy="${Y}" r="${Q * .62}" fill="url(#${mv.v % 2 ? 'gw' : 'gb'})"/>` + piece(mv.r, mv.c, mv.v, 1.15); }
-  s += '</g></g>';
+  s += '</g></g></g>';
   // urilgan donalar uchib, chetdagi qatorga tushadi (kamera yaqinlashganda yashirin)
   if (zs < 1.01) {
     let nW = 0, nB = 0; const loserW = T.s === 'b';
@@ -128,6 +132,19 @@ function scene(T, P, TT, th, flip) {
       const w = o.v % 2 === 1;
       s += `<g transform="translate(${Xc.toFixed(1)},${Yc.toFixed(1)}) scale(${sc.toFixed(3)},${(sc * flat).toFixed(3)})"><ellipse cx="0" cy="${(Q * (.06 + lift * .5)).toFixed(1)}" rx="${Q * .41}" ry="${Q * .41}" fill="#000" fill-opacity="${(.35 - lift * .3).toFixed(2)}"/><circle r="${Q * .41}" fill="url(#${w ? 'pw' : 'pb'})"/><circle r="${Q * .26}" fill="none" stroke="${w ? '#cfcfcf' : '#3a3a3a'}" stroke-width="3"/></g>`;
     }
+  }
+  // 🌑 qorong'u tushadi: xatoda va hal qiluvchi zarbadan oldin — faqat bitta dona yoritiladi; urishlarda chaqnaydi
+  { let d = 0, sp = null, fl = 0; const EM = P.EM, ms = T.m[T.m.length - 1][0];
+    if (TT >= P.HK && tt >= P.tMis && tt < P.tMis + 1.4) { const u = tt - P.tMis; d = u < 0.5 ? 0.72 * ease(u / 0.5) : u < 0.9 ? 0.72 : 0.72 * (1 - ease((u - 0.9) / 0.5)); sp = mv ? [mv.r, mv.c] : [ms[2], ms[3]]; if (u >= 0.9 && u < 1.15) fl = 0.35 * (1 - (u - 0.9) / 0.25); }
+    const a0 = EM.t0 - 1.3, a1 = EM.t0 + EM.dur;
+    if (tt >= a0 && tt < a1 + 0.45) { d = tt < EM.t0 ? 0.85 * ease((tt - a0) / 1.3) : tt < a1 ? 0.72 : 0.72 * (1 - ease((tt - a1) / 0.45)); sp = mv ? [mv.r, mv.c] : tt < EM.t0 ? [EM.m[0][0], EM.m[0][1]] : [EM.m[EM.m.length - 1][2], EM.m[EM.m.length - 1][3]];
+      for (const o of caps) if (o.big) { const e2 = tt - o.tc; if (e2 >= 0 && e2 < 0.25) fl = Math.max(fl, 0.4 * (1 - e2 / 0.25)); }
+      if (tt >= a1 && tt < a1 + 0.35) fl = Math.max(fl, 0.6 * (1 - (tt - a1) / 0.35)); }
+    if (d > 0.01) { const [R0, C0] = D(sp[0], sp[1]); let px = BX + tx + zs * (C0 + .5) * Q, py = BY + ty + zs * (R0 + .5) * Q;
+      const a = DR * Math.PI / 180, dx = (px - GX) * DS, dy = (py - GY) * DS; px = GX + dx * Math.cos(a) - dy * Math.sin(a); py = GY + dx * Math.sin(a) + dy * Math.cos(a);
+      const rr = Q * 1.25 * zs * DS;
+      s += `<defs><radialGradient id="spg" cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${rr.toFixed(1)}" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="1"/></radialGradient></defs><rect width="${W}" height="${H}" fill="url(#spg)" opacity="${d.toFixed(3)}"/><circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${(rr * 0.9).toFixed(1)}" fill="#fff6d6" fill-opacity="${(0.1 * d).toFixed(3)}"/>`; }
+    if (fl > 0.01) s += `<rect width="${W}" height="${H}" fill="#fff" opacity="${fl.toFixed(3)}"/>`;
   }
   // matnlar
   const big = (t, y, sz, op) => `<text x="${W / 2}" y="${y}" font-family="${FONT}" font-weight="900" font-size="${sz}" text-anchor="middle" fill="url(#tg)" stroke="#b3006b" stroke-width="7" stroke-linejoin="round" paint-order="stroke" opacity="${op == null ? 1 : op}">${x(t)}</text>`;
