@@ -190,7 +190,8 @@ function bgSvg() {
 
 // ---------- ovoz (sintez)
 function rngF(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
-function audio(P, withMusic) {
+function audio(P, withMusic, V) {
+  V = V || 'A';
   const N = Math.ceil((P.TOTAL + 1) * SR), out = new Float32Array(N), mus = new Float32Array(N), R = rngF(7), gn = () => { let u = 0, v = 0; while (!u) u = R(); v = R(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
   const add = (buf, f, at, dur, g) => { const i0 = Math.round(at * SR), n = Math.round(dur * SR); for (let i = 0; i < n && i0 + i < N; i++) if (i0 + i >= 0) buf[i0 + i] += g * f(i / SR, i); };
   const env = (t, a, d) => Math.min(1, t / a) * Math.exp(-t * d);
@@ -207,26 +208,43 @@ function audio(P, withMusic) {
     }
     add(mus, (t) => gn() * Math.pow(t / (tZ - tQ), 2) * 0.18, tQ, tZ - tQ, 1);
   }
+  let capN = 0;
+  const PENT = [523.3, 587.3, 659.3, 784, 880, 1046.5, 1174.7];
   for (const e of P.SFX) {
-    if (e.k === 'move') add(out, t => (Math.sin(2 * Math.PI * 1800 * t) * 0.6 + gn() * 0.4) * env(t, 0.001, 90), e.t, 0.04, 0.7);
-    else if (e.k === 'cap') { let ph = 0, lp = 0; add(out, t => { const f = 50 + 70 * Math.exp(-t * 18); ph += 2 * Math.PI * f / SR; lp += 0.02 * (gn() - lp); return Math.sin(ph) * Math.exp(-t * 5) + lp * 6 * Math.exp(-t * 10); }, e.t, 0.7, 0.9); }
+    if (V === 'B' && /^(move|cap|bad|sac)$/.test(e.k)) {   // B: kino uslubi — chuqur, yumshoq
+      if (e.k === 'move') add(out, t => Math.sin(2 * Math.PI * 600 * t) * env(t, 0.002, 55), e.t, 0.08, 0.35);
+      else if (e.k === 'cap') add(out, t => (Math.sin(2 * Math.PI * 55 * t) + 0.5 * Math.sin(2 * Math.PI * 110 * t)) * env(t, 0.01, 4) + Math.sin(2 * Math.PI * 440 * t) * env(t, 0.001, 30) * 0.25, e.t, 0.9, 0.55);
+      else if (e.k === 'bad') add(out, t => (Math.sin(2 * Math.PI * 73.4 * t) + 0.6 * Math.sin(2 * Math.PI * 146.8 * t) + 0.3 * Math.sin(2 * Math.PI * 220 * t)) * Math.min(1, t / 0.08) * Math.exp(-t * 1.6), e.t, 1.6, 0.6);
+      else if (e.k === 'sac') { let lp = 0; add(out, t => { lp += 0.05 * (gn() - lp); return lp * Math.pow(Math.sin(Math.PI * t / 0.7), 2) * 2.5; }, e.t - 0.2, 0.7, 0.35); }
+      continue;
+    }
+    if (V === 'C' && /^(move|cap|bad|sac)$/.test(e.k)) {   // C: billur — urishlarda ko'tariluvchi nota
+      if (e.k === 'move') add(out, t => Math.sin(2 * Math.PI * 1568 * t) * env(t, 0.001, 60), e.t, 0.07, 0.3);
+      else if (e.k === 'cap') { const f = PENT[capN++ % PENT.length]; add(out, t => (Math.sin(2 * Math.PI * f * t) + 0.4 * Math.sin(2 * Math.PI * f * 2.01 * t) + 0.2 * Math.sin(2 * Math.PI * f * 3.02 * t)) * env(t, 0.002, 5), e.t, 0.8, 0.4); }
+      else if (e.k === 'bad') [[659.3, 0], [622.3, 0.12], [493.9, 0.24]].forEach(([f, d]) => add(out, t => (Math.sin(2 * Math.PI * f * t) + 0.3 * Math.sin(4 * Math.PI * f * t)) * env(t, 0.003, 6), e.t + d, 0.6, 0.4));
+      else if (e.k === 'sac') add(out, t => Math.sin(2 * Math.PI * (300 + 900 * t / 0.4) * t) * Math.sin(Math.PI * t / 0.4) * 0.5, e.t - 0.1, 0.4, 0.3);
+      continue;
+    }
+    if (e.k === 'move') add(out, t => (Math.sin(2 * Math.PI * 1100 * t) * 0.7 + Math.sin(2 * Math.PI * 2300 * t) * 0.3) * env(t, 0.001, 70), e.t, 0.06, 0.55);   // yog'och «tik»
+    else if (e.k === 'cap') add(out, t => (Math.sin(2 * Math.PI * 760 * t) * 0.6 + Math.sin(2 * Math.PI * 1520 * t) * 0.25) * env(t, 0.001, 38) + Math.sin(2 * Math.PI * 82 * t) * env(t, 0.004, 14) * 0.5, e.t, 0.35, 0.5);   // urish: toza «tak» + yumshoq past zarb
     else if (e.k === 'tok') add(out, t => (Math.sin(2 * Math.PI * 900 * t) * 0.6 + Math.sin(2 * Math.PI * 1500 * t) * 0.3) * Math.exp(-t * 45), e.t, 0.12, 0.35);
-    else if (e.k === 'sac') add(out, t => gn() * Math.pow(Math.sin(Math.PI * t / 0.5), 2) * 0.5, e.t - 0.1, 0.5, 0.9);
-    else if (e.k === 'bad') add(out, t => (Math.sign(Math.sin(2 * Math.PI * 110 * t)) * 0.35 + Math.sign(Math.sin(2 * Math.PI * 116 * t)) * 0.25) * Math.exp(-t * 3), e.t, 0.45, 0.8);
-    else if (e.k === 'tick') add(out, t => Math.sin(2 * Math.PI * 1200 * t) * env(t, 0.002, 40), e.t, 0.08, 0.8);
+    else if (e.k === 'sac') { let lp = 0; add(out, t => { lp += 0.08 * (gn() - lp); return lp * Math.pow(Math.sin(Math.PI * t / 0.5), 2) * 2.2; }, e.t - 0.1, 0.5, 0.35); }   // qurbon: yumshoq shamol
+    else if (e.k === 'bad') [[392, 0], [311.1, 0.22]].forEach(([f, d]) => add(out, t => (Math.sin(2 * Math.PI * f * t) + 0.35 * Math.sin(4 * Math.PI * f * t) + 0.15 * Math.sin(6 * Math.PI * f * t)) * env(t, 0.004, 4.5), e.t + d, 0.9, 0.45));   // xato: ikki pasayuvchi past nota
+    else if (e.k === 'tick') add(out, t => Math.sin(2 * Math.PI * 1200 * t) * env(t, 0.002, 40), e.t, 0.08, 0.45);
     else if (e.k === 'win') [523.3, 659.3, 784, 1046.5].forEach((f, i) => add(out, t => (Math.sin(2 * Math.PI * f * t) + 0.4 * Math.sin(4 * Math.PI * f * t)) * env(t, 0.003, 3) * 0.5, e.t + i * 0.1, 1.2, 0.9));
   }
   let mm = 1e-9, mo = 1e-9; for (let i = 0; i < N; i++) { mm = Math.max(mm, Math.abs(mus[i])); mo = Math.max(mo, Math.abs(out[i])); }
   const L = Math.round(P.TOTAL * SR), fo = Math.round(1.5 * SR), pcm = Buffer.alloc(L * 2); let mx = 1e-9; const mix = new Float32Array(L);
   for (let i = 0; i < L; i++) { let v = (withMusic ? 0.55 * mus[i] / mm : 0) + 0.6 * out[i] / mo; if (i > L - fo) v *= (L - i) / fo; v = Math.tanh(v * 1.2); mix[i] = v; mx = Math.max(mx, Math.abs(v)); }
-  for (let i = 0; i < L; i++) pcm.writeInt16LE(Math.round(mix[i] / (mx * 1.05) * 32767), i * 2);
+  for (let i = 0; i < L; i++) pcm.writeInt16LE(Math.round(mix[i] / mx * (withMusic ? 0.92 : 0.75) * 32767), i * 2);   // effektli versiya biroz pastroq
   const hd = Buffer.alloc(44); hd.write('RIFF', 0); hd.writeUInt32LE(36 + pcm.length, 4); hd.write('WAVEfmt ', 8); hd.writeUInt32LE(16, 16); hd.writeUInt16LE(1, 20); hd.writeUInt16LE(1, 22); hd.writeUInt32LE(SR, 24); hd.writeUInt32LE(SR * 2, 28); hd.writeUInt16LE(2, 32); hd.writeUInt16LE(16, 34); hd.write('data', 36); hd.writeUInt32LE(pcm.length, 40);
   return Buffer.concat([hd, pcm]);
 }
 
 // ---------- video
 const run = (args) => new Promise(res => { let err = ''; const q = spawn(FF(), args, { stdio: ['ignore', 'ignore', 'pipe'] }); q.stderr.on('data', d => { err += d; }); q.on('close', c => res(c === 0 ? '' : (err.slice(-300) || 'ffmpeg ' + c))); q.on('error', e => res(e.message)); });
-async function make(n, th, onFrame) {
+async function make(n, th, onFrame, snd) {
+  snd = /^[ABC]$/.test(snd || '') ? snd : 'A';
   const T = traps().find(t => t.n === Number(n)); if (!T) throw new Error('Tuzoq topilmadi: №' + n);
   if (!T.z.length) throw new Error('Bu tuzoqda kombinatsiya yo‘q');
   const P = plan(T), flip = T.s === 'b', S = sharp(), NF = Math.ceil(P.TOTAL * FPS);
@@ -244,7 +262,7 @@ async function make(n, th, onFrame) {
   }
   p.stdin.end(); const code = await done; if (code !== 0) throw new Error('ffmpeg: ' + perr.slice(-300));
   const wa = tmp + '_m.wav', wb = tmp + '_s.wav', oa = tmp + '_musiqa.mp4', ob = tmp + '_effekt.mp4';
-  fs.writeFileSync(wa, audio(P, true)); fs.writeFileSync(wb, audio(P, false));
+  fs.writeFileSync(wa, audio(P, true, snd)); fs.writeFileSync(wb, audio(P, false, snd));
   for (const [w, o] of [[wa, oa], [wb, ob]]) { const e = await run(['-y', '-v', 'error', '-i', vid, '-i', w, '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-shortest', '-movflags', '+faststart', o]); if (e) throw new Error('ffmpeg (ovoz): ' + e); }
   for (const f of [vid, wa, wb]) { try { fs.unlinkSync(f); } catch (e) {} }
   const coverJpg = cover ? await S(cover, { raw: { width: W, height: H, channels: 3 } }).resize(180, 320).jpeg({ quality: 85 }).toBuffer() : null;
@@ -265,11 +283,11 @@ async function sendVideo(chat, file, cap, r) {
   return fetch('https://api.telegram.org/bot' + T0 + '/sendVideo', { method: 'POST', body: fd }).then(x => x.json()).catch(e => ({ ok: false, description: e.message }));
 }
 let busy = false;
-async function produce(n, th, to) {
+async function produce(n, th, to, snd) {
   if (busy) return 'Boshqa video yasalmoqda, biroz kuting';
   busy = true; const t0 = Date.now();
   try {
-    const r = await make(n, th);
+    const r = await make(n, th, null, snd);
     const a = await sendVideo(to, r.files[0], 'Tuzoq №' + r.T.n + ' · ' + r.T.u + ' · musiqali · ' + Math.round(r.dur) + ' s', r);
     const b = await sendVideo(to, r.files[1], 'Tuzoq №' + r.T.n + ' · faqat ovoz effektlari — Instagram’da trenddagi musiqani qo‘shing', r);
     if ((a && a.ok) || (b && b.ok)) await tg('sendMessage', { chat_id: to, text: '<pre>' + x(caption(r)) + '</pre>', parse_mode: 'HTML' });
@@ -289,11 +307,11 @@ function handle(req, res, p, h) {
   if (req.method === 'GET') { h.send(res, 200, { done: (store().db.tzReel) || {}, busy }); return true; }
   h.readBody(req, 2000, body => {
     let j = {}; try { j = JSON.parse(body); } catch (e) {}
-    const n = Number(j.n), th = TH[j.th] ? j.th : 'purple';
+    const n = Number(j.n), th = TH[j.th] ? j.th : 'purple', snd = /^[ABC]$/.test(j.snd || '') ? j.snd : 'A';
     if (!traps().find(z => z.n === n)) return h.send(res, 404, { error: 'Tuzoq topilmadi' });
     if (busy) return h.send(res, 409, { error: 'Boshqa video yasalmoqda, 1–2 daqiqadan keyin urinib ko‘ring' });
     h.send(res, 200, { ok: 1 });
-    produce(n, th, String(t.id)).then(m => { if (m) tg('sendMessage', { chat_id: String(t.id), text: m }); });
+    produce(n, th, String(t.id), snd).then(m => { if (m) tg('sendMessage', { chat_id: String(t.id), text: m }); });
   });
   return true;
 }
