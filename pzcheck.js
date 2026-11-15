@@ -70,6 +70,9 @@ function legal(pz) {
   const sols = (pz.sols && pz.sols.length ? pz.sols : [pz.sol]).filter(s => Array.isArray(s) && s.length);
   if (!sols.length) return { ok: false, err: 'yechim yo‘q' };
   const me = pz.side === 'b' ? 'b' : 'w';
+  if (!Array.isArray(pz.board) || pz.board.length !== 8) return { ok: false, err: 'doska noto‘g‘ri' };
+  if (!count(pz.board, 'w')) return { ok: false, err: 'doskada oq dona yo‘q' };
+  if (!count(pz.board, 'b')) return { ok: false, err: 'doskada qora dona yo‘q' };
   for (const s of sols) { const r = play(pz.board, me, s); if (!r.ok) return Object.assign(r, { at: (r.at | 0) + 1 }); }
   return { ok: true, sol: sols[0] };
 }

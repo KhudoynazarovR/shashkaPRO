@@ -40,7 +40,7 @@ const fmt = ev => (ev > 0 ? '+' : '') + (Math.abs(ev) >= 2500 ? (ev > 0 ? 'yutuq
 // bitta masalani tekshirish → {st:'ok'|'err'|'warn', why} yoki null (dvigatel band — keyinroq)
 async function checkOne(p) {
   const L = R.legal(p);
-  if (!L.ok) return { st: 'err', why: 'Qoidaga zid: ' + L.err + (L.at ? ' (' + L.at + '-qadam)' : '') };
+  if (!L.ok) return { st: 'err', why: (/^doska/.test(L.err) ? 'Pozitsiya xato: ' : 'Qoidaga zid: ') + L.err + (L.at ? ' (' + L.at + '-qadam)' : '') };
   const me = p.side === 'b' ? 'b' : 'w', end = R.play(p.board, me, L.sol);
   const e = await ask(end.b, end.turn); if (!e) return null;
   let ev = e.ev == null ? 0 : e.ev; if (end.turn !== me) ev = -ev;
