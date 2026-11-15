@@ -252,7 +252,7 @@
   function bindTop() {
     var ov = C.ov;
     var b = ov.querySelector('#pzBack'); if (b) b.onclick = function () { closeSheet(); var ch = document.querySelector('.advChest'); if (ch) ch.remove(); if (LAND) worldView(); else C.back(); };
-    var po = ov.querySelector('#advPost'); if (po) po.onclick = function () { var c = window.prompt('Guruh ID sini kiriting (masalan -1001234567890):', ''); if (!c) return; C.api('/api/adv/post', { chat: c.trim() }).then(function (r) { toast(r && r.ok ? 'Guruhga yuborildi' : ((r && (r.error || r.err)) || 'Yuborilmadi')); }); };
+    var po = ov.querySelector('#advPost'); if (po) po.onclick = function () { var c = window.prompt('Guruh linkini kiriting (masalan t.me/guruh_nomi yoki @guruh_nomi), yoki ID (-100…):', ''); if (!c) return; C.api('/api/adv/post', { chat: c.trim() }).then(function (r) { toast(r && r.ok ? 'Guruhga yuborildi' : ((r && (r.error || r.err)) || 'Yuborilmadi')); }); };
     var a = ov.querySelector('#advAdm'); if (a) a.onclick = function () { admin(LAND ? LAND.b : null, LAND ? LAND.i : 0); };
     [].forEach.call(ov.querySelectorAll('[data-w]'), function (e) { e.onclick = function () { W = e.getAttribute('data-w'); try { localStorage.setItem('advW', W); } catch (x) {} worldView(); }; });
   }

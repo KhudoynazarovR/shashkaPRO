@@ -192,8 +192,12 @@ function handle(req, res, p, h) {
     if (!adm) return h.send(res, 403, { error: 'Faqat admin' });
     const a = A();
     if (p === '/api/adv/post') {   // 📣 guruhga xarita xabari (admin): matn + «Xaritani ochish» tugmasi
-      const chat = String(j.chat || '').trim();
-      if (!/^-?\d{5,20}$/.test(chat)) return h.send(res, 400, { error: 'Guruh ID noto‘g‘ri' });
+      let chat = String(j.chat || '').trim();
+      // link: t.me/guruh yoki @guruh → @guruh; ID: -100… o‘zi qoladi. Yopiq invite link (t.me/+… yoki joinchat) ishlamaydi
+      const m = chat.match(/^(?:https?:\/\/)?(?:www\.)?t\.me\/([A-Za-z0-9_]{4,64})\/?$/i);
+      if (m) chat = '@' + m[1];
+      if (/^t\.me\/\+|joinchat/i.test(chat)) return h.send(res, 400, { error: 'Yopiq link ishlamaydi: guruh linkini (t.me/guruh_nomi) yoki guruh ID sini kiriting' });
+      if (!/^-?\d{5,20}$/.test(chat) && !/^@[A-Za-z0-9_]{4,64}$/.test(chat)) return h.send(res, 400, { error: 'Guruh link yoki ID noto‘g‘ri' });
       const link = (process.env.TG_APP_LINK || process.env.APP_LINK || 'https://t.me/DraughtsPRObot/play').replace(/\/$/, '');
       const text = 'Yangi sarguzasht xaritasi!\nHar kitob — alohida o‘lka, har 10 masala — bekat, oxirida qal‘a sinovi.\nSandiqlar, savollar va tangalar kutmoqda.';
       require('./gcard.js').tg('sendMessage', { chat_id: chat, text, reply_markup: { inline_keyboard: [[{ text: 'Xaritani ochish', url: link }]] } })
