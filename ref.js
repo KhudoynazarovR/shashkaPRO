@@ -115,5 +115,21 @@ function handle(req, res, p, h) {
   return true;
 }
 
+// ---------- bot adminlikdan chiqarildi: guruh uchun berilgan bonus to‘liq qaytarib olinadi, yozuv o‘chadi (qayta admin qilinsa bonus yana hisoblanadi)
+async function onGroupGone(m) {
+  const ch = m.chat || {};
+  const st = (m.new_chat_member || {}).status;
+  if (st === 'administrator' || st === 'creator') return;
+  const db = store.db, R = db.grpRew || {}, cid = String(ch.id);
+  const rec = R[cid];
+  if (!rec) return;
+  delete R[cid];
+  const u = users()[String(rec.uid)];
+  const had = u ? (u.diamonds || 0) : 0;
+  if (u && had > 0) require('./economy.js').spend(String(rec.uid), had, 'group-admin-back');   // balans 0 gacha
+  store.save();
+  dm(rec.uid, 'Bot «' + (rec.title || 'guruh') + '» guruhida adminlikdan chiqarildi. Shu guruh uchun berilgan bonus qaytarib olindi. Balansingiz: 0 tanga.');
+}
+
 const elchi = u => (u && u.refAct || 0) >= TIERS[0].n;
-module.exports = { join, onGame, onGroupAdmin, handle, elchi };
+module.exports = { join, onGame, onGroupAdmin, onGroupGone, handle, elchi };
