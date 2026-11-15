@@ -128,7 +128,7 @@ async function onGroupGone(m) {
   const had = u ? (u.diamonds || 0) : 0;
   if (u && had > 0) require('./economy.js').spend(String(rec.uid), had, 'group-admin-back');   // balans 0 gacha
   store.save();
-  dm(rec.uid, 'Bot «' + (rec.title || 'guruh') + '» guruhida adminlikdan chiqarildi. Shu guruh uchun berilgan bonus qaytarib olindi. Balansingiz: 0 tanga.');
+  dm(rec.uid, '⚠️ Tangalar qaytarib olindi\n\n👑 Bot «' + (rec.title || 'guruh') + '» guruhida adminlikdan chiqarildi.\n\n💎 Hisobingizdan -' + had + ' tanga qaytarib olindi.');
 }
 
 const elchi = u => (u && u.refAct || 0) >= TIERS[0].n;
