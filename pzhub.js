@@ -166,7 +166,7 @@
   IMG.etude = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 112 112"><defs><linearGradient id="k" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffe08a"/><stop offset="1" stop-color="#c8860f"/></linearGradient></defs><rect x="4" y="4" width="104" height="104" rx="24" fill="#2a1a08"/><ellipse cx="56" cy="80" rx="32" ry="12" fill="#111"/><rect x="24" y="62" width="64" height="18" fill="#1d1d1d"/><ellipse cx="56" cy="62" rx="32" ry="12" fill="#333" stroke="#000" stroke-width="2"/><ellipse cx="56" cy="62" rx="16" ry="6" fill="none" stroke="#e8a10f" stroke-width="3"/><path d="M34 44l8-20 14 14 14-14 8 20z" fill="url(#k)" stroke="#8a5a00" stroke-width="2"/><circle cx="42" cy="22" r="4" fill="#ffe08a"/><circle cx="56" cy="34" r="4" fill="#ffe08a"/><circle cx="70" cy="22" r="4" fill="#ffe08a"/></svg>');
   var CARDS = [
     { k: 'daily', t: 'Kunlik masala', s: 'Har kuni yangi masala', r: '+10', c1: '#1f56c4', c2: '#0e2f7c', bd: '#74a8ff', sh: '#0a1f55' },
-    { k: 'map', t: 'Kombinatsiyalar xaritasi', s: 'Sarguzasht yo‘li · qahramoning bilan yur!', r: '', c1: '#d97706', c2: '#7c2d12', bd: '#fcd34d', sh: '#451a03' },
+    { k: 'map', t: 'Sarguzasht xaritasi', s: 'O‘lkalar, bekatlar, sandiqlar va qal‘alar', r: '', c1: '#d97706', c2: '#7c2d12', bd: '#fcd34d', sh: '#451a03' },
     { k: 'rush', t: 'Puzzle Rush', s: '3 daqiqa · 3 ta xato', r: '+15', c1: '#d2281c', c2: '#7a0f0c', bd: '#ff8a68', sh: '#4f0907' },
     { k: 'battle', t: 'Puzzle Battle', s: 'Boshqa o‘yinchilar bilan bellash!', r: '+20', c1: '#6f2fcc', c2: '#391280', bd: '#bb94ff', sh: '#240a54' },
     { k: 'pzt', t: 'Masala turniri', s: 'Hamma bir vaqtda · soniyagacha', r: 'Fond', c1: '#0f8a6c', c2: '#05463a', bd: '#5ee0b0', sh: '#032a22' },
@@ -193,7 +193,7 @@
       h += '<button class="pzhCard" data-pzh="' + c.k + '" style="--c1:' + c.c1 + ';--c2:' + c.c2 + ';--bd:' + c.bd + ';--sh:' + c.sh + '">' +
         '<img alt="" src="' + IMG[c.k] + '">' +
         '<div class="pzhTx"><b>' + c.t + (c.soon ? '<span class="pzhSoon">TEZ ORADA</span>' : '') + '</b><span>' + c.s + '</span></div>' +
-        (c.k === 'deb' ? '<div class="pzhRw"><em>📖 37</em>Debyut</div>' : c.k === 'trap' ? '<div class="pzhRw"><em>🪤 208</em>Tuzoq</div>' : c.k === 'map' ? '<div class="pzhRw"><em>🗺 721</em>Bekat</div>' : c.k === 'etude' ? '<div class="pzhRw"><em>♔ ' + (window.__etN || '4787') + '</em>Etyud</div>' : c.k === 'baza' ? '<div class="pzhRw"><em>📚 109K</em>Partiya</div>' : '<div class="pzhRw"><em>🪙 ' + c.r + '</em>Mukofot</div>') + '<span class="pzhCh">›</span>' +
+        (c.k === 'deb' ? '<div class="pzhRw"><em>📖 37</em>Debyut</div>' : c.k === 'trap' ? '<div class="pzhRw"><em>🪤 208</em>Tuzoq</div>' : c.k === 'map' ? '<div class="pzhRw"><em>🗺 Yangi</em>Sarguzasht</div>' : c.k === 'etude' ? '<div class="pzhRw"><em>♔ ' + (window.__etN || '4787') + '</em>Etyud</div>' : c.k === 'baza' ? '<div class="pzhRw"><em>📚 109K</em>Partiya</div>' : '<div class="pzhRw"><em>🪙 ' + c.r + '</em>Mukofot</div>') + '<span class="pzhCh">›</span>' +
         (c.k === 'daily' && ctx.dailyDone ? '<span class="pzhOk">✓</span>' : '') +
         '</button>';
     });

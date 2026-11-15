@@ -158,6 +158,7 @@ function handle(req, res, url) {
   if (p === '/api/wager' && req.method === 'GET') { const W = require('./wager.js'); send(res, 200, { stakes: W.STAKES, fee: W.FEE, top: W.top() }); return true; }
   if (p === '/api/pzext/judge') { if (require('./pzext.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }   // 🧩 chala kombinatsiyani oxirigacha o'ynash
   if (p.startsWith('/api/daraxt')) { if (require('./daraxtsrv.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }   // 🌳 tanga daraxti
+  if (p.startsWith('/api/adv')) { if (require('./sarguzashtsrv.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }   // 🗺 sarguzasht xaritasi
   if (p.startsWith('/api/pzbook')) { if (require('./pzbooks.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }   // 📚 kitob muqovalari
   if (p.startsWith('/api/pzchk')) { if (require('./pzchk.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }   // 🧩 masalalar tekshiruvi va «Xato bor» xabarlari
   if (p === '/api/tuzoq/reel') { if (require('./tuzoqreel.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }   // 🎬 tuzoqdan Reel (admin)
@@ -612,7 +613,7 @@ function handle(req, res, url) {
       const arr = store.db.puzzles = store.db.puzzles || [];
       if (p === '/api/puzzle/fail') {   // ❌ birinchi xato yoki ko'rsatma: bu masala uchun tanga yopiladi (qayta yechsa ham)
         const u = store.getOrCreate(_tg), id = String(j.id || '').slice(0, 40);
-        if (id) { u.pzFail = u.pzFail || {}; if (!u.pzFail[id]) { u.pzFail[id] = 1; store.save(); } }
+        if (id) { u.pzFail = u.pzFail || {}; if (!u.pzFail[id]) { u.pzFail[id] = 1; store.save(); } } try { require('./sarguzashtsrv.js').onFail(u, id); } catch (e) {}
         return send(res, 200, { ok: true });
       }
       if (p === '/api/puzzle/solved') {
@@ -630,8 +631,9 @@ function handle(req, res, url) {
         if (!u.solved.includes(pz.id)) { const _fast = Date.now() - (u.lastSolve || 0) < 3000; u.lastSolve = Date.now();
           try { const _rf = String(j.ref || ''); if (/^\d{3,15}$/.test(_rf) && _rf !== String(_tg.id) && !u.pzRef && !(u.solved || []).length && Date.now() <= Date.parse(process.env.PZ_PROMO_END || '2026-10-25T23:59:59+05:00')) { const _iv = store.users()[_rf]; if (_iv) { const _day = new Date().toISOString().slice(0, 10); _iv.pzInv = _iv.pzInv || { d: '', n: 0, total: 0 }; if (_iv.pzInv.d !== _day) { _iv.pzInv.d = _day; _iv.pzInv.n = 0; } if (_iv.pzInv.n < 30) { u.pzRef = _rf; _iv.pzInv.n++; _iv.pzInv.total++; _iv.diamonds = (_iv.diamonds || 0) + 100; try { require('./pzranks.js').onInvite(_iv, _rf); } catch (e) {} if (process.env.BOT_TOKEN) fetch('https://api.telegram.org/bot' + process.env.BOT_TOKEN + '/sendMessage', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ chat_id: _rf, text: '🎉 ' + (u.name || 'Yangi o‘yinchi') + ' havolangiz orqali masala yechdi! +100 🪙' }) }).catch(() => {}); } } } } catch (e) {}
           u.solved.push(pz.id); try { const _q = require('./quests.js'); _q.bump(_tg.id, 'puzzle'); if (require('./quests.js').isDay(pz)) _q.bump(_tg.id, 'petrova', 1, pz.id); } catch (e) {} gain = (_fast || !_clean) ? 0 : 5; j.__base = gain; if (_clean) { try { gain += require('./pzranks.js').folderBonus(store, u, pz, _tg.id); } catch (e) {} } u.diamonds = (u.diamonds || 0) + gain; pz.sv = (pz.sv || []).concat([u.name || 'Foydalanuvchi']).slice(-200); try { const _dk = new Date(Date.now() + 5 * 3600e3).toISOString().slice(0, 10); if (!store.db.pzDay || store.db.pzDay.d !== _dk) store.db.pzDay = { d: _dk, c: {} }; const _us = store.users(), _uk = Object.keys(_us).find(k => _us[k] === u); if (_uk) store.db.pzDay.c[_uk] = (store.db.pzDay.c[_uk] || 0) + 1; } catch (e) {} store.save(); try { require('./grpupd.js')(pz, () => Object.values(store.users()).filter(v => (v.solved || []).includes(pz.id)).length); } catch (e) {} }
+        let _adv = null; try { _adv = require('./sarguzashtsrv.js').onSolve(String(_tg.id), u, pz, j, gain); if (_adv && _adv.extra > 0) { gain += _adv.extra; u.diamonds = (u.diamonds || 0) + _adv.extra; } } catch (e) {}   // 🗺 qal'a sinovi, kunlik mehmon
         try { gain += require('./kanal.js').onSolve(_tg.id, u, pz, j); } catch (e) {}   // 📣 kanal masalasi: bonus, reyting, taklif mukofoti
-        const _tm = Math.round(Number(j.time)); if (_tm > 0 && _tm < 36000) { u.pzBest = u.pzBest || {}; if (!u.pzBest[pz.id] || _tm < u.pzBest[pz.id]) { u.pzBest[pz.id] = _tm; store.save(); } } store.save(); return send(res, 200, { ok: true, gain, stars: _st, best3: u.pzStars[pz.id], noCoin: !_clean, best: (u.pzBest || {})[pz.id] || 0 });
+        const _tm = Math.round(Number(j.time)); if (_tm > 0 && _tm < 36000) { u.pzBest = u.pzBest || {}; if (!u.pzBest[pz.id] || _tm < u.pzBest[pz.id]) { u.pzBest[pz.id] = _tm; store.save(); } } store.save(); return send(res, 200, { ok: true, gain, stars: _st, best3: u.pzStars[pz.id], noCoin: !_clean, best: (u.pzBest || {})[pz.id] || 0, adv: _adv && _adv.out });
       }
       const adm = (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(_tg.id));
       if (!adm) return send(res, 403, { error: 'admin emassiz' });

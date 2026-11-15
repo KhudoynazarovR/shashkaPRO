@@ -414,5 +414,5 @@
     }
     draw();
   }
-  window.spPzMap = { load: load, html: html, after: after, setHero: setHero, heroSvg: function (id) { heroCss(); return heroSvg(id); }, heroes: HEROES };
+  window.spPzMap = { load: load, html: html, after: after, setHero: setHero, picker: picker, heroSvg: function (id) { heroCss(); return heroSvg(id); }, heroes: HEROES };
 })();

@@ -631,7 +631,7 @@
       });
     };
     if (window.pzHub) go();
-    else { var sc = document.createElement('script'); sc.src = '/pzhub.js?v=17'; sc.onload = go; sc.onerror = function () { hub = 0; list(); }; document.head.appendChild(sc); }
+    else { var sc = document.createElement('script'); sc.src = '/pzhub.js?v=18'; sc.onload = go; sc.onerror = function () { hub = 0; list(); }; document.head.appendChild(sc); }
   }
   var CARD = 'text-align:left;background:#161a3a;border:1px solid #262b5a;border-radius:16px;padding:12px;margin-bottom:10px;cursor:pointer';
   function lvOf(p) { return [1, 2, 3].indexOf(p.level) >= 0 ? p.level : 1; }
@@ -648,10 +648,34 @@
     var go = function () { api('/api/puzzle/move', { id: p.id, folder: t }).then(function () { load(); }); };
     if (t && fl.indexOf(t) < 0) api('/api/puzzle/folder', { name: t }).then(go); else go();
   }
+  // 🗺 Yangi sarguzasht xaritasi (sarguzasht.js): har kitob — o'lka, har 10 masala — bekat, oxiri — qal'a
+  function advBooks() {
+    var B = pzBooks(), o = { s: B.s, m: B.m, e: [] }, h36 = function (s) { var h = 5381; for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+    B.e.forEach(function (b) { o.e.push(Object.assign({}, b, { key: 'e' + h36(b.f || '') + '_' + b.k })); });
+    return o;
+  }
+  function advOpen(land) {
+    window.__advRet = null; window.__pzMapKey = undefined; hub = 0; view = 'map'; curFo = ''; curLv = 0; curBook = null;
+    var go = function () {
+      var bk = null;
+      window.spAdv.open({ ov: ov, S: S, api: api, tg: tg, admin: !!S.admin, land: land, cached: !!land,
+        books: function () { return bk || (bk = advBooks()); },
+        play: function (p, b, ret) { curBook = b; window.__advRet = ret; window.__pzMapKey = undefined; play(p); },
+        back: function () { window.__advRet = null; hub = 1; view = ''; list(); },
+        enter: function () { window.__advRet = null; hub = 0; view = 'map'; curBook = null; },
+        coins: function (n) { if (S.coins != null) S.coins += n; if (S.bal != null) S.bal += n; } });
+    };
+    var need = [];
+    if (!window.spPzMap) need.push('/pzmapview.js?v=8');
+    if (!window.spAdv) need.push('/sarguzasht.js?v=1');
+    if (!need.length) return go();
+    ov.innerHTML = '<div style="padding:40px;opacity:.7">Xarita yuklanmoqda…</div>';
+    var left = need.length; need.forEach(function (src) { var sc = document.createElement('script'); sc.src = src; sc.onload = sc.onerror = function () { if (--left === 0) { if (window.spAdv) go(); else { ov.innerHTML = head('Xarita') + '<div style="padding:30px">Yuklanmadi</div>'; on('#pzBack', function () { hub = 1; view = ''; list(); }); } } }; document.head.appendChild(sc); });
+  }
   // 🗺 Sarguzasht xaritasi (pzmapview.js): har 10 masala — bitta manzara, odamcha yechilgan masaladan keyingisiga qadam bosadi
   function mapJs(cb) {
     if (window.spPzMap) return window.spPzMap.load(cb);
-    var sc = document.createElement('script'); sc.src = '/pzmapview.js?v=7';
+    var sc = document.createElement('script'); sc.src = '/pzmapview.js?v=8';
     sc.onload = function () { window.spPzMap.load(cb); }; sc.onerror = function () {}; document.head.appendChild(sc);
   }
   // umumiy xarita tartibi: papkalar ketma-ket (Kombinatsiyalar → …), keyin papkasizlar
@@ -697,12 +721,14 @@
     return h;
   }
   function list() {
+    window.__advRet = null;
     { var _mb0 = document.getElementById('pzMgBar'); if (_mb0) _mb0.remove(); }
     if (hub && !curLv && !curFo && !window.__pzPF) return hubView();
     if (window.__pzPF) { var _pf = window.__pzPF; window.__pzPF = ''; if ((S.folders || []).indexOf(_pf) >= 0) { curFo = _pf; curLv = 0; } }
     if (curFo && (S.folders || []).indexOf(curFo) < 0) curFo = '';
     if (curLv || curFo) return items();
     var fl = S.folders || [], _mapV = view === 'map', h;
+    if (_mapV) return advOpen();
     if (_mapV) {
       h = head(view === 'custom' ? '🎨 Maxsus masalalar' : '🗺 Xarita', topBtns()) + '<div style="font-weight:800;font-size:18px;margin:2px 0 6px">🗺 ' + MAINF + '</div>' + pzMap(mainOrder(), '');
     } else {
@@ -822,7 +848,7 @@
     (S.folders || []).forEach(function (f, fi) {
       var et = S.list.filter(function (p) { return p.et && p.folder === f; }); if (!et.length) return;
       for (var i = 0, k = 0; i < et.length; i += 100, k++) {
-        var b = { key: 'e' + fi + '_' + k, kind: 'e', n: k + 1, title: f + (et.length > 100 ? ' · ' + (k + 1) : ''), from: 1, arr: et.slice(i, i + 100) };
+        var b = { key: 'e' + fi + '_' + k, f: f, k: k, kind: 'e', n: k + 1, title: f + (et.length > 100 ? ' · ' + (k + 1) : ''), from: 1, arr: et.slice(i, i + 100) };
         out.e.push(b);
       }
     });
@@ -856,7 +882,7 @@
   }
   // kitob ichi: mundarija (raqamlar to'ri)
   function bookView(b) {
-    pzCss(); curBook = b;
+    pzCss(); curBook = b; window.__advRet = null;
     var n = b.arr.length, d = nDone(b.arr), sv = S.solved || [], nx = b.arr.filter(function (p) { return sv.indexOf(p.id) < 0; })[0];
     var h = '<div class="pzN"><div class="pzNh"><button id="pzBack" class="pzNb">‹</button><div class="pzNt"><b>' + esc(b.title) + '</b><small>' + d + ' / ' + n + ' yechildi · <span style="color:#fbbf24">★ ' + bookStars(b) + ' / ' + n * 3 + '</span></small></div></div>';
     h += '<div class="pzbr" style="height:8px;border-radius:4px;background:rgba(255,255,255,.1);overflow:hidden;margin:0 2px 12px"><i style="display:block;height:100%;width:' + (n ? Math.round(d / n * 100) : 0) + '%;background:#e9c46a"></i></div>';
@@ -1389,7 +1415,7 @@
       h += '<button id="pzR" style="' + BG + '">🔄 Qayta</button><button id="pzH" style="' + BS + '">💡 Ko‘rsatma</button><button id="pzXR" style="' + BG + '">Xato bor</button>';
       if (S.link) h += '<button id="pzS" style="' + BS + '">📤 Yuborish</button>'; if (S.admin && !p.et) h += '<button id="pzE" style="' + BS + '">🛠 Tahrirlash</button>'; if (S.admin && !p.et) h += '<button id="pzN" style="' + BG + '">✏️ Nomi</button>'; if (S.admin && !p.et) h += '<button id="pzD" style="' + BG + '">🗑 O‘chirish</button>'; if (S.admin && !p.et) h += '<button id="pzQz" style="' + BG + (qzIn(p.id) ? ';background:#2b8a3e' : '') + '">' + (qzIn(p.id) ? 'Viktorinada' : 'Viktorinaga') + '</button>'; if (S.admin) h += '<button id="pzRl" style="' + BG + '">🎬 Reel' + ((S.reels || []).indexOf(p.id) >= 0 ? ' ✓' : '') + '</button>';
       ov.innerHTML = h;
-      on('#pzBack', function () { dayIds = null; if (window.__pzChkBack) { window.__pzChkBack = 0; return pzChkView(); } if (curBook && curBook.arr.some(function (x) { return x.id === p.id; })) return bookView(curBook); list(); });
+      on('#pzBack', function () { dayIds = null; if (window.__advRet) { var _ar = window.__advRet; window.__advRet = null; return advOpen({ k: _ar.k }); } if (window.__pzChkBack) { window.__pzChkBack = 0; return pzChkView(); } if (curBook && curBook.arr.some(function (x) { return x.id === p.id; })) return bookView(curBook); list(); });
       on('#pzDayEnd', function () { dayIds = null; close(); if (window.dqOpen) window.dqOpen(); });
       on('#pzXR', function () { pzReport(p); });
       on('#pzPrev', function () { var a = sibs(), i = a.findIndex(function (x) { return x.id === p.id; }); if (i > 0) play(a[i - 1]); });
@@ -1427,7 +1453,7 @@
       bindBoard(tap);
     }
     function isDay() { return !!(dayIds && dayIds.indexOf(p.id) >= 0); }
-    function sibs() { if (curBook && curBook.arr.some(function (x) { return x.id === p.id; })) return curBook.arr.slice(); if (isDay()) return dayIds.map(function (id) { return S.list.filter(function (x) { return x.id === id; })[0]; }).filter(Boolean); var f = foOf(p); return S.list.filter(function (x) { return foOf(x) === f; }).sort(function (x, y) { return (x.no || 0) - (y.no || 0); }); }
+    function sibs() { if (window.__advRet && window.__advRet.arr && window.__advRet.arr.some(function (x) { return x.id === p.id; })) return window.__advRet.arr.slice(); if (curBook && curBook.arr.some(function (x) { return x.id === p.id; })) return curBook.arr.slice(); if (isDay()) return dayIds.map(function (id) { return S.list.filter(function (x) { return x.id === id; })[0]; }).filter(Boolean); var f = foOf(p); return S.list.filter(function (x) { return foOf(x) === f; }).sort(function (x, y) { return (x.no || 0) - (y.no || 0); }); }
     function goNext() { if (_fs.lock && !done && !S.admin && (S.solved || []).indexOf(p.id) < 0) { msg = '🔒 Avval shu masalani yeching'; draw(); return; }
       var a = sibs(), i = a.findIndex(function (x) { return x.id === p.id; }), sv = S.solved || [], n = a.length, j, k;
       
@@ -1451,6 +1477,7 @@
         msg += ' · ⏱ ' + _el + ' s · xato: ' + _er;
         if (d && d.best) { S.best = S.best || {}; S.best[p.id] = d.best; msg += ' · 🏅 eng yaxshi: ' + d.best + ' s'; }
         if ((S.solved || []).indexOf(p.id) < 0) S.solved.push(p.id);
+        if (window.__advRet && window.spAdv) { var _ar2 = window.__advRet; try { window.spAdv.solved(p, d, _ar2, function (x) { msg += x; draw(); }, function () { return myT === window.__pzTok && ov && document.body.contains(ov) && done && window.__advRet === _ar2; }); } catch (e) {} }
         if (window.__pzMapKey === '' && !isDay()) msg += '<div style="margin-top:8px;font-size:14px;opacity:.85">🗺 Xaritaga qaytilmoqda — qahramon keyingi masalaga yo‘l oladi…</div>';
         draw();
         // 🗺 xaritaga chiqib, odamcha keyingi masalaga yurib boradi
