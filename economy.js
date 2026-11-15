@@ -156,6 +156,7 @@ function handle(req, res, url) {
   } catch (e) {}
   if (p === '/api/season' && req.method === 'GET') { const _t = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN); if (!_t) { send(res, 401, { error: 'auth' }); return true; } send(res, 200, require('./season.js').view(_t.id)); return true; }
   if (p === '/api/wager' && req.method === 'GET') { const W = require('./wager.js'); send(res, 200, { stakes: W.STAKES, fee: W.FEE, top: W.top() }); return true; }
+  if (p.startsWith('/api/daraxt')) { if (require('./daraxtsrv.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }   // 🌳 tanga daraxti
   if (p.startsWith('/api/pzbook')) { if (require('./pzbooks.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }   // 📚 kitob muqovalari
   if (p.startsWith('/api/pzchk')) { if (require('./pzchk.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }   // 🧩 masalalar tekshiruvi va «Xato bor» xabarlari
   if (p === '/api/tuzoq/reel') { if (require('./tuzoqreel.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }   // 🎬 tuzoqdan Reel (admin)
