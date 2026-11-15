@@ -727,6 +727,7 @@
     if (window.__pzPF) { var _pf = window.__pzPF; window.__pzPF = ''; if ((S.folders || []).indexOf(_pf) >= 0) { curFo = _pf; curLv = 0; } }
     if (curFo && (S.folders || []).indexOf(curFo) < 0) curFo = '';
     if (curLv || curFo) return items();
+    if (window.__advStart) { window.__advStart = false; view = 'map'; hub = 0; curFo = ''; }
     var fl = S.folders || [], _mapV = view === 'map', h;
     if (_mapV) return advOpen();
     if (_mapV) {
@@ -1679,7 +1680,7 @@
   if (_sp && _sp.indexOf('pz_') === 0) { var _pm = /^pz_([A-Za-z0-9_]+?)(?:-r(\d{3,15}))?$/.exec(_sp); pending = _pm ? _pm[1] : _sp.slice(3); if (_pm && _pm[2]) { window.__pzRef = _pm[2]; window.__pzRefP = _pm[1]; } setTimeout(open, 700); }   // 📤 kanal: pz_<id>-r<taklif qilgan>
   if (_sp && _sp.indexOf('pf_') === 0) { try { var _r = _sp.slice(3), _m = /^(\d{3,15})_(.+)$/.exec(_r); if (_m) { window.__pzRef = _m[1]; _r = _m[2]; } var _b = _r.replace(/-/g, '+').replace(/_/g, '/'); while (_b.length % 4) _b += '='; window.__pzPF = decodeURIComponent(escape(atob(_b))); } catch (e) {} setTimeout(open, 700); }
   if (/[?&]go=puz/.test(location.search || '') || _sp === 'go_puz') setTimeout(open, 700);
-  if (_sp === 'adv') setTimeout(function () { view = 'map'; hub = 0; curFo = ''; open(); }, 700);   // 🗺 guruhdagi «Xaritani ochish» — to‘g‘ridan-to‘g‘ri sarguzasht xaritasi
+  if (_sp === 'adv') { window.__advStart = true; setTimeout(open, 700); }   // 🗺 guruhdagi «Xaritani ochish»: masalalar ochilib, xarita ko‘rinishi
 })();
 
 
