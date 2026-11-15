@@ -5,6 +5,7 @@
 // Faol do'stlar: 5 → 🏅 Elchi, 10 → 7 kun Premium, 25 → 30 kun Premium. Oylik TOP-3 (faol do'st soni): 1000 / 500 / 250 🪙.
 const store = require('./store.js');
 const G1 = 3, G2 = 10, P1 = 100, P2 = 200, P2F = 200, MAX_REF = 50;
+const JOIN_INV = 100, JOIN_NEW = 500;   // taklif qilganga va yangi qo‘shilganga darhol tanga
 const TIERS = [{ n: 5, name: '🏅 Elchi' }, { n: 10, name: '👑 7 kun Premium', days: 7 }, { n: 25, name: '👑 30 kun Premium', days: 30 }];
 const PRIZES = [1000, 500, 250];
 const GRP_MAX = 1000;
@@ -47,8 +48,10 @@ function join(uid, ref) {
   if (Date.now() - (u.created || 0) > 3600000) return null;   // faqat yangi o'yinchi
   if ((inv.refCount || 0) >= MAX_REF) return null;
   u.refBy = rid; u.refG = 0; u.refSt = 0; inv.refCount = (inv.refCount || 0) + 1; store.save();
-  dm(rid, '👋 Do‘stingiz ' + nm(u) + ' qo‘shildi!\nU odamlar bilan ' + G1 + ' ta o‘yin o‘ynasa +' + P1 + ' 🪙, ' + G2 + ' ta o‘ynasa yana +' + P2 + ' 🪙 olasiz.');
-  dm(uid, '🎁 Siz do‘stingiz ' + nm(inv) + ' taklifi bilan keldingiz. Odamlar bilan ' + G2 + ' ta o‘yin o‘ynasangiz +' + P2F + ' 🪙 sovg‘a!');
+  add(rid, JOIN_INV, 'ref-join');   // darhol: taklif qilganga
+  add(uid, JOIN_NEW, 'ref-join-new');   // darhol: yangi qo‘shilganga
+  dm(rid, '👋 Do‘stingiz ' + nm(u) + ' qo‘shildi! Sizga darhol +' + JOIN_INV + ' 🪙 berildi.\nU odamlar bilan ' + G1 + ' ta o‘yin o‘ynasa yana +' + P1 + ' 🪙, ' + G2 + ' ta o‘ynasa +' + P2 + ' 🪙 olasiz.');
+  dm(uid, '🎁 Siz do‘stingiz ' + nm(inv) + ' taklifi bilan keldingiz. Sizga darhol +' + JOIN_NEW + ' 🪙 berildi. Odamlar bilan ' + G2 + ' ta o‘yin o‘ynasangiz yana +' + P2F + ' 🪙 sovg‘a!');
   return { inviter: rid, name: nm(u) };
 }
 
