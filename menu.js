@@ -612,6 +612,7 @@
     }).catch(function () { ov.innerHTML = head('🧩 Masalalar') + '<div style="padding:30px">Server bilan aloqa yo‘q</div>'; on('#pzBack', close); });
   }
   var curLv = 0, curFo = '', edLv = 0, edFolder = '';
+  var shelf = 's', curBook = null; try { shelf = localStorage.getItem('pzShelf') || 's'; } catch (e) {}   // 📚 kutubxona: tanlangan javon (s/m/e/f) va ochiq kitob
   var hub = 0, view = '';
   function hubSoon(n) { var t = '🚧 ' + n + ' tez orada qo‘shiladi!'; if (tg && tg.showAlert) tg.showAlert(t); else alert(t); }
   function dailyPz() { var L = S.list || []; if (!L.length) return null; return L[Math.floor((Date.now() + 18e6) / 864e5) % L.length]; }
@@ -714,14 +715,22 @@
       var solvedN = (S.solved || []).length;
       h = '<div class="pzN"><div class="pzNh"><button id="pzBack" class="pzNb" aria-label="Orqaga">‹</button><div class="pzNt"><b>' + (view === 'custom' ? 'Maxsus masalalar' : 'Masalalar') + '</b><small>' + (S.admin ? S.list.length + ' ta masala · ' + all.length + ' ta to‘plam' : solvedN + ' ta yechildi') + '</small></div></div>' +
         '<div class="pzNp"><button id="pzTop">TOP</button>' + (S.admin ? '<button id="pzQzP">Viktorina</button><button id="pzPlus" class="pr">+ Yangi</button>' : '') + '</div>';
-      // davom ettirish: boshlangan, tugamagan to'plamdagi birinchi yechilmagan masala
-      var cont = null;
-      all.forEach(function (x) { if (cont) return; var d = nDone(x.arr); if (d > 0 && d < x.arr.length) cont = x; });
-      if (!cont) all.forEach(function (x) { if (!cont && nDone(x.arr) < x.arr.length) cont = x; });
-      if (cont) {
-        var cp = cont.arr.filter(function (p) { return (S.solved || []).indexOf(p.id) < 0; })[0];
-        if (cp) { S._cont = { f: cont.f, p: cp }; h += '<button class="pzNc" id="pzCont">' + pzMini(cp.board, 0, 1) + '<span class="t"><small>DAVOM ETTIRISH</small><b>' + esc(cont.f || 'Aralash masalalar') + '</b><span>' + esc(cp.title || '') + ' · ' + (cp.side === 'w' ? 'Oq yuradi' : 'Qora yuradi') + '</span></span><span class="go">Yechish</span></button>'; }
+      // davom ettirish: boshlangan, tugamagan kitobdagi birinchi yechilmagan masala
+      var BK = pzBooks(), allB = BK.s.concat(BK.m, BK.e), cb = null;
+      allB.forEach(function (b) { if (cb) return; var d = nDone(b.arr); if (d > 0 && d < b.arr.length) cb = b; });
+      if (!cb) allB.forEach(function (b) { if (!cb && nDone(b.arr) < b.arr.length) cb = b; });
+      if (cb) {
+        var cp = cb.arr.filter(function (p) { return (S.solved || []).indexOf(p.id) < 0; })[0];
+        if (cp) { S._cont = { book: cb, p: cp }; h += '<button class="pzNc" id="pzCont">' + pzMini(cp.board, 0, 1) + '<span class="t"><small>DAVOM ETTIRISH</small><b>' + esc(cb.title) + '</b><span>' + (cb.from + cb.arr.indexOf(cp)) + '-masala · ' + (cp.side === 'w' ? 'Oq yuradi' : 'Qora yuradi') + '</span></span><span class="go">Yechish</span></button>'; }
       }
+      var TABS = [['s', 'Sodda', BK.s.length], ['m', 'Murakkab', BK.m.length], ['e', 'Etyudlar', BK.e.length], ['f', 'To‘plamlar', all.length]];
+      h += '<div class="pzTb">' + TABS.map(function (t) { return '<button data-sh="' + t[0] + '"' + (shelf === t[0] ? ' class="on"' : '') + '>' + t[1] + '</button>'; }).join('') + '</div>';
+      if (shelf !== 'f') {
+        var books = BK[shelf] || [];
+        h += '<div class="pzNs"><span>' + (shelf === 's' ? 'SODDA MASALALAR' : shelf === 'm' ? 'MURAKKAB MASALALAR' : 'ETYUDLAR') + '</span><span>' + books.length + ' ta kitob</span></div>';
+        h += books.length ? '<div class="pzSh3">' + books.map(function (b, k) { return bookHtml(b, k); }).join('') + '</div>' : '<div style="opacity:.7;padding:20px 4px">Hozircha kitob yo‘q</div>';
+        h += '<div style="height:64px"></div></div>';
+      } else {
       if (!S.list.length && !fl.length) h += '<div style="padding:30px;opacity:.7">Hozircha masala yo‘q</div>';
       h += '<div class="pzNs"><span>TO‘PLAMLAR</span><span>' + all.length + ' ta</span></div><div class="pzNg">';
       var ACC = ['#6b5cf0', '#f59e0b', '#ec4899', '#0ea5e9', '#16a34a', '#a855f7', '#ef4444', '#14b8a6'];
@@ -735,6 +744,7 @@
           '<div class="bd"><b>' + esc(f || 'Aralash masalalar') + '</b><small><span>' + n + ' ta masala</span><span>' + d + '/' + n + '</span></small><div class="pzbr"><i style="width:' + pc + '%;background:' + (done ? '#16a34a' : ACC[k % ACC.length]) + '"></i></div></div></div>';
       });
       h += '</div><div style="height:64px"></div></div>';
+      }
     }
     if (!S.admin) h += '<div style="font-size:11px;opacity:.4;margin-top:16px">ID: ' + esc(S.myId) + '</div>';
     ov.innerHTML = h;
@@ -772,8 +782,12 @@
     });
     on('#pzMG', function () { MG.on = !MG.on; MG.sel = []; list(); });
     Array.prototype.forEach.call(ov.querySelectorAll('[data-mix]'), function (e) { e.onclick = function () { curLv = 9; curFo = ''; list(); }; });
+    Array.prototype.forEach.call(ov.querySelectorAll('[data-sh]'), function (e) { e.onclick = function () { shelf = e.getAttribute('data-sh'); try { localStorage.setItem('pzShelf', shelf); } catch (x) {} list(); }; });
+    Array.prototype.forEach.call(ov.querySelectorAll('[data-bk]'), function (e) { e.onclick = function () { var b = findBook(e.getAttribute('data-bk')); if (b) bookView(b); }; });
+    Array.prototype.forEach.call(ov.querySelectorAll('[data-bm]'), function (e) { e.onclick = function (ev) { ev.stopPropagation(); var b = findBook(e.getAttribute('data-bm')); if (b) bookMenu(b); }; });
     on('#pzCont', function () {
       var c = S._cont; if (!c) return;
+      if (c.book) { curBook = c.book; return play(c.p); }
       if (c.f) { curFo = c.f; curLv = 0; } else { curLv = 9; curFo = ''; }
       list(); var el = ov.querySelector('[data-i="' + S.list.indexOf(c.p) + '"]'); if (el) el.click(); else play(c.p);
     });
@@ -794,6 +808,84 @@
       };
     });
     mgUi(fl);
+  }
+  // 📚 kitoblar: server sodda/murakkab ro'yxatini beradi, etyudlar papkalari shu yerda 100 tadan bo'linadi
+  function pzBooks() {
+    var by = {}, out = { s: [], m: [], e: [] }, B = S.books || {};
+    S.list.forEach(function (p) { by[p.id] = p; });
+    var mk = function (kind, i, ids, title) {
+      var arr = ids.map(function (id) { return by[id]; }).filter(Boolean);
+      return { key: kind + i, kind: kind, n: i + 1, title: title, from: i * 100 + 1, arr: arr };
+    };
+    (B.s || []).forEach(function (ids, i) { out.s.push(mk('s', i, ids, 'Sodda · ' + (i + 1) + '-kitob')); });
+    (B.m || []).forEach(function (ids, i) { out.m.push(mk('m', i, ids, 'Murakkab · ' + (i + 1) + '-kitob')); });
+    (S.folders || []).forEach(function (f, fi) {
+      var et = S.list.filter(function (p) { return p.et && p.folder === f; }); if (!et.length) return;
+      for (var i = 0, k = 0; i < et.length; i += 100, k++) {
+        var b = { key: 'e' + fi + '_' + k, kind: 'e', n: k + 1, title: f + (et.length > 100 ? ' · ' + (k + 1) : ''), from: 1, arr: et.slice(i, i + 100) };
+        out.e.push(b);
+      }
+    });
+    return out;
+  }
+  function findBook(key) { var B = pzBooks(), all = B.s.concat(B.m, B.e); return all.filter(function (b) { return b.key === key; })[0] || null; }
+  // 🌿 muqova manzaralari (o'zimiz chizgan): tog', o'rmon, gullar, kapalaklar, oyli ko'l, sakura, kuz, sharshara, qumtepalar
+  function natSvg(k, u) {
+    var R = function (s) { return function () { s = (s * 9301 + 49297) % 233280; return s / 233280; }; }, g = '', r, i, x, y, c;
+    switch (k % 9) {
+      case 0: g = '<defs><linearGradient id="n' + u + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb36b"/><stop offset=".6" stop-color="#ff6f61"/><stop offset="1" stop-color="#6b3a7a"/></linearGradient></defs><rect width="100" height="147" fill="url(#n' + u + ')"/><circle cx="62" cy="52" r="15" fill="#ffe9a8"/><path d="M0 95 L25 60 L45 88 L65 55 L100 98 V147 H0Z" fill="#4a2f5e"/><path d="M0 112 L30 85 L55 108 L80 90 L100 110 V147 H0Z" fill="#2d1d3d"/>'; break;
+      case 1: g = '<rect width="100" height="147" fill="#bfe8ff"/><path d="M0 100 Q50 80 100 100 V147 H0Z" fill="#7cc576"/>'; r = R(3 + k); for (i = 0; i < 9; i++) { x = r() * 100; var sz = 14 + r() * 14; y = 88 + r() * 30; g += '<path d="M' + x + ' ' + (y - sz * 2) + ' L' + (x + sz * .6) + ' ' + y + ' L' + (x - sz * .6) + ' ' + y + 'Z" fill="' + ['#1f6b3a', '#2b8048', '#175a30'][i % 3] + '"/><rect x="' + (x - 1.2) + '" y="' + y + '" width="2.4" height="5" fill="#5a3b1e"/>'; } break;
+      case 2: g = '<rect width="100" height="147" fill="#bfe6ff"/><circle cx="20" cy="25" r="9" fill="#fff6b0"/><path d="M0 80 Q50 65 100 80 V147 H0Z" fill="#8fd16a"/>'; r = R(7 + k); for (i = 0; i < 26; i++) { x = r() * 100; y = 85 + r() * 58; c = ['#ff5c8a', '#ffd23f', '#ffffff', '#c77dff', '#ff8c42'][i % 5]; g += '<line x1="' + x + '" y1="' + y + '" x2="' + x + '" y2="' + (y + 8) + '" stroke="#3f8f3a" stroke-width=".8"/>'; for (var q = 0; q < 5; q++) { var a = q * 72 * Math.PI / 180; g += '<circle cx="' + (x + Math.cos(a) * 2.2) + '" cy="' + (y + Math.sin(a) * 2.2) + '" r="1.7" fill="' + c + '"/>'; } g += '<circle cx="' + x + '" cy="' + y + '" r="1.2" fill="#ffb703"/>'; } break;
+      case 3: g = '<rect width="100" height="147" fill="#ffe3ec"/>'; r = R(11 + k); for (i = 0; i < 6; i++) { x = 15 + r() * 70; y = 25 + r() * 95; var sc = .6 + r() * .7; c = ['#7b2cbf', '#ff6d00', '#0096c7', '#e63946', '#2a9d8f', '#f15bb5'][i]; g += '<g transform="translate(' + x + ' ' + y + ') scale(' + sc + ') rotate(' + (r() * 40 - 20) + ')"><ellipse cx="-6" cy="-4" rx="7" ry="9" fill="' + c + '"/><ellipse cx="6" cy="-4" rx="7" ry="9" fill="' + c + '"/><ellipse cx="-5" cy="7" rx="5" ry="6" fill="' + c + '" opacity=".8"/><ellipse cx="5" cy="7" rx="5" ry="6" fill="' + c + '" opacity=".8"/><circle cx="-6" cy="-5" r="2.2" fill="#fff" opacity=".7"/><circle cx="6" cy="-5" r="2.2" fill="#fff" opacity=".7"/><rect x="-1" y="-10" width="2" height="22" rx="1" fill="#2b2b2b"/></g>'; } break;
+      case 4: g = '<rect width="100" height="147" fill="#13275e"/>'; r = R(5 + k); for (i = 0; i < 30; i++) g += '<circle cx="' + r() * 100 + '" cy="' + r() * 70 + '" r="' + (r() * .7 + .2) + '" fill="#fff" opacity="' + (.5 + r() * .5) + '"/>'; g += '<circle cx="70" cy="35" r="11" fill="#fdf3c4"/><path d="M0 78 L20 62 L38 76 L60 58 L100 80 V95 H0Z" fill="#0d1a3d"/><rect y="95" width="100" height="52" fill="#1d3570"/><rect x="62" y="98" width="16" height="2" fill="#fdf3c4" opacity=".6"/>'; break;
+      case 5: g = '<rect width="100" height="147" fill="#fde2e4"/><path d="M0 120 Q50 110 100 120 V147 H0Z" fill="#a7c957"/><path d="M50 125 C48 105 52 95 46 80 M48 98 C40 90 34 88 28 84 M50 92 C58 84 66 82 72 76" stroke="#5e3b1e" stroke-width="3.5" fill="none" stroke-linecap="round"/>'; r = R(9 + k); for (i = 0; i < 60; i++) { var a2 = r() * Math.PI * 2, d2 = r() * 30; g += '<circle cx="' + (50 + Math.cos(a2) * d2 * 1.2) + '" cy="' + (70 + Math.sin(a2) * d2 * .8) + '" r="' + (2 + r() * 3) + '" fill="' + ['#ffafcc', '#ffc8dd', '#ff8fab', '#fff0f3'][i % 4] + '" opacity=".9"/>'; } break;
+      case 6: g = '<rect width="100" height="147" fill="#ffe8c2"/><path d="M0 105 Q50 95 100 105 V147 H0Z" fill="#c9a26b"/>'; r = R(13 + k); for (i = 0; i < 5; i++) { x = 12 + i * 19 + r() * 6; y = 100 + r() * 8; g += '<rect x="' + (x - 1.5) + '" y="' + (y - 22) + '" width="3" height="24" fill="#5e3b1e"/><circle cx="' + x + '" cy="' + (y - 28) + '" r="' + (10 + r() * 4) + '" fill="' + ['#e76f51', '#f4a261', '#e9c46a', '#d62828', '#f77f00'][i] + '"/>'; } break;
+      case 7: g = '<rect width="100" height="147" fill="#9be7d8"/><path d="M0 0 H35 V147 H0Z" fill="#4b6b5a"/><path d="M65 0 H100 V147 H65Z" fill="#4b6b5a"/><rect x="35" y="0" width="30" height="120" fill="#e0fbff"/>'; r = R(17 + k); for (i = 0; i < 14; i++) g += '<rect x="' + (36 + r() * 28) + '" y="' + r() * 110 + '" width="1" height="' + (8 + r() * 14) + '" fill="#7fd3e6"/>'; g += '<ellipse cx="50" cy="122" rx="30" ry="9" fill="#fff" opacity=".9"/><rect y="125" width="100" height="22" fill="#2a9d8f"/><circle cx="12" cy="20" r="9" fill="#2d6a4f"/><circle cx="88" cy="30" r="10" fill="#2d6a4f"/>'; break;
+      default: g = '<rect width="100" height="147" fill="#ffc98b"/><circle cx="30" cy="40" r="13" fill="#fff1c1"/><path d="M0 90 Q30 70 60 92 T100 85 V147 H0Z" fill="#e9a35b"/><path d="M0 112 Q40 95 75 115 T100 110 V147 H0Z" fill="#c97b3b"/><path d="M78 92 v-14 m0 6 h-5 v-5 m5 9 h5 v-7" stroke="#2d6a4f" stroke-width="2.4" fill="none" stroke-linecap="round"/>';
+    }
+    return '<svg viewBox="0 0 100 147" preserveAspectRatio="xMidYMid slice">' + g + '</svg>';
+  }
+  function bookHtml(b, k) {
+    var n = b.arr.length, d = nDone(b.arr), done = n && d === n, cov = S.books && S.books.cov && S.books.cov[b.key];
+    var seed = (b.kind === 's' ? 0 : b.kind === 'm' ? 4 : 2) + b.n - 1 + (b.kind === 'e' ? k : 0);
+    return '<div class="pzBk" data-bk="' + b.key + '">' + (cov ? '<img src="/api/pzbook/cov?k=' + b.key + '&v=' + cov + '" alt="">' : natSvg(seed, b.key)) + (done ? '<span class="rib"></span>' : '') +
+      '<div class="fr"></div><div class="tt">' + (b.kind === 'e' ? (function () { var pt = b.title.split(' · '); return '<small>' + esc(pt.length > 1 ? pt[0].toUpperCase() : 'ETYUD') + '</small><span class="sm">' + esc(pt.length > 1 ? pt.slice(1).join(' · ') : b.title) + '</span>'; })() : '<small>' + (b.kind === 's' ? 'SODDA' : 'MURAKKAB') + '</small><span>' + b.n + '-kitob</span>') + '</div>' +
+      (S.admin ? '<button class="mo" data-bm="' + b.key + '">⋯</button>' : '') +
+      '<div class="pl"><b>' + (b.kind === 'e' ? n + ' ta etyud' : b.from + '–' + (b.from + n - 1)) + '</b><i><u style="width:' + (n ? Math.round(d / n * 100) : 0) + '%"></u></i><small>' + (done ? 'Tugatilgan' : d + ' / ' + n) + '</small></div></div>';
+  }
+  // kitob ichi: mundarija (raqamlar to'ri)
+  function bookView(b) {
+    pzCss(); curBook = b;
+    var n = b.arr.length, d = nDone(b.arr), sv = S.solved || [], nx = b.arr.filter(function (p) { return sv.indexOf(p.id) < 0; })[0];
+    var h = '<div class="pzN"><div class="pzNh"><button id="pzBack" class="pzNb">‹</button><div class="pzNt"><b>' + esc(b.title) + '</b><small>' + d + ' / ' + n + ' yechildi</small></div></div>';
+    h += '<div class="pzbr" style="height:8px;border-radius:4px;background:rgba(255,255,255,.1);overflow:hidden;margin:0 2px 12px"><i style="display:block;height:100%;width:' + (n ? Math.round(d / n * 100) : 0) + '%;background:#e9c46a"></i></div>';
+    if (nx) h += '<button class="pzNc" id="pzBkGo">' + pzMini(nx.board, 0, 1) + '<span class="t"><small>' + (d ? 'DAVOM ETTIRISH' : 'BOSHLASH') + '</small><b>' + (b.from + b.arr.indexOf(nx)) + '-masala</b><span>' + (nx.side === 'w' ? 'Oq yuradi' : 'Qora yuradi') + '</span></span><span class="go">Yechish</span></button>';
+    h += '<div class="pzMd">' + b.arr.map(function (p, i) { var ok = sv.indexOf(p.id) >= 0; return '<button data-bi="' + i + '" class="' + (ok ? 'ok' : '') + (p === nx ? ' nx' : '') + '">' + (b.from + i) + '</button>'; }).join('') + '</div><div style="height:64px"></div></div>';
+    ov.innerHTML = h; ov.scrollTop = 0;
+    on('#pzBack', function () { curBook = null; list(); });
+    on('#pzBkGo', function () { play(nx); });
+    Array.prototype.forEach.call(ov.querySelectorAll('[data-bi]'), function (e) { e.onclick = function () { play(b.arr[+e.getAttribute('data-bi')]); }; });
+  }
+  // admin: muqova rasmi
+  function bookMenu(b) {
+    var has = S.books && S.books.cov && S.books.cov[b.key];
+    pzSheet(b.title, [['Muqova rasmini qo‘yish', function () { coverPick(b); }]].concat(has ? [['Muqovani olib tashlash', function () { api('/api/pzbook/cov', { k: b.key, img: '' }).then(function (r) { if (r && r.cov) S.books.cov = r.cov; list(); }); }, 1]] : []));
+  }
+  function coverPick(b) {
+    var inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*';
+    inp.onchange = function () {
+      var f = inp.files && inp.files[0]; if (!f) return;
+      var img = new Image(), url = URL.createObjectURL(f);
+      img.onload = function () {
+        var W = 340, H = 500, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+        var x = cv.getContext('2d'), sc = Math.max(W / img.width, H / img.height), w = img.width * sc, hh = img.height * sc;
+        x.drawImage(img, (W - w) / 2, (H - hh) / 2, w, hh); URL.revokeObjectURL(url);
+        var data = cv.toDataURL('image/webp', .82); if (data.indexOf('data:image/webp') !== 0) data = cv.toDataURL('image/jpeg', .82);
+        api('/api/pzbook/cov', { k: b.key, img: data }).then(function (r) { if (r && r.error) { alert(r.error); return; } if (r && r.cov) S.books.cov = r.cov; list(); });
+      };
+      img.src = url;
+    };
+    inp.click();
   }
   // ⚠️ o'yinchi: «Xato bor» — sabab tanlanadi, adminga xabar ketadi
   function pzReport(p) {
@@ -873,6 +965,17 @@
       '.pzNf .pzbr{height:6px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden}.pzNf .pzbr i{display:block;height:100%;border-radius:3px}' +
       '.pzMb::before,.pzMb::after{content:none!important;display:none!important}.pzMb{display:grid;width:100%;grid-template-columns:repeat(8,minmax(0,1fr));border-radius:10px;overflow:hidden;box-shadow:0 6px 14px rgba(0,0,0,.4)}.pzMb.sm{width:78px!important;flex:none;border-radius:8px}' +
       '.pzMb i{aspect-ratio:1;position:relative;display:block;min-width:0;width:auto;height:auto;margin:0;padding:0;font-size:0;border:0}.pzMb i.w:after,.pzMb i.b:after{content:"";position:absolute;inset:13%;border-radius:50%}.pzMb i.w:after{background:radial-gradient(circle at 35% 30%,#fff,#cfc8b6)}.pzMb i.b:after{background:radial-gradient(circle at 35% 30%,#666,#111)}.pzMb i.k:after{box-shadow:inset 0 0 0 2px #e3b21c}' +
+      '.pzTb{display:flex;gap:6px;margin:0 0 12px}.pzTb button{flex:1;border:1px solid rgba(233,196,106,.35);border-radius:12px;padding:9px 2px;background:rgba(255,255,255,.04);color:#e9d9a8;font-weight:700;font-size:13px;font-family:inherit}.pzTb .on{background:linear-gradient(180deg,#e9c46a,#b8862b);color:#2a1a05;border-color:#e9c46a}' +
+      '.pzSh3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 10px}' +
+      '.pzBk{position:relative;aspect-ratio:.68;border-radius:3px 7px 7px 3px;overflow:hidden;cursor:pointer;box-shadow:inset 4px 0 0 rgba(0,0,0,.35),3px 5px 10px rgba(0,0,0,.55);font-family:"DejaVu Serif",Georgia,serif}' +
+      '.pzBk svg,.pzBk img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}.pzBk .fr{position:absolute;inset:5px 5px 5px 9px;border:1px solid rgba(255,240,200,.7);border-radius:3px;pointer-events:none}' +
+      '.pzBk .tt{position:absolute;left:12px;right:8px;top:9px;text-align:center;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8);font-weight:700;background:rgba(20,14,8,.45);border-radius:6px;padding:3px 2px 4px}.pzBk .tt small{display:block;font-size:8px;letter-spacing:1.5px}.pzBk .tt span{font-size:14px}.pzBk .tt .sm{font-size:10px;line-height:1.2;display:block;padding:0 3px}' +
+      '.pzBk .pl{position:absolute;left:12px;right:8px;bottom:9px;background:rgba(20,14,8,.72);border-radius:6px;padding:5px 5px 6px;text-align:center}.pzBk .pl b{display:block;font-size:11px;color:#f6e7bf;white-space:nowrap}' +
+      '.pzBk .pl i{display:block;height:3px;margin-top:4px;border-radius:2px;background:rgba(255,255,255,.2)}.pzBk .pl i u{display:block;height:100%;background:#e9c46a;border-radius:2px}.pzBk .pl small{display:block;font-size:9.5px;color:#e9c46a;margin-top:3px}' +
+      '.pzBk .rib{position:absolute;right:12px;top:0;width:10px;height:24px;background:#2e9e5b;clip-path:polygon(0 0,100% 0,100% 100%,50% 75%,0 100%);z-index:2}' +
+      '.pzBk .mo{position:absolute;right:10px;bottom:66px;width:30px;height:24px;border:0;border-radius:8px;background:rgba(0,0,0,.6);color:#fff;font-weight:900;z-index:3;line-height:1}' +
+      '.pzMd{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}.pzMd button{aspect-ratio:1;border:1px solid rgba(255,255,255,.08);border-radius:11px;background:#161a3a;color:#fff;font-weight:700;font-size:13px;font-family:inherit}' +
+      '.pzMd .ok{background:#14532d;color:#bbf7d0;border-color:#16a34a}.pzMd .nx{outline:2px solid #e9c46a;outline-offset:1px}' +
       '.pzCk{background:#161a3a;border-radius:16px;padding:12px;margin-bottom:12px}.pzCk small{display:block;opacity:.75;font-size:12.5px;margin-top:6px}' +
       '.pzCkI{background:#161a3a;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:11px 12px;margin-bottom:9px}.pzCkI .t{display:flex;gap:8px;align-items:flex-start}.pzCkI .t b{flex:1;font-size:14.5px}.pzCkI .t span{font-size:11px;font-weight:800;border-radius:8px;padding:3px 7px;white-space:nowrap}' +
       '.pzCkI small{display:block;opacity:.6;font-size:12px;margin:2px 0 4px}.pzCkI p{margin:3px 0;font-size:13px;opacity:.9}.pzCkI .a{display:flex;gap:6px;margin-top:8px}.pzCkI .a button{flex:1;border:0;border-radius:10px;padding:9px 4px;background:#262b66;color:#fff;font-weight:700;font-size:13px;font-family:inherit}.pzCkI .a .del{background:#7f1d1d}' +
@@ -1257,7 +1360,7 @@
       h += '<button id="pzR" style="' + BG + '">🔄 Qayta</button><button id="pzH" style="' + BS + '">💡 Ko‘rsatma</button><button id="pzXR" style="' + BG + '">Xato bor</button>';
       if (S.link) h += '<button id="pzS" style="' + BS + '">📤 Yuborish</button>'; if (S.admin && !p.et) h += '<button id="pzE" style="' + BS + '">🛠 Tahrirlash</button>'; if (S.admin && !p.et) h += '<button id="pzN" style="' + BG + '">✏️ Nomi</button>'; if (S.admin && !p.et) h += '<button id="pzD" style="' + BG + '">🗑 O‘chirish</button>'; if (S.admin && !p.et) h += '<button id="pzQz" style="' + BG + (qzIn(p.id) ? ';background:#2b8a3e' : '') + '">' + (qzIn(p.id) ? 'Viktorinada' : 'Viktorinaga') + '</button>'; if (S.admin) h += '<button id="pzRl" style="' + BG + '">🎬 Reel' + ((S.reels || []).indexOf(p.id) >= 0 ? ' ✓' : '') + '</button>';
       ov.innerHTML = h;
-      on('#pzBack', function () { dayIds = null; if (window.__pzChkBack) { window.__pzChkBack = 0; return pzChkView(); } list(); });
+      on('#pzBack', function () { dayIds = null; if (window.__pzChkBack) { window.__pzChkBack = 0; return pzChkView(); } if (curBook && curBook.arr.some(function (x) { return x.id === p.id; })) return bookView(curBook); list(); });
       on('#pzDayEnd', function () { dayIds = null; close(); if (window.dqOpen) window.dqOpen(); });
       on('#pzXR', function () { pzReport(p); });
       on('#pzPrev', function () { var a = sibs(), i = a.findIndex(function (x) { return x.id === p.id; }); if (i > 0) play(a[i - 1]); });
@@ -1295,7 +1398,7 @@
       bindBoard(tap);
     }
     function isDay() { return !!(dayIds && dayIds.indexOf(p.id) >= 0); }
-    function sibs() { if (isDay()) return dayIds.map(function (id) { return S.list.filter(function (x) { return x.id === id; })[0]; }).filter(Boolean); var f = foOf(p); return S.list.filter(function (x) { return foOf(x) === f; }).sort(function (x, y) { return (x.no || 0) - (y.no || 0); }); }
+    function sibs() { if (curBook && curBook.arr.some(function (x) { return x.id === p.id; })) return curBook.arr.slice(); if (isDay()) return dayIds.map(function (id) { return S.list.filter(function (x) { return x.id === id; })[0]; }).filter(Boolean); var f = foOf(p); return S.list.filter(function (x) { return foOf(x) === f; }).sort(function (x, y) { return (x.no || 0) - (y.no || 0); }); }
     function goNext() { if (_fs.lock && !done && !S.admin && (S.solved || []).indexOf(p.id) < 0) { msg = '🔒 Avval shu masalani yeching'; draw(); return; }
       var a = sibs(), i = a.findIndex(function (x) { return x.id === p.id; }), sv = S.solved || [], n = a.length, j, k;
       
