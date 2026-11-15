@@ -1511,7 +1511,8 @@
       });
     }
     function lineDone() {
-      if (extOk && !ext && !combDone()) return extStart();
+      // yechim oxirgi oq yurish bilan tugaydi — qora yurmaydi (chala kombinatsiya davomi o'chirildi; qaytarish: shu qatorni tiklang)
+      // if (extOk && !ext && !combDone()) return extStart();
       alive.forEach(function (i) { if (lines[i].length === idx) doneL[i] = 1; });
       afterDone();
     }
