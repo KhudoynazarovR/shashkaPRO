@@ -8,6 +8,12 @@ const R = require('./pzcheck.js');
 const SIZE = 100, EASY = 3;
 let C = { k: '', v: null };
 const moveN = new Map();   // id+hash → [o'z yurishlari, qadamlar] (qayta hisoblamaslik uchun)
+// g'alati pozitsiya: donalar soni keskin farq qiladi (masalan 12 ga 1) — darslikdan chala ko'chirilgan rasm
+function odd(b) {
+  let w = 0, k = 0; (b || []).forEach(r => (r || []).forEach(v => { if (v === 1 || v === 3) w++; else if (v === 2 || v === 4) k++; }));
+  const lo = Math.min(w, k), hi = Math.max(w, k);
+  return !lo || hi - lo >= 5 || (hi >= lo * 3 && hi - lo >= 3);
+}
 function build() {
   const L = store.db.puzzles || [], bad = (store.db.pzChk && store.db.pzChk.bad) || {};
   const key = (store.db.pzVer || 0) + ':' + L.length + ':' + Object.keys(bad).filter(id => bad[id].st === 'err').length;
@@ -15,6 +21,8 @@ function build() {
   const s = [], m = [];
   L.forEach((p, i) => {
     if (bad[p.id] && bad[p.id].st === 'err') return;
+    if (/Tahlil/i.test(p.folder || '')) return;   // o'yin tahlili pozitsiyalari — masala emas
+    if (odd(p.board)) return;
     const sol = (p.sols && p.sols[0]) || p.sol; if (!Array.isArray(sol) || !sol.length) return;
     const mk = p.id + ':' + JSON.stringify(sol).length + ':' + sol[0].join('');
     let v = moveN.get(mk);
@@ -54,4 +62,4 @@ function handle(req, res, p, h) {
   });
   return true;
 }
-module.exports = { build, covers, handle };
+module.exports = { build, covers, handle, odd };

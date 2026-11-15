@@ -41,6 +41,7 @@ const fmt = ev => (ev > 0 ? '+' : '') + (Math.abs(ev) >= 2500 ? (ev > 0 ? 'yutuq
 async function checkOne(p) {
   const L = R.legal(p);
   if (!L.ok) return { st: 'err', why: (/^doska/.test(L.err) ? 'Pozitsiya xato: ' : 'Qoidaga zid: ') + L.err + (L.at ? ' (' + L.at + '-qadam)' : '') };
+  try { if (require('./pzbooks.js').odd(p.board)) return { st: 'err', why: 'Pozitsiya xato: donalar soni keskin farq qiladi (chala ko‘chirilgan bo‘lishi mumkin)' }; } catch (e) {}
   const me = p.side === 'b' ? 'b' : 'w', end = R.play(p.board, me, L.sol);
   const e = await ask(end.b, end.turn); if (!e) return null;
   let ev = e.ev == null ? 0 : e.ev; if (end.turn !== me) ev = -ev;
