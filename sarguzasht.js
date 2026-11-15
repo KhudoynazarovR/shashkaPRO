@@ -195,7 +195,7 @@
     css(); LAND = null; C.onLand && C.onLand(null);
     var books = idxBooks(W), n = books.length, ov = C.ov;
     var tot = 0, done = 0; books.forEach(function (b) { var I = info(b); tot += I.st; if (I.n && I.d === I.n) done++; });
-    var h = '<div class="adv"><div class="advH"><button class="advB" id="pzBack">‹</button><div class="advTt"><b>' + WORLD[W].t + '</b><small>' + n + ' ta o‘lka · ' + done + ' tugatildi</small></div><span class="advCh aY">★ ' + tot + '</span>' + (C.admin ? '<button class="advE" id="advAdm">Tahrir</button>' : '') + '</div>';
+    var h = '<div class="adv"><div class="advH"><button class="advB" id="pzBack">‹</button><div class="advTt"><b>' + WORLD[W].t + '</b><small>' + n + ' ta o‘lka · ' + done + ' tugatildi</small></div><span class="advCh aY">★ ' + tot + '</span>' + (C.admin ? '<button class="advE" id="advPost">Guruhga</button><button class="advE" id="advAdm">Tahrir</button>' : '') + '</div>';
     h += '<div class="advTb">' + [['s', 'Sodda'], ['m', 'Murakkab'], ['e', 'Etyudlar']].map(function (x) { return '<button data-w="' + x[0] + '"' + (W === x[0] ? ' class="on"' : '') + '>' + x[1] + '</button>'; }).join('') + '</div>';
     if (!n) { ov.innerHTML = h + '<div style="padding:40px 20px;opacity:.7;text-align:center">Bu dunyoda hozircha o‘lka yo‘q</div></div>'; bindTop(); return; }
     var GAP = 150, H = 200 + n * GAP + 120, P = [], r = R(7 + W.charCodeAt(0));
@@ -237,22 +237,22 @@
       var sub = !op ? 'oldingi kitob 100/100 bo‘lsa ochiladi' : cw ? 'Qal‘a zabt etildi · ★ ' + I.st : dn ? 'Tugatildi · ★ ' + I.st + '/' + I.n * 3 : I.d + '/' + I.n + (I.d ? ' · ★ ' + I.st : '');
       g += '<rect x="' + (x - 66) + '" y="' + (y + 26) + '" width="132" height="34" rx="10" fill="rgba(11,14,26,.84)"/><text x="' + x + '" y="' + (y + 40) + '" text-anchor="middle" font-size="12" font-weight="800" fill="#fff">' + (i + 1) + '. ' + esc(nameOf(b, i)) + '</text><text x="' + x + '" y="' + (y + 54) + '" text-anchor="middle" font-size="10.5" fill="' + (!op ? '#cbd5e1' : cw ? '#fde68a' : dn ? '#86efac' : '#fde68a') + '">' + sub + '</text></g>';
     });
+    g += '<rect x="' + (P[cl][0] - 40) + '" y="' + (P[cl][1] - 66) + '" width="80" height="18" rx="9" fill="#2563eb"/><text x="' + P[cl][0] + '" y="' + (P[cl][1] - 53) + '" text-anchor="middle" font-size="11" font-weight="800" fill="#fff">Shu yerda</text>';
     g += '</svg>';
     var hb = books[cl], hp = P[cl];
     h += '<div class="advM">' + g + '<div class="advHero idle" id="advHr" style="pointer-events:auto;cursor:pointer;left:' + ((hp[0] - 50) / 360 * 100).toFixed(2) + '%;top:' + ((hp[1] + 8) / H * 100).toFixed(2) + '%">' + heroHtml() + '</div></div><div style="height:96px"></div>';
     var hI = info(hb), hs3 = curSt(hb), gl = '';
     if (D.guest) { var gb = null, gi = -1; ['s', 'm'].forEach(function (w) { idxBooks(w).forEach(function (bb, ii) { if (bb.key === D.guest.k) { gb = bb; gi = ii; } }); }); if (gb) gl = 'Mehmon: ' + (D.guest.k[0] === 's' ? 'Sodda' : 'Murakkab') + ' ' + (gi + 1) + '-o‘lka, ' + (D.guest.st + 1) + '-bekat · tanga ×' + (D.rw.guest || 2); }
-    h += '<div class="advC"><div><b>' + esc(nameOf(hb, cl)) + '</b><small>' + (cl + 1) + '-o‘lka · ' + hI.d + '/' + hI.n + ' · ' + (hs3 === hI.cs ? 'qal‘a' : (hs3 + 1) + '-bekat') + '</small>' + (gl ? '<small style="color:#fde68a">' + gl + '</small>' : '') + '</div><button id="advGo">Davom</button></div></div>';
     ov.innerHTML = h; bindTop();
     var M = ov.querySelector('.advM svg');
     ov.querySelector('.advM').onclick = function (ev) { var e = ev.target.closest('[data-l]'); if (!e) return; var i2 = +e.getAttribute('data-l'); if (!landOpen(books, i2)) return toast('Bu o‘lka hali yopiq: oldingi kitobdagi 100 ta masalani yeching'); landView(books[i2], i2); };
-    ov.querySelector('#advGo').onclick = function () { landView(hb, cl); };
     ov.querySelector('#advHr').onclick = function (ev) { ev.stopPropagation(); var M2 = window.spPzMap; if (M2 && M2.picker) M2.picker(function () { worldView(); }); };
     setTimeout(function () { var k = M.getBoundingClientRect().width / 360; ov.scrollTop = Math.max(0, hp[1] * k - ov.clientHeight * .55); }, 0);
   }
   function bindTop() {
     var ov = C.ov;
     var b = ov.querySelector('#pzBack'); if (b) b.onclick = function () { closeSheet(); var ch = document.querySelector('.advChest'); if (ch) ch.remove(); if (LAND) worldView(); else C.back(); };
+    var po = ov.querySelector('#advPost'); if (po) po.onclick = function () { var c = window.prompt('Guruh ID sini kiriting (masalan -1001234567890):', ''); if (!c) return; C.api('/api/adv/post', { chat: c.trim() }).then(function (r) { toast(r && r.ok ? 'Guruhga yuborildi' : ((r && (r.error || r.err)) || 'Yuborilmadi')); }); };
     var a = ov.querySelector('#advAdm'); if (a) a.onclick = function () { admin(LAND ? LAND.b : null, LAND ? LAND.i : 0); };
     [].forEach.call(ov.querySelectorAll('[data-w]'), function (e) { e.onclick = function () { W = e.getAttribute('data-w'); try { localStorage.setItem('advW', W); } catch (x) {} worldView(); }; });
   }
