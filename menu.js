@@ -740,7 +740,7 @@
       all = all.filter(function (x) { return x.arr.length || S.admin; });
       var solvedN = (S.solved || []).length;
       h = '<div class="pzN"><div class="pzNh"><button id="pzBack" class="pzNb" aria-label="Orqaga">‹</button><div class="pzNt"><b>' + (view === 'custom' ? 'Maxsus masalalar' : 'Masalalar') + '</b><small>' + (S.admin ? S.list.length + ' ta masala · ' + all.length + ' ta to‘plam' : solvedN + ' ta yechildi') + '</small></div></div>' +
-        '<div class="pzNp"><button id="pzTop">TOP</button>' + (S.admin ? '<button id="pzQzP">Viktorina</button><button id="pzPlus" class="pr">+ Yangi</button>' : '') + '</div>';
+        '<div class="pzNp"><button id="pzTop">TOP</button>' + (S.admin ? '<button id="pzUV">' + (userView() ? 'Admin ko‘rinishi' : 'Foydalanuvchi ko‘rinishi') + '</button><button id="pzQzP">Viktorina</button><button id="pzPlus" class="pr">+ Yangi</button>' : '') + '</div>';
       // davom ettirish: boshlangan, tugamagan kitobdagi birinchi yechilmagan masala
       var BK = pzBooks(), allB = BK.s.concat(BK.m, BK.e), cb = null;
       allB.forEach(function (b) { if (cb) return; var d = nDone(b.arr); if (d > 0 && d < b.arr.length) cb = b; });
@@ -776,6 +776,7 @@
     if (!S.admin) h += '<div style="font-size:11px;opacity:.4;margin-top:16px">ID: ' + esc(S.myId) + '</div>';
     ov.innerHTML = h;
     on('#pzBack', function () { hub = 1; view = ''; list(); }); on('#pzTop', pzTop); on('#pzQzP', qzPanel);
+    on('#pzUV', function () { try { localStorage.setItem('pzUserView', userView() ? '0' : '1'); } catch (e) {} list(); });
     on('#pzGo', function () { var mo = mainOrder(), nx = mo.filter(function (p) { return (S.solved || []).indexOf(p.id) < 0; })[0] || mo[0]; window.__pzMapKey = ''; if (nx) play(nx); }); on('#pzNew', function () { newPz(0, ''); });
     on('#pzNF', function () {
       var n = cleanName(prompt('Yangi papka nomi:'));
@@ -876,8 +877,9 @@
   // 🔒 kitob qulfi: oldingi kitob 100/100 bo'lmaguncha yopiq; admin ochgan kitob ochiq; etyud kitoblari ochiq qoladi
   var LOCK_BIG = '<svg viewBox="0 0 24 24" width="38" height="38"><rect x="4" y="10" width="16" height="11" rx="2.5" fill="#e2e8f0"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="#e2e8f0" stroke-width="2.4" fill="none"/><circle cx="12" cy="15" r="1.6" fill="#475569"/></svg>';
   var LOCK_SM = '<svg viewBox="0 0 24 24" width="13" height="13"><rect x="4" y="10" width="16" height="11" rx="2.5" fill="#94a3b8"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="#94a3b8" stroke-width="2.4" fill="none"/></svg>';
+  function userView() { try { return localStorage.getItem('pzUserView') === '1'; } catch (e) { return false; } }
   function bkLocked(b) {
-    if (S.admin || b.kind === 'e' || b.n <= 1) return false;
+    if ((S.admin && !userView()) || b.kind === 'e' || b.n <= 1) return false;
     var _ba = (S.bookAll || {})[b.key];
     if (_ba === 'open') return false;
     if (_ba === 'lock') return true;
