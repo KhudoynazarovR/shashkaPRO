@@ -727,6 +727,7 @@
     if (window.__pzPF) { var _pf = window.__pzPF; window.__pzPF = ''; if ((S.folders || []).indexOf(_pf) >= 0) { curFo = _pf; curLv = 0; } }
     if (curFo && (S.folders || []).indexOf(curFo) < 0) curFo = '';
     if (curLv || curFo) return items();
+    if (window.__advStart) { window.__advStart = false; view = 'map'; hub = 0; curFo = ''; }
     var fl = S.folders || [], _mapV = view === 'map', h;
     if (_mapV) return advOpen();
     if (_mapV) {
@@ -740,7 +741,7 @@
       all = all.filter(function (x) { return x.arr.length || S.admin; });
       var solvedN = (S.solved || []).length;
       h = '<div class="pzN"><div class="pzNh"><button id="pzBack" class="pzNb" aria-label="Orqaga">‹</button><div class="pzNt"><b>' + (view === 'custom' ? 'Maxsus masalalar' : 'Masalalar') + '</b><small>' + (S.admin ? S.list.length + ' ta masala · ' + all.length + ' ta to‘plam' : solvedN + ' ta yechildi') + '</small></div></div>' +
-        '<div class="pzNp"><button id="pzTop">TOP</button>' + (S.admin ? '<button id="pzUV">' + (userView() ? 'Admin ko‘rinishi' : 'Foydalanuvchi ko‘rinishi') + '</button><button id="pzQzP">Viktorina</button><button id="pzPlus" class="pr">+ Yangi</button>' : '') + '</div>';
+        '<div class="pzNp"><button id="pzTop">TOP</button>' + (S.admin ? '<button id="pzUV">' + (userView() ? 'Admin ko‘rinishi' : 'Foydalanuvchi ko‘rinishi') + '</button><button id="pzAllO">Hammasini ochish</button><button id="pzAllL">Hammasini qulflash</button><button id="pzQzP">Viktorina</button><button id="pzPlus" class="pr">+ Yangi</button>' : '') + '</div>';
       // davom ettirish: boshlangan, tugamagan kitobdagi birinchi yechilmagan masala
       var BK = pzBooks(), allB = BK.s.concat(BK.m, BK.e), cb = null;
       allB.forEach(function (b) { if (cb) return; var d = nDone(b.arr); if (d > 0 && d < b.arr.length) cb = b; });
@@ -776,6 +777,8 @@
     if (!S.admin) h += '<div style="font-size:11px;opacity:.4;margin-top:16px">ID: ' + esc(S.myId) + '</div>';
     ov.innerHTML = h;
     on('#pzBack', function () { hub = 1; view = ''; list(); }); on('#pzTop', pzTop); on('#pzQzP', qzPanel);
+    function bkAllSet(st) { api('/api/puzzle/ball-all', { state: st }).then(function (r) { if (r && r.ok) { S.bookAll = r.bookAll || {}; list(); } else window.alert((r && r.error) || 'Xato'); }).catch(function () { window.alert('Xato'); }); }
+    on('#pzAllO', function () { bkAllSet('open'); }); on('#pzAllL', function () { bkAllSet('lock'); });
     on('#pzUV', function () { try { localStorage.setItem('pzUserView', userView() ? '0' : '1'); } catch (e) {} list(); });
     on('#pzGo', function () { var mo = mainOrder(), nx = mo.filter(function (p) { return (S.solved || []).indexOf(p.id) < 0; })[0] || mo[0]; window.__pzMapKey = ''; if (nx) play(nx); }); on('#pzNew', function () { newPz(0, ''); });
     on('#pzNF', function () {
@@ -1677,7 +1680,7 @@
   if (_sp && _sp.indexOf('pz_') === 0) { var _pm = /^pz_([A-Za-z0-9_]+?)(?:-r(\d{3,15}))?$/.exec(_sp); pending = _pm ? _pm[1] : _sp.slice(3); if (_pm && _pm[2]) { window.__pzRef = _pm[2]; window.__pzRefP = _pm[1]; } setTimeout(open, 700); }   // 📤 kanal: pz_<id>-r<taklif qilgan>
   if (_sp && _sp.indexOf('pf_') === 0) { try { var _r = _sp.slice(3), _m = /^(\d{3,15})_(.+)$/.exec(_r); if (_m) { window.__pzRef = _m[1]; _r = _m[2]; } var _b = _r.replace(/-/g, '+').replace(/_/g, '/'); while (_b.length % 4) _b += '='; window.__pzPF = decodeURIComponent(escape(atob(_b))); } catch (e) {} setTimeout(open, 700); }
   if (/[?&]go=puz/.test(location.search || '') || _sp === 'go_puz') setTimeout(open, 700);
-  if (_sp === 'adv') setTimeout(function () { view = 'map'; hub = 0; curFo = ''; open(); }, 700);
+  if (_sp === 'adv') { window.__advStart = true; setTimeout(open, 700); }   // 🗺 guruhdagi «Xaritani ochish»: masalalar ochilib, xarita ko‘rinishi
 })();
 
 

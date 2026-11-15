@@ -679,6 +679,12 @@ function handle(req, res, url) {
           .slice(0, 10).map(v => ({ id: String(v.id), name: String(v.name || 'Player') }));
         return send(res, 200, { list });
       }
+      if (p === '/api/puzzle/ball-all') {   // admin: barcha kitoblar uchun 'open' / 'lock' / '' (oddiy qoida)
+        const st = String(j.state || ''); let B = null; try { B = require('./pzbooks.js').build(); } catch (e) {}
+        store.db.pzBookAll = store.db.pzBookAll || {};
+        for (const sh of ['s', 'm']) { const n = ((B && B[sh]) || []).length; for (let i = 0; i < n; i++) { const k = sh + ':' + i; if (st === 'open' || st === 'lock') store.db.pzBookAll[k] = st; else delete store.db.pzBookAll[k]; } }
+        store.save(); return send(res, 200, { ok: true, bookAll: store.db.pzBookAll });
+      }
       if (p === '/api/puzzle/ball') {   // admin: kitobni hamma uchun ochish ('open'), qulflash ('lock') yoki oddiy qoida ('')
         const key = String(j.key || '').slice(0, 20); if (!key) return send(res, 400, { error: 'key' });
         const st = String(j.state || ''); store.db.pzBookAll = store.db.pzBookAll || {};
