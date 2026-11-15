@@ -191,6 +191,16 @@ function handle(req, res, p, h) {
     // ---- admin
     if (!adm) return h.send(res, 403, { error: 'Faqat admin' });
     const a = A();
+    if (p === '/api/adv/post') {   // 📣 guruhga xarita xabari (admin): matn + «Xaritani ochish» tugmasi
+      const chat = String(j.chat || '').trim();
+      if (!/^-?\d{5,20}$/.test(chat)) return h.send(res, 400, { error: 'Guruh ID noto‘g‘ri' });
+      const link = (process.env.TG_APP_LINK || process.env.APP_LINK || 'https://t.me/DraughtsPRObot/play').replace(/\/$/, '');
+      const text = 'Yangi sarguzasht xaritasi!\nHar kitob — alohida o‘lka, har 10 masala — bekat, oxirida qal‘a sinovi.\nSandiqlar, savollar va tangalar kutmoqda.';
+      require('./gcard.js').tg('sendMessage', { chat_id: chat, text, reply_markup: { inline_keyboard: [[{ text: 'Xaritani ochish', url: link }]] } })
+        .then(r => h.send(res, 200, { ok: !!(r && r.ok), err: r && !r.ok ? (r.description || '') : '' }))
+        .catch(() => h.send(res, 500, { error: 'Yuborilmadi' }));
+      return true;
+    }
     if (p === '/api/adv/land') {
       const k = String(j.k || ''); if (!/^[sme][a-z0-9_]{1,30}$/.test(k)) return h.send(res, 400, { error: 'kalit' });
       const L = a.lands[k] = a.lands[k] || {};
