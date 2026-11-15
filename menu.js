@@ -778,7 +778,7 @@
       list(); var el = ov.querySelector('[data-i="' + S.list.indexOf(c.p) + '"]'); if (el) el.click(); else play(c.p);
     });
     on('#pzPlus', function () {
-      pzSheet('Yangi', [['Yangi masala', function () { newPz(0, ''); }], ['Yangi papka', function () { var n = cleanName(prompt('Yangi papka nomi:')); if (n) api('/api/puzzle/folder', { name: n }).then(function () { load(); }); }]]
+      pzSheet('Yangi', [['Tekshiruv va xatolar', pzChkView], ['Yangi masala', function () { newPz(0, ''); }], ['Yangi papka', function () { var n = cleanName(prompt('Yangi papka nomi:')); if (n) api('/api/puzzle/folder', { name: n }).then(function () { load(); }); }]]
         .concat(fl.filter(mgOk).length >= 2 ? [['Papkalarni birlashtirish', function () { MG.on = true; MG.sel = []; list(); }]] : []));
     });
     Array.prototype.forEach.call(ov.querySelectorAll('[data-mo]'), function (e) {
@@ -794,6 +794,51 @@
       };
     });
     mgUi(fl);
+  }
+  // ⚠️ o'yinchi: «Xato bor» — sabab tanlanadi, adminga xabar ketadi
+  function pzReport(p) {
+    var send = function (w, note) {
+      api('/api/pzchk/report', { id: p.id, why: w, note: note || '' }).then(function (r) {
+        var t = r && r.error ? '⚠️ ' + r.error : r && r.again ? 'Siz bu masalani avval belgilagansiz. Rahmat!' : 'Rahmat! Xabaringiz adminga yuborildi. Xato tasdiqlansa, sizga tanga beriladi.';
+        if (tg && tg.showAlert) tg.showAlert(t); else alert(t);
+      });
+    };
+    pzSheet('Masalada qanday xato bor?', [
+      ['Yechim noto‘g‘ri', function () { send('sol'); }],
+      ['Boshqa yo‘l ham yutadi', function () { send('alt'); }],
+      ['Pozitsiya xato', function () { send('pos'); }],
+      ['Boshqa (yozib berish)', function () { var n = prompt('Xatoni qisqa yozing:'); if (n && n.trim()) send('other', n.trim()); }]
+    ]);
+  }
+  // 🧩 admin: tekshiruv va xatolar ro'yxati
+  function pzChkView() {
+    pzCss();
+    ov.innerHTML = '<div class="pzN"><div class="pzNh"><button id="pzBack" class="pzNb">‹</button><div class="pzNt"><b>Tekshiruv va xatolar</b><small>Yuklanmoqda…</small></div></div></div>';
+    on('#pzBack', function () { list(); });
+    api('/api/pzchk').then(function (d) {
+      if (!d || d.error) { ov.querySelector('.pzNt small').textContent = (d && d.error) || 'Xato'; return; }
+      var s = d.status, pc = s.total ? Math.round(s.done / s.total * 100) : 0;
+      var h = '<div class="pzN"><div class="pzNh"><button id="pzBack" class="pzNb">‹</button><div class="pzNt"><b>Tekshiruv va xatolar</b><small>' + s.done + ' / ' + s.total + ' tekshirildi · ' + d.total + ' ta topildi</small></div></div>';
+      h += '<div class="pzCk"><div class="pzbr" style="height:8px;border-radius:4px;background:rgba(255,255,255,.1);overflow:hidden"><i style="display:block;height:100%;width:' + pc + '%;background:#6b5cf0"></i></div>' +
+        '<small>' + (s.on ? (s.now ? 'Tekshiruv ketyapti (kunduzi sekin, tunda tez)' : 'Tunda 02:00–07:00 da tekshiriladi') : pc >= 100 ? 'Hammasi tekshirilgan. Yangi yoki o‘zgargan masalalar keyingi safar tekshiriladi.' : 'To‘xtatilgan') + '</small>' +
+        '<div class="pzNp" style="margin:10px 0 0">' + (s.on ? '<button id="ckStop">To‘xtatish</button>' : '<button id="ckNight">Tunda tekshirish</button><button id="ckNow" class="pr">Hozir boshlash</button>') + '</div></div>';
+      var lab = { err: ['Xato', '#be123c'], warn: ['Shubhali', '#b45309'], user: ['O‘yinchi', '#2563eb'] };
+      h += (d.list.length ? d.list.map(function (x, k) {
+        var L = lab[x.st] || lab.user;
+        return '<div class="pzCkI"><div class="t"><b>' + esc(x.title) + '</b><span style="background:' + L[1] + '">' + L[0] + (x.n ? ' · ' + x.n + ' kishi' : '') + '</span></div><small>' + esc(x.folder || (x.etud ? 'Etyud' : 'Papkasiz')) + '</small>' +
+          x.why.slice(0, 4).map(function (w) { return '<p>' + esc(w) + '</p>'; }).join('') +
+          '<div class="a"><button data-ck-o="' + k + '">Ochish</button>' + (x.etud ? '' : '<button data-ck-d="' + k + '" class="del">O‘chirish</button>') + '<button data-ck-k="' + k + '">Xato emas</button></div></div>';
+      }).join('') : '<div style="opacity:.7;padding:20px 4px">Hozircha xato topilmadi</div>') + '<div style="height:64px"></div></div>';
+      ov.innerHTML = h;
+      on('#pzBack', function () { list(); });
+      var go = function (u, b) { api(u, b || {}).then(pzChkView); };
+      on('#ckStop', function () { go('/api/pzchk/stop'); });
+      on('#ckNight', function () { go('/api/pzchk/start', { now: false }); });
+      on('#ckNow', function () { go('/api/pzchk/start', { now: true }); });
+      Array.prototype.forEach.call(ov.querySelectorAll('[data-ck-o]'), function (b) { b.onclick = function () { var x = d.list[+b.getAttribute('data-ck-o')], q = S.list.filter(function (y) { return y.id === x.id; })[0]; if (q) { window.__pzChkBack = 1; play(q); } else alert('Masala topilmadi'); }; });
+      Array.prototype.forEach.call(ov.querySelectorAll('[data-ck-d]'), function (b) { b.onclick = function () { var x = d.list[+b.getAttribute('data-ck-d')]; if (!confirm('«' + x.title + '» o‘chirilsinmi?' + (x.n ? '\n\nBelgilagan ' + x.n + ' kishiga 10 tangadan beriladi.' : ''))) return; api('/api/pzchk/act', { id: x.id, act: 'del' }).then(function () { load(); setTimeout(pzChkView, 600); }); }; });
+      Array.prototype.forEach.call(ov.querySelectorAll('[data-ck-k]'), function (b) { b.onclick = function () { var x = d.list[+b.getAttribute('data-ck-k')]; go('/api/pzchk/act', { id: x.id, act: 'ok' }); }; });
+    });
   }
   // pastdan chiqadigan tanlov menyusi
   function pzSheet(title, items) {
@@ -828,6 +873,9 @@
       '.pzNf .pzbr{height:6px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden}.pzNf .pzbr i{display:block;height:100%;border-radius:3px}' +
       '.pzMb::before,.pzMb::after{content:none!important;display:none!important}.pzMb{display:grid;width:100%;grid-template-columns:repeat(8,minmax(0,1fr));border-radius:10px;overflow:hidden;box-shadow:0 6px 14px rgba(0,0,0,.4)}.pzMb.sm{width:78px!important;flex:none;border-radius:8px}' +
       '.pzMb i{aspect-ratio:1;position:relative;display:block;min-width:0;width:auto;height:auto;margin:0;padding:0;font-size:0;border:0}.pzMb i.w:after,.pzMb i.b:after{content:"";position:absolute;inset:13%;border-radius:50%}.pzMb i.w:after{background:radial-gradient(circle at 35% 30%,#fff,#cfc8b6)}.pzMb i.b:after{background:radial-gradient(circle at 35% 30%,#666,#111)}.pzMb i.k:after{box-shadow:inset 0 0 0 2px #e3b21c}' +
+      '.pzCk{background:#161a3a;border-radius:16px;padding:12px;margin-bottom:12px}.pzCk small{display:block;opacity:.75;font-size:12.5px;margin-top:6px}' +
+      '.pzCkI{background:#161a3a;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:11px 12px;margin-bottom:9px}.pzCkI .t{display:flex;gap:8px;align-items:flex-start}.pzCkI .t b{flex:1;font-size:14.5px}.pzCkI .t span{font-size:11px;font-weight:800;border-radius:8px;padding:3px 7px;white-space:nowrap}' +
+      '.pzCkI small{display:block;opacity:.6;font-size:12px;margin:2px 0 4px}.pzCkI p{margin:3px 0;font-size:13px;opacity:.9}.pzCkI .a{display:flex;gap:6px;margin-top:8px}.pzCkI .a button{flex:1;border:0;border-radius:10px;padding:9px 4px;background:#262b66;color:#fff;font-weight:700;font-size:13px;font-family:inherit}.pzCkI .a .del{background:#7f1d1d}' +
       '#pzSh{position:fixed;inset:0;z-index:100010}#pzSh .pzShB{position:absolute;inset:0;background:rgba(0,0,0,.55)}#pzSh .pzShC{position:absolute;left:0;right:0;bottom:0;background:#161a3a;border-radius:20px 20px 0 0;padding:14px 14px calc(18px + env(safe-area-inset-bottom,0px));color:#fff;text-align:left}' +
       '#pzSh h4{margin:0 0 10px;font-size:15px;opacity:.8}#pzSh button{display:block;width:100%;text-align:left;border:0;padding:13px 12px;border-radius:12px;background:#1d2250;color:#fff;margin-bottom:7px;font-size:15px;font-family:inherit}#pzSh .del{background:#3b0d18;color:#fca5a5}';
     document.head.appendChild(c);
@@ -1206,11 +1254,12 @@
       h += '<div style="margin:4px 0 8px;opacity:.75">' + (_i + 1) + ' / ' + _a.length + '</div>';
       if (_a.length > 1 && !(_day && _i >= _a.length - 1) && window.__pzMapKey !== '') h += done ? ('<div style="text-align:center"><span class="pzWrap"><span class="pzO">' + [0,1,2,3,4,5,6,7].map(function (k) { return '<i style="animation-delay:-' + (k * 0.375) + 's"></i>'; }).join('') + '</span><button id="pzNext" class="pzBig" style="' + BS + '">➡️ Keyingi masala</button></span></div>') : '<button id="pzNext" style="' + BG + '">➡️ Keyingi</button>';
       if (_i > 0) h += '<button id="pzPrev" style="' + BG + '">⬅️ Oldingi</button>';
-      h += '<button id="pzR" style="' + BG + '">🔄 Qayta</button><button id="pzH" style="' + BS + '">💡 Ko‘rsatma</button>';
+      h += '<button id="pzR" style="' + BG + '">🔄 Qayta</button><button id="pzH" style="' + BS + '">💡 Ko‘rsatma</button><button id="pzXR" style="' + BG + '">Xato bor</button>';
       if (S.link) h += '<button id="pzS" style="' + BS + '">📤 Yuborish</button>'; if (S.admin && !p.et) h += '<button id="pzE" style="' + BS + '">🛠 Tahrirlash</button>'; if (S.admin && !p.et) h += '<button id="pzN" style="' + BG + '">✏️ Nomi</button>'; if (S.admin && !p.et) h += '<button id="pzD" style="' + BG + '">🗑 O‘chirish</button>'; if (S.admin && !p.et) h += '<button id="pzQz" style="' + BG + (qzIn(p.id) ? ';background:#2b8a3e' : '') + '">' + (qzIn(p.id) ? 'Viktorinada' : 'Viktorinaga') + '</button>'; if (S.admin) h += '<button id="pzRl" style="' + BG + '">🎬 Reel' + ((S.reels || []).indexOf(p.id) >= 0 ? ' ✓' : '') + '</button>';
       ov.innerHTML = h;
-      on('#pzBack', function () { dayIds = null; list(); });
+      on('#pzBack', function () { dayIds = null; if (window.__pzChkBack) { window.__pzChkBack = 0; return pzChkView(); } list(); });
       on('#pzDayEnd', function () { dayIds = null; close(); if (window.dqOpen) window.dqOpen(); });
+      on('#pzXR', function () { pzReport(p); });
       on('#pzPrev', function () { var a = sibs(), i = a.findIndex(function (x) { return x.id === p.id; }); if (i > 0) play(a[i - 1]); });
       on('#pzNext', goNext);
       on('#pzR', function () { play(p); });
