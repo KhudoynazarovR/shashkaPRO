@@ -229,7 +229,7 @@
     '@media (prefers-reduced-motion:reduce){.pzA *{animation:none!important}}';
   function heroCss() { if (document.getElementById('pzHeroCss2')) return; var st = document.createElement('style'); st.id = 'pzHeroCss2'; st.textContent = HCSS; document.head.appendChild(st); }
   var HS = { av: '', n: 0, save: null };
-  function heroAv() { var x = HMAP[HS.av]; return x && HS.n >= x[2] ? HS.av : 'b0'; }
+  function heroAv() { var x = HMAP[HS.av]; return x && HS.n >= x[2] ? HS.av : 'g0'; }
   function setHero(av, n, save) { HS.av = av || ''; HS.n = n || 0; HS.save = save; }
   function picker(onDone) {
     heroCss();
