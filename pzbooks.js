@@ -21,7 +21,8 @@ function build() {
   const s = [], m = [];
   L.forEach((p, i) => {
     if (bad[p.id] && bad[p.id].st === 'err') return;
-    if (/Tahlil/i.test(p.folder || '')) return;   // o'yin tahlili pozitsiyalari — masala emas
+    if (/Tahlil|lektsiyalari 2: Endshpil/i.test(p.folder || '')) return;   // darslik pozitsiyalari (tahlil, endshpil darslari) — masala emas
+    if (p.side === 'b') return;   // kitoblarda faqat «Oq yuradi» masalalari
     if (odd(p.board)) return;
     const sol = (p.sols && p.sols[0]) || p.sol; if (!Array.isArray(sol) || !sol.length) return;
     const mk = p.id + ':' + JSON.stringify(sol).length + ':' + sol[0].join('');
