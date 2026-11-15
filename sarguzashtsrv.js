@@ -200,7 +200,7 @@ function handle(req, res, p, h) {
       if (!/^-?\d{5,20}$/.test(chat) && !/^@[A-Za-z0-9_]{4,64}$/.test(chat)) return h.send(res, 400, { error: 'Guruh link yoki ID noto‘g‘ri' });
       const link = (process.env.TG_APP_LINK || process.env.APP_LINK || 'https://t.me/DraughtsPRObot/play').replace(/\/$/, '');
       const text = 'Yangi sarguzasht xaritasi!\nHar kitob — alohida o‘lka, har 10 masala — bekat, oxirida qal‘a sinovi.\nSandiqlar, savollar va tangalar kutmoqda.';
-      require('./gcard.js').tg('sendMessage', { chat_id: chat, text, reply_markup: { inline_keyboard: [[{ text: 'Xaritani ochish', url: link }]] } })
+      require('./gcard.js').tg('sendMessage', { chat_id: chat, text, reply_markup: { inline_keyboard: [[{ text: 'Xaritani ochish', url: link + '?startapp=adv' }]] } })
         .then(r => h.send(res, 200, { ok: !!(r && r.ok), err: r && !r.ok ? (r.description || '') : '' }))
         .catch(() => h.send(res, 500, { error: 'Yuborilmadi' }));
       return true;
