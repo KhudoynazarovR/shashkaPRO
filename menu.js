@@ -815,7 +815,7 @@
     S.list.forEach(function (p) { by[p.id] = p; });
     var mk = function (kind, i, ids, title) {
       var arr = ids.map(function (id) { return by[id]; }).filter(Boolean);
-      return { key: kind + i, kind: kind, n: i + 1, title: title, from: i * 100 + 1, arr: arr };
+      return { key: kind + i, kind: kind, n: i + 1, title: title, from: 1, arr: arr };
     };
     (B.s || []).forEach(function (ids, i) { out.s.push(mk('s', i, ids, 'Sodda · ' + (i + 1) + '-kitob')); });
     (B.m || []).forEach(function (ids, i) { out.m.push(mk('m', i, ids, 'Murakkab · ' + (i + 1) + '-kitob')); });
@@ -851,7 +851,7 @@
     return '<div class="pzBk" data-bk="' + b.key + '">' + (cov ? '<img src="/api/pzbook/cov?k=' + b.key + '&v=' + cov + '" alt="">' : natSvg(seed, b.key)) + (done ? '<span class="rib"></span>' : '') +
       '<div class="fr"></div><div class="tt">' + (b.kind === 'e' ? (function () { var pt = b.title.split(' · '); return '<small>' + esc(pt.length > 1 ? pt[0].toUpperCase() : 'ETYUD') + '</small><span class="sm">' + esc(pt.length > 1 ? pt.slice(1).join(' · ') : b.title) + '</span>'; })() : '<small>' + (b.kind === 's' ? 'SODDA' : 'MURAKKAB') + '</small><span>' + b.n + '-kitob</span>') + '</div>' +
       (S.admin ? '<button class="mo" data-bm="' + b.key + '">⋯</button>' : '') +
-      '<div class="pl"><b>' + (b.kind === 'e' ? n + ' ta etyud' : b.from + '–' + (b.from + n - 1)) + '</b><i><u style="width:' + (n ? Math.round(d / n * 100) : 0) + '%"></u></i><small>' + (done ? 'Tugatilgan' : d + ' / ' + n) + '</small></div></div>';
+      '<div class="pl"><b>' + n + (b.kind === 'e' ? ' ta etyud' : ' ta masala') + '</b><i><u style="width:' + (n ? Math.round(d / n * 100) : 0) + '%"></u></i><small>' + (done ? 'Tugatilgan' : d + ' / ' + n) + '</small></div></div>';
   }
   // kitob ichi: mundarija (raqamlar to'ri)
   function bookView(b) {
@@ -1344,8 +1344,9 @@
       var tg2 = [];
       if (sel) tg2 = legal(g.b, g.side, g.forced).filter(function (s) { return s.f[0] === sel[0] && s.f[1] === sel[1]; }).map(function (s) { return s.t; });
       if (!document.getElementById('pzCss')) { var _st = document.createElement('style'); _st.id = 'pzCss'; _st.textContent = '.pzWrap{position:relative;display:inline-block;margin:18px 0 10px}.pzBig{position:relative;font-size:21px!important;padding:18px 38px!important;border-radius:18px!important;font-weight:700;animation:pzGlow 1.5s ease-in-out infinite}.pzO{position:absolute;left:0;right:0;top:0;bottom:0;pointer-events:none;transform:scaleY(.5)}.pzO i{position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:#ffd86b;box-shadow:0 0 8px #ffd86b;animation:pzOrb 3s linear infinite}@keyframes pzOrb{from{transform:rotate(0deg) translateX(125px)}to{transform:rotate(360deg) translateX(125px)}}@keyframes pzGlow{0%,100%{box-shadow:0 0 14px #6b5cf0}50%{box-shadow:0 0 34px #a99bff}}'; document.head.appendChild(_st); }
-      var h = head('🧩 ' + esc(p.title));
-      h += '<div style="margin-bottom:8px">' + (p.side === 'w' ? '⚪ Oq yuradi' : '⚫ Qora yuradi') + ' · ' + LV[p.level] + (multi ? ' · 🔀 ' + nDone() + ' / ' + lines.length + ' variant' : '') + '</div>' + '<div id="pzTm" style="font-size:20px;font-weight:bold;margin-bottom:6px">' + tmText() + '</div>';
+      var _bi = curBook ? curBook.arr.findIndex(function (x) { return x.id === p.id; }) : -1;   // kitobda: nom ham kitob raqami bilan
+      var h = head('🧩 ' + (_bi >= 0 ? (curBook.kind === 'e' ? esc(curBook.title) : curBook.n + '-kitob') + ' · ' + (_bi + 1) + '-masala' : esc(p.title)));
+      h += '<div style="margin-bottom:8px">' + (p.side === 'w' ? '⚪ Oq yuradi' : '⚫ Qora yuradi') + ' · ' + (_bi >= 0 && curBook.kind !== 'e' ? (curBook.kind === 's' ? 'Sodda' : 'Murakkab') : LV[p.level]) + (multi ? ' · 🔀 ' + nDone() + ' / ' + lines.length + ' variant' : '') + '</div>' + '<div id="pzTm" style="font-size:20px;font-weight:bold;margin-bottom:6px">' + tmText() + '</div>';
       h += boardHtml(g.b, { sel: sel, hl: tg2 });
       h += '<div style="min-height:28px;margin:10px 0;font-size:16px">' + msg + '</div>';
       var _a = sibs(), _i = _a.findIndex(function (x) { return x.id === p.id; }), _day = isDay();
