@@ -701,18 +701,41 @@
     if (window.__pzPF) { var _pf = window.__pzPF; window.__pzPF = ''; if ((S.folders || []).indexOf(_pf) >= 0) { curFo = _pf; curLv = 0; } }
     if (curFo && (S.folders || []).indexOf(curFo) < 0) curFo = '';
     if (curLv || curFo) return items();
-    var fl = S.folders || [], h = head(view === 'custom' ? '🎨 Maxsus masalalar' : view === 'map' ? '🗺 Xarita' : '🧩 Masalalar', topBtns()); if (view === 'map') h += '<div style="font-weight:800;font-size:18px;margin:2px 0 6px">🗺 ' + MAINF + '</div>' + pzMap(mainOrder(), '');
-    var _mapV = view === 'map';   // xarita alohida sahifa: unda papkalar yo'q
-    if (S.admin && !_mapV) h += '<div style="margin-bottom:10px"><button id="pzNF" style="' + BG + '">📁 Yangi papka</button>' + (fl.filter(mgOk).length >= 2 ? '<button id="pzMG" style="' + BG + (MG.on ? ';background:#7c3aed' : '') + '">🔗 Birlashtirish</button>' : '') + '</div>';
-    if (!S.list.length && !fl.length) h += '<div style="padding:30px;opacity:.7">Hozircha masala yo‘q</div>';
-    if (!_mapV) [1, 2, 3].forEach(function (lv) {
-      var arr = S.list.filter(function (p) { return lvOf(p) === lv && !foOf(p); }); if (!arr.length && (S.hideLv || []).indexOf(lv) >= 0) return;
-      h += '<div data-lv="' + lv + '" style="' + CARD + '">' + (S.admin && !arr.length ? '<button data-hl="' + lv + '" style="float:right;background:#262b5a;color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">🗑</button>' : '') + '<b style="font-size:17px">📁 ' + LV[lv] + '</b><div style="font-size:12px;opacity:.65;margin-top:4px">' + arr.length + ' ta masala · ✅ ' + nDone(arr) + '/' + arr.length + '</div></div>';
-    });
-    if (!_mapV) fl.forEach(function (f, i) {
-      var arr = S.list.filter(function (p) { return foOf(p) === f; });
-      h += '<div data-fo="' + i + '" style="' + CARD + '">' + (S.admin && f.indexOf('Etyudlar · ') !== 0 && f.indexOf('Ustyanov · ') !== 0 && f.indexOf('Malamed') !== 0 ? '<span style="float:right"><button data-ch="' + i + '" title="Kanal masalalari shu papkadan" style="background:' + ((S.chanFolders || []).indexOf(f) >= 0 ? '#2563eb' : '#262b5a') + ';color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">📣</button> <button data-dy="' + i + '" title="Kunlik 5 ta masala shu papkadan" style="background:' + (S.dayFolder === f ? '#16a34a' : '#262b5a') + ';color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">📅</button> <button data-rf="' + i + '" style="background:#262b5a;color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">✏️</button> <button data-df="' + i + '" style="background:#262b5a;color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">🗑</button></span>' : '') + '<b style="font-size:17px">📁 ' + esc(f) + '</b>' + (S.dayFolder === f ? ' <span style="font-size:12px;background:#16a34a;border-radius:8px;padding:2px 7px;vertical-align:middle">📅 Kunlik</span>' : '') + (S.admin && (S.chanFolders || []).indexOf(f) >= 0 ? ' <span style="font-size:12px;background:#2563eb;border-radius:8px;padding:2px 7px;vertical-align:middle">📣 Kanal</span>' : '') + '<div style="font-size:12px;opacity:.65;margin-top:4px">' + arr.length + ' ta masala · ✅ ' + nDone(arr) + '/' + arr.length + '</div></div>';
-    });
+    var fl = S.folders || [], _mapV = view === 'map', h;
+    if (_mapV) {
+      h = head(view === 'custom' ? '🎨 Maxsus masalalar' : '🗺 Xarita', topBtns()) + '<div style="font-weight:800;font-size:18px;margin:2px 0 6px">🗺 ' + MAINF + '</div>' + pzMap(mainOrder(), '');
+    } else {
+      // ---- yangi ko'rinish: sarlavha, «Davom ettirish», rasmli to'plamlar (2 ustun)
+      pzCss();
+      var mix = S.list.filter(function (p) { return !foOf(p); }), all = [];
+      fl.forEach(function (f, i) { all.push({ f: f, i: i, arr: S.list.filter(function (p) { return foOf(p) === f; }) }); });
+      if (mix.length) all.push({ f: '', i: -1, arr: mix });
+      all = all.filter(function (x) { return x.arr.length || S.admin; });
+      var solvedN = (S.solved || []).length;
+      h = '<div class="pzN"><div class="pzNh"><button id="pzBack" class="pzNb" aria-label="Orqaga">‹</button><div class="pzNt"><b>' + (view === 'custom' ? 'Maxsus masalalar' : 'Masalalar') + '</b><small>' + (S.admin ? S.list.length + ' ta masala · ' + all.length + ' ta to‘plam' : solvedN + ' ta yechildi') + '</small></div></div>' +
+        '<div class="pzNp"><button id="pzTop">TOP</button>' + (S.admin ? '<button id="pzQzP">Viktorina</button><button id="pzPlus" class="pr">+ Yangi</button>' : '') + '</div>';
+      // davom ettirish: boshlangan, tugamagan to'plamdagi birinchi yechilmagan masala
+      var cont = null;
+      all.forEach(function (x) { if (cont) return; var d = nDone(x.arr); if (d > 0 && d < x.arr.length) cont = x; });
+      if (!cont) all.forEach(function (x) { if (!cont && nDone(x.arr) < x.arr.length) cont = x; });
+      if (cont) {
+        var cp = cont.arr.filter(function (p) { return (S.solved || []).indexOf(p.id) < 0; })[0];
+        if (cp) { S._cont = { f: cont.f, p: cp }; h += '<button class="pzNc" id="pzCont">' + pzMini(cp.board, 0, 1) + '<span class="t"><small>DAVOM ETTIRISH</small><b>' + esc(cont.f || 'Aralash masalalar') + '</b><span>' + esc(cp.title || '') + ' · ' + (cp.side === 'w' ? 'Oq yuradi' : 'Qora yuradi') + '</span></span><span class="go">Yechish</span></button>'; }
+      }
+      if (!S.list.length && !fl.length) h += '<div style="padding:30px;opacity:.7">Hozircha masala yo‘q</div>';
+      h += '<div class="pzNs"><span>TO‘PLAMLAR</span><span>' + all.length + ' ta</span></div><div class="pzNg">';
+      var ACC = ['#6b5cf0', '#f59e0b', '#ec4899', '#0ea5e9', '#16a34a', '#a855f7', '#ef4444', '#14b8a6'];
+      all.forEach(function (x, k) {
+        var n = x.arr.length, d = nDone(x.arr), pc = n ? Math.round(d / n * 100) : 0, done = n && d === n, f = x.f;
+        var tags = '';
+        if (S.admin && f && S.dayFolder === f) tags += '<i class="tg2" style="background:#16a34a">Kunlik</i>';
+        if (S.admin && f && (S.chanFolders || []).indexOf(f) >= 0) tags += '<i class="tg2" style="background:#2563eb">Kanal</i>';
+        h += '<div class="pzNf" ' + (x.i >= 0 ? 'data-fo="' + x.i + '"' : 'data-mix="1"') + '><div class="cv">' + (n ? pzMini(x.arr[0].board, k) : '<div class="em">Bo‘sh</div>') + '<em' + (done ? ' class="ok"' : '') + '>' + (done ? 'Tugatilgan' : pc + '%') + '</em>' +
+          (S.admin && f && mgOk(f) ? '<button class="mo" data-mo="' + x.i + '">⋯</button><span style="display:none"><button data-ch="' + x.i + '"></button><button data-dy="' + x.i + '"></button><button data-rf="' + x.i + '"></button><button data-df="' + x.i + '"></button></span>' : '') + (tags ? '<span class="tgs">' + tags + '</span>' : '') + '</div>' +
+          '<div class="bd"><b>' + esc(f || 'Aralash masalalar') + '</b><small><span>' + n + ' ta masala</span><span>' + d + '/' + n + '</span></small><div class="pzbr"><i style="width:' + pc + '%;background:' + (done ? '#16a34a' : ACC[k % ACC.length]) + '"></i></div></div></div>';
+      });
+      h += '</div><div style="height:64px"></div></div>';
+    }
     if (!S.admin) h += '<div style="font-size:11px;opacity:.4;margin-top:16px">ID: ' + esc(S.myId) + '</div>';
     ov.innerHTML = h;
     on('#pzBack', function () { hub = 1; view = ''; list(); }); on('#pzTop', pzTop); on('#pzQzP', qzPanel);
@@ -748,7 +771,66 @@
       e.onclick = function () { curFo = (S.folders || [])[Number(e.getAttribute('data-fo'))] || ''; curLv = 0; list(); };
     });
     on('#pzMG', function () { MG.on = !MG.on; MG.sel = []; list(); });
+    Array.prototype.forEach.call(ov.querySelectorAll('[data-mix]'), function (e) { e.onclick = function () { curLv = 9; curFo = ''; list(); }; });
+    on('#pzCont', function () {
+      var c = S._cont; if (!c) return;
+      if (c.f) { curFo = c.f; curLv = 0; } else { curLv = 9; curFo = ''; }
+      list(); var el = ov.querySelector('[data-i="' + S.list.indexOf(c.p) + '"]'); if (el) el.click(); else play(c.p);
+    });
+    on('#pzPlus', function () {
+      pzSheet('Yangi', [['Yangi masala', function () { newPz(0, ''); }], ['Yangi papka', function () { var n = cleanName(prompt('Yangi papka nomi:')); if (n) api('/api/puzzle/folder', { name: n }).then(function () { load(); }); }]]
+        .concat(fl.filter(mgOk).length >= 2 ? [['Papkalarni birlashtirish', function () { MG.on = true; MG.sel = []; list(); }]] : []));
+    });
+    Array.prototype.forEach.call(ov.querySelectorAll('[data-mo]'), function (e) {
+      e.onclick = function (ev) {
+        ev.stopPropagation(); var i = Number(e.getAttribute('data-mo')), f = fl[i], q = function (a) { var b = ov.querySelector('[data-' + a + '="' + i + '"]'); if (b) b.click(); };
+        pzSheet(f, [
+          [((S.chanFolders || []).indexOf(f) >= 0 ? 'Kanaldan olib tashlash' : 'Kanalga yuborish'), function () { q('ch'); }],
+          [(S.dayFolder === f ? 'Kunlik rejadan olib tashlash' : 'Kunlik rejaga qo‘shish'), function () { q('dy'); }],
+          ['Nomini o‘zgartirish', function () { q('rf'); }],
+          ['Boshqa papka bilan birlashtirish', function () { MG.on = true; MG.sel = [f]; list(); }],
+          ['O‘chirish', function () { q('df'); }, 1]
+        ]);
+      };
+    });
     mgUi(fl);
+  }
+  // pastdan chiqadigan tanlov menyusi
+  function pzSheet(title, items) {
+    var o = document.createElement('div'); o.id = 'pzSh';
+    o.innerHTML = '<div class="pzShB"></div><div class="pzShC"><h4>' + esc(title) + '</h4>' + items.map(function (it, k) { return '<button data-k="' + k + '"' + (it[2] ? ' class="del"' : '') + '>' + esc(it[0]) + '</button>'; }).join('') + '</div>';
+    document.body.appendChild(o);
+    o.querySelector('.pzShB').onclick = function () { o.remove(); };
+    Array.prototype.forEach.call(o.querySelectorAll('[data-k]'), function (b) { b.onclick = function () { o.remove(); items[+b.getAttribute('data-k')][1](); }; });
+  }
+  // kichik doska rasmi (papka muqovasi)
+  var PZTH = [['#EFD9B1', '#B58863'], ['#F1D5CC', '#B5685D'], ['#FFFFDD', '#86A666'], ['#E3DAEE', '#8B72B5'], ['#DEE3E6', '#8CA2AD'], ['#D5F0EC', '#4A9A93']];
+  function pzMini(b, k, sm) {
+    var t = PZTH[k % PZTH.length], h = '<div class="pzMb' + (sm ? ' sm' : '') + '">';
+    for (var r = 0; r < 8; r++) for (var c = 0; c < 8; c++) { var d = (r + c) % 2, v = b && b[r] ? b[r][c] : 0; h += '<i class="' + (v === 1 ? 'w' : v === 2 ? 'b' : v === 3 ? 'w k' : v === 4 ? 'b k' : '') + '" style="background:' + (d ? t[1] : t[0]) + '"></i>'; }
+    return h + '</div>';
+  }
+  function pzCss() {
+    if (document.getElementById('pzNCss')) return;
+    var c = document.createElement('style'); c.id = 'pzNCss';
+    c.textContent = '#spPz .pzN{text-align:left;margin:-14px;padding:14px;min-height:100%;background:radial-gradient(120% 50% at 50% -10%,#2a2470 0,#0b0e1a 60%)}' +
+      '.pzNh{display:flex;align-items:center;gap:10px;margin:2px 0 10px}.pzNb{width:40px;height:40px;flex:none;border:0;border-radius:12px;background:rgba(255,255,255,.08);color:#fff;font-size:22px}.pzNt b{display:block;font-size:23px}.pzNt small{display:block;opacity:.65;font-size:12.5px;margin-top:2px}' +
+      '.pzNp{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.pzNp button{border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:8px 14px;background:rgba(255,255,255,.08);color:#fff;font-weight:700;font-size:13.5px}.pzNp .pr{background:#6b5cf0;border-color:#6b5cf0}' +
+      '.pzNc{width:100%;border:0;color:#fff;text-align:left;display:flex;gap:12px;align-items:center;border-radius:20px;padding:12px;margin-bottom:16px;background:linear-gradient(135deg,#6b5cf0,#a855f7 60%,#ec4899);box-shadow:0 10px 26px rgba(107,92,240,.35);font-family:inherit}' +
+      '.pzNc .t{flex:1;min-width:0}.pzNc small{display:block;font-size:11px;letter-spacing:1px;opacity:.85;font-weight:800}.pzNc b{display:block;font-size:16px;margin:3px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pzNc .t>span{font-size:12.5px;opacity:.9}.pzNc .go{background:#fff;color:#5b21b6;border-radius:14px;padding:10px 13px;font-weight:900;font-size:14px;flex:none}' +
+      '.pzNs{display:flex;justify-content:space-between;font-size:12px;letter-spacing:1.2px;font-weight:800;color:#a9a4d8;margin:2px 2px 9px}' +
+      '.pzNg{display:grid;grid-template-columns:1fr 1fr;gap:11px}.pzNf{border-radius:18px;background:#161a3a;border:1px solid rgba(255,255,255,.07);overflow:hidden;cursor:pointer;position:relative}' +
+      '.pzNf .cv{padding:9px 9px 7px;position:relative}.pzNf .cv em{position:absolute;right:15px;top:15px;font-style:normal;font-size:11px;font-weight:900;padding:3px 7px;border-radius:8px;background:rgba(0,0,0,.6);color:#fff}.pzNf .cv em.ok{background:#16a34a}' +
+      '.pzNf .em{aspect-ratio:1;border-radius:10px;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;opacity:.6}' +
+      '.pzNf .mo{position:absolute;left:15px;top:15px;width:32px;height:28px;border:0;border-radius:9px;background:rgba(0,0,0,.6);color:#fff;font-weight:900;font-size:16px;line-height:1}' +
+      '.pzNf .tgs{position:absolute;left:15px;bottom:13px;display:flex;gap:4px}.pzNf .tg2{font-style:normal;font-size:10.5px;font-weight:800;border-radius:7px;padding:2px 6px;color:#fff}' +
+      '.pzNf .bd{padding:2px 11px 11px}.pzNf .bd b{display:block;font-size:14px;line-height:1.25;min-height:35px;word-break:break-word}.pzNf .bd small{display:flex;justify-content:space-between;opacity:.75;font-size:12px;margin:5px 0 6px}' +
+      '.pzNf .pzbr{height:6px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden}.pzNf .pzbr i{display:block;height:100%;border-radius:3px}' +
+      '.pzMb::before,.pzMb::after{content:none!important;display:none!important}.pzMb{display:grid;width:100%;grid-template-columns:repeat(8,minmax(0,1fr));border-radius:10px;overflow:hidden;box-shadow:0 6px 14px rgba(0,0,0,.4)}.pzMb.sm{width:78px!important;flex:none;border-radius:8px}' +
+      '.pzMb i{aspect-ratio:1;position:relative;display:block;min-width:0;width:auto;height:auto;margin:0;padding:0;font-size:0;border:0}.pzMb i.w:after,.pzMb i.b:after{content:"";position:absolute;inset:13%;border-radius:50%}.pzMb i.w:after{background:radial-gradient(circle at 35% 30%,#fff,#cfc8b6)}.pzMb i.b:after{background:radial-gradient(circle at 35% 30%,#666,#111)}.pzMb i.k:after{box-shadow:inset 0 0 0 2px #e3b21c}' +
+      '#pzSh{position:fixed;inset:0;z-index:100010}#pzSh .pzShB{position:absolute;inset:0;background:rgba(0,0,0,.55)}#pzSh .pzShC{position:absolute;left:0;right:0;bottom:0;background:#161a3a;border-radius:20px 20px 0 0;padding:14px 14px calc(18px + env(safe-area-inset-bottom,0px));color:#fff;text-align:left}' +
+      '#pzSh h4{margin:0 0 10px;font-size:15px;opacity:.8}#pzSh button{display:block;width:100%;text-align:left;border:0;padding:13px 12px;border-radius:12px;background:#1d2250;color:#fff;margin-bottom:7px;font-size:15px;font-family:inherit}#pzSh .del{background:#3b0d18;color:#fca5a5}';
+    document.head.appendChild(c);
   }
   // ---- admin: 🔗 papkalarni birlashtirish (belgilangan papkalardagi masalalar bitta papkaga, tartib bilan qayta raqamlanadi)
   var MG = { on: false, sel: [] };
@@ -806,7 +888,7 @@
         rn.disabled = true; rn.textContent = '⏳';
         api('/api/puzzle/renum', { folder: curFo || '', level: curLv || 1 }).then(function () { load(); }).catch(function () { rn.disabled = false; rn.textContent = '🔢 Raqamlash'; });
       };
-      row.parentNode.appendChild(rn);
+      if (curLv !== 9) row.parentNode.appendChild(rn);   // aralashda (turli qiyinlik) raqamlash yo'q
     }
     if (!bulk.on) return;
     var cards = ov.querySelectorAll('[data-i]');
@@ -858,12 +940,12 @@
   function items() { window.__pzMapKey = undefined; window.pzLeft = window.pzLeft || function (ms) { var d = Math.floor(ms / 864e5), hh = Math.floor(ms % 864e5 / 36e5); return d > 0 ? d + ' kun ' + hh + ' soat' : Math.max(1, hh) + ' soat'; }; if (!document.getElementById('pzCss2')) { var _s2 = document.createElement('style'); _s2.id = 'pzCss2'; _s2.textContent = '.pzSpW{position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;transform:scaleY(.7)}.pzSpW i{position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;background:#fff3c4;border-radius:50%;box-shadow:0 0 10px 4px #ffd86b;opacity:0;animation:pzSp 3.2s ease-in-out infinite both}@keyframes pzSp{0%{transform:rotate(var(--a)) translateX(var(--r)) scale(.3);opacity:0}20%{opacity:1}80%{opacity:1}100%{transform:rotate(calc(var(--a) + 360deg)) translateX(var(--r)) scale(.3);opacity:0}}.pzStars{position:fixed;left:0;top:0;right:0;bottom:0;pointer-events:none;z-index:1}.pzStars i{position:absolute;width:3px;height:3px;border-radius:50%;background:#ffe9a0;box-shadow:0 0 6px 1px #ffd86b;opacity:0;animation:pzTw 3s ease-in-out infinite}@keyframes pzTw{0%,100%{opacity:0;transform:translateY(0) scale(.5)}50%{opacity:.9;transform:translateY(-14px) scale(1.2)}}.pzBfs{position:fixed;left:0;top:0;right:0;bottom:0;pointer-events:none;z-index:1;overflow:hidden}.pzBf{position:absolute;line-height:1;animation:pzFly 18s ease-in-out infinite}.pzBf b{display:inline-block;font-weight:normal;animation:pzFlap .4s ease-in-out infinite alternate}@keyframes pzFly{0%,100%{transform:translate(0,0) rotate(-8deg)}25%{transform:translate(var(--x1),var(--y1)) rotate(14deg)}50%{transform:translate(var(--x2),var(--y2)) rotate(-10deg)}75%{transform:translate(var(--x3),var(--y3)) rotate(12deg)}}@keyframes pzFlap{from{transform:scaleX(1)}to{transform:scaleX(.3)}}@media (prefers-reduced-motion:reduce){.pzSpW,.pzStars,.pzBfs{display:none}}'; document.head.appendChild(_s2); }
     var h = head('🧩 Masalalar', '<button id="pzTop" style="' + BG + '">🏆 TOP</button>'), shown = 0;
     var _sp2 = ''; if (curFo && !curLv) { for (var _k = 0; _k < 18; _k++) _sp2 += '<i style="--a:' + (_k * 20) + 'deg;--r:' + (60 + (_k % 3) * 28) + 'px;animation-delay:' + (_k * 0.18) + 's"></i>'; _sp2 = '<span class="pzSpW">' + _sp2 + '</span>'; }
-    h += '<div style="margin:6px 0 12px;font-weight:bold;position:relative;display:inline-block;padding:4px 14px">' + (curLv ? LV[curLv] : '📁 ' + esc(curFo)) + _sp2 + '</div>';
+    h += '<div style="margin:6px 0 12px;font-weight:bold;position:relative;display:inline-block;padding:4px 14px">' + (curLv === 9 ? 'Aralash masalalar' : curLv ? LV[curLv] : '📁 ' + esc(curFo)) + _sp2 + '</div>';
     if (curFo && !curLv) h += '<div style="margin-bottom:12px">' + (S.link ? '<button id="pzShF" style="' + BS + '">🔗 Guruhga yuborish</button>' : '') + '<button id="pzHall" style="' + BG + '">🎮 O‘yin zaliga</button><button id="pzRk" style="' + BG + '">🏅 Unvonlar</button></div>';
     if (curFo && !curLv && S.promo && Date.now() < S.promo) h += '<div style="font-size:13px;margin:-4px 0 12px;padding:8px 10px;border-radius:10px;background:#2a2560">🎁 Aksiya (' + window.pzLeft(S.promo - Date.now()) + ' qoldi): havolangiz orqali kirgan har bir yangi o‘yinchi masala yechsa, sizga +100 🪙' + (S.inv ? '<br>👥 Taklif qilinganlar: ' + S.inv.total : '') + '</div>';
     if (S.admin) h += '<div style="margin-bottom:12px"><button id="pzAdd" style="' + BS + '">➕ Masala</button>' + (curFo ? '<button id="pzRF" style="' + BG + '">✏️ Nomi</button><button id="pzDF" style="' + BG + '">🗑 Papkani o‘chirish</button>' : '') + '</div>';
     S.list.forEach(function (p, i) {
-      if (curLv ? (lvOf(p) !== curLv || foOf(p)) : foOf(p) !== curFo) return;
+      if (curLv === 9 ? foOf(p) : curLv ? (lvOf(p) !== curLv || foOf(p)) : foOf(p) !== curFo) return;
       shown++;
       var ok = (S.solved || []).indexOf(p.id) >= 0;
       h += '<div data-i="' + i + '" style="' + CARD + '">' + (S.admin ? '<button data-mv="' + i + '" style="float:right;background:#262b5a;color:#fff;border:0;border-radius:8px;padding:4px 8px;font-size:14px">📁</button>' : '') + '<b>' + (ok ? '✅ ' : '') + esc(p.title) + (S.admin && (S.reels || []).indexOf(p.id) >= 0 ? ' 🎬' : '') + '</b><div style="font-size:12px;opacity:.65;margin-top:4px">' + LV[lvOf(p)] + ' · 👥 ' + (p.cnt || 0) + ' · ' + (p.side === 'w' ? '⚪ Oq yuradi' : '⚫ Qora yuradi') + (p.author ? ' · ✍️ ' + esc(p.author) : '') + '</div></div>';
@@ -943,7 +1025,7 @@
         }
       });
     })();
-    on('#pzAdd', function () { newPz(curLv, curLv ? '' : curFo); });
+    on('#pzAdd', function () { newPz(curLv === 9 ? 0 : curLv, curLv ? '' : curFo); });
     function rankDlg() {
       var t = (S.inv && S.inv.total) || 0, RK = S.ranks || [], cur = null, nxt = null;
       RK.forEach(function (r) { if (t >= r.n) cur = r; else if (!nxt) nxt = r; });
