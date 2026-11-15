@@ -268,7 +268,7 @@
       h += '<div class="pzZone" style="aspect-ratio:' + cfg.w + '/' + cfg.h + ';background-image:url(\'' + cfg.u + '\')"><span class="pzZt">' + (z + 1) + '/' + NZ + '-bosqich</span>';
       for (var k = 0; k < PER; k++) {
         var j = z * PER + k; if (j >= n) break;
-        var p = cfg.pts[k] || GEN[k], done = items[j].done, now = j === cu, lock = j > cu + 3;
+        var p = cfg.pts[k] || GEN[k], done = items[j].done, now = j === cu, lock = !admin && j > cu && !done;
         var cls = done ? 'd' : now ? 'c' : lock ? 'l' : 'o';
         var lab = done ? '<small>✓</small>' + (j + 1) : now ? '<small>👑</small>' + (j + 1) : lock ? '🔒' : (j + 1);
         h += '<button class="pzN ' + cls + '" data-node="' + j + '" ' + (lock ? 'disabled' : 'data-pz="' + items[j].i + '"') + ' style="left:' + p[0] + '%;top:' + p[1] + '%">' + lab + '</button>';
