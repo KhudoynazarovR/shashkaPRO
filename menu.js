@@ -1272,33 +1272,59 @@
     // ♔ etyud: har bir variant (qoraning har xil himoyasi) alohida yechiladi — hammasi tugagach "yechildi"
     var multi = !!p.et && lines.length > 1, doneL = {}, hist = [];
     // kitobdan tashqari (lekin to'g'ri) yo'l: server baza/dvigatel bilan tekshiradi, qora javobini ham o'sha beradi
-    var free = false, fst = null, fn = 0;
+    var free = false, fst = null, fn = 0, ext = false;
+    // 🧩 chala kombinatsiya: kitob masalasida yechim tugagach, o'yinchi donalarni urib olguncha davom etadi (server: pzext.js)
+    var extOk = !p.et && curBook && curBook.kind !== 'e' && curBook.arr.some(function (x) { return x.id === p.id; }) && (p.goal || 'win') !== 'draw' && !/^Petrova/.test(p.folder || '');   // Petrova — qadamma-qadam endshpil darslari, kombinatsiya emas
+    function matN(b, sd) { var n = 0; for (var r = 0; r < 8; r++) for (var c = 0; c < 8; c++) { var v = b[r][c]; if (sideOf(v) === sd && !(b.dead || []).some(function (x) { return x[0] === r && x[1] === c; })) n += v > 2 ? 2 : 1; } return n; }
+    var OPP = p.side === 'w' ? 'b' : 'w';
+    function took() { return { got: matN(p.board, OPP) - matN(g.b, OPP), gave: matN(p.board, p.side) - matN(g.b, p.side) }; }
+    function combDone() {
+      if (!matN(g.b, OPP)) return true;
+      var t = took(), lg = legal(g.b, g.side, g.forced), cap = lg.some(function (s) { return !!s.x; });
+      return t.got - t.gave >= 1 && !cap;
+    }
+    function extMsg(pre) { var t = took(); return (pre ? pre + ' · ' : '') + 'Olingan: ' + t.got + ' · berilgan: ' + t.gave; }
+    function extStart() {
+      ext = true; free = true; fn = 0;
+      msg = '✅ Kombinatsiya to‘g‘ri! Endi uni oxiriga yetkazing — donalarni urib oling (raqib: King Kong) · ' + extMsg(); draw();
+      if (g.side === p.side) return;
+      busy = true; var mt = myT;
+      fetch('/api/pzext/judge', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-init-data': (tg && tg.initData) || '' }, body: JSON.stringify({ id: p.id, mode: 'start', b: to64(g.b) }) })
+        .then(function (r) { return r.json(); }).catch(function () { return null; }).then(function (d) {
+          if (mt !== window.__pzTok) return;
+          if (!d || !d.keep) { busy = false; ext = false; free = false; return freeDone(); }   // server javob bermasa — eskicha yakunlanadi
+          if (d.solved && !d.reply) { busy = false; return freeDone(); }
+          setTimeout(function () { applyReply(d.reply || []); busy = false; if (d.solved || combDone()) return freeDone(); msg = '✅ Kombinatsiya to‘g‘ri! Endi uni oxiriga yetkazing — donalarni urib oling · ' + extMsg(); draw(); }, 450);
+        });
+    }
+    function applyReply(rp) { for (var i = 1; i < rp.length; i++) { var a = rp[i - 1], z = rp[i], s3 = findStep(legal(g.b, g.side, g.forced), [a >> 3, a & 7], [z >> 3, z & 7]); if (!s3) break; g = adv(g, s3); } }
     function to64(b8) { var o = []; for (var r = 0; r < 8; r++) for (var c = 0; c < 8; c++) { var v = b8[r][c]; o.push(v === 1 ? 1 : v === 3 ? 2 : v === 2 ? -1 : v === 4 ? -2 : 0); } return o; }
     function judgeMove() {
       busy = true; sel = null; msg = '⏳ Tekshirilmoqda…'; draw();
       var mt = myT, f0 = fst;
-      fetch('/api/etudes/judge', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-init-data': (tg && tg.initData) || '' }, body: JSON.stringify({ id: p.id, b: to64(f0.b), path: f0.path, n: fn }) })
+      fetch(ext ? '/api/pzext/judge' : '/api/etudes/judge', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-init-data': (tg && tg.initData) || '' }, body: JSON.stringify({ id: p.id, b: to64(f0.b), path: f0.path, n: fn }) })
         .then(function (r) { return r.json(); }).catch(function () { return { keep: false, why: 'net' }; }).then(function (d) {
           if (mt !== window.__pzTok) return;
           fst = null;
           if (!d || !d.keep) {
             g = { b: f0.b, side: p.side, forced: null }; busy = false; errs++; markFail();
             var why = d && d.why;
+            if (ext && why === 'worse') { msg = '❌ Bu yurish kombinatsiyani buzadi — boshqasini sinang (xato: ' + errs + ') · ' + extMsg(); draw(); return; }
             msg = (why === 'busy' || why === 'eng' || why === 'err' || why === 'net') ? '⏳ Tekshirib bo‘lmadi — qaytadan urinib ko‘ring' : '❌ Noto‘g‘ri' + (why === 'loss' ? ' — bu yurishdan keyin oq yutqazadi' : why === 'draw' ? ' — bu yurish faqat durangga olib keladi' : ', boshqa yurishni sinang') + ' (xato: ' + errs + ')';
             draw(); return;
           }
           var was = free; free = true; fn++;
-          if (d.solved) { busy = false; return freeDone(); }
-          msg = was ? '✅ To‘g‘ri' : '✅ To‘g‘ri — kitobdagidan boshqa yo‘l, natija saqlanadi'; draw();
+          if (d.solved && !(ext && d.reply)) { busy = false; return freeDone(); }
+          msg = ext ? extMsg('✅ To‘g‘ri') : was ? '✅ To‘g‘ri' : '✅ To‘g‘ri — kitobdagidan boshqa yo‘l, natija saqlanadi'; draw();
           setTimeout(function () {
             if (mt !== window.__pzTok) return;
             var rp = d.reply || [];
             for (var i = 1; i < rp.length; i++) { var a = rp[i - 1], z = rp[i], s3 = findStep(legal(g.b, g.side, g.forced), [a >> 3, a & 7], [z >> 3, z & 7]); if (!s3) break; g = adv(g, s3); }
-            busy = false; draw();
+            busy = false; if (ext && (d.solved || combDone())) return freeDone(); if (ext) msg = extMsg('✅ To‘g‘ri · sizning navbatingiz'); draw();
           }, 450);
         });
     }
-    function freeDone() { if (alive.length) doneL[alive[0]] = 1; free = false; fn = 0; afterDone(); }
+    function freeDone() { if (alive.length) doneL[alive[0]] = 1; free = false; fn = 0; if (ext) { var t = took(); window.__pzExtMsg = 'Kombinatsiya yakunlandi! ' + t.gave + ' ta berdingiz, ' + t.got + ' ta oldingiz'; } afterDone(); }
     function nDone() { return Object.keys(doneL).length; }
     p.sol = lines[0];
     var g = { b: copy(p.board), side: p.side, forced: null }, idx = 0, sel = null, msg = '', done = false, busy = false;
@@ -1393,7 +1419,7 @@
           draw();
         });
       });
-      on('#pzH', function () { if (free) { msg = '💡 Siz kitobdagidan boshqa yo‘ldasiz — o‘zingiz davom eting yoki «Qayta» bosing'; draw(); return; } if (!done && !busy && g.side === p.side && p.sol[idx]) { hints++; markFail(); sel = [p.sol[idx][0], p.sol[idx][1]]; draw(); } });
+      on('#pzH', function () { if (ext) { msg = '💡 Urish majburiy — urish bo‘lsa uring, bo‘lmasa raqib donalarini olishga yo‘l oching · ' + extMsg(); draw(); return; } if (free) { msg = '💡 Siz kitobdagidan boshqa yo‘ldasiz — o‘zingiz davom eting yoki «Qayta» bosing'; draw(); return; } if (!done && !busy && g.side === p.side && p.sol[idx]) { hints++; markFail(); sel = [p.sol[idx][0], p.sol[idx][1]]; draw(); } });
       on('#pzD', function () {
         if (!confirm('Masala o‘chirilsinmi?')) return;
         api('/api/puzzle/del', { id: p.id }).then(function () { load(); });
@@ -1420,6 +1446,7 @@
       done = true; msg = '🎉 Masala yechildi!'; draw();
       api('/api/puzzle/solved', { id: p.id, time: _el, errs: _er, hints: hints, ref: window.__pzRef || '', refP: window.__pzRefP || '' }).then(function (d) {
         if (d && d.stars) { S.stars = S.stars || {}; S.stars[p.id] = Math.max(S.stars[p.id] || 0, d.stars); msg += ' <span style="color:#fbbf24">' + '★★★'.slice(0, d.stars) + '<span style="opacity:.3">' + '★★★'.slice(d.stars) + '</span></span>'; }
+        if (window.__pzExtMsg) { msg += '<div style="font-size:14px;margin:4px 0;color:#86efac">' + window.__pzExtMsg + '</div>'; window.__pzExtMsg = ''; }
         if (d && d.gain) msg += ' +' + d.gain + ' 🪙'; else if (d && d.noCoin) msg += '<div style="font-size:13px;opacity:.8;margin-top:4px">Xato yoki ko‘rsatma bo‘lgani uchun tanga berilmadi</div>';
         msg += ' · ⏱ ' + _el + ' s · xato: ' + _er;
         if (d && d.best) { S.best = S.best || {}; S.best[p.id] = d.best; msg += ' · 🏅 eng yaxshi: ' + d.best + ' s'; }
@@ -1435,6 +1462,7 @@
       });
     }
     function lineDone() {
+      if (extOk && !ext && !combDone()) return extStart();
       alive.forEach(function (i) { if (lines[i].length === idx) doneL[i] = 1; });
       afterDone();
     }
@@ -1471,7 +1499,7 @@
       if (sel) {
         var st = findStep(lg, sel, [r, c]);
         if (st) {
-          if (p.et && (free || fst)) { if (!fst) fst = { b: copy(g.b), path: [st.f[0] * 8 + st.f[1]] }; g = adv(g, st); fst.path.push(st.t[0] * 8 + st.t[1]); if (g.forced && g.side === p.side) { sel = [g.forced[0], g.forced[1]]; draw(); return; } return judgeMove(); }
+          if ((p.et || ext) && (free || fst)) { if (!fst) fst = { b: copy(g.b), path: [st.f[0] * 8 + st.f[1]] }; g = adv(g, st); fst.path.push(st.t[0] * 8 + st.t[1]); if (g.forced && g.side === p.side) { sel = [g.forced[0], g.forced[1]]; draw(); return; } return judgeMove(); }
           var w = pick(st);
           if (p.et && !(w && w[0] === st.f[0] && w[1] === st.f[1] && w[2] === st.t[0] && w[3] === st.t[1])) { fst = { b: copy(g.b), path: [st.f[0] * 8 + st.f[1]] }; g = adv(g, st); fst.path.push(st.t[0] * 8 + st.t[1]); if (g.forced && g.side === p.side) { sel = [g.forced[0], g.forced[1]]; draw(); return; } return judgeMove(); }
           if (w && w[0] === st.f[0] && w[1] === st.f[1] && w[2] === st.t[0] && w[3] === st.t[1]) {
