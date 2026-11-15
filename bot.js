@@ -294,7 +294,7 @@ async function start() {
   function onMyChat(m) {
     try {
       const ch = m.chat || {};
-      if (ch.type === 'channel') { if (((m.new_chat_member || {}).status) === 'administrator') require('./ref.js').onGroupAdmin(m).catch(e => console.log('[ref] kanal:', e.message)); return; }
+      if (ch.type === 'channel') { if (((m.new_chat_member || {}).status) === 'administrator') require('./ref.js').onGroupAdmin(m).catch(e => console.log('[ref] kanal:', e.message)); else require('./ref.js').onGroupGone(m).catch(e => console.log('[ref] kanal chiq:', e.message)); return; }
       if (ch.type !== 'group' && ch.type !== 'supergroup') return;
       const st = (m.new_chat_member || {}).status;
       const adm = st === 'administrator' || st === 'creator';
@@ -302,6 +302,7 @@ async function start() {
       s.db.groups = s.db.groups || [];
       const id = String(ch.id), i = s.db.groups.findIndex(x => String(x) === id);
       if (adm) require('./ref.js').onGroupAdmin(m).catch(e => console.log('[ref] guruh:', e.message));
+      else require('./ref.js').onGroupGone(m).catch(e => console.log('[ref] guruh chiq:', e.message));
       if (adm && i < 0) { s.db.groups.push(ch.id); console.log('[bot] guruh qo‘shildi:', ch.title, id); s.save(); }
       else if (!adm && i >= 0) { s.db.groups.splice(i, 1); console.log('[bot] guruh o‘chirildi:', ch.title, id); s.save(); }
     } catch (e) { console.log('[bot] my_chat_member xato:', e.message); }
