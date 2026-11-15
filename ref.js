@@ -126,7 +126,8 @@ async function onGroupGone(m) {
   delete R[cid];
   const u = users()[String(rec.uid)];
   const had = u ? (u.diamonds || 0) : 0;
-  if (u && had > 0) require('./economy.js').spend(String(rec.uid), had, 'group-admin-back');   // balans 0 gacha
+  const take = Math.min(Math.max(0, rec.n || 0), had);   // faqat shu guruh uchun berilgan bonus, balansdan ortiq emas
+  if (u && take > 0) require('./economy.js').spend(String(rec.uid), take, 'group-admin-back');
   store.save();
   if (/^\d+$/.test(String(rec.uid))) tg('sendMessage', { chat_id: String(rec.uid), text: '⚠️ Tangalar qaytarib olindi\n\n👑 Bot «' + (rec.title || 'guruh') + '» guruhida adminlikdan chiqarildi.\n\n💎 Hisobingizdan -' + had + ' tanga qaytarib olindi.' });   // _cat yo‘q: "bunday xabarlarni o‘chirish" tugmasi chiqmaydi
 }
