@@ -128,8 +128,8 @@
   }
   function stArr(b, s) { return b.arr.slice(s * 10, s * 10 + 10); }
   function cnt(a) { var c = 0; a.forEach(function (p) { if (isS(p.id)) c++; }); return c; }
-  function landOpen(books, i) { if (C.admin || i === 0) return true; var pv = books[i - 1].arr; return cnt(pv) >= Math.ceil(pv.length * .7) || cnt(books[i].arr) > 0; }
-  function stOpen(b, s) { if (C.admin || s === 0) return true; var pv = stArr(b, s - 1); return cnt(pv) >= Math.ceil(pv.length * .7) || cnt(stArr(b, s)) > 0; }
+  function landOpen(books, i) { if (C.admin || i === 0) return true; var pv = books[i - 1].arr; return cnt(pv) >= pv.length || cnt(books[i].arr) > 0; }
+  function stOpen(b, s) { if (C.admin || s === 0) return true; var pv = stArr(b, s - 1); return cnt(pv) >= pv.length || cnt(stArr(b, s)) > 0; }
   function nameOf(b, i) { var L = (D.lands || {})[b.key] || {}; if (L.name) return L.name; var k = i + OFF[W[0]] ; return NAMES[k % NAMES.length] + (k >= NAMES.length ? ' ' + (Math.floor(k / NAMES.length) + 1) : ''); }
   function themeOf(i) { return (i + { s: 0, m: 1, e: 8 }[W[0]]) % 9; }   // tog'larda — qarag'ayzor, cho'lda — vohalar bilan boshlanadi
   function L(b) { return (D.lands || {})[b.key] || {}; }
@@ -234,7 +234,7 @@
       if (cw) g += '<path d="M' + (x + 4) + ' ' + (y - 57) + ' l1.4 2.8 l3 .3 l-2.3 2 l.7 3 l-2.8 -1.6 l-2.6 1.6 l.6 -3 l-2.2 -2 l3 -.3z" fill="#7c2d12"/>';
       if (!op) g += '<ellipse cx="' + x + '" cy="' + (y + 4) + '" rx="80" ry="40" fill="rgba(15,20,40,.55)"/><ellipse cx="' + (x - 34) + '" cy="' + (y - 8) + '" rx="26" ry="11" fill="#e2e8f0" opacity=".55"/><ellipse cx="' + (x + 30) + '" cy="' + (y - 2) + '" rx="30" ry="12" fill="#e2e8f0" opacity=".5"/>' + lockSvg(x, y - 14, 1.3);
       if (guestK === b.key) g += '<g class="advPulse"><rect x="' + (x + 38) + '" y="' + (y - 52) + '" width="40" height="20" rx="10" fill="#fbbf24"/><text x="' + (x + 58) + '" y="' + (y - 38) + '" text-anchor="middle" font-size="11.5" font-weight="900" fill="#78350f">×' + (D.rw.guest || 2) + '</text></g>';
-      var sub = !op ? 'oldingisi 70% bo‘lsa ochiladi' : cw ? 'Qal‘a zabt etildi · ★ ' + I.st : dn ? 'Tugatildi · ★ ' + I.st + '/' + I.n * 3 : I.d + '/' + I.n + (I.d ? ' · ★ ' + I.st : '');
+      var sub = !op ? 'oldingi kitob 100/100 bo‘lsa ochiladi' : cw ? 'Qal‘a zabt etildi · ★ ' + I.st : dn ? 'Tugatildi · ★ ' + I.st + '/' + I.n * 3 : I.d + '/' + I.n + (I.d ? ' · ★ ' + I.st : '');
       g += '<rect x="' + (x - 66) + '" y="' + (y + 26) + '" width="132" height="34" rx="10" fill="rgba(11,14,26,.84)"/><text x="' + x + '" y="' + (y + 40) + '" text-anchor="middle" font-size="12" font-weight="800" fill="#fff">' + (i + 1) + '. ' + esc(nameOf(b, i)) + '</text><text x="' + x + '" y="' + (y + 54) + '" text-anchor="middle" font-size="10.5" fill="' + (!op ? '#cbd5e1' : cw ? '#fde68a' : dn ? '#86efac' : '#fde68a') + '">' + sub + '</text></g>';
     });
     g += '</svg>';
@@ -245,7 +245,7 @@
     h += '<div class="advC"><div><b>' + esc(nameOf(hb, cl)) + '</b><small>' + (cl + 1) + '-o‘lka · ' + hI.d + '/' + hI.n + ' · ' + (hs3 === hI.cs ? 'qal‘a' : (hs3 + 1) + '-bekat') + '</small>' + (gl ? '<small style="color:#fde68a">' + gl + '</small>' : '') + '</div><button id="advGo">Davom</button></div></div>';
     ov.innerHTML = h; bindTop();
     var M = ov.querySelector('.advM svg');
-    ov.querySelector('.advM').onclick = function (ev) { var e = ev.target.closest('[data-l]'); if (!e) return; var i2 = +e.getAttribute('data-l'); if (!landOpen(books, i2)) return toast('Bu o‘lka hali yopiq: oldingi o‘lkada 70% masalani yeching'); landView(books[i2], i2); };
+    ov.querySelector('.advM').onclick = function (ev) { var e = ev.target.closest('[data-l]'); if (!e) return; var i2 = +e.getAttribute('data-l'); if (!landOpen(books, i2)) return toast('Bu o‘lka hali yopiq: oldingi kitobdagi 100 ta masalani yeching'); landView(books[i2], i2); };
     ov.querySelector('#advGo').onclick = function () { landView(hb, cl); };
     ov.querySelector('#advHr').onclick = function (ev) { ev.stopPropagation(); var M2 = window.spPzMap; if (M2 && M2.picker) M2.picker(function () { worldView(); }); };
     setTimeout(function () { var k = M.getBoundingClientRect().width / 360; ov.scrollTop = Math.max(0, hp[1] * k - ov.clientHeight * .55); }, 0);
@@ -321,7 +321,7 @@
     ov.querySelector('.advM').onclick = function (ev) {
       var e = ev.target.closest('[data-s],[data-c]'); if (!e) return;
       if (e.hasAttribute('data-c')) return castle(b, i);
-      var s2 = +e.getAttribute('data-s'); if (!stOpen(b, s2)) return toast('Bu bekat hali yopiq: oldingi bekatda 7 ta masala yeching'); station(b, i, s2);
+      var s2 = +e.getAttribute('data-s'); if (!stOpen(b, s2)) return toast('Bu bekat hali yopiq: oldingi bekatdagi hamma masalani yeching'); station(b, i, s2);
     };
     ov.querySelector('#advGd').onclick = function () { cur === I.cs ? castle(b, i) : station(b, i, cur); };
     ov.querySelector('#advGo').onclick = function () { cur === I.cs ? castle(b, i) : station(b, i, cur); };
@@ -402,7 +402,7 @@
     h += '<div class="advNote">' + A.length + ' ta jumboq ketma-ket beriladi. Xato yoki ko‘rsatma — bitta xato. 3 ta xato bo‘lsa, sinov boshidan boshlanadi.' + (won ? '' : ' G‘alaba: <b>' + D.rw.castle + ' tanga</b> va o‘lka bayrog‘i.') + '</div>';
     if (tr) { h += '<div class="advBar">' + A.map(function (_, k) { return '<b class="' + (k < tr.i ? 'aG' : k === tr.i ? 'aY' : '') + '"></b>'; }).join('') + '</div><div style="font-size:13px;opacity:.7;margin-bottom:6px">' + tr.i + '/' + A.length + ' · xato: ' + tr.err + ' / 3</div>'; }
     if (won) h += '<div class="advNote aG"><b>Qal‘a zabt etilgan!</b> Yana sinab ko‘rishingiz mumkin (mukofotsiz).</div>';
-    if (!op) h += '<div class="advNote aY">Qal‘a hali yopiq: ' + I.cs + '-bekatda kamida 7 ta masala yeching.</div><button class="advBtn aO" id="advSx2">Xaritaga qaytish</button>';
+    if (!op) h += '<div class="advNote aY">Qal‘a hali yopiq: ' + I.cs + '-bekatdagi hamma masalani yeching.</div><button class="advBtn aO" id="advSx2">Xaritaga qaytish</button>';
     else if (tr) h += '<button class="advBtn" id="advTrGo">Davom etish (' + (tr.i + 1) + '-jumboq)</button><button class="advBtn aO" id="advTrNew">Qaytadan boshlash</button>';
     else h += '<button class="advBtn" id="advTrNew">Sinovni boshlash</button>';
     var e = sheet(h);

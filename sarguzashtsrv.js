@@ -77,10 +77,10 @@ function nSt(ids) { return Math.ceil(ids.length / ST); }
 function stIds(ids, st) { return ids.slice(st * ST, st * ST + ST); }
 function castleOf(ids) { const n = nSt(ids); return n >= 2 ? n - 1 : -1; }
 function cnt(ids, sv) { let c = 0; ids.forEach(id => { if (sv.has(id)) c++; }); return c; }
-function landOpen(bk, sv) { if (bk.i === 0) return true; const pv = bk.W[bk.i - 1].ids; return cnt(pv, sv) >= Math.ceil(pv.length * 0.7) || cnt(bk.ids, sv) > 0; }
+function landOpen(bk, sv) { if (bk.i === 0) return true; const pv = bk.W[bk.i - 1].ids; return cnt(pv, sv) >= pv.length || cnt(bk.ids, sv) > 0; }
 function stOpen(bk, st, sv) {
   if (!landOpen(bk, sv)) return false; if (st === 0) return true;
-  const pv = stIds(bk.ids, st - 1); return cnt(pv, sv) >= Math.ceil(pv.length * 0.7) || cnt(stIds(bk.ids, st), sv) > 0;
+  const pv = stIds(bk.ids, st - 1); return cnt(pv, sv) >= pv.length || cnt(stIds(bk.ids, st), sv) > 0;
 }
 function my(u) { const m = u.adv = u.adv || {}; m.q = m.q || {}; m.ch = m.ch || {}; m.cs = m.cs || {}; return m; }
 
@@ -169,7 +169,7 @@ function handle(req, res, p, h) {
       const key = j.k + ':' + st; if (key in m.q) return h.send(res, 400, { error: 'Bu savolga javob berilgan' });
       const Q = qFor(uid, j.k, st); if (!Q) return h.send(res, 400, { error: 'Savol yo‘q' });
       const pick = Math.floor(Number(j.a)), ok = Q.ord[pick] === 0, right = Q.ord.indexOf(0);
-      m.q[key] = ok ? 1 : 0; const g = ok ? RW().q : 0; if (g) pay(uid, g, 'sarguzasht savoli'); store.save();
+      m.q[key] = ok ? 1 : 0; const g = ok ? RW().q : 0; if (g) pay(uid, g, 'sarguzasht savoli'); if (!ok) { try { require('./economy.js').penalty(String(uid), 'sarguzasht savoli xato'); } catch (e) {} } store.save();
       return h.send(res, 200, { ok, right, x: Q.q.x || '', gain: g, my: m });
     }
     if (p === '/api/adv/chest') {   // bekat sandig'i
