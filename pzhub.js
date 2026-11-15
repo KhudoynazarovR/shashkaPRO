@@ -170,11 +170,9 @@
     { k: 'rush', t: 'Puzzle Rush', s: '3 daqiqa · 3 ta xato', r: '+15', c1: '#d2281c', c2: '#7a0f0c', bd: '#ff8a68', sh: '#4f0907' },
     { k: 'battle', t: 'Puzzle Battle', s: 'Boshqa o‘yinchilar bilan bellash!', r: '+20', c1: '#6f2fcc', c2: '#391280', bd: '#bb94ff', sh: '#240a54' },
     { k: 'pzt', t: 'Masala turniri', s: 'Hamma bir vaqtda · soniyagacha', r: 'Fond', c1: '#0f8a6c', c2: '#05463a', bd: '#5ee0b0', sh: '#032a22' },
-    { k: 'memori', t: 'Xotira', s: 'Juftliklarni toping · bot yoki do‘st bilan', r: '+10', c1: '#0f6fb0', c2: '#0a3b6b', bd: '#7cc8ff', sh: '#06243f' },
     { k: 'deb', t: 'Debyutlar', s: 'Ochilishlarni ko‘ring va yod oling', r: '', c1: '#2563eb', c2: '#1e1b6b', bd: '#8fb3ff', sh: '#120f45' },
     { k: 'trap', t: 'Debyut tuzoqlari', s: 'Xatoni jazolang · Kozirev kitobi', r: '', c1: '#e11d48', c2: '#6d0a22', bd: '#ff8fa3', sh: '#3f0614' },
-    { k: 'custom', t: 'Maxsus masalalar', s: 'Daraja va papkalar bo‘yicha', r: '+25', c1: '#128ca3', c2: '#0a4d5d', bd: '#63dcee', sh: '#06303a' },
-    { k: 'solve', t: 'Masalalarni yechish', s: 'Yeching, o‘sing, mukofot oling!', r: '+30', c1: '#33a13d', c2: '#135a1c', bd: '#85e589', sh: '#0b3a11' }
+    { k: 'custom', t: 'Maxsus masalalar', s: 'Daraja va papkalar bo‘yicha', r: '+25', c1: '#128ca3', c2: '#0a4d5d', bd: '#63dcee', sh: '#06303a' }
   ];
   function coinText(ctx) {
     var v = ctx.coins;
