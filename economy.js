@@ -71,8 +71,7 @@ function bookOrder(u, id) {
       if (_ba === 'lock') return { ok: false, why: 'locked' };
       if ((u.pzOpenB || {})[key]) return { ok: true };
       const prevFull = i === 0 || books[i - 1].every(x => sv.includes(x));
-      const curAny = ids.some(x => sv.includes(x));
-      if (i > 0 && !prevFull && !curAny) return { ok: false, why: 'locked' };
+      if (i > 0 && !prevFull) return { ok: false, why: 'locked' };   // oldingi kitob 100/100 bo‘lmaguncha yopiq
       const f = ids.findIndex(x => !sv.includes(x));
       if (f >= 0 && idx > f && !sv.includes(id)) return { ok: false, why: 'order' };
       return { ok: true };

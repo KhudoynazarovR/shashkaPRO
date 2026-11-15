@@ -885,7 +885,7 @@
     var prev = (pzBooks()[b.kind] || [])[b.n - 2], sv = S.solved || [];
     if (!prev) return false;
     var prevFull = prev.arr.every(function (p) { return sv.indexOf(p.id) >= 0; });
-    return !prevFull && nDone(b.arr) === 0;
+    return !prevFull;   // oldingi kitob 100/100 bo‘lmaguncha yopiq
   }
   function bookHtml(b, k) {
     var lk = bkLocked(b);
