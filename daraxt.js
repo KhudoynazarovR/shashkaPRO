@@ -92,13 +92,14 @@
     if (S.harv) h += '<button class="go" id="dxPick"' + (S.harv.picked ? ' disabled' : '') + '>' + (S.harv.picked ? 'Bugun terdingiz' : 'Olma terish · +' + S.harv.reward + ' tanga') + '</button>';
     h += '<div class="kv"><div><b>' + fmt(S.week.sum) + '</b>bu hafta tanga</div><div><b>' + fmt(S.week.cnt) + '</b>xato</div><div><b>' + fmt(S.week.ppl) + '</b>kishi hissa</div></div>';
     h += '<div class="nt">Daraxt o‘yinchilar xato qilganda olinadigan tangalar bilan o‘sadi. ' + fmt(S.th[5]) + ' tangaga yetganda olma pishadi: 3 kun davomida har kim kuniga bir marta olma teradi. Ko‘p masala yechganlarga ko‘proq tanga tushadi. Hosildan keyin daraxt bog‘da qoladi va yangi nihol ekiladi.' + (S.garden ? '<br><br>Bog‘da: ' + S.garden + ' ta daraxt' : '') + '</div>';
-    if (S.admin) h += '<button class="ad" id="dxAd">Admin sinovi: +1 000 tanga</button>';
+    if (S.admin) h += '<button class="ad" id="dxAd">Admin sinovi: +1 000 tanga</button> <button class="ad" id="dxRs">Nolga qaytarish</button>';
     ov.innerHTML = h + '</div>';
     ov.querySelector('#dxB').onclick = close;
     var pk = ov.querySelector('#dxPick'); if (pk) pk.onclick = function () {
       pk.disabled = true;
       post('/api/daraxt/pick').then(function (r) { if (r && r.error) { alert(r.error); pk.disabled = false; return; } S = r; card(); render(); try { Telegram.WebApp.HapticFeedback.notificationOccurred('success'); } catch (e) {} alert('🍎 +' + r.got + ' tanga!'); });
     };
+    var rs = ov.querySelector('#dxRs'); if (rs) rs.onclick = function () { if (!confirm('Daraxt boshidan boshlansinmi? (nihol, 0 tanga)')) return; post('/api/daraxt/reset').then(function (r) { if (r && !r.error) { S = r; card(); render(); } }); };
     var ad = ov.querySelector('#dxAd'); if (ad) ad.onclick = function () { post('/api/daraxt/add', { n: 1000 }).then(function (r) { if (r && !r.error) { S = r; card(); render(); } }); };
   }
   function open() { if (!ov) { ov = document.createElement('div'); ov.id = 'dxOv'; document.body.appendChild(ov); } render(); load(); }

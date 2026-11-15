@@ -3544,4 +3544,4 @@ if(document.readyState==='complete')setTimeout(init,1500);else window.addEventLi
   window.spChSync = function (L) { var ids = {}; L.forEach(function (c) { ids[c.id] = 1; }); Object.keys(CUR).forEach(function (id) { if (!ids[id]) close(id); }); };
 })();
 /* TANGA DARAXTI — bosh sahifa kartasi (daraxt.js) */
-;(function(){var s=document.createElement("script");s.src="/daraxt.js?v=1";document.head.appendChild(s)})();
+;(function(){var s=document.createElement("script");s.src="/daraxt.js?v=2";document.head.appendChild(s)})();

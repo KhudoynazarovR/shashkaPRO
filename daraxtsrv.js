@@ -62,6 +62,10 @@ function handle(req, res, p, h) {
       store.save();
       return h.send(res, 200, Object.assign(view(uid), { got: n }));
     }
+    if (p === '/api/daraxt/reset') {   // admin: daraxtni boshidan (nihol, 0 tanga, bog' bo'sh)
+      if (!ADM().includes(uid)) return h.send(res, 403, { error: 'Faqat admin' });
+      store.db.ctree = null; D(); store.save(); return h.send(res, 200, view(uid));
+    }
     if (p === '/api/daraxt/add') {   // admin sinovi uchun
       if (!ADM().includes(uid)) return h.send(res, 403, { error: 'Faqat admin' });
       feed(Math.min(100000, Number(j.n) || 0), uid, true); return h.send(res, 200, view(uid));
