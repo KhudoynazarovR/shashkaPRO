@@ -66,6 +66,9 @@ function bookOrder(u, id) {
       const ids = books[i], idx = ids.indexOf(id);
       if (idx < 0) continue;
       const key = sh + ':' + i;
+      const _ba = (store.db.pzBookAll || {})[key];   // admin: hamma uchun 'open' yoki 'lock'
+      if (_ba === 'open') return { ok: true };
+      if (_ba === 'lock') return { ok: false, why: 'locked' };
       if ((u.pzOpenB || {})[key]) return { ok: true };
       const prevFull = i === 0 || books[i - 1].every(x => sv.includes(x));
       const curAny = ids.some(x => sv.includes(x));
@@ -630,7 +633,7 @@ function handle(req, res, url) {
     let _etF = [], _etL = [], _etN = {}, _etP = {}; try { const _E = require('./etudes.js'); _etL = _E.puzzleList(); _etF = _E.FOLDERS.filter(f => _etL.some(x => x.folder === f)); _etN = _E.ETF; _etP = _E.ETP; } catch (e) {}
     const _fo = (store.db.pzFolders || []).slice(); { const _ki = _fo.indexOf('Kombinatsiyalar'); _fo.splice(_ki >= 0 ? _ki + 1 : 0, 0, ..._etF); }
     let _bk = null; try { const _B = require('./pzbooks.js'); _bk = Object.assign({ cov: _B.covers() }, _B.build()); } catch (e) { console.log('[kitob]', e.message); }
-    send(res, 200, { books: _bk, qz: _adm ? (function () { try { return require('./quiz.js').ids(); } catch (e) { return []; } })() : undefined, reels: _adm ? (function () { try { return require('./reelgen.js').usedIds(); } catch (e) { return []; } })() : undefined, etf: _etN, etp: _etP, folders: _fo, settings: store.db.pzSettings || {}, dayFolder: (function () { try { return require('./quests.js').dayFolder(); } catch (e) { return ''; } })(), chanFolders: (function () { try { return require('./kanal.js').folders(); } catch (e) { return []; } })(), hideLv: store.db.pzHideLv || [], best: _u.pzBest || {}, inv: _u.pzInv || null, ranks: require('./pzranks.js').RANKS, topInv: (function () { const m = require('./pzranks.js'); m.watch(store); return m.top(store); })(), promo: Date.parse(process.env.PZ_PROMO_END || '2026-10-25T23:59:59+05:00'), admin: _adm, link: process.env.TG_APP_LINK || '', myId: String(_tg.id), solved: _u.solved || [], stars: _u.pzStars || {}, bopen: _u.pzOpenB || {}, heroAv: _u.pzHero || '', list: (() => { const _c = {}; Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { _c[i] = (_c[i] || 0) + 1; })); return store.db.puzzles.slice().sort((x, y) => (x.no || 0) - (y.no || 0)).map(x => Object.assign({}, x, { cnt: _c[x.id] || 0 })); })(), etl: (() => { const _c = {}; Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { if (i[0] === 'e') _c[i] = (_c[i] || 0) + 1; })); return _etL.map(x => [x.id.slice(2), x.no, x.level, x.b32, x.t, _c[x.id] || 0]); })() });
+    send(res, 200, { bookAll: store.db.pzBookAll || {}, books: _bk, qz: _adm ? (function () { try { return require('./quiz.js').ids(); } catch (e) { return []; } })() : undefined, reels: _adm ? (function () { try { return require('./reelgen.js').usedIds(); } catch (e) { return []; } })() : undefined, etf: _etN, etp: _etP, folders: _fo, settings: store.db.pzSettings || {}, dayFolder: (function () { try { return require('./quests.js').dayFolder(); } catch (e) { return ''; } })(), chanFolders: (function () { try { return require('./kanal.js').folders(); } catch (e) { return []; } })(), hideLv: store.db.pzHideLv || [], best: _u.pzBest || {}, inv: _u.pzInv || null, ranks: require('./pzranks.js').RANKS, topInv: (function () { const m = require('./pzranks.js'); m.watch(store); return m.top(store); })(), promo: Date.parse(process.env.PZ_PROMO_END || '2026-10-25T23:59:59+05:00'), admin: _adm, link: process.env.TG_APP_LINK || '', myId: String(_tg.id), solved: _u.solved || [], stars: _u.pzStars || {}, bopen: _u.pzOpenB || {}, heroAv: _u.pzHero || '', list: (() => { const _c = {}; Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { _c[i] = (_c[i] || 0) + 1; })); return store.db.puzzles.slice().sort((x, y) => (x.no || 0) - (y.no || 0)).map(x => Object.assign({}, x, { cnt: _c[x.id] || 0 })); })(), etl: (() => { const _c = {}; Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { if (i[0] === 'e') _c[i] = (_c[i] || 0) + 1; })); return _etL.map(x => [x.id.slice(2), x.no, x.level, x.b32, x.t, _c[x.id] || 0]); })() });
     return true;
   }
   if ((p === '/api/puzzle' || p === '/api/puzzle/del' || p === '/api/puzzle/solved' || p === '/api/puzzle/fail' || p === '/api/puzzle/rename' || p === '/api/puzzle/folder' || p === '/api/puzzle/move' || p === '/api/puzzle/settings' || p === '/api/puzzle/order' || p === '/api/puzzle/edit' || p === '/api/puzzle/renum' || p === '/api/puzzle/merge' || p === '/api/puzzle/dayfolder' || p === '/api/puzzle/chanfolder' || p === '/api/puzzle/err' || p === '/api/puzzle/bopen') && req.method === 'POST') {
@@ -671,6 +674,18 @@ function handle(req, res, url) {
       }
       const adm = (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(_tg.id));
       if (!adm) return send(res, 403, { error: 'admin emassiz' });
+      if (p === '/api/puzzle/bfind') {   // admin: foydalanuvchini ism bo‘yicha topish (ID kerak emas)
+        const q = String(j.q || '').trim().toLowerCase(); if (q.length < 2) return send(res, 200, { list: [] });
+        const list = Object.values(store.users()).filter(v => String(v.name || '').toLowerCase().includes(q) || String(v.id) === q)
+          .slice(0, 10).map(v => ({ id: String(v.id), name: String(v.name || 'Player') }));
+        return send(res, 200, { list });
+      }
+      if (p === '/api/puzzle/ball') {   // admin: kitobni hamma uchun ochish ('open'), qulflash ('lock') yoki oddiy qoida ('')
+        const key = String(j.key || '').slice(0, 20); if (!key) return send(res, 400, { error: 'key' });
+        const st = String(j.state || ''); store.db.pzBookAll = store.db.pzBookAll || {};
+        if (st === 'open' || st === 'lock') store.db.pzBookAll[key] = st; else delete store.db.pzBookAll[key];
+        store.save(); return send(res, 200, { ok: true });
+      }
       if (p === '/api/puzzle/bopen') {   // 🔓 admin: kitobni muayyan foydalanuvchi uchun ochadi yoki yopadi
         const tu = store.users()[String(j.uid || '')];
         if (!tu) return send(res, 404, { error: 'foydalanuvchi topilmadi' });

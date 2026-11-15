@@ -878,6 +878,9 @@
   var LOCK_SM = '<svg viewBox="0 0 24 24" width="13" height="13"><rect x="4" y="10" width="16" height="11" rx="2.5" fill="#94a3b8"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="#94a3b8" stroke-width="2.4" fill="none"/></svg>';
   function bkLocked(b) {
     if (S.admin || b.kind === 'e' || b.n <= 1) return false;
+    var _ba = (S.bookAll || {})[b.key];
+    if (_ba === 'open') return false;
+    if (_ba === 'lock') return true;
     if ((S.bopen || {})[b.key]) return false;
     var prev = (pzBooks()[b.kind] || [])[b.n - 2], sv = S.solved || [];
     if (!prev) return false;
@@ -910,12 +913,20 @@
   // admin: muqova rasmi
   function bookMenu(b) {
     var has = S.books && S.books.cov && S.books.cov[b.key];
-    pzSheet(b.title, [['Muqova rasmini qo‘yish', function () { coverPick(b); }], ['Foydalanuvchiga ochish', function () { bkGrant(b, true); }], ['Foydalanuvchidan yopish', function () { bkGrant(b, false); }]].concat(has ? [['Muqovani olib tashlash', function () { api('/api/pzbook/cov', { k: b.key, img: '' }).then(function (r) { if (r && r.cov) S.books.cov = r.cov; list(); }); }, 1]] : []));
+    pzSheet(b.title, [['Muqova rasmini qo‘yish', function () { coverPick(b); }], ['Foydalanuvchiga ochish', function () { bkGrant(b, true); }], ['Foydalanuvchidan yopish', function () { bkGrant(b, false); }], ['Hamma uchun ochiq', function () { bkAll(b, 'open'); }], ['Hamma uchun qulflangan', function () { bkAll(b, 'lock'); }], ['Hamma uchun oddiy qoida', function () { bkAll(b, ''); }]].concat(has ? [['Muqovani olib tashlash', function () { api('/api/pzbook/cov', { k: b.key, img: '' }).then(function (r) { if (r && r.cov) S.books.cov = r.cov; list(); }); }, 1]] : []));
+  }
+  function bkAll(b, st) {
+    api('/api/puzzle/ball', { key: b.key, state: st }).then(function (r) { if (r && r.ok) { S.bookAll = S.bookAll || {}; if (st) S.bookAll[b.key] = st; else delete S.bookAll[b.key]; list(); } else window.alert((r && r.error) || 'Xato'); }).catch(function () { window.alert('Xato'); });
   }
   function bkGrant(b, on) {
-    var uid = window.prompt(on ? 'Foydalanuvchi Telegram ID sini kiriting (kitobni ochish):' : 'Foydalanuvchi Telegram ID sini kiriting (kitobni yopish):', '');
-    if (!uid) return;
-    api('/api/puzzle/bopen', { uid: String(uid).trim(), key: b.key, on: !!on }).then(function (r) { if (r && r.ok) window.alert(on ? 'Kitob ochildi' : 'Kitob yopildi'); else window.alert((r && r.error) || 'Xato'); }).catch(function () { window.alert('Xato'); });
+    var q = window.prompt('Foydalanuvchi ismini yozing (kamida 2 harf):', '');
+    if (!q || q.trim().length < 2) return;
+    api('/api/puzzle/bfind', { q: q.trim() }).then(function (r) {
+      var L = (r && r.list) || []; if (!L.length) { window.alert('Topilmadi'); return; }
+      pzSheet('Topildi: ' + L.length, L.map(function (x) { return [x.name + ' (' + x.id + ')', function () {
+        api('/api/puzzle/bopen', { uid: x.id, key: b.key, on: !!on }).then(function (rr) { if (rr && rr.ok) { if (on) { S.bopen = S.bopen || {}; S.bopen[b.key] = 1; } window.alert(on ? 'Kitob ochildi' : 'Kitob yopildi'); } else window.alert((rr && rr.error) || 'Xato'); });
+      }]; }));
+    }).catch(function () { window.alert('Xato'); });
   }
   function coverPick(b) {
     var inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*';
