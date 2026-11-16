@@ -1061,6 +1061,11 @@ function createLobby({ send, clients, roomsApi }) {
     if (timer.unref) timer.unref();
   }
 
+  // arena: o‘yinchiga botdan xabar — faqat u ilovada ulanmagan bo‘lsa (spam bo‘lmasin)
+  function arenaDm(p, text) {
+    if (!p || p.bot || !/^\d+$/.test(String(p.uid)) || connsOf(p.uid).length) return;
+    tgCall('sendMessage', { chat_id: Number(p.uid), text }).catch(() => {});
+  }
   function arenaPair(t) {
     const now = Date.now();
     if (t.endAt && t.endAt - now < 60000) return;   // oxirgi daqiqada yangi juftlik yo'q (lidraughts kabi)
@@ -1084,6 +1089,8 @@ function createLobby({ send, clients, roomsApi }) {
       if (!pick) continue;
       used.add(a); used.add(pick);
       startArenaGame(t, a, pick);
+      arenaDm(a, '⚔️ ' + t.name + ': yangi tur boshlandi!\nRaqibingiz: ' + String(pick.name || '').slice(0, 30) + '. U sizni kutyapti — ilovaga kirib o‘yinni boshlang.');
+      arenaDm(pick, '⚔️ ' + t.name + ': yangi tur boshlandi!\nRaqibingiz: ' + String(a.name || '').slice(0, 30) + '. U sizni kutyapti — ilovaga kirib o‘yinni boshlang.');
       made = true;
     }
     // 🤖⚔️🤖 bo'sh qolgan botlar bir-biri bilan haqiqiy o'yin (serverda); bot o'yinlari ko'pi bilan ARENA_BB_MAX ta parallel
@@ -1673,6 +1680,7 @@ function createLobby({ send, clients, roomsApi }) {
             if (t.players.size >= ARENA_MAX_PLAYERS) return err(c, 'Arena to‘lgan'), true;
             if (t.minGames && ratedGames(me.uid) < t.minGames) return err(c, 'Ishtirok sharti: kamida ' + t.minGames + ' ta reytingli o‘yin (sizda ' + ratedGames(me.uid) + ' ta)'), true;
             t.players.set(me.uid, newArenaPlayer(me));
+            arenaDm({ uid: me.uid, name: me.name }, '✅ ' + t.name + ' arenasiga qo‘shildingiz. Raqib topilganda botdan xabar olasiz.');
           }
           push();
           break;
