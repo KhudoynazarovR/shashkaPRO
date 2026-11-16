@@ -110,6 +110,8 @@
       vsBot: false, botStarted: false, botColor: null, botNote: "", botSecs: 1.2, botBlunder: 0,
       selected: null, forced: null, pending: false, connected: false, joined: false
     };
+    // lobbyclient uchun: foydalanuvchi shu xonada hali tugamagan o‘yin o‘ynayaptimi (turnirning yangi turiga avtomatik o‘tkazishdan oldin tekshiriladi)
+    window.__rcLive = function () { return st.color !== "spectator" && !st.finished && !!st.joined; };
     var ws = null, hb = null, gid = guestId();
 
     // ---------- ovozlar ----------

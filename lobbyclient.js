@@ -306,7 +306,7 @@
       if (m.reason === "tournament" || m.reason === "arena") {
         var txt = "🏆 <b>" + esc(m.tname) + "</b> — " + (m.reason === "arena" ? "yangi o‘yin" : m.round + "-tur boshlandi") + ".<br>Raqib: <b>" + esc(m.opponent) + "</b> (" + (m.color === "white" ? "oq" : "qora") + ")";
         if (!inRoom) {
-          var left = m.reason === "arena" ? 3 : 6, t;
+          var left = m.reason === "arena" ? 3 : 2, t;
           var box = toast(txt + "<br><span id=\"lbCd\">" + left + "</span> soniyadan so‘ng o‘tasiz…", [["Hozir", function () { clearInterval(t); go(m.roomId); }]], 7000);
           t = setInterval(function () {
             left--;
@@ -324,7 +324,21 @@
             var ael = $("lbCd"); if (ael) ael.textContent = aleft;
             if (aleft <= 0) { clearInterval(at); go(m.roomId); }
           }, 1000);
-        } else toast(txt, [["▶ O‘yinga o‘tish", function () { go(m.roomId); }]], 30000);
+        } else {
+          // turnirning yangi turi: o‘yinchi oldingi (tugagan) o‘yin doskasida qolgan bo‘lsa ham avtomatik o‘tadi;
+          // faqat hozir boshqa tugamagan o‘yin o‘ynayotgan bo‘lsa majburan chiqarilmaydi — tugma chiqadi
+          var busy = false; try { busy = !!(window.__rcLive && window.__rcLive()); } catch (e) {}
+          if (busy) toast(txt, [["▶ O‘yinga o‘tish", function () { go(m.roomId); }]], 30000);
+          else {
+            var tleft = 2, tt;
+            toast(txt + "<br><span id=\"lbCd\">" + tleft + "</span> soniyadan so‘ng o‘tasiz…", [["Hozir", function () { clearInterval(tt); go(m.roomId); }]], 4000);
+            tt = setInterval(function () {
+              tleft--;
+              var tel = $("lbCd"); if (tel) tel.textContent = tleft;
+              if (tleft <= 0) { clearInterval(tt); go(m.roomId); }
+            }, 1000);
+          }
+        }
         }
       } else {
         if (!inRoom) go(m.roomId);
