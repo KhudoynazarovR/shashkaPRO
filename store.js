@@ -205,6 +205,9 @@ if (URL_) {
         const meta = mr.rows[0].v, o = { users: {} };
         const sr = await pool.query("select k, v from kv where k like 's:%' or k like 'u:%'");
         const got = new Map(sr.rows.map(r => [r.k, r.v]));
+        // restartdan keyin hamma qatorni qayta yozmaslik uchun: bazadagi qatorlarning sha1 i eslab qolinadi (unpack dan OLDIN).
+        // Faqat yoziladigan matn bazadagisi bilan aynan bir xil bo'lsa yozuv tashlab ketiladi; farq bo'lsa odatdagidek yoziladi.
+        try { for (const [k0, v0] of got) lastHash.set(k0, crypto.createHash('sha1').update(packVal(v0, new Map())).digest('hex')); } catch (e) { lastHash.clear(); console.log('DB: hash eslab qolinmadi:', e.message); }
         for (const k of meta.keys || []) if (got.has('s:' + k)) o[k] = got.get('s:' + k);
         for (let i = 0; i < (meta.ub || UB); i++) Object.assign(o.users, got.get('u:' + i) || {});
         const nu = Object.keys(o.users).length, nOld = old && old.users ? Object.keys(old.users).length : 0;
