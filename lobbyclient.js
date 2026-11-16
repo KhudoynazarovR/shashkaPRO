@@ -2734,7 +2734,10 @@ document.head.appendChild(_as); }
   '.tvMb .pb{background:radial-gradient(circle at 35% 30%,#555,#111);box-shadow:0 1px 1px rgba(0,0,0,.5)}' +
   '.tvMb .kg:after{content:"";position:absolute;inset:28%;border-radius:50%;border:2px solid #f5c542}' +
   '.tvLc .sp{position:absolute;top:8px;right:8px;font-size:10px;font-weight:800;color:#fff;background:#e04a4a;border-radius:5px;padding:1px 5px;opacity:.95}' +
-  '.tvLe{color:' + MU + ';font-size:13px;padding:6px 2px}';
+  '.tvLe{color:' + MU + ';font-size:13px;padding:6px 2px}' +
+  '#tvLead{margin:0 -12px 12px;padding:10px 12px;background:' + DEEP + ';border-radius:14px;border:1px solid ' + BTN + '}' +
+  '#tvLead .ldH{font-size:12px;color:#f5c542;font-weight:800;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+  '#tvLead .tvMb{width:min(100%,280px);margin:0 auto}';
   var st = document.createElement('style'); st.id = 'tvTabsCss'; st.textContent = css; document.head.appendChild(st);
 
   var tab = null, tabFor = null, lastP = '', lastL = '';
@@ -2871,9 +2874,27 @@ document.head.appendChild(_as); }
     return '<b class="' + cc + (run ? (ms < 10000 ? ' low' : ' run') : '') + '">' + fmtC(ms) + '</b>';
   }
 
+  // lider o‘yini: eng ko‘p ochkoli o‘yinchining jonli doskasi (topilmasa birinchi o‘yin)
+  function leaderBoard(t, lv){
+    var ps = (t.players || []).slice().sort(function(a, b){ return (b.score || 0) - (a.score || 0); });
+    for (var i = 0; i < ps.length; i++) for (var j = 0; j < lv.length; j++)
+      if (lv[j].blackName === ps[i].name || lv[j].whiteName === ps[i].name) return lv[j];
+    return lv[0] || null;
+  }
+  function renderLead(t, lv){
+    var tabs = g('tvTabs'); if (!tabs) return;
+    var L = g('tvLead');
+    if (!L) { L = document.createElement('div'); L.id = 'tvLead'; tabs.parentNode.insertBefore(L, tabs.nextSibling); }
+    var lb = leaderBoard(t, lv);
+    if (!lb) { L.style.display = 'none'; return; }
+    L.style.display = '';
+    var lx = peekData[lb.roomId];
+    L.innerHTML = '<div class="ldH">👑 Lider o‘yini · ⚫ ' + esc(lb.blackName) + ' — ⚪ ' + esc(lb.whiteName) + '</div>' + (lx ? miniBoard(lx) : '<div class="tvMb">' + emptyGrid() + '</div>');
+  }
   function renderLive(){
     var t = findT(window.__tvCur), box = g('tvLiveB'); if (!t || !box) return;
     var lv = liveBoards(t);
+    renderLead(t, lv);
     g('tvTabLn').textContent = lv.length;
     g('tvTabDot').style.display = lv.length ? '' : 'none';
     var sig = JSON.stringify([lv.map(function(b){ return b.roomId; }), Object.keys(peekData).map(function(k){ var x = peekData[k]; return [k, x.moves.length, x.turn, x.finished]; })]);
