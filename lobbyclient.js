@@ -2869,6 +2869,7 @@ document.head.appendChild(_as); }
     X + '#tvLead .lzPl b{margin-left:auto;flex:none;font-variant-numeric:tabular-nums;font-size:15px;font-weight:700;background:rgba(255,255,255,.12);color:inherit;padding:2px 8px;border-radius:6px}' +
     X + '#tvLead .lzPl b.run{background:#3fa34d;color:#fff}' + X + '#tvLead .lzPl b.low{background:#e04a4a;color:#fff}' +
     X + '#tvLead .lzBd{cursor:pointer}' +
+    X + '#tvLead .tvLd{display:grid;grid-template-columns:repeat(8,1fr);width:100%;max-width:420px;margin:4px auto;border:4px solid #7a4016;border-radius:4px;box-sizing:border-box}' +
     X + '#tvLead .tvMb{width:100%!important;max-width:420px;margin:0 auto;border:0!important;border-radius:6px}' +
     X + '#tvLead .tvMb .lt{background:#cbb9ee}' + X + '#tvLead .tvMb .dk{background:#6d55b8}' + X + '#tvLead .tvMb .dk.hl{background:#9a8f4a}' +
     X + '.tvFoot button{font-size:14px!important;min-height:46px!important;padding:0 6px!important}';
@@ -3024,22 +3025,57 @@ document.head.appendChild(_as); }
     return lv[0] || null;
   }
   // 👑 lider o'yini: doim pastda (tvFoot ichida), har bir tabda ko'rinadi
+  // 🎨 lider doskasi — Arena'dagi «Yetakchi o‘yin» kabi: o‘yinchining o‘z doska va donalari (o‘yin xonasidagidek)
+  var LRCB = [["#EFD9B1", "#B58863"], ["#DEE3E6", "#8CA2AD"], ["#FFFFDD", "#86A666"], ["#DDDDDD", "#A0A0A0"], ["#F1D5CC", "#B5685D"], ["#E3DAEE", "#8B72B5"], ["#D5F0EC", "#4A9A93"], ["#9AA5B8", "#3E4A5E"], ["#F7E7B4", "linear-gradient(135deg,#C9A227,#8A6508)"], ["linear-gradient(135deg,#FAFAFA,#E3E3E0 55%,#F5F5F3)", "linear-gradient(135deg,#4B5563,#1F2937)"], ["#D9F2E3", "linear-gradient(135deg,#0F766E,#064E3B)"], ["#1E1B4B", "linear-gradient(135deg,#7C3AED,#DB2777)"]];
+  var LSK = null;
+  function leadSkin(){
+    if (LSK) return LSK;
+    var o = { th: 'edeon', ps: 'img', pz: '90', km: '♛', rc: null };
+    try { var x = JSON.parse(localStorage.getItem('sp_s2') || '{}'); if (x.th) o.th = x.th; if (x.ps) o.ps = x.ps; if (x.pz) o.pz = x.pz; if (x.km) o.km = x.km; } catch (e) {}
+    try { var m = JSON.parse(localStorage.getItem('rc_menu_v1') || '{}'); if (m.board >= 0 && LRCB[m.board]) o.rc = LRCB[m.board]; } catch (e) {}
+    try {
+      if (!document.getElementById('tvLdTh')) {
+        var css = '';
+        for (var i = 0; i < document.styleSheets.length; i++) { var Rl; try { Rl = document.styleSheets[i].cssRules; } catch (e) { continue; } for (var j = 0; j < Rl.length; j++) { var t = Rl[j].cssText || ''; if (t.indexOf('#board[') === 0) css += t.replace(/#board\[/g, '#tvLdB[') + '\n'; } }
+        var st = document.createElement('style'); st.id = 'tvLdTh'; st.textContent = css + '#tvLdB .sq{border:0!important}#tvLdB .pc{pointer-events:none}'; document.head.appendChild(st);
+      }
+    } catch (e) {}
+    LSK = o; return o;
+  }
+  function leadBoard(x){
+    var b = x ? boardOf(x) : null, cells = '', GS = leadSkin();
+    for (var r = 0; r < 8; r++) for (var c = 0; c < 8; c++) {
+      var v = b ? b[r][c] : 0, pc = '';
+      if (v) { var w = v === 1 || v === 3, k = v > 2, u = window.spEqId ? '/api/shop/img?id=' + encodeURIComponent(window.spEqId) + '&k=' + (w ? 'w' : 'b') + (k ? 'k' : '') : '';
+        pc = '<i class="piece pc ' + (w ? 'w' : 'b') + (k ? ' k' : '') + '"' + (u ? ' style="background-image:url(&quot;' + u + '&quot;)!important;background-size:contain!important;background-color:transparent!important;border:0!important;box-shadow:none!important"' : '') + '></i>'; }
+      cells += '<div class="sq ' + ((r + c) % 2 ? 'd' : 'l') + '" style="' + (GS.rc ? 'background:' + ((r + c) % 2 ? GS.rc[1] : GS.rc[0]) + ';' : '') + 'position:relative;display:flex;align-items:center;justify-content:center;aspect-ratio:1">' + pc + '</div>';
+    }
+    return '<div class="tvLd" id="tvLdB" data-th="' + GS.th + '" data-ps="' + GS.ps + '" style="--pz:' + GS.pz + '%;--km:\'' + GS.km + '\'">' + cells + '</div>';
+  }
+  var leadSig = '';
   function renderLead(t, lv){
     var host = g('tvBody'); if (!host || !t) return;
     var L = g('tvLead');
-    if (!L) { L = document.createElement('div'); L.id = 'tvLead'; }
+    if (!L) { L = document.createElement('div'); L.id = 'tvLead'; leadSig = ''; }
     if (L.parentNode !== host || host.lastElementChild !== L) host.appendChild(L);
     var lb = leaderBoard(t, lv || []);
-    if (!lb) { L.innerHTML = '<div class="lzCap">Lider o‘yini</div><div class="lzNo">Hozir jonli o‘yin yo‘q</div>'; return; }
+    if (!lb) { if (leadSig !== '-') { leadSig = '-'; L.innerHTML = '<div class="lzCap">Lider o‘yini</div><div class="lzNo">Hozir jonli o‘yin yo‘q</div>'; } return; }
     var lx = peekData[lb.roomId], ps = t.players || [];
     function pl(uid, name, elo, col){
       var rk = 0; for (var i = 0; i < ps.length; i++) if (String(ps[i].uid) === String(uid)) { rk = i + 1; break; }
-      return '<div class="lzPl">' + (rk ? '<span class="lzR">#' + rk + '</span>' : '') + '<span class="nm">' + esc(name) + '</span>' + (elo ? '<span class="el">' + elo + '</span>' : '') + clk(lx, col) + '</div>';
+      return (rk ? '<span class="lzR">#' + rk + '</span>' : '') + '<span class="nm">' + esc(name) + '</span>' + (elo ? '<span class="el">' + elo + '</span>' : '') + clk(lx, col);
     }
-    L.innerHTML = '<div class="lzCap">Lider o‘yini' + (lb.board ? ' · ' + lb.board + '-doska' : '') + '</div>' +
-      pl(lb.black, lb.blackName, lx && lx.bElo, 'black') +
-      '<div class="lzBd" data-tv="watch" data-room="' + esc(lb.roomId) + '">' + (lx ? miniBoard(lx) : '<div class="tvMb">' + emptyGrid() + '</div>') + '</div>' +
-      pl(lb.white, lb.whiteName, lx && lx.wElo, 'white');
+    // doska faqat yurish o'zgarganda qayta chiziladi (har soniyada emas) — soatlar alohida yangilanadi
+    var sig = lb.roomId + ':' + (lx ? (lx.moves || []).length + ':' + (lx.finished ? 1 : 0) : '-');
+    if (sig !== leadSig || !g('tvLdT')) {
+      leadSig = sig;
+      L.innerHTML = '<div class="lzCap">Lider o‘yini' + (lb.board ? ' · ' + lb.board + '-doska' : '') + '</div>' +
+        '<div class="lzPl" id="tvLdT"></div>' +
+        '<div class="lzBd" data-tv="watch" data-room="' + esc(lb.roomId) + '">' + leadBoard(lx) + '</div>' +
+        '<div class="lzPl" id="tvLdU"></div>';
+    }
+    g('tvLdT').innerHTML = pl(lb.black, lb.blackName, lx && lx.bElo, 'black');
+    g('tvLdU').innerHTML = pl(lb.white, lb.whiteName, lx && lx.wElo, 'white');
   }
   // 🎯 tugagan/jonli o'yinni ochish: raqam bosilganda doska oynada chiqadi
   function askRoom(rid){ if (!ws) return conn(); if (ws.readyState === 1) { try { ws.send(JSON.stringify({ type: 'roomPeek', ids: [rid] })); } catch (e) {} } }
