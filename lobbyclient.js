@@ -2927,7 +2927,7 @@ document.head.appendChild(_as); }
   function renderLead(t, lv){
     var ft = g('tvFoot'); if (!ft || !t) return;
     var L = g('tvLead');
-    if (!L) { L = document.createElement('div'); L.id = 'tvLead'; ft.insertBefore(L, ft.firstChild); }
+    if (!L) { L = document.createElement('div'); L.id = 'tvLead'; ft.appendChild(L); }
     else if (L.parentNode !== ft) ft.insertBefore(L, ft.firstChild);
     var lb = leaderBoard(t, lv || []);
     if (!lb) { L.innerHTML = '<div class="ldH">👑 Lider o‘yini</div><div class="tvLe2">Hozir jonli o‘yin yo‘q</div>'; return; }
