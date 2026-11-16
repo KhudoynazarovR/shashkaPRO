@@ -616,6 +616,7 @@ function createLobby({ send, clients, roomsApi }) {
     return a;
   }
 
+  const LATE_JOIN_ROUNDS = 2;   // kech qo‘shilish: turnirning birinchi 2 turigacha (o‘tkazilgan turlar 0 ochko)
   function swissPair(players) {
     const sorted = shuffle(players.slice()).sort((a, b) => b.score - a.score);
     let bye = null;
@@ -750,6 +751,16 @@ function createLobby({ send, clients, roomsApi }) {
     const active = [...t.players.values()].filter(p => !p.withdrawn);
     if (active.length < 2) return finishT(t);
     const { pairs, bye } = swissPair(active);
+    if (!pairs.length) {   // juftlik topilmadi: turni qayta urinamiz, jim o'tib ketmaymiz
+      t.round--;
+      t.pairFail = (t.pairFail || 0) + 1;
+      console.log('[turnir] juftlik topilmadi:', t.name, 'urinish', t.pairFail);
+      if (t.pairFail >= 5) { toast(t.creatorUid, '⚠️ ' + t.name + ': juftlik topilmadi, turnir yakunlandi'); return finishT(t); }
+      toast(t.creatorUid, '⚠️ ' + t.name + ': juftlik topilmadi, 20 soniyadan keyin qayta urinildi');
+      setTimeout(() => { if (t.status === 'running') startRound(t); }, 20000);
+      return;
+    }
+    t.pairFail = 0;
     t.cur = [];
     t.nextAt = 0;
     t.curBye = null;
@@ -1717,7 +1728,7 @@ function createLobby({ send, clients, roomsApi }) {
           const ex = t.players.get(me.uid);
           if (ex) { if (ex.withdrawn) { ex.withdrawn = false; ex.noshows = 0; } }
           else {
-            if (t.round > Math.ceil(t.rounds / 2)) return err(c, 'Turnirga qo‘shilish muddati o‘tgan'), true;
+            if (t.round > Math.max(LATE_JOIN_ROUNDS, Math.ceil(t.rounds / 2))) return err(c, 'Turnirga qo‘shilish muddati o‘tgan'), true;
             if (t.players.size >= MAX_T_PLAYERS) return err(c, 'Turnir to‘lgan'), true;
             t.players.set(me.uid, newPlayer(me));
           }

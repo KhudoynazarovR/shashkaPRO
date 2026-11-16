@@ -2157,6 +2157,7 @@ document.head.appendChild(_as); }
     }
     g('tvFoot').innerHTML = f;
     try { renderLead(t, liveBoards(t)); } catch (e) {}
+    try { var _ft = g('tvFoot'), _root = g('tvP'); if (_ft && _root) _root.style.paddingBottom = (_ft.offsetHeight + 12) + 'px'; } catch (e) {}   // jadval pastki panel ostida qolmasin
   }
 
   function renderChat(t){
@@ -2948,7 +2949,7 @@ document.head.appendChild(_as); }
     if (sp !== lastP) { lastP = sp; renderPairs(t); }
     renderLive();
     var n = Date.now();
-    if (tab === 'l' && n - lastPeek > 1500) { lastPeek = n; if (!ws) conn(); else peek(); }
+    if (n - lastPeek > 1500) { lastPeek = n; if (!ws) conn(); else peek(); }   // pastki lider doskasi har tabda yangilanadi
     if (tab !== 'l' && ws) drop();
   }, 500);
 })();
