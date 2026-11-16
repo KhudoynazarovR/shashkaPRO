@@ -2945,7 +2945,10 @@ document.head.appendChild(_as); }
     document.body.appendChild(ov);
     ov.onclick = function(ev){ if (ev.target === ov) ov.remove(); };
     document.getElementById('tvGameX').onclick = function(){ ov.remove(); };
-    if (!x) { window.__gameWait = String(rid); askRoom(rid); }
+    if (!x) {
+      window.__gameWait = String(rid); askRoom(rid);
+      setTimeout(function(){ var gb = document.getElementById('tvGameB'); if (gb && !peekData[rid] && /Yuklanmoqda/.test(gb.textContent)) gb.innerHTML = '<div class="tvLe2" style="text-align:center">O‘yin ma’lumoti topilmadi. Server yangilangan bo‘lishi mumkin, o‘yin muddati ham o‘tgan bo‘lishi mumkin.</div>'; }, 4000);
+    }
   }
   function renderLive(){
     var t = findT(window.__tvCur), box = g('tvLiveB'); if (!t || !box) return;
