@@ -2098,6 +2098,7 @@ document.head.appendChild(_as); }
       var a = b.getAttribute('data-tv');
       if (a === 'join') send({ type: 'lbTJoin', tid: curId });
       else if (a === 'leave') { if (confirm('Turnirdan chiqasizmi?')) send({ type: 'lbTLeave', tid: curId }); }
+      else if (a === 'share') { try { var _tt = findT(curId) || {}; var _u = 'https://t.me/share/url?url=' + encodeURIComponent(location.href.split('#')[0]) + '&text=' + encodeURIComponent((_tt.name || 'Turnir') + ' — ShashkaPRO'); if (window.Telegram && Telegram.WebApp && Telegram.WebApp.openTelegramLink) Telegram.WebApp.openTelegramLink(_u); else window.open(_u, '_blank'); } catch (e) {} }
       else if (a === 'start') send({ type: 'lbTStart', tid: curId });
       else if (a === 'like') send({ type: 'lbTChatLike', tid: curId, mid: b.getAttribute('data-mid') }); /*TVLKC*/
       else if (a === 'watch') { var r = b.getAttribute('data-room'), l = L(); close(); if (l && l.go) l.go(r); }
@@ -2143,11 +2144,14 @@ document.head.appendChild(_as); }
     }).join('') : '<div class="tvEmpty">' + (t.status === 'running' ? 'Hozir jonli o‘yin yo‘q, juftlash kutilmoqda…' : 'O‘yinlar turnir boshlangach shu yerda chiqadi') + '</div>';
 
     var me = meUid(), M = ['🥇', '🥈', '🥉'], ps = t.players || [];
+    function tvAv(p){ var n = String(p.name || '?').replace(/[^\p{L}\p{N}]/gu, '').charAt(0).toUpperCase() || '?'; var ini0 = esc(n); return /^\d+$/.test(String(p.uid)) ? '<span class="avS"><img src="/api/av/' + encodeURIComponent(p.uid) + '" alt="" onerror="this.parentNode.textContent=\'' + n.replace(/'/g, '') + '\'"></span>' : '<span class="avS avI">' + ini0 + '</span>'; }
     var h = '<table class="tvTb"><tr><th>#</th><th>O‘yinchi</th><th class="r">O‘yin</th><th class="r">Ochko</th></tr>';
     ps.slice(0, 100).forEach(function(p, i){
-      h += '<tr class="' + (String(p.uid) === me ? 'me' : '') + '"><td>' + (t.status === 'finished' && M[i] ? M[i] : (i + 1) + '.') /*TVRANK*/ + '</td><td>' + esc(p.name) + (p.fire ? ' 🔥' : '') + (p.busy ? ' 🎮' : '') + (p.withdrawn ? ' ⏸' : '') + '</td><td class="r">' + (p.games || 0) + '</td><td class="r sc">' + (p.score || 0) + '</td></tr>';
+      h += '<tr class="' + (String(p.uid) === me ? 'me' : '') + '"><td>' + (t.status === 'finished' && M[i] ? M[i] : (i + 1) + '.') /*TVRANK*/ + '</td><td class="nmc">' + tvAv(p) + esc(p.name) + (p.fire ? ' 🔥' : '') + (p.busy ? ' 🎮' : '') + (p.withdrawn ? ' ⏸' : '') + '</td><td class="r">' + (p.games || 0) + '</td><td class="r sc">' + (p.score || 0) + '</td></tr>';
     });
-    g('tvTable').innerHTML = ps.length ? h + '</table>' : '<div class="tvEmpty">Hali ishtirokchi yo‘q</div>';
+    var pct = Math.min(100, Math.round((t.round || 0) / (t.rounds || 1) * 100));
+    var prog = '<div class="tvProg" title="Tur ' + (t.round || 0) + '/' + (t.rounds || 0) + '"><i style="width:' + pct + '%"></i></div>';
+    g('tvTable').innerHTML = prog + (ps.length ? h + '</table>' : '<div class="tvEmpty">Hali ishtirokchi yo‘q</div>');
 
     var f = '';
     if (t.status === 'finished') { f = '<button class="tvD" disabled>🏁 Turnir tugagan</button>'; try { window.spPod(t); } catch (e) {} }
@@ -2155,6 +2159,7 @@ document.head.appendChild(_as); }
       if (t.status === 'reg' && String(t.creatorUid) === me) f += '<button class="tvS" data-tv="start">▶ Boshlash</button>';
       f += joined(t) ? '<button class="tvL" data-tv="leave">🚪 Chiqish</button>' : '<button class="tvJ" data-tv="join">✅ Qo‘shilish</button>';
     }
+    f += '<button class="tvD" data-tv="share" style="flex:0 0 auto;min-width:96px">Ulashish</button>';
     g('tvFoot').innerHTML = f;
     try { renderLead(t, liveBoards(t)); } catch (e) {}
     try { var _ft = g('tvFoot'), _root = g('tvP'); if (_ft && _root) _root.style.paddingBottom = (_ft.offsetHeight + 12) + 'px'; } catch (e) {}   // jadval pastki panel ostida qolmasin
@@ -2739,6 +2744,11 @@ document.head.appendChild(_as); }
   '.tvLc .sp{position:absolute;top:8px;right:8px;font-size:10px;font-weight:800;color:#fff;background:#e04a4a;border-radius:5px;padding:1px 5px;opacity:.95}' +
   '.tvLe{color:' + MU + ';font-size:13px;padding:6px 2px}' +
   '.tvFoot{flex-wrap:wrap}' +
+  '.tvProg{height:6px;border-radius:6px;background:rgba(127,127,160,.25);margin:4px 2px 12px;overflow:hidden}' +
+  '.tvProg i{display:block;height:100%;background:#4fb477;border-radius:6px;transition:width .4s}' +
+  '.tvTb td.nmc{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+  '.avS{display:inline-block;width:22px;height:22px;border-radius:50%;overflow:hidden;vertical-align:middle;margin-right:6px;background:#3a4a6b;color:#fff;font-size:11px;font-weight:700;line-height:22px;text-align:center}' +
+  '.avS img{width:100%;height:100%;object-fit:cover;display:block}' +
   '#tvLead{flex:0 0 100%;display:flex;flex-direction:column;align-items:center;padding:6px 8px 8px;background:' + DEEP + ';border-radius:14px;border:1px solid ' + BTN + ';box-sizing:border-box;margin-bottom:2px}' +
   '#tvLead .ldH{font-size:11px;color:#f5c542;font-weight:800;margin-bottom:4px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
   '#tvLead .tvMb{width:min(100%,340px);max-width:100%;margin:0 auto}' +
