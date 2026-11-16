@@ -279,6 +279,7 @@
         window.__mmInvT[_mc] = toast((m.all ? "<b>" + esc(m.fromName) + "</b> <b>Xotira</b> o‘yini uchun raqib qidiryapti — birinchi qabul qilgan o‘ynaydi!" : "🧠 <b>" + esc(m.fromName) + "</b> sizni <b>Xotira</b> o‘yiniga taklif qilyapti") + (m.size ? " (" + esc(m.size.replace("x", "×")) + ")" : ""),
           [["▶ Qabul qilish", function () { var go = function () { window.spMemori({ join: _mc }); }; if (window.spMemori) go(); else { var sm = document.createElement("script"); sm.src = "/memori.js?v=9"; sm.onload = go; document.head.appendChild(sm); } }],
            ["Rad etish", function () { sendMsg({ type: "mmDecline", code: _mc, init: (tg && tg.initData) || "" }); }, "no"]], 30000);
+      } else if (m.type === "lbTAnnList") { window.dispatchEvent(new CustomEvent("lbTAnnList", { detail: m }));
       } else if (m.type === "lbRec") { if (window.tfRec) window.tfRec(m.list || []);
       } else if (m.type === "lbToast") {
         toast(esc(m.text), null, 7000);

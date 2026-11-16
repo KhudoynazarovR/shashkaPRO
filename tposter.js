@@ -273,4 +273,20 @@ async function cancelAnn(t) {   // ❌ turnir bekor qilindi — kanal va guruhla
   try { if (t.annMsg) await tg('deleteMessage', { chat_id: CH(), message_id: t.annMsg }); } catch (e) {}
   for (const [g, mid] of Object.entries(t.annGrp || {})) { try { await tg('deleteMessage', { chat_id: g, message_id: mid }); } catch (e) {} }
 }
-module.exports = { hvbResPng, hvbResult, cancelAnn, hvbPng, isHvb, today, announce, remind, result, annSvg, resSvg, png, dayStr, hm };
+// 📣 admin tanlagan joylarga (kanal/guruhlar) e'lon. Bir joyga ikki marta yuborilmaydi.
+async function announceTo(t, ids) {
+  const buf = (isHvb(t) && await hvbPng(t)) || await png(annSvg(t));
+  t.annSentTo = t.annSentTo || {};
+  const out = [];
+  for (const g of ids) {
+    if (t.annSentTo[g]) { out.push({ id: g, ok: false, why: 'yuborilgan' }); continue; }
+    try {
+      const r = await sendPhoto(g, buf, annCap(t), joinKb(t));
+      if (r && r.ok && r.result) { t.annSentTo[g] = r.result.message_id; out.push({ id: g, ok: true }); }
+      else out.push({ id: g, ok: false, why: (r && r.description) || 'xato' });
+    } catch (e) { out.push({ id: g, ok: false, why: e.message }); }
+  }
+  console.log('[tposter] tanlangan e\'lon:', t.name, JSON.stringify(out));
+  return out;
+}
+module.exports = { announceTo, hvbResPng, hvbResult, cancelAnn, hvbPng, isHvb, today, announce, remind, result, annSvg, resSvg, png, dayStr, hm };

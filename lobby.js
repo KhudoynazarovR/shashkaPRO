@@ -1332,6 +1332,22 @@ function createLobby({ send, clients, roomsApi }) {
       return true;
     }
 
+    if (m.type === 'lbTAnnList' || m.type === 'lbTAnnSend') {   // 📣 admin/yaratuvchi: e'lon joyini tanlaydi
+      if (!t0 || (String(t0.creatorUid) !== String(uid) && !economy.isAdmin(uid))) { err(c, 'Faqat turnir yaratuvchisi yoki admin yuborishi mumkin'); return true; }
+      const tp = require('./tposter.js');
+      if (m.type === 'lbTAnnList') {
+        const st = require('./store');
+        const CHN = process.env.T_CHANNEL || process.env.PZ_CHANNEL || '@Draughts_uz';
+        const ids = Array.from(new Set([CHN].concat((st.db.groups || []).map(String), String(process.env.T_GROUPS || '').split(',').map(x => x.trim()).filter(Boolean))));
+        Promise.all(ids.map(id => tgCall('getChat', { chat_id: id }).then(r => ({ id: String(id), title: (r && r.ok && r.result && (r.result.title || r.result.username)) || String(id) })).catch(() => ({ id: String(id), title: String(id) }))))
+          .then(list => send(c.ws, { type: 'lbTAnnList', tid: t0.id, list: list.map(x => Object.assign(x, { sent: !!(t0.annSentTo && t0.annSentTo[x.id]) })) }));
+        return true;
+      }
+      const ids = Array.isArray(m.ids) ? m.ids.map(String).filter(x => /^(-?\d+|@[\w]+)$/.test(x)) : [];
+      if (!ids.length) { err(c, 'Hech qayerga tanlanmadi'); return true; }
+      tp.announceTo(t0, ids).then(out => err(c, out.filter(x => x.ok).length + ' ta joyga e’lon yuborildi'));
+      return true;
+    }
     if (m.type === 'lbTInvite') {   // 📣 yaratuvchi yoki admin: barcha foydalanuvchilarga botdan chaqiriq
       if (!t0 || t0.status !== 'reg' || (String(t0.creatorUid) !== String(uid) && !economy.isAdmin(uid))) { err(c, 'Faqat turnir yaratuvchisi yoki admin chaqira oladi'); return true; }
       const link = (process.env.TG_APP_LINK || process.env.APP_LINK || '').replace(/\/$/, '');

@@ -129,6 +129,7 @@
       }
       else if (a === 'pause') { send({ type: 'lbTLeave', tid: cur }); }
       else if (a === 'invite') { send({ type: 'lbTInvite', tid: cur }); }
+      else if (a === 'ann') { send({ type: 'lbTAnnList', tid: cur }); }
       else if (a === 'leave') { if (confirm('Arenadan chiqasizmi?')) send({ type: 'lbTLeave', tid: cur }); }
       else if (a === 'start') { send({ type: 'lbTStart', tid: cur }); }
       else if (a === 'bbw') { pinR = b.getAttribute('data-room'); sigMain = ''; render(); askPeek(); var fc = g('taFeatC'); if (fc) fc.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
@@ -136,6 +137,25 @@
       sigMain = ''; render();
     });
   }
+  // 📣 admin: e'lon joyini tanlash oynasi (guruh/kanal, belgilanganlar yuboriladi)
+  function annEsc(v) { return String(v).replace(/[&<>"]/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]; }); }
+  window.__taShowAnn = function (m) {
+    var old = document.getElementById('taAnnOv'); if (old) old.remove();
+    var ov = document.createElement('div'); ov.id = 'taAnnOv';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
+    var rows = (m.list || []).map(function (x) {
+      return '<label style="display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #0001"><input type="checkbox" data-id="' + annEsc(x.id) + '"' + (x.sent ? ' disabled' : '') + '><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + annEsc(x.title) + '</span>' + (x.sent ? '<small>yuborilgan</small>' : '') + '</label>';
+    }).join('') || '<div>Guruhlar topilmadi. Bot guruhda admin bo‘lsin.</div>';
+    ov.innerHTML = '<div style="background:var(--bg,#fff);color:var(--fg,#111);width:100%;max-width:460px;border-radius:16px 16px 0 0;padding:16px;box-sizing:border-box;max-height:80vh;overflow:auto"><b>E’lonni qayerga yuborish?</b><div style="margin:8px 0">' + rows + '</div><div style="display:flex;gap:8px"><button id="taAnnGo" class="taJ s" style="flex:1">Yuborish</button><button id="taAnnNo" class="taJ" style="flex:1">Yopish</button></div></div>';
+    document.body.appendChild(ov);
+    ov.onclick = function (ev) { if (ev.target === ov || ev.target.id === 'taAnnNo') ov.remove(); };
+    document.getElementById('taAnnGo').onclick = function () {
+      var ids = [].slice.call(ov.querySelectorAll('input[data-id]:checked')).map(function (i) { return i.getAttribute('data-id'); });
+      if (!ids.length) return;
+      send({ type: 'lbTAnnSend', tid: m.tid, ids: ids }); ov.remove();
+    };
+  };
+  if (!window.__taAnnL) { window.__taAnnL = 1; window.addEventListener('lbTAnnList', function (e) { if (window.__taShowAnn) window.__taShowAnn(e.detail); }); }
   function chat() { var v = g('taTx').value.trim(); if (!v || !cur) return; send({ type: 'lbTChat', tid: cur, text: v }); g('taTx').value = ''; }
   function myIdx(t) { var u = me(), ps = t.players || []; for (var i = 0; i < ps.length; i++) if (String(ps[i].uid) === u) return i; return -1; }
 
@@ -193,6 +213,7 @@
     if (t.status !== 'finished' && !t.ending) {
       if (t.status === 'reg' && !t.startAt && String(t.creatorUid) === u) jb += '<button class="taJ s" data-a="start">▶ BOSHLASH</button> ';
       if (t.status === 'reg' && String(t.creatorUid) === u) jb += '<button class="taJ p" data-a="invite">📣 CHAQIRISH</button> ';
+      if (t.status === 'reg' && (String(t.creatorUid) === u || window.__isAdmin)) jb += '<button class="taJ p" data-a="ann">GURUHGA YUBORISH</button> ';
       if (!mp || mp.withdrawn) jb += '<button class="taJ" data-a="join">▶ QATNASHISH</button>';
       else jb += t.status === 'running' ? '<button class="taJ p" data-a="pause">⏸ PAUZA</button>' : '<button class="taJ p" data-a="leave"><svg viewBox="0 0 24 24" width="18" height="18" style="vertical-align:-3px;margin-right:6px" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/></svg>TARK ETISH</button>';
     }
