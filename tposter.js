@@ -282,7 +282,7 @@ async function announceTo(t, ids) {
     if (t.annSentTo[g]) { out.push({ id: g, ok: false, why: 'yuborilgan' }); continue; }
     try {
       const r = await sendPhoto(g, buf, annCap(t), joinKb(t));
-      if (r && r.ok && r.result) { t.annSentTo[g] = r.result.message_id; out.push({ id: g, ok: true }); }
+      if (r && r.ok && r.result) { t.annSentTo[g] = r.result.message_id; t.annGrp = t.annGrp || {}; t.annGrp[g] = r.result.message_id; out.push({ id: g, ok: true }); }
       else out.push({ id: g, ok: false, why: (r && r.description) || 'xato' });
     } catch (e) { out.push({ id: g, ok: false, why: e.message }); }
   }

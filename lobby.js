@@ -1855,7 +1855,7 @@ function createLobby({ send, clients, roomsApi }) {
         const t = tournaments.get(String(m.tid));
         if (!t || (t.creatorUid !== me.uid && !economy.isAdmin(me.uid)) || t.status !== 'reg') break;
         console.log('[turnir] bekor qilindi:', t.id, t.name); tournaments.delete(t.id);
-        if (t.announce) { try { require('./tposter.js').cancelAnn(t); } catch (e) {} }
+        if (t.announce || t.annSentTo || t.annGrp || t.annMsg) { try { require('./tposter.js').cancelAnn(t); } catch (e) {} }
         for (const p of t.players.values()) toast(p.uid, t.name + ' bekor qilindi');
         push();
         break;
