@@ -309,7 +309,8 @@ function createLobby({ send, clients, roomsApi }) {
   function standings(t) {
     const arr = [...t.players.values()].map(p => {
       const st = swissStats(t, p);
-      return { uid: p.uid, name: p.name, score: p.score, buch: st.buch, sb: st.sb, games: (p.res || []).length, withdrawn: p.withdrawn };
+      const rs = p.res || [];
+      return { uid: p.uid, name: p.name, score: p.score, buch: st.buch, sb: st.sb, games: rs.filter(x => !x.bye).length, withdrawn: p.withdrawn, grid: rs.map(x => ({ rd: x.rd || 0, pts: x.pts, rid: x.rid || null, bye: !!x.bye })) };
     });
     // Lichess tartibi: ochko, keyin SB, keyin Buxgols
     arr.sort((a, b) => b.score - a.score || b.sb - a.sb || b.buch - a.buch || a.name.localeCompare(b.name));
@@ -764,7 +765,7 @@ function createLobby({ send, clients, roomsApi }) {
     t.cur = [];
     t.nextAt = 0;
     t.curBye = null;
-    if (bye) { bye.score += 1; bye.hadBye = true; t.curBye = bye.uid; toast(bye.uid, '🏆 ' + t.name + ': bu turda dam olasiz (+1 ochko)'); }
+    if (bye) { bye.score += 1; bye.hadBye = true; bye.res.push({ opp: null, pts: 1, rd: t.round, bye: true }); t.curBye = bye.uid; toast(bye.uid, '🏆 ' + t.name + ': bu turda dam olasiz (+1 ochko)'); }
     pairs.forEach(([w, b], i) => {
       const roomId = 'T' + t.id + 'R' + t.round + 'B' + (i + 1);
       w.opps.push(b.uid); b.opps.push(w.uid);
@@ -830,11 +831,11 @@ function createLobby({ send, clients, roomsApi }) {
     const pw = t.players.get(b.white), pb = t.players.get(b.black);
     let sw = 0, sb = 0;
     if (room.noshowBoth) { sw = 0; sb = 0; }
-    else if (room.winner === 'white') sw = 1;
-    else if (room.winner === 'black') sb = 1;
-    else { sw = 0.5; sb = 0.5; }
+    else if (room.winner === 'white') sw = 2;   // shashka: g‘alaba 2 ochko
+    else if (room.winner === 'black') sb = 2;
+    else { sw = 1; sb = 1; }                     // durang 1 ochko
     pw.score += sw; pb.score += sb; payWin(room, b.white, b.black, t.id);
-    pw.res.push({ opp: pb.uid, pts: sw }); pb.res.push({ opp: pw.uid, pts: sb });
+    pw.res.push({ opp: pb.uid, pts: sw, rd: t.round, rid: b.roomId }); pb.res.push({ opp: pw.uid, pts: sb, rd: t.round, rid: b.roomId });
     if (room.reason === 'noshow') {
       if (room.noshowBoth) { pw.noshows++; pb.noshows++; }
       else if (room.winner === 'white') { pb.noshows++; pw.noshows = 0; }
