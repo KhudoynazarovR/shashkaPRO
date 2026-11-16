@@ -830,9 +830,9 @@ function createLobby({ send, clients, roomsApi }) {
     const pw = t.players.get(b.white), pb = t.players.get(b.black);
     let sw = 0, sb = 0;
     if (room.noshowBoth) { sw = 0; sb = 0; }
-    else if (room.winner === 'white') sw = 1;
-    else if (room.winner === 'black') sb = 1;
-    else { sw = 0.5; sb = 0.5; }
+    else if (room.winner === 'white') sw = 2;   // shashka: g‘alaba 2 ochko
+    else if (room.winner === 'black') sb = 2;
+    else { sw = 1; sb = 1; }                     // durang 1 ochko
     pw.score += sw; pb.score += sb; payWin(room, b.white, b.black, t.id);
     pw.res.push({ opp: pb.uid, pts: sw }); pb.res.push({ opp: pw.uid, pts: sb });
     if (room.reason === 'noshow') {
