@@ -1332,6 +1332,16 @@ function createLobby({ send, clients, roomsApi }) {
       return true;
     }
 
+    if (m.type === 'lbTInvite') {   // 📣 yaratuvchi yoki admin: barcha foydalanuvchilarga botdan chaqiriq
+      if (!t0 || t0.status !== 'reg' || (String(t0.creatorUid) !== String(uid) && !economy.isAdmin(uid))) { err(c, 'Faqat turnir yaratuvchisi yoki admin chaqira oladi'); return true; }
+      const link = (process.env.TG_APP_LINK || process.env.APP_LINK || '').replace(/\/$/, '');
+      const ids = Object.keys(require('./store').users()).filter(x => /^\d+$/.test(x));
+      const text = '🏆 ' + t0.name + ' boshlanmoqda!\n\n' + (t0.tc || '') + (t0.prize ? '\n💰 Mukofot: ' + t0.prize + ' tanga' : '') + '\n\nQatnashish uchun pastdagi tugmani bosing.';
+      const extra = link ? { reply_markup: { inline_keyboard: [[{ text: '⚔️ Qo‘shilish', url: link + '?startapp=lbt_' + t0.id }]] } } : {};
+      ids.forEach((id, i) => setTimeout(() => tgCall('sendMessage', Object.assign({ chat_id: Number(id), text }, extra)).catch(() => {}), i * 100));
+      err(c, ids.length + ' ta foydalanuvchiga chaqiriq yuborilmoqda');
+      return true;
+    }
     if (m.type === 'lbTCreate') {
     { const cl0 = clubsApi.check(uid, m.clubIds); if (cl0.error) { err(c, cl0.error); return true; } }
       const before = tournaments.size;
