@@ -2740,7 +2740,7 @@ document.head.appendChild(_as); }
   '.tvFoot{flex-wrap:wrap}' +
   '#tvLead{flex:0 0 100%;display:flex;flex-direction:column;align-items:center;padding:6px 8px 8px;background:' + DEEP + ';border-radius:14px;border:1px solid ' + BTN + ';box-sizing:border-box;margin-bottom:2px}' +
   '#tvLead .ldH{font-size:11px;color:#f5c542;font-weight:800;margin-bottom:4px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
-  '#tvLead .tvMb{width:min(100%,150px);margin:0 auto}' +
+  '#tvLead .tvMb{width:min(100%,340px);max-width:100%;margin:0 auto}' +
   '#tvLead .tvLe2{font-size:11px;color:' + MU + ';padding:14px 0}';
   var st = document.createElement('style'); st.id = 'tvTabsCss'; st.textContent = css; document.head.appendChild(st);
 
