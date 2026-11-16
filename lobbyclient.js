@@ -2148,7 +2148,7 @@ document.head.appendChild(_as); }
     var R = Math.max(1, t.rounds || 1);
     var hd = '<tr><th>#</th><th>O‘yinchi</th>';
     for (var r = 1; r <= R; r++) hd += '<th class="rn">' + r + '</th>';
-    hd += '<th class="r">Ochko</th></tr>';
+    hd += '<th class="r">Ochko</th><th class="r">SB</th></tr>';
     var h = '<table class="tvTb tvGrid">' + hd;
     ps.slice(0, 100).forEach(function(p, i){
       var gm = {}; (p.grid || []).forEach(function(x){ gm[x.rd] = x; });
@@ -2159,12 +2159,12 @@ document.head.appendChild(_as); }
         else if (x.bye) cells += '<td class="rc"><i class="rbye">B</i></td>';
         else {
           var cl = x.pts >= 2 ? 'rw' : (x.pts >= 1 ? 'rd' : 'rl');
-          var lab = x.pts >= 2 ? '2' : (x.pts >= 1 ? '1' : '0');
+          var lab = x.pts >= 2 ? '1' : (x.pts >= 1 ? '½' : '0');
           cells += x.rid ? '<td class="rc"><button class="rbtn ' + cl + '" data-tv="game" data-rid="' + esc(x.rid) + '">' + lab + '</button></td>' : '<td class="rc"><i class="' + cl + '">' + lab + '</i></td>';
         }
       }
       var rank = (t.status === 'finished' && M[i]) ? M[i] : (i + 1) + '.';
-      h += '<tr class="' + (String(p.uid) === me ? 'me' : '') + '"><td>' + rank + '</td><td class="nmc">' + tvAv(p) + esc(p.name) + (p.fire ? ' 🔥' : '') + (p.busy ? ' 🎮' : '') + (p.withdrawn ? ' ⏸' : '') + '</td>' + cells + '<td class="r sc">' + (p.score || 0) + '</td></tr>';
+      h += '<tr class="' + (String(p.uid) === me ? 'me' : '') + '"><td>' + rank + '</td><td class="nmc">' + tvAv(p) + esc(p.name) + (p.fire ? ' 🔥' : '') + (p.busy ? ' 🎮' : '') + (p.withdrawn ? ' ⏸' : '') + '</td>' + cells + '<td class="r sc">' + (p.score || 0) + '</td><td class="r">' + (p.sb != null ? p.sb : '') + '</td></tr>';
     });
     var pct = Math.min(100, Math.round((t.round || 0) / (t.rounds || 1) * 100));
     var prog = '<div class="tvProg" title="Tur ' + (t.round || 0) + '/' + (t.rounds || 0) + '"><i style="width:' + pct + '%"></i></div>';
@@ -2766,8 +2766,9 @@ document.head.appendChild(_as); }
   '.tvGrid th.rn{width:28px;text-align:center;font-size:10px}' +
   '.tvGrid td.rc{padding:6px 1px;text-align:center}' +
   '.tvGrid td:nth-child(2){min-width:110px}' +
-  '.rbtn{min-width:26px;height:26px;border-radius:7px;border:0;color:#fff;font-weight:800;font-size:12px;padding:0;cursor:pointer}' +
-  '.rbtn.rw{background:#2f9e5e}.rbtn.rd{background:#b8891f}.rbtn.rl{background:#c0392b}' +
+  '.rbtn{min-width:24px;height:24px;border:0;background:transparent;font-weight:800;font-size:15px;padding:0;cursor:pointer;text-decoration:underline;text-underline-offset:3px}' +
+  '.rbtn.rw{color:#2f9e5e}.rbtn.rd{color:#d9a21b}.rbtn.rl{color:#e0533d}' +
+  '.tvGrid td.rc{border-left:1px dotted rgba(255,255,255,.14)}.tvGrid td.sc{font-weight:800}' +
   '.rw,.rd,.rl{font-weight:800;font-style:normal}.rw{color:#2f9e5e}.rd{color:#b8891f}.rl{color:#c0392b}' +
   '.rbye{font-style:normal;color:#8aa;font-weight:700}.rz{font-style:normal;opacity:.35}' +
   '.tvProg{height:6px;border-radius:6px;background:rgba(127,127,160,.25);margin:4px 2px 12px;overflow:hidden}' +
