@@ -75,10 +75,18 @@ function packVal(val, blobs) {
     return v;
   });
 }
+// vaqtinchalik ulanish uzilishlarida (Render DB qayta ulanish) 2 marta qayta urinish
+const TRANSIENT = /terminated|ECONNRESET|ECONNREFUSED|timeout|encountered/i;
+async function q(text, params) {
+  for (let i = 0; ; i++) {
+    try { return await pool.query(text, params); }
+    catch (e) { if (i >= 2 || !TRANSIENT.test(String(e.message))) throw e; await new Promise(r => setTimeout(r, 1500 * (i + 1))); }
+  }
+}
 async function putRow(k, str) {
   const h = crypto.createHash('sha1').update(str).digest('hex');
   if (lastHash.get(k) === h) return false;
-  await pool.query("insert into kv(k, v) values($1, $2) on conflict (k) do update set v = excluded.v", [k, str]);
+  await q("insert into kv(k, v) values($1, $2) on conflict (k) do update set v = excluded.v", [k, str]);
   lastHash.set(k, h); return true;
 }
 async function writeDb(force) {
@@ -101,7 +109,7 @@ async function writeDb(force) {
     for (let i = 0; i < UB; i++) rows.push(['u:' + i, packVal(ub[i], blobs)]);
     for (const [h, v] of blobs) {   // rasmlar — bir marta
       if (savedBlobs.has(h)) continue;
-      await pool.query("insert into kv(k, v) values($1, $2) on conflict (k) do nothing", ['blob:' + h, JSON.stringify(v, rep)]);
+      await q("insert into kv(k, v) values($1, $2) on conflict (k) do nothing", ['blob:' + h, JSON.stringify(v, rep)]);
       savedBlobs.add(h);
     }
     let n = 0;
@@ -116,11 +124,11 @@ async function writeDb(force) {
     if (Date.now() - lastBk > 24 * 3600e3) {
       lastBk = Date.now();
       const day = new Date().toISOString().slice(0, 10), bl = new Map();
-      await pool.query("insert into kv(k, v) values($1, $2) on conflict (k) do update set v = excluded.v", ['backup:' + day, packVal(db, bl)]);
-      await pool.query("delete from kv where k like 'backup:%' and k not in (select k from kv where k like 'backup:%' order by k desc limit 7)");
+      await q("insert into kv(k, v) values($1, $2) on conflict (k) do update set v = excluded.v", ['backup:' + day, packVal(db, bl)]);
+      await q("delete from kv where k like 'backup:%' and k not in (select k from kv where k like 'backup:%' order by k desc limit 7)");
       // eski bitta-qator "players" — yangi tuzilish 7 kun ishlagach o'chiriladi
-      if (v2Since && Date.now() - v2Since > 7 * 24 * 3600e3) await pool.query("delete from kv where k = 'players'");
-      await pool.query('vacuum kv');
+      if (v2Since && Date.now() - v2Since > 7 * 24 * 3600e3) await q("delete from kv where k = 'players'");
+      await q('vacuum kv');
     }
     if (failN) { failN = 0; alertAdmin('ok', '✅ bazaga yozish yana ishlayapti.'); }
   } catch (e) {
