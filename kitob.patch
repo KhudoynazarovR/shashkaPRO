@@ -1,0 +1,308 @@
+From d98fafa9530ad6e4f88187d1796447e71395ff61 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sun, 15 Nov 2026 17:04:03 +0500
+Subject: [PATCH 2/2] Masalalar kitoblari qulfi: oldingi kitob 100/100
+ bo'lmaguncha yopiq, kitob ichida ketma-ket ochiladi; tartibsiz yechilgan
+ masalaga tanga yo'q (faqat yulduz); har bir xato yurish va xato javob uchun 1
+ tanga jarima (daraxtga); papkalar tabi faqat adminga; admin kitobni
+ foydalanuvchi ID si orqali ochadi; sarguzasht o'lka va bekat ochilishi 100%
+ ga
+
+Co-Authored-By: Claude Haiku 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01GgCQbFACGjSCEh82q7nMXj
+---
+ economy.js       | 52 +++++++++++++++++++++++++++++++++++++++++++-----
+ menu.js          | 36 ++++++++++++++++++++++++++-------
+ sarguzasht.js    | 12 +++++------
+ sarguzashtsrv.js |  6 +++---
+ 4 files changed, 85 insertions(+), 21 deletions(-)
+
+diff --git a/economy.js b/economy.js
+index 65ecaab..e8d6577 100644
+--- a/economy.js
++++ b/economy.js
+@@ -48,6 +48,35 @@ function spend(id, n, why) {
+   return true;
+ }
+ function balance(id) { const u = user(id); return u ? (u.diamonds || 0) : 0; }
++// 🪙 jarima: har bir xato uchun 1 tanga; balans manfiy bo'lmaydi; ayirilgan tanga daraxtga tushadi
++function penalty(id, why) {
++  const x = Math.min(1, balance(id));
++  if (x <= 0) return 0;
++  spend(id, x, why);
++  try { require('./daraxtsrv.js').feed(x, String(id)); } catch (e) {}
++  return x;
++}
++// 📚 kitob tartibi: kitob oldingisi 100/100 bo'lmaguncha qulf; kitob ichida masalalar ketma-ket
++function bookOrder(u, id) {
++  let B; try { B = require('./pzbooks.js').build(); } catch (e) { return { ok: true }; }
++  const sv = u.solved || [];
++  for (const sh of ['s', 'm']) {
++    const books = (B && B[sh]) || [];
++    for (let i = 0; i < books.length; i++) {
++      const ids = books[i], idx = ids.indexOf(id);
++      if (idx < 0) continue;
++      const key = sh + ':' + i;
++      if ((u.pzOpenB || {})[key]) return { ok: true };
++      const prevFull = i === 0 || books[i - 1].every(x => sv.includes(x));
++      const curAny = ids.some(x => sv.includes(x));
++      if (i > 0 && !prevFull && !curAny) return { ok: false, why: 'locked' };
++      const f = ids.findIndex(x => !sv.includes(x));
++      if (f >= 0 && idx > f && !sv.includes(id)) return { ok: false, why: 'order' };
++      return { ok: true };
++    }
++  }
++  return { ok: true };
++}
+ 
+ function claimDaily(id) {
+   const u = user(id);
+@@ -601,10 +630,10 @@ function handle(req, res, url) {
+     let _etF = [], _etL = [], _etN = {}, _etP = {}; try { const _E = require('./etudes.js'); _etL = _E.puzzleList(); _etF = _E.FOLDERS.filter(f => _etL.some(x => x.folder === f)); _etN = _E.ETF; _etP = _E.ETP; } catch (e) {}
+     const _fo = (store.db.pzFolders || []).slice(); { const _ki = _fo.indexOf('Kombinatsiyalar'); _fo.splice(_ki >= 0 ? _ki + 1 : 0, 0, ..._etF); }
+     let _bk = null; try { const _B = require('./pzbooks.js'); _bk = Object.assign({ cov: _B.covers() }, _B.build()); } catch (e) { console.log('[kitob]', e.message); }
+-    send(res, 200, { books: _bk, qz: _adm ? (function () { try { return require('./quiz.js').ids(); } catch (e) { return []; } })() : undefined, reels: _adm ? (function () { try { return require('./reelgen.js').usedIds(); } catch (e) { return []; } })() : undefined, etf: _etN, etp: _etP, folders: _fo, settings: store.db.pzSettings || {}, dayFolder: (function () { try { return require('./quests.js').dayFolder(); } catch (e) { return ''; } })(), chanFolders: (function () { try { return require('./kanal.js').folders(); } catch (e) { return []; } })(), hideLv: store.db.pzHideLv || [], best: _u.pzBest || {}, inv: _u.pzInv || null, ranks: require('./pzranks.js').RANKS, topInv: (function () { const m = require('./pzranks.js'); m.watch(store); return m.top(store); })(), promo: Date.parse(process.env.PZ_PROMO_END || '2026-10-25T23:59:59+05:00'), admin: _adm, link: process.env.TG_APP_LINK || '', myId: String(_tg.id), solved: _u.solved || [], stars: _u.pzStars || {}, heroAv: _u.pzHero || '', list: (() => { const _c = {}; Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { _c[i] = (_c[i] || 0) + 1; })); return store.db.puzzles.slice().sort((x, y) => (x.no || 0) - (y.no || 0)).map(x => Object.assign({}, x, { cnt: _c[x.id] || 0 })); })(), etl: (() => { const _c = {}; Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { if (i[0] === 'e') _c[i] = (_c[i] || 0) + 1; })); return _etL.map(x => [x.id.slice(2), x.no, x.level, x.b32, x.t, _c[x.id] || 0]); })() });
++    send(res, 200, { books: _bk, qz: _adm ? (function () { try { return require('./quiz.js').ids(); } catch (e) { return []; } })() : undefined, reels: _adm ? (function () { try { return require('./reelgen.js').usedIds(); } catch (e) { return []; } })() : undefined, etf: _etN, etp: _etP, folders: _fo, settings: store.db.pzSettings || {}, dayFolder: (function () { try { return require('./quests.js').dayFolder(); } catch (e) { return ''; } })(), chanFolders: (function () { try { return require('./kanal.js').folders(); } catch (e) { return []; } })(), hideLv: store.db.pzHideLv || [], best: _u.pzBest || {}, inv: _u.pzInv || null, ranks: require('./pzranks.js').RANKS, topInv: (function () { const m = require('./pzranks.js'); m.watch(store); return m.top(store); })(), promo: Date.parse(process.env.PZ_PROMO_END || '2026-10-25T23:59:59+05:00'), admin: _adm, link: process.env.TG_APP_LINK || '', myId: String(_tg.id), solved: _u.solved || [], stars: _u.pzStars || {}, bopen: _u.pzOpenB || {}, heroAv: _u.pzHero || '', list: (() => { const _c = {}; Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { _c[i] = (_c[i] || 0) + 1; })); return store.db.puzzles.slice().sort((x, y) => (x.no || 0) - (y.no || 0)).map(x => Object.assign({}, x, { cnt: _c[x.id] || 0 })); })(), etl: (() => { const _c = {}; Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { if (i[0] === 'e') _c[i] = (_c[i] || 0) + 1; })); return _etL.map(x => [x.id.slice(2), x.no, x.level, x.b32, x.t, _c[x.id] || 0]); })() });
+     return true;
+   }
+-  if ((p === '/api/puzzle' || p === '/api/puzzle/del' || p === '/api/puzzle/solved' || p === '/api/puzzle/fail' || p === '/api/puzzle/rename' || p === '/api/puzzle/folder' || p === '/api/puzzle/move' || p === '/api/puzzle/settings' || p === '/api/puzzle/order' || p === '/api/puzzle/edit' || p === '/api/puzzle/renum' || p === '/api/puzzle/merge' || p === '/api/puzzle/dayfolder' || p === '/api/puzzle/chanfolder') && req.method === 'POST') {
++  if ((p === '/api/puzzle' || p === '/api/puzzle/del' || p === '/api/puzzle/solved' || p === '/api/puzzle/fail' || p === '/api/puzzle/rename' || p === '/api/puzzle/folder' || p === '/api/puzzle/move' || p === '/api/puzzle/settings' || p === '/api/puzzle/order' || p === '/api/puzzle/edit' || p === '/api/puzzle/renum' || p === '/api/puzzle/merge' || p === '/api/puzzle/dayfolder' || p === '/api/puzzle/chanfolder' || p === '/api/puzzle/err' || p === '/api/puzzle/bopen') && req.method === 'POST') {
+     const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
+     if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
+     readBody(req, 100000, body => {
+@@ -616,6 +645,10 @@ function handle(req, res, url) {
+         if (id) { u.pzFail = u.pzFail || {}; if (!u.pzFail[id]) { u.pzFail[id] = 1; store.save(); } } try { require('./sarguzashtsrv.js').onFail(u, id); } catch (e) {}
+         return send(res, 200, { ok: true });
+       }
++      if (p === '/api/puzzle/err') {   // 🪙 har bir xato yurish yoki xato javob uchun 1 tanga
++        const pen = penalty(String(_tg.id), 'masala xatosi ' + String(j.id || '').slice(0, 40));
++        return send(res, 200, { ok: true, pen });
++      }
+       if (p === '/api/puzzle/solved') {
+         let pz = arr.find(x => x.id === j.id); if (!pz) { try { pz = require('./etudes.js').asPuzzle(j.id); } catch (e) {} }
+         if (!pz) return send(res, 404, { error: 'none' });
+@@ -628,15 +661,24 @@ function handle(req, res, url) {
+         u.pzStars = u.pzStars || {}; if (!(u.pzStars[pz.id] >= _st)) u.pzStars[pz.id] = _st;
+         if (!_clean) { u.pzFail = u.pzFail || {}; u.pzFail[pz.id] = 1; }
+         if (u.solved.includes(pz.id)) { try { if (require('./quests.js').isDay(pz)) require('./quests.js').bump(_tg.id, 'petrova', 1, pz.id); } catch (e) {} }
++        const _ord = (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).includes(String(_tg.id)) ? { ok: true } : bookOrder(u, pz.id);
+         if (!u.solved.includes(pz.id)) { const _fast = Date.now() - (u.lastSolve || 0) < 3000; u.lastSolve = Date.now();
+           try { const _rf = String(j.ref || ''); if (/^\d{3,15}$/.test(_rf) && _rf !== String(_tg.id) && !u.pzRef && !(u.solved || []).length && Date.now() <= Date.parse(process.env.PZ_PROMO_END || '2026-10-25T23:59:59+05:00')) { const _iv = store.users()[_rf]; if (_iv) { const _day = new Date().toISOString().slice(0, 10); _iv.pzInv = _iv.pzInv || { d: '', n: 0, total: 0 }; if (_iv.pzInv.d !== _day) { _iv.pzInv.d = _day; _iv.pzInv.n = 0; } if (_iv.pzInv.n < 30) { u.pzRef = _rf; _iv.pzInv.n++; _iv.pzInv.total++; _iv.diamonds = (_iv.diamonds || 0) + 100; try { require('./pzranks.js').onInvite(_iv, _rf); } catch (e) {} if (process.env.BOT_TOKEN) fetch('https://api.telegram.org/bot' + process.env.BOT_TOKEN + '/sendMessage', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ chat_id: _rf, text: '🎉 ' + (u.name || 'Yangi o‘yinchi') + ' havolangiz orqali masala yechdi! +100 🪙' }) }).catch(() => {}); } } } } catch (e) {}
+-          u.solved.push(pz.id); try { const _q = require('./quests.js'); _q.bump(_tg.id, 'puzzle'); if (require('./quests.js').isDay(pz)) _q.bump(_tg.id, 'petrova', 1, pz.id); } catch (e) {} gain = (_fast || !_clean) ? 0 : 5; j.__base = gain; if (_clean) { try { gain += require('./pzranks.js').folderBonus(store, u, pz, _tg.id); } catch (e) {} } u.diamonds = (u.diamonds || 0) + gain; pz.sv = (pz.sv || []).concat([u.name || 'Foydalanuvchi']).slice(-200); try { const _dk = new Date(Date.now() + 5 * 3600e3).toISOString().slice(0, 10); if (!store.db.pzDay || store.db.pzDay.d !== _dk) store.db.pzDay = { d: _dk, c: {} }; const _us = store.users(), _uk = Object.keys(_us).find(k => _us[k] === u); if (_uk) store.db.pzDay.c[_uk] = (store.db.pzDay.c[_uk] || 0) + 1; } catch (e) {} store.save(); try { require('./grpupd.js')(pz, () => Object.values(store.users()).filter(v => (v.solved || []).includes(pz.id)).length); } catch (e) {} }
++          u.solved.push(pz.id); try { const _q = require('./quests.js'); _q.bump(_tg.id, 'puzzle'); if (require('./quests.js').isDay(pz)) _q.bump(_tg.id, 'petrova', 1, pz.id); } catch (e) {} gain = (_fast || !_clean || !_ord.ok) ? 0 : 5; j.__base = gain; if (_clean) { try { gain += require('./pzranks.js').folderBonus(store, u, pz, _tg.id); } catch (e) {} } u.diamonds = (u.diamonds || 0) + gain; pz.sv = (pz.sv || []).concat([u.name || 'Foydalanuvchi']).slice(-200); try { const _dk = new Date(Date.now() + 5 * 3600e3).toISOString().slice(0, 10); if (!store.db.pzDay || store.db.pzDay.d !== _dk) store.db.pzDay = { d: _dk, c: {} }; const _us = store.users(), _uk = Object.keys(_us).find(k => _us[k] === u); if (_uk) store.db.pzDay.c[_uk] = (store.db.pzDay.c[_uk] || 0) + 1; } catch (e) {} store.save(); try { require('./grpupd.js')(pz, () => Object.values(store.users()).filter(v => (v.solved || []).includes(pz.id)).length); } catch (e) {} }
+         let _adv = null; try { _adv = require('./sarguzashtsrv.js').onSolve(String(_tg.id), u, pz, j, gain); if (_adv && _adv.extra > 0) { gain += _adv.extra; u.diamonds = (u.diamonds || 0) + _adv.extra; } } catch (e) {}   // 🗺 qal'a sinovi, kunlik mehmon
+         try { gain += require('./kanal.js').onSolve(_tg.id, u, pz, j); } catch (e) {}   // 📣 kanal masalasi: bonus, reyting, taklif mukofoti
+-        const _tm = Math.round(Number(j.time)); if (_tm > 0 && _tm < 36000) { u.pzBest = u.pzBest || {}; if (!u.pzBest[pz.id] || _tm < u.pzBest[pz.id]) { u.pzBest[pz.id] = _tm; store.save(); } } store.save(); return send(res, 200, { ok: true, gain, stars: _st, best3: u.pzStars[pz.id], noCoin: !_clean, best: (u.pzBest || {})[pz.id] || 0, adv: _adv && _adv.out });
++        const _tm = Math.round(Number(j.time)); if (_tm > 0 && _tm < 36000) { u.pzBest = u.pzBest || {}; if (!u.pzBest[pz.id] || _tm < u.pzBest[pz.id]) { u.pzBest[pz.id] = _tm; store.save(); } } store.save(); return send(res, 200, { ok: true, gain, stars: _st, best3: u.pzStars[pz.id], noCoin: !_clean || !_ord.ok, order: _ord.ok, best: (u.pzBest || {})[pz.id] || 0, adv: _adv && _adv.out });
+       }
+       const adm = (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(_tg.id));
+       if (!adm) return send(res, 403, { error: 'admin emassiz' });
++      if (p === '/api/puzzle/bopen') {   // 🔓 admin: kitobni muayyan foydalanuvchi uchun ochadi yoki yopadi
++        const tu = store.users()[String(j.uid || '')];
++        if (!tu) return send(res, 404, { error: 'foydalanuvchi topilmadi' });
++        const key = String(j.key || '').slice(0, 20); if (!key) return send(res, 400, { error: 'key' });
++        tu.pzOpenB = tu.pzOpenB || {};
++        if (j.on) tu.pzOpenB[key] = 1; else delete tu.pzOpenB[key];
++        store.save(); return send(res, 200, { ok: true });
++      }
+       if (p === '/api/puzzle/chanfolder') {   // 📣 kanal masalalari qaysi papkalardan (bir nechta tanlash mumkin)
+         const _cf = String(j.folder || '');
+         if (!arr.some(x => x.folder === _cf)) return send(res, 400, { error: 'Bu papkada masala yo‘q' });
+@@ -922,4 +964,4 @@ function handle(req, res, url) {
+   return false;
+ }
+ 
+-module.exports = { pzRenum, CFG, balance, add, spend, claimDaily, rewardWin, chargeCreate, chargeJoin, joinFee, refund, finishTournament, hostBonus, isAdmin, handle };
++module.exports = { pzRenum, CFG, balance, penalty, bookOrder, add, spend, claimDaily, rewardWin, chargeCreate, chargeJoin, joinFee, refund, finishTournament, hostBonus, isAdmin, handle };
+diff --git a/menu.js b/menu.js
+index 4e9da3d..1b37b63 100644
+--- a/menu.js
++++ b/menu.js
+@@ -750,6 +750,7 @@
+         if (cp) { S._cont = { book: cb, p: cp }; h += '<button class="pzNc" id="pzCont">' + pzMini(cp.board, 0, 1) + '<span class="t"><small>DAVOM ETTIRISH</small><b>' + esc(cb.title) + '</b><span>' + (cb.from + cb.arr.indexOf(cp)) + '-masala · ' + (cp.side === 'w' ? 'Oq yuradi' : 'Qora yuradi') + '</span></span><span class="go">Yechish</span></button>'; }
+       }
+       var TABS = [['s', 'Sodda', BK.s.length], ['m', 'Murakkab', BK.m.length], ['e', 'Etyudlar', BK.e.length], ['f', 'To‘plamlar', all.length]];
++      if (!S.admin) { TABS = TABS.filter(function (t) { return t[0] !== 'f'; }); if (shelf === 'f') shelf = 's'; }
+       h += '<div class="pzTb">' + TABS.map(function (t) { return '<button data-sh="' + t[0] + '"' + (shelf === t[0] ? ' class="on"' : '') + '>' + t[1] + '</button>'; }).join('') + '</div>';
+       if (shelf !== 'f') {
+         var books = BK[shelf] || [];
+@@ -809,7 +810,7 @@
+     on('#pzMG', function () { MG.on = !MG.on; MG.sel = []; list(); });
+     Array.prototype.forEach.call(ov.querySelectorAll('[data-mix]'), function (e) { e.onclick = function () { curLv = 9; curFo = ''; list(); }; });
+     Array.prototype.forEach.call(ov.querySelectorAll('[data-sh]'), function (e) { e.onclick = function () { shelf = e.getAttribute('data-sh'); try { localStorage.setItem('pzShelf', shelf); } catch (x) {} list(); }; });
+-    Array.prototype.forEach.call(ov.querySelectorAll('[data-bk]'), function (e) { e.onclick = function () { var b = findBook(e.getAttribute('data-bk')); if (b) bookView(b); }; });
++    Array.prototype.forEach.call(ov.querySelectorAll('[data-bk]'), function (e) { e.onclick = function () { var b = findBook(e.getAttribute('data-bk')); if (!b) return; if (bkLocked(b)) return pzSheet('Kitob qulflangan', [['Oldingi kitobdagi 100 ta masalani yeching', function () {}]]); bookView(b); }; });
+     Array.prototype.forEach.call(ov.querySelectorAll('[data-bm]'), function (e) { e.onclick = function (ev) { ev.stopPropagation(); var b = findBook(e.getAttribute('data-bm')); if (b) bookMenu(b); }; });
+     on('#pzCont', function () {
+       var c = S._cont; if (!c) return;
+@@ -872,10 +873,22 @@
+     }
+     return '<svg viewBox="0 0 100 147" preserveAspectRatio="xMidYMid slice">' + g + '</svg>';
+   }
++  // 🔒 kitob qulfi: oldingi kitob 100/100 bo'lmaguncha yopiq; admin ochgan kitob ochiq; etyud kitoblari ochiq qoladi
++  var LOCK_BIG = '<svg viewBox="0 0 24 24" width="38" height="38"><rect x="4" y="10" width="16" height="11" rx="2.5" fill="#e2e8f0"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="#e2e8f0" stroke-width="2.4" fill="none"/><circle cx="12" cy="15" r="1.6" fill="#475569"/></svg>';
++  var LOCK_SM = '<svg viewBox="0 0 24 24" width="13" height="13"><rect x="4" y="10" width="16" height="11" rx="2.5" fill="#94a3b8"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="#94a3b8" stroke-width="2.4" fill="none"/></svg>';
++  function bkLocked(b) {
++    if (S.admin || b.kind === 'e' || b.n <= 1) return false;
++    if ((S.bopen || {})[b.key]) return false;
++    var prev = (pzBooks()[b.kind] || [])[b.n - 2], sv = S.solved || [];
++    if (!prev) return false;
++    var prevFull = prev.arr.every(function (p) { return sv.indexOf(p.id) >= 0; });
++    return !prevFull && nDone(b.arr) === 0;
++  }
+   function bookHtml(b, k) {
++    var lk = bkLocked(b);
+     var n = b.arr.length, d = nDone(b.arr), done = n && d === n, cov = S.books && S.books.cov && S.books.cov[b.key];
+     var seed = (b.kind === 's' ? 0 : b.kind === 'm' ? 4 : 2) + b.n - 1 + (b.kind === 'e' ? k : 0);
+-    return '<div class="pzBk" data-bk="' + b.key + '">' + (cov ? '<img src="/api/pzbook/cov?k=' + b.key + '&v=' + cov + '" alt="">' : natSvg(seed, b.key)) + (done ? '<span class="rib"></span>' : '') +
++    return '<div class="pzBk' + (lk ? ' lk' : '') + '" data-bk="' + b.key + '"' + (lk ? ' style="position:relative;filter:grayscale(1) brightness(.6)"' : '') + '>' + (lk ? '<span style="position:absolute;inset:0;z-index:3;display:flex;align-items:center;justify-content:center;pointer-events:none">' + LOCK_BIG + '</span>' : '') + (cov ? '<img src="/api/pzbook/cov?k=' + b.key + '&v=' + cov + '" alt="">' : natSvg(seed, b.key)) + (done ? '<span class="rib"></span>' : '') +
+       '<div class="fr"></div><div class="tt">' + (b.kind === 'e' ? (function () { var pt = b.title.split(' · '); return '<small>' + esc(pt.length > 1 ? pt[0].toUpperCase() : 'ETYUD') + '</small><span class="sm">' + esc(pt.length > 1 ? pt.slice(1).join(' · ') : b.title) + '</span>'; })() : '<small>' + (b.kind === 's' ? 'SODDA' : 'MURAKKAB') + '</small><span>' + b.n + '-kitob</span>') + '</div>' +
+       (S.admin ? '<button class="mo" data-bm="' + b.key + '">⋯</button>' : '') +
+       '<div class="pl"><b>' + n + (b.kind === 'e' ? ' ta etyud' : ' ta masala') + '</b><i><u style="width:' + (n ? Math.round(d / n * 100) : 0) + '%"></u></i><small>' + (done ? 'Tugatilgan' : d + ' / ' + n) + (d ? ' · ★ ' + bookStars(b) : '') + '</small></div></div>';
+@@ -887,7 +900,8 @@
+     var h = '<div class="pzN"><div class="pzNh"><button id="pzBack" class="pzNb">‹</button><div class="pzNt"><b>' + esc(b.title) + '</b><small>' + d + ' / ' + n + ' yechildi · <span style="color:#fbbf24">★ ' + bookStars(b) + ' / ' + n * 3 + '</span></small></div></div>';
+     h += '<div class="pzbr" style="height:8px;border-radius:4px;background:rgba(255,255,255,.1);overflow:hidden;margin:0 2px 12px"><i style="display:block;height:100%;width:' + (n ? Math.round(d / n * 100) : 0) + '%;background:#e9c46a"></i></div>';
+     if (nx) h += '<button class="pzNc" id="pzBkGo">' + pzMini(nx.board, 0, 1) + '<span class="t"><small>' + (d ? 'DAVOM ETTIRISH' : 'BOSHLASH') + '</small><b>' + (b.from + b.arr.indexOf(nx)) + '-masala</b><span>' + (nx.side === 'w' ? 'Oq yuradi' : 'Qora yuradi') + '</span></span><span class="go">Yechish</span></button>';
+-    h += '<div class="pzMd">' + b.arr.map(function (p, i) { var ok = sv.indexOf(p.id) >= 0, st = (S.stars || {})[p.id] || 0; return '<button data-bi="' + i + '" class="' + (ok ? 'ok s' + st : '') + (p === nx ? ' nx' : '') + '">' + (b.from + i) + (ok ? '<i>' + '★★★'.slice(0, st) + '<u>' + '★★★'.slice(st) + '</u></i>' : '') + '</button>'; }).join('') + '</div><div style="height:64px"></div></div>';
++    var fi = b.arr.indexOf(nx);
++    h += '<div class="pzMd">' + b.arr.map(function (p, i) { var ok = sv.indexOf(p.id) >= 0, st = (S.stars || {})[p.id] || 0, lk = !S.admin && fi >= 0 && i > fi && !ok; return '<button data-bi="' + i + '" class="' + (ok ? 'ok s' + st : '') + (p === nx ? ' nx' : '') + (lk ? ' lk' : '') + '"' + (lk ? ' disabled' : '') + '>' + (lk ? LOCK_SM : (b.from + i) + (ok ? '<i>' + '★★★'.slice(0, st) + '<u>' + '★★★'.slice(st) + '</u></i>' : '')) + '</button>'; }).join('') + '</div><div style="height:64px"></div></div>';
+     ov.innerHTML = h; ov.scrollTop = 0;
+     on('#pzBack', function () { curBook = null; list(); });
+     on('#pzBkGo', function () { play(nx); });
+@@ -896,7 +910,12 @@
+   // admin: muqova rasmi
+   function bookMenu(b) {
+     var has = S.books && S.books.cov && S.books.cov[b.key];
+-    pzSheet(b.title, [['Muqova rasmini qo‘yish', function () { coverPick(b); }]].concat(has ? [['Muqovani olib tashlash', function () { api('/api/pzbook/cov', { k: b.key, img: '' }).then(function (r) { if (r && r.cov) S.books.cov = r.cov; list(); }); }, 1]] : []));
++    pzSheet(b.title, [['Muqova rasmini qo‘yish', function () { coverPick(b); }], ['Foydalanuvchiga ochish', function () { bkGrant(b, true); }], ['Foydalanuvchidan yopish', function () { bkGrant(b, false); }]].concat(has ? [['Muqovani olib tashlash', function () { api('/api/pzbook/cov', { k: b.key, img: '' }).then(function (r) { if (r && r.cov) S.books.cov = r.cov; list(); }); }, 1]] : []));
++  }
++  function bkGrant(b, on) {
++    var uid = window.prompt(on ? 'Foydalanuvchi Telegram ID sini kiriting (kitobni ochish):' : 'Foydalanuvchi Telegram ID sini kiriting (kitobni yopish):', '');
++    if (!uid) return;
++    api('/api/puzzle/bopen', { uid: String(uid).trim(), key: b.key, on: !!on }).then(function (r) { if (r && r.ok) window.alert(on ? 'Kitob ochildi' : 'Kitob yopildi'); else window.alert((r && r.error) || 'Xato'); }).catch(function () { window.alert('Xato'); });
+   }
+   function coverPick(b) {
+     var inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*';
+@@ -1333,7 +1352,7 @@
+           if (mt !== window.__pzTok) return;
+           fst = null;
+           if (!d || !d.keep) {
+-            g = { b: f0.b, side: p.side, forced: null }; busy = false; errs++; markFail();
++            g = { b: f0.b, side: p.side, forced: null }; busy = false; errs++; markFail(); penErr();
+             var why = d && d.why;
+             if (ext && why === 'worse') { msg = '❌ Bu yurish kombinatsiyani buzadi — boshqasini sinang (xato: ' + errs + ') · ' + extMsg(); draw(); return; }
+             msg = (why === 'busy' || why === 'eng' || why === 'err' || why === 'net') ? '⏳ Tekshirib bo‘lmadi — qaytadan urinib ko‘ring' : '❌ Noto‘g‘ri' + (why === 'loss' ? ' — bu yurishdan keyin oq yutqazadi' : why === 'draw' ? ' — bu yurish faqat durangga olib keladi' : ', boshqa yurishni sinang') + ' (xato: ' + errs + ')';
+@@ -1455,6 +1474,8 @@
+     function isDay() { return !!(dayIds && dayIds.indexOf(p.id) >= 0); }
+     function sibs() { if (window.__advRet && window.__advRet.arr && window.__advRet.arr.some(function (x) { return x.id === p.id; })) return window.__advRet.arr.slice(); if (curBook && curBook.arr.some(function (x) { return x.id === p.id; })) return curBook.arr.slice(); if (isDay()) return dayIds.map(function (id) { return S.list.filter(function (x) { return x.id === id; })[0]; }).filter(Boolean); var f = foOf(p); return S.list.filter(function (x) { return foOf(x) === f; }).sort(function (x, y) { return (x.no || 0) - (y.no || 0); }); }
+     function goNext() { if (_fs.lock && !done && !S.admin && (S.solved || []).indexOf(p.id) < 0) { msg = '🔒 Avval shu masalani yeching'; draw(); return; }
++      var inBk = !S.admin && (S.solved || []).indexOf(p.id) < 0 && ((curBook && curBook.arr.some(function (x) { return x.id === p.id; })) || (window.__advRet && window.__advRet.arr && window.__advRet.arr.some(function (x) { return x.id === p.id; })));
++      if (inBk) { msg = '🔒 Avval shu masalani yeching'; draw(); return; }
+       var a = sibs(), i = a.findIndex(function (x) { return x.id === p.id; }), sv = S.solved || [], n = a.length, j, k;
+       
+       if (i < n - 1) return play(a[i + 1]);
+@@ -1467,13 +1488,14 @@
+       function n(f, t, d, g) { var a = c(), o = a.createOscillator(), v = a.createGain(), t0 = a.currentTime + t; o.type = 'triangle'; o.frequency.setValueAtTime(f, t0); v.gain.setValueAtTime(0.0001, t0); v.gain.exponentialRampToValueAtTime(g, t0 + 0.012); v.gain.exponentialRampToValueAtTime(0.0001, t0 + d); o.connect(v); v.connect(a.destination); o.start(t0); o.stop(t0 + d + 0.05); }
+       return function () { [523.25, 659.25, 783.99, 1046.5].forEach(function (x, i) { n(x, i * 0.1, 0.35, 0.3); }); n(1318.5, 0.42, 0.5, 0.22); };
+     })();
++    function penErr() { if (!p || !p.id) return; try { api('/api/puzzle/err', { id: p.id }).catch(function () {}); } catch (e) {} }
+     function markFail() { if (failSent || done) return; failSent = true; api('/api/puzzle/fail', { id: p.id }); }   // birinchi xato/ko'rsatma — bu masala uchun tanga yopiladi
+     function solved() { if (tOut) return; try { window.pzFan(); } catch (e) {} var _el = pzEl(), _er = errs; fin = _el;
+       done = true; msg = '🎉 Masala yechildi!'; draw();
+       api('/api/puzzle/solved', { id: p.id, time: _el, errs: _er, hints: hints, ref: window.__pzRef || '', refP: window.__pzRefP || '' }).then(function (d) {
+         if (d && d.stars) { S.stars = S.stars || {}; S.stars[p.id] = Math.max(S.stars[p.id] || 0, d.stars); msg += ' <span style="color:#fbbf24">' + '★★★'.slice(0, d.stars) + '<span style="opacity:.3">' + '★★★'.slice(d.stars) + '</span></span>'; }
+         if (window.__pzExtMsg) { msg += '<div style="font-size:14px;margin:4px 0;color:#86efac">' + window.__pzExtMsg + '</div>'; window.__pzExtMsg = ''; }
+-        if (d && d.gain) msg += ' +' + d.gain + ' 🪙'; else if (d && d.noCoin) msg += '<div style="font-size:13px;opacity:.8;margin-top:4px">Xato yoki ko‘rsatma bo‘lgani uchun tanga berilmadi</div>';
++        if (d && d.gain) msg += ' +' + d.gain + ' 🪙'; else if (d && d.noCoin) msg += '<div style="font-size:13px;opacity:.8;margin-top:4px">' + (d.order === false ? 'Tartib buzilgan: tanga berilmadi, yulduz yoziladi' : 'Xato yoki ko‘rsatma bo‘lgani uchun tanga berilmadi') + '</div>';
+         msg += ' · ⏱ ' + _el + ' s · xato: ' + _er;
+         if (d && d.best) { S.best = S.best || {}; S.best[p.id] = d.best; msg += ' · 🏅 eng yaxshi: ' + d.best + ' s'; }
+         if ((S.solved || []).indexOf(p.id) < 0) S.solved.push(p.id);
+@@ -1533,7 +1555,7 @@
+             g = adv(g, st); idx++; hist.push(w.slice(0, 4)); sel = (g.forced && g.side === p.side) ? [g.forced[0], g.forced[1]] : null; msg = '✅ To‘g‘ri';
+             if (idx >= p.sol.length) return lineDone();
+             draw(); next();
+-          } else { sel = null; errs++; markFail(); msg = '❌ Noto‘g‘ri, boshqa yurishni sinang (xato: ' + errs + ')'; draw(); }
++          } else { sel = null; errs++; markFail(); penErr(); msg = '❌ Noto‘g‘ri, boshqa yurishni sinang (xato: ' + errs + ')'; draw(); }
+           return;
+         }
+       }
+diff --git a/sarguzasht.js b/sarguzasht.js
+index 555a522..f2a96f0 100644
+--- a/sarguzasht.js
++++ b/sarguzasht.js
+@@ -128,8 +128,8 @@
+   }
+   function stArr(b, s) { return b.arr.slice(s * 10, s * 10 + 10); }
+   function cnt(a) { var c = 0; a.forEach(function (p) { if (isS(p.id)) c++; }); return c; }
+-  function landOpen(books, i) { if (C.admin || i === 0) return true; var pv = books[i - 1].arr; return cnt(pv) >= Math.ceil(pv.length * .7) || cnt(books[i].arr) > 0; }
+-  function stOpen(b, s) { if (C.admin || s === 0) return true; var pv = stArr(b, s - 1); return cnt(pv) >= Math.ceil(pv.length * .7) || cnt(stArr(b, s)) > 0; }
++  function landOpen(books, i) { if (C.admin || i === 0) return true; var pv = books[i - 1].arr; return cnt(pv) >= pv.length || cnt(books[i].arr) > 0; }
++  function stOpen(b, s) { if (C.admin || s === 0) return true; var pv = stArr(b, s - 1); return cnt(pv) >= pv.length || cnt(stArr(b, s)) > 0; }
+   function nameOf(b, i) { var L = (D.lands || {})[b.key] || {}; if (L.name) return L.name; var k = i + OFF[W[0]] ; return NAMES[k % NAMES.length] + (k >= NAMES.length ? ' ' + (Math.floor(k / NAMES.length) + 1) : ''); }
+   function themeOf(i) { return (i + { s: 0, m: 1, e: 8 }[W[0]]) % 9; }   // tog'larda — qarag'ayzor, cho'lda — vohalar bilan boshlanadi
+   function L(b) { return (D.lands || {})[b.key] || {}; }
+@@ -234,7 +234,7 @@
+       if (cw) g += '<path d="M' + (x + 4) + ' ' + (y - 57) + ' l1.4 2.8 l3 .3 l-2.3 2 l.7 3 l-2.8 -1.6 l-2.6 1.6 l.6 -3 l-2.2 -2 l3 -.3z" fill="#7c2d12"/>';
+       if (!op) g += '<ellipse cx="' + x + '" cy="' + (y + 4) + '" rx="80" ry="40" fill="rgba(15,20,40,.55)"/><ellipse cx="' + (x - 34) + '" cy="' + (y - 8) + '" rx="26" ry="11" fill="#e2e8f0" opacity=".55"/><ellipse cx="' + (x + 30) + '" cy="' + (y - 2) + '" rx="30" ry="12" fill="#e2e8f0" opacity=".5"/>' + lockSvg(x, y - 14, 1.3);
+       if (guestK === b.key) g += '<g class="advPulse"><rect x="' + (x + 38) + '" y="' + (y - 52) + '" width="40" height="20" rx="10" fill="#fbbf24"/><text x="' + (x + 58) + '" y="' + (y - 38) + '" text-anchor="middle" font-size="11.5" font-weight="900" fill="#78350f">×' + (D.rw.guest || 2) + '</text></g>';
+-      var sub = !op ? 'oldingisi 70% bo‘lsa ochiladi' : cw ? 'Qal‘a zabt etildi · ★ ' + I.st : dn ? 'Tugatildi · ★ ' + I.st + '/' + I.n * 3 : I.d + '/' + I.n + (I.d ? ' · ★ ' + I.st : '');
++      var sub = !op ? 'oldingi kitob 100/100 bo‘lsa ochiladi' : cw ? 'Qal‘a zabt etildi · ★ ' + I.st : dn ? 'Tugatildi · ★ ' + I.st + '/' + I.n * 3 : I.d + '/' + I.n + (I.d ? ' · ★ ' + I.st : '');
+       g += '<rect x="' + (x - 66) + '" y="' + (y + 26) + '" width="132" height="34" rx="10" fill="rgba(11,14,26,.84)"/><text x="' + x + '" y="' + (y + 40) + '" text-anchor="middle" font-size="12" font-weight="800" fill="#fff">' + (i + 1) + '. ' + esc(nameOf(b, i)) + '</text><text x="' + x + '" y="' + (y + 54) + '" text-anchor="middle" font-size="10.5" fill="' + (!op ? '#cbd5e1' : cw ? '#fde68a' : dn ? '#86efac' : '#fde68a') + '">' + sub + '</text></g>';
+     });
+     g += '</svg>';
+@@ -245,7 +245,7 @@
+     h += '<div class="advC"><div><b>' + esc(nameOf(hb, cl)) + '</b><small>' + (cl + 1) + '-o‘lka · ' + hI.d + '/' + hI.n + ' · ' + (hs3 === hI.cs ? 'qal‘a' : (hs3 + 1) + '-bekat') + '</small>' + (gl ? '<small style="color:#fde68a">' + gl + '</small>' : '') + '</div><button id="advGo">Davom</button></div></div>';
+     ov.innerHTML = h; bindTop();
+     var M = ov.querySelector('.advM svg');
+-    ov.querySelector('.advM').onclick = function (ev) { var e = ev.target.closest('[data-l]'); if (!e) return; var i2 = +e.getAttribute('data-l'); if (!landOpen(books, i2)) return toast('Bu o‘lka hali yopiq: oldingi o‘lkada 70% masalani yeching'); landView(books[i2], i2); };
++    ov.querySelector('.advM').onclick = function (ev) { var e = ev.target.closest('[data-l]'); if (!e) return; var i2 = +e.getAttribute('data-l'); if (!landOpen(books, i2)) return toast('Bu o‘lka hali yopiq: oldingi kitobdagi 100 ta masalani yeching'); landView(books[i2], i2); };
+     ov.querySelector('#advGo').onclick = function () { landView(hb, cl); };
+     ov.querySelector('#advHr').onclick = function (ev) { ev.stopPropagation(); var M2 = window.spPzMap; if (M2 && M2.picker) M2.picker(function () { worldView(); }); };
+     setTimeout(function () { var k = M.getBoundingClientRect().width / 360; ov.scrollTop = Math.max(0, hp[1] * k - ov.clientHeight * .55); }, 0);
+@@ -321,7 +321,7 @@
+     ov.querySelector('.advM').onclick = function (ev) {
+       var e = ev.target.closest('[data-s],[data-c]'); if (!e) return;
+       if (e.hasAttribute('data-c')) return castle(b, i);
+-      var s2 = +e.getAttribute('data-s'); if (!stOpen(b, s2)) return toast('Bu bekat hali yopiq: oldingi bekatda 7 ta masala yeching'); station(b, i, s2);
++      var s2 = +e.getAttribute('data-s'); if (!stOpen(b, s2)) return toast('Bu bekat hali yopiq: oldingi bekatdagi hamma masalani yeching'); station(b, i, s2);
+     };
+     ov.querySelector('#advGd').onclick = function () { cur === I.cs ? castle(b, i) : station(b, i, cur); };
+     ov.querySelector('#advGo').onclick = function () { cur === I.cs ? castle(b, i) : station(b, i, cur); };
+@@ -402,7 +402,7 @@
+     h += '<div class="advNote">' + A.length + ' ta jumboq ketma-ket beriladi. Xato yoki ko‘rsatma — bitta xato. 3 ta xato bo‘lsa, sinov boshidan boshlanadi.' + (won ? '' : ' G‘alaba: <b>' + D.rw.castle + ' tanga</b> va o‘lka bayrog‘i.') + '</div>';
+     if (tr) { h += '<div class="advBar">' + A.map(function (_, k) { return '<b class="' + (k < tr.i ? 'aG' : k === tr.i ? 'aY' : '') + '"></b>'; }).join('') + '</div><div style="font-size:13px;opacity:.7;margin-bottom:6px">' + tr.i + '/' + A.length + ' · xato: ' + tr.err + ' / 3</div>'; }
+     if (won) h += '<div class="advNote aG"><b>Qal‘a zabt etilgan!</b> Yana sinab ko‘rishingiz mumkin (mukofotsiz).</div>';
+-    if (!op) h += '<div class="advNote aY">Qal‘a hali yopiq: ' + I.cs + '-bekatda kamida 7 ta masala yeching.</div><button class="advBtn aO" id="advSx2">Xaritaga qaytish</button>';
++    if (!op) h += '<div class="advNote aY">Qal‘a hali yopiq: ' + I.cs + '-bekatdagi hamma masalani yeching.</div><button class="advBtn aO" id="advSx2">Xaritaga qaytish</button>';
+     else if (tr) h += '<button class="advBtn" id="advTrGo">Davom etish (' + (tr.i + 1) + '-jumboq)</button><button class="advBtn aO" id="advTrNew">Qaytadan boshlash</button>';
+     else h += '<button class="advBtn" id="advTrNew">Sinovni boshlash</button>';
+     var e = sheet(h);
+diff --git a/sarguzashtsrv.js b/sarguzashtsrv.js
+index ead6c96..828443b 100644
+--- a/sarguzashtsrv.js
++++ b/sarguzashtsrv.js
+@@ -77,10 +77,10 @@ function nSt(ids) { return Math.ceil(ids.length / ST); }
+ function stIds(ids, st) { return ids.slice(st * ST, st * ST + ST); }
+ function castleOf(ids) { const n = nSt(ids); return n >= 2 ? n - 1 : -1; }
+ function cnt(ids, sv) { let c = 0; ids.forEach(id => { if (sv.has(id)) c++; }); return c; }
+-function landOpen(bk, sv) { if (bk.i === 0) return true; const pv = bk.W[bk.i - 1].ids; return cnt(pv, sv) >= Math.ceil(pv.length * 0.7) || cnt(bk.ids, sv) > 0; }
++function landOpen(bk, sv) { if (bk.i === 0) return true; const pv = bk.W[bk.i - 1].ids; return cnt(pv, sv) >= pv.length || cnt(bk.ids, sv) > 0; }
+ function stOpen(bk, st, sv) {
+   if (!landOpen(bk, sv)) return false; if (st === 0) return true;
+-  const pv = stIds(bk.ids, st - 1); return cnt(pv, sv) >= Math.ceil(pv.length * 0.7) || cnt(stIds(bk.ids, st), sv) > 0;
++  const pv = stIds(bk.ids, st - 1); return cnt(pv, sv) >= pv.length || cnt(stIds(bk.ids, st), sv) > 0;
+ }
+ function my(u) { const m = u.adv = u.adv || {}; m.q = m.q || {}; m.ch = m.ch || {}; m.cs = m.cs || {}; return m; }
+ 
+@@ -169,7 +169,7 @@ function handle(req, res, p, h) {
+       const key = j.k + ':' + st; if (key in m.q) return h.send(res, 400, { error: 'Bu savolga javob berilgan' });
+       const Q = qFor(uid, j.k, st); if (!Q) return h.send(res, 400, { error: 'Savol yo‘q' });
+       const pick = Math.floor(Number(j.a)), ok = Q.ord[pick] === 0, right = Q.ord.indexOf(0);
+-      m.q[key] = ok ? 1 : 0; const g = ok ? RW().q : 0; if (g) pay(uid, g, 'sarguzasht savoli'); store.save();
++      m.q[key] = ok ? 1 : 0; const g = ok ? RW().q : 0; if (g) pay(uid, g, 'sarguzasht savoli'); if (!ok) { try { require('./economy.js').penalty(String(uid), 'sarguzasht savoli xato'); } catch (e) {} } store.save();
+       return h.send(res, 200, { ok, right, x: Q.q.x || '', gain: g, my: m });
+     }
+     if (p === '/api/adv/chest') {   // bekat sandig'i
+-- 
+2.43.0
+

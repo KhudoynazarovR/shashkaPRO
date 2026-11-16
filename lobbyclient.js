@@ -279,6 +279,7 @@
         window.__mmInvT[_mc] = toast((m.all ? "<b>" + esc(m.fromName) + "</b> <b>Xotira</b> o‘yini uchun raqib qidiryapti — birinchi qabul qilgan o‘ynaydi!" : "🧠 <b>" + esc(m.fromName) + "</b> sizni <b>Xotira</b> o‘yiniga taklif qilyapti") + (m.size ? " (" + esc(m.size.replace("x", "×")) + ")" : ""),
           [["▶ Qabul qilish", function () { var go = function () { window.spMemori({ join: _mc }); }; if (window.spMemori) go(); else { var sm = document.createElement("script"); sm.src = "/memori.js?v=9"; sm.onload = go; document.head.appendChild(sm); } }],
            ["Rad etish", function () { sendMsg({ type: "mmDecline", code: _mc, init: (tg && tg.initData) || "" }); }, "no"]], 30000);
+      } else if (m.type === "lbTAnnList") { window.dispatchEvent(new CustomEvent("lbTAnnList", { detail: m }));
       } else if (m.type === "lbRec") { if (window.tfRec) window.tfRec(m.list || []);
       } else if (m.type === "lbToast") {
         toast(esc(m.text), null, 7000);
@@ -2155,6 +2156,7 @@ document.head.appendChild(_as); }
       f += joined(t) ? '<button class="tvL" data-tv="leave">🚪 Chiqish</button>' : '<button class="tvJ" data-tv="join">✅ Qo‘shilish</button>';
     }
     g('tvFoot').innerHTML = f;
+    try { renderLead(t, liveBoards(t)); } catch (e) {}
   }
 
   function renderChat(t){
@@ -2735,9 +2737,11 @@ document.head.appendChild(_as); }
   '.tvMb .kg:after{content:"";position:absolute;inset:28%;border-radius:50%;border:2px solid #f5c542}' +
   '.tvLc .sp{position:absolute;top:8px;right:8px;font-size:10px;font-weight:800;color:#fff;background:#e04a4a;border-radius:5px;padding:1px 5px;opacity:.95}' +
   '.tvLe{color:' + MU + ';font-size:13px;padding:6px 2px}' +
-  '#tvLead{margin:0 -12px 12px;padding:10px 12px;background:' + DEEP + ';border-radius:14px;border:1px solid ' + BTN + '}' +
-  '#tvLead .ldH{font-size:12px;color:#f5c542;font-weight:800;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
-  '#tvLead .tvMb{width:min(100%,280px);margin:0 auto}';
+  '.tvFoot{flex-wrap:wrap}' +
+  '#tvLead{flex:0 0 100%;display:flex;flex-direction:column;align-items:center;padding:6px 8px 8px;background:' + DEEP + ';border-radius:14px;border:1px solid ' + BTN + ';box-sizing:border-box;margin-bottom:2px}' +
+  '#tvLead .ldH{font-size:11px;color:#f5c542;font-weight:800;margin-bottom:4px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+  '#tvLead .tvMb{width:min(100%,150px);margin:0 auto}' +
+  '#tvLead .tvLe2{font-size:11px;color:' + MU + ';padding:14px 0}';
   var st = document.createElement('style'); st.id = 'tvTabsCss'; st.textContent = css; document.head.appendChild(st);
 
   var tab = null, tabFor = null, lastP = '', lastL = '';
@@ -2881,15 +2885,16 @@ document.head.appendChild(_as); }
       if (lv[j].blackName === ps[i].name || lv[j].whiteName === ps[i].name) return lv[j];
     return lv[0] || null;
   }
+  // 👑 lider o'yini: doim pastda (tvFoot ichida), har bir tabda ko'rinadi
   function renderLead(t, lv){
-    var tabs = g('tvTabs'); if (!tabs) return;
+    var ft = g('tvFoot'); if (!ft || !t) return;
     var L = g('tvLead');
-    if (!L) { L = document.createElement('div'); L.id = 'tvLead'; tabs.parentNode.insertBefore(L, tabs.nextSibling); }
-    var lb = leaderBoard(t, lv);
-    if (!lb) { L.style.display = 'none'; return; }
-    L.style.display = '';
+    if (!L) { L = document.createElement('div'); L.id = 'tvLead'; ft.insertBefore(L, ft.firstChild); }
+    else if (L.parentNode !== ft) ft.insertBefore(L, ft.firstChild);
+    var lb = leaderBoard(t, lv || []);
+    if (!lb) { L.innerHTML = '<div class="ldH">👑 Lider o‘yini</div><div class="tvLe2">Hozir jonli o‘yin yo‘q</div>'; return; }
     var lx = peekData[lb.roomId];
-    L.innerHTML = '<div class="ldH">👑 Lider o‘yini · ⚫ ' + esc(lb.blackName) + ' — ⚪ ' + esc(lb.whiteName) + '</div>' + (lx ? miniBoard(lx) : '<div class="tvMb">' + emptyGrid() + '</div>');
+    L.innerHTML = '<div class="ldH">👑 ⚫ ' + esc(lb.blackName) + ' — ⚪ ' + esc(lb.whiteName) + '</div>' + (lx ? miniBoard(lx) : '<div class="tvMb">' + emptyGrid() + '</div>');
   }
   function renderLive(){
     var t = findT(window.__tvCur), box = g('tvLiveB'); if (!t || !box) return;

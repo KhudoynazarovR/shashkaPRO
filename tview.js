@@ -114,6 +114,8 @@
       var a = b.getAttribute('data-tv');
       if (a === 'join') send({ type: 'lbTJoin', tid: curId });
       else if (a === 'leave') { if (confirm('Turnirdan chiqasizmi?')) send({ type: 'lbTLeave', tid: curId }); }
+      else if (a === 'ann') { send({ type: 'lbTAnnList', tid: curId }); }
+      else if (a === 'cancel') { if (confirm('Turnir o‘chirilsinmi? E’lon kanal va guruhlardan ham o‘chiriladi.')) send({ type: 'lbTCancel', tid: curId }); }
       else if (a === 'start') send({ type: 'lbTStart', tid: curId });
       else if (a === 'like') send({ type: 'lbTChatLike', tid: curId, mid: b.getAttribute('data-mid') }); /*TVLKC*/
       else if (a === 'watch') { var r = b.getAttribute('data-room'), l = L(); close(); if (l && l.go) l.go(r); }
@@ -170,6 +172,7 @@
     if (t.status === 'finished') { f = '<button class="tvD" disabled>🏁 Turnir tugagan</button>'; try { window.spPod(t); } catch (e) {} }
     else {
       if (t.status === 'reg' && String(t.creatorUid) === me) f += '<button class="tvS" data-tv="start">▶ Boshlash</button>';
+      if (t.status === 'reg' && (String(t.creatorUid) === me || window.__isAdmin)) f += '<button class="tvJ" data-tv="ann">📣 Guruhga yuborish</button><button class="tvL" data-tv="cancel">🗑 Turnirni o‘chirish</button>';
       f += joined(t) ? '<button class="tvL" data-tv="leave">🚪 Chiqish</button>' : '<button class="tvJ" data-tv="join">✅ Qo‘shilish</button>';
     }
     g('tvFoot').innerHTML = f;

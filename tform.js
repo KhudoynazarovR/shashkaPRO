@@ -19,7 +19,6 @@
   window.__tfx = function () {
     var o = { flag: !!(g('lbTflag') && g('lbTflag').value === '1' && g('lbTk') && g('lbTk').value === 'arena'), desc: (g('tfDesc') || {}).value || '' };
     if (window.__isAdmin) {
-      o.announce = !!(g('tfAnn') && g('tfAnn').checked);
       if (g('tfRec') && g('tfRec').checked) { o.rec = true; o.recDays = days.slice(); }
     }
     if (g('lbTk') && g('lbTk').value === 'mix') o.mix = MIX.slice();
@@ -76,7 +75,6 @@
     if (window.__isAdmin) {
       h += '<div id="tfAdm"><b>🛡 ADMIN</b>' +
         '<div class="tfQ" id="tfQ"><button type="button" data-q="kubok">🏳️ Shanba kubogi</button><button type="button" data-q="blits">⚡ Kechki blits</button><button type="button" data-q="bullet">🚀 Bullet soati</button><button type="button" data-q="mix">🔀 Shanba Miksi</button></div>' +
-        '<label><input type="checkbox" id="tfAnn" checked> 📣 Kanalga va barcha o‘yinchilarga e’lon (rasm + «Qo‘shilish» tugmasi)</label>' +
         '<label><input type="checkbox" id="tfRec"> 🔁 Doimiy turnir — har hafta takrorlanadi</label>' +
         '<div id="tfRecD" style="display:none"><div class="tfDays">' + ORD.map(function (d) { return '<button type="button" data-d="' + d + '">' + DN[d] + '</button>'; }).join('') + '</div>' +
         '<div class="tfQ"><button type="button" data-p="all">Har kuni</button><button type="button" data-p="work">Ish kunlari</button><button type="button" data-p="wk">Dam olish kunlari</button></div>' +
