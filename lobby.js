@@ -310,7 +310,7 @@ function createLobby({ send, clients, roomsApi }) {
     const arr = [...t.players.values()].map(p => {
       const st = swissStats(t, p);
       const rs = p.res || [];
-      return { uid: p.uid, name: p.name, score: p.score, buch: st.buch, sb: st.sb, games: rs.filter(x => !x.bye).length, withdrawn: p.withdrawn, grid: rs.map(x => ({ rd: x.rd || 0, pts: x.pts, rid: x.rid || null, bye: !!x.bye })) };
+      return { uid: p.uid, name: p.name, elo: eloOf(p.uid), score: p.score, buch: st.buch, sb: st.sb, games: rs.filter(x => !x.bye).length, withdrawn: p.withdrawn, grid: rs.map(x => ({ rd: x.rd || 0, pts: x.pts, rid: x.rid || null, bye: !!x.bye })) };
     });
     // Lichess tartibi: ochko, keyin SB, keyin Buxgols
     arr.sort((a, b) => b.score - a.score || b.sb - a.sb || b.buch - a.buch || a.name.localeCompare(b.name));
