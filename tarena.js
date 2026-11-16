@@ -49,6 +49,7 @@
     '#taP .taJ{margin-left:auto;flex:none;white-space:nowrap;border:0;border-radius:10px;padding:9px 12px;font-weight:800;font-size:14px;letter-spacing:.3px;color:#fff;background:#3fa34d}' +
     '#taP .taJ.p{background:#4a4390}#taP .taJ.s{background:#d97706}#taP .taJ.d{background:#c93b3b}' +
     '#taP #taMenu{flex-direction:column;gap:8px;padding:10px 12px;background:#1e1856;border-bottom:1px solid #2d2775}' +
+    '#taP #taJw .taJ{margin-left:0;flex:1 1 auto;text-align:center}' +
     '#taP #taMenu[style*="flex"]{display:flex!important}#taP #taMenu .taJ{margin-left:0;width:100%;text-align:left}' +
     '#taP .taRow{display:grid;grid-template-columns:30px minmax(0,1fr) auto 48px;align-items:center;gap:6px;padding:9px 10px;border-bottom:1px solid #241e63}' +
     '#taP .taRow:nth-child(even){background:#1a1550}#taP .taRow.me{background:#2c2470;box-shadow:inset 3px 0 0 #f5b72b}' +
@@ -100,7 +101,7 @@
     P = document.createElement('div'); P.id = 'taP';
     P.innerHTML = '<div class="taTop"><button class="taBk" id="taBk">←</button><div class="taTt"><b id="taNm"></b><small id="taSub"></small></div><div class="taCd" id="taCd"></div></div>' +
       '<div class="taSc" id="taSc"><div id="taPod"></div><div id="taClubs"></div>' +
-      '<div class="taBar"><button class="n" data-a="me" title="Meni top">🔍</button><button class="n" data-a="first">⏮</button><button class="n" data-a="prev">◀</button><span class="taPg" id="taPg"></span><button class="n" data-a="next">▶</button><button class="n" data-a="last">⏭</button><span id="taJw" style="margin-left:auto"></span></div><div id="taMenu" style="display:none"></div>' +
+      '<div class="taBar"><button class="n" data-a="me" title="Meni top">🔍</button><button class="n" data-a="first">⏮</button><button class="n" data-a="prev">◀</button><span class="taPg" id="taPg"></span><button class="n" data-a="next">▶</button><button class="n" data-a="last">⏭</button></div><div id="taJw" style="display:flex;gap:6px;padding:8px 8px 0;flex-wrap:wrap"></div><div id="taMenu" style="display:none"></div>' +
       '<div id="taRows"></div>' +
       '<div class="taCard" id="taInfo"></div>' +
       '<div class="taCard" id="taFeatC" style="display:none"><h4>📺 Yetakchi o‘yin</h4><div id="taFeat"></div></div>' +
