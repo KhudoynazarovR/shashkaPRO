@@ -310,7 +310,8 @@ function createLobby({ send, clients, roomsApi }) {
     const arr = [...t.players.values()].map(p => {
       const st = swissStats(t, p);
       const rs = p.res || [];
-      return { uid: p.uid, name: p.name, elo: eloOf(p.uid), score: p.score, buch: st.buch, sb: st.sb, games: rs.filter(x => !x.bye).length, withdrawn: p.withdrawn, grid: rs.map(x => ({ rd: x.rd || 0, pts: x.pts, rid: x.rid || null, bye: !!x.bye })) };
+      const _e = eloOf(p.uid); if (p.elo0 == null && t.status === 'running') p.elo0 = _e;
+      return { uid: p.uid, name: p.name, elo: _e, d: (t.rated !== false && p.elo0 != null) ? (p.elo1 != null ? p.elo1 : _e) - p.elo0 : null, score: p.score, buch: st.buch, sb: st.sb, games: rs.filter(x => !x.bye).length, withdrawn: p.withdrawn, grid: rs.map(x => ({ rd: x.rd || 0, pts: x.pts, rid: x.rid || null, bye: !!x.bye, opp: x.opp || null, col: x.col || null })) };
     });
     // Lichess tartibi: ochko, keyin SB, keyin Buxgols
     arr.sort((a, b) => b.score - a.score || b.sb - a.sb || b.buch - a.buch || a.name.localeCompare(b.name));
@@ -363,7 +364,7 @@ function createLobby({ send, clients, roomsApi }) {
         whiteElo: t.type === 'arena' ? olyElo(b.white) : 0, blackElo: t.type === 'arena' ? olyElo(b.black) : 0, bb: !!b.bb,
         done: b.done, winner: b.winner || null, g: b.g || null
       })),
-      bye: t.curBye || null, hist: (t.hist || []).slice(-40), chat: (t.chat || []).slice(-60)
+      bye: t.curBye || null, hist: (t.hist || []).slice(-40), chat: (t.chat || []).slice(-60), pin: t.pin || null, remind: t.remind || []
     };
   }
 
@@ -746,6 +747,8 @@ function createLobby({ send, clients, roomsApi }) {
     onRoomFinished(room);
     roomToBoard.delete(b.roomId);
   }
+  // 💬 chatga tizim yozuvi (tur boshlandi, 1-doska natijasi, turnir tugadi)
+  function sysChat(t, o) { try { t.chat = t.chat || []; t.chat.push(Object.assign({ id: hex(4), at: Date.now() }, o)); if (t.chat.length > 60) t.chat.splice(0, t.chat.length - 60); } catch (e) {} }
   function startRound(t) {
     t.round++;
     if (t.type === 'olympic') return olyStartRound(t);
@@ -790,6 +793,7 @@ function createLobby({ send, clients, roomsApi }) {
       sendUid(w.uid, { type: 'lbGo', roomId, reason: 'tournament', tname: t.name, round: t.round, color: 'white', opponent: b.name, tc: tcR });
       sendUid(b.uid, { type: 'lbGo', roomId, reason: 'tournament', tname: t.name, round: t.round, color: 'black', opponent: w.name, tc: tcR });
     });
+    sysChat(t, { sys: 'round', text: t.round + '-tur boshlandi · ' + t.cur.length + ' ta doska' });
     const roundNo = t.round;
     t.timer = setTimeout(() => checkNoShows(t, roundNo), NOSHOW_MS);
     if (t.timer.unref) t.timer.unref();
@@ -835,7 +839,8 @@ function createLobby({ send, clients, roomsApi }) {
     else if (room.winner === 'black') sb = 2;
     else { sw = 1; sb = 1; }                     // durang 1 ochko
     pw.score += sw; pb.score += sb; payWin(room, b.white, b.black, t.id);
-    pw.res.push({ opp: pb.uid, pts: sw, rd: t.round, rid: b.roomId }); pb.res.push({ opp: pw.uid, pts: sb, rd: t.round, rid: b.roomId });
+    pw.res.push({ opp: pb.uid, pts: sw, rd: t.round, rid: b.roomId, col: 'w' }); pb.res.push({ opp: pw.uid, pts: sb, rd: t.round, rid: b.roomId, col: 'b' });
+    if (b.board === 1) sysChat(t, { sys: 'res', w: pw.name, b: pb.name, wu: pw.uid, bu: pb.uid, sw, sb });
     if (room.reason === 'noshow') {
       if (room.noshowBoth) { pw.noshows++; pb.noshows++; }
       else if (room.winner === 'white') { pb.noshows++; pw.noshows = 0; }
@@ -967,6 +972,8 @@ function createLobby({ send, clients, roomsApi }) {
     t.finishedAt = Date.now(); if (!t.paidOut) { t.paidOut = true; const r = economy.finishTournament(t.creatorUid, [...(t.paid || [])]); if (r.bonus) toast(t.creatorUid, '🪙 Yaratuvchi bonusi: +' + r.bonus); }
     t.nextAt = 0;
     const st = t.type === 'arena' ? arenaStandings(t) : standings(t);
+    if (t.type !== 'arena' && st[0]) sysChat(t, { sys: 'end', text: 'Turnir tugadi · G‘olib: ' + st[0].name });
+    if (t.type !== 'arena') for (const p of t.players.values()) { try { if (p.elo0 != null) p.elo1 = eloOf(p.uid); } catch (e) {} }   // yakuniy reyting o‘zgarishi qotiriladi
     if (t.prize > 0 && !t.prizeDone) {
       t.prizeDone = true;
       const el = st.filter(x => x.games > 0 && !x.bot && (t.type === "arena" || !x.withdrawn));
@@ -1293,6 +1300,10 @@ function createLobby({ send, clients, roomsApi }) {
     t.rounds = t.mix ? t.mix.length : Math.max(1, Math.min(n - 1, t.roundsWanted || auto));   // 🔀 miksda — har o'yin bitta tur
     t.startAt = 0;
     t.status = 'running';
+    for (const p of t.players.values()) { try { p.elo0 = eloOf(p.uid); } catch (e) {} }   // reyting o‘zgarishini ko‘rsatish uchun boshlang‘ich reyting
+    try {   // 🔔 eslatma so‘raganlarga (qatnashmayotgan va hozir onlayn bo‘lmaganlarga) botdan xabar
+      for (const u of (t.remind || [])) { if (/^\d+$/.test(String(u)) && !t.players.has(String(u)) && !connsOf(String(u)).length) tgCall('sendMessage', { chat_id: Number(u), text: 'Turnir boshlandi: ' + t.name }).catch(() => {}); }
+    } catch (e) {}
     startRound(t);
   }
 
@@ -1324,9 +1335,25 @@ function createLobby({ send, clients, roomsApi }) {
       if (!t0 || !t0.chat) return true;
       const msg = t0.chat.find(x => x.id && x.id === String(m.mid || ''));
       if (!msg) return true;
-      msg.likes = msg.likes || [];
-      const k = msg.likes.indexOf(String(uid));
-      if (k >= 0) msg.likes.splice(k, 1); else msg.likes.push(String(uid));
+      if (msg.sys) return true;
+      const fld = m.k === 'l' ? 'ups' : 'likes';   // 'l' — yoqdi, aks holda yurak
+      msg[fld] = msg[fld] || [];
+      const k = msg[fld].indexOf(String(uid));
+      if (k >= 0) msg[fld].splice(k, 1); else msg[fld].push(String(uid));
+      push(); return true;
+    }
+    if (m.type === 'lbTChatPin') {   // 📌 tashkilotchi/admin xabarni chat tepasiga qadaydi (qayta bosilsa — olib tashlaydi)
+      if (!t0 || (String(t0.creatorUid) !== String(uid) && !economy.isAdmin(uid))) return true;
+      const pm = (t0.chat || []).find(x => x.id && x.id === String(m.mid || '') && !x.sys);
+      if (!pm || (t0.pin && t0.pin.id === pm.id)) t0.pin = null;
+      else t0.pin = { id: pm.id, name: pm.name, text: String(pm.text || '').slice(0, 140) };
+      push(); return true;
+    }
+    if (m.type === 'lbTRemind') {   // 🔔 turnir boshlanganda botdan eslatma (yoqish/o‘chirish)
+      if (!t0 || t0.status !== 'reg') return true;
+      t0.remind = t0.remind || [];
+      const ri = t0.remind.indexOf(String(uid));
+      if (ri >= 0) t0.remind.splice(ri, 1); else if (t0.remind.length < 2000) t0.remind.push(String(uid));
       push(); return true;
     }
     if (m.type === 'lbTChat') { /*TVCHAT*/
@@ -1338,7 +1365,9 @@ function createLobby({ send, clients, roomsApi }) {
       { const _md = require('./mod.js'); if (_md.isMuted(uid)) { err(c, _md.muteText ? (_md.muteText(uid) || 'Chatga yozish vaqtincha yopiq') : 'Chatga yozish vaqtincha yopiq'); return true; } try { tx = _md.censor(tx) || tx; } catch (e) {} }
       c.lb._tvChatAt = now;
       t0.chat = t0.chat || [];
-      t0.chat.push({ id: hex(4), uid: String(uid), name: c.lb.name, text: tx, at: now, likes: [] }); /*TVMID*/
+      let re = null;
+      if (m.re) { const rm = t0.chat.find(x => x.id && x.id === String(m.re) && !x.sys); if (rm) re = { id: rm.id, name: rm.name, text: String(rm.text || '').slice(0, 90) }; }
+      t0.chat.push({ id: hex(4), uid: String(uid), name: c.lb.name, text: tx, at: now, likes: [], ups: [], re }); /*TVMID*/
       if (t0.chat.length > 60) t0.chat.splice(0, t0.chat.length - 60);
       push();
       return true;
