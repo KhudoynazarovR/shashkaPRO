@@ -2159,7 +2159,7 @@ document.head.appendChild(_as); }
         else if (x.bye) cells += '<td class="rc"><i class="rbye">B</i></td>';
         else {
           var cl = x.pts >= 2 ? 'rw' : (x.pts >= 1 ? 'rd' : 'rl');
-          var lab = x.pts >= 2 ? '1' : (x.pts >= 1 ? '½' : '0');
+          var lab = x.pts >= 2 ? '2' : (x.pts >= 1 ? '1' : '0');
           cells += x.rid ? '<td class="rc"><button class="rbtn ' + cl + '" data-tv="game" data-rid="' + esc(x.rid) + '">' + lab + '</button></td>' : '<td class="rc"><i class="' + cl + '">' + lab + '</i></td>';
         }
       }
