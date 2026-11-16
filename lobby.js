@@ -851,7 +851,7 @@ function createLobby({ send, clients, roomsApi }) {
     const cl = clubsApi.check(me.uid, m.clubIds); if (cl.error) return cl.error;
     if (cl.ids.includes(clubsApi.SYS) && m.kind !== 'arena') return 'Botlar klubi faqat arenada ishlaydi';
     if (!adm0 && [...tournaments.values()].filter(x => x.status !== 'finished').length >= MAX_TOURNAMENTS) return 'Turnirlar soni limitga yetdi';   // tugaganlar (24 soat saqlanadi) hisobga kirmaydi; admin va doimiy turnirlarga limit yo'q
-    if (!sys && [...tournaments.values()].some(t => t.creatorUid === me.uid && t.status === 'reg')) return 'Sizda allaqachon ochiq turnir bor';
+    // (bir vaqtda bitta ochiq turnir cheklovi olib tashlandi)
     const adm = economy.isAdmin(me.uid) || !!sys;
     const extra = {
       rated: m.rated !== false, flag: !!m.flag && m.kind === 'arena', desc: String(m.desc || '').replace(/[\u0000-\u001f<>]/g, ' ').trim().slice(0, 200),
