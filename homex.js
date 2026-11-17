@@ -78,11 +78,11 @@
     var day = D ? D.day || 0 : 0, sol = D ? D.solved || 0 : 0;
     var pz = el('hxPz', '<div class="L"><h3>🧩 Kunlik masala</h3><div class="s">' + (day ? '✅ Bugun ' + day + ' ta yechdingiz — davom eting!' : 'Bugungi masala sizni kutmoqda') + '</div>' +
       '<div class="n">Jami ' + sol + ' ta yechilgan</div><div class="bar"><i style="width:' + Math.min(100, day * 20) + '%"></i></div></div><div class="R"><div class="bd"></div><button>Yechish!</button></div>');
-    if (pz.parentNode !== hero) { hero.appendChild(pz); pz.onclick = openDaily; }
+    if (pz.parentNode) pz.parentNode.removeChild(pz);   // bosh sahifada katta kunlik masala kartasi yo‘q — reytinglar qatoridagi «Masala» yetarli
     // 📊 reytinglar
         var RT = (D && D.rt) || {}, cell = function (k, ic, lb) { var x = RT[k] || { r: 1500, prov: true }; return '<div data-x="rk"><em>' + ic + '</em><b>' + x.r + (x.prov ? '<span style="opacity:.5">?</span>' : '') + '</b><small>' + lb + '</small></div>'; };
     var rt = el('hxRt', '<div class="hxH">Reytinglar <a data-x="rk">Hammasi ›</a></div><div class="rt">' +
-      cell('bullet', '🚀', 'Bullet') + cell('blits', '⚡', 'Blits') + cell('rapid', '⏱', 'Rapid') + cell('corr', '📮', 'Yozishma') +
+      cell('bullet', '🚀', 'Bullet') + cell('blits', '⚡', 'Blits') + cell('rapid', '⏱', 'Rapid') +
       '<div data-x="pz"><em>🧩</em><b>' + sol + '</b><small>Masala</small></div></div>');
     if (rt.parentNode !== hero) {
       hero.appendChild(rt);
