@@ -69,7 +69,7 @@
   function banner() {
     var hero = $('hzHero'); if (!hero || !S) return;
     var b = $('drBan');
-    if (hidden()) { if (b) b.remove(); return; }
+    if (b) b.remove(); return;   // bosh sahifada emas — Menyu'da (menu.js: @dragon)
     if (!b) {
       b = document.createElement('div'); b.id = 'drBan';
       b.onclick = function (e) { if (e.target && e.target.getAttribute && e.target.getAttribute('data-x')) { e.stopPropagation(); try { localStorage.setItem('drHide', new Date().toISOString().slice(0, 10)); } catch (x) {} b.remove(); return; } openOv(); };
@@ -82,6 +82,7 @@
       '<div class="c">' + avs(4) + '<span><b>' + fmt(S.n) + '</b> kishi kutmoqda</span></div>';
     if (b._h !== h) { b.innerHTML = h; b._h = h; }
   }
+  window.spDragonOpen = function () { openOv(); };
   // 🤖 botlar ro'yxatidagi qator (navbar.js chaqiradi)
   window.spDragonRow = function (closeSheet) {
     var r = document.createElement('div'); r.className = 'r'; r.style.cssText = 'border:2px solid #ff7a3d;border-radius:14px;background:linear-gradient(135deg,#3a0d0d,#7c1d1d 55%,#1f0a3a)';

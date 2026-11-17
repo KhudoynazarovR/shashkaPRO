@@ -92,7 +92,9 @@
     ["O‘YNASH", [
       ["📮", "Yozishma o‘yinlari", "Har yurishga 1 kun — bot navbatingizni aytadi", "@corr", "#7c3aed,#0ea5e9"],
       ["🎓", "Endshpil maktabi", "Bazada tekshirilgan mashqlar — King Kongga qarshi", "@eg", "#0f766e,#22c55e"],
-      ["📖", "Debyutlar", "Mashhur ochilishlar va yod olish", "@deb", "#0ea5e9,#6366f1"]], "🎮"],
+      ["📖", "Debyutlar", "Mashhur ochilishlar va yod olish", "@deb", "#0ea5e9,#6366f1"],
+      ["🐉", "DragonBOT", "Tez kunda — kutayotganlar ro‘yxati", "@dragon", "#7c1d1d,#ff7a3d"],
+      ["🌳", "Tanga daraxti", "Yosh daraxtni o‘stiring, hosil oling", "@daraxt", "#166534,#22c55e"]], "🎮"],
     ["TOMOSHA VA TAHLIL", [
       ["📺", "Jonli efir", "Hozirgi o‘yinlarni kuzating", "@live", "#ff4d6d,#ff8fa3"],
       ["📁", "Arxiv", "O‘tgan o‘yinlar tarixi", "@arch", "#2fd27f,#1ea36a"],
@@ -208,6 +210,8 @@
     if (a === "@ref") { close(); window.refGo(); return; }
     if (a === "@gomoku") { close(); var _o = document.createElement("div"); _o.style.cssText = "position:fixed;inset:0;z-index:99999;background:#161512"; _o.innerHTML = "<iframe src='/gomoku.html' style='position:absolute;inset:0;width:100%;height:100%;border:0'></iframe><button style='position:absolute;top:8px;right:8px;z-index:2;width:40px;height:40px;border:0;border-radius:50%;background:#000a;color:#fff;font-size:20px'>✕</button>"; _o.querySelector("button").onclick = function () { _o.remove(); }; document.body.appendChild(_o); return; } if (a === "@set") { close(); if (window.spSettings) window.spSettings(); return; } if (a.indexOf("@ai:") === 0) { close(); if (window.aiShow) window.aiShow(a.slice(4)); return; }
     if (a === "@live") { close(); liveOpen(); return; }
+    if (a === "@dragon") { close(); if (window.spDragonOpen) window.spDragonOpen(); return; }
+    if (a === "@daraxt") { close(); if (window.spDaraxtOpen) window.spDaraxtOpen(); return; }
     if (a === "@deb") { close(); if (window.spDebut) window.spDebut(); else { var _d = document.createElement('script'); _d.src = '/debyut.js?v=3'; _d.onload = function () { window.spDebut(); }; document.head.appendChild(_d); } return; }
     if (a === "@stats") { close(); if (window.spStats) window.spStats(); else { var _s = document.createElement('script'); _s.src = '/statsview.js?v=2'; _s.onload = function () { window.spStats(); }; document.head.appendChild(_s); } return; }
     if (a === "@kkadm") { var _go = function () { window.kkPanel(); }; if (window.kkPanel) _go(); else { var _s = document.createElement("script"); _s.src = "/kkpanel.js?v=3"; _s.onload = _go; document.head.appendChild(_s); } return; }

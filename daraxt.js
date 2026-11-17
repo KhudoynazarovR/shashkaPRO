@@ -73,6 +73,7 @@
   // 🏠 bosh sahifa kartasi
   function card() {
     var hero = $('hzHero'); if (!hero || !S) return;
+    var c0 = $('dxCard'); if (c0) c0.remove(); return;   // bosh sahifada emas — Menyu'da (menu.js: @daraxt)
     var c = $('dxCard');
     if (!c) { c = document.createElement('div'); c.id = 'dxCard'; c.onclick = open; }
     var anchor = $('drBan') || $('hxPz');
@@ -104,6 +105,7 @@
   }
   function open() { if (!ov) { ov = document.createElement('div'); ov.id = 'dxOv'; document.body.appendChild(ov); } render(); load(); }
   function close() { if (ov) ov.remove(); ov = null; }
+  window.spDaraxtOpen = function () { open(); };
   window.spDaraxt = open;
   load();
   setInterval(card, 3000);
