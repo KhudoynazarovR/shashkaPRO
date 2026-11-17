@@ -86,7 +86,7 @@
     '#taP .taTg:last-child{border-bottom:0}#taP .taTg div{font-size:14px;line-height:1.5;min-width:0}#taP .taTg div span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
     '#taP .taTg small{color:#a9a4d8}#taP .taTg .rk{display:inline-block;background:#2d2775;border-radius:5px;padding:0 5px;font-size:12px;margin-right:4px;color:#cfcaff}' +
     '#taP .taTg button{border:0;border-radius:9px;background:#3b3394;color:#fff;padding:8px 10px;font-size:13px}' +
-    '#taP .taCh{max-height:260px;overflow-y:auto;font-size:14px;line-height:1.45}#taP .taCh p{margin:0 0 5px}#taP .taCh p b{color:#c4b5fd;margin-right:5px}#taP .taCh p.me b{color:#f5b72b}' +
+    '#taP .cHd{display:flex;align-items:center;justify-content:space-between}#taP .cSw{position:relative;display:inline-block;width:44px;height:24px;margin:0;flex:none}#taP .cSw input{opacity:0;width:0;height:0;position:absolute}#taP .cSw i{position:absolute;inset:0;background:#3a3380;border-radius:999px;transition:.2s}#taP .cSw i:before{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}#taP .cSw input:checked+i{background:#3fa34d}#taP .cSw input:checked+i:before{transform:translateX(20px)}#taP .cFt{margin-top:10px;padding-top:8px;border-top:1px solid #2d2775;color:#8f89c4;font-size:12px}#taP .cX{float:right;border:0;border-radius:8px;background:#2d2775;color:#cfcaff;font-size:12px;padding:4px 9px;font-weight:700}#taP .cm{display:flex;gap:8px;margin:0 0 10px;align-items:flex-start}#taP .cm .taAv{margin:0;width:30px;height:30px;font-size:14px}#taP .cb{min-width:0;flex:1}#taP .cb>b{font-size:13px;color:#c4b5fd}#taP .cm.me .cb>b{color:#f5b72b}#taP .cq{border-left:3px solid #6d5fe0;padding:2px 8px;margin:3px 0;font-size:12px;color:#b9b3e6;background:#241e63;border-radius:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#taP .ct{font-size:14px;line-height:1.4;word-break:break-word;color:#f2f2f7}#taP .cA{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}#taP .cA button{border:0;background:transparent;color:#9b95d0;font-size:12px;padding:3px 6px;border-radius:6px}#taP .cA button.on{color:#f5b72b;font-weight:700}#taP .cA button[data-act=del],#taP .cA button[data-act=blk]{color:#f08a80}#taP .cRp{display:flex;align-items:center;gap:8px;background:#241e63;border-radius:8px;padding:6px 10px;font-size:12px;color:#cfcaff;margin:6px 0}#taP .cRp span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#taP .cRp button{border:0;background:transparent;color:#cfcaff;font-size:16px}#taP .ce{color:#a9a4d8;margin:0}#taP .taCard.cols .taCh,#taP .taCard.cols .taCi,#taP .taCard.cols #taRp{display:none}#taP .taCard.cols #taChX{}#taP .taCh{max-height:340px;overflow-y:auto;font-size:14px;line-height:1.45}#taP .taCh p{margin:0 0 5px}#taP .taCh p b{color:#c4b5fd;margin-right:5px}#taP .taCh p.me b{color:#f5b72b}' +
     '#taP .taCi{display:flex;gap:6px;margin-top:8px}#taP .taCi input{flex:1;min-width:0;border:1px solid #2d2775;background:#120e3a;color:#fff;border-radius:10px;padding:10px;font-size:15px}' +
     '#taP .taCi button{border:0;border-radius:10px;background:#3fa34d;color:#fff;padding:0 14px;font-size:16px}' +
     '#taP .taRl{font-size:14px;line-height:1.55;color:#d6d3f5}#taP .taRl p{margin:0 0 7px}#taP details summary{cursor:pointer;font-weight:700;color:#cfcaff;list-style:none}';
@@ -110,14 +110,25 @@
       '<div class="taBar"><button class="n" data-a="me" title="Meni top">🔍</button><button class="n" data-a="first">⏮</button><button class="n" data-a="prev">◀</button><span class="taPg" id="taPg"></span><button class="n" data-a="next">▶</button><button class="n" data-a="last">⏭</button><span id="taJw" class="taJwIn"></span></div><div id="taMenu" style="display:none"></div>' +
       '<div id="taRows"></div>' +
       '<div class="taCard" id="taInfo"></div>' +
+      '<div class="taCard"><details><summary>ℹ️ Arena qoidalari</summary><div class="taRl" style="margin-top:10px">' + RULES + '</div></details></div>' +
       '<div class="taCard" id="taFeatC" style="display:none"><h4>📺 Yetakchi o‘yin</h4><div id="taFeat"></div></div>' +
       '<div class="taCard" id="taTopC" style="display:none"><h4>⭐ TOP o‘yinlar</h4><div id="taTop"></div></div>' +
-      '<div class="taCard"><h4>💬 Chat <span id="taChN"></span></h4><div class="taCh" id="taCh"></div><div class="taCi"><input id="taTx" maxlength="200" placeholder="Xabar yozing…"><button id="taSd">➤</button></div></div>' +
-      '<div class="taCard"><details><summary>ℹ️ Arena qoidalari</summary><div class="taRl" style="margin-top:10px">' + RULES + '</div></details></div>' +
+      '<div class="taCard" id="taChC"><h4 class="cHd">💬 Chat <span id="taChN"></span><label class="cSw" title="Chatni yoqish/o‘chirish"><input type="checkbox" id="taChX" checked><i></i></label></h4><div class="taCh" id="taCh"></div><div id="taRp" class="cRp" style="display:none"></div><div class="taCi"><input id="taTx" maxlength="200" placeholder="Xabar yozing…"><button id="taSd">➤</button></div><div class="cFt">Chatda odob saqlang!</div></div>' +
       '</div>';
     document.body.appendChild(P);
     g('taBk').onclick = close;
     g('taSd').onclick = chat;
+    g('taChX').onchange = function () { g('taChC').classList.toggle('cols', !this.checked); };
+    g('taCh').onclick = function (e) {
+      var b = e.target.closest ? e.target.closest('button[data-act]') : null; if (!b || !cur) return;
+      var a = b.getAttribute('data-act'), mid = b.getAttribute('data-mid'), uid = b.getAttribute('data-uid');
+      if (a === 'reply') { var mm = ((window.__taLastT || {}).chat || []).find(function (x) { return x.id === mid; }); if (mm) { chReply = { id: mm.id, name: mm.name, text: mm.text }; renderReply(); g('taTx').focus(); } }
+      else if (a === 'like') send({ type: 'lbTChatLike', tid: cur, mid: mid, k: 'l' });
+      else if (a === 'rep') send({ type: 'lbTChatReport', tid: cur, mid: mid, reason: 'insult' });
+      else if (a === 'del') send({ type: 'lbTChatDel', tid: cur, mid: mid });
+      else if (a === 'blk') send({ type: 'lbTChatBlock', tid: cur, uid: uid });
+    };
+    g('taRp').onclick = function (e) { if (e.target.tagName === 'BUTTON') { chReply = null; renderReply(); } };
     g('taTx').onkeydown = function (e) { if (e.key === 'Enter') chat(); };
     P.addEventListener('click', function (e) {
       var b = e.target.closest('[data-a]'); if (!b || !cur) return;
@@ -169,7 +180,9 @@
     };
   };
   if (!window.__taAnnL) { window.__taAnnL = 1; window.addEventListener('lbTAnnList', function (e) { if (window.__taShowAnn) window.__taShowAnn(e.detail); }); }
-  function chat() { var v = g('taTx').value.trim(); if (!v || !cur) return; send({ type: 'lbTChat', tid: cur, text: v }); g('taTx').value = ''; }
+  var chReply = null;
+  function renderReply() { var r = g('taRp'); if (!r) return; if (!chReply) { r.style.display = 'none'; r.innerHTML = ''; return; } r.style.display = 'flex'; r.innerHTML = '<span>Javob: ' + nm(chReply.name) + ' — ' + esc(chReply.text) + '</span><button>×</button>'; }
+  function chat() { var v = g('taTx').value.trim(); if (!v || !cur) return; var o = { type: 'lbTChat', tid: cur, text: v }; if (chReply) o.re = chReply.id; send(o); g('taTx').value = ''; chReply = null; renderReply(); }
   function myIdx(t) { var u = me(), ps = t.players || []; for (var i = 0; i < ps.length; i++) if (String(ps[i].uid) === u) return i; return -1; }
 
   function render() {
@@ -269,10 +282,22 @@
   }
 
   function renderChat(t) {
-    var c = t.chat || [], u = me(), box = g('taCh');
+    window.__taLastT = t;
+    var cc0 = g('taChC'); if (cc0) cc0.style.display = t.chatOff ? 'none' : '';
+    var c = t.chat || [], u = me(), box = g('taCh'), isCr = String(t.creatorUid) === u || !!window.__isAdmin;
     g('taChN').textContent = c.length ? '(' + c.length + ')' : '';
     var bottom = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
-    box.innerHTML = c.length ? c.map(function (m) { return '<p' + (String(m.uid) === u ? ' class="me"' : '') + '><b>' + (String(m.uid) === u ? 'Siz' : nm(m.name)) + '</b>' + esc(m.text) + '</p>'; }).join('') : '<p style="color:#a9a4d8">Hali xabar yo‘q.</p>';
+    box.innerHTML = c.length ? c.map(function (m) {
+      var mine = String(m.uid) === u, ups = (m.ups || []), liked = ups.indexOf(u) >= 0;
+      var quote = m.re ? '<div class="cq">' + nm(m.re.name) + ': ' + esc(m.re.text) + '</div>' : '';
+      var acts = '<div class="cA"><button data-act="reply" data-mid="' + esc(m.id) + '">Javob</button>' +
+        '<button data-act="like" data-mid="' + esc(m.id) + '"' + (liked ? ' class="on"' : '') + '>Yoqdi' + (ups.length ? ' ' + ups.length : '') + '</button>' +
+        (mine ? '' : '<button data-act="rep" data-mid="' + esc(m.id) + '">Shikoyat</button>') +
+        ((mine || isCr) ? '<button data-act="del" data-mid="' + esc(m.id) + '">O‘chirish</button>' : '') +
+        (isCr && !mine ? '<button data-act="blk" data-uid="' + esc(m.uid) + '">Bloklash</button>' : '') + '</div>';
+      return '<div class="cm' + (mine ? ' me' : '') + '">' + avT({ uid: m.uid, name: m.name }) +
+        '<div class="cb"><b>' + (mine ? 'Siz' : nm(m.name)) + '</b>' + quote + '<div class="ct">' + esc(m.text) + '</div>' + acts + '</div></div>';
+    }).join('') : '<p class="ce">Hali xabar yo‘q.</p>';
     if (bottom) box.scrollTop = box.scrollHeight;
   }
 

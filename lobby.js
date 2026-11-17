@@ -364,7 +364,7 @@ function createLobby({ send, clients, roomsApi }) {
         whiteElo: t.type === 'arena' ? olyElo(b.white) : 0, blackElo: t.type === 'arena' ? olyElo(b.black) : 0, bb: !!b.bb,
         done: b.done, winner: b.winner || null, g: b.g || null
       })),
-      bye: t.curBye || null, hist: (t.hist || []).slice(-40), chat: (t.chat || []).slice(-60), pin: t.pin || null, remind: t.remind || []
+      bye: t.curBye || null, hist: (t.hist || []).slice(-40), chat: (t.chat || []).slice(-60), pin: t.pin || null, remind: t.remind || [], chatOff: !!t.chatOff
     };
   }
 
@@ -871,7 +871,7 @@ function createLobby({ send, clients, roomsApi }) {
     // (bir vaqtda bitta ochiq turnir cheklovi olib tashlandi)
     const adm = economy.isAdmin(me.uid) || !!sys;
     const extra = {
-      rated: m.rated !== false, flag: !!m.flag && m.kind === 'arena', desc: String(m.desc || '').replace(/[\u0000-\u001f<>]/g, ' ').trim().slice(0, 200),
+      rated: m.rated !== false, chatOff: m.chat === false, flag: !!m.flag && m.kind === 'arena', desc: String(m.desc || '').replace(/[\u0000-\u001f<>]/g, ' ').trim().slice(0, 200),
       announce: adm && !!m.announce, rec: m._rec || null
     };
     if (m.kind === 'arena') {
@@ -1342,6 +1342,27 @@ function createLobby({ send, clients, roomsApi }) {
       if (k >= 0) msg[fld].splice(k, 1); else msg[fld].push(String(uid));
       push(); return true;
     }
+    if (m.type === 'lbTChatReport' || m.type === 'lbTChatBlock' || m.type === 'lbTChatDel') {   // chat: shikoyat, bloklash (yaratuvchi), o‘chirish
+      if (!t0 || !t0.chat) return true;
+      const isCr = String(t0.creatorUid) === String(uid) || economy.isAdmin(uid);
+      const cm = t0.chat.find(x => x.id && x.id === String(m.mid || '') && !x.sys);
+      if (m.type === 'lbTChatReport') {
+        if (!cm) return true;
+        const R = require('./mod.js').report(String(uid), String(cm.uid), ['insult', 'spam', 'other'].includes(m.reason) ? m.reason : 'insult', 'Turnir chati: ' + t0.name + ' · «' + String(cm.text).slice(0, 80) + '»');
+        err(c, R && R.error ? R.error : 'Shikoyat yuborildi');
+        return true;
+      }
+      if (m.type === 'lbTChatBlock') {
+        const bu = String(m.uid || '');
+        if (!isCr || !bu || bu === String(t0.creatorUid)) return true;
+        t0.blocked = t0.blocked || [];
+        const bi = t0.blocked.indexOf(bu);
+        if (bi >= 0) t0.blocked.splice(bi, 1); else if (t0.blocked.length < 500) t0.blocked.push(bu);
+        push(); return true;
+      }
+      if (cm && (String(cm.uid) === String(uid) || isCr)) { t0.chat = t0.chat.filter(x => x !== cm); push(); }
+      return true;
+    }
     if (m.type === 'lbTChatPin') {   // 📌 tashkilotchi/admin xabarni chat tepasiga qadaydi (qayta bosilsa — olib tashlaydi)
       if (!t0 || (String(t0.creatorUid) !== String(uid) && !economy.isAdmin(uid))) return true;
       const pm = (t0.chat || []).find(x => x.id && x.id === String(m.mid || '') && !x.sys);
@@ -1358,6 +1379,8 @@ function createLobby({ send, clients, roomsApi }) {
     }
     if (m.type === 'lbTChat') { /*TVCHAT*/
       if (!t0) return true;
+      if ((t0.blocked || []).includes(String(uid))) { err(c, 'Bu turnir chatidan bloklangansiz'); return true; }
+      if (t0.chatOff) { err(c, 'Bu turnirda chat o‘chirilgan'); return true; }
       const now = Date.now();
       if (now - (c.lb._tvChatAt || 0) < 800) return true;
       let tx = String(m.text || '').replace(/[\u0000-\u001f<>]/g, ' ').trim().slice(0, 200);
