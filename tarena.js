@@ -151,7 +151,9 @@
     var rows = (m.list || []).map(function (x) {
       return '<label style="display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #0001"><input type="checkbox" data-id="' + annEsc(x.id) + '"' + (x.sent ? ' disabled' : '') + '><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + annEsc(x.title) + '</span>' + (x.sent ? '<small>yuborilgan</small>' : '') + '</label>';
     }).join('') || '<div>Guruhlar topilmadi. Bot guruhda admin bo‘lsin.</div>';
-    ov.innerHTML = '<div style="background:var(--bg,#fff);color:var(--fg,#111);width:100%;max-width:460px;border-radius:16px 16px 0 0;padding:16px;box-sizing:border-box;max-height:80vh;overflow:auto"><b>E’lonni qayerga yuborish?</b><div style="margin:8px 0">' + rows + '</div><div style="display:flex;gap:8px"><button id="taAnnGo" class="taJ s" style="flex:1">Yuborish</button><button id="taAnnNo" class="taJ" style="flex:1">Yopish</button></div></div>';
+    ov.innerHTML = '<div style="background:#1e1a4d;color:#f2f2f7;width:100%;max-width:460px;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));box-sizing:border-box;max-height:80vh;display:flex;flex-direction:column;gap:10px"><b style="font-size:16px">E’lonni qayerga yuborish?</b><div style="flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;color:#f2f2f7">' + rows + '</div><div style="display:flex;gap:8px;flex:none"><button id="taAnnGo" class="taJ s" style="flex:1;min-height:44px">Yuborish</button><button id="taAnnNo" class="taJ" style="flex:1;min-height:44px">Yopish</button></div></div>';
+    ov.querySelectorAll('label').forEach(function (l) { l.style.color = '#f2f2f7'; l.style.borderBottom = '1px solid rgba(255,255,255,.12)'; });
+    ov.querySelectorAll('small').forEach(function (s) { s.style.color = '#9fd8ad'; });
     document.body.appendChild(ov);
     ov.onclick = function (ev) { if (ev.target === ov || ev.target.id === 'taAnnNo') ov.remove(); };
     document.getElementById('taAnnGo').onclick = function () {

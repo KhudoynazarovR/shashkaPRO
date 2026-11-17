@@ -44,25 +44,69 @@ function bg() {
     '<rect width="' + W + '" height="' + H + '" fill="url(#g)"/><g transform="translate(700,-90) rotate(-14)" fill="#fff" opacity=".13">' + sq + '</g>';
 }
 function coin(cx, cy, r) { return '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="url(#cn)" stroke="#b45309" stroke-width="5"/><circle cx="' + cx + '" cy="' + cy + '" r="' + (r * 0.62) + '" fill="none" stroke="#fde68a" stroke-width="3" opacity=".8"/>'; }
+function coinIcon(cx, cy, r) {
+  // tanga: oltin disk, qirrali chekka, ichki halqa va «T» belgisi
+  return '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="url(#cn)" stroke="#92400e" stroke-width="3"/>' +
+    '<circle cx="' + cx + '" cy="' + cy + '" r="' + (r - 4) + '" fill="none" stroke="#b45309" stroke-width="2" stroke-dasharray="3 3"/>' +
+    '<circle cx="' + cx + '" cy="' + cy + '" r="' + (r - 9) + '" fill="none" stroke="#fde68a" stroke-width="2" opacity=".9"/>' +
+    '<text x="' + cx + '" y="' + (cy + r * 0.36) + '" font-family="' + F + '" font-size="' + Math.round(r * 0.9) + '" font-weight="900" fill="#92400e" text-anchor="middle">T</text>';
+}
 function chip(xp, y, txt, fill) { const w = 26 + txt.length * 15.5; return { w, s: '<rect x="' + xp + '" y="' + y + '" width="' + w + '" height="50" rx="14" fill="' + (fill || 'rgba(0,0,0,.28)') + '"/><text x="' + (xp + w / 2) + '" y="' + (y + 34) + '" font-family="' + F + '" font-size="25" font-weight="700" fill="#fff" text-anchor="middle">' + x(txt) + '</text>' }; }
 function regBadge(xp, y, k, c, w, hh, fs) { return '<rect x="' + xp + '" y="' + y + '" width="' + w + '" height="' + hh + '" rx="10" fill="' + c + '"/><text x="' + (xp + w / 2) + '" y="' + (y + hh * 0.7) + '" font-family="' + F + '" font-size="' + fs + '" font-weight="900" fill="#fff" text-anchor="middle">' + x(/^[A-Z]+$/.test(k) ? k : 'XORIJ') + '</text>'; }
 function annSvg(t) {
-  const name = noEmo(t.name).slice(0, 34), tags = t.mix ? [kindTxt(t), t.mix.length + ' o‘yin', t.rated === false ? 'Reytingsiz' : 'Reytingli'] : [kindTxt(t), tcTxt(t.tc) + ' ' + tcCat(t.tc), t.pos === 'idf' ? 'IDF 780' : 'Standart', t.rated === false ? 'Reytingsiz' : 'Reytingli'].concat(t.flag ? ['Bayroqli'] : []);
-  let s = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '">' + bg();
-  s += '<circle cx="1000" cy="240" r="44" fill="#f5f5f5"/><circle cx="1130" cy="340" r="44" fill="#1f1f2e"/><circle cx="930" cy="410" r="44" fill="#1f1f2e"/>';
-  s += '<text x="70" y="90" font-family="' + F + '" font-size="30" font-weight="900" fill="#fbbf24" letter-spacing="2">' + (t.rec ? 'HAFTALIK TURNIR' : 'YANGI TURNIR') + '</text>';
-  s += '<text x="1210" y="90" font-family="' + F + '" font-size="26" font-weight="700" fill="#fff" opacity=".8" text-anchor="end">@' + x(BOT()) + '</text>';
-  s += '<text x="70" y="172" font-family="' + F + '" font-size="' + (name.length > 22 ? 56 : 70) + '" font-weight="900" fill="#fff">' + x(name) + '</text>';
+  // Ko‘k fon, shashka kletkali chekkalar, kalendar/soat/tanga belgilari, sariq «Qo‘shilish» tugmasi
+  const name = noEmo(t.name).slice(0, 34);
+  const tags = t.mix ? [kindTxt(t), t.mix.length + ' o‘yin', t.rated === false ? 'Reytingsiz' : 'Reytingli'] : [kindTxt(t), tcTxt(t.tc) + ' ' + tcCat(t.tc), t.pos === 'idf' ? 'IDF 780' : 'Standart', t.rated === false ? 'Reytingsiz' : 'Reytingli'].concat(t.flag ? ['Bayroqli'] : []);
   const dt = dayStr(t.startAt), tm = hm(t.startAt) + (t.endAt ? ' – ' + hm(t.endAt) : '');
-  const dw = 60 + dt.length * 25 + tm.length * 17;
-  s += '<rect x="70" y="205" width="' + dw + '" height="84" rx="22" fill="rgba(255,255,255,.14)" stroke="rgba(255,255,255,.28)" stroke-width="2"/>';
-  s += '<text x="98" y="261" font-family="' + F + '" font-size="42" font-weight="900" fill="#fff">' + x(dt) + '<tspan font-size="30" font-weight="400" dx="18">' + x(tm) + '</tspan></text>';
-  let cx = 70, cy = 320;
-  for (const tg0 of tags) { const c = chip(cx, cy, tg0); if (cx + c.w > 800) { cx = 70; cy += 62; } const c2 = chip(cx, cy, tg0); s += c2.s; cx += c2.w + 12; }
-  if (t.prize > 0) {
-    s += coin(110, 620, 40) + '<text x="170" y="592" font-family="' + F + '" font-size="25" fill="#fff" opacity=".85">Mukofot fondi</text><text x="170" y="652" font-family="' + F + '" font-size="60" font-weight="900" fill="#fcd34d">' + fmt(t.prize) + '</text>';
+  const CX = W / 2;
+  let s = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '">';
+  s += '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1e3a8a"/><stop offset=".55" stop-color="#2563eb"/><stop offset="1" stop-color="#38bdf8"/></linearGradient>' +
+    '<radialGradient id="cn" cx=".35" cy=".3" r=".75"><stop offset="0" stop-color="#fff3b0"/><stop offset=".3" stop-color="#fcd34d"/><stop offset=".75" stop-color="#d97706"/><stop offset="1" stop-color="#92400e"/></radialGradient></defs>';
+  s += '<rect width="' + W + '" height="' + H + '" fill="url(#g)"/>';
+  // chekkalar: ikki chetda shashka taxtasi kletkasi
+  const SQ = 60;
+  for (const side of [0, W - 120]) {
+    for (let r = 0; r < Math.ceil(H / SQ); r++) for (let c = 0; c < 2; c++) {
+      const dark = (r + c) % 2 === 1;   // to‘q kletka va oq kletka: ikkalasi ham fonda ko‘rinadi
+      s += '<rect x="' + (side + c * SQ) + '" y="' + (r * SQ) + '" width="' + SQ + '" height="' + SQ + '" fill="' + (dark ? '#0b1f5c' : '#ffffff') + '" opacity="' + (dark ? '.55' : '.22') + '"/>';
+    }
   }
-  if (t.flag) { const R = require('./flags.js').REG; const ks = ['Surxondaryo', 'Toshkent', 'Samarqand', 'Andijon']; let bx = 1210 - ks.length * 96; for (const k of ks) { s += regBadge(bx, 610, R[k][0], R[k][1], 84, 48, 22); bx += 96; } }
+  // yuqori belgi va sarlavha
+  const tagTxt = t.rec ? 'HAFTALIK TURNIR' : 'YANGI TURNIR';
+  const tagW = 60 + tagTxt.length * 17;
+  s += '<rect x="' + (CX - tagW / 2) + '" y="88" width="' + tagW + '" height="52" rx="26" fill="rgba(255,255,255,.18)" stroke="rgba(255,255,255,.35)" stroke-width="2"/>';
+  s += '<text x="' + CX + '" y="124" font-family="' + F + '" font-size="24" font-weight="900" fill="#fff" text-anchor="middle" letter-spacing="3">' + tagTxt + '</text>';
+  s += '<text x="' + CX + '" y="240" font-family="' + F + '" font-size="' + (name.length > 22 ? 58 : 70) + '" font-weight="900" fill="#fff" text-anchor="middle">' + x(name) + '</text>';
+  // ma’lumot kartalari: sana (kalendar), vaqt (soat), mukofot (tanga)
+  const items = [];
+  { const dp = dt.split(', '); items.push({ kind: 'cal', big: dp[1] || dt, small: (dp[0] || 'SANA').toUpperCase() }); }
+  items.push({ kind: 'clock', big: tm, small: 'BOSHLANISH – TUGASH' });
+  if (t.prize > 0) items.push({ kind: 'coin', big: fmt(t.prize) + ' tanga', small: 'MUKOFOT FONDI' });
+  const BW = 320, BH = 110, GAP = 26;
+  let bx = CX - (items.length * BW + (items.length - 1) * GAP) / 2;
+  const by = 290;
+  for (const it of items) {
+    s += '<rect x="' + bx + '" y="' + by + '" width="' + BW + '" height="' + BH + '" rx="22" fill="rgba(255,255,255,.14)" stroke="rgba(255,255,255,.3)" stroke-width="2"/>';
+    const ix = bx + 62, iy = by + BH / 2;
+    if (it.kind === 'cal') s += '<g transform="translate(' + (bx + 20) + ',' + (by + 30) + ') scale(1.6)" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></g>';
+    if (it.kind === 'clock') s += '<g transform="translate(' + (bx + 20) + ',' + (by + 30) + ') scale(1.6)" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></g>';
+    if (it.kind === 'coin') s += coinIcon(bx + 54, by + BH / 2, 26);
+    const tx = bx + (it.kind === 'coin' ? 102 : 74);
+    s += '<text x="' + tx + '" y="' + (by + 48) + '" font-family="' + F + '" font-size="' + (it.big.length > 14 ? 26 : 30) + '" font-weight="900" fill="#fff">' + x(it.big) + '</text>';
+    s += '<text x="' + tx + '" y="' + (by + 80) + '" font-family="' + F + '" font-size="16" font-weight="700" fill="#fff" opacity=".8" letter-spacing="1.5">' + x(it.small) + '</text>';
+    bx += BW + GAP;
+  }
+  // format belgilari
+  const chipW = tags.map(tg0 => 26 + tg0.length * 15.5);
+  const rowW = chipW.reduce((a, b) => a + b, 0) + (tags.length - 1) * 12;
+  let cx = CX - rowW / 2;
+  for (let i = 0; i < tags.length; i++) { s += chip(cx, 440, tags[i]).s.replace('fill="rgba(0,0,0,.28)"', 'fill="#fff" fill-opacity=".95"').replace(/fill="#fff" font-size="25"/, 'fill="#1e3a8a" font-size="25"'); cx += chipW[i] + 12; }
+  // tugma
+  s += '<rect x="' + (CX - 230) + '" y="530" width="460" height="92" rx="22" fill="#facc15"/><rect x="' + (CX - 230) + '" y="530" width="460" height="92" rx="22" fill="none" stroke="#ca8a04" stroke-width="4"/>';
+  s += '<text x="' + CX + '" y="572" font-family="' + F + '" font-size="34" font-weight="900" fill="#1e293b" text-anchor="middle">Qo‘shilish</text>';
+  s += '<text x="' + CX + '" y="604" font-family="' + F + '" font-size="20" font-weight="700" fill="#334155" text-anchor="middle">@' + x(BOT()) + '</text>';
+  // flag badges (agar viloyat turniri bo‘lsa)
+  if (t.flag) { const R = require('./flags.js').REG; const ks = ['Surxondaryo', 'Toshkent', 'Samarqand', 'Andijon']; let fx = CX - (ks.length * 96 - 12) / 2; for (const k of ks) { s += regBadge(fx, 652, R[k][0], R[k][1], 84, 48, 22); fx += 96; } }
   return s + '</svg>';
 }
 function resSvg(t, st, regs) {
