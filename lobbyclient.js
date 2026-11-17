@@ -698,15 +698,7 @@
         tk.textContent = "#lbTick{overflow:hidden;white-space:nowrap;margin:6px -2px;padding:7px 0;border-radius:12px;background:rgba(255,255,255,.08);font-size:13px}#lbTick span{display:inline-block;padding-left:100%;animation:lbMq 28s linear infinite}@keyframes lbMq{to{transform:translateX(-100%)}}";
         document.head.appendChild(tk);
       }
-      if (!window.__lbTk || Date.now() - window.__lbTk.t > 60000) {
-        window.__lbTk = { t: Date.now(), txt: window.__lbTk ? window.__lbTk.txt : "" };
-        fetch("/api/leaderboard").then(function (r) { return r.json(); }).then(function (d) {
-          var f = function (a, ic, lab, key, suf) { return a && a[0] ? ic + " " + lab + ": " + a[0].name + " — " + a[0][key] + suf : ""; };
-          window.__lbTk.txt = [f(d.wins, "🏆", "Eng ko‘p g‘alaba", "wins", ""), f(d.games, "🎮", "Eng ko‘p o‘yin", "games", ""), f(d.diamonds, "🪙", "Boyvachcha", "diamonds", "")].filter(Boolean).join("   •   ");
-          var te = document.getElementById("lbTick"); if (te) te.firstChild.textContent = window.__lbTk.txt;
-          if (te) te.style.display = window.__lbTk.txt ? "block" : "none";
-        }).catch(function () {});
-      }
+      if (!window.__lbTk) window.__lbTk = { t: Date.now(), txt: "" };   // eski lenta yashirin; yangi reyting lentasi homex.js da (/api/leaders, yengil)
       if (!document.getElementById("lbTick") && panel) {
         var td = document.createElement("div"); td.id = "lbTick"; td.innerHTML = "<span></span>";
         td.firstChild.textContent = window.__lbTk.txt || "";

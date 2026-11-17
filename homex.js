@@ -21,6 +21,18 @@
     H + ' #nvKK{display:none!important}' +
     H + ' #nvDuo{order:2!important}' + H + ' #hxLvW{order:3!important}' + H + ' #hxRt{order:4!important}' +
     H + ' #hxLvW:not(:has(.hzLvC)){display:none!important}' +
+    // ── 🏅 reyting lentasi (eng tepada, suzib yuradi; bosilsa — Reyting)
+    H + ' #hxTick{grid-row:1;grid-column:1/-1;position:relative;overflow:hidden;height:36px;border-radius:12px;cursor:pointer;' + GL + '}' +
+    H + '.hxTk #pfCard,' + H + '.hxTk #hxChips,' + H + '.hxTk #hxFrB{grid-row:2!important}' +
+    H + ' #hxTick::before,' + H + ' #hxTick::after{content:""!important;display:block!important;position:absolute;top:0;bottom:0;width:22px;z-index:2;pointer-events:none}' +
+    H + ' #hxTick::before{left:0;background:linear-gradient(90deg,rgba(14,22,82,1),rgba(14,22,82,0))}' + H + ' #hxTick::after{right:0;background:linear-gradient(270deg,rgba(14,22,82,1),rgba(14,22,82,0))}' +
+    '@keyframes hxTk{from{transform:translateX(0)}to{transform:translateX(-50%)}}' +
+    H + ' #hxTick .tr{display:flex;width:max-content;height:100%;align-items:center;animation:hxTk 40s linear infinite!important}' +
+    H + ' #hxTick .it{display:flex;align-items:center;gap:7px;padding:0 14px;white-space:nowrap;font-size:13px;color:#fff}' +
+    H + ' #hxTick .it .e{width:22px;height:22px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;box-shadow:inset 0 1px 0 rgba(255,255,255,.45)}' +
+    H + ' #hxTick .it small{font-size:12px;color:#b6c4ee}' + H + ' #hxTick .it b{font-weight:700;max-width:170px;overflow:hidden;text-overflow:ellipsis}' + H + ' #hxTick .it i{font-style:normal;font-weight:800;color:#ffc53d}' +
+    H + ' #hxTick .sep{color:#e8c46a;opacity:.6;font-size:10px}' +
+    '@media (prefers-reduced-motion: reduce){' + H + ' #hxTick .tr{animation:none!important}' + H + ' #hxTick{overflow-x:auto}}' +
     // ── profil kartasi
     H + '.hz #pfCard{grid-row:1;grid-column:1;order:0!important;display:flex!important;align-items:flex-start!important;gap:10px!important;margin:0!important;padding:10px 12px 12px!important;min-height:92px;border-radius:16px!important;box-sizing:border-box;cursor:pointer;' + GL + '}' +
     H + ' #pfCard .pfA{width:44px!important;height:44px!important;border-radius:50%!important;flex:none;background:linear-gradient(150deg,#3b82f6,#1e3a8a)!important;box-shadow:0 0 0 2px #e8c46a!important;font-size:16px!important;font-weight:800;color:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;margin:1px 0 0 1px}' +
@@ -139,7 +151,16 @@
   window.hxFxSet = fxSet;
   (function () { var v = '1'; try { v = localStorage.getItem('hxFx') || '1'; } catch (e) {} fxSet(v !== '0'); })();
 
-  var D = null, dAt = 0;
+  var D = null, dAt = 0, LD = null, ldAt = 0;
+  function esc(x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function num(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
+  function loadLd() {
+    if (Date.now() - ldAt < 60000) return; ldAt = Date.now();
+    fetch('/api/leaders').then(function (r) { return r.ok ? r.json() : null; }).then(function (j) { if (j) { LD = j; draw(); } }).catch(function () {});
+  }
+  // lenta: [kalit, emoji, rang, yozuv]
+  var LDK = [['elo', '⚡', '#93c5fd,#2563eb', 'Reyting yetakchisi'], ['wins', '🏆', '#fde68a,#f59e0b', 'Eng ko‘p g‘alaba'], ['games', '🎮', '#d8b4fe,#8b5cf6', 'Eng ko‘p o‘yin'],
+    ['best', '🔥', '#fdba74,#ea580c', 'Eng uzun seriya'], ['diamonds', '🪙', '#fef08a,#ca8a04', 'Boyvachcha'], ['tw', '👑', '#fbcfe8,#db2777', 'Turnir g‘olibi']];
   function load(force) {
     if (!idata() || (!force && Date.now() - dAt < 60000)) return;
     dAt = Date.now();
@@ -159,6 +180,17 @@
   function mk(id, tag) { var e = $(id); if (!e) { e = document.createElement(tag || 'div'); e.id = id; } return e; }
   function draw() {
     var hero = $('hzHero'); if (!hero) return;
+    // 🏅 reyting lentasi
+    var items = LD ? LDK.filter(function (k) { return LD[k[0]] && LD[k[0]].v > 0; }) : [];
+    var tk = $('hxTick');
+    if (items.length) {
+      if (!tk) { tk = mk('hxTick'); tk.setAttribute('role', 'button'); tk.onclick = function () { nav(/Reyting|Рейтинг|Rating/); }; }
+      var one = items.map(function (k) { var c = k[2].split(','), x = LD[k[0]]; return '<span class="it"><span class="e" style="background:linear-gradient(145deg,' + c[0] + ',' + c[1] + ')">' + k[1] + '</span><small>' + k[3] + '</small><b>' + esc(x.name) + '</b><i>' + num(x.v) + '</i></span><span class="sep">◆</span>'; }).join('');
+      var th = '<div class="tr" style="animation-duration:' + Math.max(18, items.length * 7) + 's!important">' + one + one + '</div>';
+      if (tk.__h !== th) { tk.innerHTML = th; tk.__h = th; }
+      if (tk.parentNode !== hero) hero.insertBefore(tk, hero.firstChild);
+      hero.classList.add('hxTk');
+    } else { if (tk) tk.remove(); hero.classList.remove('hxTk'); }
     // 🎯 jonli stollar — o‘z o‘ramimizda (#hxLvW), uchta tugmadan keyin
     var lw = mk('hxLvW');
     if (lw.parentNode !== hero) hero.appendChild(lw);
@@ -225,7 +257,7 @@
     var h = vis <= 1 && !fr ? '<div id="hxEmp">😴 Hozir hamma o‘yinda<small>Bir daqiqada bo‘shaydi</small></div>' : '';
     if (bot.__h !== h) { bot.innerHTML = h; bot.__h = h; }
   }
-  setInterval(function () { var hero = $('hzHero'); if (!hero || !hero.offsetParent) return; load(); try { draw(); } catch (e) {} }, 1000);
+  setInterval(function () { var hero = $('hzHero'); if (!hero || !hero.offsetParent) return; load(); loadLd(); try { draw(); } catch (e) {} }, 1000);
   // o‘yindan qaytganda yangilaymiz
   document.addEventListener('visibilitychange', function () { if (!document.hidden) load(true); });
   window.hxRefresh = function () { load(true); };

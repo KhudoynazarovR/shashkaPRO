@@ -176,6 +176,7 @@ function send(res, code, obj) {
 }
 
 // HTTP: GET /api/economy, GET /api/balance, POST /api/daily (sarlavha: x-init-data)
+var _ldC = null;   // 🏅 /api/leaders keshi (60 soniya)
 function handle(req, res, url) {
   const p = url.pathname;
   if (p.startsWith('/api/quiz')) { try { if (require('./quiz.js').handle(req, res, url)) return true; } catch (e) { console.log('[quiz] api:', e.message); } }   // 🧠 viktorina (admin)
@@ -370,6 +371,20 @@ function handle(req, res, url) {
     });
     let _rt = null; try { _rt = require('./glicko.js').view(_u); } catch (e) {}
     send(res, 200, { elo: _u.elo || 1500, rt: _rt, solved: (_u.solved || []).length, day: _pd && _pd.d === _dk ? (_pd.c[_id] || 0) : 0, arch, fx: store.db.hxFx !== false });
+    return true;
+  }
+  // 🏅 bosh sahifa reyting lentasi: har yo'nalish bo'yicha faqat 1-o'rin (yengil javob, 60 soniya kesh)
+  if (p === '/api/leaders' && req.method === 'GET') {
+    if (!_ldC || Date.now() - _ldC.t > 60000) {
+      const K = { elo: u => (u.games || 0) >= 10 ? (u.elo || 0) : 0, wins: u => u.wins || 0, games: u => u.games || 0, best: u => u.bestStreak || 0, diamonds: u => u.diamonds || 0, tw: u => u.tournWins || 0 };
+      const top = {};
+      for (const [id, u] of Object.entries(store.users())) {
+        if (!u || /^bot/i.test(id)) continue;
+        for (const k in K) { const v = K[k](u); if (v > 0 && (!top[k] || v > top[k].v)) top[k] = { name: u.name || 'O‘yinchi', v }; }
+      }
+      _ldC = { t: Date.now(), d: top };
+    }
+    send(res, 200, _ldC.d);
     return true;
   }
   // ✨ bosh sahifa jonli effektlari (emoji harakatlari) — hamma foydalanuvchi uchun bitta sozlama; admin yoqadi / o'chiradi
