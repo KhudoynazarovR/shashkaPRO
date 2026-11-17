@@ -16,6 +16,11 @@
   // 🏳️ viloyat belgisi (SRX…) yoki chet el bayrog'i
   function bdg(k, c, t) { return /^[A-Z]+$/.test(String(k)) ? '<span title="' + esc(t || '') + '" style="display:inline-block;min-width:30px;padding:1px 4px;margin-right:5px;border-radius:5px;background:' + c + ';color:#fff;font-size:10.5px;font-weight:900;letter-spacing:.3px;text-align:center;vertical-align:1px">' + esc(k) + '</span>' : '<span title="' + esc(t || '') + '" style="margin-right:4px">' + esc(k) + '</span>'; }
   function nm(s) { return esc(String(s || '').replace(/^🤖\s*/, '')); }
+  function avT(p) {
+    var id = String(p && p.uid != null ? p.uid : ''), ch = String((p && p.name) || '?').replace(/[^\p{L}\p{N}]/gu, '').charAt(0).toUpperCase() || '?';
+    if (/^\d+$/.test(id)) return '<span class="taAv"><img src="/api/av/' + encodeURIComponent(id) + '" alt="" onerror="this.outerHTML=\'<i>' + esc(ch) + '</i>\'"></span>';
+    return '<span class="taAv"><i>' + esc(ch) + '</i></span>';
+  }
   function tcInfo(tc) {
     var a = String(tc || '3+2').split('+'), b = Number(a[0]) || 0, inc = Number(a[1]) || 0, est = b * 60 + inc * 40;
     var sp = est < 30 ? ['⚡', 'Giper'] : est < 180 ? ['🚀', 'Bullet'] : est < 480 ? ['🔥', 'Blits'] : ['⏱', 'Rapid'];
@@ -49,11 +54,12 @@
     '#taP .taJ{margin-left:auto;flex:none;white-space:nowrap;border:0;border-radius:10px;padding:9px 12px;font-weight:800;font-size:14px;letter-spacing:.3px;color:#fff;background:#3fa34d}' +
     '#taP .taJ.p{background:#4a4390}#taP .taJ.s{background:#d97706}#taP .taJ.d{background:#c93b3b}' +
     '#taP #taMenu{flex-direction:column;gap:8px;padding:10px 12px;background:#1e1856;border-bottom:1px solid #2d2775}' +
-    '#taP #taJw .taJ{margin-left:0;flex:1 1 auto;text-align:center}' +
+    '#taP #taJw.taJwIn{display:flex;gap:6px;margin-left:auto;flex:none;align-items:center}#taP #taJw .taJ{margin-left:0;flex:none;padding:7px 11px;font-size:13px;white-space:nowrap;text-align:center}' +
     '#taP #taMenu[style*="flex"]{display:flex!important}#taP #taMenu .taJ{margin-left:0;width:100%;text-align:left}' +
-    '#taP .taRow{display:grid;grid-template-columns:30px minmax(0,1fr) auto 48px;align-items:center;gap:6px;padding:9px 10px;border-bottom:1px solid #241e63}' +
+    '#taP .taRow{display:grid;grid-template-columns:30px 28px minmax(0,1fr) auto 48px;align-items:center;gap:6px;padding:9px 10px;border-bottom:1px solid #241e63}' +
     '#taP .taRow:nth-child(even){background:#1a1550}#taP .taRow.me{background:#2c2470;box-shadow:inset 3px 0 0 #f5b72b}' +
     '#taP .taRk{font-size:14px;color:#a9a4d8;text-align:center}#taP .taRk.ps{color:#8f8bc4;font-weight:800;letter-spacing:-1px}' +
+    '#taP .taAv{width:28px;height:28px;border-radius:50%;overflow:hidden;flex:none;display:inline-flex;align-items:center;justify-content:center;background:#3d2f8f;color:#fff;font-weight:800;font-size:13px;margin:0 8px 0 2px}#taP .taAv img{width:100%;height:100%;object-fit:cover;display:block}#taP .taAv i{font-style:normal}' +
     '#taP .taNm{min-width:0}#taP .taNm b{display:block;font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
     '#taP .taNm small{font-size:12px;color:#a9a4d8}#taP .taNm small .u{color:#6cc04a}#taP .taNm small .dn{color:#e5534b}#taP .taNm small .pl{color:#5fb3ff;margin-left:4px}' +
     '#taP .taSh{max-width:44vw;overflow:hidden;white-space:nowrap;direction:rtl;text-align:left;font-size:15px;letter-spacing:1px}' +
@@ -101,7 +107,7 @@
     P = document.createElement('div'); P.id = 'taP';
     P.innerHTML = '<div class="taTop"><button class="taBk" id="taBk">←</button><div class="taTt"><b id="taNm"></b><small id="taSub"></small></div><div class="taCd" id="taCd"></div></div>' +
       '<div class="taSc" id="taSc"><div id="taPod"></div><div id="taClubs"></div>' +
-      '<div class="taBar"><button class="n" data-a="me" title="Meni top">🔍</button><button class="n" data-a="first">⏮</button><button class="n" data-a="prev">◀</button><span class="taPg" id="taPg"></span><button class="n" data-a="next">▶</button><button class="n" data-a="last">⏭</button></div><div id="taJw" style="display:flex;gap:6px;padding:8px 8px 0;flex-wrap:wrap"></div><div id="taMenu" style="display:none"></div>' +
+      '<div class="taBar"><button class="n" data-a="me" title="Meni top">🔍</button><button class="n" data-a="first">⏮</button><button class="n" data-a="prev">◀</button><span class="taPg" id="taPg"></span><button class="n" data-a="next">▶</button><button class="n" data-a="last">⏭</button><span id="taJw" class="taJwIn"></span></div><div id="taMenu" style="display:none"></div>' +
       '<div id="taRows"></div>' +
       '<div class="taCard" id="taInfo"></div>' +
       '<div class="taCard" id="taFeatC" style="display:none"><h4>📺 Yetakchi o‘yin</h4><div id="taFeat"></div></div>' +
@@ -147,11 +153,11 @@
   window.__taShowAnn = function (m) {
     var old = document.getElementById('taAnnOv'); if (old) old.remove();
     var ov = document.createElement('div'); ov.id = 'taAnnOv';
-    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2147483000;display:flex;align-items:flex-end;justify-content:center';
     var rows = (m.list || []).map(function (x) {
       return '<label style="display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #0001"><input type="checkbox" data-id="' + annEsc(x.id) + '"' + (x.sent ? ' disabled' : '') + '><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + annEsc(x.title) + '</span>' + (x.sent ? '<small>yuborilgan</small>' : '') + '</label>';
     }).join('') || '<div>Guruhlar topilmadi. Bot guruhda admin bo‘lsin.</div>';
-    ov.innerHTML = '<div style="background:#1e1a4d;color:#f2f2f7;width:100%;max-width:460px;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));box-sizing:border-box;max-height:80vh;display:flex;flex-direction:column;gap:10px"><b style="font-size:16px">E’lonni qayerga yuborish?</b><div style="flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;color:#f2f2f7">' + rows + '</div><div style="display:flex;gap:8px;flex:none"><button id="taAnnGo" class="taJ s" style="flex:1;min-height:44px">Yuborish</button><button id="taAnnNo" class="taJ" style="flex:1;min-height:44px">Yopish</button></div></div>';
+    ov.innerHTML = '<div style="background:#1e1a4d;color:#f2f2f7;width:100%;max-width:460px;border-radius:16px 16px 0 0;padding:16px 16px calc(96px + env(safe-area-inset-bottom,0px));box-sizing:border-box;max-height:80vh;display:flex;flex-direction:column;gap:10px"><b style="font-size:16px">E’lonni qayerga yuborish?</b><div style="flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;color:#f2f2f7">' + rows + '</div><div style="display:flex;gap:8px;flex:none"><button id="taAnnGo" class="taJ s" style="flex:1;min-height:44px">Yuborish</button><button id="taAnnNo" class="taJ" style="flex:1;min-height:44px">Yopish</button></div></div>';
     ov.querySelectorAll('label').forEach(function (l) { l.style.color = '#f2f2f7'; l.style.borderBottom = '1px solid rgba(255,255,255,.12)'; });
     ov.querySelectorAll('small').forEach(function (s) { s.style.color = '#9fd8ad'; });
     document.body.appendChild(ov);
@@ -233,7 +239,7 @@
       var i = page * PER + k, d = Number(p.d) || 0;
       var dh = d > 0 ? ' <span class="u">↗' + d + '</span>' : d < 0 ? ' <span class="dn">↘' + (-d) + '</span>' : '';
       return '<div class="taRow' + (String(p.uid) === u ? ' me' : '') + '">' +
-        '<div class="taRk' + (p.withdrawn ? ' ps' : '') + '">' + (p.withdrawn ? 'II' : (i + 1)) + '</div>' +
+        '<div class="taRk' + (p.withdrawn ? ' ps' : '') + '">' + (p.withdrawn ? 'II' : (i + 1)) + '</div>' + avT(p) +
         '<div class="taNm"><b>' + (p.rg ? bdg(p.rg, p.rc, p.rn) : '') + nm(p.name) + (p.bh ? ' <img src="/img/bhunt_s.png" title="Botlar ovchisi ×' + p.bh + '" style="width:18px;height:20px;vertical-align:-3px">' : '') + '</b><small>' + (p.elo || '') + dh + (p.busy ? '<span class="pl">⚔ o‘ynamoqda</span>' : '') + '</small></div>' +
         '<div class="taSh"><span>' + sheetHtml(p.sheet) + '</span></div>' +
         '<div class="taPt' + (p.fire ? ' f' : '') + '">' + (p.fire ? '🔥' : '') + p.score + '</div></div>';
