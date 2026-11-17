@@ -15,6 +15,8 @@
   function tgLight() { try { var W = window.Telegram && Telegram.WebApp; return !!(W && W.colorScheme === 'light'); } catch (e) { return false; } }
   function ls(k, v) { try { if (v === undefined) return localStorage.getItem(k) || ''; localStorage.setItem(k, v); } catch (e) { return ''; } }
   var DEF = 'e';   // tanlanmagan bo'lsa (standart)
+  // bir martalik: eski standart «Tungi ko‘k» saqlangan telefonlar yangi «Samarqand»ga o‘tadi (keyin xohlasa qayta tanlaydi)
+  if (!ls('spThMig')) { if (ls('spTheme') === 'a') ls('spTheme', 'e'); ls('spThMig', '1'); }
   function cur() { var k = ls('spTheme') || DEF; if (k === 'auto') return tgLight() ? 'd' : DEF; return T[k] ? k : DEF; }
   var FONT = '"Roboto","Segoe UI",-apple-system,BlinkMacSystemFont,"SF Pro Text","Noto Sans",system-ui,Arial,sans-serif';
 

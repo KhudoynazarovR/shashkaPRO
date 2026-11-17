@@ -137,7 +137,7 @@
     h += "<div class='mnm' id='mnMsg'></div>";
     SEC.forEach(function (s) { h += "<div class='mqS'><span>" + s[2] + "</span>" + s[0] + "</div><div class='mqGr'>" + s[1].map(cardHtml).join("") + "</div>"; });
     h += "<div class='mqS'><span>⚙️</span>ILOVA</div><div class='mqLs'>" + LIST.map(rowHtml).join("") + "</div>";
-    if (window.__isAdmin) h += "<div class='mqS'><span>🛡</span>ADMIN</div><div class='mqGr'>" + cardHtml(["📊", "Statistika", "Faollik, iqtisod, Premium, tikish", "@stats", "#0ea5e9,#22c55e"]) + cardHtml(["🦍", "King Kong xatolari", "O‘yinlardagi xatolarni topish va tuzatish", "@kkadm", "#b45309,#f59e0b"]) + (document.getElementById("bpBtn") ? cardHtml(["🤖", "Bot kuchi", "Botlar kuchini 1–100% belgilash", "@bpow", "#8e6ff0,#c58bf2"]) : "") + "</div>";
+    if (window.__isAdmin) h += "<div class='mqS'><span>🛡</span>ADMIN</div><div class='mqGr'>" + cardHtml(["📊", "Statistika", "Faollik, iqtisod, Premium, tikish", "@stats", "#0ea5e9,#22c55e"]) + cardHtml(["🦍", "King Kong xatolari", "O‘yinlardagi xatolarni topish va tuzatish", "@kkadm", "#b45309,#f59e0b"]) + cardHtml(["✨", "Jonli effektlar", window.hxFx === false ? "O‘chirilgan — bosib yoqing" : "Yoqilgan — bosib o‘chiring", "@fx", "#7c3aed,#ec4899"]) + (document.getElementById("bpBtn") ? cardHtml(["🤖", "Bot kuchi", "Botlar kuchini 1–100% belgilash", "@bpow", "#8e6ff0,#c58bf2"]) : "") + "</div>";
     h += "<div class='mqV'>ShashkaPRO · v" + (window.SP_VER || "10.1") + "</div>";
     panel.innerHTML = h + "<div class='mnp'></div>";
   }
@@ -202,6 +202,14 @@
   }, 2500);
   window.corrGo = window.corrGo || function (id) { if (window.corrOpen) return window.corrOpen(id); var s = document.createElement("script"); s.src = "/corrpanel.js?v=" + Date.now(); s.onload = function () { window.corrOpen(id); }; document.head.appendChild(s); };
   window.mnA = function (a) {
+    if (a === "@fx") {   // ✨ bosh sahifa harakatlari — hamma foydalanuvchi uchun (admin)
+      var nv = window.hxFx === false;
+      fetch("/api/hxfx", { method: "POST", headers: { "Content-Type": "application/json", "x-init-data": initData }, body: JSON.stringify({ fx: nv }) })
+        .then(function (r) { return r.json(); })
+        .then(function (j) { if (j && j.ok) { if (window.hxFxSet) window.hxFxSet(j.fx); render(); msgSet(j.fx ? "✨ Jonli effektlar yoqildi — hamma foydalanuvchilarda" : "Jonli effektlar o‘chirildi — hamma foydalanuvchilarda"); } else msgSet("Xato: " + ((j && j.error) || "")); })
+        .catch(function () { msgSet("Tarmoq xatosi"); });
+      return;
+    }
     if (a === "@corr") { close(); window.corrGo(); return; }
     if (a === "@stake") { close(); if (window.lbTables) window.lbTables(); else if (window.lbStakeOpen) window.lbStakeOpen(); return; }
     if (a === "@prem") { close(); window.premGo(); return; }

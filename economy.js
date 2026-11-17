@@ -369,8 +369,18 @@ function handle(req, res, url) {
       return { id: g.id, at: g.at, w: g.w, b: g.b, win: g.win, tc: g.tc, me, oe: me === 'white' ? g.be : me === 'black' ? g.we : null, m: g.m, o: g.o, f: g.f };
     });
     let _rt = null; try { _rt = require('./glicko.js').view(_u); } catch (e) {}
-    send(res, 200, { elo: _u.elo || 1500, rt: _rt, solved: (_u.solved || []).length, day: _pd && _pd.d === _dk ? (_pd.c[_id] || 0) : 0, arch });
+    send(res, 200, { elo: _u.elo || 1500, rt: _rt, solved: (_u.solved || []).length, day: _pd && _pd.d === _dk ? (_pd.c[_id] || 0) : 0, arch, fx: store.db.hxFx !== false });
     return true;
+  }
+  // ✨ bosh sahifa jonli effektlari (emoji harakatlari) — hamma foydalanuvchi uchun bitta sozlama; admin yoqadi / o'chiradi
+  if (p === '/api/hxfx') {
+    if (req.method === 'GET') { send(res, 200, { fx: store.db.hxFx !== false }); return true; }
+    if (req.method === 'POST') {
+      const _t = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
+      if (!_t || !isAdmin(_t.id)) { send(res, 403, { error: 'admin emassiz' }); return true; }
+      readBody(req, 1000, body => { let j = {}; try { j = JSON.parse(body); } catch (e) {} store.db.hxFx = !!j.fx; store.save(); send(res, 200, { ok: true, fx: store.db.hxFx }); });
+      return true;
+    }
   }
   // ⭐ Reyting jadvali (faqat odamlar): ?cat=bullet|blits|rapid|corr & f=all|friends|region|week ; ?cat=bots — botlar
   if (p === '/api/rating' && req.method === 'GET') {

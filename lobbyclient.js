@@ -720,9 +720,8 @@
     var fl = S.friends || [], fin = S.freqIn || [], fset = {}, showF = !!window.__lbF;
     fl.forEach(function (f) { fset[f.uid] = 1; });
     if (showF) list = fl.map(function (f) { return { uid: f.uid, name: f.name, elo: f.elo, gems: f.gems, hasAv: f.hasAv, busy: false, offline: !f.online, ls: f.ls || 0 }; });
-      var tbI = function (p) { return "<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">" + p + "</svg>"; };
-      var h = "<div class=\"tabs\"><button class=\"lbtb" + (showF ? "" : " on") + "\" data-t=\"pl\"><span class=\"lbtI\">" + tbI("<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20\"/><path d=\"M2 12h20\"/>") + "<i class=\"lbtOn\"></i></span><span class=\"lbtT\"><small>Online o‘yinchilar</small><b>" + all.length + "</b></span></button>" +
-        "<button class=\"lbtb" + (showF ? " on" : "") + "\" data-t=\"f\"><span class=\"lbtI\">" + tbI("<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M22 21v-2a4 4 0 0 0-3-3.87\"/><path d=\"M16 3.13a4 4 0 0 1 0 7.75\"/>") + (fin.length ? "<i class=\"lbtNew\"></i>" : "") + "</span><span class=\"lbtT\"><small>Do‘stlar</small><b>" + fl.length + "</b></span></button></div>";
+      var h = "<div class=\"tabs\"><button class=\"lbtb" + (showF ? "" : " on") + "\" data-t=\"pl\"><span class=\"lbtI\">🌐<i class=\"lbtOn\"></i></span><span class=\"lbtT\"><small>Online o‘yinchilar</small><b>" + all.length + "</b></span></button>" +
+        "<button class=\"lbtb" + (showF ? " on" : "") + "\" data-t=\"f\"><span class=\"lbtI\">👥" + (fin.length ? "<i class=\"lbtNew\"></i>" : "") + "</span><span class=\"lbtT\"><small>Do‘stlar</small><b>" + fl.length + "</b></span></button></div>";
     fin.forEach(function (r) { h += '<div class="lbp lbin">' + avh(r.uid, r.hasAv, r.name, false) + '<div class="lbinf"><b>' + esc(r.name) + '</b><small>do‘st bo‘lishni taklif qildi</small></div><button class="lbacc" data-f="acc" data-id="' + esc(r.uid) + '">Qabul</button><button class="lbrej" data-f="rej" data-id="' + esc(r.uid) + '">Rad</button></div>'; });
       (S.incoming || []).forEach(function (c) {
         h += "<div class=\"lbp lbin\"><div class=\"lbav\">" + esc((c.fromName || "?").charAt(0).toUpperCase()) + "</div><div class=\"lbinf\"><b>" + esc(c.fromName) + "</b><small>sizni o‘yinga taklif qildi · " + esc(c.tc) + (c.stake ? " · 💰 " + c.stake + " 🪙" : "") + "</small></div>" +
@@ -1526,15 +1525,9 @@ document.head.appendChild(_as); }
 ;(function () {
   var ws = null, list = [], sig = "", box = null, n = 0;
   var COL = { "1+1": "#c0605f", "2+2": "#6aaed4", "3+2": "#6aaed4", "5+3": "#88aa3c", "7+5": "#88aa3c" };
-  // jonli stol kartasidagi kichik chiziqli ikonlar (emoji o‘rniga)
-  var LVP = {
-    bot: "<path d=\"M12 8V4H8\"/><rect width=\"16\" height=\"12\" x=\"4\" y=\"8\" rx=\"2\"/><path d=\"M2 14h2\"/><path d=\"M20 14h2\"/><path d=\"M15 13v2\"/><path d=\"M9 13v2\"/>",
-    rocket: "<path d=\"M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z\"/><path d=\"m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z\"/><path d=\"M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0\"/><path d=\"M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5\"/>",
-    zap: "<polygon points=\"13 2 3 14 12 14 11 22 21 10 12 10 13 2\"/>",
-    timer: "<line x1=\"10\" x2=\"14\" y1=\"2\" y2=\"2\"/><line x1=\"12\" x2=\"15\" y1=\"14\" y2=\"11\"/><circle cx=\"12\" cy=\"14\" r=\"8\"/>",
-    eye: "<path d=\"M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/>"
-  };
-  function LVI(k) { return "<svg viewBox=\"0 0 24 24\" width=\"12\" height=\"12\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">" + (LVP[k] || "") + "</svg>"; }
+  // jonli stol kartasidagi kichik emoji ikonlar
+  var LVE = { bot: "🤖", rocket: "🚀", zap: "⚡", timer: "⏱️", eye: "👁" };
+  function LVI(k) { return "<span class=\"hzE\">" + (LVE[k] || "") + "</span>"; }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c]; }); }
   if (!document.getElementById("hzLvCss")) {
     var st = document.createElement("style"); st.id = "hzLvCss";
