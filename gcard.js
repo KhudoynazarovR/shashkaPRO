@@ -2,7 +2,7 @@
 // gcard.js — guruhga tushadigan "doska kartasi" (inline rejim): rasm + jonli yangilanish.
 // /api/gcard/<xona>.jpg — joriy pozitsiya rasmi. Inline xabar yuborilgach (chosen_inline_result),
 // xonadagi har o'zgarishda xabar rasmi va yozuvi yangilanadi (editMessageMedia, ~3 s da bir marta).
-const svgBoard = require('./puzimg.js').svgBoard;
+const svgBoard = require('./puzimg.js').svgBoard, pcImgs = require('./puzimg.js').pcImgs;
 const BASE = () => (process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || '').replace(/\/$/, '');
 const msgs = new Map();   // xona -> { imid, from, at, last, tmr, ver, done }
 const cache = new Map();  // kalit -> jpeg (eng ko'pi 100 ta)
@@ -260,7 +260,31 @@ function gifRender(id, from, tc) {
   gifPend.set(ck, p); return p;
 }
 function gifUrl(roomId, from, tc) { const b = BASE(); return b ? b + '/api/gcard/pool' + Math.floor(Math.random() * 5) + '.gif?f=' + encodeURIComponent(from || '') + '&t=' + encodeURIComponent(tc || '') : ''; }
+// Boshlang‘ich doska rasmi (inline karta uchun): do‘kondagi asosiy toshlar bilan, yashil taxta
+const _startC = new Map();   // uid -> { buf, at }
+function setOf(uid) {   // foydalanuvchining tanlangan (yoki asosiy) toshlar to‘plami
+  try {
+    const store = require('./store'), S = store.db.shop || [], U = store.users()[String(uid)] || {};
+    const eq = U.equipped === '-' ? '' : (U.equipped || ((S.find(x => x.def) || {}).id) || '');
+    return S.find(x => x.id === eq) || null;
+  } catch (e) { return null; }
+}
+async function startCardJpg(uid) {
+  const key = String(uid || '0'), hit = _startC.get(key);
+  if (hit && Date.now() - hit.at < 600000) return hit.buf;
+  const sharp = require('sharp');
+  const b = Array.from({ length: 8 }, () => Array(8).fill(0));
+  for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) if ((r + c) % 2 === 1) b[r][c] = r < 3 ? 2 : r > 4 ? 1 : 0;
+  const IM = await pcImgs(sharp, setOf(uid) || undefined);
+  let svg = svgBoard(b, 'w', IM, 'wood');
+  const green = { '#f3bb86': '#d8efb8', '#f6c493': '#e6f6cc', '#eaa874': '#b9dc96', '#eeb272': '#c4e6a4', '#e9a868': '#b0d88a', '#e8a970': '#a9d18a', '#f2bf8c': '#c9e7a8', '#f8d0a6': '#e3f3c9', '#7b2f13': '#2f6b3b', '#702a10': '#25582f', '#7d3114': '#33733f', '#6b2610': '#24552e', '#7c2f12': '#2f6b3b', '#94411d': '#3f8a4d' };
+  for (const k in green) svg = svg.split(k).join(green[k]);
+  const buf = await sharp(Buffer.from(svg)).resize(1000, 700, { fit: 'contain', background: '#1b1040' }).jpeg({ quality: 90 }).toBuffer();
+  if (_startC.size > 200) _startC.clear();
+  _startC.set(key, { buf, at: Date.now() }); return buf;
+}
 function handleHttp(req, res, p) {
+  if (p === '/api/gstart.jpg') { startCardJpg(new URL(req.url, 'http://x').searchParams.get('u')).then(buf => { res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=600' }); res.end(buf); }).catch(e => { console.log('[gstart]', e.message); res.writeHead(500); res.end(); }); return true; }
   const mx = /^\/api\/mcard\/([A-Z0-9]{6})\.jpg$/.exec(p);
   if (mx) { mmRender(mx[1], String(new URL(req.url, 'http://x').searchParams.get('f') || '').slice(0, 30), new URL(req.url, 'http://x').searchParams.get('r') === '1').then(buf => { res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=60' }); res.end(buf); }).catch(e => { console.log('[mcard]', e.message); res.writeHead(500); res.end(); }); return true; }
   const mg = /^\/api\/gcard\/([a-z0-9]{4,16})\.gif$/.exec(p);

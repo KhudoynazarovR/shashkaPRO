@@ -1,6 +1,6 @@
-async function pcImgs(sharp) {
+async function pcImgs(sharp, item) {
   try {
-    const it = (require('./store').db.shop || []).find(x => x.def);
+    const it = item || (require('./store').db.shop || []).find(x => x.def);
     if (!it || !it.imgs) return null;
     const o = {};
     for (const k of ['w', 'b', 'wk', 'bk']) {

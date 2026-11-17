@@ -231,10 +231,13 @@ async function onInline(q) {
   const results = [];
   const ph = G.url(id, from, 0);
   const side = o.col === "b" ? "⚪ oq" : o.col === "r" ? "tasodifiy rang" : "⚫ qora", mine = o.col === "b" ? "⚫ qora" : o.col === "r" ? "tasodifiy" : "⚪ oq";
-  if (ph) results.push({   // 🖼 doska kartasi: guruhga rasm + "O'yinga kirish" tugmasi, keyin jonli yangilanadi
-    type: "gif", id: "g_" + id + "_" + (tcC || "0") + "_" + o.col, gif_url: G.gifUrl(id, from, o.tc), thumbnail_url: ph, thumbnail_mime_type: "image/jpeg", gif_width: 640, gif_height: 448,
-    title: "🎮 Shashka o‘ynash" + (o.tc ? " · " + o.tc : ""), description: "Siz: " + mine + " · birinchi kirgan raqib bo‘ladi. Masalan: 3+2 qora",
-    reply_markup: { inline_keyboard: [[{ text: "▶ O‘yinga kirish", url: roomLink(id) }]] }
+  // 🎮 Shashka kartasi: bir bosishda yuboriladi (article + katta rasm, xuddi Xotira kabi); doska — boshlang‘ich rasm
+  const shImg = (process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || '').replace(/\/$/, '') + '/api/gstart.jpg?u=' + encodeURIComponent(String(q.from.id));
+  if (shImg.startsWith('http')) results.push({
+    type: 'article', id: 's_' + id + '_' + (tcC || '0') + '_' + o.col, thumbnail_url: shImg, thumbnail_width: 1000, thumbnail_height: 700,
+    title: '🎮 Shashka o‘ynash' + (o.tc ? ' · ' + o.tc : ''), description: 'Siz: ' + mine + ' · birinchi kirgan raqib bo‘ladi. Masalan: 3+2 qora',
+    input_message_content: { message_text: '🎮 <b>Shashka o‘ynash</b>' + (o.tc ? ' · ⏱ ' + o.tc : '') + '\n🎯 <b>' + from.replace(/[<>&]/g, '') + '</b> raqib qidiryapti — bosing va o‘ynang! 👇', parse_mode: 'HTML', link_preview_options: { url: shImg, prefer_large_media: true, show_above_text: true } },
+    reply_markup: { inline_keyboard: [[{ text: '▶ O‘yinga kirish', url: roomLink(id) }]] }
   });
   // 🧠 Xotira kartasi
   const mq = String(q.query || ""), msz = /6\s*[x×х]\s*6/i.test(mq) ? "6x6" : "4x6", mtc = /\b20\s*s/i.test(mq) ? 20 : /\b10\s*s/i.test(mq) ? 10 : /2\s*(m|daq)|blitz|⚡/i.test(mq) ? -120 : 0;
