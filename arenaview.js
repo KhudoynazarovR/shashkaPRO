@@ -66,7 +66,8 @@
     var c = document.getElementById('pfCard'); if (!c) return;
     var id = myId(), d = me || {}, nm0 = d.name || myName() || 'Mehmon';
     var av = id ? '<img src="/api/av/' + encodeURIComponent(id) + '" alt="" onerror="this.parentNode.textContent=\'' + esc(nm0.charAt(0).toUpperCase()).replace(/'/g, '') + '\'">' : esc(nm0.charAt(0).toUpperCase());
-    var html = '<div class="pfA">' + av + '</div><div class="pfB"><div class="pfC">🪙 ' + (d.diamonds || 0) + '</div><div class="pfE">⚡ ' + (d.elo || 1000) + ' <small>reyting</small></div></div><div class="pfG">›</div>';
+    var coins = String(d.diamonds || 0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');   // 17200 → 17 200
+    var html = '<div class="pfA">' + av + '</div><div class="pfB"><div class="pfN">' + esc(nm0) + '</div><div class="pfC"><i class="pfCo"></i>' + coins + '</div><div class="pfE">⚡ ' + (d.elo || 1000) + ' <small>reyting</small></div></div><div class="pfG">›</div>';
     if (c.__h !== html) { c.__h = html; c.innerHTML = html; }
   }
   function openProfile() {

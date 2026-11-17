@@ -1,10 +1,11 @@
 /* theme.js — 🎨 platforma mavzusi: bitta shrift, bir xil fon (yengil gradient + xira shashka katakchalari) va 3 ta tungi mavzu.
-   A · Tungi ko'k (standart), B · Grafit, C · Zumrad. Tanlov localStorage('spTheme') da.
+   E · Samarqand (standart: to‘q ko‘k, xira oltin sharqona naqsh), A · Tungi ko'k, B · Grafit, C · Zumrad. Tanlov localStorage('spTheme') da.
    B va C uchun: sahifadagi binafsha/ko'k to'q ranglar (fon, chegara, gradient) yorug'ligi saqlangan holda mavzu rangiga almashtiriladi —
    doska kataklari, donalar, oltin va yashil urg'ular o'zgarmaydi. Eski «Fon rasmi» (spBgPicker) qo'shimcha sifatida qoladi. */
 ;(function () {
   if (window.__spTheme) return; window.__spTheme = 1;
   var T = {
+    e: { name: 'Samarqand', icon: '', bg1: '#121c63', mid: '#0b1240', bg2: '#070a28', nav: '#0a0d33', pat: 'sam', acc: '#3fa34d', h: null, line: 'rgba(232,196,106,.28)' },
     a: { name: 'Tungi ko‘k', icon: '🌙', bg1: '#1c1854', bg2: '#110e33', nav: '#0e0c2b', chk: 'rgba(255,255,255,.035)', acc: '#3fa34d', h: null },
     b: { name: 'Grafit', icon: '⚫', bg1: '#22201d', bg2: '#161512', nav: '#121110', chk: 'rgba(255,255,255,.03)', acc: '#629924', h: 38, s: 0.07, tx: 0.05 },
     c: { name: 'Zumrad', icon: '🟢', bg1: '#123328', bg2: '#0a1c16', nav: '#08150f', chk: 'rgba(255,255,255,.035)', acc: '#3fa34d', h: 158, s: 0.45, tx: 0.25 },
@@ -13,8 +14,8 @@
   // 🌗 Avto: Telegram'ning mavzusi bo'yicha (kunduzgi → D, tungi → A)
   function tgLight() { try { var W = window.Telegram && Telegram.WebApp; return !!(W && W.colorScheme === 'light'); } catch (e) { return false; } }
   function ls(k, v) { try { if (v === undefined) return localStorage.getItem(k) || ''; localStorage.setItem(k, v); } catch (e) { return ''; } }
-  var DEF = 'a';   // tanlanmagan bo'lsa (standart)
-  function cur() { var k = ls('spTheme') || DEF; if (k === 'auto') return tgLight() ? 'd' : 'a'; return T[k] ? k : 'a'; }
+  var DEF = 'e';   // tanlanmagan bo'lsa (standart)
+  function cur() { var k = ls('spTheme') || DEF; if (k === 'auto') return tgLight() ? 'd' : DEF; return T[k] ? k : DEF; }
   var FONT = '"Roboto","Segoe UI",-apple-system,BlinkMacSystemFont,"SF Pro Text","Noto Sans",system-ui,Arial,sans-serif';
 
   // ---- asosiy CSS: shrift, fon, pastki menyu
@@ -28,7 +29,10 @@
       '#nvBar button{font-weight:600}';
   }
   // fon: tepada xira shashka katakchalari (pastga qarab yo'qoladi) + yengil gradient; sahifa bilan birga suriladi
+  // Samarqand: tepada xira oltin nur + butun fonda xira sakkiz qirrali yulduz naqshi
+  var STAR = "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2756%27 height=%2756%27 viewBox=%270 0 56 56%27%3E%3Cg fill=%27none%27 stroke=%27%23e8c46a%27 stroke-opacity=%27.13%27 stroke-width=%271%27%3E%3Crect x=%2717%27 y=%2717%27 width=%2722%27 height=%2722%27/%3E%3Crect x=%2717%27 y=%2717%27 width=%2722%27 height=%2722%27 transform=%27rotate(45 28 28)%27/%3E%3Cpath d=%27M0 28h12.4M43.6 28H56M28 0v12.4M28 43.6V56%27/%3E%3C/g%3E%3C/svg%3E";
   function bgImg(t) {
+    if (t.pat === 'sam') return 'radial-gradient(120% 360px at 50% -40px,rgba(232,196,106,.18),rgba(232,196,106,0) 70%),url("' + STAR + '") 0 0/56px 56px,linear-gradient(180deg,' + t.bg1 + ' 0,' + t.mid + ' 55%,' + t.bg2 + ' 100%)';
     var c = t.chk;
     return 'linear-gradient(180deg,transparent 0,' + t.bg1 + ' 260px,' + t.bg2 + ' 100%),' +
       'linear-gradient(45deg,' + c + ' 25%,transparent 25%,transparent 75%,' + c + ' 75%) 0 0/44px 44px,' +
@@ -160,7 +164,7 @@
     var k0 = ls('spTheme') || DEF, h = '<div style="width:100%;background:#17133f;color:#fff;border-radius:20px 20px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom));box-sizing:border-box">' +
       '<div style="display:flex;align-items:center;margin-bottom:12px"><b style="font-size:19px">🎨 Mavzu</b><span id="spThX" style="margin-left:auto;font-size:22px;padding:2px 8px;cursor:pointer">✕</span></div>' +
       '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">';
-    ['auto', 'a', 'b', 'c', 'd'].forEach(function (k) {
+    ['auto', 'e', 'a', 'b', 'c', 'd'].forEach(function (k) {
       var t = k === 'auto' ? { name: 'Avto', icon: '🌗', bg1: '#f6f7fb', bg2: '#110e33', acc: '#3fa34d' } : T[k];
       h += '<div data-th="' + k + '" style="cursor:pointer;text-align:center">' +
         '<div style="height:96px;border-radius:14px;background:' + (k === 'auto' ? 'linear-gradient(135deg,#f6f7fb 0 50%,#1c1854 50% 100%)' : 'linear-gradient(180deg,' + t.bg1 + ',' + t.bg2 + ')') + ';border:3px solid ' + (k === k0 ? t.acc : 'rgba(255,255,255,.15)') + ';position:relative;overflow:hidden">' +
@@ -168,7 +172,7 @@
         '<div style="position:absolute;left:10px;right:30px;top:34px;height:10px;border-radius:5px;background:rgba(255,255,255,.08)"></div>' +
         '<div style="position:absolute;left:10px;bottom:12px;width:46px;height:20px;border-radius:8px;background:' + t.acc + '"></div>' +
         (k === k0 ? '<div style="position:absolute;right:8px;bottom:8px;font-size:18px">✅</div>' : '') + '</div>' +
-        '<div style="margin-top:6px;font-size:13px;font-weight:600">' + t.icon + ' ' + t.name + (k === 'auto' ? '<br><small style="opacity:.6;font-weight:400">Telegram bo‘yicha</small>' : k === DEF ? '<br><small style="opacity:.6;font-weight:400">standart</small>' : '') + '</div></div>';
+        '<div style="margin-top:6px;font-size:13px;font-weight:600">' + (t.icon ? t.icon + ' ' : '') + t.name + (k === 'auto' ? '<br><small style="opacity:.6;font-weight:400">Telegram bo‘yicha</small>' : k === DEF ? '<br><small style="opacity:.6;font-weight:400">standart</small>' : '') + '</div></div>';
     });
     h += '</div><button id="spThBg" style="margin-top:16px;width:100%;border:0;border-radius:12px;padding:13px;background:#2d2775;color:#fff;font-size:15px;font-weight:600">🖼 Fon rasmi va boshqa fonlar</button>' +
       '</div>';

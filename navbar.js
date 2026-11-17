@@ -11,6 +11,9 @@
     '#nvBar button{flex:1;background:none;border:0;color:#8a8db8;font-size:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}' +
     '#nvBar button span{font-size:22px;line-height:1}' +
     '#nvBar button.on{color:#7c83ff}' +
+    '#nvBar button span.nvI{display:flex;align-items:center;justify-content:center;width:52px;height:28px;border-radius:99px;font-size:0}' +
+    '#nvBar button span.nvI svg{width:22px;height:22px}' +
+    '#nvBar button.on{color:#fff;font-weight:700}#nvBar button.on span.nvI{background:#1d4ed8}' +
     '#nvPg{position:fixed;left:0;right:0;top:0;bottom:60px;background:#12122b;color:#fff;z-index:99998;overflow:auto;padding:20px;display:none;font-family:system-ui,sans-serif}' +
     '#nvPg h2{margin:0 0 14px}#nvPg .c{background:#1b1c3d;border-radius:14px;padding:14px;margin-bottom:12px}' +
     '#nvPg .m{color:#8a8db8;font-size:13px}' +
@@ -19,9 +22,15 @@
   document.head.appendChild(css);
   var bar = document.createElement('div');
   bar.id = 'nvBar';
-  var items = [['pl', '🏠', 'Bosh'], ['puz', '🧩', 'Masalalar'], ['t', '🏆', 'Turnir'], ['rk', '📊', 'Reyting'], ['mn', '☰', 'Menyu']];
+  // bir xil chiziqli ikonlar (emoji o‘rniga — har telefonda bir xil ko‘rinadi)
+  function nvI(p) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>'; }
+  var items = [['pl', nvI('<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>'), 'Bosh'],
+    ['puz', nvI('<path d="M19.44 7.85c-.05.32.06.65.29.88l1.57 1.57c.47.47.7 1.09.7 1.7s-.23 1.23-.7 1.7l-1.61 1.61a.98.98 0 0 1-.84.28c-.47-.07-.8-.48-.97-.93a2.5 2.5 0 1 0-3.21 3.21c.45.17.86.5.93.97a.98.98 0 0 1-.28.84l-1.61 1.61a2.4 2.4 0 0 1-3.41 0l-1.57-1.57a1.03 1.03 0 0 0-.88-.29c-.49.07-.84.5-1.02.97a2.5 2.5 0 1 1-3.24-3.24c.46-.18.9-.53.97-1.02a1.03 1.03 0 0 0-.29-.88l-1.57-1.57A2.4 2.4 0 0 1 2 12c0-.62.24-1.23.7-1.7l1.53-1.53c.24-.24.58-.35.92-.3.51.08.88.53 1.07 1.01a2.5 2.5 0 1 0 3.26-3.26c-.48-.2-.93-.56-1.01-1.07-.05-.34.06-.68.3-.92l1.53-1.53A2.4 2.4 0 0 1 12 2c.62 0 1.23.24 1.7.7l1.57 1.57c.23.23.56.34.88.29.49-.07.84-.5 1.02-.97a2.5 2.5 0 1 1 3.24 3.24c-.46.18-.9.53-.97 1.02Z"/>'), 'Masalalar'],
+    ['t', nvI('<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>'), 'Turnir'],
+    ['rk', nvI('<path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>'), 'Reyting'],
+    ['mn', nvI('<line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/>'), 'Menyu']];
   bar.innerHTML = items.map(function (i) {
-    return '<button data-k="' + i[0] + '"><span>' + i[1] + '</span>' + i[2] + '</button>';
+    return '<button data-k="' + i[0] + '"><span class="nvI">' + i[1] + '</span>' + i[2] + '</button>';
   }).join('') + '<button data-k="pf" style="display:none"><span>👤</span>Profil</button>';
   document.body.appendChild(bar);
   var pg = document.createElement('div');

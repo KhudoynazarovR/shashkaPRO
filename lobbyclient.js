@@ -720,7 +720,9 @@
     var fl = S.friends || [], fin = S.freqIn || [], fset = {}, showF = !!window.__lbF;
     fl.forEach(function (f) { fset[f.uid] = 1; });
     if (showF) list = fl.map(function (f) { return { uid: f.uid, name: f.name, elo: f.elo, gems: f.gems, hasAv: f.hasAv, busy: false, offline: !f.online, ls: f.ls || 0 }; });
-      var h = "<div class=\"tabs\"><button class=\"lbtb" + (showF ? "" : " on") + "\" data-t=\"pl\">🌐 Online o‘yinchilar " + all.length + "</button><button class=\"lbtb" + (showF ? " on" : "") + "\" data-t=\"f\">👥 Do‘stlar " + fl.length + (fin.length ? " 🔴" : "") + "</button></div>";
+      var tbI = function (p) { return "<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">" + p + "</svg>"; };
+      var h = "<div class=\"tabs\"><button class=\"lbtb" + (showF ? "" : " on") + "\" data-t=\"pl\"><span class=\"lbtI\">" + tbI("<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20\"/><path d=\"M2 12h20\"/>") + "<i class=\"lbtOn\"></i></span><span class=\"lbtT\"><small>Online o‘yinchilar</small><b>" + all.length + "</b></span></button>" +
+        "<button class=\"lbtb" + (showF ? " on" : "") + "\" data-t=\"f\"><span class=\"lbtI\">" + tbI("<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M22 21v-2a4 4 0 0 0-3-3.87\"/><path d=\"M16 3.13a4 4 0 0 1 0 7.75\"/>") + (fin.length ? "<i class=\"lbtNew\"></i>" : "") + "</span><span class=\"lbtT\"><small>Do‘stlar</small><b>" + fl.length + "</b></span></button></div>";
     fin.forEach(function (r) { h += '<div class="lbp lbin">' + avh(r.uid, r.hasAv, r.name, false) + '<div class="lbinf"><b>' + esc(r.name) + '</b><small>do‘st bo‘lishni taklif qildi</small></div><button class="lbacc" data-f="acc" data-id="' + esc(r.uid) + '">Qabul</button><button class="lbrej" data-f="rej" data-id="' + esc(r.uid) + '">Rad</button></div>'; });
       (S.incoming || []).forEach(function (c) {
         h += "<div class=\"lbp lbin\"><div class=\"lbav\">" + esc((c.fromName || "?").charAt(0).toUpperCase()) + "</div><div class=\"lbinf\"><b>" + esc(c.fromName) + "</b><small>sizni o‘yinga taklif qildi · " + esc(c.tc) + (c.stake ? " · 💰 " + c.stake + " 🪙" : "") + "</small></div>" +
@@ -1524,6 +1526,15 @@ document.head.appendChild(_as); }
 ;(function () {
   var ws = null, list = [], sig = "", box = null, n = 0;
   var COL = { "1+1": "#c0605f", "2+2": "#6aaed4", "3+2": "#6aaed4", "5+3": "#88aa3c", "7+5": "#88aa3c" };
+  // jonli stol kartasidagi kichik chiziqli ikonlar (emoji o‘rniga)
+  var LVP = {
+    bot: "<path d=\"M12 8V4H8\"/><rect width=\"16\" height=\"12\" x=\"4\" y=\"8\" rx=\"2\"/><path d=\"M2 14h2\"/><path d=\"M20 14h2\"/><path d=\"M15 13v2\"/><path d=\"M9 13v2\"/>",
+    rocket: "<path d=\"M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z\"/><path d=\"m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z\"/><path d=\"M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0\"/><path d=\"M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5\"/>",
+    zap: "<polygon points=\"13 2 3 14 12 14 11 22 21 10 12 10 13 2\"/>",
+    timer: "<line x1=\"10\" x2=\"14\" y1=\"2\" y2=\"2\"/><line x1=\"12\" x2=\"15\" y1=\"14\" y2=\"11\"/><circle cx=\"12\" cy=\"14\" r=\"8\"/>",
+    eye: "<path d=\"M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/>"
+  };
+  function LVI(k) { return "<svg viewBox=\"0 0 24 24\" width=\"12\" height=\"12\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">" + (LVP[k] || "") + "</svg>"; }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c]; }); }
   if (!document.getElementById("hzLvCss")) {
     var st = document.createElement("style"); st.id = "hzLvCss";
@@ -1533,7 +1544,7 @@ document.head.appendChild(_as); }
   function render() {
     if (!box) return;
     var s = JSON.stringify(list); if (s === sig) return; sig = s;
-    var h = "<div class=\"hzLvH\"><span>🎯 Jonli stollar</span><small>" + list.length + " ta o‘yin</small></div>";
+    var h = "<div class=\"hzLvH\"><span>Jonli stollar</span><small>" + list.length + " ta o‘yin</small></div>";
     if (!list.length) h += "<div class=\"hzLvE\">Hozir o‘ynalayotgan o‘yin yo‘q</div>";
     else {
       h += "<div class=\"hzLvG\">";
@@ -1542,7 +1553,11 @@ document.head.appendChild(_as); }
         var bm = bot ? "" : (function (t) { var m = /^(\d+(?:\.\d+)?)(?:\+(\d+))?/.exec(String(t || "")); if (!m) return ""; var x = +m[1] * 60 + (+m[2] || 0) * 40; return x < 180 ? "🚀 Bullet " : x < 480 ? "⚡ Blits " : "⏱ Rapid "; })(r.tc);
         if (!bot) c = /Bullet/.test(bm) ? "#d9534f" : /Blits/.test(bm) ? "#3b82f6" : /Rapid/.test(bm) ? "#16a34a" : c;
         var mb = ""; if (r.bd && r.bd.length === 64) { mb = "<div class=\"hzLvB\">"; for (var q = 0; q < 64; q++) { var rr = q >> 3, cc = q & 7, dk = (rr + cc) % 2 === 1, pv = r.bd.charAt(q); mb += "<i class=\"" + (dk ? "d" : "l") + "\">" + (pv !== "0" ? "<s class=\"p" + pv + "\"></s>" : "") + "</i>"; } mb += "</div>"; }
-        h += "<div class=\"hzLvC\" data-r=\"" + esc(r.id) + "\"><b style=\"background:" + c + "\">" + (bot ? "🤖 Bot " + esc(tcl) : bm + esc(tcl)) + "</b>" + mb + "<div>⚪ " + esc(r.white) + " (" + (r.wElo || 1000) + ")</div><i>vs</i><div>⚫ " + esc(r.black) + " (" + (r.bElo || 1000) + ")</div><u>👁 " + (r.spectators || 0) + " · " + Math.ceil((r.moves || 0) / 2) + " yurish</u></div>";
+        var kd = bot ? ["bot", "Bot"] : /Bullet/.test(bm) ? ["rocket", "Bullet"] : /Blits/.test(bm) ? ["zap", "Blits"] : /Rapid/.test(bm) ? ["timer", "Rapid"] : null;
+        h += "<div class=\"hzLvC\" data-r=\"" + esc(r.id) + "\"><b style=\"background:" + c + "\">" + (kd ? LVI(kd[0]) + "<span>" + kd[1] + "</span> " : "") + esc(tcl) + "</b>" + mb +
+          "<div class=\"hzLp\"><span class=\"hzDw\"></span><span class=\"hzNm\">" + esc(r.white) + "</span><em>" + (r.wElo || 1000) + "</em></div>" +
+          "<div class=\"hzLp\"><span class=\"hzDb\"></span><span class=\"hzNm\">" + esc(r.black) + "</span><em>" + (r.bElo || 1000) + "</em></div>" +
+          "<u>" + LVI("eye") + (r.spectators || 0) + " · " + Math.ceil((r.moves || 0) / 2) + " yurish</u></div>";
       });
       h += "</div>";
     }
