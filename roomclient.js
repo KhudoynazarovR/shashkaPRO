@@ -178,6 +178,9 @@
         "#rcBar button.off{opacity:.38}#rcBar button[hidden],#rcBar .bd[hidden]{display:none}" +
         "#rcBar .bd{position:absolute;top:-5px;left:calc(50% + 16px);min-width:18px;height:18px;border-radius:9px;background:#e04a3a;color:#fff;font:700 11px/18px system-ui,sans-serif;text-align:center;padding:0 4px;box-sizing:border-box}" +
         "#rcResign,#rcDrawOffer,#rcDrawCnt,#rcChatBtn,#rcMenuBtn{display:none!important}" +
+        // o'yin tugagach tugmalar paneli — pastki tugmalar o'rnida (yuqorida turib doska va kartani pastga surmaydi)
+        "#rcEx.rcExB{position:fixed;left:8px;right:8px;bottom:calc(env(safe-area-inset-bottom,0px) + 8px);z-index:9994;margin:0!important;max-width:none!important;background:#221a2e!important;border-radius:16px!important;padding:10px!important;box-shadow:0 -6px 24px rgba(0,0,0,.35);display:flex!important;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;box-sizing:border-box}" +
+        "#rcEx.rcExB>div{width:100%;margin:0!important;color:#cfc8e0;font:600 13px system-ui,sans-serif;text-align:center}#rcEx.rcExB button{flex:1 1 0;min-width:0;margin:0!important;border:0;border-radius:12px!important;padding:12px 6px!important;font:700 15px system-ui,sans-serif!important;color:#fff;background:#3a3150;box-shadow:none!important}.rcExOn #rcBar{display:none}" +
         // 🏟 arena: o'yin tugagach pastki panel (pastki tugmalar o'rnida, doskani yopmaydi)
         "#spAE{position:fixed;left:8px;right:8px;bottom:calc(env(safe-area-inset-bottom,0px) + 8px);z-index:9995;background:#221a2e;color:#fff;border-radius:16px;padding:10px 12px;box-shadow:0 -6px 24px rgba(0,0,0,.35);font-family:system-ui,sans-serif}.spAEon #rcBar{display:none}" +
         "#spAE .r1{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}#spAE .res{font:800 17px system-ui,sans-serif}#spAE .pt{font:800 16px system-ui,sans-serif;color:#9be36b}#spAE .mt{margin-left:auto;font:600 12px system-ui,sans-serif;color:#cfc8e0;white-space:nowrap}" +
@@ -859,6 +862,8 @@
       }
       if (spec) { line("👁 Siz tomoshabinsiz"); btn("🏟 O‘yin zaliga o‘tish", function () { elZal.onclick(); }); }
       ex.style.display = ex.childNodes.length ? "block" : "none";
+      var _exB = !!(st.finished && !spec && ex.childNodes.length && !/^A.+?G\d+/.test(String(roomId)));   // arenada o'z paneli bor
+      ex.classList.toggle("rcExB", _exB); root.classList.toggle("rcExOn", _exB);
     }
 
     function renderTc() { try { renderExtra(); } catch (e) { console.error(e); }
@@ -1198,7 +1203,7 @@
         var tm = st.reason === "abandon" ? "🚪 Raqib o‘yindan chiqib ketdi · " : st.reason === "timeout" ? "⏰ Vaqt tugadi · " : st.reason === "noshow" ? "⏳ Birinchi yurish qilinmadi · " : st.reason === "voice" ? "🎤 Noto‘g‘ri yurish aytildi" + (st.voiceSaid ? " («" + st.voiceSaid + "»)" : "") + " · " : "";
         if (st.winner === "draw") t = st.reason === "abort" ? "O‘yin bekor qilindi" : st.drawText ? "🤝 " + st.drawText : "🤝 Durang (kelishildi)";
         else if (st.color === "spectator") t = tm + "🏆 " + sideName(st.winner) + " g‘alaba qozondi";
-        else t = tm + (st.winner === st.color ? "🏆 Siz g‘alaba qozondingiz!" : "😔 Siz yutqazdingiz");
+        else t = st.winner === st.color ? tm + "🏆 Siz g‘alaba qozondingiz!" : tm.replace(/\s*·\s*$/, "");   // yutqazganda «Siz yutqazdingiz» yozilmaydi
       }
       else if (st.etude && st.turn === st.color) t = "♔ " + st.etude.title + " · " + (st.etude.goal === "draw" ? "Oq yuradi va durang qiladi" : "Oq yuradi va yutadi");
       else if (st.etude) t = "🦍 King Kong o‘ylamoqda…";

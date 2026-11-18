@@ -113,7 +113,7 @@ function createRooms({ send, clients, onFinish }) {
   function _pi(seat) {
     try {
       if (!seat || !seat.uid) return null;
-      if (isBotUid(seat.uid)) return { uid: seat.uid, elo: 0, av: false, bot: true };
+      if (isBotUid(seat.uid)) return { uid: seat.uid, elo: 0, av: !!((require("./store.js").db.botAv || {})[seat.uid]), bot: true };   // 🤖 bot rasmi (admin yuklagan) — /api/av/bot_…
       var u = require("./store.js").users()[String(seat.uid)] || {};
       return { uid: String(seat.uid), elo: u.elo || 1000, av: !!require("./store").avOf(u) };
     } catch (e) { return null; }
