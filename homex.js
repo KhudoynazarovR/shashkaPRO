@@ -12,6 +12,18 @@
   function em(ch, cls) { return '<span class="hxEm' + (cls ? ' ' + cls : '') + '">' + ch + '</span>'; }
   // karta uslubi: shaffof to‘q ko‘k + ingichka oltin chiziq (fon naqshidan ajralib turadi)
   var GL = 'background:var(--spCard,rgba(14,22,82,.84))!important;border:1px solid var(--spLine,rgba(232,196,106,.28))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 8px 22px rgba(0,0,0,.28)!important';
+  // 🪙 oltin tanga (SVG): tishli chet, markazda bo‘rtma toj, yaltiroq chiziq — hamma telefonda bir xil
+  var COIN = (function () {
+    var cr = function (dx, dy, c) { return '<path transform="translate(' + dx + ' ' + dy + ')" d="M19.5 39.5 L21.5 25.5 L27.6 31.6 L32 21.5 L36.4 31.6 L42.5 25.5 L44.5 39.5 Z" fill="' + c + '" stroke-linejoin="round"/><rect transform="translate(' + dx + ' ' + dy + ')" x="19.5" y="40.6" width="25" height="4.2" rx="1.6" fill="' + c + '"/>'; };
+    var sv = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><radialGradient id="f" cx="34%" cy="28%" r="80%"><stop offset="0" stop-color="#fff6c2"/><stop offset=".38" stop-color="#ffd54a"/><stop offset=".78" stop-color="#e3a31a"/><stop offset="1" stop-color="#b8780a"/></radialGradient>' +
+      '<linearGradient id="r" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe98a"/><stop offset=".45" stop-color="#e2a414"/><stop offset="1" stop-color="#7d5000"/></linearGradient></defs>' +
+      '<circle cx="32" cy="32" r="31" fill="url(#r)"/><circle cx="32" cy="32" r="30.4" fill="none" stroke="#6e4600" stroke-width="1.2"/>' +
+      '<circle cx="32" cy="32" r="28.2" fill="none" stroke="#9a6608" stroke-width="2.6" stroke-dasharray="1.1 1.9" opacity=".6"/>' +
+      '<circle cx="32" cy="32" r="25.2" fill="url(#f)" stroke="#a86f05" stroke-width="1.6"/><circle cx="32" cy="32" r="21.5" fill="none" stroke="#f7c43a" stroke-width="1.1" opacity=".9"/>' +
+      cr(0.9, 1.1, '#9c6400') + cr(0, 0, '#f1b52a') + '<path d="M21.5 25.5 L27.6 31.6 L32 21.5" stroke="#fff3b3" stroke-width="1.2" fill="none" stroke-linejoin="round" opacity=".9"/>' +
+      '<path d="M13.5 24 A19.5 19.5 0 0 1 27 11.6" stroke="#fffdf0" stroke-width="3.2" stroke-linecap="round" fill="none" opacity=".8"/></svg>';
+    return 'url("data:image/svg+xml;utf8,' + encodeURIComponent(sv) + '")';
+  })();
   var H = '#lbPanel #hzHero', D3 = H + ' #nvDuo';
   var st = document.createElement('style'); st.id = 'hxCss';
   st.textContent =
@@ -40,7 +52,7 @@
     H + ' #pfCard .pfB{flex:1;min-width:0}' +
     H + ' #pfCard .pfN{font-size:14px!important;font-weight:700!important;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
     H + ' #pfCard .pfC{display:flex;align-items:center;gap:5px;margin-top:4px;font-size:16px!important;font-weight:800!important;line-height:1.2;color:#ffc53d!important;white-space:nowrap}' +
-    H + ' #pfCard .pfCo{width:14px;height:14px;border-radius:50%;flex:none;background:radial-gradient(circle at 35% 35%,#ffe08a,#f5a524);box-shadow:inset 0 0 0 2px #d48806}' +
+    H + ' #pfCard .pfCo{width:26px;height:26px;border-radius:50%;flex:none;background:' + COIN + ' center/contain no-repeat;box-shadow:0 2px 3px rgba(0,0,0,.45);margin-right:2px}' +   // 🪙 haqiqiy oltin tanga (tishli chet, toj, yaltiroq)
     H + ' #pfCard .pfE,' + H + ' #pfCard .pfG{display:none!important}' +
     // ── o‘rin va seriya belgilari: profil kartasi ichida, pastki qatorda
     H + ' #hxChips{grid-row:1;grid-column:1;align-self:end;display:flex!important;flex-wrap:wrap;align-items:center;gap:6px;margin:0 10px 10px 12px!important;padding:0!important;pointer-events:none;z-index:2;min-width:0;width:auto!important;height:auto!important;background:none!important}' +
