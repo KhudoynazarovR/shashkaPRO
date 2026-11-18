@@ -165,7 +165,14 @@ function createRooms({ send, clients, onFinish }) {
     return P;
   }
   let EVN = 0;   // bir vaqtda dvigatelga ketgan tomoshabin so'rovlari (botlar navbatini to'ldirmaslik uchun)
-  function evPos(room, i, cb) {   // i-pozitsiya bahosi (oq nuqtai nazaridan, dvigatel birligida) va Dragon yurishi; xona bo'yicha keshlanadi
+  // s nuqtai nazaridan baho (dvigatel birligi, 200 = 1 dona). Yagona (majburiy) yurishni dvigatel hisoblamaydi (0 qaytaradi) — o'zimiz yurib o'tamiz
+  function evSide(b, s, t, d, cb) {
+    let L = []; try { L = require("./kkrules.js").moves(b, s); } catch (e) {}
+    if (!L.length) return cb(-9999);
+    if (L.length === 1 && d < 8) return evSide(L[0].board, -s, t, d + 1, v => cb(v == null ? null : -v));
+    require("./kestoai.js").move({ board: b.slice(), side: s, time: t, tbAlways: true }, r => cb(r && !r.error && typeof r.ev === 'number' ? r.ev : null));
+  }
+  function evPos(room, i, cb) {   // i-pozitsiya bahosi (oq nuqtai nazaridan) va Dragon yurishi; xona bo'yicha keshlanadi
     const C = room._evC || (room._evC = new Map()), h = C.get(i);
     if (h) { if (h.done) return cb(h.r); h.q.push(cb); return; }
     const P = evLine(room); if (!P || !P[i]) return cb(null);
@@ -177,12 +184,30 @@ function createRooms({ send, clients, onFinish }) {
     let L = []; try { L = require("./kkrules.js").moves(b, side); } catch (e) {}
     if (!L.length) return fin({ ev: -side * 9999, best: null, end: 1 });   // yurish yo'q — navbatdagi tomon yutqazgan
     EVN++;
-    let done = false; const tm = setTimeout(() => { if (!done) { done = true; EVN--; fin(null); } }, 15000);
-    require("./kestoai.js").move({ board: b, side, time: 0.5, tbAlways: true }, r => {
-      if (done) return; done = true; clearTimeout(tm); EVN--;
-      if (!r || r.error || r.from == null) return fin(null);
-      const m = L.find(x => x.from === r.from && x.to === r.to);
-      fin({ ev: typeof r.ev === 'number' ? side * r.ev : null, tb: r.tb ? 1 : 0, best: { from: r.from, path: m ? m.path : [r.to], caps: m ? m.caps.length : 0 } });
+    let done = false; const tm = setTimeout(() => { if (!done) { done = true; EVN--; fin(null); } }, 20000);
+    const end = r => { if (done) return; done = true; clearTimeout(tm); EVN--; fin(r); };
+    // oe — yurishdan keyin raqib nuqtai nazaridan baho; oq nuqtai nazari = -side * oe
+    const res = (m, oe, tb) => ({ ev: oe == null ? null : -side * oe, tb: tb ? 1 : 0, best: { from: m.from, path: m.path, caps: m.caps.length } });
+    if (L.length === 1) return evSide(L[0].board, -side, 0.5, 1, oe => end(res(L[0], oe)));
+    require("./kestoai.js").move({ board: b.slice(), side, time: 0.5, tbAlways: true }, r => {
+      if (done) return;
+      const c = r && !r.error && r.from != null ? L.find(x => x.from === r.from && x.to === r.to) : null;
+      if (!c) return end(null);
+      if (r.tb) return end(res(c, typeof r.ev === 'number' ? -r.ev : null, 1));   // endshpil bazasi — aniq
+      // ✅ tekshiruv: Dragon yurishidan keyin raqibning eng yaxshi javobi. Dvigatel aytgan bahoga mos kelmasa (yurish rad etilgan) —
+      // hamma yurishlar raqib javobi bo'yicha tekshiriladi va eng xavfsizi tanlanadi
+      evSide(c.board, -side, 0.4, 1, oe => {
+        if (done) return;
+        if (oe == null) return end(res(c, typeof r.ev === 'number' ? -r.ev : null));
+        if (oe + (typeof r.ev === 'number' ? r.ev : 0) <= 120) return end(res(c, oe));
+        let bm = c, be = oe, k = 0;
+        (function nx() {
+          if (done) return;
+          if (k >= L.length) return end(res(bm, be));
+          const m = L[k++]; if (m === c) return nx();
+          evSide(m.board, -side, 0.25, 1, e => { if (e != null && e < be) { be = e; bm = m; } nx(); });
+        })();
+      });
     });
   }
   function snapshot(room, color) {
