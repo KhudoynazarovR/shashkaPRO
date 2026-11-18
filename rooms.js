@@ -110,12 +110,15 @@ function createRooms({ send, clients, onFinish }) {
     return c;
   }
 
-  function _pi(seat) {
+  function _pi(seat, tc) {
     try {
       if (!seat || !seat.uid) return null;
-      if (isBotUid(seat.uid)) return { uid: seat.uid, elo: 0, av: !!((require("./store.js").db.botAv || {})[seat.uid]), bot: true };   // 🤖 bot rasmi (admin yuklagan) — /api/av/bot_…
+      const G = require("./glicko.js");
+      if (isBotUid(seat.uid)) { let be = 0; try { be = G.botView(seat.uid).r; } catch (e) {} return { uid: seat.uid, elo: be || 0, av: !!((require("./store.js").db.botAv || {})[seat.uid]), bot: true }; }   // 🤖 bot rasmi (admin yuklagan) va reytingi
       var u = require("./store.js").users()[String(seat.uid)] || {};
-      return { uid: String(seat.uid), elo: u.elo || 1000, av: !!require("./store").avOf(u) };
+      let el = u.elo || 1000;
+      if (tc) { try { const v = G.view(u)[G.catOf(tc)]; if (v && v.n) el = v.r; } catch (e) {} }   // shu o'yin turidagi reyting (o'ynagan bo'lsa)
+      return { uid: String(seat.uid), elo: el, av: !!require("./store").avOf(u) };
     } catch (e) { return null; }
   }
   // 🎯 Jonli stollar: botning haqiqiy reytingi (_pi botga 0 beradi → avval (1000) chiqardi)
@@ -136,7 +139,7 @@ function createRooms({ send, clients, onFinish }) {
       roomId: room.id,
       color: color || "spectator",
       white: room.white ? room.white.name : null,
-      wInfo: _pi(room.white), bInfo: _pi(room.black),
+      wInfo: _pi(room.white, room.tc), bInfo: _pi(room.black, room.tc),
       h2h: h2hOf(room),
       black: room.black ? room.black.name : null,
       whiteOnline: isOnline(room.white), canSit: !!(room.inline && !room.finished && (!!room.white !== !!room.black)), sitColor: room.white ? 'black' : 'white',

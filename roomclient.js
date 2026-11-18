@@ -992,7 +992,13 @@
       b.textContent = (color === "white" ? "⚪ " : "⚫ ") + (_nm || "kutilmoqda…") + (st.color === color ? " (siz)" : "") + (st.berserk && st.berserk[color] ? " ⚡" : "");
       var sm = document.createElement("small");
       if (_nm) { var on = st[color + "Online"], ii = document.createElement("i"); ii.textContent = on ? "Onlayn" : "Oflayn"; ii.style.color = on ? "#7fc25a" : "#e0705a"; sm.appendChild(ii); }
-      if (_inf && _inf.elo) sm.appendChild(document.createTextNode((_nm ? " " : "") + "(" + _inf.elo + ")"));
+      if (_inf && _inf.elo) {
+        var _ed = st.finished && st.eloD ? st.eloD : null, _d = _ed ? _ed[color] : null, _nw = _ed ? (color === "white" ? _ed.we : _ed.be) : null;
+        sm.appendChild(document.createTextNode((_nm ? " " : "") + "("));
+        var _es = document.createElement("span"); _es.className = "el"; _es.textContent = typeof _d === "number" && _nw ? _nw : _inf.elo; sm.appendChild(_es);
+        if (typeof _d === "number") { var _ds = document.createElement("i"); _ds.className = "eld"; _ds.textContent = (_d > 0 ? " +" : _d < 0 ? " −" : " ±") + Math.abs(_d); _ds.style.color = _d > 0 ? "#43a047" : _d < 0 ? "#e53935" : "#9e9e9e"; sm.appendChild(_ds); }   // ⭐ reyting o'zgarishi
+        sm.appendChild(document.createTextNode(")"));
+      }
       nmD.appendChild(b); nmD.appendChild(sm); el.appendChild(nmD);
       var r = document.createElement("span"); r.className = "ck"; r.setAttribute("data-clock", color);
       el.appendChild(r);
@@ -1704,7 +1710,7 @@
       }, 1000);
     }
     function onMessage(m) {
-      if (m && m.type === "roomElo" && m.roomId === roomId) { st.eloD = m.eloD || null; try { rmPanel(); } catch (e) {} }
+      if (m && m.type === "roomElo" && m.roomId === roomId) { st.eloD = m.eloD || null; try { rmPanel(); } catch (e) {} try { render(); } catch (e) {} }   // kartalarda yangi reyting
       if (m.type === "error" && (st.optim || m.resync)) { st.optim = false; st.optN = 0; st.pending = false; st.forced = null; if (m.resync) { st.needRebuild = true; botGen++; botBusy = false; } send({ type: "roomSync", roomId: roomId }); }
       if (m.type === "roomState" && m.roomId === roomId && !m.finished) { try { window.__coinClear(); } catch (e) {} }
       if (m.type === "roomState" && m.roomId === roomId) {
@@ -1926,7 +1932,7 @@
 
 /* ELODELTA — o'yin tugagach reyting o'zgarishi (yashil +N / qizil −N) */
 ;(function(){
-if(window.__eloDelta)return;window.__eloDelta=1;
+if(window.__eloDelta||true)return;window.__eloDelta=1;   /* endi o'yinchi kartasi o'zi ko'rsatadi */
 var last=null,iv=null;
 function myId(){try{var u=window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initDataUnsafe&&Telegram.WebApp.initDataUnsafe.user;return u?String(u.id):''}catch(e){return ''}}
 function clear(){[].forEach.call(document.querySelectorAll('.eloDx,.eloDp'),function(e){e.remove()})}
