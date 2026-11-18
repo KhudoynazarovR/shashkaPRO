@@ -168,15 +168,23 @@
         ".rcPc .nm{flex:1;min-width:0}.rcPc .nm b{display:block;font:700 16px system-ui,sans-serif;color:#f3ebe0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
         ".rcPc .nm small{display:block;font:500 13px system-ui,sans-serif;color:#b9ab98;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rcPc .nm small i{font-style:normal;font-weight:700}" +
         ".rcPc .ck{font:700 26px/1 ui-monospace,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums;min-width:92px;text-align:center;padding:7px 10px;border-radius:10px;border:2px solid rgba(255,255,255,.16);flex:none;box-sizing:border-box}" +
-        "#rcBar{position:fixed;left:0;right:0;bottom:0;z-index:9990;display:flex;justify-content:space-around;align-items:flex-start;padding:10px 6px calc(env(safe-area-inset-bottom,0px) + 8px);background:var(--rcBar,#fff);border-top:1px solid rgba(255,255,255,.08);box-shadow:0 -6px 18px rgba(0,0,0,.35)}" +
-        "#rcBar button{all:unset;flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:#d9cdbb;font:600 13px system-ui,sans-serif;-webkit-tap-highlight-color:transparent;position:relative}" +
-        "#rcBar button i{width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 3px 0 rgba(0,0,0,.35)}" +
+        "#rcBar{position:fixed;left:0;right:0;bottom:0;z-index:9990;display:flex;justify-content:space-around;align-items:flex-start;padding:10px 6px calc(env(safe-area-inset-bottom,0px) + 8px);background:var(--rcBar,#221a2e);box-shadow:0 -6px 18px rgba(0,0,0,.3)}" +
+        "#rcBar button{all:unset;flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:#cfc8e0;font:600 13px system-ui,sans-serif;-webkit-tap-highlight-color:transparent;position:relative}" +
+        "#rcBar button i{width:58px;height:58px;border-radius:16px;display:flex;align-items:center;justify-content:center;color:#fff}#rcBar button i svg{width:30px;height:30px;stroke-width:2.4}" +
+        // Shashka Online uslubida: Chat ko'k-binafsha, Taslim va Durang to'q sariq, Menu binafsha
+        "#rcBar [data-bb=chat] i{background:linear-gradient(135deg,#6f86f2,#7b52d6);box-shadow:0 6px 14px rgba(111,100,230,.45)}" +
+        "#rcBar [data-bb=res] i,#rcBar [data-bb=draw] i{background:linear-gradient(180deg,#ffa726,#fb8c00);box-shadow:0 6px 14px rgba(251,140,0,.42)}" +
+        "#rcBar [data-bb=menu] i{background:linear-gradient(135deg,#b23fd1,#8e24aa);box-shadow:0 6px 16px rgba(156,39,176,.55)}" +
         "#rcBar button.off{opacity:.38}#rcBar button[hidden],#rcBar .bd[hidden]{display:none}" +
         "#rcBar .bd{position:absolute;top:-5px;left:calc(50% + 16px);min-width:18px;height:18px;border-radius:9px;background:#e04a3a;color:#fff;font:700 11px/18px system-ui,sans-serif;text-align:center;padding:0 4px;box-sizing:border-box}" +
         "#rcResign,#rcDrawOffer,#rcDrawCnt,#rcChatBtn,#rcMenuBtn{display:none!important}" +
+        "#rcH2H{width:min(94vw,520px);box-sizing:border-box;margin:2px auto 4px;padding:7px 12px;border-radius:12px;background:rgba(0,0,0,.22);font:600 14px system-ui,sans-serif;color:#f3ebe0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}" +
+        "#rcH2H .t{opacity:.7;font-weight:500;white-space:nowrap}#rcH2H .s{flex:1;min-width:0;display:flex;align-items:center;justify-content:flex-end;gap:6px}" +
+        "#rcH2H .s span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}#rcH2H .s span:first-child{flex:none;max-width:35%}#rcH2H .s b{white-space:nowrap;padding:2px 10px;border-radius:8px;background:rgba(255,255,255,.12);font-variant-numeric:tabular-nums}#rcH2H>div{width:100%}" +
+        ".rcL #rcH2H{background:#fff;color:#2b2119;box-shadow:0 3px 10px rgba(80,50,20,.12)}.rcL #rcH2H .s b{background:#f3ede4}" +
         // och fonlar (krem, qor, marmar): oq kartalar, to'q yozuv
         ".rcL .rcPc{background:#fff;border-color:rgba(0,0,0,.08);box-shadow:0 3px 10px rgba(80,50,20,.15)}.rcL .rcPc .nm b{color:#2b2119}.rcL .rcPc .nm small{color:#8a7a68}" +
-        ".rcL #rcBar{border-top-color:rgba(0,0,0,.08);box-shadow:0 -4px 14px rgba(80,50,20,.12)}.rcL #rcBar button{color:#5a4a3a}.rcL #rcInfo{color:#4a3a2a}.rcL #rcStatus{color:#9a6a12!important}" +
+        ".rcL #rcInfo{color:#4a3a2a}.rcL #rcStatus{color:#9a6a12!important}" +
         "#rcChatBd{position:fixed;inset:0;z-index:10002;background:rgba(10,6,3,.45);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}" +
         "#rcChat{position:fixed;top:0;bottom:0;left:0;width:min(82vw,380px);z-index:10003;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;padding:calc(env(safe-area-inset-top,0px) + 10px) 12px calc(env(safe-area-inset-bottom,0px) + 10px);background:#262421;border-right:1px solid rgba(255,255,255,.1);box-shadow:10px 0 30px rgba(0,0,0,.5);color:#f3ebe0}" +
         "#rcChat .rcCH{display:flex;align-items:center;justify-content:space-between}#rcChat .rcCH b{display:flex;align-items:center;gap:8px;font:800 20px system-ui,sans-serif}#rcChat .rcCH b svg{width:24px;height:24px}" +
@@ -383,16 +391,16 @@
       var rcmStyle = document.createElement("style"); rcmStyle.id = "rcmStyle"; document.head.appendChild(rcmStyle);
       // 🖼 o'yin oynasi foni: kulrang (asosiy), krem, jigarrang — bepul; qolganlari tangaga; «O‘z rasmim» — rasm faqat shu telefonda saqlanadi
       var RC_BGS = [
-        { k: "c", n: "Krem", p: 0, bg: "linear-gradient(180deg,#f3ebdf 0,#e6d8c3 100%)", bar: "#fff", l: 1 },   // hamma uchun asosiy
+        { k: "c", n: "Krem", p: 0, bg: "linear-gradient(180deg,#f3ebdf 0,#e6d8c3 100%)", bar: "#221a2e", l: 1 },   // hamma uchun asosiy
         { k: "g", n: "Kulrang", p: 0, bg: "#312e2b", bar: "#262421" },
         { k: "w", n: "Jigarrang", p: 0, bg: "radial-gradient(circle at 30% 0,#3b2a1d 0,#22180f 55%,#140e09 100%)", bar: "#1b130d" },
         { k: "n", n: "Tun", p: 150, bg: "linear-gradient(180deg,#22314f 0,#0d1424 100%)", bar: "#0b1120" },
         { k: "f", n: "O‘rmon", p: 150, bg: "linear-gradient(180deg,#2c4a34 0,#0f2017 100%)", bar: "#0c1a12" },
         { k: "v", n: "Binafsha", p: 150, bg: "radial-gradient(circle at 30% 0,#5b3590 0,#2a1650 55%,#140a2a 100%)", bar: "#120925" },
-        { k: "q", n: "Qor", p: 150, bg: "linear-gradient(180deg,#f2f7fc 0,#d3e0ee 100%)", bar: "#fff", l: 1 },
+        { k: "q", n: "Qor", p: 150, bg: "linear-gradient(180deg,#f2f7fc 0,#d3e0ee 100%)", bar: "#221a2e", l: 1 },
         { k: "o", n: "Okean", p: 200, bg: "linear-gradient(180deg,#136a86 0,#0a3a4f 55%,#06202c 100%)", bar: "#051b25" },
         { k: "s", n: "Shafaq", p: 200, bg: "linear-gradient(180deg,#e8865a 0,#a2456a 50%,#2e1a40 100%)", bar: "#26152f" },
-        { k: "m", n: "Marmar", p: 250, bg: "linear-gradient(125deg,#fafaf8 0,#e4e4e0 40%,#f3f3f0 60%,#d9d9d4 100%)", bar: "#fff", l: 1 },
+        { k: "m", n: "Marmar", p: 250, bg: "linear-gradient(125deg,#fafaf8 0,#e4e4e0 40%,#f3f3f0 60%,#d9d9d4 100%)", bar: "#221a2e", l: 1 },
         { k: "y", n: "Yog‘och", p: 300, bg: "repeating-linear-gradient(90deg,#5e4027 0,#6a4a2e 7px,#553923 13px,#664629 21px)", bar: "#3e2a19" },
         { k: "a", n: "Oltin", p: 300, bg: "radial-gradient(circle at 50% 0,#7a5f22 0,#3a2c10 55%,#1a1408 100%)", bar: "#161108" }
       ];
@@ -616,10 +624,10 @@
     // ⬇️ pastki 4 tugma: Chat, Taslim, Durang, Menu (doim ekran pastida)
     var elBar = document.createElement("div"); elBar.id = "rcBar";
     elBar.innerHTML =
-      '<button data-bb="chat"><i style="background:#81b64c">' + RC_ICO.chat + '</i>Chat<span class="bd" hidden></span></button>' +
-      '<button data-bb="res"><i style="background:#d9822b">' + RC_ICO.flag + '</i>Taslim</button>' +
-      '<button data-bb="draw"><i style="background:#d9822b">' + RC_ICO.hand + '</i>Durang</button>' +
-      '<button data-bb="menu"><i style="background:#8a5a33">' + RC_ICO.menu + '</i>Menu</button>';
+      '<button data-bb="chat"><i>' + RC_ICO.chat + '</i>Chat<span class="bd" hidden></span></button>' +
+      '<button data-bb="res"><i>' + RC_ICO.flag + '</i>Taslim</button>' +
+      '<button data-bb="draw"><i>' + RC_ICO.hand + '</i>Durang</button>' +
+      '<button data-bb="menu"><i>' + RC_ICO.menu + '</i>Menu</button>';
     root.appendChild(elBar);
     function rcBarPlay() { return st.color !== "spectator" && !st.finished && bothIn(); }
     elBar.onclick = function (e) {
@@ -1067,23 +1075,16 @@
     try { var tg = window.Telegram && Telegram.WebApp; if (tg && tg.showConfirm) { tg.showConfirm(msg, function (ok) { if (ok) go(); }); return; } } catch (x) {}
     if (confirm(msg)) go();
   });
+  // 🤝 o'zaro hisob — bitta qatorda: «Siz 3.5 : 1.5 Raqib» (har bir o'yin alohida ko'rsatilmaydi, joy egallamaydi)
   function drawH2H(topColor, bottomColor) {
       var el = document.getElementById("rcH2H"), h = st.h2h;
       if (!h || !h.n) { if (el) el.style.display = "none"; return; }
-      if (!el) {
-        el = document.createElement("div"); el.id = "rcH2H";
-        el.style.cssText = "max-width:560px;margin:6px auto;background:#161a3a;border:1px solid #262b5a;border-radius:12px;padding:6px 10px;font:600 14px system-ui,sans-serif;color:#fff;box-sizing:border-box";
-        elBottom.parentNode.insertBefore(el, elBottom.nextSibling);
-      }
+      if (!el) { el = document.createElement("div"); el.id = "rcH2H"; elBottom.parentNode.insertBefore(el, elBottom.nextSibling); }
       el.style.display = "";
-      var last = (h.last || []).slice(-10), fmt = function (x) { var i = Math.floor(x), f = x - i > 0.01; return (i || !f ? String(i) : "") + (f ? "½" : ""); };
-      function row(color) {
-        var nm = st[color] || (color === "white" ? "Oq" : "Qora");
-        var cells = last.map(function (r) { var v = r === "d" ? "½" : (r === (color === "white" ? "w" : "b") ? "1" : "0"); return '<span style="width:20px;text-align:center;color:' + (v === "1" ? "#7ee081" : v === "0" ? "#ff8a8a" : "#cfd5ff") + '">' + v + "</span>"; }).join("");
-        return '<div style="display:flex;align-items:center;gap:2px;padding:3px 0"><span style="display:flex;gap:2px;flex:1;min-width:0;overflow:hidden">' + cells + '</span>' +
-          '<b style="min-width:42px;text-align:center;background:#262b5a;border-radius:6px;padding:2px 4px;margin:0 6px">' + fmt(h[color]) + '</b><span style="max-width:40%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.85">' + String(nm).replace(/[<>&]/g, "") + "</span></div>";
-      }
-      el.innerHTML = '<div style="font-size:11px;opacity:.6;margin-bottom:2px">🤝 O‘zaro natija · ' + h.n + ' o‘yin</div>' + row(topColor) + '<div style="height:1px;background:#262b5a"></div>' + row(bottomColor) + h2hBtn();
+      var sc = function (x) { return String(Math.round((+x || 0) * 2) / 2); };
+      var nm = function (c) { return String(st[c] || (c === "white" ? "Oq" : "Qora")).replace(/[<>&"]/g, ""); };
+      var me = bottomColor, op = topColor;
+      el.innerHTML = '<span class="t">O‘zaro hisob</span><span class="s"><span>' + (st.color === me ? "Siz" : nm(me)) + '</span><b>' + sc(h[me]) + ' : ' + sc(h[op]) + '</b><span>' + nm(op) + '</span></span>' + h2hBtn();
     }
     function render() {
       var fl = flipped();
