@@ -285,8 +285,11 @@
   function ldJs(src, cb) { var sc = document.createElement('script'); sc.src = src; sc.onload = cb; document.head.appendChild(sc); }
   var mb = document.createElement('button');
   mb.id = 'nvMore'; mb.textContent = '👥'; mb.setAttribute('aria-label', 'Do‘st bilan o‘ynash'); document.body.appendChild(mb);
+  // tugmalar ortidagi to‘q tasma: ro‘yxat tugmalar orasidan ko‘rinmasin (faqat «O‘ynash» ko‘rinib turganda)
+  var dk = document.createElement('div'); dk.id = 'nvDock'; document.body.appendChild(dk);
   var cssQ = document.createElement('style');
-  cssQ.textContent = '#nvPlayBtn{right:160px!important}#nvTcChip{width:84px!important;right:16px!important;font-size:14px!important;padding:0!important}#nvMore{position:fixed;right:108px;width:44px;bottom:calc(68px + env(safe-area-inset-bottom));height:54px;border:0;border-radius:14px;background:#1f2147;color:#fff;font:800 22px system-ui,sans-serif;box-shadow:0 5px 0 #0e0f2a;display:flex;align-items:center;justify-content:center}';
+  cssQ.textContent = '#nvDock{position:fixed;left:0;right:0;bottom:0;height:calc(136px + env(safe-area-inset-bottom));z-index:99996;background:linear-gradient(180deg,transparent 0,var(--spNav,#10112a) 16px);display:none}#nvPlayBtn[style*="display: block"]~#nvDock{display:block}' +
+    '#nvPlayBtn{right:160px!important}#nvTcChip{width:84px!important;right:16px!important;font-size:14px!important;padding:0!important}#nvMore{position:fixed;right:108px;width:44px;bottom:calc(68px + env(safe-area-inset-bottom));height:54px;border:0;border-radius:14px;background:#1f2147;color:#fff;font:800 22px system-ui,sans-serif;box-shadow:0 5px 0 #0e0f2a;display:flex;align-items:center;justify-content:center}';
   document.head.appendChild(cssQ);
   mb.onclick = function () { friendSheet(); };
   function pbDraw() {
