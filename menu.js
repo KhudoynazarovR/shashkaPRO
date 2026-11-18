@@ -593,20 +593,100 @@
     return '<div style="display:flex;justify-content:space-between;align-items:center;font-size:20px;font-weight:700;margin-bottom:12px"><span>' + t + '</span><span>' + (extra || '') + '<button id="pzBack" style="' + BG + '">⬅️</button></span></div>';
   }
   function boardHtml(b, o) {
-    o = o || {};
-    var h = '<div id="pzB" style="width:min(94vw,460px);aspect-ratio:1;margin:0 auto;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border:4px solid #8a4a1c;border-radius:6px;overflow:hidden">', r, c;
+    o = o || {}; pzSkinCss();
+    var F = 'abcdefgh', h = '<div id="pzB" class="pzBd" style="width:min(94vw,460px);aspect-ratio:1;margin:0 auto;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border-radius:8px;overflow:hidden">', r, c;
     for (r = 0; r < 8; r++) for (c = 0; c < 8; c++) {
-      var dark = (r + c) % 2 === 1, p = b[r][c], sh = '', dot = '';
-      if (o.sel && o.sel[0] === r && o.sel[1] === c) sh = 'box-shadow:inset 0 0 0 3px #f5d92b;';
-      if ((o.hl || []).some(function (x) { return x[0] === r && x[1] === c; })) dot = '<i style="position:absolute;width:30%;height:30%;border-radius:50%;background:#34f5c5"></i>';
-      h += '<div data-r="' + r + '" data-c="' + c + '" style="position:relative;background:' + (dark ? '#7b2f13' : '#f3bb86') + ';' + sh + 'display:flex;align-items:center;justify-content:center">' + dot;
-      if (p) {
-        var w = p === 1 || p === 3;
-        h += '<div style="width:80%;height:80%;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;color:#f5b72b;border:2px solid ' + (w ? '#9a9a9a' : '#000') + ';background:' + (w ? 'radial-gradient(circle at 35% 28%,#fff,#bbb)' : 'radial-gradient(circle at 35% 28%,#888,#111)') + '">' + (p > 2 ? '♛' : '') + '</div>';
-      }
+      var dark = (r + c) % 2 === 1, p = b[r][c], sel = !!(o.sel && o.sel[0] === r && o.sel[1] === c);
+      var dot = (o.hl || []).some(function (x) { return x[0] === r && x[1] === c; }) ? '<i class="pzDot"></i>' : '';
+      h += '<div data-r="' + r + '" data-c="' + c + '" class="pzSq ' + (dark ? 'd' : 'l') + (sel ? ' sel' : '') + '">' + dot +
+        (c === 0 ? '<span class="pzC rk">' + (8 - r) + '</span>' : '') + (r === 7 ? '<span class="pzC fl">' + F[c] + '</span>' : '');
+      if (p) h += '<div class="pzPc ' + (p === 1 || p === 3 ? 'w' : 'b') + '">' + (p > 2 ? '<span class="kg">♛</span>' : '') + '</div>';
       h += '</div>';
     }
     return h + '</div>';
+  }
+  // ♟ chess.com darajasidagi masala ekrani: yashil doska, 3D toshlar, yuqori panel, pastki tugmalar
+  function pzSkinCss() {
+    if (document.getElementById('pzSkinCss')) return;
+    var CARD = 'var(--spCard,rgba(255,255,255,.07))', LINE = 'var(--spLine,rgba(255,255,255,.11))', MUTE = 'var(--spMute,#c9c9d6)';
+    var st = document.createElement('style'); st.id = 'pzSkinCss';
+    st.textContent =
+      // doska
+      '.pzBd{box-shadow:0 14px 30px rgba(0,0,0,.6),0 0 0 1px rgba(0,0,0,.35)}' +
+      '.pzSq{position:relative;display:flex;align-items:center;justify-content:center}.pzSq.l{background:#ebecd0}.pzSq.d{background:#739552}' +
+      '.pzSq.sel{background-image:linear-gradient(rgba(255,255,51,.5),rgba(255,255,51,.5))}' +
+      '.pzDot{position:absolute;width:30%;height:30%;border-radius:50%;background:rgba(0,0,0,.2);z-index:3;pointer-events:none}' +
+      '.pzC{position:absolute;font:800 11px/1 system-ui,sans-serif;pointer-events:none;z-index:1}.pzC.rk{top:3px;left:4px}.pzC.fl{bottom:3px;right:4px}.pzSq.d .pzC{color:#ebecd0}.pzSq.l .pzC{color:#739552}' +
+      // 3D toshlar
+      '.pzPc{position:relative;width:82%;height:82%;border-radius:50%;z-index:2}' +
+      '.pzPc.w{background:radial-gradient(circle at 50% 32%,#fff 0,#f4efe4 45%,#d6cdb9 100%);box-shadow:inset 0 -4px 0 rgba(0,0,0,.16),inset 0 2px 0 rgba(255,255,255,.9),0 3px 0 #a99f8b,0 6px 8px rgba(0,0,0,.45)}' +
+      '.pzPc.b{background:radial-gradient(circle at 50% 32%,#666 0,#2b2b2b 50%,#0e0e0e 100%);box-shadow:inset 0 -4px 0 rgba(0,0,0,.5),inset 0 2px 0 rgba(255,255,255,.16),0 3px 0 #000,0 6px 8px rgba(0,0,0,.55)}' +
+      '.pzPc::before{content:"";position:absolute;inset:19%;border-radius:50%;box-shadow:inset 0 0 0 2px rgba(0,0,0,.10),0 1px 0 rgba(255,255,255,.55)}.pzPc.b::before{box-shadow:inset 0 0 0 2px rgba(255,255,255,.10),0 1px 0 rgba(0,0,0,.6)}' +
+      '.pzPc .kg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:clamp(16px,5vw,24px);color:#f5b72b;text-shadow:0 1px 0 #7a5200,0 0 6px rgba(245,183,43,.6)}' +
+      // ekran
+      '#spPz.pzSk{padding:12px 10px 18px!important}' +
+      '#spPz .pzHdr{display:flex;align-items:center;gap:10px;margin:2px 2px 10px;text-align:left}' +
+      '#spPz .pzHdr #pzBack,#spPz .pzHdr .pzMu{width:44px;height:44px;flex:none;margin:0!important;padding:0!important;border-radius:14px!important;background:' + CARD + '!important;border:1px solid ' + LINE + '!important;color:#fff!important;font-size:21px!important;line-height:1;display:flex;align-items:center;justify-content:center}' +
+      '#spPz .pzHdr .pzMu{color:#ffe9a8!important;font-size:18px!important}' +
+      '#spPz .pzTt{flex:1;min-width:0}#spPz .pzTt b{display:block;font-size:19px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+      '#spPz .pzTt small{display:block;margin-top:2px;font-size:12.5px;font-weight:600;color:' + MUTE + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+      '#spPz .pzTt .pzPb{display:block;height:4px;margin-top:5px;max-width:180px;border-radius:2px;overflow:hidden;background:rgba(255,255,255,.12)}#spPz .pzTt .pzPb i{display:block;height:100%;border-radius:2px;background:linear-gradient(90deg,#9bd462,#5d8a2f)}' +
+      '#spPz .pzHdr #pzTm{flex:none;margin:0!important;padding:9px 12px;border-radius:12px;font-size:16px!important;font-weight:800!important;background:' + CARD + ';border:1px solid ' + LINE + ';font-variant-numeric:tabular-nums}' +
+      'body:has(#spPz .pzHdr) #pzhFab{display:none!important}' +
+      '#spPz .pzSide{display:flex;align-items:center;gap:10px;margin:0 2px 10px!important;padding:8px 12px;border-radius:14px;background:' + CARD + ';border:1px solid ' + LINE + ';text-align:left}' +
+      '#spPz .pzSide .pc{width:26px;height:26px;border-radius:50%;flex:none}' +
+      '#spPz .pzSide .pc.w{background:radial-gradient(circle at 50% 35%,#fff,#ece6d8 55%,#cfc6b3);box-shadow:inset 0 -3px 0 rgba(0,0,0,.18),0 2px 3px rgba(0,0,0,.4)}' +
+      '#spPz .pzSide .pc.b{background:radial-gradient(circle at 50% 35%,#5c5c5c,#262626 55%,#0d0d0d);box-shadow:inset 0 -3px 0 rgba(0,0,0,.45),inset 0 2px 0 rgba(255,255,255,.15),0 2px 3px rgba(0,0,0,.5)}' +
+      '#spPz .pzSide .t{flex:1;min-width:0}#spPz .pzSide .t b{display:block;font-size:16px}#spPz .pzSide .t small{display:block;margin-top:1px;font-size:12px;color:' + MUTE + '}' +
+      '#spPz .pzSide .lv{flex:none;padding:5px 10px;border-radius:99px;border:1px solid;font-size:12px;font-weight:800}' +
+      '#spPz .pzSide .lv.e{color:#bbf7d0;background:rgba(34,197,94,.16);border-color:rgba(34,197,94,.5)}#spPz .pzSide .lv.m{color:#fde68a;background:rgba(245,158,11,.16);border-color:rgba(245,158,11,.5)}#spPz .pzSide .lv.h{color:#fecaca;background:rgba(239,68,68,.16);border-color:rgba(239,68,68,.5)}' +
+      '#spPz.pzSk #pzB{width:min(100%,520px)!important}' +
+      '#spPz .pzMsg{margin:12px 2px 0!important;font-weight:700}#spPz .pzMsg:not(:empty){padding:10px 12px;border-radius:14px;background:' + CARD + ';border:1px solid ' + LINE + '}#spPz .pzMsg:empty{display:none}' +
+      '#spPz .pzTools{display:grid;grid-template-columns:repeat(auto-fit,minmax(60px,1fr));gap:6px;margin-top:12px}' +
+      '#spPz .pzTools button{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-width:0;margin:0!important;padding:10px 4px!important;border-radius:14px!important;font-size:11.5px!important;font-weight:700;color:#efe6da!important;background:' + CARD + '!important;border:1px solid ' + LINE + '!important}' +
+      '#spPz .pzTools .i{font-size:20px;line-height:1}' +
+      '#spPz .pzMain{margin:10px 0 0}#spPz .pzMain .pzWrap{display:block;margin:0}#spPz .pzMain .pzO{display:none}' +
+      '#spPz .pzMain #pzNext{display:block;width:100%;margin:0!important;padding:16px!important;border-radius:14px!important;font-size:18px!important;font-weight:800!important;color:#fff!important;background:#81b64c!important;box-shadow:0 5px 0 #45753c!important;animation:none!important}' +
+      '#spPz .pzAdm{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px}#spPz .pzAdm button{margin:0!important;padding:7px 10px!important;font-size:12px!important;border-radius:10px!important;background:rgba(0,0,0,.35)!important;color:' + MUTE + '!important}';
+    document.head.appendChild(st);
+  }
+  // masala o‘yin ko‘rinishini yangi tartibga keltiradi (elementlar ko‘chiriladi — id va tugmalar o‘zgarmaydi)
+  function pzSkin(ov) {
+    var bd = ov.querySelector('#pzB'), kids = [].slice.call(ov.children); if (!bd || kids.length < 3) return;
+    pzSkinCss(); ov.classList.add('pzSk');
+    var hdr = kids[0], info = kids[1], tm = ov.querySelector('#pzTm'), back = ov.querySelector('#pzBack');
+    var tsp = hdr.querySelector('span'), title = tsp ? tsp.textContent.replace(/^🧩\s*/, '') : '';
+    var prog = kids.filter(function (k) { return /^\s*\d+\s*\/\s*\d+\s*$/.test(k.textContent) || /^📗 Kunlik masala \d+ \/ \d+/.test(k.textContent.trim()); })[0];
+    var pm = prog && /(\d+)\s*\/\s*(\d+)/.exec(prog.textContent), daily = prog && /Kunlik masala/.test(prog.textContent);
+    var top = document.createElement('div'); top.className = 'pzHdr';
+    if (back) { back.textContent = '←'; top.appendChild(back); }
+    var tt = document.createElement('div'); tt.className = 'pzTt';
+    tt.innerHTML = '<b>' + esc(title) + '</b><small>' + (pm ? esc(daily ? prog.textContent.replace(/^📗\s*/, '').trim() : 'Masala ' + pm[1] + ' / ' + pm[2]) : '') + '</small>' +
+      (pm ? '<span class="pzPb"><i style="width:' + Math.max(2, Math.round(pm[1] * 100 / pm[2])) + '%"></i></span>' : '');
+    top.appendChild(tt);
+    // 🎵 musiqa tugmasi tepada (pastdagi suzuvchi tugma shu ekranda yashiriladi va shu tugma orqali boshqariladi)
+    var fab = document.getElementById('pzhFab'), mu = document.createElement('button'); mu.className = 'pzMu'; mu.setAttribute('aria-label', 'Musiqa');
+    mu.textContent = (fab && fab.textContent) || '🎵';
+    mu.onclick = function () { var f = document.getElementById('pzhFab'); if (f) { f.click(); mu.textContent = f.textContent; } };
+    top.appendChild(mu); setTimeout(function () { var f = document.getElementById('pzhFab'); if (f && mu.isConnected) mu.textContent = f.textContent || '🎵'; }, 900);
+    if (tm) top.appendChild(tm);
+    ov.insertBefore(top, ov.firstChild); if (hdr.parentNode) hdr.remove();
+    var it = info.textContent, parts = it.split('·').map(function (x) { return x.trim(); }), white = /Oq yuradi/.test(it);
+    var lvl = (parts[1] || '').replace(/^[^A-Za-zА-Яа-яЁёʻ‘’'O]+/, '').trim(), more = parts.slice(2).join(' · ');
+    var lc = /Oson|Sodda|Yengil/i.test(lvl) ? 'e' : /Qiyin|Murakkab/i.test(lvl) ? 'h' : 'm';
+    info.className = 'pzSide'; info.removeAttribute('style');
+    info.innerHTML = '<span class="pc ' + (white ? 'w' : 'b') + '"></span><span class="t"><b>' + (white ? 'Oq yuradi' : 'Qora yuradi') + '</b><small>' + (more ? esc(more) : 'Eng yaxshi yurishni toping') + '</small></span>' + (lvl ? '<span class="lv ' + lc + '">' + esc(lvl) + '</span>' : '');
+    var msgEl = kids.filter(function (k) { return /min-height:28px/.test(k.getAttribute('style') || ''); })[0]; if (msgEl) msgEl.className = 'pzMsg';
+    if (prog) prog.remove();
+    var tools = document.createElement('div'); tools.className = 'pzTools';
+    [['pzH', '💡', 'Ko‘rsatma'], ['pzR', '🔄', 'Qayta'], ['pzPrev', '⬅️', 'Oldingi'], ['pzS', '📤', 'Yuborish'], ['pzXR', '⚠️', 'Xato bor']].forEach(function (x) {
+      var bt = ov.querySelector('#' + x[0]); if (!bt) return; bt.innerHTML = '<span class="i">' + x[1] + '</span><span>' + x[2] + '</span>'; tools.appendChild(bt);
+    });
+    var main = document.createElement('div'); main.className = 'pzMain';
+    var nx = ov.querySelector('#pzNext'); if (nx) { var wrap = nx.closest('.pzWrap') || nx, wp = wrap.parentNode; nx.textContent = 'Keyingi masala →'; main.appendChild(wrap); if (wp && wp !== ov && !wp.children.length) wp.remove(); }
+    var adm = document.createElement('div'); adm.className = 'pzAdm';
+    ['pzE', 'pzN', 'pzD', 'pzQz', 'pzRl'].forEach(function (id) { var bt = ov.querySelector('#' + id); if (bt) adm.appendChild(bt); });
+    ov.appendChild(tools); if (main.children.length) ov.appendChild(main); if (adm.children.length) ov.appendChild(adm);
   }
   function bindBoard(fn) {
     var e = ov.querySelector('#pzB'); if (!e) return;
@@ -1470,7 +1550,7 @@
       if (_i > 0) h += '<button id="pzPrev" style="' + BG + '">⬅️ Oldingi</button>';
       h += '<button id="pzR" style="' + BG + '">🔄 Qayta</button><button id="pzH" style="' + BS + '">💡 Ko‘rsatma</button><button id="pzXR" style="' + BG + '">Xato bor</button>';
       if (S.link) h += '<button id="pzS" style="' + BS + '">📤 Yuborish</button>'; if (S.admin && !p.et) h += '<button id="pzE" style="' + BS + '">🛠 Tahrirlash</button>'; if (S.admin && !p.et) h += '<button id="pzN" style="' + BG + '">✏️ Nomi</button>'; if (S.admin && !p.et) h += '<button id="pzD" style="' + BG + '">🗑 O‘chirish</button>'; if (S.admin && !p.et) h += '<button id="pzQz" style="' + BG + (qzIn(p.id) ? ';background:#2b8a3e' : '') + '">' + (qzIn(p.id) ? 'Viktorinada' : 'Viktorinaga') + '</button>'; if (S.admin) h += '<button id="pzRl" style="' + BG + '">🎬 Reel' + ((S.reels || []).indexOf(p.id) >= 0 ? ' ✓' : '') + '</button>';
-      ov.innerHTML = h;
+      ov.innerHTML = h; try { pzSkin(ov); } catch (e) {}
       on('#pzBack', function () { dayIds = null; if (window.__advRet) { var _ar = window.__advRet; window.__advRet = null; return advOpen({ k: _ar.k }); } if (window.__pzChkBack) { window.__pzChkBack = 0; return pzChkView(); } if (curBook && curBook.arr.some(function (x) { return x.id === p.id; })) return bookView(curBook); list(); });
       on('#pzDayEnd', function () { dayIds = null; close(); if (window.dqOpen) window.dqOpen(); });
       on('#pzXR', function () { pzReport(p); });

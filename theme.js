@@ -33,7 +33,7 @@
     return ':root{--spBg1:' + t.bg1 + ';--spBg2:' + t.bg2 + ';--spNav:' + t.nav + ';--spAcc:' + t.acc +
       (t.v ? ';--spCard:' + v.card + ';--spLine:' + v.cline + ';--spMute:' + v.mute + ';--spMute2:' + v.mute2 + ';--spOn:' + v.on + ';--spOnLine:' + v.onl + ';--spPill:' + v.pill + ';--spFade:' + v.fade : '') + '}' +
       (t.v ? 'html body #nvTcChip,html body #nvMore{background:' + v.btn + '!important;box-shadow:0 5px 0 ' + v.btnSh + '!important}' : '') +
-      (t.pat === 'wood' ? 'html body #mnPanel#mnPanel,html body #rkPanel#rkPanel{background:' + bgImg(t) + '!important;background-color:' + t.bg2 + '!important}' : '') +
+      (t.pat === 'wood' ? 'html body #mnPanel#mnPanel,html body #rkPanel#rkPanel,html body #spPz#spPz{background:' + bgImg(t) + '!important;background-color:' + t.bg2 + '!important}' : '') +
       'html body,html body *:not(pre):not(code):not(kbd):not(samp){font-family:' + FONT + '!important}' +
       'html body,html body #nvPg#nvPg,html body #nvPlay#nvPlay,html body #lbPanel#lbPanel,html body #taP#taP,html body #tvP#tvP{background:' + bgImg(t) + '!important;background-color:' + t.bg2 + '!important}' +
       '#nvBar{background:' + t.nav + '!important;border-top:1px solid ' + (t.line || 'rgba(255,255,255,.08)') + '!important}' +
