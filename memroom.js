@@ -272,6 +272,7 @@ function hostLink(r) {
 // do'st qo'shildi, yuboruvchi esa ilovada emas: botdan xabar + 3 daqiqa kutish, kirmasa o'rin yana bo'shaydi
 function pingHost(r, name) {
   const now = Date.now(); if (r.pinged && now - r.pinged < 60e3) return; r.pinged = now;
+  try { global.spLobby && global.spLobby.pushUid(r.p[0].uid, { type: 'gmJoinIn', g: 'mm', code: r.code, name: String(name || ''), gn: '🧠 Xotira' }); } catch (e) {}   // 📲 ilova ochiq bo'lsa — o'yin o'zi ochiladi
   try { require('./gcard.js').tg('sendMessage', { chat_id: r.p[0].uid, parse_mode: 'HTML', text: '🧠 <b>' + esc(name) + '</b> Xotira o‘yiningizga qo‘shildi!\nSiz kirishingiz bilan o‘yin boshlanadi ⏳ (3 daqiqa kutadi)', reply_markup: { inline_keyboard: [[{ text: '▶ O‘yinga kirish', url: hostLink(r) }]] } }); } catch (e) {}
   clearTimeout(r.stmr);
   r.stmr = setTimeout(() => {

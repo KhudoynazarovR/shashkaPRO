@@ -187,6 +187,7 @@ function card(r) {
 }
 function pingHost(r, name) {
   if (r.pinged) return; r.pinged = Date.now();
+  try { global.spLobby && global.spLobby.pushUid(r.p[0].uid, { type: 'gmJoinIn', g: 'rp', code: r.code, name: String(name || ''), gn: '✊✌️✋ Tosh-qaychi-qog‘oz' }); } catch (e) {}   // 📲 ilova ochiq bo'lsa — o'yin o'zi ochiladi
   TG('sendMessage', { chat_id: r.p[0].uid, parse_mode: 'HTML', text: '✊✌️✋ <b>' + esc(name) + '</b> Tosh-qaychi-qog‘oz o‘yiningizga qo‘shildi!\nKiring va «▶ Boshlash» ni bosing.', reply_markup: { inline_keyboard: [[{ text: '▶ O‘yinga kirish', url: r.link || ('https://t.me/DraughtsPRObot/play?startapp=rp_' + r.code) }]] } });
 }
 module.exports = { handle, onClose, rooms, remember, BEATS };

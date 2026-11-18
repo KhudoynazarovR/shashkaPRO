@@ -32,6 +32,7 @@ const { createLobby } = require("./lobby");
 let lobbyApi = null;
 const roomsApi = createRooms({ send, clients, onFinish: room => lobbyApi && lobbyApi.onRoomFinished(room) });
 lobbyApi = createLobby({ send, clients, roomsApi });
+global.spLobby = lobbyApi;   // xona modullari (ugolki, duo, xotira, tosh-qaychi) ilova ichida xabar yuborishi uchun
 try { require('./gcard.js').setRooms(roomsApi.rooms); require('./gcard.js').setApi(roomsApi); } catch (e) { console.log('[gcard]', e.message); }
 
 function broadcast(data, exceptId = null) {

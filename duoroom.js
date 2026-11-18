@@ -198,6 +198,7 @@ function card(r) {   // guruhdagi xabarni yangilash (imid — «tanlandi» xabar
 // do'st qo'shildi, yuboruvchi esa ilovada emas: botdan xabar + 3 daqiqa kutish
 function pingHost(r) {
   const now = Date.now(); if (r.pinged && now - r.pinged < 60e3) return; r.pinged = now;
+  try { global.spLobby && global.spLobby.pushUid(r.p[0].uid, { type: 'gmJoinIn', g: r.g, code: r.code, name: String(r.p[1].name || ''), gn: GN[r.g] || r.g }); } catch (e) {}   // 📲 ilova ochiq bo'lsa — o'yin o'zi ochiladi
   TG('sendMessage', { chat_id: r.p[0].uid, parse_mode: 'HTML', text: (GN[r.g] || r.g) + ': <b>' + esc(r.p[1].name) + '</b> o‘yiningizga qo‘shildi!\nSiz kirishingiz bilan boshlanadi ⏳ (3 daqiqa kutadi)', reply_markup: { inline_keyboard: [[{ text: '▶ O‘yinga kirish', url: r.link || ('https://t.me/DraughtsPRObot/play?startapp=' + 'du_' + r.g + '_' + r.code) }]] } });
   clearTimeout(r.stmr);
   r.stmr = setTimeout(() => {

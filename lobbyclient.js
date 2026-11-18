@@ -93,7 +93,7 @@
       var p = String(id).split(':'), gk = p[1], code = p[2]; if (!code) return;
       if (gk === 'mm') { var j = function () { window.spMemori({ join: code }); }; if (window.spMemori) j(); else { var sm = document.createElement('script'); sm.src = '/memori.js?v=9'; sm.onload = j; document.head.appendChild(sm); } return; }
       var old = document.getElementById('mxOv'); if (old) old.remove();
-      var url = gk === 'ug' ? '/ugolki.html?room=' + code : '/duo.html?g=' + encodeURIComponent(gk) + '&room=' + code;
+      var url = gk === 'ug' ? '/ugolki.html?room=' + code : gk === 'rp' ? '/rps.html?room=' + code : '/duo.html?g=' + encodeURIComponent(gk) + '&room=' + code;
       var o = document.createElement('div'); o.id = 'mxOv'; o.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#100c33';
       o.innerHTML = '<iframe src="' + url + '" style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe><button style="position:absolute;top:calc(10px + env(safe-area-inset-top,0px));right:10px;z-index:2;width:40px;height:40px;border:0;border-radius:50%;background:#000a;color:#fff;font-size:20px">✕</button>';
       o.querySelector('button').onclick = function () { o.remove(); };
@@ -281,6 +281,11 @@
            ["Rad etish", function () { sendMsg({ type: "mmDecline", code: _mc, init: (tg && tg.initData) || "" }); }, "no"]], 30000);
       } else if (m.type === "lbTAnnList") { window.dispatchEvent(new CustomEvent("lbTAnnList", { detail: m }));
       } else if (m.type === "lbRec") { if (window.tfRec) window.tfRec(m.list || []);
+      } else if (m.type === "gmJoinIn") {   // 👥 guruh kartasi: do'st o'yiningizga qo'shildi — ilova ochiq bo'lsa o'yin o'zi ochiladi
+        var _gid = "mx:" + m.g + ":" + m.code, _gb = !!(document.getElementById("mxOv") || document.getElementById("ugOv") || $("rcFrameOv") || inRoom), _gl = 3, _gt = 0;
+        var _go = function () { clearInterval(_gt); if (window.mxOpen) window.mxOpen(_gid); };
+        toast("<b>" + esc(m.name) + "</b> " + esc(m.gn || "") + " o‘yiningizga qo‘shildi!" + (_gb ? "" : "<br><span id=\"gmCd\">3</span> soniyadan so‘ng o‘yinga o‘tasiz…"), [["▶ O‘yinga kirish", _go]], _gb ? 30000 : 4000);
+        if (!_gb) _gt = setInterval(function () { _gl--; var e = $("gmCd"); if (e) e.textContent = _gl; if (_gl <= 0) _go(); }, 1000);
       } else if (m.type === "lbToast") {
         toast(esc(m.text), null, 7000);
       } else if (m.type === "error" && (panelOpen || Date.now() - (window.__siAt || 0) < 5000)) {

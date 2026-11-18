@@ -2162,7 +2162,8 @@ function createLobby({ send, clients, roomsApi }) {
     clients.set('ai_' + b.uid, { id: 'ai_' + b.uid, name: b.name, elo: 0, ws: botWs, isBot: true, hidden: true, lb: { uid: b.uid, name: b.name, tg: false, inRoom: false } });
   }
 
-  return { handle, onClose, onRoomFinished, tournaments, arenaTick };
+  const pushUid = (uid, msg) => { const cs = connsOf(String(uid)); cs.forEach(c => send(c.ws, msg)); return cs.length; };   // 📲 ilova ichidagi xabar (masalan: guruh kartasidagi o'yinga do'st qo'shildi)
+  return { handle, onClose, onRoomFinished, tournaments, arenaTick, pushUid };
 }
 
 module.exports = { createLobby };
