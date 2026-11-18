@@ -48,7 +48,37 @@ svg.path{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-even
 .mod .cd{width:100%;max-width:360px;text-align:center}.mod h2{font-size:24px;margin:6px 0}
 .code{font-size:30px;font-weight:900;letter-spacing:6px;color:#ffd257;margin:6px 0}
 .muted{opacity:.7;font-size:13px}
-</style></head><body>
+/* shashkadagidek: doska ramkasiz, halqali donalar */
+.bd{border:0;border-radius:0}
+.p{width:86%;height:86%;position:relative;box-sizing:border-box}
+.p.w{background:radial-gradient(circle at 35% 28%,#fff 0,#f0f0f0 35%,#bdbdbd 100%);border:2px solid #9a9a9a;box-shadow:0 3px 4px #0007,inset 0 -3px 4px #0003,inset 0 2px 3px #fff}
+.p.b{background:radial-gradient(circle at 35% 28%,#8a8a8a 0,#3a3a3a 35%,#0b0b0b 100%);border:2px solid #000;box-shadow:0 3px 4px #000a,inset 0 -3px 4px #0008,inset 0 2px 3px #777}
+.p::before{content:'';position:absolute;inset:14%;border-radius:50%;border:3px solid #0004;box-shadow:inset 0 0 0 3px #fff3,0 0 0 3px #0002}
+.p.w::before{border-color:#8884;box-shadow:inset 0 0 0 3px #fff9,0 0 0 3px #0001}
+.p.hm{box-shadow:0 0 0 3px #e11d48,0 3px 4px #0007}
+</style><script>
+// 🎨 shashkada tanlangan dona (Tosh do'koni) Ugolkida ham: ilovadagi amaldagi dona uslubidan olinadi (ilova kech yuklasa — 15 soniya kutiladi)
+(function () {
+  var tries = 0;
+  function cur() {
+    var css = '';
+    try { if (window.parent !== window) { var pe = window.parent.document.getElementById('spShopCss'); css = pe ? pe.textContent : ''; } else css = localStorage.getItem('spShopCss') || ''; } catch (e) { try { css = localStorage.getItem('spShopCss') || ''; } catch (e2) {} }
+    var m = /\/api\/shop\/img\?id=([^&"]+)&k=w"/.exec(css); return m ? decodeURIComponent(m[1]) : '';
+  }
+  function apply() {
+    var id = cur(), old = document.getElementById('ugPcEq');
+    if (!id) { if (++tries < 15) setTimeout(apply, 1000); return; }
+    if (old && old.getAttribute('data-id') === id) return;
+    if (old) old.remove();
+    var u = function (k) { return 'url("/api/shop/img?id=' + encodeURIComponent(id) + '&k=' + k + '")'; };
+    var st = document.createElement('style'); st.id = 'ugPcEq'; st.setAttribute('data-id', id);
+    st.textContent = '.p.w,.p.b,.av.w,.av.b{background-color:transparent!important;background-position:center!important;background-size:contain!important;background-repeat:no-repeat!important;border:0!important;box-shadow:none!important;filter:drop-shadow(0 3px 2px #0007)}.p::before{display:none!important}' +
+      '.p.w,.av.w{background-image:' + u('w') + '!important}.p.b,.av.b{background-image:' + u('b') + '!important}.p.hm{box-shadow:0 0 0 3px #e11d48!important}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  apply();
+})();
+</script></head><body>
 <div id="app"></div>
 <script src="/ugcore.js?v=1"></script>
 <script src="/gsnd.js?v=1"></script>
