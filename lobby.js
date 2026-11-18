@@ -1324,6 +1324,22 @@ function createLobby({ send, clients, roomsApi }) {
     if (tg) { try { require('./store').getOrCreate({ id: uid, first_name: name }); } catch (e) {} }
     for (const t of tournaments.values()) { const p = t.players.get(uid); if (p) p.name = name; }
     push();
+    pendingGame(c);
+  }
+  // 📲 guruh kartasidagi o'yinga do'st qo'shilib, sizni kutyapti — ilova ochilishi (qayta ulanishi) bilan o'yinga o'tkazamiz
+  function pendingGame(c) {
+    try {
+      if (!c.lb || c.lb.inRoom) return;
+      const uid = String(c.lb.uid), GN = Object.assign({ mm: '🧠 Xotira', rp: '✊✌️✋ Tosh-qaychi-qog‘oz' }, require('./ugroom.js').GN);
+      for (const [mod, gk] of [['./ugroom.js', () => 'ug'], ['./duoroom.js', r => r.g], ['./memroom.js', () => 'mm'], ['./rpsroom.js', () => 'rp']]) {
+        for (const r of require(mod).rooms.values()) {
+          if (!r.inline || r.status !== 'wait' || !r.p || r.p.length < 2 || !r.p[0] || String(r.p[0].uid) !== uid || r.p[0].ws) continue;
+          const g = gk(r); if (!g) continue;
+          send(c.ws, { type: 'gmJoinIn', g, code: r.code, name: String(r.p[1].name || ''), gn: GN[g] || '' });
+          return;
+        }
+      }
+    } catch (e) { console.log('[pendingGame]', e.message); }
   }
 
   function handle(c, m) {
@@ -2162,7 +2178,7 @@ function createLobby({ send, clients, roomsApi }) {
     clients.set('ai_' + b.uid, { id: 'ai_' + b.uid, name: b.name, elo: 0, ws: botWs, isBot: true, hidden: true, lb: { uid: b.uid, name: b.name, tg: false, inRoom: false } });
   }
 
-  const pushUid = (uid, msg) => { const cs = connsOf(String(uid)); cs.forEach(c => send(c.ws, msg)); return cs.length; };   // 📲 ilova ichidagi xabar (masalan: guruh kartasidagi o'yinga do'st qo'shildi)
+  const pushUid = (uid, msg) => { const cs = connsOf(String(uid)).filter(c => !c.lb.inRoom); cs.forEach(c => send(c.ws, msg)); return cs.length; };   // 📲 ilova ichidagi xabar (masalan: guruh kartasidagi o'yinga do'st qo'shildi)
   return { handle, onClose, onRoomFinished, tournaments, arenaTick, pushUid };
 }
 
