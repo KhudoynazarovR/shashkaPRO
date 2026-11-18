@@ -2847,6 +2847,8 @@ document.head.appendChild(_as); }
   function boot() {
     if (!document.body) return setTimeout(boot, 50);
     var old = document.getElementById("spBgBtn"); if (old) old.remove();
+    // bir marta: avval tanlangan fonlar o‘chiriladi — hammada klassik (mavzu) fon; keyin xohlagan yana tanlay oladi
+    try { if (!localStorage.getItem("spBgMig1")) { localStorage.removeItem("spBg"); localStorage.setItem("spBgMig1", "1"); } } catch (e) {}
     apply();
     setInterval(function () { if (resolve()) { if (ls("spBg") === "auto") apply(); else sweep(document.body.classList.contains("nvT")); } else sweep(false); }, 1500);
   }

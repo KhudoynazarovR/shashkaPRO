@@ -30,17 +30,17 @@
     '#lbT.tlOn:not(.tlClub) #lbClubs,#tvClub3{display:none!important}#lbT.tlClub #tlList{display:none}' +
     'body.tlOnB #tvClub3{display:none!important}' +
     '#tlHead{display:flex;align-items:center;gap:8px;margin:4px 0 6px}#tlHead b{flex:1;font-size:21px;font-weight:800}' +
-    '#tlHead button{border:0;border-radius:12px;height:40px;padding:0 12px;font-weight:700;font-size:14px;color:#fff;background:#2d2775}#tlHead button.add{background:#3fa34d}' +
-    '#tlTabs{display:flex;border-bottom:1px solid rgba(255,255,255,.12);margin-bottom:4px}#tlTabs button{flex:1;border:0;background:none;color:#a9a4d8;font-weight:700;font-size:15px;padding:11px 0;border-bottom:3px solid transparent}' +
+    '#tlHead button{border:0;border-radius:12px;height:40px;padding:0 12px;font-weight:700;font-size:14px;color:#fff;background:rgba(255,255,255,.09)}#tlHead button.add{background:#81b64c}' +
+    '#tlTabs{display:flex;border-bottom:1px solid rgba(255,255,255,.12);margin-bottom:4px}#tlTabs button{flex:1;border:0;background:none;color:var(--spMute,#b9ab98);font-weight:700;font-size:15px;padding:11px 0;border-bottom:3px solid transparent}' +
     '#tlTabs button.on{color:#fff;border-bottom-color:#6cc04a}' +
-    '#tlList h5{margin:14px 4px 4px;font-size:12px;letter-spacing:.8px;color:#8f8bc4;font-weight:700}' +
+    '#tlList h5{margin:14px 4px 4px;font-size:12px;letter-spacing:.8px;color:#9c8f80;font-weight:700}' +
     '#tlList .r{display:flex;align-items:center;gap:12px;padding:11px 8px;border-bottom:1px solid rgba(255,255,255,.07);cursor:pointer;-webkit-tap-highlight-color:transparent}' +
     '#tlList .r:active{background:rgba(255,255,255,.05)}#tlList .r.me{background:rgba(108,192,74,.09);box-shadow:inset 3px 0 0 #6cc04a}' +
     '#tlList .i{font-size:25px;width:32px;text-align:center;flex:none}#tlList .t{flex:1;min-width:0}' +
     '#tlList .t b{display:block;font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
-    '#tlList .t small{display:block;color:#a9a4d8;font-size:13px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#tlList .t small .p{color:#f5b72b}#tlList .t small .y{color:#86efac}' +
-    '#tlList .w{text-align:right;font-size:12.5px;color:#cfcaff;white-space:nowrap;flex:none}#tlList .w b{display:block;color:#fff;font-size:15px}#tlList .w b.l{color:#6cc04a}' +
-    '#tlList .e{padding:28px 10px;text-align:center;color:#a9a4d8}#tlList .e button{margin-top:12px;border:0;border-radius:12px;padding:11px 18px;background:#3fa34d;color:#fff;font-weight:700;font-size:15px}';
+    '#tlList .t small{display:block;color:var(--spMute,#b9ab98);font-size:13px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#tlList .t small .p{color:#f5b72b}#tlList .t small .y{color:#86efac}' +
+    '#tlList .w{text-align:right;font-size:12.5px;color:#d6ccbd;white-space:nowrap;flex:none}#tlList .w b{display:block;color:#fff;font-size:15px}#tlList .w b.l{color:#6cc04a}' +
+    '#tlList .e{padding:28px 10px;text-align:center;color:var(--spMute,#b9ab98)}#tlList .e button{margin-top:12px;border:0;border-radius:12px;padding:11px 18px;background:#81b64c;color:#fff;font-weight:700;font-size:15px}';
   var stl = document.createElement('style'); stl.textContent = css; document.head.appendChild(stl);
 
   var tab = 'live', sig = '';
@@ -102,12 +102,12 @@
   var LBL = { lbTk: 'Turnir turi', lbTtb: 'Boshlang‘ich vaqt', lbTti: 'Har yurishga qo‘shimcha', lbTdur: 'Davomiyligi', lbTflag: 'Bayroq', lbTr: 'Turlar soni', lbTiv: 'Turlar orasida tanaffus', lbTsin: 'Boshlanishi', lbTp: 'Pozitsiya', lbTmg: 'Ishtirok sharti', lbTrated: 'Reyting', lbTpl: 'Mukofot oladigan o‘rinlar' };
   var SHORT = { lbTmg: function (v) { return +v ? 'Kamida ' + v + ' o‘yin' : '✅ Shartsiz'; }, lbTk: function (v, t) { return v === 'swiss' ? '♟ Shveytsariya' : t; } };
   var fcss = document.createElement('style'); fcss.textContent =
-    '#lbTform.tlF{background:linear-gradient(180deg,#26207a,#1a155a)!important;border:1px solid #3a33a0!important;border-radius:18px!important;padding:14px!important;box-shadow:0 8px 24px rgba(0,0,0,.35)!important}' +
+    '#lbTform.tlF{background:linear-gradient(180deg,#2a1f17,#1e1610)!important;border:1px solid rgba(255,255,255,.14)!important;border-radius:18px!important;padding:14px!important;box-shadow:0 8px 24px rgba(0,0,0,.35)!important}' +
     '#lbTform.tlF select.tlHid{display:none!important}#lbTform.tlF .row{flex-wrap:wrap;gap:8px}#lbTform.tlF .row>.muted.tlHid{display:none!important}' +
-    '#lbTform.tlF #lbTn{height:46px;font-size:16px;border-radius:12px}#lbTform.tlF #lbTCreate{height:46px;border-radius:12px;background:#3fa34d!important;color:#fff!important;font-weight:800}' +
-    '.tlCh{width:100%;margin:6px 0 2px}.tlCh>small{display:block;font-size:12px;letter-spacing:.5px;color:#a9a4d8;font-weight:700;text-transform:uppercase;margin-bottom:6px}' +
-    '.tlCh>div{display:flex;flex-wrap:wrap;gap:6px}.tlCh button{border:1px solid #3a33a0!important;background:#16124a!important;color:#d6d3f5!important;border-radius:10px!important;padding:9px 12px!important;font-size:14px!important;font-weight:600;min-height:0;box-shadow:none!important}' +
-    '.tlCh button.on{background:#3fa34d!important;border-color:#3fa34d!important;color:#fff!important}';
+    '#lbTform.tlF #lbTn{height:46px;font-size:16px;border-radius:12px}#lbTform.tlF #lbTCreate{height:46px;border-radius:12px;background:#81b64c!important;color:#fff!important;font-weight:800}' +
+    '.tlCh{width:100%;margin:6px 0 2px}.tlCh>small{display:block;font-size:12px;letter-spacing:.5px;color:var(--spMute,#b9ab98);font-weight:700;text-transform:uppercase;margin-bottom:6px}' +
+    '.tlCh>div{display:flex;flex-wrap:wrap;gap:6px}.tlCh button{border:1px solid rgba(255,255,255,.14)!important;background:rgba(0,0,0,.3)!important;color:#e2d9cc!important;border-radius:10px!important;padding:9px 12px!important;font-size:14px!important;font-weight:600;min-height:0;box-shadow:none!important}' +
+    '.tlCh button.on{background:#81b64c!important;border-color:#81b64c!important;color:#fff!important}';
   document.head.appendChild(fcss);
   function enhanceForm() {
     var f = g('lbTform'); if (!f) return;
