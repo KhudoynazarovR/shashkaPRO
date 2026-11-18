@@ -152,11 +152,49 @@
 
 
     // ---------- UI ----------
+    // 🎨 klassik o'yin oynasi: o'yinchi kartalari, pastki 4 tugma (Chat, Taslim, Durang, Menu), chapdan ochiladigan chat
+    var _sv = function (p) { return '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + p + '</svg>'; };
+    var RC_ICO = {
+      chat: _sv('<path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2z"/><path d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1"/>'),
+      flag: _sv('<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" fill="currentColor"/><path d="M4 22v-7"/>'),
+      hand: _sv('<path d="m11 17 2 2a1 1 0 1 0 3-3"/><path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4"/><path d="m21 3 1 11h-2"/><path d="M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3"/><path d="M3 4h8"/>'),
+      menu: _sv('<path d="M4 6h16M4 12h16M4 18h16"/>')
+    };
+    if (!document.getElementById("rcKlCss")) {
+      var _kc = document.createElement("style"); _kc.id = "rcKlCss";
+      _kc.textContent =
+        ".rcPc{display:flex!important;align-items:center;gap:10px;width:min(94vw,520px)!important;box-sizing:border-box;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:8px 10px!important;margin:6px 0;box-shadow:0 4px 14px rgba(0,0,0,.35)}" +
+        ".rcPc .av{width:44px;height:44px;border-radius:10px;flex:none;object-fit:cover;background:#5a4130;color:#fff;display:flex;align-items:center;justify-content:center;font:800 20px system-ui,sans-serif}" +
+        ".rcPc .nm{flex:1;min-width:0}.rcPc .nm b{display:block;font:700 16px system-ui,sans-serif;color:#f3ebe0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
+        ".rcPc .nm small{display:block;font:500 13px system-ui,sans-serif;color:#b9ab98;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rcPc .nm small i{font-style:normal;font-weight:700}" +
+        ".rcPc .ck{font:700 26px/1 ui-monospace,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums;min-width:92px;text-align:center;padding:7px 10px;border-radius:10px;border:2px solid rgba(255,255,255,.16);flex:none;box-sizing:border-box}" +
+        "#rcBar{position:fixed;left:0;right:0;bottom:0;z-index:9990;display:flex;justify-content:space-around;align-items:flex-start;padding:10px 6px calc(env(safe-area-inset-bottom,0px) + 8px);background:var(--rcBar,#fff);border-top:1px solid rgba(255,255,255,.08);box-shadow:0 -6px 18px rgba(0,0,0,.35)}" +
+        "#rcBar button{all:unset;flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:#d9cdbb;font:600 13px system-ui,sans-serif;-webkit-tap-highlight-color:transparent;position:relative}" +
+        "#rcBar button i{width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 3px 0 rgba(0,0,0,.35)}" +
+        "#rcBar button.off{opacity:.38}#rcBar button[hidden],#rcBar .bd[hidden]{display:none}" +
+        "#rcBar .bd{position:absolute;top:-5px;left:calc(50% + 16px);min-width:18px;height:18px;border-radius:9px;background:#e04a3a;color:#fff;font:700 11px/18px system-ui,sans-serif;text-align:center;padding:0 4px;box-sizing:border-box}" +
+        "#rcResign,#rcDrawOffer,#rcDrawCnt,#rcChatBtn,#rcMenuBtn{display:none!important}" +
+        // och fonlar (krem, qor, marmar): oq kartalar, to'q yozuv
+        ".rcL .rcPc{background:#fff;border-color:rgba(0,0,0,.08);box-shadow:0 3px 10px rgba(80,50,20,.15)}.rcL .rcPc .nm b{color:#2b2119}.rcL .rcPc .nm small{color:#8a7a68}" +
+        ".rcL #rcBar{border-top-color:rgba(0,0,0,.08);box-shadow:0 -4px 14px rgba(80,50,20,.12)}.rcL #rcBar button{color:#5a4a3a}.rcL #rcInfo{color:#4a3a2a}.rcL #rcStatus{color:#9a6a12!important}" +
+        "#rcChatBd{position:fixed;inset:0;z-index:10002;background:rgba(10,6,3,.45);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}" +
+        "#rcChat{position:fixed;top:0;bottom:0;left:0;width:min(82vw,380px);z-index:10003;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;padding:calc(env(safe-area-inset-top,0px) + 10px) 12px calc(env(safe-area-inset-bottom,0px) + 10px);background:#262421;border-right:1px solid rgba(255,255,255,.1);box-shadow:10px 0 30px rgba(0,0,0,.5);color:#f3ebe0}" +
+        "#rcChat .rcCH{display:flex;align-items:center;justify-content:space-between}#rcChat .rcCH b{display:flex;align-items:center;gap:8px;font:800 20px system-ui,sans-serif}#rcChat .rcCH b svg{width:24px;height:24px}" +
+        "#rcChat #rcCX{all:unset;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer;color:#fff}" +
+        "#rcChat #rcMsgs{flex:1;min-height:0;overflow:auto;background:rgba(0,0,0,.28);border-radius:12px;padding:8px 10px;font-size:15px;line-height:1.45}" +
+        "#rcChat #rcCIn{display:flex;gap:6px;align-items:center}" +
+        "#rcChat #rcInput{flex:1;min-width:0;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.3);color:#fff;font-size:16px;outline:none}" +
+        "#rcChat #rcSend{flex:none;padding:10px 14px;border-radius:10px;border:0;background:#81b64c;color:#fff;font-size:16px}" +
+        "#rcQuick .rcQc{flex:none;border:0;border-radius:99px;padding:7px 12px;background:rgba(255,255,255,.08);color:#e2d9cc;font:700 14px system-ui,sans-serif;box-shadow:none}" +
+        "#rcQuick .rcQc.on{background:#81b64c;color:#fff}" +
+        "#rcQuick .rcQp{border:1px solid rgba(255,255,255,.12);border-radius:99px;padding:8px 12px;background:rgba(255,255,255,.1);color:#fff;font:600 14px system-ui,sans-serif;box-shadow:none}";
+      document.head.appendChild(_kc);
+    }
     var root = document.createElement("div");
     root.style.cssText =
-      "position:fixed;inset:0;z-index:9999;background:radial-gradient(circle at 30% 10%,#3a1a7a 0,#241058 50%,#140a33 100%);color:#fff;font-family:Arial,sans-serif;" +
+      "position:fixed;inset:0;z-index:9999;background:var(--rcBg,#ece2d3);color:#fff;font-family:Arial,sans-serif;" +
       "display:flex;flex-direction:column;align-items:center;overflow:auto;" +
-      "padding:calc(env(safe-area-inset-top,0px) + 10px) 10px 14px";
+      "padding:calc(env(safe-area-inset-top,0px) + 10px) 10px calc(env(safe-area-inset-bottom,0px) + 110px)";
     root.innerHTML =
       '<div style="display:none">♟️ ShashkaPRO</div>' +
       '<div id="rcStatus" style="margin:8px 0;color:#e3b746;min-height:22px;text-align:center"></div>' +
@@ -173,15 +211,17 @@
       '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;justify-content:center">' +
       '<button id="rcDrawOffer" style="display:none">🤝 Durang</button>' +
       '<button id="rcResign" style="display:none">🏳️ Taslim</button>' +
-      '<button id="rcLink">🔗 Havola</button>' +
       '<button id="rcChatBtn">💬 Chat</button>' +
-      '<button id="rcZal">Chiqish</button>' +
+      '<button id="rcZal" style="display:none">Chiqish</button>' +   // chiqish — ☰ Menu ichida (bu tugma faqat ichki chaqiruv uchun)
       '<button id="rcClose" style="display:none">✖️ Yopish</button></div>' +
-      '<div id="rcChat" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:10000;background:#120b30;border-top:1px solid #3a2f7a;padding:8px 10px calc(env(safe-area-inset-bottom,0px) + 8px);box-sizing:border-box">' +
-      '<div id="rcMsgs" style="height:90px;overflow:auto;background:#101a24;border-radius:8px;padding:6px 8px;font-size:14px"></div>' +
-      '<div id="rcQuick"></div><div style="display:flex;gap:6px;margin-top:8px;align-items:center">' +
-      '<input id="rcInput" maxlength="200" placeholder="Xabar yozing…" style="flex:1;min-width:0;padding:8px;border-radius:8px;border:1px solid #2a3a4a;background:#0b1017;color:#fff;font-size:16px">' +
-      '<button id="rcSend" style="flex:none;padding:8px 14px;border-radius:8px;font-size:16px">➤</button></div></div>' +
+      // 💬 chat — chapdan ochiladigan yon panel: tepada xabarlar, pastda emojili so'zlar va yozish
+      '<div id="rcChatBd" style="display:none"></div>' +
+      '<div id="rcChat" style="display:none">' +
+      '<div class="rcCH"><b>' + RC_ICO.chat + 'Chat</b><button id="rcCX">✕</button></div>' +
+      '<div id="rcMsgs"></div>' +
+      '<div id="rcQuick"></div><div id="rcCIn">' +
+      '<input id="rcInput" maxlength="200" placeholder="Xabar yozing…">' +
+      '<button id="rcSend">➤</button></div></div>' +
       '<div id="rcInfo" style="margin-top:10px;font-size:13px;opacity:.7;text-align:center"></div>';
     document.body.appendChild(root);
 
@@ -202,8 +242,9 @@
     elZal.onclick = function () {
       var live = st.color !== "spectator" && !st.finished && bothIn() && st.moves.length > 0;
       if (live && !confirm("O‘yin davom etyapti, zalga chiqsangiz vaqtingiz ketadi. Chiqasizmi?")) return;
-      try { var _tm = String(roomId).match(/^T(.+?)R\d+B\d+|^A(.+?)G\d+/); if (_tm) sessionStorage.setItem("spOpenT", _tm[1] || _tm[2]); } catch (e) {} rcLeave();
+      rcExit();
     };
+    function rcExit() { try { var _tm = String(roomId).match(/^T(.+?)R\d+B\d+|^A(.+?)G\d+/); if (_tm) sessionStorage.setItem("spOpenT", _tm[1] || _tm[2]); } catch (e) {} rcLeave(); }
     var elMsgs = root.querySelector("#rcMsgs");
     var elInput = root.querySelector("#rcInput");
 
@@ -214,7 +255,7 @@
     root.querySelector("#rcClose").onclick = function () {
       if (tg && tg.close) tg.close(); else root.style.display = "none";
     };
-    root.querySelector("#rcLink").onclick = function () {
+    if (root.querySelector("#rcLink")) root.querySelector("#rcLink").onclick = function () {
       var base = window.TG_APP_LINK || "";
       var url = base
         ? base + "?startapp=" + encodeURIComponent(roomId)
@@ -258,6 +299,8 @@
       var rcm = { night: false, sound: true, flat: false, board: -1, pieces: -1, auto: false, autoPro: false, chat: true };
       try { var rcmSv = JSON.parse(localStorage.getItem(RCM_KEY) || "{}"); for (var rcmK in rcmSv) rcm[rcmK] = rcmSv[rcmK]; } catch (e) {}
       function rcmSave() { try { localStorage.setItem(RCM_KEY, JSON.stringify(rcm)); } catch (e) {} }
+      // hamma uchun asosiy doska — «Yog‘och» (tekis klassik ranglar) va odatiy donalar; o'zi boshqa doska tanlaganlarniki o'zgarmaydi
+      if (!rcm.bv) { var _sth = ""; try { _sth = (typeof S === "object" && S && S.th) || JSON.parse(localStorage.getItem("sp_s2") || "{}").th || ""; } catch (e) {} if (rcm.board === -1 && (!_sth || _sth === "edeon")) rcm.board = 0; rcm.bv = 1; rcmSave(); }
 
       // Ovozni o'chirish (audio elementlar va WebAudio)
       if (!window.__rcmSoundPatched) {
@@ -338,6 +381,73 @@
       }
       var rcmOrigBg = root.style.background;
       var rcmStyle = document.createElement("style"); rcmStyle.id = "rcmStyle"; document.head.appendChild(rcmStyle);
+      // 🖼 o'yin oynasi foni: kulrang (asosiy), krem, jigarrang — bepul; qolganlari tangaga; «O‘z rasmim» — rasm faqat shu telefonda saqlanadi
+      var RC_BGS = [
+        { k: "c", n: "Krem", p: 0, bg: "linear-gradient(180deg,#f3ebdf 0,#e6d8c3 100%)", bar: "#fff", l: 1 },   // hamma uchun asosiy
+        { k: "g", n: "Kulrang", p: 0, bg: "#312e2b", bar: "#262421" },
+        { k: "w", n: "Jigarrang", p: 0, bg: "radial-gradient(circle at 30% 0,#3b2a1d 0,#22180f 55%,#140e09 100%)", bar: "#1b130d" },
+        { k: "n", n: "Tun", p: 150, bg: "linear-gradient(180deg,#22314f 0,#0d1424 100%)", bar: "#0b1120" },
+        { k: "f", n: "O‘rmon", p: 150, bg: "linear-gradient(180deg,#2c4a34 0,#0f2017 100%)", bar: "#0c1a12" },
+        { k: "v", n: "Binafsha", p: 150, bg: "radial-gradient(circle at 30% 0,#5b3590 0,#2a1650 55%,#140a2a 100%)", bar: "#120925" },
+        { k: "q", n: "Qor", p: 150, bg: "linear-gradient(180deg,#f2f7fc 0,#d3e0ee 100%)", bar: "#fff", l: 1 },
+        { k: "o", n: "Okean", p: 200, bg: "linear-gradient(180deg,#136a86 0,#0a3a4f 55%,#06202c 100%)", bar: "#051b25" },
+        { k: "s", n: "Shafaq", p: 200, bg: "linear-gradient(180deg,#e8865a 0,#a2456a 50%,#2e1a40 100%)", bar: "#26152f" },
+        { k: "m", n: "Marmar", p: 250, bg: "linear-gradient(125deg,#fafaf8 0,#e4e4e0 40%,#f3f3f0 60%,#d9d9d4 100%)", bar: "#fff", l: 1 },
+        { k: "y", n: "Yog‘och", p: 300, bg: "repeating-linear-gradient(90deg,#5e4027 0,#6a4a2e 7px,#553923 13px,#664629 21px)", bar: "#3e2a19" },
+        { k: "a", n: "Oltin", p: 300, bg: "radial-gradient(circle at 50% 0,#7a5f22 0,#3a2c10 55%,#1a1408 100%)", bar: "#161108" }
+      ];
+      var rcBg = { own: null, self: false, admin: false };   // serverdan: sotib olingan fonlar
+      function rcBgDef(k) { for (var i = 0; i < RC_BGS.length; i++) if (RC_BGS[i].k === k) return RC_BGS[i]; return null; }
+      function rcBgCur() { var k = "c"; try { k = localStorage.getItem("rcBg") || "c"; } catch (e) {} return k; }
+      function rcBgImg() { try { return localStorage.getItem("rcBgImg") || ""; } catch (e) { return ""; } }
+      function rcBgHas(k) { if (rcBg.admin) return true; if (k === "self") return rcBg.self; var d = rcBgDef(k); return !!d && (!d.p || (rcBg.own || []).indexOf(k) >= 0); }
+      function rcBgApply() {
+        var k = rcBgCur(), d = rcBgDef(k), img = k === "self" ? rcBgImg() : "";
+        if (k === "self" ? (!img || (rcBg.own && !rcBgHas("self"))) : (!d || (rcBg.own && !rcBgHas(k)))) { k = "c"; d = rcBgDef("c"); }
+        root.style.setProperty("--rcBg", k === "self" ? "linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.35)),url(" + img + ") center/cover no-repeat" : d.bg);
+        root.style.setProperty("--rcBar", k === "self" ? "#151515" : d.bar);
+        root.classList.toggle("rcL", k !== "self" && !!d.l && !rcm.night);
+      }
+      function rcBgApi(path, body) {
+        var idt = (window.Telegram && Telegram.WebApp && Telegram.WebApp.initData) || "";
+        return fetch(path, { method: body ? "POST" : "GET", headers: { "Content-Type": "application/json", "x-init-data": idt }, body: body ? JSON.stringify(body) : undefined }).then(function (r) { return r.json(); });
+      }
+      rcBgApi("/api/bg").then(function (d) { if (d && !d.error) { rcBg.own = d.own || []; rcBg.self = !!d.self; rcBg.admin = !!d.admin; rcBgApply(); } }).catch(function () {});
+      function rcBgSet(k) { try { localStorage.setItem("rcBg", k); } catch (e) {} rcBgApply(); rcmBuild(); }
+      function rcBgBuy(k, p, what, ok) {
+        if (!confirm(what + " — " + p + " 🪙. Sotib olasizmi?")) return;
+        rcBgApi("/api/bg/buy", { k: k }).then(function (d) {
+          if (d && d.ok) { if (k === "self") rcBg.self = true; else { rcBg.own = rcBg.own || []; rcBg.own.push(k); } ok(); }
+          else alert((d && d.error) || "Xato");
+        }).catch(function () { alert("Server bilan aloqa yo‘q"); });
+      }
+      function rcBgFile() {   // telefondan rasm: 1280 px gacha kichraytiriladi va faqat shu telefonda saqlanadi
+        var inp = document.createElement("input"); inp.type = "file"; inp.accept = "image/*";
+        inp.onchange = function () {
+          var f = inp.files && inp.files[0]; if (!f) return;
+          var rd = new FileReader();
+          rd.onload = function () {
+            var im = new Image();
+            im.onload = function () {
+              var s = Math.min(1, 1280 / Math.max(im.width, im.height)), cv = document.createElement("canvas");
+              cv.width = Math.round(im.width * s); cv.height = Math.round(im.height * s);
+              cv.getContext("2d").drawImage(im, 0, 0, cv.width, cv.height);
+              var q = 0.8, url = cv.toDataURL("image/jpeg", q);
+              while (url.length > 700000 && q > 0.4) { q -= 0.15; url = cv.toDataURL("image/jpeg", q); }
+              try { localStorage.setItem("rcBgImg", url); } catch (e) { alert("Rasm juda katta — boshqa rasm tanlang"); return; }
+              rcBgSet("self");
+            };
+            im.src = rd.result;
+          };
+          rd.readAsDataURL(f);
+        };
+        inp.click();
+      }
+      function rcBgPick(k) {
+        if (k === "self") { if (rcBgHas("self")) rcBgFile(); else rcBgBuy("self", 500, "O‘z rasmingizni fon qilish", rcBgFile); return; }
+        var d = rcBgDef(k); if (!d) return;
+        if (rcBgHas(k)) rcBgSet(k); else rcBgBuy(k, d.p, "«" + d.n + "» foni", function () { rcBgSet(k); });
+      }
       function rcmApply() {
         window.__rcmMute = !rcm.sound;
         var css = "";
@@ -355,10 +465,11 @@
         root.classList.remove("rcPS");
         if (rcm.pieces >= 0) { root.classList.add("rcP" + (rcm.pieces + 1)); root.classList.add("rcPS"); }
         root.style.background = rcm.night ? "radial-gradient(circle at 30% 10%,#10162b 0,#0a0e1d 55%,#05070f 100%)" : rcmOrigBg;
+        rcBgApply();
         rcmChatVis();
       }
       function rcmChatVis() {
-        if (!rcm.chat) { elChatBtn.style.display = "none"; elChat.style.display = "none"; }
+        if (!rcm.chat) { elChatBtn.style.display = "none"; elChat.style.display = "none"; st.chatOpen = false; var _cbd = document.getElementById("rcChatBd"); if (_cbd) _cbd.style.display = "none"; }
         else if (!st.vsBot && elChatBtn.style.display === "none") elChatBtn.style.display = "";
       }
 
@@ -372,6 +483,9 @@
         return st.color === "white" ? st.moves.length > 0 : st.moves.length >= 2;
       }
       function rcmCanAbort() { return st.color !== "spectator" && !st.finished && st.joined && !rcmMoved(); }
+      // ☰ Menu → Chiqish: tomoshabin, o'yin tugagan, raqib hali kelmagan — yoki ikki tomon ham birinchi yurishni qilmaguncha
+      function rcmCanExit() { if (!st.joined) return false; if (st.color === "spectator" || st.finished || !bothIn()) return true; return (st.moves || []).length < 2; }
+      function rcmNeedAbort() { return st.color !== "spectator" && !st.finished && bothIn() && !(st.vsBot && !st.botStarted); }
 
       // Menyu tugmasi va paneli
       var rcmBtn = document.createElement("button");
@@ -379,7 +493,7 @@
       elChatBtn.parentNode.insertBefore(rcmBtn, elChatBtn);
       var rcmPanel = document.createElement("div");
       rcmPanel.style.cssText = "display:none;position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,.55)";
-      rcmPanel.innerHTML = '<div id="rcmBox" style="position:absolute;top:0;right:0;bottom:0;width:min(82vw,340px);background:#101a2e;color:#fff;overflow:auto;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 24px;font-size:16px;box-sizing:border-box"></div>';
+      rcmPanel.innerHTML = '<div id="rcmBox" style="position:absolute;top:0;right:0;bottom:0;width:min(82vw,340px);background:#262421;color:#fff;overflow:auto;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 24px;font-size:16px;box-sizing:border-box"></div>';
       root.appendChild(rcmPanel);
       rcmPanel.onclick = function (e) { if (e.target === rcmPanel) rcmPanel.style.display = "none"; };
       rcmBtn.onclick = function () { rcmBuild(); rcmPanel.style.display = "block"; };
@@ -396,7 +510,7 @@
         if (!mine.length) return note("Do‘konda tosh yo‘q");
         g.innerHTML = mine.map(function (x) {
           var u = "/api/shop/img?id=" + encodeURIComponent(x.id) + "&k=", nm = String(x.name || "").replace(/[<>"']/g, "");
-          return '<div data-sid="' + x.id + '" title="' + nm + '" style="border-radius:10px;background:#26344f;padding:6px 0;display:flex;justify-content:center;border:3px solid ' + (x.id === eq ? "#4c8dff" : "transparent") + '"><div style="display:grid;grid-template-columns:repeat(2,20px);gap:4px">' +
+          return '<div data-sid="' + x.id + '" title="' + nm + '" style="border-radius:10px;background:rgba(255,255,255,.08);padding:6px 0;display:flex;justify-content:center;border:3px solid ' + (x.id === eq ? "#4c8dff" : "transparent") + '"><div style="display:grid;grid-template-columns:repeat(2,20px);gap:4px">' +
             ["w", "b", "wk", "bk"].map(function (k) { return '<i style="width:20px;height:20px;display:block;background:url(' + u + k + ') center/contain no-repeat"></i>'; }).join("") + '</div></div>';
         }).join("");
         Array.prototype.forEach.call(g.querySelectorAll("[data-sid]"), function (el) {
@@ -419,7 +533,7 @@
         ];
         var h = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b style="font-size:19px">☰ Menu</b><span id="rcmX" style="font-size:24px;padding:4px 8px">✕</span></div>';
         T.forEach(function (t) {
-          h += '<label style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #26344f">' +
+          h += '<label style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.1)">' +
             '<span>' + t[1] + (t[2] ? '<small style="display:block;opacity:.6;font-size:12px;margin-top:2px">' + t[2] + '</small>' : '') + '</span>' +
             '<input type="checkbox" data-k="' + t[0] + '"' + (rcm[t[0]] ? " checked" : "") + ' style="width:22px;height:22px"></label>';
         });
@@ -430,8 +544,15 @@
             (b[3] ? '<span style="position:absolute;top:-8px;right:-4px;font-size:14px">👑</span>' : "") + '</div>';
         });
         h += '</div><div id="rcmReset" style="margin:10px 0 0;font-size:13px;opacity:.7;text-decoration:underline">↺ Standart doska</div>';
+        var _bgc = rcBgCur(), _bgi = rcBgImg(), _bgL = function (p) { return '<span style="position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.62);color:#ffd27a;font-size:11px;font-weight:700;text-align:center;border-radius:0 0 7px 7px;padding:2px 0">' + p + ' 🪙</span>'; };
+        h += '<div style="margin:18px 0 8px">Fon</div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">';
+        RC_BGS.forEach(function (b) {
+          h += '<div data-bg="' + b.k + '" title="' + b.n + '" style="aspect-ratio:1;border-radius:10px;position:relative;background:' + b.bg + ';border:3px solid ' + (b.k === _bgc ? "#81b64c" : "rgba(255,255,255,.12)") + '">' + (rcBgHas(b.k) ? "" : _bgL(b.p)) + '</div>';
+        });
+        h += '<div data-bg="self" style="aspect-ratio:1;border-radius:10px;position:relative;display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;font-weight:700;line-height:1.2;color:#e2d9cc;background:' + (_bgi ? 'url(' + _bgi + ') center/cover' : 'rgba(255,255,255,.08)') + ';border:3px solid ' + (_bgc === "self" && _bgi ? "#81b64c" : "rgba(255,255,255,.12)") + '">' + (_bgi ? "" : "O‘z<br>rasmim") + (rcBgHas("self") ? "" : _bgL(500)) + '</div></div>';
+        h += '<div style="margin:6px 0 0;font-size:12px;opacity:.6">' + (_bgc === "self" && _bgi ? "O‘z rasmingiz (faqat shu telefonda)" : (rcBgDef(_bgc) || RC_BGS[0]).n) + '</div>';
         h += '<div style="margin:18px 0 8px">♟ Toshlar</div><div id="rcmShop" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px"><div style="grid-column:1/-1;opacity:.6;font-size:13px">Yuklanmoqda…</div></div>';
-        if (rcmCanAbort()) h += '<button id="rcmAbort" style="width:100%;margin-top:22px;padding:14px;border:0;border-radius:12px;background:#d32f2f;color:#fff;font-size:16px">⎋ Chiqish (yurmasdan)</button>';
+        if (rcmCanExit()) h += '<button id="rcmAbort" style="width:100%;margin-top:22px;padding:14px;border:0;border-radius:12px;background:#d32f2f;color:#fff;font-size:16px;font-weight:700">' + (rcmNeedAbort() ? "Chiqish (yurmasdan)" : "Chiqish") + '</button>';
         box.innerHTML = h; rcmShopFill(box);
 
         box.querySelector("#rcmX").onclick = function () { rcmPanel.style.display = "none"; };
@@ -450,7 +571,8 @@
             rcm.board = i; rcmSave(); rcmApply(); rcmBuild();
           };
         });
-        box.querySelector("#rcmReset").onclick = function () { rcm.board = -1; rcmSave(); rcmApply(); rcmBuild(); };
+        box.querySelector("#rcmReset").onclick = function () { rcm.board = 0; rcmSave(); rcmApply(); rcmBuild(); };
+        Array.prototype.forEach.call(box.querySelectorAll("[data-bg]"), function (el) { el.onclick = function () { rcBgPick(el.getAttribute("data-bg")); }; });
         Array.prototype.forEach.call(box.querySelectorAll("[data-p]"), function (el) {
           el.onclick = function () { rcm.pieces = +el.getAttribute("data-p"); rcmSave(); rcmApply(); rcmBuild(); };
         });
@@ -458,10 +580,11 @@
         if (pr) pr.onclick = function () { rcm.pieces = -1; rcmSave(); rcmApply(); rcmBuild(); };
         var ab = box.querySelector("#rcmAbort");
         if (ab) ab.onclick = function () {
-          if (!rcmCanAbort()) { rcmBuild(); return; }
-          if (!confirm("Yurmasdan chiqasizmi? O‘yin bekor qilinadi.")) return;
+          if (!rcmCanExit()) { rcmBuild(); return; }
+          if (!rcmNeedAbort()) { rcmPanel.style.display = "none"; rcExit(); return; }
+          if (!confirm("O‘yindan chiqmoqchimisiz?")) return;
           send({ type: "roomAbort", roomId: roomId });
-          setTimeout(function () { rcLeave(); }, 600);
+          setTimeout(function () { rcExit(); }, 600);
         };
       }
 
@@ -490,6 +613,36 @@
       rcmApply();
     } catch (e) { console.error("rc-menu xato:", e); }
 
+    // ⬇️ pastki 4 tugma: Chat, Taslim, Durang, Menu (doim ekran pastida)
+    var elBar = document.createElement("div"); elBar.id = "rcBar";
+    elBar.innerHTML =
+      '<button data-bb="chat"><i style="background:#81b64c">' + RC_ICO.chat + '</i>Chat<span class="bd" hidden></span></button>' +
+      '<button data-bb="res"><i style="background:#d9822b">' + RC_ICO.flag + '</i>Taslim</button>' +
+      '<button data-bb="draw"><i style="background:#d9822b">' + RC_ICO.hand + '</i>Durang</button>' +
+      '<button data-bb="menu"><i style="background:#8a5a33">' + RC_ICO.menu + '</i>Menu</button>';
+    root.appendChild(elBar);
+    function rcBarPlay() { return st.color !== "spectator" && !st.finished && bothIn(); }
+    elBar.onclick = function (e) {
+      var b = e.target && e.target.closest ? e.target.closest("[data-bb]") : null; if (!b) return;
+      var k = b.getAttribute("data-bb"), off = b.classList.contains("off");
+      if (k === "chat") { if (!off) elChatBtn.click(); }
+      else if (k === "menu") { var mb = document.getElementById("rcMenuBtn"); if (mb) mb.click(); }
+      else if (k === "res") { if (!off) elResign.onclick(); }
+      else if (k === "draw") {
+        if (!off) { elDrawOffer.onclick(); return; }
+        if (!rcBarPlay()) return;
+        alert(st.drawOffer === st.color ? "Durang taklif qilindi — raqib javobi kutilmoqda" : st.drawOffer ? "Raqib durang taklif qilmoqda — javob bering" : "Durang taklif qilish uchun har tomondan kamida 10 yurish kerak");
+      }
+    };
+    function rcBarUpd() {
+      var bs = elBar.children, pl = rcBarPlay();
+      bs[0].hidden = elChatBtn.style.display === "none";
+      bs[1].classList.toggle("off", !pl);
+      bs[2].classList.toggle("off", !(pl && st.moves.length >= 2 && st.canDraw && !st.drawOffer));
+      var u = st.unread || 0, bd = bs[0].querySelector(".bd"); bd.hidden = !u; bd.textContent = u > 9 ? "9+" : String(u);
+    }
+    setInterval(function () { try { rcBarUpd(); } catch (e) {} }, 300);
+
     var elBerserk = document.createElement("button");
     elBerserk.textContent = "⚡ Berserk";
     elBerserk.className = elResign.className;
@@ -516,36 +669,31 @@
     elInput.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); sendChat(); } });
     var CATS = [["🎮","Yurishlar",["👍 Ajoyib yurish!","⏩ Tezroq yur!","🐢 Shoshilma!","🎯 Aniq yurish!","🧠 Aqlli yurish!","🔥 Zo‘r yurish!","⚡ Tez va aniq!","👀 Yaxshilab o‘yla!","🤔 Variantlarni ko‘r!","💡 Mana bu yurishni qara!","🚀 Olg‘a!","Tavakkal qil!","🛡️ Himoyalan!","⚔️ Hujum qil!","🔄 Yana bir o‘yla!"]],["🧠","Strategiya",["🧠 Haqiqiy strateg!","♟️ Reja zo‘r!","🔮 Keyingi yurishni bilaman!","🧐 Qiziq strategiya!","💡 Zo‘r fikr!","🎯 Hammasi hisoblangan!","🕵️ Tuzog‘imga tushding!","🪤 Bu tuzoq!","🤯 Qanday yurish?!","📈 Ustunlik menda!","🧩 Kombinatsiyani top!","🧠 Miyani ishlat!","👑 Strategiya qiroli!","🥷 Ayyor yurish!","🔍 Bir xatoni kutyapman!"]],["🔥","Hujum",["🔥 Zo‘r kombinatsiya!","⚔️ Hujum boshlandi!","💥 Kuchli zarba!","🎯 Nishonga tegdi!","🪓 Bittasi ketdi!","💣 Portlovchi yurish!","🚀 Hujumga o‘t!","🐉 Shafqatsiz hujum!","⚡ Chaqmoqdek yurish!","🥊 Zarba ber!","🔗 Ketma-ket zarbalar!","💥 Bir yurishda ikki dona!","🧨 Kutilmagan hujum!","🦈 O‘ljani ko‘rdim!","🏹 Aniq zarba!"]],["👑","Dama",["👑 Dama bo‘ldi!","🎉 Dama oldim!","💎 Dama — mening boyligim!","🏆 Ustunlik menda!","📈 Vaziyat yaxshi!","😎 Endi qiziq bo‘ladi!","🔥 Dama bilan ehtiyot bo‘l!","👑 Dama qiroli!","🚀 Dama bilan hujum!","🛡️ Damani asra!","😏 Dama bilan nima qilasan?","💪 Kuchlar teng emas!","🌟 Dama vaqti!","🎯 Damani tutib ko‘r!","🦁 Maydon meniki!"]],["😂","Hazil",["😂 Nima qilyapsan?","🤣 Bunaqasi ham bo‘ladimi?","😅 Voy, xato ketdi!","🙈 Ko‘rmadim deb hisobla!","🤦 O‘zim ham tushunmadim!","😜 Ataylab qildim!","🫣 Bu yurishni unutaylik!","🤡 Bugun omad kulmadi!","🥲 Yuragim og‘ridi!","😎 Hammasi reja bo‘yicha!","🤭 Seni sinab ko‘rdim!","🐒 Qiziq yurish ekan!","😆 Qaytadan o‘ynaymizmi?","🙃 Vaziyat chatoq!","🫡 Xo‘p, ustoz!"]],["😤","Chaqiriq",["😤 Qani, kuchingni ko‘rsat!","🔥 Meni yenga olasanmi?","😏 Ishonching komilmi?","🥶 Sovuqqon bo‘l!","👀 Seni kuzatyapman!","🐯 Hujumga tayyormisan?","🦁 Qani, boshladik!","🎯 Meni tutib ko‘r!","🧠 O‘ylashga vaqt bor!","😜 Qo‘rqib ketdingmi?","⚔️ Oxirigacha kurash!","🏆 G‘olib kim bo‘larkin?","💪 Qani, raqib!","🔥 Hali hammasi oldinda!","😎 Men tayyorman!"]],["🤝","Hurmat",["👏 Yaxshi o‘yin!","🤝 Omad, raqib!","🙌 Ajoyib!","💯 Zo‘r o‘ynayapsan!","🫡 Hurmat!","👏 Chiroyli yurish!","🧠 Ustalik bilan!","🌟 Barakalla!","🏅 Haqiqiy mahorat!","🤜🤛 Kuchli raqib!","❤️ O‘yin uchun rahmat!","🙏 Rahmat, do‘stim!","🎖️ Munosib raqib!","🤝 Yana o‘ynaymiz!","🏆 G‘alabang muborak!"]],["😬","Omadsizlik",["😅 Omadsizlik!","🤦 Qanday xato!","😭 Voy, donam ketdi!","💔 Bu og‘riqli bo‘ldi!","🥲 Buni kutmagandim!","😵 Vaziyat yomonlashdi!","🙈 Xatoni ko‘rmadim!","😓 Endi nima qilaman?","💀 Tamom bo‘ldim!","🫠 Vaziyat erib ketdi!","😩 Bitta dona qoldi!","🤯 Qanday qilib?!","🥶 Sovuq dush!","📉 Ustunlik qo‘ldan ketdi!","🫥 Jim bo‘lib qoldim..."]],["🏆","G‘alaba",["🏆 Yutding!","🎉 G‘alaba!","👑 Men chempionman!","🔥 Zo‘r g‘alaba!","🥇 Birinchi o‘rin!","😎 Men aytgandim!","💪 Kuchlilar g‘alaba qozonadi!","🏳️ Taslim bo‘laman!","😅 Bu safar seniki!","🤝 Durang?","🥲 Keyingi safar yutaman!","🔄 Qayta o‘ynaymiz!","🏆 G‘alaba shirin!","👏 Munosib g‘alaba!","🎮 Yana bir partiya!"]],["⏳","Vaqt",["⏩ Tezroq yur!","⏰ Vaqt ketyapti!","🐢 Juda sekin!","⚡ Tezroq!","⌛ Kutib turibman!","🕐 Vaqting oz qoldi!","🏃 Qani, yur!","😴 Uxlab qoldingmi?","🤔 Hali ham o‘ylayapsanmi?","🚦 Navbat senda!","🔔 Yurish vaqti!","🧘 Shoshilma, lekin yur!","⏳ Vaqt tugayapti!","👀 Kutamiz...","⚡ Tezkor o‘yin!"]],["🤔","Hayrat",["🤔 O‘ylayapsanmi?","😳 Rostdanmi?","😮 Voy-bo‘!","🤯 Aql bovar qilmaydi!","🧐 Qiziq yurish!","👀 Buni kutmagandim!","😲 Qanday kombinatsiya!","🤨 Ishonching komilmi?","😱 Bunaqa ham bo‘ladimi?!","🫢 Kutilmagan yurish!","🧩 Rejangni tushunmadim!","🤔 Nima maqsad?","😏 Nimadir rejalashtiryapsan!","🕵️ Bir sir bor...","💭 O‘ylab ko‘ray..."]],["💪","Ruhlantirish",["💪 Sen uddalaysan!","🔥 Olg‘a!","🚀 To‘xtama!","🦁 Kurashni davom ettir!","🌟 Hammasi oldinda!","🙌 Ishon o‘zingga!","💯 Zo‘r ketyapsan!","🏆 G‘alabaga intil!","⚡ Kuchingni ko‘rsat!","🎯 Maqsad sari!","💪 Taslim bo‘lma!","🔥 Oxirigacha!","🌈 Hali imkon bor!","🧠 Aql bilan yut!","🥇 Chempion bo‘l!"]],["😎","Maqtanish",["😎 Shashka ustasi!","👑 Men qirolman!","🔥 Menga teng keladigani yo‘q!","🏆 G‘alaba meniki!","💪 Kuchimni ko‘rdingmi?","😏 Hammasi nazoratda!","🧠 Ustalik shu!","🥷 Sokin, lekin xavfli!","🎯 Bir zarbada!","👑 Maydon hukmdori!","😎 Professional daraja!","💎 Mening uslubim!","🚀 Darajam boshqa!","🦾 Kuchli o‘yinchi!","🏅 Tajriba gapiradi!"]],["🔁","Takliflar",["🤝 Durang?","🔄 Qayta o‘ynaymizmi?","🎮 Yana bir partiya?","⏸️ Biroz tanaffus?","🤔 Durangga rozimisan?","🔥 Yana bir jang!","🏆 Revansh qilamizmi?","🙌 Tayyor bo‘lsang, boshlaymiz!","🤜🤛 Kelishdik!","🔁 Yana urinib ko‘r!","🎯 Rematch?","🫱🏻‍🫲🏼 Kelishuv?","🕹️ O‘yinni davom ettiramiz!","💪 Ikkinchi raund?","👋 Keyingi safargacha!"]],["⚔️","Shashka",["♟️ Shashka ustasi!","👑 Dama bo‘ldi!","💥 Urib ol!","🔗 Zanjirli zarba!","🪤 Tuzoq tayyor!","🎯 Donani saqla!","🛡️ Himoyani mustahkamla!","⚔️ Hujum vaqti!","🔄 Donalarni almashtiramizmi?","🧩 Kombinatsiyani ko‘r!","🏃 Dama tomon yur!","👀 Donangni ehtiyot qil!","💎 Damani yo‘qotma!","🔥 Oxirgi donagacha!","🏆 Shashka — aql o‘yini!"]]];
     var elQ = root.querySelector("#rcQuick");
-    elQ.style.cssText = "margin-top:6px";
+    // emojili so'zlar: bo'lim tugmalari (belgi + nomi) va so'zlar — chat panelining pastida
     var tabs = document.createElement("div");
-    tabs.style.cssText = "display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;align-items:center";
-    var lab = document.createElement("div");
-    lab.style.cssText = "font-size:12px;opacity:.7;margin-bottom:4px";
+    tabs.style.cssText = "display:flex;gap:6px;overflow-x:auto;padding:4px;margin-bottom:8px;background:rgba(0,0,0,.25);border-radius:99px;scrollbar-width:none";
     var box = document.createElement("div");
-    box.style.cssText = "display:flex;flex-wrap:wrap;gap:6px;max-height:112px;overflow-y:auto";
+    box.style.cssText = "display:flex;flex-wrap:wrap;gap:6px;max-height:150px;overflow-y:auto";
     function showCat(i) {
       box.innerHTML = "";
-      lab.textContent = CATS[i][1];
-      for (var k = 0; k < tabs.children.length; k++) tabs.children[k].style.background = k === i ? "#6b5cf0" : "";
+      for (var k = 0; k < tabs.children.length; k++) tabs.children[k].classList.toggle("on", k === i);
       CATS[i][2].forEach(function (p) {
         var bt = document.createElement("button");
-        bt.textContent = p; bt.style.cssText = "padding:7px 10px;border-radius:12px;font-size:14px";
+        bt.className = "rcQp"; bt.textContent = p;
         bt.onclick = function () { send({ type: "roomChat", roomId: roomId, text: p }); };
         box.appendChild(bt);
       });
     }
     CATS.forEach(function (c, i) {
       var t = document.createElement("button");
-      t.textContent = c[0]; t.style.cssText = "flex:none;padding:6px 10px;border-radius:12px;font-size:18px";
+      t.className = "rcQc"; t.textContent = c[0] + " " + c[1];
       t.onclick = function () { showCat(i); };
       tabs.appendChild(t);
     });
-    var xb = document.createElement("button");
-    xb.textContent = "⬅️"; xb.style.cssText = "flex:none;padding:6px 12px;border-radius:12px;font-size:16px";
-    xb.onclick = function () { elChatBtn.click(); };
-    var hd = document.createElement("div"); hd.style.cssText = "display:flex;gap:6px;align-items:center"; tabs.style.flex = "1"; tabs.style.minWidth = "0"; hd.appendChild(xb); hd.appendChild(tabs);
-    elQ.appendChild(hd); elQ.appendChild(lab); elQ.appendChild(box);
+    elQ.appendChild(tabs); elQ.appendChild(box);
     showCat(0);
+    root.querySelector("#rcCX").onclick = function () { if (st.chatOpen) elChatBtn.click(); };
+    root.querySelector("#rcChatBd").onclick = function () { if (st.chatOpen) elChatBtn.click(); };
     elInput.addEventListener("keydown", function (e) { if (e.key === "Enter") sendChat(); });
 
     function addMsg(msg) {
@@ -560,9 +708,12 @@
       elMsgs.appendChild(row);
     }
     function renderChat() {
-      if (st.vsBot) { elChatBtn.style.display = "none"; elChat.style.display = "none"; st._cbHid = true; return; }
+      var _bd = root.querySelector("#rcChatBd");
+      if (st.vsBot) { elChatBtn.style.display = "none"; elChat.style.display = "none"; _bd.style.display = "none"; st._cbHid = true; return; }
       if (st._cbHid) { elChatBtn.style.display = ""; st._cbHid = false; if (typeof rcmChatVis === "function") rcmChatVis(); }
+      if (elChatBtn.style.display === "none") st.chatOpen = false;   // chat menyuda o'chirilgan
       elChat.style.display = st.chatOpen ? "" : "none";
+      _bd.style.display = st.chatOpen ? "" : "none";
       elChatBtn.textContent = "💬 Chat" + (st.unread ? " (" + st.unread + ")" : "");
     }
     function rebuildChat() {
@@ -693,6 +844,7 @@
     function renderTc() { try { renderExtra(); } catch (e) { console.error(e); }
       elTc.innerHTML = "";
       if (st.vsBot) { renderBotSetup(); return; }
+      elTc.style.display = "none"; return;   // vaqt va Standart/IDF tanlovi o‘yin oynasida yo‘q: o‘yin turi lobbida tanlanadi
       var canPick = st.color === "white" && st.moves.length === 0 && !st.finished;
       if (!canPick) { elTc.style.display = "none"; return; }
       elTc.style.display = "flex";
@@ -798,35 +950,26 @@
     }
 
     // ismi chapda, soat o'ngda
+    // o'yinchi kartasi: rasm, ism, onlayn holati va reyting, o'ngda soat (ramkada)
     function fillLine(el, color) {
       el.innerHTML = "";
-      el.style.display = "flex";
-      el.style.justifyContent = "space-between";
-      el.style.alignItems = "center";
-      var l = document.createElement("span");
-      var _inf = color === "white" ? st.wInfo : st.bInfo, _nm = (color === "white" ? st.white : st.black) || "?";
-      l.style.cssText = "display:flex;align-items:center;gap:7px;min-width:0";
-      function _letter() {
-        var d = document.createElement("span"); d.textContent = (Array.from(String(_nm))[0] || "?").toUpperCase();
-        d.style.cssText = "width:30px;height:30px;border-radius:50%;background:#3b3f8f;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:bold;flex:none";
-        return d;
-      }
-      if (_inf && _inf.uid) {
-        if (_inf.av) {
-          var _im = document.createElement("img"); _im.src = "/api/av/" + encodeURIComponent(_inf.uid);
-          _im.style.cssText = "width:30px;height:30px;border-radius:50%;object-fit:cover;flex:none;background:#2a2f55";
-          _im.onerror = function () { if (_im.parentNode) _im.parentNode.replaceChild(_letter(), _im); };
-          l.appendChild(_im);
-        } else l.appendChild(_letter());
-      }
-      var _tx = document.createElement("span"); _tx.style.cssText = "overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0";
-      _tx.textContent = nameLine(color) + (st.berserk && st.berserk[color] ? " ⚡" : "");
-      l.appendChild(_tx);
-      if (_inf && _inf.elo) { var _eb = document.createElement("span"); _eb.textContent = _inf.elo; _eb.style.cssText = "color:#9aa3b5;font-size:14px;font-weight:600;flex:none;margin-left:2px"; l.appendChild(_eb); }
-      var r = document.createElement("span");
-      r.setAttribute("data-clock", color);
-      r.style.cssText = "font:700 26px/1 ui-monospace,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums;min-width:96px;text-align:center;padding:8px 12px;border-radius:8px;background:#1c2733;color:#9a9fb5;flex:none";
-      el.appendChild(l);
+      el.className = "rcPc";
+      var _inf = color === "white" ? st.wInfo : st.bInfo, _nm = (color === "white" ? st.white : st.black) || "";
+      function _letter() { var d = document.createElement("span"); d.className = "av"; d.textContent = (Array.from(String(_nm || "?"))[0] || "?").toUpperCase(); return d; }
+      var av;
+      if (_inf && _inf.uid && _inf.av) {
+        av = document.createElement("img"); av.className = "av"; av.src = "/api/av/" + encodeURIComponent(_inf.uid);
+        av.onerror = function () { if (av.parentNode) av.parentNode.replaceChild(_letter(), av); };
+      } else av = _letter();
+      el.appendChild(av);
+      var nmD = document.createElement("div"); nmD.className = "nm";
+      var b = document.createElement("b");
+      b.textContent = (color === "white" ? "⚪ " : "⚫ ") + (_nm || "kutilmoqda…") + (st.color === color ? " (siz)" : "") + (st.berserk && st.berserk[color] ? " ⚡" : "");
+      var sm = document.createElement("small");
+      if (_nm) { var on = st[color + "Online"], ii = document.createElement("i"); ii.textContent = on ? "Onlayn" : "Oflayn"; ii.style.color = on ? "#7fc25a" : "#e0705a"; sm.appendChild(ii); }
+      if (_inf && _inf.elo) sm.appendChild(document.createTextNode((_nm ? " " : "") + "(" + _inf.elo + ")"));
+      nmD.appendChild(b); nmD.appendChild(sm); el.appendChild(nmD);
+      var r = document.createElement("span"); r.className = "ck"; r.setAttribute("data-clock", color);
       el.appendChild(r);
     }
 
@@ -851,8 +994,10 @@
         if (st.vsBot && st.botColor === color && /King ?Kong/i.test(String(st[color] || "")) && false) { els[i].textContent = "∞"; els[i].style.background = "#1c2733"; els[i].style.color = "#fff"; continue; }   // 🦍 soatsiz
         els[i].textContent = fmt(ms);
         var active = st.clockRunning && !st.finished && st.turn === color;
-        els[i].style.background = active ? (ms < 10000 ? "#a83232" : "#4d7a1a") : "#1c2733";
-        els[i].style.color = active ? "#fff" : "#9a9fb5";
+        var lt = root.classList.contains("rcL");   // och fon
+        els[i].style.background = active ? (ms < 10000 ? "rgba(224,74,58,.22)" : "rgba(129,182,76,.2)") : (lt ? "#f3ede4" : "rgba(0,0,0,.25)");
+        els[i].style.borderColor = active ? (ms < 10000 ? "#e04a3a" : "#81b64c") : (lt ? "rgba(0,0,0,.12)" : "rgba(255,255,255,.16)");
+        els[i].style.color = active ? (lt ? "#2b2119" : "#fff") : (lt ? "#3a2a1d" : "#bfb3a2");
       }
     }
 
@@ -1005,7 +1150,7 @@
       }
       else if (st.finished) {
         var tm = st.reason === "abandon" ? "🚪 Raqib o‘yindan chiqib ketdi · " : st.reason === "timeout" ? "⏰ Vaqt tugadi · " : st.reason === "noshow" ? "⏳ Birinchi yurish qilinmadi · " : st.reason === "voice" ? "🎤 Noto‘g‘ri yurish aytildi" + (st.voiceSaid ? " («" + st.voiceSaid + "»)" : "") + " · " : "";
-        if (st.winner === "draw") t = st.drawText ? "🤝 " + st.drawText : "🤝 Durang (kelishildi)";
+        if (st.winner === "draw") t = st.reason === "abort" ? "O‘yin bekor qilindi" : st.drawText ? "🤝 " + st.drawText : "🤝 Durang (kelishildi)";
         else if (st.color === "spectator") t = tm + "🏆 " + sideName(st.winner) + " g‘alaba qozondi";
         else t = tm + (st.winner === st.color ? "🏆 Siz g‘alaba qozondingiz!" : "😔 Siz yutqazdingiz");
       }
@@ -1407,7 +1552,7 @@
       var old = document.getElementById("spAE"); if (old) old.remove();
       var mm = String(roomId).match(/^A(.+?)G\d+/), tid = mm ? mm[1] : "";
       var bx = document.createElement("div"); bx.id = "spAE";
-      bx.style.cssText = "position:fixed;left:8px;right:8px;bottom:84px;z-index:2147483000;display:flex;gap:8px;background:#1c2733;border:1px solid #2a3647;border-radius:12px;padding:10px";
+      bx.style.cssText = "position:fixed;left:8px;right:8px;bottom:calc(env(safe-area-inset-bottom,0px) + 104px);z-index:2147483000;display:flex;gap:8px;background:#1c2733;border:1px solid #2a3647;border-radius:12px;padding:10px";
       function mk(t, f, bg) { var x = document.createElement("button"); x.textContent = t; x.style.cssText = "flex:1;border:0;border-radius:8px;padding:10px 4px;font-size:14px;color:#fff;background:" + bg; x.onclick = f; bx.appendChild(x); }
       mk("🏟 Turnirga qaytish", function () { try { elZal.onclick(); } catch (e) {} }, "#3fa34d");
       mk("⏸ Pauza", function () { try { if (window.__lb && window.__lb.send) window.__lb.send({ type: "lbTLeave", tid: tid }); } catch (e) {} window.__spArenaStop = true; this.textContent = "✓ Pauzadasiz"; }, "#4a4390");
@@ -1424,8 +1569,8 @@
         if (!on) { if (bar) bar.remove(); _fmKey = -1; _fmLast = -1; return; }
         if (_fmKey !== st.moves.length) { _fmKey = st.moves.length; _fmT0 = Date.now(); _fmLast = -1; }
         var left = Math.max(0, 15 - Math.floor((Date.now() - _fmT0) / 1000));
-        if (!bar) { bar = document.createElement("div"); bar.id = "spFM"; bar.style.cssText = "position:fixed;left:0;right:0;bottom:84px;z-index:2147482000;text-align:center;color:#fff;font:600 15px Arial,sans-serif;padding:8px"; document.body.appendChild(bar); }
-        bar.style.bottom = (st.color === turn) ? "84px" : "auto"; bar.style.top = (st.color === turn) ? "auto" : "0"; bar.style.background = left <= 5 ? "#cf2a2a" : "#629924";
+        if (!bar) { bar = document.createElement("div"); bar.id = "spFM"; bar.style.cssText = "width:min(94vw,520px);box-sizing:border-box;margin-top:10px;border-radius:10px;text-align:center;color:#fff;font:600 15px Arial,sans-serif;padding:8px;flex:none"; var _inf = document.getElementById("rcInfo"); if (_inf && _inf.parentNode) _inf.parentNode.insertBefore(bar, _inf); else document.body.appendChild(bar); }   // tugmalar ostida, hech narsani yopmaydi
+        bar.style.background = left <= 5 ? "#cf2a2a" : "#629924";
         bar.innerHTML = ((st.color === turn || st.color === "spectator") ? "" : "Raqib: ") + "<b>" + left + "</b> soniya birinchi yurishga";
         if (left <= 5 && left > 0 && left !== _fmLast && st.color === turn) spBeep();
         _fmLast = left;
@@ -1439,7 +1584,7 @@
       if (typeof elZal === "undefined" || !elZal || !elZal.onclick) return;
       var n = /^T.+?R\d+B\d+|^A.+?G\d+/.test(String(roomId)) ? 3 : 10;
       _azBox = document.createElement("div");
-      _azBox.style.cssText = "position:fixed;left:50%;transform:translateX(-50%);bottom:84px;z-index:2147483000;background:#1c2733;color:#fff;border:1px solid #2a3647;border-radius:12px;padding:10px 14px;font:14px Arial,sans-serif;display:flex;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,.4)";
+      _azBox.style.cssText = "position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 104px);z-index:2147483000;background:#1c2733;color:#fff;border:1px solid #2a3647;border-radius:12px;padding:10px 14px;font:14px Arial,sans-serif;display:flex;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,.4)";
       var tx = document.createElement("span"), bt = document.createElement("button");
       bt.textContent = "Qolish";
       bt.style.cssText = "background:#3b3f8f;color:#fff;border:0;border-radius:8px;padding:6px 12px;font-size:14px";

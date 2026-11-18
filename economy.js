@@ -888,6 +888,33 @@ function handle(req, res, url) {
     });
     return true;
   }
+  // 🖼 o'yin oynasi fonlari: kulrang, krem, jigarrang — bepul; qolganlari tangaga (bir marta sotib olinadi).
+  // «self» — o'z rasmini fon qilish huquqi (rasm serverga yuklanmaydi, faqat o'yinchi telefonida saqlanadi)
+  if ((p === '/api/bg' && req.method === 'GET') || (p === '/api/bg/buy' && req.method === 'POST')) {
+    const BG_PRICE = { n: 150, f: 150, v: 150, q: 150, o: 200, s: 200, m: 250, y: 300, a: 300, self: 500 };
+    const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
+    if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
+    const _adm = isAdmin(_tg.id);
+    if (p === '/api/bg') {
+      const _u = store.users()[String(_tg.id)] || {};
+      send(res, 200, { own: _u.bgOwn || [], self: !!_u.bgSelf, admin: _adm, coins: _u.diamonds || 0 });
+      return true;
+    }
+    readBody(req, 2000, body => {
+      let j = {}; try { j = JSON.parse(body); } catch (e) {}
+      const k = String(j.k || ''), price = BG_PRICE[k];
+      if (!price) return send(res, 400, { error: 'Fon topilmadi' });
+      const u = store.getOrCreate(_tg); u.bgOwn = u.bgOwn || [];
+      const has = _adm || (k === 'self' ? !!u.bgSelf : u.bgOwn.includes(k));
+      if (!has) {
+        if (!spend(_tg.id, price, 'fon: ' + k)) return send(res, 400, { error: 'Tanga yetarli emas (' + price + ' 🪙 kerak)' });
+        if (k === 'self') u.bgSelf = true; else u.bgOwn.push(k);
+        store.save();
+      }
+      send(res, 200, { ok: true, coins: u.diamonds || 0 });
+    });
+    return true;
+  }
     if (p.split('?')[0] === '/api/shop/img' && req.method === 'GET') {
     const _q = new URL(req.url, 'http://x').searchParams;
     const _it = (store.db.shop || []).find(x => _q.get('id') === 'def' ? !!x.def : x.id === _q.get('id'));

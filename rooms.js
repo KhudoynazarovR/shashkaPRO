@@ -727,7 +727,7 @@ const srvBotOn = room => !!(room && room.vsBot && room.botCfg && room.botCfg.id 
     if (m.type === "roomAbort") {
       if (!col) return err(c, "Siz tomoshabinsiz"), true;
       if (room.finished) return true;
-      if (room.mvCount && room.mvCount[col]) return err(c, "Birinchi yurishdan keyin chiqib bo‘lmaydi"), true;
+      if ((room.plies || 0) >= 2) return err(c, "Ikki tomon ham yurgandan keyin chiqib bo‘lmaydi"), true;   // ikki tomon ham birinchi yurishni qilmaguncha bekor qilish mumkin
       finish(room, "draw", "abort");   // rc-menu-v1
       return true;
     }
