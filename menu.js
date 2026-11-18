@@ -137,7 +137,8 @@
     h += "<div class='mnm' id='mnMsg'></div>";
     SEC.forEach(function (s) { h += "<div class='mqS'><span>" + s[2] + "</span>" + s[0] + "</div><div class='mqGr'>" + s[1].map(cardHtml).join("") + "</div>"; });
     h += "<div class='mqS'><span>⚙️</span>ILOVA</div><div class='mqLs'>" + LIST.map(rowHtml).join("") + "</div>";
-    if (window.__isAdmin) h += "<div class='mqS'><span>🛡</span>ADMIN</div><div class='mqGr'>" + cardHtml(["📊", "Statistika", "Faollik, iqtisod, Premium, tikish", "@stats", "#0ea5e9,#22c55e"]) + cardHtml(["🦍", "King Kong xatolari", "O‘yinlardagi xatolarni topish va tuzatish", "@kkadm", "#b45309,#f59e0b"]) + cardHtml(["✨", "Jonli effektlar", window.hxFx === false ? "O‘chirilgan — bosib yoqing" : "Yoqilgan — bosib o‘chiring", "@fx", "#7c3aed,#ec4899"]) + cardHtml(["🏅", "Reyting lentasi", window.hxTick === false ? "O‘chirilgan — bosib yoqing" : "Yoqilgan — bosib o‘chiring", "@tick", "#f59e0b,#2563eb"]) + (document.getElementById("bpBtn") ? cardHtml(["🤖", "Bot kuchi", "Botlar kuchini 1–100% belgilash", "@bpow", "#8e6ff0,#c58bf2"]) : "") + "</div>";
+    if (window.__isAdmin && !window.__dgwF) { window.__dgwF = 1; fetch("/api/dgw", { headers: { "x-init-data": initData } }).then(function (r) { return r.json(); }).then(function (j) { if (j && !j.error) { window.__dgw = j; render(); } }).catch(function () {}); }
+    if (window.__isAdmin) h += "<div class='mqS'><span>🛡</span>ADMIN</div><div class='mqGr'>" + cardHtml(["📊", "Statistika", "Faollik, iqtisod, Premium, tikish", "@stats", "#0ea5e9,#22c55e"]) + cardHtml(["🦍", "King Kong xatolari", "O‘yinlardagi xatolarni topish va tuzatish", "@kkadm", "#b45309,#f59e0b"]) + cardHtml(["🐉", "Dragon kuzatuvi", window.__dgw ? (window.__dgw.all ? "Hammaga yoqilgan" : "Hammadan o‘chirilgan") + (window.__dgw.list && window.__dgw.list.length ? " · " + window.__dgw.list.length + " ta istisno" : "") : "Tomoshabin tahlili kimga ochiq", "@dgw", "#16a34a,#0d9488"]) + cardHtml(["✨", "Jonli effektlar", window.hxFx === false ? "O‘chirilgan — bosib yoqing" : "Yoqilgan — bosib o‘chiring", "@fx", "#7c3aed,#ec4899"]) + cardHtml(["🏅", "Reyting lentasi", window.hxTick === false ? "O‘chirilgan — bosib yoqing" : "Yoqilgan — bosib o‘chiring", "@tick", "#f59e0b,#2563eb"]) + (document.getElementById("bpBtn") ? cardHtml(["🤖", "Bot kuchi", "Botlar kuchini 1–100% belgilash", "@bpow", "#8e6ff0,#c58bf2"]) : "") + "</div>";
     h += "<div class='mqV'>ShashkaPRO · v" + (window.SP_VER || "10.1") + "</div>";
     panel.innerHTML = h + "<div class='mnp'></div>";
   }
@@ -201,7 +202,45 @@
     } catch (e) {}
   }, 2500);
   window.corrGo = window.corrGo || function (id) { if (window.corrOpen) return window.corrOpen(id); var s = document.createElement("script"); s.src = "/corrpanel.js?v=" + Date.now(); s.onload = function () { window.corrOpen(id); }; document.head.appendChild(s); };
+  // 🐉 Dragon kuzatuvi (tomoshabin tahlili) — admin: hammaga yoqish / hammadan o'chirish, alohida odamlar (istisnolar)
+  window.spDgwOpen = function () {
+    var ov = document.createElement("div"); ov.style.cssText = "position:fixed;inset:0;z-index:100002;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center";
+    ov.onclick = function (e) { if (e.target === ov) ov.remove(); };
+    var bx = document.createElement("div"); bx.style.cssText = "width:100%;max-width:520px;max-height:82vh;overflow:auto;background:#141040;color:#fff;border-radius:20px 20px 0 0;padding:16px 16px calc(18px + env(safe-area-inset-bottom,0px));box-sizing:border-box;font-family:system-ui,sans-serif";
+    ov.appendChild(bx); document.body.appendChild(ov);
+    function esc(t) { return String(t == null ? "" : t).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+    function post(o) { return fetch("/api/dgw", { method: "POST", headers: { "Content-Type": "application/json", "x-init-data": initData }, body: JSON.stringify(o) }).then(function (r) { return r.json(); }); }
+    function btn(k, lab, bg, on) { return "<button data-k='" + k + "' style='flex:1;border:0;border-radius:14px;padding:13px 6px;font:700 15px system-ui,sans-serif;color:#fff;background:" + bg + ";" + (on ? "box-shadow:0 0 0 3px #fff6" : "opacity:.75") + "'>" + lab + "</button>"; }
+    function draw(d) {
+      if (!d || d.error) { bx.innerHTML = "<div style='padding:20px;text-align:center'>" + esc((d && d.error) || "Server bilan aloqa yo‘q") + "</div>"; return; }
+      window.__dgw = d; try { render(); } catch (e) {}
+      var L = d.list || [];
+      var h = "<div style='display:flex;align-items:center;margin-bottom:6px'><b style='font-size:20px'>🐉 Dragon kuzatuvi</b><span data-x style='margin-left:auto;font-size:22px;padding:4px 8px;cursor:pointer'>✕</span></div>" +
+        "<div style='font-size:13px;opacity:.75;margin-bottom:12px'>O‘yinni tomosha qilayotganda Dragon kuchli yurishni strelkada ko‘rsatadi, «Tahlil» bilan o‘yinni hozirgi pozitsiyadan taxtada yurib ko‘rish mumkin. Adminlar uchun doim yoniq.</div>" +
+        "<div style='font-size:14px;margin-bottom:8px'>Hozir: <b style='color:" + (d.all ? "#7ee08a" : "#ff8a8a") + "'>" + (d.all ? "hammaga yoqilgan" : "hammadan o‘chirilgan") + "</b></div>" +
+        "<div style='display:flex;gap:8px;margin-bottom:14px'>" + btn("all", "✅ Hammaga yoqish", "#2e7d32", d.all) + btn("none", "⛔ Hammadan o‘chirish", "#a3263a", !d.all) + "</div>" +
+        "<div style='font-size:13px;font-weight:700;opacity:.8;margin-bottom:6px'>" + (d.all ? "O‘chirilgan odamlar" : "Yoqilgan odamlar") + " · " + L.length + "</div>";
+      h += L.length ? L.map(function (x) { return "<div style='display:flex;align-items:center;gap:10px;padding:9px 2px;border-bottom:1px solid #26305a'><span style='flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap'>" + esc(x.name) + " <small style='opacity:.5'>" + esc(x.id) + "</small></span><button data-u='" + esc(x.id) + "' style='border:0;border-radius:10px;padding:7px 10px;font-size:13px;color:#fff;background:#3a3f6b'>" + (d.all ? "Yoqish" : "O‘chirish") + "</button></div>"; }).join("")
+        : "<div style='font-size:13px;opacity:.6;padding:6px 2px'>Hech kim yo‘q</div>";
+      h += "<div style='font-size:12px;opacity:.6;margin-top:12px'>Bitta odamga: o‘yinchi kartasini oching (reyting yoki zaldan) → 🛡 Admin → 🐉 Dragon kuzatuvi.</div>";
+      bx.innerHTML = h;
+      bx.querySelector("[data-x]").onclick = function () { ov.remove(); };
+      [].forEach.call(bx.querySelectorAll("[data-k]"), function (b) {
+        b.onclick = function () {
+          var k = b.getAttribute("data-k"); if ((k === "all") === !!d.all && !L.length) return;
+          if (!confirm(k === "all" ? "Dragon kuzatuvi HAMMAGA yoqilsinmi?" : "Dragon kuzatuvi HAMMADAN o‘chirilsinmi? (adminlardan tashqari)")) return;
+          b.disabled = true; post({ act: k }).then(draw).catch(function () { draw(null); });
+        };
+      });
+      [].forEach.call(bx.querySelectorAll("[data-u]"), function (b) {
+        b.onclick = function () { b.disabled = true; post({ act: "user", uid: b.getAttribute("data-u"), on: !!d.all }).then(draw).catch(function () { draw(null); }); };
+      });
+    }
+    bx.innerHTML = "<div style='padding:20px;opacity:.7;text-align:center'>Yuklanmoqda…</div>";
+    fetch("/api/dgw", { headers: { "x-init-data": initData } }).then(function (r) { return r.json(); }).then(draw).catch(function () { draw(null); });
+  };
   window.mnA = function (a) {
+    if (a === "@dgw") { window.spDgwOpen(); return; }
     if (a === "@tick") {   // 🏅 bosh sahifadagi suzib yuruvchi reyting lentasi — hamma foydalanuvchi uchun (admin)
       var tv = window.hxTick === false;
       fetch("/api/hxfx", { method: "POST", headers: { "Content-Type": "application/json", "x-init-data": initData }, body: JSON.stringify({ tick: tv }) })

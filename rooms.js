@@ -210,9 +210,10 @@ function createRooms({ send, clients, onFinish }) {
       });
     });
   }
-  function snapshot(room, color) {
+  function snapshot(room, color, cl) {
+    const _du = !color && cl && cl.roomUser ? String(cl.roomUser.id || "") : "";   // 🐉 tomoshabinga Dragon kuzatuvi ochiqmi (admin boshqaradi)
     return {
-      type: "roomState",
+      type: "roomState", dgOk: _du ? require("./dgwatch.js").allowed(_du) : false, dgAdm: _du ? require("./dgwatch.js").isAdmin(_du) : false,
       roomId: room.id,
       color: color || "spectator",
       white: room.white ? room.white.name : null,
@@ -262,7 +263,7 @@ function createRooms({ send, clients, onFinish }) {
     if (srvBotOn(room)) setImmediate(() => srvBotKick(room));
     for (const id of room.members) {
       const cl = clients.get(id);
-      if (cl) send(cl.ws, snapshot(room, colorOf(room, cl)));
+      if (cl) send(cl.ws, snapshot(room, colorOf(room, cl), cl));
     }
   }
 
@@ -778,6 +779,7 @@ const srvBotOn = room => !!(room && room.vsBot && room.botCfg && room.botCfg.id 
       const u = c.roomUser;
       if (!room.members.has(c.id)) return true;
       if (!room.finished && (col || (u && ((room.white && room.white.uid === u.id) || (room.black && room.black.uid === u.id))))) return true;   // o'yinchi (boshqa qurilmadan kirsa ham) — yo'q
+      if (!u || !require("./dgwatch.js").allowed(u.id)) { send(c.ws, { type: "roomEval", roomId, off: 1 }); return true; }   // admin bu odamga (yoki hammaga) o'chirgan
       const P = evLine(room);
       if (!P) { send(c.ws, { type: "roomEval", roomId, err: 1 }); return true; }
       const N = P.length - 1, n = room.moves.length, fin = !!room.finished;
@@ -1004,7 +1006,7 @@ const srvBotOn = room => !!(room && room.vsBot && room.botCfg && room.botCfg.id 
     }
 
     if (m.type === "roomSync") {
-      send(c.ws, snapshot(room, col));
+      send(c.ws, snapshot(room, col, c));
       return true;
     }
 

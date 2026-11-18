@@ -208,6 +208,7 @@ function handle(req, res, url) {
   if (p.startsWith('/api/premium')) { if (require('./premium.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }
   if (p === '/api/ref') { if (require('./ref.js').handle(req, res, p, { verifyInitData, send })) return true; }
   if (p === '/api/report' || p === '/api/mod') { if (require('./mod.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }
+  if (p === '/api/dgw') { if (require('./dgwatch.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }   // 🐉 Dragon kuzatuvi kimga ochiq (admin)
   if (p.startsWith('/api/auth/')) { if (require('./weblogin.js').handle(req, res, p, { send, readBody })) return true; }
   if (p.startsWith('/api/pzt/')) { if (require('./pztour.js').handle(req, res, p, { store, verifyInitData, send, readBody })) return true; }
   if (p.startsWith('/api/battle/')) { if (require('./pzbattle.js').handle(req, res, p, { store, verifyInitData, send, readBody })) return true; }
@@ -346,7 +347,7 @@ function handle(req, res, url) {
       bio: _u.bio || '', hasAv: !!store.avOf(_u), premium: !!store.isPremium(_u), lastSeen: _u.lastSeen || 0, elchi: require('./ref.js').elchi(_u), region: _u.region || '', titles: (_u.titles || []).slice(-3).reverse().map(x => x.t), bhunt: (_u.bhunt || []).slice(-20).reverse(), ach: (require('./ach.js').sync(_id, { quiet: true }), require('./ach.js').list(_id, false)),
       stones: (() => { const S = store.db.shop || [], eq = _u.equipped === '-' ? '' : (_u.equipped || ((S.find(x => x.def) || {}).id) || ''); return S.filter(x => x.def || (_u.owned || []).includes(x.id)).slice(0, 24).map(x => ({ id: x.id, name: x.name, eq: x.id === eq })); })(),
       myDiamonds: ((store.users()[String(_tg.id)] || {}).diamonds) || 0, giftFee: [require('./gift.js').FEE_PCT, require('./gift.js').FEE_MIN],
-      ...(isAdmin(_tg.id) ? { adm: true, sanc: require('./mod.js').info(_id), cheat: require('./cheat.js').stats(_id) } : {})
+      ...(isAdmin(_tg.id) ? { adm: true, sanc: require('./mod.js').info(_id), cheat: require('./cheat.js').stats(_id), dgw: require('./dgwatch.js').allowed(_id), dgwAdm: require('./dgwatch.js').isAdmin(_id) } : {})
     });
     return true;
   }

@@ -343,6 +343,16 @@
             w.innerHTML = "<div style=\"font-size:13px;color:#ff9aa8;font-weight:700;margin-bottom:4px\">🛡 Admin</div>" + line("chat", "💬", "Chat") + line("play", "🎮", "O‘yin") +
               (d.cheat ? "<div style=\"font-size:13px;margin:3px 0\">🕵️ Dragon bilan moslik: <b style=\"color:" + (d.cheat.avg >= 80 ? "#ff6b7f" : "#7ee08a") + "\">" + d.cheat.avg + "%</b> (" + d.cheat.n + " ta g‘alaba tahlili)</div>" : "") +
               "<div style=\"display:flex;gap:6px;margin-top:8px\">" + act("chat", "💬 Chat ⛔", "#8a5a00") + act("play", "🎮 O‘yin ⛔", "#a3263a") + act("undo", "↩️ Bekor", "#3a3f6b") + "</div>";
+            if (d.dgw !== undefined) w.innerHTML += "<div style=\"display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px\"><span style=\"flex:1\">🐉 Dragon kuzatuvi: <b style=\"color:" + (d.dgw ? "#7ee08a" : "#ff6b7f") + "\">" + (d.dgwAdm ? "admin — doim yoniq" : d.dgw ? "yoqiq" : "o‘chiq") + "</b></span>" +
+              (d.dgwAdm ? "" : "<button data-dgw=\"1\" style=\"border:0;border-radius:12px;padding:9px 12px;font-size:13px;color:#fff;background:" + (d.dgw ? "#a3263a" : "#2e7d32") + "\">" + (d.dgw ? "O‘chirish" : "Yoqish") + "</button>") + "</div>";   // 🐉 tomoshabin tahlili shu odamga
+            var _dgb = w.querySelector("[data-dgw]");
+            if (_dgb) _dgb.onclick = function () {
+              _dgb.disabled = true;
+              fetch("/api/dgw", { method: "POST", headers: { "Content-Type": "application/json", "x-init-data": (tg && tg.initData) || "" }, body: JSON.stringify({ act: "user", uid: d.id, on: !d.dgw }) })
+                .then(function (r) { return r.json(); })
+                .then(function (j) { if (j.error) { alert(j.error); _dgb.disabled = false; return; } d.dgw = !!j.on; paint(); })
+                .catch(function () { alert("Server bilan aloqa yo‘q"); _dgb.disabled = false; });
+            };
             [].forEach.call(w.querySelectorAll("[data-ma]"), function (b) {
               b.onclick = function () {
                 var a = b.getAttribute("data-ma"), reason = "";

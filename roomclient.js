@@ -226,7 +226,7 @@
         "#spDG{all:unset;width:min(94vw,520px);box-sizing:border-box;margin:0 0 2px;padding:6px 12px;border-radius:14px;background:rgba(0,0,0,.28);box-shadow:0 4px 14px rgba(0,0,0,.3);color:#f3ebe0;display:flex;align-items:center;gap:10px;min-height:46px;cursor:pointer;-webkit-tap-highlight-color:transparent}" +
         "#spDG .ic{flex:none;font-size:22px;line-height:1}#spDG .t{flex:1;min-width:0}#spDG .t b{display:block;font:800 15px system-ui,sans-serif}#spDG .t small{display:block;font:500 12.5px system-ui,sans-serif;color:#b9ab98;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
         "#spDG .sw{flex:none;width:46px;height:28px;border-radius:14px;background:rgba(255,255,255,.22);position:relative;transition:background .2s}#spDG .sw::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:left .2s}" +
-        "#spDG.on .sw{background:#81b64c}#spDG.on .sw::after{left:21px}#spDG .a{display:block}#spDG .z{display:none}#spDG.on .a{display:none}#spDG.on .z{display:block}" +
+        "#spDG.on .sw{background:#81b64c}#spDG.on .sw::after{left:21px}#spDG.adm .sw{display:none}#spDG .an{display:none}#spDG.on .an,#spDG.adm .an{display:block;flex:none;padding:7px 10px;border-radius:12px;background:#81b64c;color:#fff;font:800 14px system-ui,sans-serif}#spDG.on:not(.adm) .sw{width:40px;height:24px}#spDG.on:not(.adm) .sw::after{width:18px;height:18px;left:19px}#spDG .a{display:block}#spDG .z{display:none}#spDG.on .a{display:none}#spDG.on .z{display:block}" +
         "#spDG .bar{display:flex;align-items:center;gap:8px}#spDG .bar b{flex:none;min-width:40px;font:800 16px system-ui,sans-serif;font-variant-numeric:tabular-nums}" +
         "#spDG .bar .bm{flex:none;font:800 14px system-ui,sans-serif;color:#5fc25a;white-space:nowrap}#spDG .bar .bm:empty{display:none}#spDG .bar .tr{flex:1;min-width:40px;height:10px;border-radius:5px;background:#3a3330;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}#spDG .bar .tr i{display:block;height:100%;width:50%;background:#fbf7f0;border-right:2px solid #c9a46a;transition:width .5s}" +
         "#spDG .mv{margin-top:4px;font:600 13px system-ui,sans-serif;color:#e2d6c6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#spDG .mv .ok{color:#6cc04a}#spDG .mv .bad{color:#ff8a50}#spDG .mv .dg{color:#5fc25a}#spDG .mv em{font-style:normal;opacity:.7;font-weight:500}" +
@@ -718,7 +718,7 @@
     }
     function spNextLive(b) { st._nl = b; b.disabled = true; b.textContent = "⏳ Qidirilmoqda…"; send({ type: "roomLive" }); }
     // 🐉 Dragon bilan kuzatish: tomoshabin yoqadi, server baholaydi — strelka hozirgi o'rindagi kuchli yurishni yurishdan oldin ko'rsatadi
-    function spDgOn() { try { return localStorage.getItem("spDg") === "1"; } catch (e) { return !!st._dgOn; } }
+    function spDgOn() { if (!st.dgOk) return false; if (st.dgAdm) return true; try { return localStorage.getItem("spDg") === "1"; } catch (e) { return !!st._dgOn; } }   // admin uchun doim yoniq
     function spDgReq(ms) {
       if (st.color !== "spectator" || !spDgOn() || !st.joined) return;
       if (ms == null) st._dgB = 0;   // yangi yurish — band bo'lgandagi qayta urinishlar hisobi yangidan
@@ -763,9 +763,14 @@
       elBoard.appendChild(s);
     }
     function spDgSet(m) {
+      if (m.off) { st.dgOk = false; st.dg = null; spSpecUI(); spDgArrows(); return; }   // admin o'chirgan
       if (m.n != null && m.n < st.moves.length) { if (st._dgN !== st.moves.length) { st._dgN = st.moves.length; spDgReq(); } return; }   // eski doska uchun javob — yangisini so'raymiz
       st.dg = m; spDgTxt(); spDgArrows();
       if (m.busy && (st._dgB = (st._dgB || 0) + 1) <= 6) spDgReq(2500);   // Dragon band — biroz kutib qayta (ko'pi bilan 6 marta)
+    }
+    function spAdmAnalyze() {   // 🔬 Dragon kuzatuvi ochiq tomoshabin (va admin): davom etayotgan o'yinni hozirgi pozitsiyadan tahlil taxtasida yurib ko'rish
+      if (!st.dgOk) return;
+      try { window.spBoardOpen({ moves: st.moves.slice(), white: nameLine("white"), black: nameLine("black"), start: st.opening && st.opening.board ? st.opening.board : undefined, first: st.opening && st.opening.side === "b" ? "black" : undefined, at: st.moves.length, flip: flipped(), live: !st.finished, winner: st.finished ? st.winner : null }); } catch (e) {}
     }
     function spSpecUI() {
       var spec = st.color === "spectator" && st.joined;
@@ -793,19 +798,22 @@
       var ah = L.slice(0, 4).map(spAv).join("");
       var avs = sh.querySelector(".avs"); if (avs._h !== ah) { avs._h = ah; avs.innerHTML = ah; }
       sh.querySelector(".sv b span").textContent = String(n);
+      if (!st.dgOk) { if (dg) dg.remove(); return; }   // 🐉 admin bu tomoshabinga (yoki hammaga) o'chirgan
       if (!dg) {
         dg = document.createElement("button"); dg.id = "spDG";
         dg.innerHTML = '<div class="ic">🐉</div><div class="t"><div class="a"><b>Dragon bilan kuzatish</b><small>Kuchli yurish strelka bilan</small></div>' +
-          '<div class="z"><div class="bar"><b>…</b><div class="tr"><i></i></div><span class="bm"></span></div><div class="mv">Hisoblanmoqda…</div></div></div><div class="sw"></div>';
+          '<div class="z"><div class="bar"><b>…</b><div class="tr"><i></i></div><span class="bm"></span></div><div class="mv">Hisoblanmoqda…</div></div></div><div class="sw"></div><span class="an">Tahlil</span>';
         root.insertBefore(dg, elTop);
+        dg.querySelector(".an").onclick = function (e) { e.stopPropagation(); spAdmAnalyze(); };   // 🔬 «Tahlil»: shu o'yinni hozirgi pozitsiyadan taxtada yurib ko'rish (lichess kabi)
         dg.onclick = function () {
+          if (st.dgAdm) { spAdmAnalyze(); return; }   // admin: doim yoniq — karta bosilsa ham tahlil ochiladi
           var on = !spDgOn(); st._dgOn = on; try { localStorage.setItem("spDg", on ? "1" : "0"); } catch (e) {}
           dg.classList.toggle("on", on);
           if (on) { st.dg = null; st._dgB = 0; spDgTxt(); spDgReq(0); } else spDgArrows();
         };
         spDgTxt();
       }
-      dg.classList.toggle("on", spDgOn());
+      dg.classList.toggle("on", spDgOn()); dg.classList.toggle("adm", !!st.dgAdm);
     }
 
     var elBerserk = document.createElement("button");
@@ -1871,7 +1879,7 @@
         st.whiteOnline = m.whiteOnline; st.blackOnline = m.blackOnline; st.stake = m.stake || 0;
         st.offAt = { white: m.whiteOff ? Date.now() - (m.srvNow - m.whiteOff) : 0, black: m.blackOff ? Date.now() - (m.srvNow - m.blackOff) : 0 }; st.claimMs = m.claimMs || 15000;
         st.spectators = m.spectators || 0;
-        st.specNames = m.spectatorNames || []; st.specList = m.specList || null;
+        st.specNames = m.spectatorNames || []; st.specList = m.specList || null; st.dgOk = !!m.dgOk; st.dgAdm = !!m.dgAdm;
         st.gamesTotal = m.gamesTotal || 1; st.played = m.played || 0; st.seriesScore = m.seriesScore || null;
         st.seriesDone = !!m.seriesDone; st.nextIn = !!m.nextIn; st.rematch = m.rematch || null; st.casual = !!m.casual; st.rmOk = !!m.rmOk; if (!m.finished) st.eloD = null; st.voice = !!m.voice; st.botUid = m.botUid || null; st.voiceSaid = m.voiceSaid || null; st.vsBot = !!m.vsBot; st.etude = m.etude || null; st.h2h = m.h2h || null; try { var _bk = "spBotRoom:" + roomId; if (st.vsBot) localStorage.setItem(_bk, "1"); else if (localStorage.getItem(_bk) === "1") { localStorage.removeItem(_bk); alert("Server qayta ishga tushdi, bot bilan o‘yin uzildi. Zalga qaytasiz."); rcLeave(); return; } } catch (e) {} try { renderChat(); } catch (e) {} st.botStarted = !!m.botStarted; st.srvBot = !!m.srvBot; st.botColor = m.botColor || null; st.botSecs = Number(m.botSecs) > 0 ? Number(m.botSecs) : 1.2; st.botBlunder = Number(m.botBlunder) || 0;
         var openNew = (m.opening ? m.opening.id : null) !== (st.opening ? st.opening.id : null);
