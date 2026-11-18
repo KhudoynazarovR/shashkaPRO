@@ -420,8 +420,9 @@
 
 ;(function(){
   if (window.__tvTheme) return; window.__tvTheme = 1;
-  var BG = '#1a1650', CARD = '#2a2470', DEEP = '#141040', BTN = '#352d86', LINE = '#4a42a0',
-      SH = '0 3px 0 #0e0b30', TX = '#ffffff', MU = '#bababa', GR = '#81b64c', GRS = '0 4px 0 #45753c';
+  // klassik (yog‘och) palitra: mavzu ranglari (theme.js) bo‘lsa — o‘shalar, bo‘lmasa to‘q jigarrang
+  var BG = 'var(--spBg2,#1b130d)', CARD = 'var(--spCard,rgba(30,22,16,.82))', CARDO = '#2a1f17', DEEP = 'rgba(0,0,0,.3)', BTN = 'rgba(255,255,255,.09)', LINE = 'rgba(255,255,255,.12)',
+      SH = '0 2px 0 rgba(0,0,0,.35)', TX = '#ffffff', MU = 'var(--spMute,#b9ab98)', GR = '#81b64c', GRS = '0 4px 0 #45753c';
   var O = 'html body #lbPanel.lbTMode ', I = 'html body #tvP ';
   var css =
   // ---------- tashqari: turnirlar ro'yxati va yaratish formasi ----------
@@ -465,9 +466,9 @@
   I + '.tvG{background:' + DEEP + '!important;border:0!important}' +
   I + '.tvG button{background:' + BTN + '!important;color:' + TX + '!important;border:0!important;box-shadow:' + SH + '!important}' +
   I + '.tvFoot{background:linear-gradient(180deg,transparent,' + BG + ' 35%)!important}' +
-  I + '#tvChatSheet{background:' + CARD + '!important;border-top:0!important}' +
+  I + '#tvChatSheet{background:' + CARDO + '!important;border-top:0!important}' +
   I + '#tvChatSheet .shX{color:' + MU + '!important}' +
-  'html body #tvRem{background:' + CARD + '!important;border:0!important;box-shadow:0 10px 30px rgba(0,0,0,.6)!important}' +
+  'html body #tvRem{background:' + CARDO + '!important;border:0!important;box-shadow:0 10px 30px rgba(0,0,0,.6)!important}' +
   'html body #tvRem .rT{color:' + GR + '!important}' +
   'html body #tvRem .rI,html body #tvRem .rX{color:' + MU + '!important}' +
   'html body #tvRem .rJ{background:' + GR + '!important;box-shadow:' + GRS + '!important}' +
@@ -479,7 +480,7 @@
   if (window.__tvClub3) return; window.__tvClub3 = 1;
   var s = document.createElement('style');
   s.textContent = '#lbClubBn{display:none!important}' +
-    '#tvClub3{position:fixed;z-index:2147480000;display:none;align-items:center;justify-content:center;border:0;border-radius:14px;background:#352d86;color:#fff;font-size:22px;box-shadow:0 3px 0 #0e0b30;padding:0;min-height:0;margin:0}' +
+    '#tvClub3{position:fixed;z-index:2147480000;display:none;align-items:center;justify-content:center;border:0;border-radius:14px;background:rgba(255,255,255,.09);color:#fff;font-size:22px;box-shadow:0 2px 0 rgba(0,0,0,.35);padding:0;min-height:0;margin:0}' +
     '#tvClub3.on{background:#81b64c;box-shadow:0 4px 0 #45753c}';
   document.body.appendChild(s);
   var b = document.createElement('button'); b.id = 'tvClub3'; b.type = 'button'; b.textContent = '👥'; b.title = 'Klublar';

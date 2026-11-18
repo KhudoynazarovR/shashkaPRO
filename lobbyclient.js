@@ -2590,8 +2590,9 @@ document.head.appendChild(_as); }
 
 ;(function(){
   if (window.__tvTheme) return; window.__tvTheme = 1;
-  var BG = '#1a1650', CARD = '#2a2470', DEEP = '#141040', BTN = '#352d86', LINE = '#4a42a0',
-      SH = '0 3px 0 #0e0b30', TX = '#ffffff', MU = '#bababa', GR = '#81b64c', GRS = '0 4px 0 #45753c';
+  // klassik (yog‘och) palitra: mavzu ranglari (theme.js) bo‘lsa — o‘shalar, bo‘lmasa to‘q jigarrang
+  var BG = 'var(--spBg2,#1b130d)', CARD = 'var(--spCard,rgba(30,22,16,.82))', CARDO = '#2a1f17', DEEP = 'rgba(0,0,0,.3)', BTN = 'rgba(255,255,255,.09)', LINE = 'rgba(255,255,255,.12)',
+      SH = '0 2px 0 rgba(0,0,0,.35)', TX = '#ffffff', MU = 'var(--spMute,#b9ab98)', GR = '#81b64c', GRS = '0 4px 0 #45753c';
   var O = 'html body #lbPanel.lbTMode ', I = 'html body #tvP ';
   var css =
   // ---------- tashqari: turnirlar ro'yxati va yaratish formasi ----------
@@ -2635,9 +2636,9 @@ document.head.appendChild(_as); }
   I + '.tvG{background:' + DEEP + '!important;border:0!important}' +
   I + '.tvG button{background:' + BTN + '!important;color:' + TX + '!important;border:0!important;box-shadow:' + SH + '!important}' +
   I + '.tvFoot{background:linear-gradient(180deg,transparent,' + BG + ' 35%)!important}' +
-  I + '#tvChatSheet{background:' + CARD + '!important;border-top:0!important}' +
+  I + '#tvChatSheet{background:' + CARDO + '!important;border-top:0!important}' +
   I + '#tvChatSheet .shX{color:' + MU + '!important}' +
-  'html body #tvRem{background:' + CARD + '!important;border:0!important;box-shadow:0 10px 30px rgba(0,0,0,.6)!important}' +
+  'html body #tvRem{background:' + CARDO + '!important;border:0!important;box-shadow:0 10px 30px rgba(0,0,0,.6)!important}' +
   'html body #tvRem .rT{color:' + GR + '!important}' +
   'html body #tvRem .rI,html body #tvRem .rX{color:' + MU + '!important}' +
   'html body #tvRem .rJ{background:' + GR + '!important;box-shadow:' + GRS + '!important}' +
@@ -2649,7 +2650,7 @@ document.head.appendChild(_as); }
   if (window.__tvClub3) return; window.__tvClub3 = 1;
   var s = document.createElement('style');
   s.textContent = '#lbClubBn{display:none!important}' +
-    '#tvClub3{position:fixed;z-index:2147480000;display:none;align-items:center;justify-content:center;border:0;border-radius:14px;background:#352d86;color:#fff;font-size:22px;box-shadow:0 3px 0 #0e0b30;padding:0;min-height:0;margin:0}' +
+    '#tvClub3{position:fixed;z-index:2147480000;display:none;align-items:center;justify-content:center;border:0;border-radius:14px;background:rgba(255,255,255,.09);color:#fff;font-size:22px;box-shadow:0 3px 0 #0e0b30;padding:0;min-height:0;margin:0}' +
     '#tvClub3.on{background:#81b64c;box-shadow:0 4px 0 #45753c}';
   document.body.appendChild(s);
   var b = document.createElement('button'); b.id = 'tvClub3'; b.type = 'button'; b.textContent = '👥'; b.title = 'Klublar';
@@ -2877,7 +2878,7 @@ document.head.appendChild(_as); }
   function g(id){ return document.getElementById(id); }
   function fmtC(ms){ ms = Math.max(0, ms); var s = Math.ceil(ms / 1000), m = Math.floor(s / 60), x = s % 60; return m + ':' + (x < 10 ? '0' : '') + x; }
 
-  var BG = '#1a1650', CARD = '#2a2470', DEEP = '#141040', BTN = '#352d86', LINE = '#4a42a0', GR = '#81b64c', MU = '#bababa';
+  var BG = 'var(--spBg2,#1b130d)', CARD = 'var(--spCard,rgba(30,22,16,.82))', DEEP = 'rgba(0,0,0,.3)', BTN = 'rgba(255,255,255,.09)', LINE = 'rgba(255,255,255,.12)', GR = '#81b64c', MU = 'var(--spMute,#b9ab98)';
   var css =
   '#tvTabs{position:sticky;top:0;z-index:3;display:flex;gap:6px;margin:0 -12px 12px;padding:8px 12px;background:' + BG + '}' +
   '#tvTabs button{flex:1;min-width:0;min-height:44px!important;padding:0 6px!important;border-radius:12px!important;background:' + CARD + '!important;color:' + MU + '!important;border:2px solid transparent!important;box-shadow:0 3px 0 #0e0b30!important;font-weight:800;font-size:13px;letter-spacing:.3px;display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap}' +
@@ -2908,7 +2909,7 @@ document.head.appendChild(_as); }
   '.tvLc .ln{display:flex;align-items:center;gap:4px;font-size:12px;padding:3px 2px;min-width:0}' +
   '.tvLc .ln span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
   '.tvLc .ln b{flex:none;font-variant-numeric:tabular-nums;font-size:12px;background:' + BTN + ';border-radius:5px;padding:1px 5px;color:' + MU + '}' +
-  '.tvLc .ln b.run{background:#fff;color:#141040}' +
+  '.tvLc .ln b.run{background:#fff;color:#1b130d}' +
   '.tvLc .ln b.low{background:#e04a4a;color:#fff}' +
   '.tvMb{display:grid;grid-template-columns:repeat(8,1fr);aspect-ratio:1;border-radius:6px;overflow:hidden;border:2px solid #302217}' +
   '.tvMb div{position:relative}' +
@@ -3010,7 +3011,7 @@ document.head.appendChild(_as); }
     X + '.rw{color:#57c26a!important}' + X + '.rd{color:#e5a93a!important}' + X + '.rl{color:#ee6a5a!important}' +
     X + '.lzCap2{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;opacity:.7}' +
     // --- raqib / vaqt paneli ---
-    X + '.lzBan{margin:10px 10px 4px;border-radius:14px;padding:11px 13px;background:linear-gradient(135deg,rgba(124,92,255,.55),rgba(91,63,208,.75))}' +
+    X + '.lzBan{margin:10px 10px 4px;border-radius:14px;padding:11px 13px;background:linear-gradient(135deg,rgba(129,182,76,.55),rgba(74,112,38,.8))}' +
     X + '.lzBan .bw{display:flex;align-items:center;gap:10px}' + X + '.lzBan .lzCap2+.bw{margin-top:8px}' +
     X + '.lzBan .tx{min-width:0;flex:1}' + X + '.lzBan .tx b{display:block;font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' + X + '.lzBan small{font-size:12px;opacity:.85}' +
     X + '.lzBan .cd{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums;flex:none}' +
@@ -3025,7 +3026,7 @@ document.head.appendChild(_as); }
     X + '.lzT td.dl{font-size:12px;font-weight:700;opacity:1}' +
     // --- sizning o'rningiz ---
     X + '#tvMeBar{position:sticky;bottom:8px;z-index:3;margin-top:10px}' +
-    X + '.lzMe{display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:14px;background:#2a2470;border:1px solid rgba(245,183,43,.55);box-shadow:0 6px 18px rgba(0,0,0,.4);cursor:pointer}' +
+    X + '.lzMe{display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:14px;background:rgba(30,22,16,.9);border:1px solid rgba(245,183,43,.55);box-shadow:0 6px 18px rgba(0,0,0,.4);cursor:pointer}' +
     X + '.lzMe .big{font-size:20px;font-weight:800}' + X + '.lzMe .mu{opacity:.65}' + X + '.lzMe .sp{margin-left:auto;text-align:right;font-size:12px;opacity:.95}' + X + '.lzMe .sp b{font-size:15px}' + X + '.lzMe .sp i{font-style:normal;font-weight:700}' +
     // --- chat ---
     X + '#tvChatSheet #tvMsgs{gap:10px!important;padding:4px 2px 8px!important}' +
@@ -3368,8 +3369,8 @@ document.head.appendChild(_as); }
     'html body #tvP #tvInfo{display:none!important}' +
     'html body #tvP #tvTabs{gap:10px!important;padding-top:12px!important}' +
     B + '{border:2px solid transparent!important;color:#fff!important;opacity:.72}' +
-    B + '[data-tab="p"]{background:#352d86!important;box-shadow:0 4px 0 #0e0b30!important}' +
-    B + '[data-tab="t"]{background:#0b0920!important;box-shadow:0 4px 0 #000!important}' +
+    B + '[data-tab="p"]{background:#3a2e24!important;box-shadow:0 4px 0 #1f1812!important}' +
+    B + '[data-tab="t"]{background:#120d09!important;box-shadow:0 4px 0 #000!important}' +
     B + '[data-tab="l"]{background:#b33430!important;box-shadow:0 4px 0 #7a201d!important}' +
     B + '.on{opacity:1;border-color:#fff!important;transform:translateY(-1px)}' +
     B + ' i{background:rgba(255,255,255,.18)!important}' +

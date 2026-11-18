@@ -324,7 +324,7 @@ function createLobby({ send, clients, roomsApi }) {
   function arenaStandings(t) {
     const arr = [...t.players.values()].map(p => ({
       uid: p.uid, name: p.name, score: p.score, buch: 0, withdrawn: p.withdrawn, bot: !!p.bot,
-      games: p.games, wins: p.wins, fire: p.streak >= ARENA_FIRE_AFTER, busy: p.busy, at: p.lastScoreAt,
+      games: p.games, wins: p.wins, fire: p.streak >= ARENA_FIRE_AFTER, busy: p.busy, at: p.lastScoreAt, on: !!(p.bot || connsOf(p.uid).length),   // on: ilovada (juftlash mumkin)
       elo: olyElo(p.uid), d: p.elo0 ? olyElo(p.uid) - p.elo0 : 0, sheet: (p.sheet || '').slice(-40), perf: arenaPerf(p), bh: bhN(p.uid)
     }));
     // lidraughts: ochko, teng bo'lsa turnirdagi samaradorlik (performance), keyin shu ochkoga birinchi yetgan

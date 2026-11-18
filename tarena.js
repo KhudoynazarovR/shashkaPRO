@@ -38,58 +38,58 @@
   }
 
   var css = '' +
-    '#taP{position:fixed;inset:0;z-index:2147483050;display:none;flex-direction:column;background:#161244;color:#ecebff;font-family:-apple-system,system-ui,Roboto,"Segoe UI","Noto Sans",Arial,sans-serif;font-variant-numeric:tabular-nums}' +
+    '#taP{position:fixed;inset:0;z-index:2147483050;display:none;flex-direction:column;background:var(--spBg2,#1b130d);color:#f2ede6;font-family:-apple-system,system-ui,Roboto,"Segoe UI","Noto Sans",Arial,sans-serif;font-variant-numeric:tabular-nums}' +
     '#taP.on{display:flex}' +
     'body.taOn #lbPanel{visibility:hidden!important}' +
     'body.taOn #lbToasts{z-index:2147483100!important}' +   // «yangi o'yin — 3 soniyada o'tasiz» xabari arena ustida ko'rinsin
-    '#taP .taTop{display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 10px) 12px 10px;background:#1e1856;border-bottom:1px solid #2d2775}' +
-    '#taP .taBk{border:0;background:#2d2775;color:#fff;border-radius:12px;width:40px;height:40px;font-size:18px;flex:none}' +
-    '#taP .taTt{flex:1;min-width:0}#taP .taTt b{display:block;font-size:19px;color:#f5b72b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
-    '#taP .taTt small{display:block;font-size:12px;color:#a9a4d8;margin-top:2px}' +
-    '#taP .taCd{font-size:26px;font-weight:700;color:#fff;flex:none}' +
+    '#taP .taTop{display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 10px) 12px 10px;background:rgba(18,13,9,.84);border-bottom:1px solid rgba(255,255,255,.09)}' +
+    '#taP .taBk{border:0;background:rgba(255,255,255,.09);color:#fff;border-radius:12px;width:40px;height:40px;font-size:18px;flex:none}' +
+    '#taP .taTt{flex:1;min-width:0}#taP .taTt b{display:block;font-size:18px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+    '#taP .taTt small{display:block;font-size:12px;color:var(--spMute,#b9ab98);margin-top:2px}' +
+    '#taP .taCd{font-size:20px;font-weight:800;color:#fff;flex:none}#taP .taCd:not(:empty){background:#5d8a2f;border-radius:10px;padding:5px 10px;box-shadow:inset 0 -2px 0 rgba(0,0,0,.25)}' +
     '#taP .taSc{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 calc(env(safe-area-inset-bottom,0px) + 18px)}' +
-    '#taP .taBar{display:flex;align-items:center;gap:4px;padding:8px 8px;background:#1e1856;border-bottom:1px solid #2d2775;position:sticky;top:0;z-index:2}' +
-    '#taP .taBar button.n{border:0;background:transparent;color:#cfcaff;font-size:17px;padding:6px 7px;border-radius:8px;flex:none}#taP .taBar button.n:disabled{opacity:.3}' +
-    '#taP .taPg{font-size:14px;color:#cfcaff;min-width:0;flex:1;text-align:center;white-space:nowrap}' +
-    '#taP .taJ{margin-left:auto;flex:none;white-space:nowrap;border:0;border-radius:10px;padding:9px 12px;font-weight:800;font-size:14px;letter-spacing:.3px;color:#fff;background:#3fa34d}' +
-    '#taP .taJ.p{background:#4a4390}#taP .taJ.s{background:#d97706}#taP .taJ.d{background:#c93b3b}' +
-    '#taP #taMenu{flex-direction:column;gap:8px;padding:10px 12px;background:#1e1856;border-bottom:1px solid #2d2775}' +
+    '#taP .taBar{display:flex;align-items:center;gap:4px;padding:8px 8px;background:rgba(18,13,9,.84);border-bottom:1px solid rgba(255,255,255,.09);position:sticky;top:0;z-index:2}' +
+    '#taP .taBar button.n{border:0;background:transparent;color:#d6ccbd;font-size:17px;padding:6px 7px;border-radius:8px;flex:none}#taP .taBar button.n:disabled{opacity:.3}' +
+    '#taP .taPg{font-size:14px;color:#d6ccbd;min-width:0;flex:1;text-align:center;white-space:nowrap}' +
+    '#taP .taJ{margin-left:auto;flex:none;white-space:nowrap;border:0;border-radius:10px;padding:9px 12px;font-weight:800;font-size:14px;letter-spacing:.3px;color:#fff;background:#81b64c;box-shadow:0 3px 0 #5a8a2e}' +
+    '#taP .taJ.p{background:#3a2e24;box-shadow:0 3px 0 #1f1812}#taP .taJ.s{background:#d97706;box-shadow:0 3px 0 #92400e}#taP .taJ.d{background:#c93b3b;box-shadow:0 3px 0 #7f1d1d}' +
+    '#taP #taMenu{flex-direction:column;gap:8px;padding:10px 12px;background:rgba(18,13,9,.84);border-bottom:1px solid rgba(255,255,255,.09)}' +
     '#taP #taJw.taJwIn{display:flex;gap:6px;margin-left:auto;flex:none;align-items:center}#taP #taJw .taJ{margin-left:0;flex:none;padding:7px 11px;font-size:13px;white-space:nowrap;text-align:center}' +
     '#taP #taMenu[style*="flex"]{display:flex!important}#taP #taMenu .taJ{margin-left:0;width:100%;text-align:left}' +
-    '#taP .taRow{display:grid;grid-template-columns:30px 28px minmax(0,1fr) auto 48px;align-items:center;gap:6px;padding:9px 10px;border-bottom:1px solid #241e63}' +
-    '#taP .taRow:nth-child(even){background:#1a1550}#taP .taRow.me{background:#2c2470;box-shadow:inset 3px 0 0 #f5b72b}' +
-    '#taP .taRk{font-size:14px;color:#a9a4d8;text-align:center}#taP .taRk.ps{color:#8f8bc4;font-weight:800;letter-spacing:-1px}' +
-    '#taP .taAv{width:28px;height:28px;border-radius:50%;overflow:hidden;flex:none;display:inline-flex;align-items:center;justify-content:center;background:#3d2f8f;color:#fff;font-weight:800;font-size:13px;margin:0 8px 0 2px}#taP .taAv img{width:100%;height:100%;object-fit:cover;display:block}#taP .taAv i{font-style:normal}' +
+    '#taP #taRows{margin:10px 10px 0;border-radius:14px;overflow:hidden;background:var(--spCard,rgba(30,22,16,.8));border:1px solid var(--spLine,rgba(255,255,255,.08))}#taP .taTh{display:grid;grid-template-columns:30px minmax(0,1fr) auto 48px;gap:6px;padding:8px 10px;font-size:11px;letter-spacing:1px;font-weight:800;color:var(--spMute2,#a89886);text-transform:uppercase;background:rgba(0,0,0,.2);border-bottom:1px solid rgba(255,255,255,.08)}#taP .taTh span:first-child{text-align:center}#taP .taTh span:last-child{text-align:right}#taP .taRow{display:grid;grid-template-columns:30px 28px minmax(0,1fr) auto 48px;align-items:center;gap:6px;padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.06)}#taP .taRow:last-child{border-bottom:0}#taP .taRk.m1,#taP .taRk.m2,#taP .taRk.m3{width:24px;height:24px;line-height:24px;border-radius:50%;color:#2b1d0e;font-weight:900;margin:0 auto}#taP .taRk.m1{background:linear-gradient(145deg,#fde68a,#d4a017)}#taP .taRk.m2{background:linear-gradient(145deg,#f1f5f9,#94a3b8)}#taP .taRk.m3{background:linear-gradient(145deg,#f3c39a,#b06a35)}#taP .taRow.np{opacity:.55}#taP .taNm small .np{margin-left:4px}#taP .taWt{margin:10px 10px 0;padding:10px 12px;border-radius:12px;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.08);font-size:13.5px;line-height:1.45;color:#e2d9cc}#taP .taWt b{color:#fff}' +
+    '#taP .taRow:nth-child(even){background:rgba(255,255,255,.025)}#taP .taRow.me{background:rgba(129,182,76,.14);box-shadow:inset 3px 0 0 #81b64c}' +
+    '#taP .taRk{font-size:14px;color:var(--spMute,#b9ab98);text-align:center}#taP .taRk.ps{color:#9c8f80;font-weight:800;letter-spacing:-1px}' +
+    '#taP .taAv{width:28px;height:28px;border-radius:50%;overflow:hidden;flex:none;display:inline-flex;align-items:center;justify-content:center;background:#4a3b2e;color:#fff;font-weight:800;font-size:13px;margin:0 8px 0 2px}#taP .taAv img{width:100%;height:100%;object-fit:cover;display:block}#taP .taAv i{font-style:normal}' +
     '#taP .taNm{min-width:0}#taP .taNm b{display:block;font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
-    '#taP .taNm small{font-size:12px;color:#a9a4d8}#taP .taNm small .u{color:#6cc04a}#taP .taNm small .dn{color:#e5534b}#taP .taNm small .pl{color:#5fb3ff;margin-left:4px}' +
+    '#taP .taNm small{font-size:12px;color:var(--spMute,#b9ab98)}#taP .taNm small .u{color:#6cc04a}#taP .taNm small .dn{color:#e5534b}#taP .taNm small .pl{color:#5fb3ff;margin-left:4px}' +
     '#taP .taSh{max-width:44vw;overflow:hidden;white-space:nowrap;direction:rtl;text-align:left;font-size:15px;letter-spacing:1px}' +
-    '#taP .taSh span{direction:ltr;unicode-bidi:bidi-override}#taP .taSh i{font-style:normal}#taP .taSh i.w{color:#9fd36f}#taP .taSh i.d{color:#d6d3f5}#taP .taSh i.z{color:#7c78ad}#taP .taSh i.f{color:#ff9b2f;font-weight:800}' +
+    '#taP .taSh span{direction:ltr;unicode-bidi:bidi-override}#taP .taSh i{font-style:normal}#taP .taSh i.w{color:#9fd36f}#taP .taSh i.d{color:#e2d9cc}#taP .taSh i.z{color:#7d6f60}#taP .taSh i.f{color:#ff9b2f;font-weight:800}' +
     '#taP .taPt{text-align:right;font-weight:800;font-size:16px}#taP .taPt.f{color:#ff9b2f}' +
-    '#taP .taEm{padding:22px 14px;text-align:center;color:#a9a4d8}' +
-    '#taP .taCard{margin:12px 10px 0;background:#1e1856;border:1px solid #2d2775;border-radius:14px;padding:12px 14px}' +
-    '#taP .taCard h4{margin:0 0 8px;font-size:13px;letter-spacing:.6px;color:#a9a4d8;font-weight:700;text-transform:uppercase}' +
+    '#taP .taEm{padding:22px 14px;text-align:center;color:var(--spMute,#b9ab98)}' +
+    '#taP .taCard{margin:12px 10px 0;background:rgba(18,13,9,.84);border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:12px 14px}' +
+    '#taP .taCard h4{margin:0 0 8px;font-size:13px;letter-spacing:.6px;color:var(--spMute,#b9ab98);font-weight:700;text-transform:uppercase}' +
     '#taP .taInf{display:flex;gap:12px;align-items:center}#taP .taInf .ic{font-size:30px}#taP .taInf div{font-size:15px;line-height:1.45}' +
-    '#taP .taLn{display:flex;gap:10px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid #2d2775;font-size:14px}' +
+    '#taP .taLn{display:block;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.09);font-size:14px;line-height:1.5}' +
     '#taP .taLn.bad{color:#f87171}#taP .taLn.ok{color:#86efac}' +
     '#taP .taPod{display:flex;align-items:flex-end;justify-content:center;gap:8px;margin:14px 10px 4px}' +
-    '#taP .taPod div{flex:1;max-width:120px;text-align:center;border-radius:12px 12px 4px 4px;padding:10px 6px;background:#2a2470}' +
+    '#taP .taPod div{flex:1;max-width:120px;text-align:center;border-radius:12px 12px 4px 4px;padding:10px 6px;background:rgba(30,22,16,.85)}' +
     '#taP .taPod div b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#taP .taPod div em{font-style:normal;font-size:26px;display:block}#taP .taPod div small{color:#f5b72b;font-weight:800}' +
-    '#taP .taPod .p1{padding-top:22px;background:linear-gradient(180deg,#6b5310,#2a2470)}' +
+    '#taP .taPod .p1{padding-top:22px;background:linear-gradient(180deg,#8a6a12,rgba(30,22,16,.85))}' +
     '#taP .taFt{display:grid;grid-template-columns:repeat(8,1fr);width:100%;max-width:360px;margin:6px auto;border:4px solid #7a4016;border-radius:4px;box-sizing:border-box}' +
     '#taP .taFt i{aspect-ratio:1;display:flex;align-items:center;justify-content:center}#taP .taFt i.l{background:#f3bb86}#taP .taFt i.d{background:#7b2f13}' +
     '#taP .taFt u{display:block;width:80%;height:80%;border-radius:50%;box-shadow:inset 0 -3px 0 rgba(0,0,0,.35),0 1px 2px #0008;position:relative}' +
     '#taP .taFt u.w{background:#efefeb}#taP .taFt u.b{background:#232327}#taP .taFt u.k::after{content:"K";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:70%;color:#f5b72b}' +
     '#taP .taFp{display:flex;justify-content:space-between;align-items:center;font-size:14px;max-width:360px;margin:0 auto}' +
-    '#taP .taFp b{font-weight:600}#taP .taFp small{color:#a9a4d8}#taP .taFp .c{background:#0f0c33;border-radius:6px;padding:2px 8px;font-weight:700}' +
-    '#taP .taW{display:block;width:100%;max-width:360px;margin:10px auto 0;border:0;border-radius:10px;padding:10px;background:#3b3394;color:#fff;font-weight:700;font-size:14px}' +
-    '#taP .taTg{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #2d2775}' +
+    '#taP .taFp b{font-weight:600}#taP .taFp small{color:var(--spMute,#b9ab98)}#taP .taFp .c{background:rgba(0,0,0,.35);border-radius:6px;padding:2px 8px;font-weight:700}' +
+    '#taP .taW{display:block;width:100%;max-width:360px;margin:10px auto 0;border:0;border-radius:10px;padding:10px;background:rgba(255,255,255,.1);color:#fff;font-weight:700;font-size:14px}' +
+    '#taP .taTg{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.09)}' +
     '#taP .taTg:last-child{border-bottom:0}#taP .taTg div{font-size:14px;line-height:1.5;min-width:0}#taP .taTg div span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
-    '#taP .taTg small{color:#a9a4d8}#taP .taTg .rk{display:inline-block;background:#2d2775;border-radius:5px;padding:0 5px;font-size:12px;margin-right:4px;color:#cfcaff}' +
-    '#taP .taTg button{border:0;border-radius:9px;background:#3b3394;color:#fff;padding:8px 10px;font-size:13px}' +
-    '#taP .cHd{display:flex;align-items:center;justify-content:space-between}#taP .cSw{position:relative;display:inline-block;width:44px;height:24px;margin:0;flex:none}#taP .cSw input{opacity:0;width:0;height:0;position:absolute}#taP .cSw i{position:absolute;inset:0;background:#3a3380;border-radius:999px;transition:.2s}#taP .cSw i:before{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}#taP .cSw input:checked+i{background:#3fa34d}#taP .cSw input:checked+i:before{transform:translateX(20px)}#taP .cFt{margin-top:10px;padding-top:8px;border-top:1px solid #2d2775;color:#8f89c4;font-size:12px}#taP .cX{float:right;border:0;border-radius:8px;background:#2d2775;color:#cfcaff;font-size:12px;padding:4px 9px;font-weight:700}#taP .cm{display:flex;gap:8px;margin:0 0 10px;align-items:flex-start}#taP .cm .taAv{margin:0;width:30px;height:30px;font-size:14px}#taP .cb{min-width:0;flex:1}#taP .cb>b{font-size:13px;color:#c4b5fd}#taP .cm.me .cb>b{color:#f5b72b}#taP .cq{border-left:3px solid #6d5fe0;padding:2px 8px;margin:3px 0;font-size:12px;color:#b9b3e6;background:#241e63;border-radius:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#taP .ct{font-size:14px;line-height:1.4;word-break:break-word;color:#f2f2f7}#taP .cA{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}#taP .cA button{border:0;background:transparent;color:#9b95d0;font-size:12px;padding:3px 6px;border-radius:6px}#taP .cA button.on{color:#f5b72b;font-weight:700}#taP .cA button[data-act=del],#taP .cA button[data-act=blk]{color:#f08a80}#taP .cRp{display:flex;align-items:center;gap:8px;background:#241e63;border-radius:8px;padding:6px 10px;font-size:12px;color:#cfcaff;margin:6px 0}#taP .cRp span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#taP .cRp button{border:0;background:transparent;color:#cfcaff;font-size:16px}#taP .ce{color:#a9a4d8;margin:0}#taP .taCard.cols .taCh,#taP .taCard.cols .taCi,#taP .taCard.cols #taRp{display:none}#taP .taCard.cols #taChX{}#taP .taCh{max-height:340px;overflow-y:auto;font-size:14px;line-height:1.45}#taP .taCh p{margin:0 0 5px}#taP .taCh p b{color:#c4b5fd;margin-right:5px}#taP .taCh p.me b{color:#f5b72b}' +
-    '#taP .taCi{display:flex;gap:6px;margin-top:8px}#taP .taCi input{flex:1;min-width:0;border:1px solid #2d2775;background:#120e3a;color:#fff;border-radius:10px;padding:10px;font-size:15px}' +
-    '#taP .taCi button{border:0;border-radius:10px;background:#3fa34d;color:#fff;padding:0 14px;font-size:16px}' +
-    '#taP .taRl{font-size:14px;line-height:1.55;color:#d6d3f5}#taP .taRl p{margin:0 0 7px}#taP details summary{cursor:pointer;font-weight:700;color:#cfcaff;list-style:none}';
+    '#taP .taTg small{color:var(--spMute,#b9ab98)}#taP .taTg .rk{display:inline-block;background:rgba(255,255,255,.09);border-radius:5px;padding:0 5px;font-size:12px;margin-right:4px;color:#d6ccbd}' +
+    '#taP .taTg button{border:0;border-radius:9px;background:rgba(255,255,255,.1);color:#fff;padding:8px 10px;font-size:13px}' +
+    '#taP .cHd{display:flex;align-items:center;justify-content:space-between}#taP .cSw{position:relative;display:inline-block;width:44px;height:24px;margin:0;flex:none}#taP .cSw input{opacity:0;width:0;height:0;position:absolute}#taP .cSw i{position:absolute;inset:0;background:rgba(255,255,255,.14);border-radius:999px;transition:.2s}#taP .cSw i:before{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}#taP .cSw input:checked+i{background:#81b64c}#taP .cSw input:checked+i:before{transform:translateX(20px)}#taP .cFt{margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,.09);color:#9c8f80;font-size:12px}#taP .cX{float:right;border:0;border-radius:8px;background:rgba(255,255,255,.09);color:#d6ccbd;font-size:12px;padding:4px 9px;font-weight:700}#taP .cm{display:flex;gap:8px;margin:0 0 10px;align-items:flex-start}#taP .cm .taAv{margin:0;width:30px;height:30px;font-size:14px}#taP .cb{min-width:0;flex:1}#taP .cb>b{font-size:13px;color:#e9c46a}#taP .cm.me .cb>b{color:#f5b72b}#taP .cq{border-left:3px solid #81b64c;padding:2px 8px;margin:3px 0;font-size:12px;color:#cdbfae;background:rgba(255,255,255,.06);border-radius:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#taP .ct{font-size:14px;line-height:1.4;word-break:break-word;color:#f2f2f7}#taP .cA{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}#taP .cA button{border:0;background:transparent;color:#b9ab98;font-size:12px;padding:3px 6px;border-radius:6px}#taP .cA button.on{color:#f5b72b;font-weight:700}#taP .cA button[data-act=del],#taP .cA button[data-act=blk]{color:#f08a80}#taP .cRp{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border-radius:8px;padding:6px 10px;font-size:12px;color:#d6ccbd;margin:6px 0}#taP .cRp span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#taP .cRp button{border:0;background:transparent;color:#d6ccbd;font-size:16px}#taP .ce{color:var(--spMute,#b9ab98);margin:0}#taP .taCard.cols .taCh,#taP .taCard.cols .taCi,#taP .taCard.cols #taRp{display:none}#taP .taCard.cols #taChX{}#taP .taCh{max-height:340px;overflow-y:auto;font-size:14px;line-height:1.45}#taP .taCh p{margin:0 0 5px}#taP .taCh p b{color:#e9c46a;margin-right:5px}#taP .taCh p.me b{color:#f5b72b}' +
+    '#taP .taCi{display:flex;gap:6px;margin-top:8px}#taP .taCi input{flex:1;min-width:0;border:1px solid rgba(255,255,255,.09);background:rgba(0,0,0,.3);color:#fff;border-radius:10px;padding:10px;font-size:15px}' +
+    '#taP .taCi button{border:0;border-radius:10px;background:#81b64c;color:#fff;padding:0 14px;font-size:16px}' +
+    '#taP .taRl{font-size:14px;line-height:1.55;color:#e2d9cc}#taP .taRl p{margin:0 0 7px}#taP details summary{cursor:pointer;font-weight:700;color:#d6ccbd;list-style:none}';
   var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
 
   var P = null, cur = null, page = -1, timer = null, sigMain = '', sigChat = '', sigFeat = '';
@@ -108,7 +108,7 @@
     P.innerHTML = '<div class="taTop"><button class="taBk" id="taBk">←</button><div class="taTt"><b id="taNm"></b><small id="taSub"></small></div><div class="taCd" id="taCd"></div></div>' +
       '<div class="taSc" id="taSc"><div id="taPod"></div><div id="taClubs"></div>' +
       '<div class="taBar"><button class="n" data-a="me" title="Meni top">🔍</button><button class="n" data-a="first">⏮</button><button class="n" data-a="prev">◀</button><span class="taPg" id="taPg"></span><button class="n" data-a="next">▶</button><button class="n" data-a="last">⏭</button><span id="taJw" class="taJwIn"></span></div><div id="taMenu" style="display:none"></div>' +
-      '<div id="taRows"></div>' +
+      '<div id="taWt"></div><div id="taRows"></div>' +
       '<div class="taCard" id="taInfo"></div>' +
       '<div class="taCard"><details><summary>ℹ️ Arena qoidalari</summary><div class="taRl" style="margin-top:10px">' + RULES + '</div></details></div>' +
       '<div class="taCard" id="taFeatC" style="display:none"><h4>📺 Yetakchi o‘yin</h4><div id="taFeat"></div></div>' +
@@ -168,7 +168,7 @@
     var rows = (m.list || []).map(function (x) {
       return '<label style="display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #0001"><input type="checkbox" data-id="' + annEsc(x.id) + '"' + (x.sent ? ' disabled' : '') + '><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + annEsc(x.title) + '</span>' + (x.sent ? '<small>yuborilgan</small>' : '') + '</label>';
     }).join('') || '<div>Guruhlar topilmadi. Bot guruhda admin bo‘lsin.</div>';
-    ov.innerHTML = '<div style="background:#1e1a4d;color:#f2f2f7;width:100%;max-width:460px;border-radius:16px 16px 0 0;padding:16px 16px calc(96px + env(safe-area-inset-bottom,0px));box-sizing:border-box;max-height:80vh;display:flex;flex-direction:column;gap:10px"><b style="font-size:16px">E’lonni qayerga yuborish?</b><div style="flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;color:#f2f2f7">' + rows + '</div><div style="display:flex;gap:8px;flex:none"><button id="taAnnGo" class="taJ s" style="flex:1;min-height:44px">Yuborish</button><button id="taAnnNo" class="taJ" style="flex:1;min-height:44px">Yopish</button></div></div>';
+    ov.innerHTML = '<div style="background:rgba(18,13,9,.92);color:#f2f2f7;width:100%;max-width:460px;border-radius:16px 16px 0 0;padding:16px 16px calc(96px + env(safe-area-inset-bottom,0px));box-sizing:border-box;max-height:80vh;display:flex;flex-direction:column;gap:10px"><b style="font-size:16px">E’lonni qayerga yuborish?</b><div style="flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;color:#f2f2f7">' + rows + '</div><div style="display:flex;gap:8px;flex:none"><button id="taAnnGo" class="taJ s" style="flex:1;min-height:44px">Yuborish</button><button id="taAnnNo" class="taJ" style="flex:1;min-height:44px">Yopish</button></div></div>';
     ov.querySelectorAll('label').forEach(function (l) { l.style.color = '#f2f2f7'; l.style.borderBottom = '1px solid rgba(255,255,255,.12)'; });
     ov.querySelectorAll('small').forEach(function (s) { s.style.color = '#9fd8ad'; });
     document.body.appendChild(ov);
@@ -183,7 +183,8 @@
   var chReply = null;
   function renderReply() { var r = g('taRp'); if (!r) return; if (!chReply) { r.style.display = 'none'; r.innerHTML = ''; return; } r.style.display = 'flex'; r.innerHTML = '<span>Javob: ' + nm(chReply.name) + ' — ' + esc(chReply.text) + '</span><button>×</button>'; }
   function chat() { var v = g('taTx').value.trim(); if (!v || !cur) return; var o = { type: 'lbTChat', tid: cur, text: v }; if (chReply) o.re = chReply.id; send(o); g('taTx').value = ''; chReply = null; renderReply(); }
-  function myIdx(t) { var u = me(), ps = t.players || []; for (var i = 0; i < ps.length; i++) if (String(ps[i].uid) === u) return i; return -1; }
+  function plist(t) { var ps = t.players || []; if (t.status !== 'finished') return ps; return ps.filter(function (p) { return p.games > 0; }).concat(ps.filter(function (p) { return !(p.games > 0); })); }   // tugaganda: o‘ynaganlar oldin, o‘ynamaganlar o‘rinsiz
+  function myIdx(t) { var u = me(), ps = plist(t); for (var i = 0; i < ps.length; i++) if (String(ps[i].uid) === u) return i; return -1; }
 
   function render() {
     if (!P || !cur) return;
@@ -195,13 +196,13 @@
     else if (t.status === 'running') { if (t.ending) { sub = '⌛ Yakunlanmoqda — o‘yinlar tugashi kutilmoqda'; } else { cd = fmt(t.endAt - now); sub = 'Tugashiga'; } }
     else sub = '🏁 Arena tugadi';
     g('taCd').textContent = cd; g('taSub').textContent = sub + ' · ' + (t.players || []).length + ' o‘yinchi';
-    var sig = JSON.stringify([t.status, t.ending, t.players, t.boards, page, me(), t.minGames, t.prize, t.clubs]);
+    var sig = JSON.stringify([t.status, t.ending, t.players, t.boards, page, me(), t.minGames, t.prize, t.clubs, t.awards, !!(t.endAt && t.endAt - now < 60000)]);
     if (sig !== sigMain) { sigMain = sig; renderMain(t); }
     var cs = JSON.stringify(t.chat || []); if (cs !== sigChat) { sigChat = cs; renderChat(t); }
   }
 
   function renderMain(t) {
-    var ps = t.players || [], u = me(), mi = myIdx(t), mp = mi >= 0 ? ps[mi] : null, n = Math.max(1, Math.ceil(ps.length / PER));
+    var ps = plist(t), fin = t.status === 'finished', u = me(), mi = myIdx(t), mp = mi >= 0 ? ps[mi] : null, n = Math.max(1, Math.ceil(ps.length / PER));
     if (page < 0) page = mi >= 0 ? Math.floor(mi / PER) : 0;
     if (page > n - 1) page = n - 1;
     // podium
@@ -219,13 +220,13 @@
     if (cl.length) {
       var md2 = ['🥇', '🥈', '🥉'];
       ch = '<div class="taCard" style="margin-top:10px"><h4>👥 Klublar jangi · eng yaxshi 5 o‘yinchi</h4>' + cl.map(function (c, i) {
-        return '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #2d2775"><span style="width:26px;text-align:center">' + (md2[i] || (i + 1)) + '</span><b style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + nm(c.name) + '</b><small style="color:#a9a4d8">' + (c.players || 0) + ' o‘yinchi</small><b style="min-width:40px;text-align:right;color:#f5b72b">' + (c.score || 0) + '</b></div>';
+        return '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.09)"><span style="width:26px;text-align:center">' + (md2[i] || (i + 1)) + '</span><b style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + nm(c.name) + '</b><small style="color:var(--spMute,#b9ab98)">' + (c.players || 0) + ' o‘yinchi</small><b style="min-width:40px;text-align:right;color:#f5b72b">' + (c.score || 0) + '</b></div>';
       }).join('') + '</div>';
     }
     if (t.flag && (t.regs || []).length) {   // 🏳️ viloyatlar hisobi: eng yaxshi 5 o'yinchi
       var R = t.regs, mx = Math.max(1, R[0].score || 1), md3 = ['🥇', '🥈', '🥉'];
       ch = '<div class="taCard" style="margin-top:10px"><h4>🗺 Viloyatlar hisobi · eng yaxshi 5 o‘yinchi</h4>' + R.slice(0, 14).map(function (r, i) {
-        return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #2d2775;font-size:14px"><span style="width:24px;text-align:center">' + (md3[i] || (i + 1)) + '</span>' + bdg(r.k, r.c) +
+        return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.09);font-size:14px"><span style="width:24px;text-align:center">' + (md3[i] || (i + 1)) + '</span>' + bdg(r.k, r.c) +
           '<span style="width:96px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(r.r) + '</span><span style="flex:1;height:9px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden"><i style="display:block;height:100%;width:' + Math.round((r.score || 0) * 100 / mx) + '%;background:' + r.c + '"></i></span>' +
           '<b style="min-width:30px;text-align:right">' + r.score + '</b><small style="opacity:.55;min-width:30px;text-align:right">' + r.n + ' ki.</small></div>';
       }).join('') + '</div>' + ch;
@@ -235,6 +236,7 @@
     g('taPg').textContent = ps.length ? (page * PER + 1) + '-' + Math.min(ps.length, page * PER + PER) + ' / ' + ps.length : '0';
     var bs = P.querySelectorAll('.taBar button.n');
     bs[1].disabled = bs[2].disabled = page <= 0; bs[3].disabled = bs[4].disabled = page >= n - 1; bs[0].disabled = mi < 0;
+    for (var bi = 0; bi < bs.length; bi++) bs[bi].style.display = n > 1 ? '' : 'none';
     var adm = '', jb = '';
     if (t.status !== 'finished' && !t.ending) {
       if (t.status === 'reg' && !t.startAt && String(t.creatorUid) === u) adm += '<button class="taJ s" data-a="start">▶ BOSHLASH</button>';
@@ -249,18 +251,33 @@
     g('taMenu').innerHTML = adm;
     // jadval
     var rows = ps.slice(page * PER, page * PER + PER).map(function (p, k) {
-      var i = page * PER + k, d = Number(p.d) || 0;
+      var i = page * PER + k, pl = p.games > 0, d = pl ? Number(p.d) || 0 : 0;   // reyting o‘zgarishi — faqat arenada o‘ynaganda
       var dh = d > 0 ? ' <span class="u">↗' + d + '</span>' : d < 0 ? ' <span class="dn">↘' + (-d) + '</span>' : '';
-      return '<div class="taRow' + (String(p.uid) === u ? ' me' : '') + '">' +
-        '<div class="taRk' + (p.withdrawn ? ' ps' : '') + '">' + (p.withdrawn ? 'II' : (i + 1)) + '</div>' + avT(p) +
-        '<div class="taNm"><b>' + (p.rg ? bdg(p.rg, p.rc, p.rn) : '') + nm(p.name) + (p.bh ? ' <img src="/img/bhunt_s.png" title="Botlar ovchisi ×' + p.bh + '" style="width:18px;height:20px;vertical-align:-3px">' : '') + '</b><small>' + (p.elo || '') + dh + (p.busy ? '<span class="pl">⚔ o‘ynamoqda</span>' : '') + '</small></div>' +
+      var npl = fin && !pl, rk = npl ? '–' : (!fin && p.withdrawn) ? 'II' : (i + 1), md = !npl && !(!fin && p.withdrawn) && i < 3 && p.score > 0 ? ' m' + (i + 1) : '';
+      return '<div class="taRow' + (String(p.uid) === u ? ' me' : '') + (npl ? ' np' : '') + '">' +
+        '<div class="taRk' + (!fin && p.withdrawn ? ' ps' : '') + md + '">' + rk + '</div>' + avT(p) +
+        '<div class="taNm"><b>' + (p.rg ? bdg(p.rg, p.rc, p.rn) : '') + nm(p.name) + (p.bh ? ' <img src="/img/bhunt_s.png" title="Botlar ovchisi ×' + p.bh + '" style="width:18px;height:20px;vertical-align:-3px">' : '') + '</b><small>' + (p.elo || '') + dh + (p.busy ? '<span class="pl">⚔ o‘ynamoqda</span>' : '') + (npl ? '<span class="np">· o‘ynamadi</span>' : '') + '</small></div>' +
         '<div class="taSh"><span>' + sheetHtml(p.sheet) + '</span></div>' +
         '<div class="taPt' + (p.fire ? ' f' : '') + '">' + (p.fire ? '🔥' : '') + p.score + '</div></div>';
     }).join('');
-    g('taRows').innerHTML = rows || '<div class="taEm">Hali hech kim qo‘shilmadi. Birinchi bo‘ling!</div>';
+    g('taRows').innerHTML = rows ? '<div class="taTh"><span>#</span><span>O‘yinchi</span><span>Natijalar</span><span>Ochko</span></div>' + rows : '<div class="taEm">Hali hech kim qo‘shilmadi. Birinchi bo‘ling!</div>';
+    // ⏳ kutayotgan o‘yinchiga holat: raqib bormi (arena faqat ilovada turgan va pauzada bo‘lmaganlarni juftlaydi)
+    var wt = '';
+    if (t.status === 'running' && mp && !mp.withdrawn && !mp.busy) {
+      var free = ps.filter(function (p) { return String(p.uid) !== u && !p.withdrawn && !p.busy && p.on; }).length;
+      if (t.ending || (t.endAt && t.endAt - Date.now() < 60000)) wt = '⌛ <b>Oxirgi daqiqa</b> — yangi o‘yinlar boshlanmaydi.';
+      else if (!free) wt = '⏳ <b>Raqib kutilmoqda.</b> Hozir bo‘sh raqib yo‘q: qolganlar o‘ynayapti, pauzada yoki ilovada emas. Kimdir bo‘shashi bilan o‘yin o‘zi boshlanadi — sahifani yopmang.';
+      else wt = '⏳ <b>Raqib qidirilmoqda…</b> Bir necha soniyada o‘yin boshlanadi.';
+    }
+    g('taWt').innerHTML = wt ? '<div class="taWt">' + wt + '</div>' : '';
     // ma'lumot
     var tc = tcInfo(t.tc), inf = '<div class="taInf"><span class="ic">' + tc.icon + '</span><div><b>' + tc.txt + '</b> · ' + tc.name + ' · ' + (t.durationMin || 0) + ' daq<br>' + (t.rated === false ? '🤝 Reytingsiz' : '⭐ Reytingli') + ' · Arena' + (t.flag ? ' · 🏳️ Bayroqli' : '') + (t.berserk ? ' · ⚡ Berserk' : '') + (t.pos === 'idf' ? ' · IDF pozitsiyalar' : '') + '</div></div>' + (t.desc ? '<div class="taLn">📝 ' + esc(t.desc) + '</div>' : '');
-    if (t.prize > 0) inf += '<div class="taLn">🏆 Mukofot jamg‘armasi: <b>' + t.prize + '</b> tanga · ' + (t.places || 3) + ' o‘ringa</div>';
+    if (t.prize > 0) {
+      var aw = (t.awards || []).filter(function (x) { return x.amt > 0; }), mdl = ['🥇', '🥈', '🥉'];
+      if (!fin) inf += '<div class="taLn">🏆 Mukofot jamg‘armasi: <b>' + t.prize + '</b> tanga · ' + (t.places || 3) + ' o‘ringa</div>';
+      else if (aw.length) inf += '<div class="taLn">🏆 Mukofotlar: ' + aw.map(function (x) { return (mdl[x.place - 1] || x.place + '.') + ' ' + nm(x.name) + ' — <b>' + x.amt + '</b>'; }).join(' · ') + ' tanga</div>';
+      else inf += '<div class="taLn">🏆 Mukofot berilmadi: arenada birorta ham o‘yin o‘ynalmadi' + (t.flag ? '' : ', jamg‘arma tashkilotchiga qaytarildi') + '.</div>';
+    }
     if (t.minGames > 0) {
       var s = St(), mg = s && s.me && s.me.games != null ? Number(s.me.games) : null, ok = mp ? true : mg == null ? null : mg >= t.minGames;
       inf += '<div class="taLn' + (ok === false ? ' bad' : ok ? ' ok' : '') + '">' + (ok === false ? '✖' : '✔') + ' Ishtirok sharti: kamida ' + t.minGames + ' ta reytingli o‘yin' + (mg != null && !mp ? ' (sizda ' + mg + ')' : '') + '</div>';
@@ -335,7 +352,7 @@
       var uid = col === 'w' ? feat.white : feat.black, n = col === 'w' ? feat.whiteName : feat.blackName, e = col === 'w' ? feat.whiteElo : feat.blackElo, t = col === 'w' ? ck.white : ck.black;
       return '<div class="taFp"><span><small>#' + (featRk[String(uid)] || '–') + '</small> <b>' + nm(n) + '</b> <small>' + (e || '') + '</small></span><span class="c">' + clk(t) + '</span></div>';
     }
-    g('taFeat').innerHTML = line('b') + '<div class="taFt" id="taFtB" data-th="' + GS.th + '" data-ps="' + GS.ps + '" style="--pz:' + GS.pz + '%;--km:\'' + GS.km + '\'">' + cells + '</div>' + line('w') + (feat.bb ? '<div style="text-align:center;color:#a9a4d8;font-size:13px;margin-top:8px">🤖 Botlar o‘yini — jonli</div>' : '<button class="taW" data-a="watch" data-room="' + esc(feat.roomId) + '">👁 Tomosha qilish</button>');
+    g('taFeat').innerHTML = line('b') + '<div class="taFt" id="taFtB" data-th="' + GS.th + '" data-ps="' + GS.ps + '" style="--pz:' + GS.pz + '%;--km:\'' + GS.km + '\'">' + cells + '</div>' + line('w') + (feat.bb ? '<div style="text-align:center;color:var(--spMute,#b9ab98);font-size:13px;margin-top:8px">🤖 Botlar o‘yini — jonli</div>' : '<button class="taW" data-a="watch" data-room="' + esc(feat.roomId) + '">👁 Tomosha qilish</button>');
   }
 
   function open(id) {
