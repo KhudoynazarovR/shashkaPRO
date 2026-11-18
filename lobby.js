@@ -1090,7 +1090,7 @@ function createLobby({ send, clients, roomsApi }) {
     if (t.endAt && t.endAt - now < 60000) return;   // oxirgi daqiqada yangi juftlik yo'q (lidraughts kabi)
     const avail = shuffle([...t.players.values()].filter(p =>
       !p.withdrawn && !p.busy && now - p.waitingSince >= ARENA_PAIR_DELAY_MS && (p.bot || connsOf(p.uid).length)
-    )).sort((a, b) => b.score - a.score);
+    )).sort((a, b) => b.score - a.score || (!a.games && !b.games ? olyElo(b.uid) - olyElo(a.uid) : 0));   // lichess: birinchi tur — reytingi yaqinlar, keyin — turnirdagi o'rni yaqinlar
     const used = new Set();
     let made = false;
     for (let i = 0; i < avail.length; i++) {

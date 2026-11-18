@@ -320,6 +320,7 @@
           }, 1000);
         } else {
           if (m.reason === "arena") {
+          try { if (window.__spArenaNext && window.__spArenaNext(m)) return; } catch (e) {}   // 🏟 o'yin oynasidagi «Keyingi raqib» paneli o'zi ko'rsatadi va o'tkazadi
           var aleft = 3, at;
           window.__spArenaStop = false;
           toast(txt + "<br><span id=\"lbCd\">" + aleft + "</span> soniyadan so‘ng o‘tasiz…", [["Hozir", function () { clearInterval(at); go(m.roomId); }]], 4000);

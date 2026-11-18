@@ -178,6 +178,14 @@
         "#rcBar button.off{opacity:.38}#rcBar button[hidden],#rcBar .bd[hidden]{display:none}" +
         "#rcBar .bd{position:absolute;top:-5px;left:calc(50% + 16px);min-width:18px;height:18px;border-radius:9px;background:#e04a3a;color:#fff;font:700 11px/18px system-ui,sans-serif;text-align:center;padding:0 4px;box-sizing:border-box}" +
         "#rcResign,#rcDrawOffer,#rcDrawCnt,#rcChatBtn,#rcMenuBtn{display:none!important}" +
+        // 🏟 arena: o'yin tugagach pastki panel (pastki tugmalar o'rnida, doskani yopmaydi)
+        "#spAE{position:fixed;left:8px;right:8px;bottom:calc(env(safe-area-inset-bottom,0px) + 8px);z-index:9995;background:#221a2e;color:#fff;border-radius:16px;padding:10px 12px;box-shadow:0 -6px 24px rgba(0,0,0,.35);font-family:system-ui,sans-serif}.spAEon #rcBar{display:none}" +
+        "#spAE .r1{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}#spAE .res{font:800 17px system-ui,sans-serif}#spAE .pt{font:800 16px system-ui,sans-serif;color:#9be36b}#spAE .mt{margin-left:auto;font:600 12px system-ui,sans-serif;color:#cfc8e0;white-space:nowrap}" +
+        "#spAE .r2{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.06);border-radius:12px;padding:7px 10px}" +
+        "#spAE .cd{width:44px;height:44px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;position:relative;background:conic-gradient(#81b64c var(--p,0%),rgba(255,255,255,.15) 0)}#spAE .cd:before{content:'';position:absolute;inset:5px;border-radius:50%;background:#2a2238}#spAE .cd b{position:relative;font:800 19px system-ui,sans-serif}" +
+        "#spAE .cd.wait{background:conic-gradient(#81b64c 0 22%,rgba(255,255,255,.15) 0);animation:spAEr 1s linear infinite}@keyframes spAEr{to{transform:rotate(360deg)}}" +
+        "#spAE .nx{flex:1;min-width:0}#spAE .nx small{display:block;font:500 12px system-ui,sans-serif;color:#cfc8e0}#spAE .nx b{display:block;font:800 15px system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
+        "#spAE .r3{display:flex;gap:8px;margin-top:8px}#spAE .r3 button{flex:1;border:0;border-radius:11px;padding:10px 0;font:700 14px system-ui,sans-serif;color:#fff}#spAE [data-a=p]{background:#7b52d6}#spAE [data-a=p].on{background:#4a3a6a}#spAE [data-a=t]{background:#fb8c00}#spAE [data-a=z]{background:#81b64c}" +
         // 🤝 durang taklifi — pastki tugmalar ustida, doim ko'rinadi (Qabul / Rad etish yopilib qolmaydi)
         "#rcDraw{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 104px);z-index:20;width:min(94vw,520px);box-sizing:border-box;margin:0!important;border-radius:12px!important;box-shadow:0 6px 20px rgba(0,0,0,.4)}" +
         "#rcH2H{width:min(94vw,520px);box-sizing:border-box;margin:2px auto 4px;padding:7px 12px;border-radius:12px;background:rgba(0,0,0,.22);font:600 14px system-ui,sans-serif;color:#f3ebe0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}" +
@@ -608,6 +616,8 @@
           if (st.vsBot && !st.botStarted) return;
           if (!bothIn() || st.turn !== st.color) return;
           if (st.optN > 0) return;   // oldingi qadamga server javobi kelmaguncha kutamiz (takroriy qadam bo'lmasin)
+          if (st.pre) return;   // oldindan belgilangan yurish bor — avval u tekshiriladi
+          if (st.oppAt && Date.now() - st.oppAt < 550) return;   // raqib yurishi ko'rinib bo'lsin (toshlar «joy almashgandek» ko'rinmasin)
           var now = Date.now(); if (now - rcmLast < (st.forced ? 1200 : 600)) return;
           var chain = !!st.forced;
           var steps = chain ? captureSteps(st.board, st.forced.r, st.forced.c) : allMoves(st.board, codeOf(st.color));
@@ -1088,6 +1098,41 @@
       var me = bottomColor, op = topColor;
       el.innerHTML = '<span class="t">O‘zaro hisob</span><span class="s"><span>' + (st.color === me ? "Siz" : nm(me)) + '</span><b>' + sc(h[me]) + ' : ' + sc(h[op]) + '</b><span>' + nm(op) + '</span></span>' + h2hBtn();
     }
+    // tosh elementi (do'kon donasi tanlangan bo'lsa — uning rasmi)
+    function rcPieceEl(p) {
+      var pc = document.createElement("i");
+      pc.className = "piece pc " + (isWhite(p) ? "w" : "b") + (isKing(p) ? " k" : ""); var _u = window.spEqId ? "/api/shop/img?id=" + encodeURIComponent(window.spEqId) + "&k=" + (isWhite(p) ? "w" : "b") + (isKing(p) ? "k" : "") : ""; if (_u) { var _ps = pc.style; _ps.setProperty("background-image", "url(\"" + _u + "\")", "important"); _ps.setProperty("background-size", "contain", "important"); _ps.setProperty("background-position", "center", "important"); _ps.setProperty("background-repeat", "no-repeat", "important"); _ps.setProperty("background-color", "transparent", "important"); _ps.setProperty("border", "0", "important"); _ps.setProperty("box-shadow", "none", "important"); pc.classList.add("spImg"); if (!document.getElementById("spImgCss")) { var _sc = document.createElement("style"); _sc.id = "spImgCss"; _sc.textContent = "html body .cell .pc.spImg::before,html body .cell .pc.spImg::after{display:none!important;content:none!important}"; document.head.appendChild(_sc); } }
+      return pc;
+    }
+    // 🎞 yurish animatsiyasi (lidraughts kabi, yumshoq va tez): tosh sirpanib boradi, urilgan tosh xiralashib yo'qoladi
+    var RC_ANIM_MS = 170;
+    function rcAnimReq(mv, board) {   // yurish qo'llanishidan OLDINGI doska bilan chaqiriladi (urilganlar rangi uchun)
+      try {
+        if (!mv || !mv.from || !mv.to) return;
+        st.anim = { from: mv.from, to: mv.to, caps: (mv.captures || []).map(function (q) { return { r: q.r, c: q.c, p: board && board[q.r] ? board[q.r][q.c] : 0 }; }) };
+      } catch (e) {}
+    }
+    function rcCell(r, c) { return elBoard.querySelector('.cell[data-r="' + r + '"][data-c="' + c + '"]'); }
+    function rcAnim(A) {
+      if (!A || !("translate" in document.body.style)) return;
+      var fc = rcCell(A.from.r, A.from.c), tc = rcCell(A.to.r, A.to.c); if (!fc || !tc) return;
+      var pc = tc.querySelector(".pc"); if (!pc) return;
+      var a = fc.getBoundingClientRect(), b = tc.getBoundingClientRect(), dx = a.left - b.left, dy = a.top - b.top;
+      if (!dx && !dy) return;
+      tc.style.zIndex = "6"; tc.style.overflow = "visible"; if (getComputedStyle(tc).position === "static") tc.style.position = "relative";
+      pc.style.transition = "none"; pc.style.translate = dx + "px " + dy + "px";
+      void pc.offsetWidth;
+      pc.style.transition = "translate " + RC_ANIM_MS + "ms cubic-bezier(.2,.75,.3,1)"; pc.style.translate = "0px 0px";
+      setTimeout(function () { pc.style.transition = ""; pc.style.translate = ""; tc.style.zIndex = ""; }, RC_ANIM_MS + 40);
+      (A.caps || []).forEach(function (q) {
+        var cc = rcCell(q.r, q.c); if (!cc || !q.p || cc.querySelector(".pc")) return;
+        var g = rcPieceEl(q.p); g.style.pointerEvents = "none";
+        cc.appendChild(g); void g.offsetWidth;
+        g.style.transition = "opacity " + (RC_ANIM_MS + 90) + "ms ease-out " + Math.round(RC_ANIM_MS * 0.4) + "ms, scale " + (RC_ANIM_MS + 90) + "ms ease-out " + Math.round(RC_ANIM_MS * 0.4) + "ms";
+        g.style.opacity = "0"; g.style.scale = ".8";
+        setTimeout(function () { if (g.parentNode) g.parentNode.removeChild(g); }, RC_ANIM_MS * 2 + 120);
+      });
+    }
     function render() {
       var fl = flipped();
       var topColor = fl ? "white" : "black";
@@ -1115,20 +1160,18 @@
             if (opts[k].to.r === r && opts[k].to.c === c) cell.classList.add(opts[k].captures.length ? "cp" : "tg");
           }
           var p = st.board[r][c];
-          if (p) {
-            var pc = document.createElement("i");
-            pc.className = "piece pc " + (isWhite(p) ? "w" : "b") + (isKing(p) ? " k" : ""); var _u = window.spEqId ? "/api/shop/img?id=" + encodeURIComponent(window.spEqId) + "&k=" + (isWhite(p) ? "w" : "b") + (isKing(p) ? "k" : "") : ""; if (_u) { var _ps = pc.style; _ps.setProperty("background-image", "url(\"" + _u + "\")", "important"); _ps.setProperty("background-size", "contain", "important"); _ps.setProperty("background-position", "center", "important"); _ps.setProperty("background-repeat", "no-repeat", "important"); _ps.setProperty("background-color", "transparent", "important"); _ps.setProperty("border", "0", "important"); _ps.setProperty("box-shadow", "none", "important"); pc.classList.add("spImg"); if (!document.getElementById("spImgCss")) { var _sc = document.createElement("style"); _sc.id = "spImgCss"; _sc.textContent = "html body .cell .pc.spImg::before,html body .cell .pc.spImg::after{display:none!important;content:none!important}"; document.head.appendChild(_sc); } }
-            cell.appendChild(pc);
-          }
+          if (p) cell.appendChild(rcPieceEl(p));
           elBoard.appendChild(cell);
         }
       }
 
+      if (st.anim) { var _A = st.anim; st.anim = null; try { rcAnim(_A); } catch (e) {} }
       if (!document.getElementById("rcPreCss")) { var pcs = document.createElement("style"); pcs.id = "rcPreCss"; pcs.textContent = ".cell.pre{box-shadow:inset 0 0 0 4px #4aa3ff!important}body.rcPlaying #rcZal{display:none!important}"; document.head.appendChild(pcs); }
       if (st.pre && st.finished) st.pre = null;
       if (st.pre && st.pre.to && st.turn === st.color && !st.pending && !st.forced && !st.finished && !botBusy) {
         var pm = st.pre; st.pre = null;
-        setTimeout(function () { try { st.selected = pm.from; var po = options(), pf = null; st.selected = null;
+        setTimeout(function () { try { if (st.turn !== st.color || st.pending || st.forced || st.finished || st.optN > 0) { st.selected = null; render(); return; }   // holat o'zgargan — oldindan yurish bekor
+          st.selected = pm.from; var po = options(), pf = null; st.selected = null;
           for (var q = 0; q < po.length; q++) if (po[q].to.r === pm.to.r && po[q].to.c === pm.to.c) pf = po[q];
           if (pf) sendMove(pf); else render(); } catch (e) {} }, 120);
       }
@@ -1257,6 +1300,7 @@
     }
 
     function sendMove(mv) { st.pre = null;
+      rcAnimReq(mv, st.board);
       var nb = applyStep(st.board, mv);
       var keep = mv.captures.length > 0 && captureSteps(nb, mv.to.r, mv.to.c).length > 0;
       st.pending = true;
@@ -1551,17 +1595,67 @@
     }
     /* ARENA: o'yin tugagach tugmalar + birinchi yurish chizig'i */
     function spBeep() { try { var C = window.AudioContext || window.webkitAudioContext; if (!window.__spAC) window.__spAC = new C(); var c = window.__spAC; if (c.state === "suspended") c.resume(); var o = c.createOscillator(), g = c.createGain(); o.frequency.value = 880; g.gain.value = 0.15; o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + 0.08); } catch (e) {} }
+    // 🏟 arena: o'yin tugagach pastki panel — natija, o'rin, ochko, qolgan vaqt va keyingi raqib (3 soniyada o'tiladi)
+    function spArenaT() { try { var mm = String(roomId).match(/^A(.+?)G\d+/), tid = mm ? mm[1] : "", S = window.__lb && window.__lb.S; return ((S && S.tournaments) || []).filter(function (x) { return String(x.id) === String(tid); })[0] || null; } catch (e) { return null; } }
+    function spMeUid() { try { return String(tg.initDataUnsafe.user.id); } catch (e) { return ""; } }
+    function spArenaMe(t) { var u = spMeUid(), L = (t && t.players) || []; for (var i = 0; i < L.length; i++) if (String(L[i].uid) === u) return { p: L[i], rank: i + 1 }; return null; }
+    var spAG0 = -1, spAENext = null;
+    window.__spArenaNext = function (m) {   // lobbyclient: keyingi arena o'yini tayyor
+      if (!document.getElementById("spAE")) return false;
+      if (window.__spArenaStop) return true;
+      spAENext = { roomId: m.roomId, name: String(m.opponent || ""), color: m.color, at: Date.now() };
+      spAEDraw(); return true;
+    };
     function spArenaEnd() {
       var old = document.getElementById("spAE"); if (old) old.remove();
       var mm = String(roomId).match(/^A(.+?)G\d+/), tid = mm ? mm[1] : "";
+      spAENext = null; window.__spArenaStop = false;
       var bx = document.createElement("div"); bx.id = "spAE";
-      bx.style.cssText = "position:fixed;left:8px;right:8px;bottom:calc(env(safe-area-inset-bottom,0px) + 104px);z-index:2147483000;display:flex;gap:8px;background:#1c2733;border:1px solid #2a3647;border-radius:12px;padding:10px";
-      function mk(t, f, bg) { var x = document.createElement("button"); x.textContent = t; x.style.cssText = "flex:1;border:0;border-radius:8px;padding:10px 4px;font-size:14px;color:#fff;background:" + bg; x.onclick = f; bx.appendChild(x); }
-      mk("🏟 Turnirga qaytish", function () { try { elZal.onclick(); } catch (e) {} }, "#3fa34d");
-      mk("⏸ Pauza", function () { try { if (window.__lb && window.__lb.send) window.__lb.send({ type: "lbTLeave", tid: tid }); } catch (e) {} window.__spArenaStop = true; this.textContent = "✓ Pauzadasiz"; }, "#4a4390");
-      mk("🔍 Tahlil", function () { var a = document.getElementById("rcAn"); if (a) a.click(); }, "#2c3e90");
-      document.body.appendChild(bx);
+      bx.innerHTML = '<div class="r1"><b class="res"></b><span class="pt"></span><span class="mt"></span></div>' +
+        '<div class="r2"><div class="cd"><b></b></div><div class="nx"><small></small><b></b></div></div>' +
+        '<div class="r3"><button data-a="p">⏸ Pauza</button><button data-a="t">🔍 Tahlil</button><button data-a="z">🏟 Turnir</button></div>';
+      bx.onclick = function (e) {
+        var b = e.target && e.target.closest ? e.target.closest("[data-a]") : null; if (!b) return;
+        var a = b.getAttribute("data-a");
+        if (a === "p") { if (window.__spArenaStop) return; try { if (window.__lb && window.__lb.send) window.__lb.send({ type: "lbTLeave", tid: tid }); } catch (e2) {} window.__spArenaStop = true; spAENext = null; spAEDraw(); }
+        else if (a === "t") { var an = document.getElementById("rcAn"); if (an) an.click(); }
+        else if (a === "z") { try { elZal.onclick(); } catch (e2) {} }
+      };
+      root.appendChild(bx); root.classList.add("spAEon");
+      spAEDraw();
     }
+    function spAEDraw() {
+      var bx = document.getElementById("spAE"); if (!bx) return;
+      var t = spArenaT(), me = spArenaMe(t), now = Date.now();
+      var w = st.winner, res = w === "draw" ? "🤝 Durang" : w === st.color ? "🏆 G‘alaba!" : "😔 Mag‘lubiyat";
+      bx.querySelector(".res").textContent = res;
+      var pt = "";
+      if (me && spAG0 >= 0 && me.p.games > spAG0) { var d = String(me.p.sheet || "").slice(-1); pt = "+" + (d || "0") + (me.p.fire && w === st.color ? " 🔥" : ""); }
+      bx.querySelector(".pt").textContent = pt;
+      var left = t && t.endAt ? Math.max(0, t.endAt - now) : 0, fin = !t || t.status === "finished" || (t.endAt && left <= 0);
+      var mmss = Math.floor(left / 60000) + ":" + ("0" + Math.floor(left / 1000) % 60).slice(-2);
+      bx.querySelector(".mt").textContent = me ? me.rank + "-o‘rin · " + me.p.score + " ochko" + (fin ? "" : " · " + mmss) : "";
+      var cd = bx.querySelector(".cd"), cb = cd.querySelector("b"), sm = bx.querySelector(".nx small"), nb = bx.querySelector(".nx b");
+      cd.classList.remove("wait"); cd.style.setProperty("--p", "0%"); cb.textContent = "";
+      if (window.__spArenaStop) { sm.textContent = "Pauzadasiz"; nb.textContent = "«Turnir» da davom etasiz"; bx.querySelector('[data-a="p"]').classList.add("on"); }
+      else if (spAENext) {
+        var sec = Math.max(0, 3 - Math.floor((now - spAENext.at) / 1000)), el = "";
+        try { ((t && t.players) || []).forEach(function (q) { if (String(q.name) === spAENext.name && q.elo) el = " · " + q.elo; }); } catch (e) {}
+        sm.textContent = "Keyingi raqib (o‘rningizga yaqin)"; nb.textContent = spAENext.name + el;
+        cb.textContent = sec; cd.style.setProperty("--p", Math.round(((now - spAENext.at) / 3000) * 100) + "%");
+        if (now - spAENext.at >= 3000) { var rid = spAENext.roomId; spAENext = null; try { if (window.__lb && window.__lb.go) window.__lb.go(rid); } catch (e) {} }
+      }
+      else if (fin) { sm.textContent = "Turnir tugadi"; nb.textContent = "Natijalar — «Turnir» da"; }
+      else if (left < 60000) { sm.textContent = "Oxirgi daqiqa"; nb.textContent = "Yangi juftlik berilmaydi"; }
+      else { cd.classList.add("wait"); sm.textContent = "Keyingi raqib qidirilmoqda…"; nb.textContent = "O‘rningizga yaqin o‘yinchi"; }
+    }
+    setInterval(function () {   // arena: o'yin davomida o'yinlar soni (natija ochkosini aniqlash uchun); tugagach panel yangilanadi
+      try {
+        if (!/^A.+?G\d+/.test(String(roomId))) return;
+        if (!st.finished) { var me = spArenaMe(spArenaT()); if (me) spAG0 = me.p.games; if (root.classList.contains("spAEon")) root.classList.remove("spAEon"); return; }
+        spAEDraw();
+      } catch (e) {}
+    }, 250);
     var _fmKey = -1, _fmT0 = 0, _fmLast = -1;
     setInterval(function () {
       try {
@@ -1649,7 +1743,7 @@
         st.canDraw = !!m.canDraw;
         var _own = m.color === st.color && st.optN > 0; if (_own) st.optN--;
         var _pp = st.board[m.move.from.r] && st.board[m.move.from.r][m.move.from.c];
-        if (!_own) st.board = applyStep(st.board, m.move);
+        if (!_own) { rcAnimReq(m.move, st.board); st.oppAt = Date.now(); st.board = applyStep(st.board, m.move); }
         if (!_own) soundForMove(m.move, _pp);
         st.turn = m.turn;
         setClock(m.clock, m.clockRunning);
