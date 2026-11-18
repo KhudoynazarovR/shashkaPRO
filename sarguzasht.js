@@ -1,11 +1,13 @@
 // sarguzasht.js — 🗺 Sarguzasht xaritasi (mijoz).
-// Dunyo (Sodda / Murakkab / Etyudlar) → o'lkalar (har kitob) → bekatlar (har 10 masala) → qal'a (oxirgi 10 masala).
+// Dunyo (daraja: 3-daraja … GM, yoki Etyudlar) → o'lkalar (har 100 masala) → bekatlar (har 10 masala) → qal'a (oxirgi 10 masala).
 // Yo'lboshchi ertak aytadi va savol beradi, bekat tugasa sandiq ochiladi, ko'prikli bekatlar, qal'a sinovi,
 // yechilgan joylar gullab «tiriladi», kunlik mehmon bekati (tanga 2 barobar). Admin: nom, ertak, rasmlar, savollar, mukofotlar.
 (function () {
   'use strict';
-  var C = null, D = null, W = 's', LAND = null, BR = [3, 6];
-  try { W = localStorage.getItem('advW') || 's'; } catch (e) {}
+  var C = null, D = null, W = 'r3', LAND = null, BR = [3, 6];
+  var WL = ['r3', 'r2', 'r1', 'kms', 'ms', 'gm', 'e'];
+  try { W = localStorage.getItem('advW') || 'r3'; } catch (e) {}
+  if (WL.indexOf(W) < 0) W = 'r3';
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function R(s) { return function () { s = (s * 9301 + 49297) % 233280; return s / 233280; }; }
   function hs(s) { var h = 5381; s = String(s); for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return h >>> 0; }
@@ -14,8 +16,11 @@
   var NAMES = ['Yashil vodiy', 'Qarag‘ayzor', 'Gulzor', 'Kapalaklar bog‘i', 'Oyli ko‘l', 'Sakura tepaligi', 'Kuzgi o‘rmon', 'Sharshara', 'Oltin qumlar',
     'Lolazor', 'Archazor', 'Bodomzor', 'Ninachilar bog‘i', 'Kumush ko‘l', 'Gilos tepaligi', 'Anorzor', 'Kamalak sharsharasi', 'Vohalar',
     'Chinor vodiysi', 'Qoraqarag‘ay', 'Yalpiz dalasi', 'Zumrad bog‘', 'Yulduzli ko‘l', 'O‘rik tepaligi', 'Uzumzor', 'Kumush buloq', 'Sarob cho‘li'];
-  var OFF = { s: 0, m: 9, e: 18 };
-  var WORLD = { s: { t: 'Sodda sarguzasht', sub: 'Yashil orollar' }, m: { t: 'Murakkab sarguzasht', sub: 'Baland tog‘lar' }, e: { t: 'Etyudlar sarguzashti', sub: 'Oltin cho‘l' } };
+  var OFF = { r3: 0, r2: 4, r1: 8, kms: 9, ms: 13, gm: 17, e: 18 };
+  // sy — ko'rinish: s — orollar, m — tog'lar, e — cho'l; th — birinchi o'lka manzarasi
+  var WORLD = { r3: { t: '3-daraja', s: '3-daraja', sy: 's', th: 0 }, r2: { t: '2-daraja', s: '2-daraja', sy: 's', th: 3 }, r1: { t: '1-daraja', s: '1-daraja', sy: 's', th: 6 },
+    kms: { t: 'KMS', s: 'KMS', sy: 'm', th: 1 }, ms: { t: 'MS', s: 'MS', sy: 'm', th: 4 }, gm: { t: 'GM', s: 'GM', sy: 'm', th: 7 }, e: { t: 'Etyudlar', s: 'Etyudlar', sy: 'e', th: 8 } };
+  function SY() { return (WORLD[W] || WORLD.r3).sy; }
   var TH = [   // g — yer, d — to'q, deco — bezak turi, gd — yo'lboshchi
     { g: '#8fd16a', d: '#4f9d4a', deco: 'tree', gd: 'Toshbaqa bobo' },
     { g: '#5fae6e', d: '#24653c', deco: 'pine', gd: 'Dono Boyqush' },
@@ -128,16 +133,16 @@
   }
   function stArr(b, s) { return b.arr.slice(s * 10, s * 10 + 10); }
   function cnt(a) { var c = 0; a.forEach(function (p) { if (isS(p.id)) c++; }); return c; }
+  function rankLocked() { return !C.admin && W !== 'e' && C.rankOpen && !C.rankOpen(W); }   // daraja yopiq (admin qarori yoki oldingi darajadan 100 ta yechilmagan)
   function landOpen(books, i) {
-    if (C.admin || i === 0) return true;
-    var k = books[i].key, S0 = C.S || {}, ba = /^[sm]\d+$/.test(k) ? (S0.bookAll || {})[k] : '';   // admin qarori: hamma uchun ochiq/qulf yoki shu o‘yinchiga ochilgan
-    if (ba === 'open' || (ba !== 'lock' && /^[sm]\d+$/.test(k) && (S0.bopen || {})[k])) return true;
-    if (ba === 'lock') return false;
+    if (C.admin) return true;
+    if (rankLocked()) return false;
+    if (i === 0) return true;
     var pv = books[i - 1].arr; return cnt(pv) >= pv.length || cnt(books[i].arr) > 0;
   }
   function stOpen(b, s) { if (C.admin || s === 0) return true; var pv = stArr(b, s - 1); return cnt(pv) >= pv.length || cnt(stArr(b, s)) > 0; }
-  function nameOf(b, i) { var L = (D.lands || {})[b.key] || {}; if (L.name) return L.name; var k = i + OFF[W[0]] ; return NAMES[k % NAMES.length] + (k >= NAMES.length ? ' ' + (Math.floor(k / NAMES.length) + 1) : ''); }
-  function themeOf(i) { return (i + { s: 0, m: 1, e: 8 }[W[0]]) % 9; }   // tog'larda — qarag'ayzor, cho'lda — vohalar bilan boshlanadi
+  function nameOf(b, i) { var L = (D.lands || {})[b.key] || {}; if (L.name) return L.name; var k = i + (OFF[W] || 0); return NAMES[k % NAMES.length] + (k >= NAMES.length ? ' ' + (Math.floor(k / NAMES.length) + 1) : ''); }
+  function themeOf(i) { return (i + (WORLD[W] || WORLD.r3).th) % 9; }   // tog'larda — qarag'ayzor, cho'lda — vohalar bilan boshlanadi
   function L(b) { return (D.lands || {})[b.key] || {}; }
   function img(id) { return '/api/adv/img?id=' + encodeURIComponent(id); }
   function curLand(books) { var c = 0; for (var i = 0; i < books.length; i++) { if (!landOpen(books, i)) break; c = i; if (cnt(books[i].arr) < books[i].arr.length) break; } return c; }
@@ -150,7 +155,7 @@
   }
   function guideHtml(b, i) { var I = L(b).img || {}; return I.guide ? '<img src="' + img(I.guide) + '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : guideSvg(themeOf(i)); }
   function guideName(b, i) { return L(b).guide || TH[themeOf(i)].gd; }
-  function bossOf(i) { return (i + (W === 'm' ? 1 : W === 'e' ? 2 : 0)) % 3; }
+  function bossOf(i) { return (i + (WORLD[W] || WORLD.r3).th) % 3; }
   function heroHtml() {
     var M = window.spPzMap; if (!M || !M.heroSvg) return '<svg viewBox="0 0 40 60"><circle cx="20" cy="16" r="10" fill="#f2c29b"/><rect x="10" y="28" width="20" height="24" rx="6" fill="#d32f2f"/></svg>';
     var hs2 = M.heroes || [], x = null, n = sv().length; hs2.forEach(function (h) { if (h[0] === C.S.heroAv) x = h; });
@@ -167,7 +172,7 @@
       '.advTt{flex:1;min-width:0}.advTt b{display:block;font-size:19px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.advTt small{display:block;opacity:.7;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
       '.advCh{background:rgba(255,255,255,.1);border-radius:11px;padding:6px 9px;font-size:13px;font-weight:700;white-space:nowrap}.advCh.aY{color:#fde68a}' +
       '.advE{border:0;border-radius:11px;padding:7px 10px;background:#6b5cf0;color:#fff;font-size:13px;font-weight:700}' +
-      '.advTb{display:flex;gap:6px;padding:0 12px 8px;position:sticky;top:44px;z-index:5;background:#0b0e1a;box-shadow:0 8px 12px -6px rgba(0,0,0,.5)}.advTb button{flex:1;border:0;border-radius:11px;padding:8px 4px;background:rgba(38,43,102,.9);color:#cfd3ff;font-size:13.5px;font-weight:700}.advTb button.on{background:#6b5cf0;color:#fff}' +
+      '.advTb{display:flex;gap:6px;padding:0 12px 8px;position:sticky;top:44px;z-index:5;background:#0b0e1a;box-shadow:0 8px 12px -6px rgba(0,0,0,.5)}.advTb button{flex:1;border:0;border-radius:11px;padding:8px 4px;background:rgba(38,43,102,.9);color:#cfd3ff;font-size:13.5px;font-weight:700}.advTb button.on{background:#6b5cf0;color:#fff}.advTbR{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.advTbR::-webkit-scrollbar{display:none}.advTbR button{flex:none;padding:8px 13px;white-space:nowrap}' +
       '.advM{position:relative;margin-top:-100px}.advM svg{display:block;width:100%;height:auto}.advM [data-l],.advM [data-s],.advM [data-c]{cursor:pointer}' +
       '.advHero{position:absolute;width:13%;max-width:58px;transform:translate(-50%,-96%);pointer-events:none;z-index:2;transition:left .9s ease,top .9s ease}' +
       '.advGd{position:absolute;width:19%;max-width:84px;transform:translate(-50%,-50%);z-index:2;border:0;background:none;padding:0}.advGd i{position:absolute;right:-4px;top:-2px;width:22px;height:22px;border-radius:50%;background:#fbbf24;color:#3b2a1a;font-style:normal;font-weight:900;font-size:15px;line-height:22px;text-align:center;animation:advP 1.2s ease-in-out infinite}' +
@@ -202,25 +207,27 @@
     var books = idxBooks(W), n = books.length, ov = C.ov;
     var tot = 0, done = 0; books.forEach(function (b) { var I = info(b); tot += I.st; if (I.n && I.d === I.n) done++; });
     var h = '<div class="adv"><div class="advH"><button class="advB" id="pzBack">‹</button><div class="advTt"><b>' + WORLD[W].t + '</b><small>' + n + ' ta o‘lka · ' + done + ' tugatildi</small></div><span class="advCh aY">★ ' + tot + '</span>' + (C.admin ? '<button class="advE" id="advPost">Guruhga</button><button class="advE" id="advAdm">Tahrir</button>' : '') + '</div>';
-    h += '<div class="advTb">' + [['s', 'Sodda'], ['m', 'Murakkab'], ['e', 'Etyudlar']].map(function (x) { return '<button data-w="' + x[0] + '"' + (W === x[0] ? ' class="on"' : '') + '>' + x[1] + '</button>'; }).join('') + '</div>';
+    var rkLk = rankLocked();
+    h += '<div class="advTb advTbR">' + WL.map(function (w) { return '<button data-w="' + w + '"' + (W === w ? ' class="on"' : '') + '>' + WORLD[w].s + '</button>'; }).join('') + '</div>';
+    if (rkLk) h += '<div class="advNote aG" style="margin:0 12px 8px">Bu daraja hali yopiq: ' + (WORLD[WL[WL.indexOf(W) - 1]] || {}).t + 'dan ' + (C.rkUnlock || 100) + ' ta masala yeching</div>';
     if (!n) { ov.innerHTML = h + '<div style="padding:40px 20px;opacity:.7;text-align:center">Bu dunyoda hozircha o‘lka yo‘q</div></div>'; bindTop(); return; }
-    var GAP = 150, H = 200 + n * GAP + 120, P = [], r = R(7 + W.charCodeAt(0));
+    var GAP = 150, H = 200 + n * GAP + 120, P = [], r = R(7 + hs(W) % 97);
     for (var i = 0; i < n; i++) P.push([(i % 2 ? 262 : 98) + (r() * 20 - 10), H - 170 - i * GAP]);
     var cl = curLand(books), g = '<svg viewBox="0 0 360 ' + H + '"><defs>' +
-      '<linearGradient id="advSea" x1="0" y1="0" x2="0" y2="1">' + (W === 's' ? '<stop offset="0" stop-color="#1b4f8a"/><stop offset="1" stop-color="#2b78c2"/>' : W === 'm' ? '<stop offset="0" stop-color="#1e2a4a"/><stop offset="1" stop-color="#4a5f8f"/>' : '<stop offset="0" stop-color="#d9a75a"/><stop offset="1" stop-color="#f3d39a"/>') + '</linearGradient></defs>' +
+      '<linearGradient id="advSea" x1="0" y1="0" x2="0" y2="1">' + (SY() === 's' ? '<stop offset="0" stop-color="#1b4f8a"/><stop offset="1" stop-color="#2b78c2"/>' : SY() === 'm' ? '<stop offset="0" stop-color="#1e2a4a"/><stop offset="1" stop-color="#4a5f8f"/>' : '<stop offset="0" stop-color="#d9a75a"/><stop offset="1" stop-color="#f3d39a"/>') + '</linearGradient></defs>' +
       '<rect width="360" height="' + H + '" fill="url(#advSea)"/>';
     // fon bezaklari
     var r2 = R(3 + n);
-    if (W === 's') { g += '<g class="advWave">'; for (i = 0; i < n * 10; i++) g += '<path d="M' + (r2() * 400).toFixed(0) + ' ' + (r2() * H).toFixed(0) + ' q6 -4 12 0 t12 0" stroke="#9fd0ff" stroke-width="1.4" fill="none" opacity=".45"/>'; g += '</g>'; }
-    else if (W === 'm') { for (i = 0; i < n * 2 + 2; i++) { var mx = r2() * 360, my = r2() * H; g += '<path d="M' + (mx - 60) + ' ' + my + ' l60 -70 l60 70z" fill="#2b3a63" opacity=".7"/><path d="M' + (mx - 14) + ' ' + (my - 54) + ' l14 -16 l14 16 l-7 -3 l-7 5z" fill="#e2e8f0" opacity=".85"/>'; } for (i = 0; i < n * 2; i++) g += '<ellipse cx="' + (r2() * 360).toFixed(0) + '" cy="' + (r2() * H).toFixed(0) + '" rx="' + (26 + r2() * 20).toFixed(0) + '" ry="9" fill="#fff" opacity=".12"/>'; }
+    if (SY() === 's') { g += '<g class="advWave">'; for (i = 0; i < n * 10; i++) g += '<path d="M' + (r2() * 400).toFixed(0) + ' ' + (r2() * H).toFixed(0) + ' q6 -4 12 0 t12 0" stroke="#9fd0ff" stroke-width="1.4" fill="none" opacity=".45"/>'; g += '</g>'; }
+    else if (SY() === 'm') { for (i = 0; i < n * 2 + 2; i++) { var mx = r2() * 360, my = r2() * H; g += '<path d="M' + (mx - 60) + ' ' + my + ' l60 -70 l60 70z" fill="#2b3a63" opacity=".7"/><path d="M' + (mx - 14) + ' ' + (my - 54) + ' l14 -16 l14 16 l-7 -3 l-7 5z" fill="#e2e8f0" opacity=".85"/>'; } for (i = 0; i < n * 2; i++) g += '<ellipse cx="' + (r2() * 360).toFixed(0) + '" cy="' + (r2() * H).toFixed(0) + '" rx="' + (26 + r2() * 20).toFixed(0) + '" ry="9" fill="#fff" opacity=".12"/>'; }
     else { for (i = 0; i < n * 4; i++) { var dx = r2() * 400 - 20, dy = r2() * H; g += '<path d="M' + dx.toFixed(0) + ' ' + dy.toFixed(0) + ' q30 -14 60 0" stroke="#c0873e" stroke-width="2" fill="none" opacity=".45"/>'; } }
     // yo'l
     var pd = 'M' + P[0][0] + ' ' + P[0][1]; for (i = 1; i < n; i++) { var a = P[i - 1], b2 = P[i]; pd += ' C' + a[0] + ' ' + (a[1] - 70) + ' ' + b2[0] + ' ' + (b2[1] + 70) + ' ' + b2[0] + ' ' + b2[1]; }
-    g += '<path d="' + pd + '" stroke="' + (W === 'e' ? '#8b5a2b' : '#ffe7a3') + '" stroke-width="5" stroke-dasharray="2 12" stroke-linecap="round" fill="none" opacity=".9"/>';
+    g += '<path d="' + pd + '" stroke="' + (SY() === 'e' ? '#8b5a2b' : '#ffe7a3') + '" stroke-width="5" stroke-dasharray="2 12" stroke-linecap="round" fill="none" opacity=".9"/>';
     var guestK = D.guest && D.guest.k;
     books.forEach(function (b, i) {
       var I = info(b), x = P[i][0], y = P[i][1], t = themeOf(i), op = landOpen(books, i), dn = I.n && I.d === I.n, cw = !!(D.my.cs || {})[b.key], li = L(b).img || {};
-      var rim = W === 's' ? '#ecd9a6' : W === 'm' ? '#94a3b8' : '#b7793e';
+      var rim = SY() === 's' ? '#ecd9a6' : SY() === 'm' ? '#94a3b8' : '#b7793e';
       g += '<g data-l="' + i + '"><ellipse cx="' + x + '" cy="' + (y + 12) + '" rx="82" ry="40" fill="rgba(0,0,0,.18)"/><ellipse cx="' + x + '" cy="' + (y + 8) + '" rx="80" ry="40" fill="' + rim + '"/>';
       if (li.land) g += '<clipPath id="advCl' + i + '"><ellipse cx="' + x + '" cy="' + y + '" rx="74" ry="36"/></clipPath><image href="' + img(li.land) + '" x="' + (x - 74) + '" y="' + (y - 36) + '" width="148" height="72" preserveAspectRatio="xMidYMid slice" clip-path="url(#advCl' + i + ')"/>';
       else {
@@ -240,7 +247,7 @@
       if (cw) g += '<path d="M' + (x + 4) + ' ' + (y - 57) + ' l1.4 2.8 l3 .3 l-2.3 2 l.7 3 l-2.8 -1.6 l-2.6 1.6 l.6 -3 l-2.2 -2 l3 -.3z" fill="#7c2d12"/>';
       if (!op) g += '<ellipse cx="' + x + '" cy="' + (y + 4) + '" rx="80" ry="40" fill="rgba(15,20,40,.55)"/><ellipse cx="' + (x - 34) + '" cy="' + (y - 8) + '" rx="26" ry="11" fill="#e2e8f0" opacity=".55"/><ellipse cx="' + (x + 30) + '" cy="' + (y - 2) + '" rx="30" ry="12" fill="#e2e8f0" opacity=".5"/>' + lockSvg(x, y - 14, 1.3);
       if (guestK === b.key) g += '<g class="advPulse"><rect x="' + (x + 38) + '" y="' + (y - 52) + '" width="40" height="20" rx="10" fill="#fbbf24"/><text x="' + (x + 58) + '" y="' + (y - 38) + '" text-anchor="middle" font-size="11.5" font-weight="900" fill="#78350f">×' + (D.rw.guest || 2) + '</text></g>';
-      var sub = !op ? 'oldingi kitob 100/100 bo‘lsa ochiladi' : cw ? 'Qal‘a zabt etildi · ★ ' + I.st : dn ? 'Tugatildi · ★ ' + I.st + '/' + I.n * 3 : I.d + '/' + I.n + (I.d ? ' · ★ ' + I.st : '');
+      var sub = !op ? (rkLk ? 'daraja yopiq' : 'oldingi o‘lka 100/100 bo‘lsa ochiladi') : cw ? 'Qal‘a zabt etildi · ★ ' + I.st : dn ? 'Tugatildi · ★ ' + I.st + '/' + I.n * 3 : I.d + '/' + I.n + (I.d ? ' · ★ ' + I.st : '');
       g += '<rect x="' + (x - 66) + '" y="' + (y + 26) + '" width="132" height="34" rx="10" fill="rgba(11,14,26,.84)"/><text x="' + x + '" y="' + (y + 40) + '" text-anchor="middle" font-size="12" font-weight="800" fill="#fff">' + (i + 1) + '. ' + esc(nameOf(b, i)) + '</text><text x="' + x + '" y="' + (y + 54) + '" text-anchor="middle" font-size="10.5" fill="' + (!op ? '#cbd5e1' : cw ? '#fde68a' : dn ? '#86efac' : '#fde68a') + '">' + sub + '</text></g>';
     });
     g += '<rect x="' + (P[cl][0] - 40) + '" y="' + (P[cl][1] - 66) + '" width="80" height="18" rx="9" fill="#2563eb"/><text x="' + P[cl][0] + '" y="' + (P[cl][1] - 53) + '" text-anchor="middle" font-size="11" font-weight="800" fill="#fff">Shu yerda</text>';
@@ -248,10 +255,10 @@
     var hb = books[cl], hp = P[cl];
     h += '<div class="advM">' + g + '<div class="advHero idle" id="advHr" style="pointer-events:auto;cursor:pointer;left:' + ((hp[0] - 50) / 360 * 100).toFixed(2) + '%;top:' + ((hp[1] + 8) / H * 100).toFixed(2) + '%">' + heroHtml() + '</div></div><div style="height:96px"></div>';
     var hI = info(hb), hs3 = curSt(hb), gl = '';
-    if (D.guest) { var gb = null, gi = -1; ['s', 'm'].forEach(function (w) { idxBooks(w).forEach(function (bb, ii) { if (bb.key === D.guest.k) { gb = bb; gi = ii; } }); }); if (gb) gl = 'Mehmon: ' + (D.guest.k[0] === 's' ? 'Sodda' : 'Murakkab') + ' ' + (gi + 1) + '-o‘lka, ' + (D.guest.st + 1) + '-bekat · tanga ×' + (D.rw.guest || 2); }
+    if (D.guest) { var gb = null, gi = -1; var gw = String(D.guest.k).split('_')[0]; idxBooks(gw).forEach(function (bb, ii) { if (bb.key === D.guest.k) { gb = bb; gi = ii; } }); if (gb) gl = 'Mehmon: ' + ((WORLD[gw] || {}).t || '') + ' ' + (gi + 1) + '-o‘lka, ' + (D.guest.st + 1) + '-bekat · tanga ×' + (D.rw.guest || 2); }
     ov.innerHTML = h; bindTop();
     var M = ov.querySelector('.advM svg');
-    ov.querySelector('.advM').onclick = function (ev) { var e = ev.target.closest('[data-l]'); if (!e) return; var i2 = +e.getAttribute('data-l'); if (!landOpen(books, i2)) return toast('Bu o‘lka hali yopiq: oldingi kitobdagi 100 ta masalani yeching'); landView(books[i2], i2); };
+    ov.querySelector('.advM').onclick = function (ev) { var e = ev.target.closest('[data-l]'); if (!e) return; var i2 = +e.getAttribute('data-l'); if (!landOpen(books, i2)) return toast(rkLk ? 'Bu daraja hali yopiq: oldingi darajadan ' + (C.rkUnlock || 100) + ' ta masala yeching' : 'Bu o‘lka hali yopiq: oldingi o‘lkadagi 100 ta masalani yeching'); landView(books[i2], i2); };
     ov.querySelector('#advHr').onclick = function (ev) { ev.stopPropagation(); var M2 = window.spPzMap; if (M2 && M2.picker) M2.picker(function () { worldView(); }); };
     setTimeout(function () { var k = M.getBoundingClientRect().width / 360; ov.scrollTop = Math.max(0, hp[1] * k - ov.clientHeight * .55); }, 0);
   }
@@ -259,7 +266,7 @@
     var ov = C.ov;
     var b = ov.querySelector('#pzBack'); if (b) b.onclick = function () { closeSheet(); var ch = document.querySelector('.advChest'); if (ch) ch.remove(); if (LAND) worldView(); else C.back(); };
     var po = ov.querySelector('#advPost'); if (po) po.onclick = function () {
-      var u = 'https://t.me/DraughtsPRObot/play?startapp=adv', sh = 'https://t.me/share/url?url=' + encodeURIComponent(u) + '&text=' + encodeURIComponent('Yangi sarguzasht xaritasi! Har kitob — alohida o‘lka.');
+      var u = 'https://t.me/DraughtsPRObot/play?startapp=adv', sh = 'https://t.me/share/url?url=' + encodeURIComponent(u) + '&text=' + encodeURIComponent('Yangi sarguzasht xaritasi! Har daraja — alohida dunyo.');
       if (C.tg && C.tg.openTelegramLink) C.tg.openTelegramLink(sh); else window.open(sh, '_blank');
     };
     var a = ov.querySelector('#advAdm'); if (a) a.onclick = function () { admin(LAND ? LAND.b : null, LAND ? LAND.i : 0); };
@@ -356,7 +363,7 @@
     h += '</div>';
     if (full && !opened) h += '<button class="advBtn aG" id="advOpen">Sandiqni ochish</button>';
     else if (nx) h += '<button class="advBtn" id="advPlay"' + (!qAns && D.qn > 0 ? ' disabled' : '') + '>' + (dn ? 'Davom: ' : 'Boshlash: ') + (b.arr.indexOf(nx) + 1) + '-masala</button>' + (!qAns && D.qn > 0 ? '<div style="text-align:center;font-size:12.5px;opacity:.6;margin-top:6px">Avval yo‘lboshchining savoliga javob bering</div>' : '');
-    else h += '<div class="advNote aG">Bekat tugatildi' + (opened ? ' · sandiqdan ' + opened + ' tanga olindi' : '') + '</div><button class="advBtn aO" id="advSx2">Xaritaga qaytish</button>';
+    else h += '<div class="advNote aG">Bekat tugatildi' + (opened > 0 ? ' · sandiqdan ' + opened + ' tanga olindi' : '') + '</div><button class="advBtn aO" id="advSx2">Xaritaga qaytish</button>';
     var e = sheet(h);
     e.querySelector('#advSx').onclick = closeSheet;
     var x2 = e.querySelector('#advSx2'); if (x2) x2.onclick = closeSheet;
@@ -437,7 +444,7 @@
     C._sv = {}; sv().forEach(function (id) { C._sv[id] = 1; });
     var ad = (d && d.adv) || {}, b = null, i = ctx.i;
     idxBooks(W).forEach(function (x) { if (x.key === ctx.k) b = x; });
-    if (!b) ['s', 'm', 'e'].forEach(function (w) { idxBooks(w).forEach(function (x) { if (x.key === ctx.k) { b = x; W = w; } }); });
+    if (!b) WL.forEach(function (w) { idxBooks(w).forEach(function (x) { if (x.key === ctx.k) { b = x; W = w; } }); });
     if (ad.guest) add('<div style="font-size:14px;color:#fde68a;margin-top:4px">Kunlik mehmon: +' + ad.guest + ' tanga qo‘shimcha</div>');
     if (!b) return;
     if (ctx.trial && ad.tr) {
@@ -526,7 +533,7 @@
     var ov = C.ov; css();
     var M = window.spPzMap; if (M && M.setHero) M.setHero(C.S.heroAv, sv().length, function (av) { C.S.heroAv = av; C.api('/api/pzmap/hero', { av: av }); });
     var goTo = function () {
-      if (ctx.land) { var f = null; ['s', 'm', 'e'].forEach(function (w) { idxBooks(w).forEach(function (x, ii) { if (x.key === ctx.land.k) { f = [x, ii]; W = w; } }); }); if (f) return landView(f[0], f[1], ctx.land.then); }
+      if (ctx.land) { var f = null; WL.forEach(function (w) { idxBooks(w).forEach(function (x, ii) { if (x.key === ctx.land.k) { f = [x, ii]; W = w; } }); }); if (f) return landView(f[0], f[1], ctx.land.then); }
       worldView();
     };
     if (D && ctx.cached) return goTo();

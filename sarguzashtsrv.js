@@ -1,5 +1,6 @@
 'use strict';
-// sarguzashtsrv.js — 🗺 Sarguzasht xaritasi (server): har kitob — o'lka, har 10 masala — bekat, oxirgi bekat — qal'a.
+// sarguzashtsrv.js — 🗺 Sarguzasht xaritasi (server): dunyo — daraja (3-daraja … GM) yoki Etyudlar; har 100 masala — o'lka,
+// har 10 masala — bekat, oxirgi bekat — qal'a.
 // Bekatga kirishda savol (+tanga), bekat tugaganda sandiq, ko'prikli bekatlar (birinchi 3 masala xatosiz — sandiq 2 barobar),
 // qal'ada 10 masala ketma-ket sinov (3 xato — boshidan), kunlik mehmon bekati (tanga 2 barobar).
 // Admin: o'lka nomi, yo'lboshchi, ertak matnlari, rasmlar, savollar va mukofotlar.
@@ -50,10 +51,23 @@ const QS = [
   ['Bir damka bitta damkaga qarshi qolsa, odatda natija qanday?', ['Durang', 'Oqlar yutadi', 'Birinchi yurgan yutadi'], 'Bir damkaga qarshi bir damka bilan yutib bo‘lmaydi.']
 ];
 
-function A() { const a = store.db.adv = store.db.adv || {}; a.lands = a.lands || {}; a.rw = a.rw || {}; if (!Array.isArray(a.qs)) a.qs = QS.map((x, i) => ({ id: 'q' + i, t: x[0], a: x[1], x: x[2] })); return a; }
+function A() {
+  const a = store.db.adv = store.db.adv || {}; a.lands = a.lands || {}; a.rw = a.rw || {}; if (!Array.isArray(a.qs)) a.qs = QS.map((x, i) => ({ id: 'q' + i, t: x[0], a: x[1], x: x[2] }));
+  if (!a.rkMig) {   // bir marta: eski Sodda/Murakkab o'lkalariga qo'yilgan nom/rasmlar — darajalar o'lkalariga shu tartibda
+    try {
+      const old = Object.keys(a.lands).filter(k => /^[sm]\d+$/.test(k)).sort((x, y) => (x[0] === y[0] ? 0 : x[0] === 's' ? -1 : 1) || Number(x.slice(1)) - Number(y.slice(1)));
+      const nw = []; RKS().forEach(w => world(w).forEach(b => nw.push(b.k)));
+      old.forEach((k, i) => { if (nw[i] && !a.lands[nw[i]]) a.lands[nw[i]] = a.lands[k]; });
+      a.rkMig = 1; store.save();
+    } catch (e) { console.log('[sarguzasht] mig', e.message); }
+  }
+  return a;
+}
 function RW() { return Object.assign({}, DEF_RW, A().rw); }
 
-// --- kitoblar: sodda (s), murakkab (m) — pzbooks.js; etyudlar (e) — etudes.js papkalari 100 tadan
+// --- dunyolar: darajalar (r3 … gm) — pzbooks.js ro'yxatlari 100 tadan; etyudlar (e) — etudes.js papkalari 100 tadan
+const PB = () => require('./pzbooks.js');
+const RKS = () => PB().RK;
 let EC = { n: -1, v: null };
 function etBooks() {
   let L = []; try { L = require('./etudes.js').puzzleList(); } catch (e) {}
@@ -65,11 +79,12 @@ function etBooks() {
 }
 function world(w) {   // [{k, ids}] tartib bilan
   if (w === 'e') { const E = etBooks(); return Object.keys(E).map(k => ({ k, ids: E[k] })); }
-  let B = { s: [], m: [] }; try { B = require('./pzbooks.js').build(); } catch (e) {}
-  return (B[w] || []).map((ids, i) => ({ k: w + i, ids }));
+  let ids = []; try { ids = (PB().build().r || {})[w] || []; } catch (e) {}
+  const out = []; for (let i = 0, k = 0; i < ids.length; i += 100, k++) out.push({ k: w + '_' + k, ids: ids.slice(i, i + 100) });
+  return out;
 }
 function bookOf(k) {
-  const w = String(k || '')[0]; if (!/^[sme]$/.test(w)) return null;
+  k = String(k || ''); const w = k[0] === 'e' ? 'e' : k.split('_')[0]; if (w !== 'e' && RKS().indexOf(w) < 0) return null;
   const W = world(w), i = W.findIndex(b => b.k === k); if (i < 0) return null;
   return { w, i, W, ids: W[i].ids };
 }
@@ -77,24 +92,27 @@ function nSt(ids) { return Math.ceil(ids.length / ST); }
 function stIds(ids, st) { return ids.slice(st * ST, st * ST + ST); }
 function castleOf(ids) { const n = nSt(ids); return n >= 2 ? n - 1 : -1; }
 function cnt(ids, sv) { let c = 0; ids.forEach(id => { if (sv.has(id)) c++; }); return c; }
-// admin qarori: kitob hamma uchun ochiq/qulf yoki shu o'yinchiga ochilgan (Sodda/Murakkab; 1-kitob doim ochiq)
-function bkOver(bk, u) {
-  if (bk.w === 'e' || bk.i === 0) return null;
-  const k = bk.w + bk.i, o = bk.w + ':' + bk.i, A = store.db.pzBookAll || {}, a = A[k] || A[o];
-  if (a === 'open') return true; if (a === 'lock') return false;
-  const ob = (u && u.pzOpenB) || {}; return (ob[k] || ob[o]) ? true : null;
+// o'lka ochiqmi: avval daraja ochiq bo'lishi kerak (admin qarori va oldingi darajadan 100 ta — pzbooks.rankOpen), keyin o'lkalar ketma-ket
+function landOpen(bk, sv, u) {
+  if (bk.w !== 'e') { try { if (!PB().rankOpen(bk.w, u)) return false; } catch (e) {} }
+  if (bk.i === 0) return true; const pv = bk.W[bk.i - 1].ids; return cnt(pv, sv) >= pv.length || cnt(bk.ids, sv) > 0;
 }
-function landOpen(bk, sv, u) { if (bk.i === 0) return true; const ov = bkOver(bk, u); if (ov !== null) return ov; const pv = bk.W[bk.i - 1].ids; return cnt(pv, sv) >= pv.length || cnt(bk.ids, sv) > 0; }
 function stOpen(bk, st, sv, u) {
   if (!landOpen(bk, sv, u)) return false; if (st === 0) return true;
   const pv = stIds(bk.ids, st - 1); return cnt(pv, sv) >= pv.length || cnt(stIds(bk.ids, st), sv) > 0;
 }
-function my(u) { const m = u.adv = u.adv || {}; m.q = m.q || {}; m.ch = m.ch || {}; m.cs = m.cs || {}; return m; }
+function my(u) {
+  const m = u.adv = u.adv || {}; m.q = m.q || {}; m.ch = m.ch || {}; m.cs = m.cs || {};
+  if (!m.rk) {   // bir marta: darajalar xaritasida oldin yechib bo'lingan bekatlar sandig'i qayta tanga bermaydi (-1 — «ilgari yechilgan»)
+    try { const sv = new Set(u.solved || []); RKS().forEach(w => world(w).forEach(b => { for (let st = 0; st < nSt(b.ids); st++) { const s = stIds(b.ids, st), key = b.k + ':' + st; if (!(key in m.ch) && s.length && s.every(id => sv.has(id))) m.ch[key] = -1; } })); m.rk = 1; } catch (e) {}
+  }
+  return m;
+}
 
 // kunlik mehmon: o'yinchining ochiq, tugamagan bekatlaridan biri (har kuni boshqasi)
 function guest(uid, u) {
   const sv = new Set((u && u.solved) || []), c = [];
-  ['s', 'm'].forEach(w => {
+  RKS().forEach(w => {
     const W = world(w);
     W.forEach((b, i) => {
       const bk = { w, i, W, ids: b.ids }; if (!landOpen(bk, sv, u)) return;
@@ -206,14 +224,14 @@ function handle(req, res, p, h) {
       if (/^t\.me\/\+|joinchat/i.test(chat)) return h.send(res, 400, { error: 'Yopiq link ishlamaydi: guruh linkini (t.me/guruh_nomi) yoki guruh ID sini kiriting' });
       if (!/^-?\d{5,20}$/.test(chat) && !/^@[A-Za-z0-9_]{4,64}$/.test(chat)) return h.send(res, 400, { error: 'Guruh link yoki ID noto‘g‘ri' });
       const link = (process.env.TG_APP_LINK || process.env.APP_LINK || 'https://t.me/DraughtsPRObot/play').replace(/\/$/, '');
-      const text = 'Yangi sarguzasht xaritasi!\nHar kitob — alohida o‘lka, har 10 masala — bekat, oxirida qal‘a sinovi.\nSandiqlar, savollar va tangalar kutmoqda.';
+      const text = 'Yangi sarguzasht xaritasi!\nHar daraja — alohida dunyo, har 100 masala — o‘lka, har 10 masala — bekat, oxirida qal‘a sinovi.\nSandiqlar, savollar va tangalar kutmoqda.';
       require('./gcard.js').tg('sendMessage', { chat_id: chat, text: text + '\n\nXarita: ' + link + '?startapp=adv', reply_markup: { inline_keyboard: [[{ text: 'Xaritani ochish', url: link + '?startapp=adv' }]] } })
         .then(r => h.send(res, 200, { ok: !!(r && r.ok), err: r && !r.ok ? (r.description || '') : '' }))
         .catch(() => h.send(res, 500, { error: 'Yuborilmadi' }));
       return true;
     }
     if (p === '/api/adv/land') {
-      const k = String(j.k || ''); if (!/^[sme][a-z0-9_]{1,30}$/.test(k)) return h.send(res, 400, { error: 'kalit' });
+      const k = String(j.k || ''); if (!/^[a-z][a-z0-9_]{1,30}$/.test(k)) return h.send(res, 400, { error: 'kalit' });
       const L = a.lands[k] = a.lands[k] || {};
       if ('name' in j) L.name = String(j.name || '').slice(0, 40);
       if ('guide' in j) L.guide = String(j.guide || '').slice(0, 40);

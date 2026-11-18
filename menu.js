@@ -672,8 +672,8 @@
     if (tm) top.appendChild(tm);
     ov.insertBefore(top, ov.firstChild); if (hdr.parentNode) hdr.remove();
     var it = info.textContent, parts = it.split('·').map(function (x) { return x.trim(); }), white = /Oq yuradi/.test(it);
-    var lvl = (parts[1] || '').replace(/^[^A-Za-zА-Яа-яЁёʻ‘’'O]+/, '').trim(), more = parts.slice(2).join(' · ');
-    var lc = /Oson|Sodda|Yengil/i.test(lvl) ? 'e' : /Qiyin|Murakkab/i.test(lvl) ? 'h' : 'm';
+    var lvl = (parts[1] || '').replace(/^[^0-9A-Za-zА-Яа-яЁёʻ‘’'O]+/, '').trim(), more = parts.slice(2).join(' · ');
+    var lc = /Oson|Sodda|Yengil|^[23]-daraja|Durang/i.test(lvl) ? 'e' : /Qiyin|Murakkab|^MS$|^GM$/i.test(lvl) ? 'h' : 'm';
     info.className = 'pzSide'; info.removeAttribute('style');
     info.innerHTML = '<span class="pc ' + (white ? 'w' : 'b') + '"></span><span class="t"><b>' + (white ? 'Oq yuradi' : 'Qora yuradi') + '</b><small>' + (more ? esc(more) : 'Eng yaxshi yurishni toping') + '</small></span>' + (lvl ? '<span class="lv ' + lc + '">' + esc(lvl) + '</span>' : '');
     var msgEl = kids.filter(function (k) { return /min-height:28px/.test(k.getAttribute('style') || ''); })[0]; if (msgEl) msgEl.className = 'pzMsg';
@@ -724,7 +724,7 @@
         ov: ov, coins: (S.coins != null ? S.coins : (S.bal != null ? S.bal : null)),
         dailyDone: !!(dp && (S.solved || []).indexOf(dp.id) >= 0),
         back: close, soon: hubSoon,
-        daily: function () { var p = dailyPz(); if (!p) { hubSoon('Masalalar'); return; } hub = 0; view = ''; play(p); },
+        daily: function () { var p = dailyPz(); if (!p) { hubSoon('Masalalar'); return; } hub = 0; view = ''; curBook = null; play(p); },
         custom: function () { hub = 0; view = 'custom'; list(); },
         solve: function () { hub = 0; view = ''; list(); },
         map: function () { hub = 0; view = 'map'; curFo = ''; curLv = 0; list(); }
@@ -750,7 +750,8 @@
   }
   // 🗺 Yangi sarguzasht xaritasi (sarguzasht.js): har kitob — o'lka, har 10 masala — bekat, oxiri — qal'a
   function advBooks() {
-    var B = pzBooks(), o = { s: B.s, m: B.m, e: [] }, h36 = function (s) { var h = 5381; for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+    var B = pzBooks(), o = { e: [] }, h36 = function (s) { var h = 5381; for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+    ranks().forEach(function (r) { var L = []; for (var i = 0, k = 0; i < r.arr.length; i += 100, k++) L.push({ key: r.key + '_' + k, kind: 'r', land: 1, rk: r.key, n: k + 1, title: r.title, from: i + 1, arr: r.arr.slice(i, i + 100) }); o[r.key] = L; });   // o'lka — daraja ichida 100 ta masala
     B.e.forEach(function (b) { o.e.push(Object.assign({}, b, { key: 'e' + h36(b.f || '') + '_' + b.k })); });
     return o;
   }
@@ -758,7 +759,7 @@
     window.__advRet = null; window.__pzMapKey = undefined; hub = 0; view = 'map'; curFo = ''; curLv = 0; curBook = null;
     var go = function () {
       var bk = null;
-      window.spAdv.open({ ov: ov, S: S, api: api, tg: tg, admin: !!S.admin && !userView(), land: land, cached: !!land,
+      window.spAdv.open({ ov: ov, S: S, api: api, tg: tg, admin: !!S.admin && !userView(), land: land, cached: !!land, rankOpen: rankOpen, rkUnlock: unlockN(),
         books: function () { return bk || (bk = advBooks()); },
         play: function (p, b, ret) { curBook = b; window.__advRet = ret; window.__pzMapKey = undefined; play(p); },
         back: function () { window.__advRet = null; hub = 1; view = ''; list(); },
@@ -833,34 +834,45 @@
     if (_mapV) {
       h = head(view === 'custom' ? '🎨 Maxsus masalalar' : '🗺 Xarita', topBtns()) + '<div style="font-weight:800;font-size:18px;margin:2px 0 6px">🗺 ' + MAINF + '</div>' + pzMap(mainOrder(), '');
     } else {
-      // ---- yangi ko'rinish: sarlavha, «Davom ettirish», rasmli to'plamlar (2 ustun)
-      pzCss();
+      // ---- darajalar: «Darajangiz», «Davom ettirish», 6 daraja; Etyudlar, Durang va (admin) To'plamlar — alohida bo'limlar
+      pzCss(); rkCss();
       var mix = S.list.filter(function (p) { return !foOf(p); }), all = [];
       fl.forEach(function (f, i) { all.push({ f: f, i: i, arr: S.list.filter(function (p) { return foOf(p) === f; }) }); });
       if (mix.length) all.push({ f: '', i: -1, arr: mix });
       all = all.filter(function (x) { return x.arr.length || S.admin; });
       var solvedN = (S.solved || []).length, AD = S.admin && !userView();   // AD: admin ko‘rinishi («Foydalanuvchi ko‘rinishi»da o‘yinchi nima ko‘rsa, shu)
-      var BK = pzBooks(), allB = BK.s.concat(BK.m, BK.e), cb = null;
-      // kitob qulflari umumiy holati (1-kitobdan keyingi Sodda/Murakkab kitoblar): hammasi ochiq / hammasi qulf / oddiy qoida
-      var gK = BK.s.slice(1).concat(BK.m.slice(1)).map(function (b) { return (S.bookAll || {})[b.key] || ''; });
+      var RR = ranks(), DR = drRank(), BK = pzBooks();
+      if (shelf !== 'e' && shelf !== 'f') shelf = '';
+      if (shelf === 'f' && !AD) shelf = '';
+      // daraja qulflari umumiy holati (3-darajadan keyingilar): hammasi ochiq / hammasi qulf / oddiy qoida
+      var gK = RR.slice(1).map(function (r) { return (S.bookAll || {})[r.key] || ''; });
       var gst = !gK.length ? '' : gK.every(function (v) { return v === 'open'; }) ? 'open' : gK.every(function (v) { return v === 'lock'; }) ? 'lock' : gK.every(function (v) { return !v; }) ? 'norm' : '';
-      h = '<div class="pzN"><div class="pzNh"><button id="pzBack" class="pzNb" aria-label="Orqaga">‹</button><div class="pzNt"><b>' + (view === 'custom' ? 'Maxsus masalalar' : 'Masalalar') + '</b><small>' + (AD ? S.list.length + ' ta masala · ' + all.length + ' ta to‘plam' : solvedN + ' ta yechildi') + '</small></div></div>' +
-        '<div class="pzNp"><button id="pzTop">TOP</button>' + (S.admin ? '<button id="pzUV"' + (userView() ? ' class="uv"' : '') + '>' + (userView() ? 'Admin ko‘rinishi' : 'Foydalanuvchi ko‘rinishi') + '</button>' : '') +
-        (AD ? '<button id="pzAllO"' + (gst === 'open' ? ' class="on o"' : '') + '>Hammasini ochish</button><button id="pzAllL"' + (gst === 'lock' ? ' class="on l"' : '') + '>Hammasini qulflash</button><button id="pzAllN"' + (gst === 'norm' ? ' class="on n"' : '') + '>Oddiy qoida</button><button id="pzQzP">Viktorina</button><button id="pzPlus" class="pr">+ Yangi</button>' : '') + '</div>';
-      // davom ettirish: boshlangan, tugamagan kitobdagi birinchi yechilmagan masala
-      allB.forEach(function (b) { if (cb) return; var d = nDone(b.arr); if (d > 0 && d < b.arr.length) cb = b; });
-      if (!cb) allB.forEach(function (b) { if (!cb && nDone(b.arr) < b.arr.length) cb = b; });
-      if (cb) {
-        var cp = cb.arr.filter(function (p) { return (S.solved || []).indexOf(p.id) < 0; })[0];
-        if (cp) { S._cont = { book: cb, p: cp }; h += '<button class="pzNc" id="pzCont">' + pzMini(cp.board, 0, 1) + '<span class="t"><small>DAVOM ETTIRISH</small><b>' + esc(cb.title) + '</b><span>' + (cb.from + cb.arr.indexOf(cp)) + '-masala · ' + (cp.side === 'w' ? 'Oq yuradi' : 'Qora yuradi') + '</span></span><span class="go">Yechish</span></button>'; }
-      }
-      var TABS = [['s', 'Sodda', BK.s.length], ['m', 'Murakkab', BK.m.length], ['e', 'Etyudlar', BK.e.length], ['f', 'To‘plamlar', all.length]];
-      if (!AD) { TABS = TABS.filter(function (t) { return t[0] !== 'f'; }); if (shelf === 'f') shelf = 's'; }
-      h += '<div class="pzTb">' + TABS.map(function (t) { return '<button data-sh="' + t[0] + '"' + (shelf === t[0] ? ' class="on"' : '') + '>' + t[1] + '</button>'; }).join('') + '</div>';
-      if (shelf !== 'f') {
-        var books = BK[shelf] || [];
-        h += '<div class="pzNs"><span>' + (shelf === 's' ? 'SODDA MASALALAR' : shelf === 'm' ? 'MURAKKAB MASALALAR' : 'ETYUDLAR') + '</span><span>' + books.length + ' ta kitob</span></div>';
-        h += books.length ? '<div class="pzSh3">' + books.map(function (b, k) { return bookHtml(b, k); }).join('') + '</div>' : '<div style="opacity:.7;padding:20px 4px">Hozircha kitob yo‘q</div>';
+      var ttl = shelf === 'e' ? 'Etyudlar' : shelf === 'f' ? 'To‘plamlar' : (view === 'custom' ? 'Maxsus masalalar' : 'Masalalar');
+      h = '<div class="pzN rkPg"><div class="pzNh"><button id="pzBack" class="pzNb" aria-label="Orqaga">‹</button><div class="pzNt"><b>' + ttl + '</b><small>' + (AD ? S.list.length + ' ta masala · ' + all.length + ' ta to‘plam' : solvedN + ' ta yechildi') + '</small></div></div>' +
+        (shelf ? '' : '<div class="pzNp"><button id="pzTop">TOP</button>' + (S.admin ? '<button id="pzUV"' + (userView() ? ' class="uv"' : '') + '>' + (userView() ? 'Admin ko‘rinishi' : 'Foydalanuvchi ko‘rinishi') + '</button>' : '') +
+        (AD ? '<button id="pzAllO"' + (gst === 'open' ? ' class="on o"' : '') + '>Hammasini ochish</button><button id="pzAllL"' + (gst === 'lock' ? ' class="on l"' : '') + '>Hammasini qulflash</button><button id="pzAllN"' + (gst === 'norm' ? ' class="on n"' : '') + '>Oddiy qoida</button><button id="pzQzP">Viktorina</button><button id="pzPlus" class="pr">+ Yangi</button>' : '') + '</div>');
+      if (!shelf) {
+        var me = myRank(RR);
+        h += '<div class="rkMe">' + rkEmb(me.cur ? me.cur.key : '', 30) + '<div class="t"><small>DARAJANGIZ</small><b>' + (me.cur ? esc(me.cur.title) : 'Hali yo‘q') + '</b></div>' +
+          (me.next ? '<em>' + (me.cur ? 'Keyingisi' : 'Birinchisi') + ': ' + esc(me.next.title) + ' · ' + me.pct + '%</em>' : '<em>Hamma darajalar olingan</em>') + '</div>';
+        // davom ettirish: boshlangan, tugamagan ochiq darajadagi birinchi yechilmagan masala
+        var cr = null, svm = svMap();
+        RR.forEach(function (r) { if (cr || !rankOpen(r.key)) return; var d = rkDone(r); if (d > 0 && d < r.arr.length) cr = r; });
+        if (!cr) RR.forEach(function (r) { if (!cr && rankOpen(r.key) && rkDone(r) < r.arr.length) cr = r; });
+        if (cr) {
+          var cp = cr.arr.filter(function (p) { return !svm[p.id]; })[0];
+          if (cp) { S._cont = { book: cr, p: cp }; h += '<button class="pzNc" id="pzCont">' + pzMini(cp.board, 0, 1) + '<span class="t"><small>DAVOM ETTIRISH · ' + esc(cr.title.toUpperCase()) + '</small><b>' + (cr.arr.indexOf(cp) + 1) + '-masala</b><span>' + (cp.side === 'w' ? 'Oq yuradi' : 'Qora yuradi') + '</span></span><span class="go">Yechish</span></button>'; }
+        }
+        var tot = 0; RR.forEach(function (r) { tot += r.arr.length; });
+        h += '<div class="pzNs"><span>DARAJALAR</span><span>' + RR.length + ' ta daraja · ' + fmtN(tot) + ' ta</span></div><div class="rkL">' + RR.map(function (r) { return rkCard(r); }).join('') + '</div>';
+        h += '<div class="pzNs" style="margin-top:18px"><span>ALOHIDA BO‘LIMLAR</span><span></span></div><div class="rkL">' +
+          sideCard('et', 'Etyudlar', 'Klassik etyudlar · ' + BK.e.length + ' ta kitob', BK.e.reduce(function (a, b) { return a.concat(b.arr); }, []), 'data-shv="e"') +
+          (DR.arr.length ? rkCard(DR) : '') +
+          (AD ? sideCard('fo', 'To‘plamlar', 'Papkalar · faqat admin', S.list, 'data-shv="f"') : '') + '</div>';
+        h += '<div style="height:64px"></div></div>';
+      } else if (shelf === 'e') {
+        h += '<div class="pzNs"><span>ETYUDLAR</span><span>' + BK.e.length + ' ta kitob</span></div>';
+        h += BK.e.length ? '<div class="pzSh3">' + BK.e.map(function (b, k) { return bookHtml(b, k); }).join('') + '</div>' : '<div style="opacity:.7;padding:20px 4px">Hozircha etyud yo‘q</div>';
         h += '<div style="height:64px"></div></div>';
       } else {
       if (!S.list.length && !fl.length) h += '<div style="padding:30px;opacity:.7">Hozircha masala yo‘q</div>';
@@ -880,7 +892,10 @@
     }
     if (!(S.admin && !userView())) h += '<div style="font-size:11px;opacity:.4;margin-top:16px">ID: ' + esc(S.myId) + '</div>';
     ov.innerHTML = h;
-    on('#pzBack', function () { hub = 1; view = ''; list(); }); on('#pzTop', pzTop); on('#pzQzP', qzPanel);
+    on('#pzBack', function () { if (shelf) { shelf = ''; return list(); } hub = 1; view = ''; list(); }); on('#pzTop', pzTop); on('#pzQzP', qzPanel);
+    Array.prototype.forEach.call(ov.querySelectorAll('[data-shv]'), function (e) { e.onclick = function () { shelf = e.getAttribute('data-shv'); list(); ov.scrollTop = 0; }; });
+    Array.prototype.forEach.call(ov.querySelectorAll('[data-rk]'), function (e) { e.onclick = function (ev) { if (ev.target.closest('[data-rm]')) return; var r = rankByKey(e.getAttribute('data-rk')); if (r) rankView(r); }; });
+    Array.prototype.forEach.call(ov.querySelectorAll('[data-rm]'), function (e) { e.onclick = function (ev) { ev.stopPropagation(); var r = rankByKey(e.getAttribute('data-rm')); if (r) rankMenu(r); }; });
     function bkAllSet(st) { api('/api/puzzle/ball-all', { state: st }).then(function (r) { if (r && r.ok) { S.bookAll = r.bookAll || {}; list(); } else window.alert((r && r.error) || 'Xato'); }).catch(function () { window.alert('Xato'); }); }
     on('#pzAllO', function () { bkAllSet('open'); }); on('#pzAllL', function () { bkAllSet('lock'); }); on('#pzAllN', function () { bkAllSet(''); });
     on('#pzUV', function () { try { localStorage.setItem('pzUserView', userView() ? '0' : '1'); } catch (e) {} list(); });
@@ -927,7 +942,7 @@
       list(); var el = ov.querySelector('[data-i="' + S.list.indexOf(c.p) + '"]'); if (el) el.click(); else play(c.p);
     });
     on('#pzPlus', function () {
-      pzSheet('Yangi', [['Tekshiruv va xatolar', pzChkView], ['Yangi masala', function () { newPz(0, ''); }], ['Yangi papka', function () { var n = cleanName(prompt('Yangi papka nomi:')); if (n) api('/api/puzzle/folder', { name: n }).then(function () { load(); }); }]]
+      pzSheet('Yangi', [['Tekshiruv va xatolar', pzChkView], ['Darajalarni qayta saralash', rerank], ['Yangi masala', function () { newPz(0, ''); }], ['Yangi papka', function () { var n = cleanName(prompt('Yangi papka nomi:')); if (n) api('/api/puzzle/folder', { name: n }).then(function () { load(); }); }]]
         .concat(fl.filter(mgOk).length >= 2 ? [['Papkalarni birlashtirish', function () { MG.on = true; MG.sel = []; list(); }]] : []));
     });
     Array.prototype.forEach.call(ov.querySelectorAll('[data-mo]'), function (e) {
@@ -944,16 +959,9 @@
     });
     mgUi(fl);
   }
-  // 📚 kitoblar: server sodda/murakkab ro'yxatini beradi, etyudlar papkalari shu yerda 100 tadan bo'linadi
+  // 📚 etyudlar: papkalari shu yerda 100 tadan kitoblarga bo'linadi (Sodda/Murakkab kitoblari o'rniga — darajalar)
   function pzBooks() {
-    var by = {}, out = { s: [], m: [], e: [] }, B = S.books || {};
-    S.list.forEach(function (p) { by[p.id] = p; });
-    var mk = function (kind, i, ids, title) {
-      var arr = ids.map(function (id) { return by[id]; }).filter(Boolean);
-      return { key: kind + i, kind: kind, n: i + 1, title: title, from: 1, arr: arr };
-    };
-    (B.s || []).forEach(function (ids, i) { out.s.push(mk('s', i, ids, 'Sodda · ' + (i + 1) + '-kitob')); });
-    (B.m || []).forEach(function (ids, i) { out.m.push(mk('m', i, ids, 'Murakkab · ' + (i + 1) + '-kitob')); });
+    var out = { s: [], m: [], e: [] };
     (S.folders || []).forEach(function (f, fi) {
       var et = S.list.filter(function (p) { return p.et && p.folder === f; }); if (!et.length) return;
       for (var i = 0, k = 0; i < et.length; i += 100, k++) {
@@ -962,6 +970,150 @@
       }
     });
     return out;
+  }
+  // 🏅 darajalar (3-daraja … GM): ro'yxatlarni server beradi (qotirilgan tartib). Daraja ichida masalalar ketma-ket ochiladi.
+  var RKV = {
+    r3: { lb: '3', c1: '#e7a96b', c2: '#8a4f22' }, r2: { lb: '2', c1: '#e2e8f0', c2: '#64748b' }, r1: { lb: '1', c1: '#fde68a', c2: '#c27c0e' },
+    kms: { lb: 'KMS', c1: '#6ee7b7', c2: '#047857', full: 'Sport ustasiligiga nomzod' }, ms: { lb: 'MS', c1: '#a5b4fc', c2: '#4338ca', full: 'Sport ustasi' },
+    gm: { lb: 'GM', c1: '#fda4af', c2: '#9f1239', full: 'Grossmeyster' }, dr: { lb: '½', c1: '#93c5fd', c2: '#1d4ed8' },
+    et: { lb: 'E', c1: '#e9d5ff', c2: '#7e22ce' }, fo: { lb: 'T', c1: '#fcd34d', c2: '#92400e' }, '': { lb: '–', c1: '#a8a29e', c2: '#57534e' }
+  };
+  var RKDEF = [{ k: 'r3', t: '3-daraja', min: 1, max: 3 }, { k: 'r2', t: '2-daraja', min: 4, max: 4 }, { k: 'r1', t: '1-daraja', min: 5, max: 5 }, { k: 'kms', t: 'KMS', min: 6, max: 6 }, { k: 'ms', t: 'MS', min: 7, max: 8 }, { k: 'gm', t: 'GM', min: 9, max: 999 }];
+  function fmtN(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
+  function byId() { if (S.__byL !== S.list || S.__byN !== S.list.length) { var m = {}; S.list.forEach(function (p) { m[p.id] = p; }); S.__by = m; S.__byL = S.list; S.__byN = S.list.length; } return S.__by; }
+  function svMap() { var a = S.solved || []; if (S.__svL !== a || S.__svN !== a.length) { var m = {}; a.forEach(function (id) { m[id] = 1; }); S.__sv = m; S.__svL = a; S.__svN = a.length; } return S.__sv; }
+  function ranks() {
+    var B = S.books || {}, RR = B.r || {}, by = byId();
+    if (S.__rkB === B && S.__rkM === by) return S.__rk;
+    var L = ((S.rk && S.rk.list) || RKDEF).map(function (r, i) { return { key: r.k, kind: 'r', n: i + 1, title: r.t, min: r.min, max: r.max, from: 1, arr: (RR[r.k] || []).map(function (id) { return by[id]; }).filter(Boolean) }; });
+    S.__rk = L; S.__rkB = B; S.__rkM = by; return L;
+  }
+  function drRank() { var by = byId(); return { key: 'dr', kind: 'r', n: 0, title: 'Durang masalalari', from: 1, arr: ((S.books || {}).dr || []).map(function (id) { return by[id]; }).filter(Boolean) }; }
+  function rankByKey(k) { return k === 'dr' ? drRank() : ranks().filter(function (r) { return r.key === k; })[0] || null; }
+  function rkDone(r) { var m = svMap(), c = 0; r.arr.forEach(function (p) { if (m[p.id]) c++; }); return c; }
+  function unlockN() { return (S.rk && S.rk.unlock) || 100; }
+  // daraja ochiqmi (serverdagi pzbooks.rankOpen bilan bir xil): 3-daraja va durang doim ochiq; admin qarori; oldingi darajadan 100 ta yechilgan
+  function rankOpen(k) {
+    if (S.admin && !userView()) return true;
+    var R = ranks(), i = R.map(function (r) { return r.key; }).indexOf(k); if (i <= 0) return true;
+    var a = (S.bookAll || {})[k]; if (a === 'open') return true; if (a === 'lock') return false;
+    if ((S.bopen || {})[k]) return true;
+    var pv = R[i - 1]; return rkDone(pv) >= Math.min(unlockN(), pv.arr.length);
+  }
+  function lockWhy(r) {
+    if ((S.bookAll || {})[r.key] === 'lock') return 'Admin vaqtincha yopgan';
+    var R = ranks(), i = R.map(function (x) { return x.key; }).indexOf(r.key), pv = R[i - 1]; if (!pv) return '';
+    return pv.title + 'dan yana ' + Math.max(1, Math.min(unlockN(), pv.arr.length) - rkDone(pv)) + ' ta masala yeching';
+  }
+  // «Darajangiz»: boshidan ketma-ket to'liq yechilgan oxirgi daraja
+  function myRank(R) {
+    var cur = null, nx = null;
+    for (var i = 0; i < R.length; i++) { var r = R[i]; if (r.arr.length && rkDone(r) >= r.arr.length) cur = r; else { nx = r; break; } }
+    return { cur: cur, next: nx, pct: nx && nx.arr.length ? Math.floor(rkDone(nx) / nx.arr.length * 100) : 0 };
+  }
+  function rkSub(r) {
+    if (r.key === 'dr') return 'Durang qiling · alohida bo‘lim';
+    var V = RKV[r.key] || {}, mv = r.min === r.max ? r.min : r.max >= 99 ? r.min + ' va undan ko‘p' : r.min + '–' + r.max;
+    return V.full ? V.full + ' · ' + mv + ' yurish' : mv + ' yurishda yechiladi';
+  }
+  var _rkE = 0;
+  function rkEmb(k, w) {
+    var V = RKV[k] || RKV[''], id = 'rkg' + (++_rkE), fs = V.lb.length > 2 ? 12.5 : V.lb.length > 1 ? 15 : 22;
+    return '<svg class="rkE" viewBox="0 0 48 56" width="' + w + '" height="' + Math.round(w * 56 / 48) + '" aria-hidden="true"><defs><linearGradient id="' + id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + V.c1 + '"/><stop offset="1" stop-color="' + V.c2 + '"/></linearGradient></defs>' +
+      '<path d="M24 2 L44 9 V27 C44 40 35 49 24 54 C13 49 4 40 4 27 V9 Z" fill="url(#' + id + ')" stroke="rgba(255,255,255,.6)" stroke-width="1.6"/><path d="M24 6.5 L40.5 12.2 V27 C40.5 37.6 33.4 44.9 24 49.6 Z" fill="rgba(255,255,255,.16)"/>' +
+      '<text x="24" y="' + (fs > 20 ? 36 : 33) + '" text-anchor="middle" font-family="Roboto,system-ui,sans-serif" font-size="' + fs + '" font-weight="900" fill="#fff" stroke="rgba(0,0,0,.28)" stroke-width="2.2" paint-order="stroke">' + V.lb + '</text></svg>';
+  }
+  var LOCK_IC = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2.5" fill="currentColor"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="2.4" fill="none"/></svg>';
+  function rkCard(r) {
+    var V = RKV[r.key] || RKV[''], n = r.arr.length, d = rkDone(r), pc = n ? Math.round(d / n * 100) : 0, op = rankOpen(r.key), done = n && d === n, AD = S.admin && !userView(), ba = (S.bookAll || {})[r.key];
+    return '<div class="rkC' + (op ? '' : ' lk') + '" data-rk="' + r.key + '" style="--rc:' + V.c2 + ';--rc1:' + V.c1 + '"><span class="ew">' + rkEmb(r.key, 46) + (done ? '<span class="done">✓</span>' : '') + '</span>' +
+      '<div class="tx"><div class="h"><b>' + esc(r.title) + '</b><span>' + fmtN(n) + ' ta</span></div><div class="s">' + esc(rkSub(r)) + '</div>' +
+      (op ? '<div class="br"><i style="width:' + pc + '%"></i></div><div class="f"><span>' + fmtN(d) + ' / ' + fmtN(n) + '</span>' + (done ? '<span class="ok">Tugatildi</span>' : d ? '<span>' + pc + '%</span>' : '<span class="nw">Ochiq</span>') + '</div>'
+        : '<div class="lkT">' + LOCK_IC + esc(lockWhy(r)) + '</div>') + '</div>' +
+      (AD && ba ? '<span class="ba ' + (ba === 'open' ? 'o' : 'l') + '">' + (ba === 'open' ? 'Ochiq' : 'Yopiq') + '</span>' : '') +
+      (AD ? '<button class="mo" data-rm="' + r.key + '" aria-label="Sozlash">⋯</button>' : (op ? '<span class="gt">›</span>' : '')) + '</div>';
+  }
+  function sideCard(k, title, sub, arr, attr) {
+    var V = RKV[k], n = arr.length, d = 0, m = svMap(); arr.forEach(function (p) { if (m[p.id]) d++; }); var pc = n ? Math.round(d / n * 100) : 0;
+    return '<div class="rkC" ' + attr + ' style="--rc:' + V.c2 + ';--rc1:' + V.c1 + '"><span class="ew">' + rkEmb(k, 46) + '</span><div class="tx"><div class="h"><b>' + esc(title) + '</b><span>' + fmtN(n) + ' ta</span></div><div class="s">' + esc(sub) + '</div>' +
+      '<div class="br"><i style="width:' + pc + '%"></i></div><div class="f"><span>' + fmtN(d) + ' / ' + fmtN(n) + '</span><span>' + pc + '%</span></div></div><span class="gt">›</span></div>';
+  }
+  // yengil doska rasmi: katakchalar — bitta naqsh (#rkChk), donalar — doirachalar
+  function rkThumb(b) {
+    var g = '<svg viewBox="0 0 8 8" aria-hidden="true"><rect width="8" height="8" fill="url(#rkChk)"/>';
+    for (var r = 0; r < 8; r++) for (var c = 0; c < 8; c++) { var v = b && b[r] ? b[r][c] : 0; if (!v) continue; g += '<circle cx="' + (c + .5) + '" cy="' + (r + .5) + '" r=".37" class="' + (v === 1 || v === 3 ? 'w' : 'b') + '"/>' + (v > 2 ? '<circle cx="' + (c + .5) + '" cy="' + (r + .5) + '" r=".15" class="k"/>' : ''); }
+    return g + '</svg>';
+  }
+  // daraja ichi: masalalar doskalar ko'rinishida; yechilganlar va navbatdagisi ochiq, qolganlari qulf
+  function rankView(r) {
+    pzCss(); rkCss(); curBook = r; window.__advRet = null;
+    var V = RKV[r.key] || RKV[''], n = r.arr.length, d = rkDone(r), m = svMap(), st = S.stars || {}, AD = S.admin && !userView(), op = rankOpen(r.key);
+    var nx = r.arr.filter(function (p) { return !m[p.id]; })[0], fi = nx ? r.arr.indexOf(nx) : -1, pc = n ? Math.round(d / n * 100) : 0;
+    var h = '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><pattern id="rkChk" width="2" height="2" patternUnits="userSpaceOnUse"><rect width="2" height="2" fill="#ebecd0"/><rect x="1" width="1" height="1" fill="#739552"/><rect y="1" width="1" height="1" fill="#739552"/></pattern></defs></svg>' +
+      '<div class="pzN rkPg"><div class="rkHd"><button id="pzBack" class="pzNb" aria-label="Orqaga">‹</button>' + rkEmb(r.key, 44) + '<div class="tx"><b>' + esc(r.title) + '</b><small>' + esc(rkSub(r)) + ' · ' + fmtN(n) + ' ta masala</small></div></div>' +
+      '<div class="rkPb"><i style="width:' + pc + '%;background:linear-gradient(90deg,' + V.c1 + ',' + V.c2 + ')"></i></div><div class="rkPf"><span>' + fmtN(d) + ' / ' + fmtN(n) + ' yechildi</span><b>★ ' + bookStars(r) + '</b></div>';
+    if (!op) h += '<div class="rkLkN">' + LOCK_IC + '<span>Bu daraja hali yopiq: ' + esc(lockWhy(r)) + '</span></div>';
+    else if (nx) h += '<button class="pzNc" id="pzBkGo">' + pzMini(nx.board, 0, 1) + '<span class="t"><small>' + (d ? 'DAVOM ETTIRISH' : 'BOSHLASH') + '</small><b>' + (fi + 1) + '-masala</b><span>' + (nx.side === 'w' ? 'Oq yuradi' : 'Qora yuradi') + '</span></span><span class="go">Yechish</span></button>';
+    h += '<div class="pzNs"><span>MASALALAR</span><span>' + fmtN(n) + ' ta</span></div><div class="rkG" id="rkG"></div><div id="rkMore" style="height:30px"></div><div style="height:64px"></div></div>';
+    ov.innerHTML = h; ov.scrollTop = 0;
+    var G = ov.querySelector('#rkG'), shown = 0, io = null;
+    function cell(p, i) {
+      var ok = !!m[p.id], s3 = st[p.id] || (ok ? 1 : 0), lk = !AD && !ok && (!op || i !== fi);
+      return '<button class="rkCl' + (ok ? ' ok' : '') + (i === fi && op ? ' nx' : '') + (lk ? ' lk' : '') + '" data-ri="' + i + '"><span class="bd">' + rkThumb(p.board) + (lk ? '<span class="lki">' + LOCK_IC + '</span>' : '') + '</span>' +
+        '<span class="nm">' + (i + 1) + (ok ? '<i>' + '★★★'.slice(0, s3) + '</i>' : '') + '</span></button>';
+    }
+    function more(k) { var t = Math.min(n, shown + k), hh = ''; for (var i = shown; i < t; i++) hh += cell(r.arr[i], i); if (hh) G.insertAdjacentHTML('beforeend', hh); shown = t; if (shown >= n && io) io.disconnect(); }
+    more(Math.max(48, fi + 24));
+    if (shown < n) { if (window.IntersectionObserver) { io = new IntersectionObserver(function (es) { if (es.some(function (e) { return e.isIntersecting; })) more(48); }, { root: ov, rootMargin: '600px 0px' }); io.observe(ov.querySelector('#rkMore')); } else more(n); }
+    G.onclick = function (ev) {
+      var c = ev.target.closest('[data-ri]'); if (!c) return; var i = +c.getAttribute('data-ri'), p = r.arr[i];
+      if (c.classList.contains('lk')) { var t = !op ? 'Bu daraja hali yopiq: ' + lockWhy(r) : '🔒 Avval ' + (fi + 1) + '-masalani yeching'; if (tg && tg.showAlert) tg.showAlert(t); else alert(t); return; }
+      play(p);
+    };
+    on('#pzBack', function () { if (io) io.disconnect(); curBook = null; list(); });
+    on('#pzBkGo', function () { if (nx) play(nx); });
+  }
+  // admin: daraja qulfi (hamma uchun / shu o'yinchiga)
+  function rankMenu(r) {
+    var first = r.key === 'dr' || ranks().map(function (x) { return x.key; }).indexOf(r.key) === 0;
+    pzSheet(r.title, first ? [['Bu daraja doim ochiq', function () {}]] : [['Hamma uchun ochiq', function () { bkAll(r, 'open'); }], ['Hamma uchun qulflangan', function () { bkAll(r, 'lock'); }], ['Hamma uchun oddiy qoida', function () { bkAll(r, ''); }],
+      ['Foydalanuvchiga ochish', function () { bkGrant(r, true); }], ['Foydalanuvchidan yopish', function () { bkGrant(r, false); }]]);
+  }
+  function rerank() {
+    if (!confirm('Darajalar qaytadan saralansinmi? Masalalar o‘rni o‘zgaradi, yechilganlar saqlanadi.')) return;
+    api('/api/puzzle/rerank', {}).then(function (r) { if (r && r.ok) load(); else window.alert((r && r.error) || 'Xato'); }).catch(function () { window.alert('Xato'); });
+  }
+  function rkCss() {
+    if (document.getElementById('rkCss')) return;
+    var s = document.createElement('style'); s.id = 'rkCss';
+    s.textContent = '#spPz .pzN.rkPg{background:transparent}.rkPg .pzNt small,.rkPg .pzNs{color:var(--spMute,#cdbfae)}' +
+      '.rkMe{display:flex;align-items:center;gap:10px;margin:0 0 14px;padding:10px 12px;border-radius:16px;background:var(--spCard,rgba(38,27,19,.72));border:1px solid var(--spLine,rgba(255,255,255,.10))}' +
+      '.rkMe .t{flex:1;min-width:0}.rkMe small{display:block;font-size:10.5px;letter-spacing:1.2px;font-weight:800;color:var(--spMute2,#a89886)}.rkMe b{display:block;font-size:17px;color:#fff}.rkMe em{font-style:normal;font-size:11.5px;color:var(--spMute,#cdbfae);text-align:right;max-width:48%;line-height:1.3}' +
+      '.rkL{display:flex;flex-direction:column;gap:10px}' +
+      '.rkC{display:flex;align-items:center;gap:12px;padding:12px 12px 12px 10px;border-radius:18px;background:var(--spCard,rgba(38,27,19,.72));border:1px solid var(--spLine,rgba(255,255,255,.10));position:relative;overflow:hidden;cursor:pointer;text-align:left}' +
+      '.rkC::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--rc)}' +
+      '.rkC .ew{position:relative;flex:none;display:flex}.rkC .rkE{filter:drop-shadow(0 3px 5px rgba(0,0,0,.45))}' +
+      '.rkC .done{position:absolute;right:-5px;bottom:-3px;width:18px;height:18px;border-radius:50%;background:#22c55e;color:#fff;font:900 11px/18px system-ui;text-align:center;box-shadow:0 0 0 2px #1b130d}' +
+      '.rkC .tx{flex:1;min-width:0}.rkC .h{display:flex;align-items:baseline;justify-content:space-between;gap:8px}.rkC .h b{font-size:17px;color:#fff}.rkC .h span{font-size:12px;color:var(--spMute2,#a89886);white-space:nowrap}' +
+      '.rkC .s{font-size:12.5px;color:var(--spMute,#cdbfae);margin:2px 0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+      '.rkC .br{height:7px;border-radius:4px;background:rgba(255,255,255,.10);overflow:hidden}.rkC .br i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--rc1),var(--rc))}' +
+      '.rkC .f{display:flex;justify-content:space-between;margin-top:6px;font-size:11.5px;color:var(--spMute,#cdbfae)}.rkC .f .ok{color:#86efac;font-weight:800}.rkC .f .nw{color:#fde68a;font-weight:800}' +
+      '.rkC .gt{flex:none;font-size:24px;color:var(--spMute2,#a89886);margin-left:2px}' +
+      '.rkC .mo{flex:none;width:34px;height:34px;border:0;border-radius:10px;background:rgba(0,0,0,.3);color:#fff;font-size:18px;line-height:1}' +
+      '.rkC .ba{position:absolute;right:52px;top:10px;font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:8px;color:#fff}.rkC .ba.o{background:#2e7d4f}.rkC .ba.l{background:#8a2a3a}' +
+      '.rkC.lk{background:rgba(25,18,13,.72)}.rkC.lk .rkE{filter:grayscale(1) brightness(.7)}.rkC.lk .h b{color:#bdb3a7}.rkC.lk .lkT{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--spMute2,#a89886)}' +
+      '.rkHd{display:flex;align-items:center;gap:12px;margin:0 0 12px}.rkHd .tx{min-width:0}.rkHd .tx b{display:block;font-size:22px;color:#fff;line-height:1.15}.rkHd .tx small{display:block;font-size:12.5px;color:var(--spMute,#cdbfae);margin-top:2px}' +
+      '.rkPb{height:8px;border-radius:4px;background:rgba(255,255,255,.1);overflow:hidden;margin:0 2px 6px}.rkPb i{display:block;height:100%}' +
+      '.rkPf{display:flex;justify-content:space-between;font-size:12px;color:var(--spMute,#cdbfae);margin:0 2px 14px}.rkPf b{color:#fbbf24}' +
+      '.rkLkN{display:flex;align-items:center;gap:8px;margin:0 0 14px;padding:12px;border-radius:14px;background:rgba(0,0,0,.3);color:var(--spMute,#cdbfae);font-size:13px}' +
+      '.rkG{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px 8px}' +
+      '.rkCl{position:relative;border:0;padding:0;background:none;color:#fff;font-family:inherit;text-align:center;min-width:0}' +
+      '.rkCl .bd{position:relative;display:block;aspect-ratio:1;border-radius:9px;overflow:hidden;border:2px solid rgba(0,0,0,.35);box-shadow:0 2px 6px rgba(0,0,0,.4)}.rkCl .bd svg{display:block;width:100%;height:100%}' +
+      '.rkCl .bd .w{fill:#f6f1e6;stroke:#8f846f;stroke-width:.07}.rkCl .bd .b{fill:#262626;stroke:#000;stroke-width:.07}.rkCl .bd .k{fill:#e9c46a}' +
+      '.rkCl.ok .bd{border-color:#5d8a2f}.rkCl.nx .bd{border-color:#e9c46a;box-shadow:0 0 0 2px rgba(233,196,106,.35),0 4px 10px rgba(0,0,0,.5)}' +
+      '.rkCl.lk .bd svg{filter:grayscale(1) brightness(.42)}.rkCl .lki{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#e7e5e4}.rkCl .lki svg{width:22px;height:22px;filter:none!important}' +
+      '.rkCl .nm{display:block;margin-top:4px;font-size:12px;font-weight:700;color:var(--spMute,#cdbfae)}.rkCl.nx .nm{color:#fde68a}.rkCl .nm i{font-style:normal;color:#fbbf24;font-size:10px;margin-left:3px;letter-spacing:.5px}';
+    document.head.appendChild(s);
   }
   function bookStars(b) { var t = 0, sv = S.solved || [], st = S.stars || {}; b.arr.forEach(function (p) { if (sv.indexOf(p.id) >= 0) t += st[p.id] || 1; }); return t; }
   function findBook(key) { var B = pzBooks(), all = B.s.concat(B.m, B.e); return all.filter(function (b) { return b.key === key; })[0] || null; }
@@ -1539,8 +1691,8 @@
       if (sel) tg2 = legal(g.b, g.side, g.forced).filter(function (s) { return s.f[0] === sel[0] && s.f[1] === sel[1]; }).map(function (s) { return s.t; });
       if (!document.getElementById('pzCss')) { var _st = document.createElement('style'); _st.id = 'pzCss'; _st.textContent = '.pzWrap{position:relative;display:inline-block;margin:18px 0 10px}.pzBig{position:relative;font-size:21px!important;padding:18px 38px!important;border-radius:18px!important;font-weight:700;animation:pzGlow 1.5s ease-in-out infinite}.pzO{position:absolute;left:0;right:0;top:0;bottom:0;pointer-events:none;transform:scaleY(.5)}.pzO i{position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:#ffd86b;box-shadow:0 0 8px #ffd86b;animation:pzOrb 3s linear infinite}@keyframes pzOrb{from{transform:rotate(0deg) translateX(125px)}to{transform:rotate(360deg) translateX(125px)}}@keyframes pzGlow{0%,100%{box-shadow:0 0 14px #6b5cf0}50%{box-shadow:0 0 34px #a99bff}}'; document.head.appendChild(_st); }
       var _bi = curBook ? curBook.arr.findIndex(function (x) { return x.id === p.id; }) : -1;   // kitobda: nom ham kitob raqami bilan
-      var h = head('🧩 ' + (_bi >= 0 ? (curBook.kind === 'e' ? esc(curBook.title) : curBook.n + '-kitob') + ' · ' + (_bi + 1) + '-masala' : esc(p.title)));
-      h += '<div style="margin-bottom:8px">' + (p.side === 'w' ? '⚪ Oq yuradi' : '⚫ Qora yuradi') + ' · ' + (_bi >= 0 && curBook.kind !== 'e' ? (curBook.kind === 's' ? 'Sodda' : 'Murakkab') : LV[p.level]) + (multi ? ' · 🔀 ' + nDone() + ' / ' + lines.length + ' variant' : '') + '</div>' + '<div id="pzTm" style="font-size:20px;font-weight:bold;margin-bottom:6px">' + tmText() + '</div>';
+      var h = head('🧩 ' + (_bi >= 0 ? (curBook.kind === 'e' || curBook.kind === 'r' ? esc(curBook.title) : curBook.n + '-kitob') + ' · ' + ((curBook.kind === 'r' ? (curBook.from || 1) : 1) + _bi) + '-masala' : esc(p.title)));
+      h += '<div style="margin-bottom:8px">' + (p.side === 'w' ? '⚪ Oq yuradi' : '⚫ Qora yuradi') + ' · ' + (_bi >= 0 && curBook.kind === 'r' ? esc(curBook.title) : _bi >= 0 && curBook.kind !== 'e' ? (curBook.kind === 's' ? 'Sodda' : 'Murakkab') : LV[p.level]) + (multi ? ' · 🔀 ' + nDone() + ' / ' + lines.length + ' variant' : '') + '</div>' + '<div id="pzTm" style="font-size:20px;font-weight:bold;margin-bottom:6px">' + tmText() + '</div>';
       h += boardHtml(g.b, { sel: sel, hl: tg2 });
       h += '<div style="min-height:28px;margin:10px 0;font-size:16px">' + msg + '</div>';
       var _a = sibs(), _i = _a.findIndex(function (x) { return x.id === p.id; }), _day = isDay();
@@ -1555,7 +1707,7 @@
       h += '<button id="pzR" style="' + BG + '">🔄 Qayta</button><button id="pzH" style="' + BS + '">💡 Ko‘rsatma</button><button id="pzXR" style="' + BG + '">Xato bor</button>';
       if (S.link) h += '<button id="pzS" style="' + BS + '">📤 Yuborish</button>'; if (S.admin && !p.et) h += '<button id="pzE" style="' + BS + '">🛠 Tahrirlash</button>'; if (S.admin && !p.et) h += '<button id="pzN" style="' + BG + '">✏️ Nomi</button>'; if (S.admin && !p.et) h += '<button id="pzD" style="' + BG + '">🗑 O‘chirish</button>'; if (S.admin && !p.et) h += '<button id="pzQz" style="' + BG + (qzIn(p.id) ? ';background:#2b8a3e' : '') + '">' + (qzIn(p.id) ? 'Viktorinada' : 'Viktorinaga') + '</button>'; if (S.admin) h += '<button id="pzRl" style="' + BG + '">🎬 Reel' + ((S.reels || []).indexOf(p.id) >= 0 ? ' ✓' : '') + '</button>';
       ov.innerHTML = h; try { pzSkin(ov); } catch (e) {}
-      on('#pzBack', function () { dayIds = null; if (window.__advRet) { var _ar = window.__advRet; window.__advRet = null; return advOpen({ k: _ar.k }); } if (window.__pzChkBack) { window.__pzChkBack = 0; return pzChkView(); } if (curBook && curBook.arr.some(function (x) { return x.id === p.id; })) return bookView(curBook); list(); });
+      on('#pzBack', function () { dayIds = null; if (window.__advRet) { var _ar = window.__advRet; window.__advRet = null; return advOpen({ k: _ar.k }); } if (window.__pzChkBack) { window.__pzChkBack = 0; return pzChkView(); } if (curBook && curBook.arr.some(function (x) { return x.id === p.id; })) { if (curBook.kind === 'r') { var _rb = curBook.land ? rankByKey(curBook.rk) : curBook; if (_rb) return rankView(_rb); } return bookView(curBook); } list(); });
       on('#pzDayEnd', function () { dayIds = null; close(); if (window.dqOpen) window.dqOpen(); });
       on('#pzXR', function () { pzReport(p); });
       on('#pzPrev', function () { var a = sibs(), i = a.findIndex(function (x) { return x.id === p.id; }); if (i > 0) play(a[i - 1]); });
