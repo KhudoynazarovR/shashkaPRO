@@ -1565,13 +1565,16 @@
       try {
         var ae = document.getElementById("spAE"); if (ae && !st.finished) ae.remove();
         var bar = document.getElementById("spFM");
-        var turn = st.moves.length % 2 === 0 ? "white" : "black";
+        var turn = st.turn || (st.moves.length % 2 === 0 ? "white" : "black");
         var on = !st.finished && st.moves.length < 2 && bothIn() && st.joined && (st.arena || !st.vsBot);
         if (!on) { if (bar) bar.remove(); _fmKey = -1; _fmLast = -1; return; }
         if (_fmKey !== st.moves.length) { _fmKey = st.moves.length; _fmT0 = Date.now(); _fmLast = -1; }
         var left = Math.max(0, 15 - Math.floor((Date.now() - _fmT0) / 1000));
-        if (!bar) { bar = document.createElement("div"); bar.id = "spFM"; bar.style.cssText = "width:min(94vw,520px);box-sizing:border-box;margin-top:10px;border-radius:10px;text-align:center;color:#fff;font:600 15px Arial,sans-serif;padding:8px;flex:none"; var _inf = document.getElementById("rcInfo"); if (_inf && _inf.parentNode) _inf.parentNode.insertBefore(bar, _inf); else document.body.appendChild(bar); }   // tugmalar ostida, hech narsani yopmaydi
+        if (!bar) { bar = document.createElement("div"); bar.id = "spFM"; bar.style.cssText = "position:absolute;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 8px);z-index:5;width:min(94vw,520px);box-sizing:border-box;border-radius:10px;text-align:center;color:#fff;font:600 15px Arial,sans-serif;padding:7px;box-shadow:0 4px 12px rgba(0,0,0,.25)"; root.appendChild(bar); }   // ekran tepasida (bo'sh joyda): doim ko'rinadi, doska va tugmalarni yopmaydi
         bar.style.background = left <= 5 ? "#cf2a2a" : "#629924";
+        // kimning vaqti — o'sha tomonda: pastdagi o'yinchi (odatda siz) — pastki tugmalar ustida, tepadagi (raqib) — ekran tepasida
+        var _atBot = turn === (flipped() ? "black" : "white");
+        if (bar._bot !== _atBot) { bar._bot = _atBot; if (_atBot) { bar.style.position = "fixed"; bar.style.top = "auto"; bar.style.bottom = "calc(env(safe-area-inset-bottom,0px) + 104px)"; } else { bar.style.position = "absolute"; bar.style.bottom = "auto"; bar.style.top = "calc(env(safe-area-inset-top,0px) + 8px)"; } }
         bar.innerHTML = ((st.color === turn || st.color === "spectator") ? "" : "Raqib: ") + "<b>" + left + "</b> soniya birinchi yurishga";
         if (left <= 5 && left > 0 && left !== _fmLast && st.color === turn) spBeep();
         _fmLast = left;
