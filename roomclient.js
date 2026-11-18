@@ -405,7 +405,7 @@
         var k = rcBgCur(), d = rcBgDef(k), img = k === "self" ? rcBgImg() : "";
         if (k === "self" ? (!img || (rcBg.own && !rcBgHas("self"))) : (!d || (rcBg.own && !rcBgHas(k)))) { k = "c"; d = rcBgDef("c"); }
         root.style.setProperty("--rcBg", k === "self" ? "linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.35)),url(" + img + ") center/cover no-repeat" : d.bg);
-        root.style.setProperty("--rcBar", k === "self" ? "#151515" : d.bar);
+        root.style.setProperty("--rcBar", rcm.night ? "#0a0e1d" : k === "self" ? "#151515" : d.bar);   // tungi rejimda panel ham to'q
         root.classList.toggle("rcL", k !== "self" && !!d.l && !rcm.night);
       }
       function rcBgApi(path, body) {
