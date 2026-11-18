@@ -13,7 +13,7 @@
     '#nvBar button.on{color:#7c83ff}' +
     '#nvBar button span.nvI{display:flex;align-items:center;justify-content:center;width:52px;height:28px;border-radius:99px;font-size:21px}' +
     '#nvBar button:not(.on) span.nvI{opacity:.8}' +
-    '#nvBar button.on{color:#fff;font-weight:700}#nvBar button.on span.nvI{background:#1d4ed8}' +
+    '#nvBar button.on{color:#fff;font-weight:700}#nvBar button.on span.nvI{background:var(--spPill,#1d4ed8)}' +
     '#nvPg{position:fixed;left:0;right:0;top:0;bottom:60px;background:#12122b;color:#fff;z-index:99998;overflow:auto;padding:20px;display:none;font-family:system-ui,sans-serif}' +
     '#nvPg h2{margin:0 0 14px}#nvPg .c{background:#1b1c3d;border-radius:14px;padding:14px;margin-bottom:12px}' +
     '#nvPg .m{color:#8a8db8;font-size:13px}' +

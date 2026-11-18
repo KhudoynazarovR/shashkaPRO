@@ -11,7 +11,7 @@
   // rangli fon ustidagi emoji ikonlar
   function em(ch, cls) { return '<span class="hxEm' + (cls ? ' ' + cls : '') + '">' + ch + '</span>'; }
   // karta uslubi: shaffof to‘q ko‘k + ingichka oltin chiziq (fon naqshidan ajralib turadi)
-  var GL = 'background:rgba(14,22,82,.84)!important;border:1px solid rgba(232,196,106,.28)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 8px 22px rgba(0,0,0,.28)!important';
+  var GL = 'background:var(--spCard,rgba(14,22,82,.84))!important;border:1px solid var(--spLine,rgba(232,196,106,.28))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 8px 22px rgba(0,0,0,.28)!important';
   var H = '#lbPanel #hzHero', D3 = H + ' #nvDuo';
   var st = document.createElement('style'); st.id = 'hxCss';
   st.textContent =
@@ -25,12 +25,12 @@
     H + ' #hxTick{grid-row:1;grid-column:1/-1;position:relative;overflow:hidden;height:36px;border-radius:12px;cursor:pointer;' + GL + '}' +
     H + '.hxTk #pfCard,' + H + '.hxTk #hxChips,' + H + '.hxTk #hxFrB{grid-row:2!important}' +
     H + ' #hxTick::before,' + H + ' #hxTick::after{content:""!important;display:block!important;position:absolute;top:0;bottom:0;width:22px;z-index:2;pointer-events:none}' +
-    H + ' #hxTick::before{left:0;background:linear-gradient(90deg,rgba(14,22,82,1),rgba(14,22,82,0))}' + H + ' #hxTick::after{right:0;background:linear-gradient(270deg,rgba(14,22,82,1),rgba(14,22,82,0))}' +
+    H + ' #hxTick::before{left:0;background:linear-gradient(90deg,var(--spFade,rgba(14,22,82,1)),transparent)}' + H + ' #hxTick::after{right:0;background:linear-gradient(270deg,var(--spFade,rgba(14,22,82,1)),transparent)}' +
     '@keyframes hxTk{from{transform:translateX(0)}to{transform:translateX(-50%)}}' +
     H + ' #hxTick .tr{display:flex;width:max-content;height:100%;align-items:center;animation:hxTk 40s linear infinite!important}' +
     H + ' #hxTick .it{display:flex;align-items:center;gap:7px;padding:0 14px;white-space:nowrap;font-size:13px;color:#fff}' +
     H + ' #hxTick .it .e{width:22px;height:22px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;box-shadow:inset 0 1px 0 rgba(255,255,255,.45)}' +
-    H + ' #hxTick .it small{font-size:12px;color:#b6c4ee}' + H + ' #hxTick .it b{font-weight:700;max-width:170px;overflow:hidden;text-overflow:ellipsis}' + H + ' #hxTick .it i{font-style:normal;font-weight:800;color:#ffc53d}' +
+    H + ' #hxTick .it small{font-size:12px;color:var(--spMute,#b6c4ee)}' + H + ' #hxTick .it b{font-weight:700;max-width:170px;overflow:hidden;text-overflow:ellipsis}' + H + ' #hxTick .it i{font-style:normal;font-weight:800;color:#ffc53d}' +
     H + ' #hxTick .sep{color:#e8c46a;opacity:.6;font-size:10px}' +
     '@media (prefers-reduced-motion: reduce){' + H + ' #hxTick .tr{animation:none!important}' + H + ' #hxTick{overflow-x:auto}}' +
     // ── profil kartasi
@@ -46,7 +46,7 @@
     H + ' #hxChips{grid-row:1;grid-column:1;align-self:end;display:flex!important;flex-wrap:wrap;align-items:center;gap:6px;margin:0 10px 10px 12px!important;padding:0!important;pointer-events:none;z-index:2;min-width:0;width:auto!important;height:auto!important;background:none!important}' +
     H + ' #hxChips:empty{display:none}' +
     H + ' #hxChips>#lgCard,' + H + ' #hxChips>#dqCard{pointer-events:auto;position:relative!important;top:auto!important;right:auto!important;left:auto!important;bottom:auto!important;flex:0 0 auto!important;width:auto!important;max-width:max-content!important;height:24px!important;margin:0!important;padding:0 8px!important;gap:4px!important;border-radius:99px!important;box-shadow:none!important;z-index:auto!important;box-sizing:border-box}' +
-    H + ' #hxChips>#lgCard{background:rgba(255,255,255,.08)!important;border:1px solid rgba(232,196,106,.25)!important}' +
+    H + ' #hxChips>#lgCard{background:rgba(255,255,255,.08)!important;border:1px solid var(--spLine,rgba(232,196,106,.25))!important}' +
     H + ' #hxChips .f{font-size:12px!important}' + H + ' #hxChips b{font-size:11.5px!important}' + H + ' #hxChips small{font-size:10.5px!important}' +
     H + ' #hxChips .dot{min-width:18px!important;height:18px!important;font-size:11px!important;line-height:18px!important;top:-7px!important;right:-6px!important}' +
     // ── Do‘st bilan o‘ynash
@@ -77,7 +77,7 @@
     '#lbPanel #hzLive .hzLvH{display:flex;justify-content:space-between;align-items:baseline;margin:6px 2px 10px!important;font-size:16px!important;font-weight:700}' +
     '#lbPanel #hzLive .hzLvH>span{display:inline-flex;align-items:center;gap:8px}' +
     '#lbPanel #hzLive .hzLvH>span::before{content:""!important;display:inline-block!important;width:9px;height:9px;border-radius:50%;background:#ef4444}' +
-    '#lbPanel #hzLive .hzLvH small{font-size:12px;font-weight:400;color:#b6c4ee;opacity:1!important}' +
+    '#lbPanel #hzLive .hzLvH small{font-size:12px;font-weight:400;color:var(--spMute,#b6c4ee);opacity:1!important}' +
     '#lbPanel #hzLive .hzLvG{display:flex!important;gap:10px!important;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}' +
     '#lbPanel #hzLive .hzLvG::-webkit-scrollbar{display:none}' +
     '#lbPanel #hzLive .hzLvC{flex:0 0 calc(50% - 5px)!important;scroll-snap-align:start;box-sizing:border-box;padding:8px!important;border-radius:16px!important;text-align:left!important;color:#fff!important;overflow:hidden;' + GL + '}' +
@@ -89,15 +89,15 @@
     '#lbPanel #hzLive .hzLp{display:flex!important;align-items:center;gap:6px;margin:0;padding:0!important;font-size:12px!important;line-height:1.5;white-space:nowrap;overflow:hidden;color:#fff}' +
     '#lbPanel #hzLive .hzLvB+.hzLp{margin-top:8px}' +
     '#lbPanel #hzLive .hzNm{min-width:0;overflow:hidden;text-overflow:ellipsis}' +
-    '#lbPanel #hzLive .hzLp em{flex:none;font-style:normal;color:#8ea0d6}' +
+    '#lbPanel #hzLive .hzLp em{flex:none;font-style:normal;color:var(--spMute2,#8ea0d6)}' +
     '#lbPanel #hzLive .hzDw,#lbPanel #hzLive .hzDb{width:10px;height:10px;border-radius:50%;flex:none}' +
     '#lbPanel #hzLive .hzDw{background:#f8fafc;box-shadow:inset 0 0 0 1px #94a3b8}#lbPanel #hzLive .hzDb{background:#0f172a;box-shadow:inset 0 0 0 1px #64748b}' +
-    '#lbPanel #hzLive .hzLvC u{display:flex!important;align-items:center;gap:5px;margin-top:6px;padding:0!important;text-decoration:none;font-size:11px!important;color:#8ea0d6!important}' +
+    '#lbPanel #hzLive .hzLvC u{display:flex!important;align-items:center;gap:5px;margin-top:6px;padding:0!important;text-decoration:none;font-size:11px!important;color:var(--spMute2,#8ea0d6)!important}' +
     // ── reytinglar: bitta kartada uchta ustun
     '#lbPanel #hxRt .rt{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));margin:0!important;border-radius:16px;overflow:hidden;' + GL + '}' +
-    '#lbPanel #hxRt .rt>div{padding:11px 4px;text-align:center;cursor:pointer;border-left:1px solid rgba(232,196,106,.22);min-width:0}' +
+    '#lbPanel #hxRt .rt>div{padding:11px 4px;text-align:center;cursor:pointer;border-left:1px solid var(--spLine,rgba(232,196,106,.22));min-width:0}' +
     '#lbPanel #hxRt .rt>div:first-child{border-left:0}' +
-    '#lbPanel #hxRt .lab{display:flex;align-items:center;justify-content:center;gap:5px;font-size:12px;color:#b6c4ee}' +
+    '#lbPanel #hxRt .lab{display:flex;align-items:center;justify-content:center;gap:5px;font-size:12px;color:var(--spMute,#b6c4ee)}' +
     '#lbPanel #hxRt .hxRc{width:24px;height:24px;border-radius:50%;font-size:13px;flex:none}' +
     '#lbPanel #hxRt .rt>div:nth-child(1) .hxRc{background:linear-gradient(145deg,#fca5a5,#dc2626)}#lbPanel #hxRt .rt>div:nth-child(2) .hxRc{background:linear-gradient(145deg,#93c5fd,#2563eb)}#lbPanel #hxRt .rt>div:nth-child(3) .hxRc{background:linear-gradient(145deg,#86efac,#16a34a)}' +
     '#lbPanel #hxRt .rt b{display:block;margin-top:3px;font-size:20px;font-weight:800;color:#fff}' +
@@ -105,17 +105,17 @@
     // ── online o‘yinchilar / do‘stlar (lobbyclient yozgan tugmalar)
     '#lbPanel #lbPl .tabs{display:grid!important;grid-template-columns:1fr 1fr;gap:8px!important;margin:0 0 8px!important}' +
     '#lbPanel #lbPl .tabs .lbtb{display:flex!important;align-items:center;gap:10px;min-width:0;padding:10px 12px!important;border-radius:16px!important;color:#fff!important;text-align:left;font:inherit;cursor:pointer;' + GL + '}' +
-    '#lbPanel #lbPl .tabs .lbtb.on{background:rgba(29,78,216,.5)!important;border-color:rgba(232,196,106,.6)!important}' +
+    '#lbPanel #lbPl .tabs .lbtb.on{background:var(--spOn,rgba(29,78,216,.5))!important;border-color:var(--spOnLine,rgba(232,196,106,.6))!important}' +
     '#lbPanel #lbPl .lbtb .lbtI{position:relative;width:34px;height:34px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1;background:linear-gradient(145deg,#93c5fd,#1d4ed8);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 3px 6px rgba(0,0,0,.25)}' +
     '#lbPanel #lbPl .lbtb[data-t="f"] .lbtI{background:linear-gradient(145deg,#e9d5ff,#7c3aed)}' +
     '#lbPanel #lbPl .lbtb .lbtOn{position:absolute;right:0;bottom:0;width:10px;height:10px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 2px #0e1650}' +
     '#lbPanel #lbPl .lbtb .lbtNew{position:absolute;right:-1px;top:-1px;width:10px;height:10px;border-radius:50%;background:#ef4444;box-shadow:0 0 0 2px #0e1650}' +
     '#lbPanel #lbPl .lbtb .lbtT{display:flex;flex-direction:column;min-width:0;line-height:1.2}' +
-    '#lbPanel #lbPl .lbtb .lbtT small{font-size:11px;color:#b6c4ee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+    '#lbPanel #lbPl .lbtb .lbtT small{font-size:11px;color:var(--spMute,#b6c4ee);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
     '#lbPanel #lbPl .lbtb .lbtT b{font-size:16px;font-weight:800}' +
     // ── bo‘sh holat
     '#hxBot{padding:0 0 10px}#hxBot:empty{display:none}' +
-    '#hxEmp{margin:4px 0 6px;padding:12px;border-radius:16px;border:1px dashed rgba(232,196,106,.35);text-align:center;font-size:13.5px;color:#dfe6ff}#hxEmp small{display:block;margin-top:3px;opacity:.7}';
+    '#hxEmp{margin:4px 0 6px;padding:12px;border-radius:16px;border:1px dashed var(--spLine,rgba(232,196,106,.35));text-align:center;font-size:13.5px;color:#dfe6ff}#hxEmp small{display:block;margin-top:3px;opacity:.7}';
   document.head.appendChild(st);
 
   // ✨ jonli effektlar (harakatlar) — admin Menyu'dan hamma uchun yoqadi / o‘chiradi (/api/home → fx).

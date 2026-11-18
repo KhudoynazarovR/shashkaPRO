@@ -27,7 +27,7 @@
       ["🌐", "Til · Язык · Language", (window.spLangName ? window.spLangName() : "O‘zbekcha"), function () { if (window.spLangPicker) window.spLangPicker(); }],
       ["🔊", "Ovoz", "Ovoz balandligi, yurish va olish ovozlari", function () { if (window.SPSound && SPSound.openSettings) SPSound.openSettings(); }],
       ["🎤", "Ovozli boshqaruv", (function () { var off = false; try { off = localStorage.getItem("spMicOff") !== "0"; } catch (e) {} return !(window.spVoice && window.spVoice.supported()) ? "Bu brauzerda ishlamaydi (Chrome yoki ilovada ishlaydi)" : off ? "O‘chirilgan — yoqish uchun bosing" : "Yoqilgan — o‘chirish uchun bosing"; })(), function () { try { localStorage.setItem("spMicOff", localStorage.getItem("spMicOff") === "0" ? "1" : "0"); } catch (e) {} }],
-      ["🎨", "Mavzu", "Samarqand, Tungi ko‘k, Grafit, Zumrad va fon rasmi", function () { if (window.spThemePicker) window.spThemePicker(); else if (window.spBgPicker) window.spBgPicker(); }],
+      ["🎨", "Mavzu", "Yog‘och, Samarqand, Tungi ko‘k, Grafit, Zumrad va fon rasmi", function () { if (window.spThemePicker) window.spThemePicker(); else if (window.spBgPicker) window.spBgPicker(); }],
       ["🔔", "Bot xabarlari", "Qaysi xabarlar kelishini tanlang", function () { window.spNotify(); }],
       ["🤖", "AI o‘yin sozlamalari", "Doska, vaqt va AI bilan o‘yin sozlamalari", function () { if (window.aiShow) window.aiShow("set"); }]
     ];
@@ -130,7 +130,7 @@
     function v(x) { return x == null ? "—" : x; }
     var P = pst || {};
     var lc = "UZ"; try { lc = String(localStorage.getItem("shashkaPRO_lang") || "uz").slice(0, 2).toUpperCase(); } catch (e) {}
-    var tk = "e"; try { tk = localStorage.getItem("spTheme") || "e"; } catch (e) {}
+    var tk = "w"; try { tk = localStorage.getItem("spTheme") || "w"; } catch (e) {}
     var ti = tk === "auto" ? "🌗" : tk === "d" ? "☀️" : "🌙";
     var h = "<div class='mqT'><div class='mqH'>☰ Menyu</div>" +
       "<div class='mqR'><button class='mqI' onclick='mnLang()'>🌐 " + lc + "</button><button class='mqI' onclick='mnTheme()' title='Tungi / kunduzgi / avto'>" + ti + "</button></div></div>";
@@ -253,8 +253,8 @@
   };
   window.mnLang = function () { if (window.spLangPicker) window.spLangPicker(); };
   window.mnTheme = function () {   // 🌙 tungi → ☀️ kunduzgi → 🌗 avto (Telegram mavzusi bo'yicha)
-    var k = "e"; try { k = localStorage.getItem("spTheme") || "e"; } catch (e) {}
-    var nx = k === "d" ? "auto" : k === "auto" ? "e" : "d";
+    var k = "w"; try { k = localStorage.getItem("spTheme") || "w"; } catch (e) {}
+    var nx = k === "d" ? "auto" : k === "auto" ? "w" : "d";
     if (window.spThemeSet) window.spThemeSet(nx); else { try { localStorage.setItem("spTheme", nx); } catch (e) {} }
     render();
   };

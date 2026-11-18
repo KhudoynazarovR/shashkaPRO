@@ -1,10 +1,13 @@
 /* theme.js — 🎨 platforma mavzusi: bitta shrift, bir xil fon (yengil gradient + xira shashka katakchalari) va 3 ta tungi mavzu.
-   E · Samarqand (standart: to‘q ko‘k, xira oltin sharqona naqsh), A · Tungi ko'k, B · Grafit, C · Zumrad. Tanlov localStorage('spTheme') da.
+   W · Yog‘och (standart: chess.com uslubidagi to‘q yog‘och), E · Samarqand (to‘q ko‘k, xira oltin naqsh), A · Tungi ko'k, B · Grafit, C · Zumrad.
+   Tanlov localStorage('spTheme') da. Kartalar ranglari --spCard, --spLine, --spMute … o‘zgaruvchilarida (homex.js va navbar.js ishlatadi).
    B va C uchun: sahifadagi binafsha/ko'k to'q ranglar (fon, chegara, gradient) yorug'ligi saqlangan holda mavzu rangiga almashtiriladi —
    doska kataklari, donalar, oltin va yashil urg'ular o'zgarmaydi. Eski «Fon rasmi» (spBgPicker) qo'shimcha sifatida qoladi. */
 ;(function () {
   if (window.__spTheme) return; window.__spTheme = 1;
   var T = {
+    w: { name: 'Yog‘och', icon: '', bg1: '#2a1d14', bg2: '#1b130d', nav: '#16100b', pat: 'wood', acc: '#81b64c', h: null, line: 'rgba(255,255,255,.08)',
+      v: { card: 'rgba(38,27,19,.66)', cline: 'rgba(255,255,255,.10)', mute: '#cdbfae', mute2: '#a89886', on: 'rgba(93,138,47,.35)', onl: 'rgba(129,182,76,.7)', pill: '#5d8a2f', fade: 'rgba(38,27,19,1)', btn: '#2a1f17', btnSh: '#120c08' } },
     e: { name: 'Samarqand', icon: '', bg1: '#121c63', mid: '#0b1240', bg2: '#070a28', nav: '#0a0d33', pat: 'sam', acc: '#3fa34d', h: null, line: 'rgba(232,196,106,.28)' },
     a: { name: 'Tungi ko‘k', icon: '🌙', bg1: '#1c1854', bg2: '#110e33', nav: '#0e0c2b', chk: 'rgba(255,255,255,.035)', acc: '#3fa34d', h: null },
     b: { name: 'Grafit', icon: '⚫', bg1: '#22201d', bg2: '#161512', nav: '#121110', chk: 'rgba(255,255,255,.03)', acc: '#629924', h: 38, s: 0.07, tx: 0.05 },
@@ -14,9 +17,11 @@
   // 🌗 Avto: Telegram'ning mavzusi bo'yicha (kunduzgi → D, tungi → A)
   function tgLight() { try { var W = window.Telegram && Telegram.WebApp; return !!(W && W.colorScheme === 'light'); } catch (e) { return false; } }
   function ls(k, v) { try { if (v === undefined) return localStorage.getItem(k) || ''; localStorage.setItem(k, v); } catch (e) { return ''; } }
-  var DEF = 'e';   // tanlanmagan bo'lsa (standart)
+  var DEF = 'w';   // tanlanmagan bo'lsa (standart)
   // bir martalik: eski standart «Tungi ko‘k» saqlangan telefonlar yangi «Samarqand»ga o‘tadi (keyin xohlasa qayta tanlaydi)
   if (!ls('spThMig')) { if (ls('spTheme') === 'a') ls('spTheme', 'e'); ls('spThMig', '1'); }
+  // bir martalik: «Yog‘och» hamma uchun standart — avvalgi standartlar (Tungi ko‘k, Samarqand) saqlangan telefonlar ham o‘tadi
+  if (!ls('spThMig2')) { var _k = ls('spTheme'); if (_k === 'a' || _k === 'e') ls('spTheme', 'w'); ls('spThMig2', '1'); }
   function cur() { var k = ls('spTheme') || DEF; if (k === 'auto') return tgLight() ? 'd' : DEF; return T[k] ? k : DEF; }
   var FONT = '"Roboto","Segoe UI",-apple-system,BlinkMacSystemFont,"SF Pro Text","Noto Sans",system-ui,Arial,sans-serif';
 
@@ -24,7 +29,11 @@
   var st = document.createElement('style'); st.id = 'spThemeCss';
   function css(k) {
     var t = T[k];
-    return ':root{--spBg1:' + t.bg1 + ';--spBg2:' + t.bg2 + ';--spNav:' + t.nav + ';--spAcc:' + t.acc + '}' +
+    var v = t.v || {};
+    return ':root{--spBg1:' + t.bg1 + ';--spBg2:' + t.bg2 + ';--spNav:' + t.nav + ';--spAcc:' + t.acc +
+      (t.v ? ';--spCard:' + v.card + ';--spLine:' + v.cline + ';--spMute:' + v.mute + ';--spMute2:' + v.mute2 + ';--spOn:' + v.on + ';--spOnLine:' + v.onl + ';--spPill:' + v.pill + ';--spFade:' + v.fade : '') + '}' +
+      (t.v ? 'html body #nvTcChip,html body #nvMore{background:' + v.btn + '!important;box-shadow:0 5px 0 ' + v.btnSh + '!important}' : '') +
+      (t.pat === 'wood' ? 'html body #mnPanel#mnPanel,html body #rkPanel#rkPanel{background:' + bgImg(t) + '!important;background-color:' + t.bg2 + '!important}' : '') +
       'html body,html body *:not(pre):not(code):not(kbd):not(samp){font-family:' + FONT + '!important}' +
       'html body,html body #nvPg#nvPg,html body #nvPlay#nvPlay,html body #lbPanel#lbPanel,html body #taP#taP,html body #tvP#tvP{background:' + bgImg(t) + '!important;background-color:' + t.bg2 + '!important}' +
       '#nvBar{background:' + t.nav + '!important;border-top:1px solid ' + (t.line || 'rgba(255,255,255,.08)') + '!important}' +
@@ -34,6 +43,7 @@
   // Samarqand: tepada xira oltin nur + butun fonda xira sakkiz qirrali yulduz naqshi
   var STAR = "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2756%27 height=%2756%27 viewBox=%270 0 56 56%27%3E%3Cg fill=%27none%27 stroke=%27%23e8c46a%27 stroke-opacity=%27.13%27 stroke-width=%271%27%3E%3Crect x=%2717%27 y=%2717%27 width=%2722%27 height=%2722%27/%3E%3Crect x=%2717%27 y=%2717%27 width=%2722%27 height=%2722%27 transform=%27rotate(45 28 28)%27/%3E%3Cpath d=%27M0 28h12.4M43.6 28H56M28 0v12.4M28 43.6V56%27/%3E%3C/g%3E%3C/svg%3E";
   function bgImg(t) {
+    if (t.pat === 'wood') return 'linear-gradient(180deg,rgba(0,0,0,.10),rgba(0,0,0,.28)),url("/wood.webp?v=1") center top/cover';
     if (t.pat === 'sam') return 'radial-gradient(120% 360px at 50% -40px,rgba(232,196,106,.18),rgba(232,196,106,0) 70%),url("' + STAR + '") 0 0/56px 56px,linear-gradient(180deg,' + t.bg1 + ' 0,' + t.mid + ' 55%,' + t.bg2 + ' 100%)';
     var c = t.chk;
     return 'linear-gradient(180deg,transparent 0,' + t.bg1 + ' 260px,' + t.bg2 + ' 100%),' +
@@ -166,7 +176,7 @@
     var k0 = ls('spTheme') || DEF, h = '<div style="width:100%;background:#17133f;color:#fff;border-radius:20px 20px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom));box-sizing:border-box">' +
       '<div style="display:flex;align-items:center;margin-bottom:12px"><b style="font-size:19px">🎨 Mavzu</b><span id="spThX" style="margin-left:auto;font-size:22px;padding:2px 8px;cursor:pointer">✕</span></div>' +
       '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">';
-    ['auto', 'e', 'a', 'b', 'c', 'd'].forEach(function (k) {
+    ['auto', 'w', 'e', 'a', 'b', 'c', 'd'].forEach(function (k) {
       var t = k === 'auto' ? { name: 'Avto', icon: '🌗', bg1: '#f6f7fb', bg2: '#110e33', acc: '#3fa34d' } : T[k];
       h += '<div data-th="' + k + '" style="cursor:pointer;text-align:center">' +
         '<div style="height:96px;border-radius:14px;background:' + (k === 'auto' ? 'linear-gradient(135deg,#f6f7fb 0 50%,#1c1854 50% 100%)' : 'linear-gradient(180deg,' + t.bg1 + ',' + t.bg2 + ')') + ';border:3px solid ' + (k === k0 ? t.acc : 'rgba(255,255,255,.15)') + ';position:relative;overflow:hidden">' +
