@@ -19,7 +19,7 @@
     'body:not(.nvT) ' + H + '.hz{display:grid!important;grid-template-columns:minmax(0,1fr) 104px;gap:10px!important;align-items:stretch!important;align-content:start!important}' +
     H + '.hz>*,' + H + '.hz #hzRow2>*{grid-column:1/-1;min-width:0}' +
     H + ' #nvKK{display:none!important}' +
-    H + ' #nvDuo{order:2!important}' + H + ' #hxLvW{order:3!important}' + H + ' #hxRt{order:4!important}' +
+    H + ' #nvDuo{order:2!important}' + H + ' #hxRec{order:3!important}' + H + ' #hxLvW{order:4!important}' + H + ' #hxRt{order:5!important}' + H + ' #hxFrs{order:6!important}' +
     H + ' #hxLvW:not(:has(.hzLvC)){display:none!important}' +
     // ── 🏅 reyting lentasi (eng tepada, suzib yuradi; bosilsa — Reyting)
     H + ' #hxTick{grid-row:1;grid-column:1/-1;position:relative;overflow:hidden;height:36px;border-radius:12px;cursor:pointer;' + GL + '}' +
@@ -68,6 +68,47 @@
     D3 + '>div>div{min-width:0;max-width:100%}' +
     D3 + ' b{display:block!important;font-size:clamp(12px,3.4vw,13px)!important;font-weight:700!important;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
     D3 + ' small,' + D3 + ' small.hxSub{display:block!important;margin-top:2px;font-size:11px!important;opacity:.88;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+    // ── 🔔 bildirishnomalar tugmasi (profil kartasining o‘ng yuqori burchagida)
+    H + ' #hxBell{grid-row:1;grid-column:1;justify-self:end;align-self:start;margin:10px 10px 0 0!important;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1;position:relative;z-index:3;cursor:pointer;background:linear-gradient(145deg,#fde68a,#f59e0b);box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 3px 8px rgba(0,0,0,.3)}' +
+    H + '.hxTk #hxBell{grid-row:2!important}' + H + ' #pfCard .pfB{padding-right:38px}' +
+    H + ' #hxBell i{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;border-radius:9px;background:#e11d48;color:#fff;font:800 11px/18px system-ui,sans-serif;text-align:center;padding:0 4px;font-style:normal;box-shadow:0 0 0 2px var(--spFade,#0e1650)}' +
+    H + ' #hxBell i:empty{display:none}' +
+    '#hxNtf{position:fixed;inset:0;z-index:100500;background:rgba(0,0,0,.55);display:flex;align-items:flex-end}' +
+    '#hxNtf .sh{width:100%;max-height:78%;overflow-y:auto;box-sizing:border-box;padding:16px 16px calc(18px + env(safe-area-inset-bottom));border-radius:20px 20px 0 0;color:#fff;background:var(--spFade,#141a3f);border-top:1px solid var(--spLine,rgba(232,196,106,.28))}' +
+    '#hxNtf .hd{display:flex;align-items:center;margin-bottom:12px}#hxNtf .hd b{font-size:18px}#hxNtf .hd span{margin-left:auto;font-size:22px;padding:2px 8px;cursor:pointer}' +
+    '#hxNtf .it{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid rgba(255,255,255,.08)}#hxNtf .it:first-of-type{border-top:0}' +
+    '#hxNtf .ic{width:40px;height:40px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;font-size:20px;background:rgba(255,255,255,.08)}' +
+    '#hxNtf .tx{flex:1;min-width:0;font-size:14px;line-height:1.3}#hxNtf .tx small{display:block;margin-top:2px;font-size:12px;color:var(--spMute,#b6c4ee)}' +
+    '#hxNtf button{border:0;border-radius:10px;padding:8px 12px;font-weight:700;font-size:13px;color:#fff;cursor:pointer;flex:none}#hxNtf .ok{background:#16a34a}#hxNtf .no{background:rgba(255,255,255,.12)}' +
+    '#hxNtf .em{padding:26px 0;text-align:center;color:var(--spMute,#b6c4ee);font-size:14px}' +
+    // ── masala progressi: daraja belgisi va keyingi darajagacha chiziq
+    D3 + ' #hxPzT .hxIc{position:relative}' +
+    D3 + ' #hxPzT .hxLv{position:absolute;right:-7px;top:-7px;min-width:20px;height:20px;border-radius:10px;background:#fbbf24;color:#3b2300;font:900 11px/20px system-ui,sans-serif!important;text-align:center;padding:0 4px;box-sizing:border-box;box-shadow:0 0 0 2px #15803d}' +
+    D3 + ' #hxPzT .hxBar{width:100%;height:6px;margin-top:6px;border-radius:3px;overflow:hidden;background:rgba(0,0,0,.25)}' +
+    D3 + ' #hxPzT .hxBar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,#fde047,#f59e0b)}' +
+    // ── avatarlar
+    '.hxAvW{position:relative;flex:none;display:inline-block}' +
+    '.hxAv{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;color:#fff;font-weight:800;font-size:18px;box-shadow:0 0 0 2px #e8c46a}' +
+    '.hxAv img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}' +
+    '.hxAvW .on{position:absolute;right:0;bottom:1px;width:12px;height:12px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 2px var(--spFade,#0e1650)}' +
+    // ── tavsiya etilgan raqib
+    H + ' #hxRec .hxH a,' + H + ' #hxFrs .hxH a{font-size:12px;font-weight:600;color:#e8c46a;cursor:pointer}' +
+    H + ' #hxRec .cd{display:flex;align-items:center;gap:12px;padding:12px;border-radius:16px;' + GL + '}' +
+    H + ' #hxRec .tx{flex:1;min-width:0}' + H + ' #hxRec .tx b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+    H + ' #hxRec .tx small{display:block;margin-top:2px;font-size:12px;color:var(--spMute,#b6c4ee)}' +
+    H + ' #hxRec .tg{display:inline-block;margin-top:5px;padding:2px 8px;border-radius:99px;font-size:10.5px;font-weight:800;letter-spacing:.4px}' +
+    H + ' #hxRec .tg.eq{color:#bbf7d0;background:rgba(34,197,94,.18);border:1px solid rgba(34,197,94,.45)}' +
+    H + ' #hxRec .tg.up{color:#fed7aa;background:rgba(249,115,22,.18);border:1px solid rgba(249,115,22,.45)}' +
+    H + ' #hxRec .tg.dn{color:#bfdbfe;background:rgba(59,130,246,.18);border:1px solid rgba(59,130,246,.45)}' +
+    H + ' #hxRec .go{flex:none;border:0;padding:11px 16px;border-radius:14px;font-weight:800;font-size:14px;color:#fff;cursor:pointer;background:linear-gradient(180deg,#8fe57a,#2fa83a 60%,#1f8a2b);box-shadow:0 3px 0 #14601c}' +
+    H + ' #hxRec .go:disabled{background:rgba(255,255,255,.14);box-shadow:none;color:#d1fae5}' +
+    // ── do‘stlar qatori
+    H + ' #hxFrs .rw{display:flex;gap:12px;overflow-x:auto;padding:4px 2px 2px;scrollbar-width:none}' + H + ' #hxFrs .rw::-webkit-scrollbar{display:none}' +
+    H + ' #hxFrs .f{flex:none;width:60px;text-align:center;font-size:11.5px;color:#efe6da;cursor:pointer}' +
+    H + ' #hxFrs .f .hxAvW{display:block;width:54px;margin:0 auto 6px}' + H + ' #hxFrs .f .hxAv{width:54px;height:54px}' +
+    H + ' #hxFrs .f.add .hxAv{background:rgba(255,255,255,.06)!important;box-shadow:none;border:2px dashed rgba(232,196,106,.6);box-sizing:border-box;font-size:24px;color:#e8c46a}' +
+    H + ' #hxFrs .f>span:last-child{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+    H + ' #hxFrs .nf{align-self:center;font-size:12.5px;color:var(--spMute,#b6c4ee);line-height:1.35;max-width:220px}' +
     // ── sarlavhalar
     '.hxEm{display:inline-flex;align-items:center;justify-content:center;line-height:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.28))}' +
     '.hxH{display:flex;justify-content:space-between;align-items:baseline;margin:6px 2px 10px;font-weight:700;font-size:16px}' +
@@ -130,7 +171,9 @@
     '@keyframes hxCoin{0%,78%,100%{transform:rotateY(0)}89%{transform:rotateY(180deg)}}' +
     '@keyframes hxWig{0%,84%,100%{transform:rotate(0)}88%{transform:rotate(-14deg)}92%{transform:rotate(12deg)}96%{transform:rotate(-6deg)}}' +
     D3 + ' .hxIc{animation:hxFloat 3.2s ease-in-out infinite!important}' + D3 + ' #hxPzT .hxIc{animation-delay:.5s!important}' + D3 + ' #nvBotRow .hxIc{animation-delay:1s!important}' +
-    H + ' #pfCard,' + H + ' #hxFrB,' + D3 + '>div,' + H + ' #hxLvW,' + H + ' #hxRt{animation:hxIn .5s cubic-bezier(.2,.8,.2,1) both!important}' +
+    H + ' #pfCard,' + H + ' #hxFrB,' + D3 + '>div,' + H + ' #hxRec,' + H + ' #hxLvW,' + H + ' #hxRt,' + H + ' #hxFrs{animation:hxIn .5s cubic-bezier(.2,.8,.2,1) both!important}' +
+    H + ' #hxRec{animation-delay:.28s!important}' + H + ' #hxFrs{animation-delay:.42s!important}' +
+    H + ' #hxBell i:not(:empty){animation:hxFlick 1.6s ease-in-out infinite!important}' +
     H + ' #hxFrB{animation-delay:.06s!important}' + D3 + ' #nvMemRow{animation-delay:.12s!important}' + D3 + ' #hxPzT{animation-delay:.18s!important}' + D3 + ' #nvBotRow{animation-delay:.24s!important}' + H + ' #hxLvW{animation-delay:.3s!important}' + H + ' #hxRt{animation-delay:.36s!important}' +
     H + ' #hxFrB::after{content:""!important;display:block!important;position:absolute;top:0;bottom:0;left:0;width:45%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.38),transparent);animation:hxShine 3.6s ease-in-out infinite!important;pointer-events:none}' +
     H + ' #hxFrB .hxEc{animation:hxWig 4s ease-in-out infinite!important}' +
@@ -157,6 +200,59 @@
 
   var D = null, dAt = 0, LD = null, ldAt = 0;
   function esc(x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  var AVC = [['#60a5fa', '#1d4ed8'], ['#c084fc', '#7c3aed'], ['#fdba74', '#ea580c'], ['#86efac', '#16a34a'], ['#f9a8d4', '#db2777'], ['#fde68a', '#d97706'], ['#67e8f9', '#0891b2']];
+  function avh(uid, name, hasAv, on) {
+    var h = 0, k = String(uid || name || ''); for (var i = 0; i < k.length; i++) h = (h * 31 + k.charCodeAt(i)) | 0;
+    var c = AVC[Math.abs(h) % AVC.length], ini = esc((String(name || '?').replace(/[^\p{L}\p{N}]/gu, '').charAt(0) || '?').toUpperCase());
+    return '<span class="hxAvW"><span class="hxAv" style="background:linear-gradient(145deg,' + c[0] + ',' + c[1] + ')">' + ini +
+      (hasAv ? '<img src="/api/av/' + encodeURIComponent(uid) + '" alt="" onerror="this.remove()">' : '') + '</span>' + (on ? '<i class="on"></i>' : '') + '</span>';
+  }
+  function snap() { try { return window.lbPlay && window.lbPlay.snap ? window.lbPlay.snap() : null; } catch (e) { return null; } }
+  // 🧩 masala darajalari: jami yechilgan masalalar soni bo‘yicha
+  var LV = [0, 5, 15, 30, 50, 80, 120, 170, 230, 300, 400, 520, 660, 820, 1000, 1250, 1500, 2000, 2500, 3000, 4000, 5000, 7000, 10000];
+  function lvOf(n) { var i = 0; while (i + 1 < LV.length && n >= LV[i + 1]) i++; var lo = LV[i], hi = LV[i + 1]; return { lv: i + 1, pct: hi ? Math.max(3, Math.round((n - lo) * 100 / (hi - lo))) : 100 }; }
+  // 🔔 bildirishnomalar: o‘yinga takliflar, do‘stlik so‘rovlari, kunlik vazifa mukofotlari, yaqin turnirlar
+  function ntfList() {
+    var sn = snap(), L = []; if (!sn) return L;
+    var me = sn.me && sn.me.uid, now = Date.now();
+    sn.incoming.forEach(function (c) { L.push({ k: 'inv', id: c.id, ic: '🎮', t: '<b>' + esc(c.fromName || '?') + '</b> sizni o‘yinga taklif qildi', s: esc(c.tc || '') + (c.stake ? ' · ' + c.stake + ' 🪙' : '') }); });
+    sn.freqIn.forEach(function (r) { L.push({ k: 'fr', id: r.uid, ic: '🤝', t: '<b>' + esc(r.name || '?') + '</b> do‘st bo‘lishni taklif qildi', s: '' }); });
+    var dq = document.querySelector('#dqCard .dot'), dn = dq ? parseInt(dq.textContent, 10) || 0 : 0;
+    if (dn) L.push({ k: 'dq', ic: '📋', t: 'Kunlik vazifalar: <b>' + dn + ' ta</b> mukofot olinmagan', s: 'Bosib oling' });
+    (sn.tournaments || []).filter(function (t) { return t.status === 'reg' && t.startAt > now && t.startAt - now < 3600e3; }).slice(0, 3).forEach(function (t) {
+      var mine = (t.players || []).some(function (p) { return p.uid === me; });
+      L.push({ k: 't', id: t.id, ic: '🏆', t: '<b>' + esc(t.name || 'Turnir') + '</b> ' + Math.max(1, Math.round((t.startAt - now) / 60000)) + ' daqiqadan keyin boshlanadi', s: mine ? 'Siz ro‘yxatdasiz' : 'Qo‘shilish uchun bosing' });
+    });
+    return L;
+  }
+  function ntfOpen() {
+    var old = $('hxNtf'); if (old) old.remove();
+    var ov = document.createElement('div'); ov.id = 'hxNtf'; ov.setAttribute('data-nott', '1');
+    function render() {
+      var L = ntfList(), h = '<div class="sh"><div class="hd"><b>🔔 Bildirishnomalar</b><span data-n="x">✕</span></div>';
+      if (!L.length) h += '<div class="em">Yangi xabar yo‘q</div>';
+      L.forEach(function (x, i) {
+        h += '<div class="it" data-i="' + i + '"><span class="ic">' + x.ic + '</span><div class="tx">' + x.t + (x.s ? '<small>' + x.s + '</small>' : '') + '</div>' +
+          (x.k === 'inv' || x.k === 'fr' ? '<button class="ok" data-n="ok" data-i="' + i + '">Qabul</button><button class="no" data-n="no" data-i="' + i + '">Rad</button>' : '') + '</div>';
+      });
+      ov.innerHTML = h + '</div>'; ov.__L = L;
+    }
+    render();
+    ov.onclick = function (e) {
+      if (e.target === ov) { ov.remove(); return; }
+      var t = e.target; while (t && t !== ov && !(t.getAttribute && (t.getAttribute('data-n') || t.getAttribute('data-i')))) t = t.parentNode;
+      if (!t || t === ov) return;
+      var n = t.getAttribute('data-n'), x = (ov.__L || [])[+t.getAttribute('data-i')];
+      if (n === 'x') { ov.remove(); return; }
+      if (!x) return;
+      if (x.k === 'inv' && (n === 'ok' || n === 'no')) { window.lbPlay.respond(x.id, n === 'ok'); ov.remove(); return; }
+      if (x.k === 'fr' && (n === 'ok' || n === 'no')) { window.lbPlay.friendResp(x.id, n === 'ok'); setTimeout(render, 600); return; }
+      if (x.k === 'dq') { ov.remove(); var c = $('dqCard'); if (c) c.click(); return; }
+      if (x.k === 't') { ov.remove(); nav(/Turnir|Турнир|Tournament/); }
+    };
+    document.body.appendChild(ov);
+  }
+  var recI = 0, recSent = {};
   function num(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
   function loadLd() {
     if (window.hxTick === false || Date.now() - ldAt < 60000) return; ldAt = Date.now();
@@ -224,8 +320,9 @@
       var mem = $('nvMemRow'), bt = $('nvBotRow');
       var pt = $('hxPzT');
       if (!pt) { pt = mk('hxPzT'); pt.setAttribute('role', 'button'); pt.onclick = openDaily; }
-      var day = D ? D.day || 0 : 0;
-      var ph = '<span class="hxIc">🧩</span><div><b>Kunlik masala</b><small>' + (day ? 'Bugun ' + day + ' ta' : 'Bugungi masala') + '</small></div>';
+      var day = D ? D.day || 0 : 0, pzs = D ? D.pzs || 0 : 0, pl0 = lvOf(D ? D.solved || 0 : 0);
+      var ph = '<span class="hxIc">🧩<span class="hxLv">' + pl0.lv + '</span></span><div><b>Kunlik masala</b><small>' + (day ? 'Bugun ' + day + ' ta' : 'Bugungi masala') + (pzs > 1 ? ' · 🔥' + pzs : '') + '</small>' +
+        '<div class="hxBar"><i style="width:' + pl0.pct + '%"></i></div></div>';
       if (pt.__h !== ph) { pt.innerHTML = ph; pt.__h = ph; }
       if (pt.parentNode !== duo) duo.insertBefore(pt, bt && bt.parentNode === duo ? bt : null);
       if (mem && mem.dataset.mini && !mem.__hx) {
@@ -239,6 +336,55 @@
         var ib = document.createElement('span'); ib.className = 'hxIc'; ib.textContent = '🤖'; bt.insertBefore(ib, bt.firstChild);
         var b1 = bt.querySelector('div b'); if (b1) b1.textContent = 'Botlar';
       }
+    }
+    // 🔔 bildirishnomalar tugmasi
+    var bell = $('hxBell');
+    if (!bell) { bell = mk('hxBell'); bell.setAttribute('role', 'button'); bell.innerHTML = '🔔<i></i>'; bell.onclick = ntfOpen; }
+    if (bell.parentNode !== hero) hero.appendChild(bell);
+    var nn = ntfList().length, bi = bell.querySelector('i'), bt0 = nn ? String(nn > 9 ? '9+' : nn) : '';
+    if (bi && bi.textContent !== bt0) bi.textContent = bt0;
+    var sn = snap();
+    // 🎯 tavsiya etilgan raqib: onlayn, band emas, reytingi eng yaqin odam
+    var rec = $('hxRec');
+    var my = (D && D.elo) || (sn && sn.me && sn.me.elo) || 1500, meU = sn && sn.me && sn.me.uid;
+    var RL = sn ? sn.players.filter(function (p) { return p.uid !== meU && !p.bot && !/^bot/.test(String(p.uid)) && !p.busy && !p.offline; })
+      .sort(function (a, b) { return Math.abs((a.elo || 1500) - my) - Math.abs((b.elo || 1500) - my); }) : [];
+    if (RL.length) {
+      var rp = RL[recI % RL.length], dl = (rp.elo || 1500) - my, sent = recSent[rp.uid] && Date.now() - recSent[rp.uid] < 30000;
+      var tg0 = Math.abs(dl) <= 60 ? '<span class="tg eq">SIZGA TENG</span>' : dl > 0 ? '<span class="tg up">KUCHLIROQ RAQIB</span>' : '<span class="tg dn">MASHQ UCHUN</span>';
+      var rh = '<div class="hxH">Tavsiya etilgan raqib' + (RL.length > 1 ? ' <a data-r="next">Boshqasi ↻</a>' : '') + '</div><div class="cd">' + avh(rp.uid, rp.name, rp.hasAv, true) +
+        '<div class="tx"><b>' + esc(rp.name || '?') + '</b><small>ELO ' + (rp.elo || 1500) + ' · onlayn</small>' + tg0 + '</div>' +
+        '<button class="go" data-r="go" data-u="' + esc(rp.uid) + '"' + (sent ? ' disabled>Yuborildi ✓' : '>O‘ynash') + '</button></div>';
+      rec = el('hxRec', rh);
+      if (!rec.__oc) {
+        rec.__oc = 1;
+        rec.onclick = function (e) {
+          var t = e.target; while (t && t !== rec && !(t.getAttribute && t.getAttribute('data-r'))) t = t.parentNode;
+          var a = t && t !== rec && t.getAttribute('data-r');
+          if (a === 'next') { recI++; draw(); }
+          else if (a === 'go' && !t.disabled) { var u = t.getAttribute('data-u'); if (window.lbChallengeUid) window.lbChallengeUid(u); recSent[u] = Date.now(); draw(); }
+        };
+      }
+      if (rec.parentNode !== hero) hero.appendChild(rec);
+    } else if (rec) rec.remove();
+    // 👥 do‘stlar qatori
+    if (sn) {
+      var FL = sn.friends.slice().sort(function (a, b) { return (b.online ? 1 : 0) - (a.online ? 1 : 0) || (b.ls || 0) - (a.ls || 0); }).slice(0, 15);
+      var fh = '<div class="hxH">Do‘stlar' + (FL.length ? ' <a data-f="all">Hammasi ›</a>' : '') + '</div><div class="rw"><div class="f add" data-f="add"><span class="hxAvW"><span class="hxAv">+</span></span><span>Qo‘shish</span></div>' +
+        (FL.length ? FL.map(function (f) { return '<div class="f" data-f="u" data-u="' + esc(f.uid) + '">' + avh(f.uid, f.name, f.hasAv, f.online) + '<span>' + esc(String(f.name || '?').split(' ')[0]) + '</span></div>'; }).join('')
+          : '<div class="nf">Do‘stlaringizni taklif qiling — birga o‘ynash qiziqroq</div>') + '</div>';
+      var frs = el('hxFrs', fh);
+      if (!frs.__oc) {
+        frs.__oc = 1;
+        frs.onclick = function (e) {
+          var t = e.target; while (t && t !== frs && !(t.getAttribute && t.getAttribute('data-f'))) t = t.parentNode;
+          var a = t && t !== frs && t.getAttribute('data-f');
+          if (a === 'add') { if (window.refGo) window.refGo(); else { var kk = $('nvKK'); if (kk) kk.click(); } }
+          else if (a === 'all') { var pl2 = $('lbPl'), ft = pl2 && pl2.querySelector('[data-t="f"]'); if (ft) { ft.click(); pl2.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }
+          else if (a === 'u' && window.spUser) window.spUser(t.getAttribute('data-u'));
+        };
+      }
+      if (frs.parentNode !== hero) hero.appendChild(frs);
     }
     // 📊 reytinglar
     var RT = (D && D.rt) || {}, cell = function (k, e, lb) { var x = RT[k] || { r: 1500, prov: true }; return '<div data-x="rk"><span class="lab">' + em(e, 'hxRc') + '<span>' + lb + '</span></span><b>' + x.r + (x.prov ? '<i>?</i>' : '') + '</b></div>'; };

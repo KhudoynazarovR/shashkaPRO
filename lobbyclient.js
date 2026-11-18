@@ -1278,7 +1278,11 @@
       quick: function (tc, voice) { if (S.inQueue) sendMsg({ type: "lbQuickCancel" }); sendMsg({ type: "lbQuick", tc: tc, pos: window.nvPos || ($("lbPos") || {}).value || "std", games: 1, voice: !!voice }); },
       cancel: function () { sendMsg({ type: "lbQuickCancel" }); },
       friend: function (tc, voice) { sendMsg({ type: "lbFriendNew", tc: tc, pos: window.nvPos || ($("lbPos") || {}).value || "std", games: 1, voice: !!voice }); toast("🔗 Havola tayyorlanmoqda…", null, 2000); },
-      state: function () { return { inQueue: !!S.inQueue, tc: S.myQueueTc || null, seekers: S.seekers || {}, online: (S.players || []).length, friendsOnline: (S.friends || []).filter(function (f) { return f.online; }).length }; }
+      state: function () { return { inQueue: !!S.inQueue, tc: S.myQueueTc || null, seekers: S.seekers || {}, online: (S.players || []).length, friendsOnline: (S.friends || []).filter(function (f) { return f.online; }).length }; },
+      // 🏠 bosh sahifa (homex.js) uchun: o‘qish uchun nusxa va javob amallari
+      snap: function () { return { me: S.me || null, players: S.players || [], friends: S.friends || [], incoming: S.incoming || [], freqIn: S.freqIn || [], tournaments: S.tournaments || [] }; },
+      respond: function (id, ok) { sendMsg({ type: "lbRespond", id: id, accept: !!ok }); },
+      friendResp: function (uid, ok) { sendMsg({ type: "lbFriendResp", uid: uid, accept: !!ok }); }
     };
     window.lbFriend = function () { sendMsg({ type: "lbFriendNew", tc: $("lbTc").value, pos: $("lbPos").value, games: Number($("lbGm").value) }); toast("🔗 Havola tayyorlanmoqda…", null, 2000); };
     var tFil = "new";
