@@ -178,6 +178,8 @@
         "#rcBar button.off{opacity:.38}#rcBar button[hidden],#rcBar .bd[hidden]{display:none}" +
         "#rcBar .bd{position:absolute;top:-5px;left:calc(50% + 16px);min-width:18px;height:18px;border-radius:9px;background:#e04a3a;color:#fff;font:700 11px/18px system-ui,sans-serif;text-align:center;padding:0 4px;box-sizing:border-box}" +
         "#rcResign,#rcDrawOffer,#rcDrawCnt,#rcChatBtn,#rcMenuBtn{display:none!important}" +
+        // 🤝 durang taklifi — pastki tugmalar ustida, doim ko'rinadi (Qabul / Rad etish yopilib qolmaydi)
+        "#rcDraw{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 104px);z-index:20;width:min(94vw,520px);box-sizing:border-box;margin:0!important;border-radius:12px!important;box-shadow:0 6px 20px rgba(0,0,0,.4)}" +
         "#rcH2H{width:min(94vw,520px);box-sizing:border-box;margin:2px auto 4px;padding:7px 12px;border-radius:12px;background:rgba(0,0,0,.22);font:600 14px system-ui,sans-serif;color:#f3ebe0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}" +
         "#rcH2H .t{opacity:.7;font-weight:500;white-space:nowrap}#rcH2H .s{flex:1;min-width:0;display:flex;align-items:center;justify-content:flex-end;gap:6px}" +
         "#rcH2H .s span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}#rcH2H .s span:first-child{flex:none;max-width:35%}#rcH2H .s b{white-space:nowrap;padding:2px 10px;border-radius:8px;background:rgba(255,255,255,.12);font-variant-numeric:tabular-nums}#rcH2H>div{width:100%}" +
