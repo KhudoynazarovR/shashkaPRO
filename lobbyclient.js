@@ -284,7 +284,7 @@
       } else if (m.type === "gmJoinIn") {   // 👥 guruh kartasi: do'st o'yiningizga qo'shildi — ilova ochiq bo'lsa o'yin o'zi ochiladi
         var _gid = "mx:" + m.g + ":" + m.code, _gb = !!(document.getElementById("mxOv") || document.getElementById("ugOv") || $("rcFrameOv") || inRoom), _gl = 3, _gt = 0;
         var _go = function () { clearInterval(_gt); if (window.mxOpen) window.mxOpen(_gid); };
-        toast("<b>" + esc(m.name) + "</b> " + esc(m.gn || "") + " o‘yiningizga qo‘shildi!" + (_gb ? "" : "<br><span id=\"gmCd\">3</span> soniyadan so‘ng o‘yinga o‘tasiz…"), [["▶ O‘yinga kirish", _go]], _gb ? 30000 : 4000);
+        toast("<b>" + esc(m.name) + "</b> " + esc(m.gn || "") + (m.k === "host" ? " o‘yinida sizni kutyapti!" : " o‘yiningizga qo‘shildi!") + (_gb ? "" : "<br><span id=\"gmCd\">3</span> soniyadan so‘ng o‘yinga o‘tasiz…"), [["▶ O‘yinga kirish", _go]], _gb ? 30000 : 4000);
         if (!_gb) _gt = setInterval(function () { _gl--; var e = $("gmCd"); if (e) e.textContent = _gl; if (_gl <= 0) _go(); }, 1000);
       } else if (m.type === "lbToast") {
         toast(esc(m.text), null, 7000);

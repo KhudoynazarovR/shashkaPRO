@@ -128,7 +128,8 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
     if (m.status === 'over' && !m.st) { A.innerHTML = '<div class="top"><b>' + META.ic + ' ' + META.t + '</b></div><div class="cd" style="text-align:center;line-height:1.6"><div style="font-size:42px">⌛</div>O‘yin bo‘lmadi — raqib vaqtida kirmadi.<br><span class="muted">Natija turnir jadvaliga yozildi.</span></div><button class="go g2" id="mn">☰ Menyu</button>'; document.getElementById('mn').onclick = menu; return; }   // 🔀 turnir: kelmaganlik
     if (m.status === 'wait' && m.inl) {   // 📣 guruh kartasi orqali
       var hn = m.players[0] ? m.players[0].name : '', fn = m.players[1] ? m.players[1].name : '';
-      var tx = m.mi === 0 ? (fn ? '<b>' + esc(fn) + '</b> qo‘shildi — boshlanmoqda…' : 'Guruhdagi do‘stingiz kartani bosishini kutyapmiz…') : m.mi === 1 ? '<b>' + esc(hn) + '</b> kirishini kutyapmiz.<br><span class="muted">Unga botdan xabar yuborildi · 3 daqiqa kutiladi</span>' : '👁 O‘yin boshlanishi kutilmoqda…';
+      var fOn = !!(m.players[1] && m.players[1].on);
+      var tx = m.mi === 0 ? (fn ? (fOn ? '<b>' + esc(fn) + '</b> qo‘shildi — boshlanmoqda…' : '<b>' + esc(fn) + '</b> ilovadan chiqib ketdi — unga xabar yubordik.<br><span class="muted">Qaytishi bilan o‘yin o‘zi boshlanadi</span>') : 'Guruhdagi do‘stingiz kartani bosishini kutyapmiz…') : m.mi === 1 ? '<b>' + esc(hn) + '</b> kirishini kutyapmiz.<br><span class="muted">Unga xabar yuborildi · ilovadan chiqsangiz ham, u kirganda sizga xabar keladi</span>' : '👁 O‘yin boshlanishi kutilmoqda…';
       A.innerHTML = '<div class="top"><button class="bk" id="bk">‹</button><b>⏳ Kutilmoqda</b></div><div class="cd" style="text-align:center;line-height:1.6"><div style="font-size:42px">' + META.ic + '</div>' + tx + '</div>';
       document.getElementById('bk').onclick = menu; return;
     }

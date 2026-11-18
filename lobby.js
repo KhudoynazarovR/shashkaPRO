@@ -1333,10 +1333,11 @@ function createLobby({ send, clients, roomsApi }) {
       const uid = String(c.lb.uid), GN = Object.assign({ mm: '🧠 Xotira', rp: '✊✌️✋ Tosh-qaychi-qog‘oz' }, require('./ugroom.js').GN);
       for (const [mod, gk] of [['./ugroom.js', () => 'ug'], ['./duoroom.js', r => r.g], ['./memroom.js', () => 'mm'], ['./rpsroom.js', () => 'rp']]) {
         for (const r of require(mod).rooms.values()) {
-          if (!r.inline || r.status !== 'wait' || !r.p || r.p.length < 2 || !r.p[0] || String(r.p[0].uid) !== uid || r.p[0].ws) continue;
+          if (!r.inline || r.status !== 'wait' || !r.p || r.p.length < 2 || !r.p[0] || !r.p[1]) continue;
           const g = gk(r); if (!g) continue;
-          send(c.ws, { type: 'gmJoinIn', g, code: r.code, name: String(r.p[1].name || ''), gn: GN[g] || '' });
-          return;
+          if (String(r.p[0].uid) === uid && !r.p[0].ws) { send(c.ws, { type: 'gmJoinIn', g, code: r.code, name: String(r.p[1].name || ''), gn: GN[g] || '' }); return; }   // siz yuboruvchi — do'st kutyapti
+          if (String(r.p[1].uid) === uid && !r.p[1].ws && r.p[0].ws) { send(c.ws, { type: 'gmJoinIn', g, code: r.code, name: String(r.p[0].name || ''), gn: GN[g] || '', k: 'host' }); return; }   // siz do'st — yuboruvchi kutyapti
+          continue;
         }
       }
     } catch (e) { console.log('[pendingGame]', e.message); }

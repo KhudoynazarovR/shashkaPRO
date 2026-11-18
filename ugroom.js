@@ -74,6 +74,7 @@ function handle(c, m) {
     p.ws = c.ws; p.cid = c.id; p.offAt = 0; p.j = true; byConn.set(c.id, r.code);
     if (r.p.length === 2 && r.status === 'wait' && (!(r.onEnd || r.inline) || r.p.every(x => x.ws))) begin(r);   // turnir / guruh kartasi — ikkalasi ham kirganda
     else if (r.inline && r.status === 'wait' && r.p.length === 2 && !r.p[0].ws) { pingHost(r); card(r); }
+    else if (r.inline && r.status === 'wait' && r.p.length === 2 && r.p[0].ws && !r.p[1].ws) pingFriend(r);   // do'st chiqib ketgan — unga xabar
     push(r);
     return true;
   }
@@ -131,7 +132,7 @@ setInterval(() => {
   const now = Date.now();
   for (const [k, r] of rooms) {
     if (r.status === 'play') { const off = r.p.find(x => !x.ws && x.offAt && now - x.offAt > 60e3); if (off) end(r, off.side === 1 ? 2 : 1, 'left'); }
-    if (r.inline && r.status === 'wait' && r.p.length === 2 && !r.p[1].ws && r.p[1].offAt && now - r.p[1].offAt > 60e3) { r.p.pop(); clearTimeout(r.stmr); r.pinged = 0; card(r); push(r); }
+    if (r.inline && r.status === 'wait' && r.p.length === 2 && !r.p[1].ws && r.p[1].offAt && now - r.p[1].offAt > 180e3) { r.p.pop(); clearTimeout(r.stmr); r.pinged = 0; card(r); push(r); }
     const on = r.p.some(x => x.ws);
     if ((!on && now - r.at > 30 * 60e3) || now - r.at > 6 * 3600e3) { clearTimeout(r.tmr); rooms.delete(k); }
   }
@@ -206,5 +207,12 @@ function pingHost(r) {
     send(f.ws, { type: 'ugErr', msg: 'Raqib 3 daqiqada kirmadi — keyinroq qayta urinib ko‘ring' });
     r.pinged = 0; card(r); push(r);
   }, 180e3);
+}
+// yuboruvchi kirdi, do'st esa ilovadan chiqib ketgan: do'stga xabar — ilova ochiq bo'lsa o'yin o'zi ochiladi, aks holda botdan tugma
+function pingFriend(r) {
+  const now = Date.now(), f = r.p[1]; if (!f || f.ws || (r.pingedF && now - r.pingedF < 60e3)) return; r.pingedF = now;
+  try { global.spLobby && global.spLobby.pushUid(f.uid, { type: 'gmJoinIn', g: 'ug', code: r.code, name: String(r.p[0].name || ''), gn: '🏁 Ugolki', k: 'host' }); } catch (e) {}
+  if (!/^\d+$/.test(String(f.uid))) return;
+  try { TG('sendMessage', { chat_id: f.uid, parse_mode: 'HTML', text: '🏁 Ugolki' + ': <b>' + esc(r.p[0].name) + '</b> o‘yinga kirdi va sizni kutyapti!', reply_markup: { inline_keyboard: [[{ text: '▶ O‘yinga kirish', url: r.link || ('https://t.me/DraughtsPRObot/play?startapp=' + 'ug_' + r.code) }]] } }); } catch (e) {}
 }
 module.exports = { handle, onClose, rooms, createPair, remember, GN };

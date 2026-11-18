@@ -166,8 +166,19 @@ svg.path{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-even
     NET = NET || {}; NET.code = m.code;
     if (m.status === 'over' && !m.b) { A.innerHTML = '<div class="top"><b>🏁 Ugolki</b></div><div class="cd" style="text-align:center;line-height:1.6"><div style="font-size:42px">⌛</div>O‘yin bo‘lmadi — raqib vaqtida kirmadi.<br><span class="muted">Natija turnir jadvaliga yozildi.</span></div><button class="go g2" id="mn">☰ Menyu</button>'; document.getElementById('mn').onclick = menu; return; }   // 🔀 turnir: kelmaganlik
     if (m.status === 'wait' && m.inl) {   // 📣 guruh kartasi orqali
-      var hn = m.players[0] ? m.players[0].name : '', fn = m.players[1] ? m.players[1].name : '';
-      var tx = m.mi === 0 ? (fn ? '<b>' + esc(fn) + '</b> qo‘shildi — boshlanmoqda…' : 'Guruhdagi do‘stingiz kartani bosishini kutyapmiz…') : m.mi === 1 ? '<b>' + esc(hn) + '</b> kirishini kutyapmiz.<br><span class="muted">Unga botdan xabar yuborildi · 3 daqiqa kutiladi</span>' : '👁 O‘yin boshlanishi kutilmoqda…';
+      var hn = m.players[0] ? m.players[0].name : '', fn = m.players[1] ? m.players[1].name : '', fOn = !!(m.players[1] && m.players[1].on);
+      var tx = m.mi === 0 ? (fn ? (fOn ? '<b>' + esc(fn) + '</b> qo‘shildi — boshlanmoqda…' : '<b>' + esc(fn) + '</b> ilovadan chiqib ketdi — unga xabar yubordik.<br><span class="muted">Qaytishi bilan o‘yin o‘zi boshlanadi</span>') : 'Guruhdagi do‘stingiz kartani bosishini kutyapmiz…')
+        : m.mi === 1 ? '<b>' + esc(hn) + '</b> kirishini kutyapmiz.<br><span class="muted">Unga xabar yuborildi · ilovadan chiqsangiz ham, u kirganda sizga xabar keladi</span>' : '👁 O‘yin boshlanishi kutilmoqda…';
+      try {   // ♟ kutish paytida ham doska ko'rinadi (boshlang'ich holat) — o'yin boshlanishi bilan shu doskada davom etadi
+        var mySide = m.mi === 1 ? B : W;
+        G = { mode: 'wait', code: m.code, st: UG.start(), me: mySide, watch: true, sel: -1, names: {}, m: m, hist: [] };
+        G.names[mySide] = (m.players[m.mi] || {}).name || myName(); G.names[3 - mySide] = (m.mi === 1 ? hn : fn) || 'Raqib kutilmoqda…';
+        draw();
+        var stE = A.querySelector('.st'); if (stE) { stE.innerHTML = '⏳ ' + tx; stE.style.lineHeight = '1.5'; }
+        var btE = A.querySelector('.btns'); if (btE) btE.style.display = 'none';
+        var bkE = document.getElementById('bk'); if (bkE) bkE.onclick = menu;
+        return;
+      } catch (e) {}
       A.innerHTML = '<div class="top"><button class="bk" id="bk">‹</button><b>⏳ Kutilmoqda</b></div><div class="cd" style="text-align:center;line-height:1.6"><div style="font-size:42px">' + '🏁' + '</div>' + tx + '</div>';
       document.getElementById('bk').onclick = menu; return;
     }
