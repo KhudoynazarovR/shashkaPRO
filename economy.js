@@ -370,7 +370,7 @@ function handle(req, res, url) {
       return { id: g.id, at: g.at, w: g.w, b: g.b, win: g.win, tc: g.tc, me, oe: me === 'white' ? g.be : me === 'black' ? g.we : null, m: g.m, o: g.o, f: g.f };
     });
     let _rt = null; try { _rt = require('./glicko.js').view(_u); } catch (e) {}
-    send(res, 200, { elo: _u.elo || 1500, rt: _rt, solved: (_u.solved || []).length, day: _pd && _pd.d === _dk ? (_pd.c[_id] || 0) : 0, arch, fx: store.db.hxFx !== false });
+    send(res, 200, { elo: _u.elo || 1500, rt: _rt, solved: (_u.solved || []).length, day: _pd && _pd.d === _dk ? (_pd.c[_id] || 0) : 0, arch, fx: store.db.hxFx !== false, tick: store.db.hxTick !== false });
     return true;
   }
   // 🏅 bosh sahifa reyting lentasi: har yo'nalish bo'yicha faqat 1-o'rin (yengil javob, 60 soniya kesh)
@@ -387,13 +387,18 @@ function handle(req, res, url) {
     send(res, 200, _ldC.d);
     return true;
   }
-  // ✨ bosh sahifa jonli effektlari (emoji harakatlari) — hamma foydalanuvchi uchun bitta sozlama; admin yoqadi / o'chiradi
+  // ✨ bosh sahifa sozlamalari — hamma foydalanuvchi uchun; admin yoqadi / o'chiradi: fx — jonli effektlar, tick — reyting lentasi
   if (p === '/api/hxfx') {
-    if (req.method === 'GET') { send(res, 200, { fx: store.db.hxFx !== false }); return true; }
+    if (req.method === 'GET') { send(res, 200, { fx: store.db.hxFx !== false, tick: store.db.hxTick !== false }); return true; }
     if (req.method === 'POST') {
       const _t = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
       if (!_t || !isAdmin(_t.id)) { send(res, 403, { error: 'admin emassiz' }); return true; }
-      readBody(req, 1000, body => { let j = {}; try { j = JSON.parse(body); } catch (e) {} store.db.hxFx = !!j.fx; store.save(); send(res, 200, { ok: true, fx: store.db.hxFx }); });
+      readBody(req, 1000, body => {
+        let j = {}; try { j = JSON.parse(body); } catch (e) {}
+        if ('fx' in j) store.db.hxFx = !!j.fx;
+        if ('tick' in j) store.db.hxTick = !!j.tick;
+        store.save(); send(res, 200, { ok: true, fx: store.db.hxFx !== false, tick: store.db.hxTick !== false });
+      });
       return true;
     }
   }

@@ -149,13 +149,17 @@
     if (!fxSt.parentNode) document.head.appendChild(fxSt);
   }
   window.hxFxSet = fxSet;
+  // 🏅 reyting lentasi — admin hamma uchun yoqadi / o‘chiradi (/api/home → tick)
+  function tickSet(on) { on = on !== false; window.hxTick = on; try { localStorage.setItem('hxTick', on ? '1' : '0'); } catch (e) {} }
+  window.hxTickSet = function (v) { tickSet(v); if (v !== false) ldAt = 0; try { draw(); } catch (e) {} };
+  (function () { var v = '1'; try { v = localStorage.getItem('hxTick') || '1'; } catch (e) {} tickSet(v !== '0'); })();
   (function () { var v = '1'; try { v = localStorage.getItem('hxFx') || '1'; } catch (e) {} fxSet(v !== '0'); })();
 
   var D = null, dAt = 0, LD = null, ldAt = 0;
   function esc(x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function num(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
   function loadLd() {
-    if (Date.now() - ldAt < 60000) return; ldAt = Date.now();
+    if (window.hxTick === false || Date.now() - ldAt < 60000) return; ldAt = Date.now();
     fetch('/api/leaders').then(function (r) { return r.ok ? r.json() : null; }).then(function (j) { if (j) { LD = j; draw(); } }).catch(function () {});
   }
   // lenta: [kalit, emoji, rang, yozuv]
@@ -164,7 +168,7 @@
   function load(force) {
     if (!idata() || (!force && Date.now() - dAt < 60000)) return;
     dAt = Date.now();
-    fetch('/api/home', { headers: { 'x-init-data': idata() } }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) { if (j) { D = j; fxSet(j.fx); draw(); } }).catch(function () {});
+    fetch('/api/home', { headers: { 'x-init-data': idata() } }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) { if (j) { D = j; fxSet(j.fx); tickSet(j.tick); draw(); } }).catch(function () {});
   }
   function nav(rx) { var b = [].slice.call(document.querySelectorAll('#nvBar button')).find(function (x) { return rx.test(x.textContent || ''); }); if (b) b.click(); }
   function openDaily() {
@@ -181,7 +185,7 @@
   function draw() {
     var hero = $('hzHero'); if (!hero) return;
     // 🏅 reyting lentasi
-    var items = LD ? LDK.filter(function (k) { return LD[k[0]] && LD[k[0]].v > 0; }) : [];
+    var items = LD && window.hxTick !== false ? LDK.filter(function (k) { return LD[k[0]] && LD[k[0]].v > 0; }) : [];
     var tk = $('hxTick');
     if (items.length) {
       if (!tk) { tk = mk('hxTick'); tk.setAttribute('role', 'button'); tk.onclick = function () { nav(/Reyting|Рейтинг|Rating/); }; }
