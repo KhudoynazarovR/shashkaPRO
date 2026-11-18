@@ -228,13 +228,13 @@
         "#spDG .sw{flex:none;width:46px;height:28px;border-radius:14px;background:rgba(255,255,255,.22);position:relative;transition:background .2s}#spDG .sw::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:left .2s}" +
         "#spDG.on .sw{background:#81b64c}#spDG.on .sw::after{left:21px}#spDG .a{display:block}#spDG .z{display:none}#spDG.on .a{display:none}#spDG.on .z{display:block}" +
         "#spDG .bar{display:flex;align-items:center;gap:8px}#spDG .bar b{flex:none;min-width:40px;font:800 16px system-ui,sans-serif;font-variant-numeric:tabular-nums}" +
-        "#spDG .bar .tr{flex:1;height:10px;border-radius:5px;background:#3a3330;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}#spDG .bar .tr i{display:block;height:100%;width:50%;background:#fbf7f0;border-right:2px solid #c9a46a;transition:width .5s}" +
+        "#spDG .bar .bm{flex:none;font:800 14px system-ui,sans-serif;color:#5fc25a;white-space:nowrap}#spDG .bar .bm:empty{display:none}#spDG .bar .tr{flex:1;min-width:40px;height:10px;border-radius:5px;background:#3a3330;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}#spDG .bar .tr i{display:block;height:100%;width:50%;background:#fbf7f0;border-right:2px solid #c9a46a;transition:width .5s}" +
         "#spDG .mv{margin-top:4px;font:600 13px system-ui,sans-serif;color:#e2d6c6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#spDG .mv .ok{color:#6cc04a}#spDG .mv .bad{color:#ff8a50}#spDG .mv .dg{color:#5fc25a}#spDG .mv em{font-style:normal;opacity:.7;font-weight:500}" +
         "#spDA{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:7}" +
         ".rcL #spSH .bk,.rcL #spSH .sv{background:#fff;color:#2b2119;box-shadow:0 3px 10px rgba(80,50,20,.15)}.rcL #spSH .tt{color:#2b2119}.rcL #spSH .sv b{color:#5a4a3a}" +
         ".rcL #spSL{background:#fff;color:#2b2119;box-shadow:0 10px 30px rgba(60,40,20,.28)}" +
         ".rcL #spDG{background:#fff;color:#2b2119;box-shadow:0 3px 10px rgba(80,50,20,.15)}.rcL #spDG .t small{color:#8a7a68}.rcL #spDG .sw{background:#d9cfc2}.rcL #spDG.on .sw{background:#81b64c}" +
-        ".rcL #spDG .bar .tr{box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}.rcL #spDG .mv{color:#4a3a2a}.rcL #spDG .mv .ok{color:#3f8f2a}.rcL #spDG .mv .bad{color:#d0582a}.rcL #spDG .mv .dg{color:#2e8b3a}" +
+        ".rcL #spDG .bar .tr{box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}.rcL #spDG .mv{color:#4a3a2a}.rcL #spDG .mv .ok{color:#3f8f2a}.rcL #spDG .mv .bad{color:#d0582a}.rcL #spDG .mv .dg,.rcL #spDG .bar .bm{color:#2e8b3a}" +
         ".rcSpec #rcStatus:empty{display:none}.rcSpec{padding-top:calc(env(safe-area-inset-top,0px) + 6px)!important}";
       document.head.appendChild(_kc);
     }
@@ -717,56 +717,53 @@
       try { navigator.clipboard.writeText(url).then(function () { elInfo.textContent = "🔗 Havola nusxalandi"; }); } catch (e) {}
     }
     function spNextLive(b) { st._nl = b; b.disabled = true; b.textContent = "⏳ Qidirilmoqda…"; send({ type: "roomLive" }); }
-    // 🐉 Dragon bilan kuzatish (2 yurish orqada): tomoshabin yoqadi, server baholaydi
+    // 🐉 Dragon bilan kuzatish: tomoshabin yoqadi, server baholaydi — strelka hozirgi o'rindagi kuchli yurishni yurishdan oldin ko'rsatadi
     function spDgOn() { try { return localStorage.getItem("spDg") === "1"; } catch (e) { return !!st._dgOn; } }
     function spDgReq(ms) {
       if (st.color !== "spectator" || !spDgOn() || !st.joined) return;
       if (ms == null) st._dgB = 0;   // yangi yurish — band bo'lgandagi qayta urinishlar hisobi yangidan
-      clearTimeout(st._dgT); st._dgT = setTimeout(function () { send({ type: "roomEval", roomId: roomId }); }, ms == null ? 350 : ms);
+      clearTimeout(st._dgT); st._dgT = setTimeout(function () { send({ type: "roomEval", roomId: roomId }); }, ms == null ? 250 : ms);
     }
     function spSq(i) { return "abcdefgh".charAt(i & 7) + (8 - (i >> 3)); }
+    function spDgFresh(d) { return !!(d && !d.busy && !d.err && d.n === st.moves.length); }   // baho hozirgi doskaga tegishli
     function spDgTxt() {
       var d = st.dg, z = document.getElementById("spDG"); if (!z) return;
-      var ev = z.querySelector(".bar b"), w = z.querySelector(".bar .tr i"), mv = z.querySelector(".mv");
-      if (!d || d.wait || d.busy || d.err) {
-        ev.textContent = "…"; w.style.width = "50%";
-        mv.textContent = !d ? "Hisoblanmoqda…" : d.wait ? "Tahlil 3-yurishdan so‘ng boshlanadi" : d.err ? "Bu o‘yinni tahlil qilib bo‘lmaydi" : "Dragon band — birozdan so‘ng";
+      var ev = z.querySelector(".bar b"), w = z.querySelector(".bar .tr i"), bm = z.querySelector(".bar .bm"), mv = z.querySelector(".mv");
+      if (!d || d.busy || d.err) {
+        ev.textContent = "…"; w.style.width = "50%"; bm.textContent = "";
+        mv.textContent = !d ? "Hisoblanmoqda…" : d.err ? "Bu o‘yinni tahlil qilib bo‘lmaydi" : "Dragon band — birozdan so‘ng";
         return;
       }
       var x = typeof d.ev === "number" ? d.ev / 200 : null, big = x != null && Math.abs(x) >= 10;
       ev.textContent = x == null ? "—" : big ? (x > 0 ? "⚪ yutadi" : "⚫ yutadi") : (x > 0.05 ? "+" : x < -0.05 ? "−" : "") + Math.abs(x).toFixed(1);
       w.style.width = (x == null ? 50 : 50 + Math.max(-5, Math.min(5, x)) * 10) + "%";
-      var m = d.mv || {}, b = d.best, f = m.from ? m.from.r * 8 + m.from.c : -1, t = m.to ? m.to.r * 8 + m.to.c : -1;
-      var played = f >= 0 ? spSq(f) + (m.caps ? ":" : "-") + spSq(t) : "";
-      var same = !!(b && b.from === f && b.path && b.path[b.path.length - 1] === t);
-      var best = b ? spSq(b.from) + (b.caps ? ":" : "-") + (b.path || []).map(spSq).join(b.caps ? ":" : "-") : "";
-      var sg = m.col === "black" ? -1 : 1, loss = typeof d.prev === "number" && typeof d.ev === "number" ? sg * (d.prev - d.ev) / 200 : 0;
-      var mk = same || loss < 0.3 ? '<span class="ok">✓ aniq</span>' : loss < 0.8 ? '<span class="bad">?! noaniq</span>' : loss < 1.5 ? '<span class="bad">? xato</span>' : '<span class="bad">?? qo‘pol xato</span>';
-      d._same = same; d._bad = !same && loss >= 0.3;
-      mv.innerHTML = Math.ceil(d.k / 2) + ". " + (m.col === "black" ? "⚫" : "⚪") + " " + played + " " + mk + (same ? " <em>· Dragon ham shunday</em>" : best ? ' <em>· Dragon:</em> <span class="dg">' + best + "</span>" : "");
+      var b = d.best;   // navbatdagi tomon uchun kuchli yurish — doskadagi yashil strelka bilan bir xil
+      bm.textContent = b ? (d.turn === "black" ? "⚫ " : "⚪ ") + spSq(b.from) + (b.caps ? ":" : "-") + (b.path || []).map(spSq).join(b.caps ? ":" : "-") : "";
+      var h = "", m = d.mv || {}, f = m.from ? m.from.r * 8 + m.from.c : -1, t = m.to ? m.to.r * 8 + m.to.c : -1;
+      if (f >= 0) {   // oxirgi qilingan yurish: Dragon bahosi bo'yicha belgi
+        var pb = d.pbest, same = !!(pb && pb.from === f && pb.path && pb.path[pb.path.length - 1] === t);
+        var sg = m.col === "black" ? -1 : 1, loss = typeof d.prev === "number" && typeof d.ev === "number" ? sg * (d.prev - d.ev) / 200 : 0;
+        var mk = same || loss < 0.3 ? '<span class="ok">✓ aniq</span>' : loss < 0.8 ? '<span class="bad">?! noaniq</span>' : loss < 1.5 ? '<span class="bad">? xato</span>' : '<span class="bad">?? qo‘pol xato</span>';
+        h = Math.ceil(d.k / 2) + ". " + (m.col === "black" ? "⚫" : "⚪") + " " + spSq(f) + (m.caps ? ":" : "-") + spSq(t) + " " + mk;
+      }
+      if (d.end) h += (h ? " <em>·</em> " : "") + "<em>yurish qolmadi</em>";
+      mv.innerHTML = h || (b ? "<em>Yashil strelka — kuchli yurish</em>" : "—");
     }
-    function spDgArrows() {   // doskada: yashil — Dragon yurishi, to'q sariq — xato qilingan yurish
+    function spDgArrows() {   // doskada yashil strelka — navbatdagi tomon uchun Dragonning kuchli yurishi (yurishdan oldin)
       var old = document.getElementById("spDA"); if (old) old.remove();
-      var d = st.dg; if (st.color !== "spectator" || !spDgOn() || !d || d.wait || d.busy || d.err || !d.mv || !d.mv.from) return;
+      var d = st.dg; if (st.color !== "spectator" || !spDgOn() || !spDgFresh(d) || !d.best || !d.best.path || !d.best.path.length) return;
       var fl = flipped();
       function pt(i) { var r = i >> 3, c = i & 7; if (fl) { r = 7 - r; c = 7 - c; } return [c + 0.5, r + 0.5]; }
-      function line(sqs, col, id) {
-        var P = sqs.map(pt), n = P.length; if (n < 2) return "";
-        var a = P[n - 2], z = P[n - 1], dx = z[0] - a[0], dy = z[1] - a[1], L = Math.sqrt(dx * dx + dy * dy) || 1; P[n - 1] = [z[0] - dx / L * 0.3, z[1] - dy / L * 0.3];
-        return '<polyline points="' + P.map(function (p) { return p[0].toFixed(2) + "," + p[1].toFixed(2); }).join(" ") + '" fill="none" stroke="' + col + '" stroke-width=".15" stroke-linecap="round" stroke-linejoin="round" opacity=".85" marker-end="url(#' + id + ')"/>';
-      }
-      function mk(id, col) { return '<marker id="' + id + '" markerWidth="3" markerHeight="3" refX="1.6" refY="1.5" orient="auto"><path d="M0,0 L3,1.5 L0,3z" fill="' + col + '"/></marker>'; }
-      var m = d.mv, f = m.from.r * 8 + m.from.c, t = m.to.r * 8 + m.to.c, o = "";
-      if (d._bad) o += line([f, t], "#ff8a3d", "spAhO");
-      if (d.best && d.best.path) o += line([d.best.from].concat(d.best.path), "#3fb950", "spAhG");
-      if (!o) return;
+      var P = [d.best.from].concat(d.best.path).map(pt), n = P.length;
+      var a = P[n - 2], z = P[n - 1], dx = z[0] - a[0], dy = z[1] - a[1], L = Math.sqrt(dx * dx + dy * dy) || 1; P[n - 1] = [z[0] - dx / L * 0.3, z[1] - dy / L * 0.3];
       var s = document.createElementNS("http://www.w3.org/2000/svg", "svg"); s.id = "spDA"; s.setAttribute("viewBox", "0 0 8 8");
-      s.innerHTML = "<defs>" + mk("spAhG", "#3fb950") + mk("spAhO", "#ff8a3d") + "</defs>" + o;
+      s.innerHTML = '<defs><marker id="spAhG" markerWidth="3" markerHeight="3" refX="1.6" refY="1.5" orient="auto"><path d="M0,0 L3,1.5 L0,3z" fill="#3fb950"/></marker></defs>' +
+        '<polyline points="' + P.map(function (p) { return p[0].toFixed(2) + "," + p[1].toFixed(2); }).join(" ") + '" fill="none" stroke="#3fb950" stroke-width=".15" stroke-linecap="round" stroke-linejoin="round" opacity=".85" marker-end="url(#spAhG)"/>';
       if (getComputedStyle(elBoard).position === "static") elBoard.style.position = "relative";
       elBoard.appendChild(s);
     }
     function spDgSet(m) {
-      if (m.k && st.dg && st.dg.k > m.k && !m.fin) return;   // eski javob kechikib keldi
+      if (m.n != null && m.n < st.moves.length) { if (st._dgN !== st.moves.length) { st._dgN = st.moves.length; spDgReq(); } return; }   // eski doska uchun javob — yangisini so'raymiz
       st.dg = m; spDgTxt(); spDgArrows();
       if (m.busy && (st._dgB = (st._dgB || 0) + 1) <= 6) spDgReq(2500);   // Dragon band — biroz kutib qayta (ko'pi bilan 6 marta)
     }
@@ -798,8 +795,8 @@
       sh.querySelector(".sv b span").textContent = String(n);
       if (!dg) {
         dg = document.createElement("button"); dg.id = "spDG";
-        dg.innerHTML = '<div class="ic">🐉</div><div class="t"><div class="a"><b>Dragon bilan kuzatish</b><small>2 yurish orqada tahlil</small></div>' +
-          '<div class="z"><div class="bar"><b>…</b><div class="tr"><i></i></div></div><div class="mv">Hisoblanmoqda…</div></div></div><div class="sw"></div>';
+        dg.innerHTML = '<div class="ic">🐉</div><div class="t"><div class="a"><b>Dragon bilan kuzatish</b><small>Kuchli yurish strelka bilan</small></div>' +
+          '<div class="z"><div class="bar"><b>…</b><div class="tr"><i></i></div><span class="bm"></span></div><div class="mv">Hisoblanmoqda…</div></div></div><div class="sw"></div>';
         root.insertBefore(dg, elTop);
         dg.onclick = function () {
           var on = !spDgOn(); st._dgOn = on; try { localStorage.setItem("spDg", on ? "1" : "0"); } catch (e) {}
@@ -1919,7 +1916,7 @@
         st.selected = null;
         if (!_own) st.forced = computeForced(m.move);
         render();
-        if (m.turn !== m.color) spDgReq();   // 🐉 yangi yurish — Dragon bahosi (2 yurish orqada)
+        if (m.turn !== m.color) spDgReq();   // 🐉 yangi yurish — Dragon navbatdagi tomonning kuchli yurishini ko‘rsatadi
         // navbat o'tgan bo'lsa va yurish qolmagan bo'lsa — o'yin tugaydi
         if (m.turn !== m.color && st.color !== "spectator" && !st.finished) {
           if (!allMoves(st.board, codeOf(m.turn)).length) {

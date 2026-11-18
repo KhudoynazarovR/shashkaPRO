@@ -148,19 +148,20 @@ function createRooms({ send, clients, onFinish }) {
   }
   // 🐉 Dragon bilan kuzatish: har to'liq yurishdan keyingi pozitsiyalar [{ b, turn, mv }] (urish zanjiri — bitta yurish)
   function evLine(room) {
-    if (room._evL && room._evL.n === room.moves.length) return room._evL.P;
+    if (room._evL && room._evL.arr === room.moves && room._evL.n === room.moves.length) return room._evL.P;
+    if (!room._evL || room._evL.arr !== room.moves) room._evC = new Map();   // yangi o'yin (seriya, revansh) — eski baholar o'chadi
     const V = require("./vrules.js")._t;
     let st = { b: V.startOf(room), dead: [], forced: null, turn: room.first || (room.opening && room.opening.side === 'b' ? 'black' : 'white') };
     const P = [{ b: st.b, turn: st.turn, mv: null }]; let cur = null;
     for (const mv of room.moves) {
       const col = st.turn, r = V.step(st, col, mv, null);
-      if (r.error) { room._evL = { n: room.moves.length, P: null }; return null; }
+      if (r.error) { room._evL = { arr: room.moves, n: room.moves.length, P: null }; return null; }
       if (!cur) cur = { from: mv.from, to: mv.to, caps: 0, col };
       cur.to = mv.to; cur.caps += (mv.captures || []).length;
       st = r.st;
       if (!r.keep) { P.push({ b: st.b, turn: st.turn, mv: cur }); cur = null; }
     }
-    room._evL = { n: room.moves.length, P };
+    room._evL = { arr: room.moves, n: room.moves.length, P };
     return P;
   }
   let EVN = 0;   // bir vaqtda dvigatelga ketgan tomoshabin so'rovlari (botlar navbatini to'ldirmaslik uchun)
@@ -748,18 +749,20 @@ const srvBotOn = room => !!(room && room.vsBot && room.botCfg && room.botCfg.id 
       pushState(room);
       return true;
     }
-    if (m.type === "roomEval") {   // 🐉 Dragon bilan kuzatish — faqat tomoshabinga, 2 yurish orqada (o'yin tugagach — oxirgi yurish)
-      if ((col && !room.finished) || !room.members.has(c.id)) return true;
+    if (m.type === "roomEval") {   // 🐉 Dragon bilan kuzatish — faqat tomoshabinga: hozirgi o'rindagi kuchli yurish (strelka) va oxirgi yurish bahosi
+      const u = c.roomUser;
+      if (!room.members.has(c.id)) return true;
+      if (!room.finished && (col || (u && ((room.white && room.white.uid === u.id) || (room.black && room.black.uid === u.id))))) return true;   // o'yinchi (boshqa qurilmadan kirsa ham) — yo'q
       const P = evLine(room);
       if (!P) { send(c.ws, { type: "roomEval", roomId, err: 1 }); return true; }
-      const N = P.length - 1, k = room.finished ? N : N - 2;
-      if (k < 1) { send(c.ws, { type: "roomEval", roomId, k: 0, wait: 1, fin: !!room.finished }); return true; }
-      evPos(room, k - 1, a => {
-        if (!a || a.busy) return send(c.ws, { type: "roomEval", roomId, k, busy: 1 });
-        evPos(room, k, z => {
-          if (!z || z.busy) return send(c.ws, { type: "roomEval", roomId, k, busy: 1 });
-          const mv = P[k].mv || {};
-          send(c.ws, { type: "roomEval", roomId, k, fin: !!room.finished, ev: z.ev, tb: z.tb || 0, end: z.end || 0, prev: a.ev, best: a.best, mv: { from: mv.from, to: mv.to, col: mv.col, caps: mv.caps || 0 } });
+      const N = P.length - 1, n = room.moves.length, fin = !!room.finished;
+      evPos(room, N, z => {
+        if (!z || z.busy) return send(c.ws, { type: "roomEval", roomId, k: N, n, busy: 1 });
+        const base = { type: "roomEval", roomId, k: N, n, fin, ev: z.ev, tb: z.tb || 0, end: z.end || 0, best: z.best, turn: P[N].turn };
+        if (N < 1) return send(c.ws, base);
+        evPos(room, N - 1, a => {   // oxirgi yurish: oldingi o'rindagi baho bilan solishtiriladi (odatda keshda tayyor)
+          const mv = P[N].mv || {}, ok = a && !a.busy;
+          send(c.ws, Object.assign(base, { prev: ok ? a.ev : null, pbest: ok ? a.best : null, mv: { from: mv.from, to: mv.to, col: mv.col, caps: mv.caps || 0 } }));
         });
       });
       return true;
