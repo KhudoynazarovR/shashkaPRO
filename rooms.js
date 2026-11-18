@@ -133,6 +133,57 @@ function createRooms({ send, clients, onFinish }) {
   }
   // 🎯 jonli stol kartasidagi kichik doska: 64 belgi (0 bo'sh, 1 oq, 2 qora, 3 oq damka, 4 qora damka)
   function _bd64(r) { try { const v = require("./vrules.js").stateOf(r); if (!v || !v.b) return ""; let o = ""; for (let i = 0; i < 8; i++) for (let j = 0; j < 8; j++) o += String(v.b[i][j] || 0); return o; } catch (e) { return ""; } }
+  // 👁 tomoshabinlar: ism va rasm (o'yin oynasining tepasida kichik rasmlar)
+  function _specList(room) {
+    const out = [], seen = new Set();
+    for (const id of room.members) {
+      const cl = clients.get(id); if (!cl || colorOf(room, cl)) continue;
+      const u = cl.roomUser || {}, uid = String(u.id || "");
+      if (uid) { if (seen.has(uid)) continue; seen.add(uid); }
+      let av = false; try { const S = require("./store"); av = !!(uid && !/^g_/.test(uid) && S.avOf(S.users()[uid])); } catch (e) {}
+      out.push({ n: room.names.get(id) || u.name || "Mehmon", u: av ? uid : "", av });
+      if (out.length >= 12) break;
+    }
+    return out;
+  }
+  // 🐉 Dragon bilan kuzatish: har to'liq yurishdan keyingi pozitsiyalar [{ b, turn, mv }] (urish zanjiri — bitta yurish)
+  function evLine(room) {
+    if (room._evL && room._evL.n === room.moves.length) return room._evL.P;
+    const V = require("./vrules.js")._t;
+    let st = { b: V.startOf(room), dead: [], forced: null, turn: room.first || (room.opening && room.opening.side === 'b' ? 'black' : 'white') };
+    const P = [{ b: st.b, turn: st.turn, mv: null }]; let cur = null;
+    for (const mv of room.moves) {
+      const col = st.turn, r = V.step(st, col, mv, null);
+      if (r.error) { room._evL = { n: room.moves.length, P: null }; return null; }
+      if (!cur) cur = { from: mv.from, to: mv.to, caps: 0, col };
+      cur.to = mv.to; cur.caps += (mv.captures || []).length;
+      st = r.st;
+      if (!r.keep) { P.push({ b: st.b, turn: st.turn, mv: cur }); cur = null; }
+    }
+    room._evL = { n: room.moves.length, P };
+    return P;
+  }
+  let EVN = 0;   // bir vaqtda dvigatelga ketgan tomoshabin so'rovlari (botlar navbatini to'ldirmaslik uchun)
+  function evPos(room, i, cb) {   // i-pozitsiya bahosi (oq nuqtai nazaridan, dvigatel birligida) va Dragon yurishi; xona bo'yicha keshlanadi
+    const C = room._evC || (room._evC = new Map()), h = C.get(i);
+    if (h) { if (h.done) return cb(h.r); h.q.push(cb); return; }
+    const P = evLine(room); if (!P || !P[i]) return cb(null);
+    if (EVN >= 3) return cb({ busy: 1 });
+    const b = [], side = P[i].turn === 'white' ? 1 : -1;
+    for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) { const p = P[i].b[r][c]; b.push(p === 1 ? 1 : p === 3 ? 2 : p === 2 ? -1 : p === 4 ? -2 : 0); }
+    const it = { q: [cb], done: false }; C.set(i, it);
+    const fin = r => { it.done = true; it.r = r; if (!r) C.delete(i); const q = it.q; it.q = []; q.forEach(f => { try { f(r); } catch (e) {} }); };
+    let L = []; try { L = require("./kkrules.js").moves(b, side); } catch (e) {}
+    if (!L.length) return fin({ ev: -side * 9999, best: null, end: 1 });   // yurish yo'q — navbatdagi tomon yutqazgan
+    EVN++;
+    let done = false; const tm = setTimeout(() => { if (!done) { done = true; EVN--; fin(null); } }, 15000);
+    require("./kestoai.js").move({ board: b, side, time: 0.5, tbAlways: true }, r => {
+      if (done) return; done = true; clearTimeout(tm); EVN--;
+      if (!r || r.error || r.from == null) return fin(null);
+      const m = L.find(x => x.from === r.from && x.to === r.to);
+      fin({ ev: typeof r.ev === 'number' ? side * r.ev : null, tb: r.tb ? 1 : 0, best: { from: r.from, path: m ? m.path : [r.to], caps: m ? m.caps.length : 0 } });
+    });
+  }
   function snapshot(room, color) {
     return {
       type: "roomState",
@@ -148,6 +199,7 @@ function createRooms({ send, clients, onFinish }) {
       whiteOff: (room.white && room.white.offSince) || 0, blackOff: (room.black && room.black.offSince) || 0, srvNow: Date.now(), claimMs: CLAIM_MS,
       spectators: [...room.members].filter(id => !colorOf(room, clients.get(id) || {})).length,
       spectatorNames: [...room.members].filter(id => !colorOf(room, clients.get(id) || {})).map(id => room.names.get(id) || "Mehmon").slice(0, 8),
+      specList: _specList(room),
       moves: room.moves,
       turn: room.turn,
       finished: room.finished,
@@ -694,6 +746,22 @@ const srvBotOn = room => !!(room && room.vsBot && room.botCfg && room.botCfg.id 
       const s = { uid: u.id, name: u.name, clientId: c.id };
       if (room.white) room.black = s; else room.white = s;
       pushState(room);
+      return true;
+    }
+    if (m.type === "roomEval") {   // 🐉 Dragon bilan kuzatish — faqat tomoshabinga, 2 yurish orqada (o'yin tugagach — oxirgi yurish)
+      if ((col && !room.finished) || !room.members.has(c.id)) return true;
+      const P = evLine(room);
+      if (!P) { send(c.ws, { type: "roomEval", roomId, err: 1 }); return true; }
+      const N = P.length - 1, k = room.finished ? N : N - 2;
+      if (k < 1) { send(c.ws, { type: "roomEval", roomId, k: 0, wait: 1, fin: !!room.finished }); return true; }
+      evPos(room, k - 1, a => {
+        if (!a || a.busy) return send(c.ws, { type: "roomEval", roomId, k, busy: 1 });
+        evPos(room, k, z => {
+          if (!z || z.busy) return send(c.ws, { type: "roomEval", roomId, k, busy: 1 });
+          const mv = P[k].mv || {};
+          send(c.ws, { type: "roomEval", roomId, k, fin: !!room.finished, ev: z.ev, tb: z.tb || 0, end: z.end || 0, prev: a.ev, best: a.best, mv: { from: mv.from, to: mv.to, col: mv.col, caps: mv.caps || 0 } });
+        });
+      });
       return true;
     }
     if (m.type === "roomMove") {
