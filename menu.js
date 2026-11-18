@@ -715,7 +715,7 @@
   var shelf = 's', curBook = null; try { shelf = localStorage.getItem('pzShelf') || 's'; } catch (e) {}   // 📚 kutubxona: tanlangan javon (s/m/e/f) va ochiq kitob
   var hub = 0, view = '';
   function hubSoon(n) { var t = '🚧 ' + n + ' tez orada qo‘shiladi!'; if (tg && tg.showAlert) tg.showAlert(t); else alert(t); }
-  function dailyPz() { var L = S.list || []; if (!L.length) return null; return L[Math.floor((Date.now() + 18e6) / 864e5) % L.length]; }
+  function dailyPz() { var L = S.list || []; if (!L.length) return null; if (S.dayPz) { var x = L.filter(function (p) { return p.id === S.dayPz; })[0]; if (x) return x; } return L[Math.floor((Date.now() + 18e6) / 864e5) % L.length]; }   // kunini server tanlaydi (tanga tartibdan ozod)
   function hubView() {
     window.__pzMapKey = undefined;
     var go = function () {
@@ -758,7 +758,7 @@
     window.__advRet = null; window.__pzMapKey = undefined; hub = 0; view = 'map'; curFo = ''; curLv = 0; curBook = null;
     var go = function () {
       var bk = null;
-      window.spAdv.open({ ov: ov, S: S, api: api, tg: tg, admin: !!S.admin, land: land, cached: !!land,
+      window.spAdv.open({ ov: ov, S: S, api: api, tg: tg, admin: !!S.admin && !userView(), land: land, cached: !!land,
         books: function () { return bk || (bk = advBooks()); },
         play: function (p, b, ret) { curBook = b; window.__advRet = ret; window.__pzMapKey = undefined; play(p); },
         back: function () { window.__advRet = null; hub = 1; view = ''; list(); },
@@ -839,11 +839,15 @@
       fl.forEach(function (f, i) { all.push({ f: f, i: i, arr: S.list.filter(function (p) { return foOf(p) === f; }) }); });
       if (mix.length) all.push({ f: '', i: -1, arr: mix });
       all = all.filter(function (x) { return x.arr.length || S.admin; });
-      var solvedN = (S.solved || []).length;
-      h = '<div class="pzN"><div class="pzNh"><button id="pzBack" class="pzNb" aria-label="Orqaga">‹</button><div class="pzNt"><b>' + (view === 'custom' ? 'Maxsus masalalar' : 'Masalalar') + '</b><small>' + (S.admin ? S.list.length + ' ta masala · ' + all.length + ' ta to‘plam' : solvedN + ' ta yechildi') + '</small></div></div>' +
-        '<div class="pzNp"><button id="pzTop">TOP</button>' + (S.admin ? '<button id="pzUV">' + (userView() ? 'Admin ko‘rinishi' : 'Foydalanuvchi ko‘rinishi') + '</button><button id="pzAllO">Hammasini ochish</button><button id="pzAllL">Hammasini qulflash</button><button id="pzQzP">Viktorina</button><button id="pzPlus" class="pr">+ Yangi</button>' : '') + '</div>';
-      // davom ettirish: boshlangan, tugamagan kitobdagi birinchi yechilmagan masala
+      var solvedN = (S.solved || []).length, AD = S.admin && !userView();   // AD: admin ko‘rinishi («Foydalanuvchi ko‘rinishi»da o‘yinchi nima ko‘rsa, shu)
       var BK = pzBooks(), allB = BK.s.concat(BK.m, BK.e), cb = null;
+      // kitob qulflari umumiy holati (1-kitobdan keyingi Sodda/Murakkab kitoblar): hammasi ochiq / hammasi qulf / oddiy qoida
+      var gK = BK.s.slice(1).concat(BK.m.slice(1)).map(function (b) { return (S.bookAll || {})[b.key] || ''; });
+      var gst = !gK.length ? '' : gK.every(function (v) { return v === 'open'; }) ? 'open' : gK.every(function (v) { return v === 'lock'; }) ? 'lock' : gK.every(function (v) { return !v; }) ? 'norm' : '';
+      h = '<div class="pzN"><div class="pzNh"><button id="pzBack" class="pzNb" aria-label="Orqaga">‹</button><div class="pzNt"><b>' + (view === 'custom' ? 'Maxsus masalalar' : 'Masalalar') + '</b><small>' + (AD ? S.list.length + ' ta masala · ' + all.length + ' ta to‘plam' : solvedN + ' ta yechildi') + '</small></div></div>' +
+        '<div class="pzNp"><button id="pzTop">TOP</button>' + (S.admin ? '<button id="pzUV"' + (userView() ? ' class="uv"' : '') + '>' + (userView() ? 'Admin ko‘rinishi' : 'Foydalanuvchi ko‘rinishi') + '</button>' : '') +
+        (AD ? '<button id="pzAllO"' + (gst === 'open' ? ' class="on o"' : '') + '>Hammasini ochish</button><button id="pzAllL"' + (gst === 'lock' ? ' class="on l"' : '') + '>Hammasini qulflash</button><button id="pzAllN"' + (gst === 'norm' ? ' class="on n"' : '') + '>Oddiy qoida</button><button id="pzQzP">Viktorina</button><button id="pzPlus" class="pr">+ Yangi</button>' : '') + '</div>';
+      // davom ettirish: boshlangan, tugamagan kitobdagi birinchi yechilmagan masala
       allB.forEach(function (b) { if (cb) return; var d = nDone(b.arr); if (d > 0 && d < b.arr.length) cb = b; });
       if (!cb) allB.forEach(function (b) { if (!cb && nDone(b.arr) < b.arr.length) cb = b; });
       if (cb) {
@@ -851,7 +855,7 @@
         if (cp) { S._cont = { book: cb, p: cp }; h += '<button class="pzNc" id="pzCont">' + pzMini(cp.board, 0, 1) + '<span class="t"><small>DAVOM ETTIRISH</small><b>' + esc(cb.title) + '</b><span>' + (cb.from + cb.arr.indexOf(cp)) + '-masala · ' + (cp.side === 'w' ? 'Oq yuradi' : 'Qora yuradi') + '</span></span><span class="go">Yechish</span></button>'; }
       }
       var TABS = [['s', 'Sodda', BK.s.length], ['m', 'Murakkab', BK.m.length], ['e', 'Etyudlar', BK.e.length], ['f', 'To‘plamlar', all.length]];
-      if (!S.admin) { TABS = TABS.filter(function (t) { return t[0] !== 'f'; }); if (shelf === 'f') shelf = 's'; }
+      if (!AD) { TABS = TABS.filter(function (t) { return t[0] !== 'f'; }); if (shelf === 'f') shelf = 's'; }
       h += '<div class="pzTb">' + TABS.map(function (t) { return '<button data-sh="' + t[0] + '"' + (shelf === t[0] ? ' class="on"' : '') + '>' + t[1] + '</button>'; }).join('') + '</div>';
       if (shelf !== 'f') {
         var books = BK[shelf] || [];
@@ -874,11 +878,11 @@
       h += '</div><div style="height:64px"></div></div>';
       }
     }
-    if (!S.admin) h += '<div style="font-size:11px;opacity:.4;margin-top:16px">ID: ' + esc(S.myId) + '</div>';
+    if (!(S.admin && !userView())) h += '<div style="font-size:11px;opacity:.4;margin-top:16px">ID: ' + esc(S.myId) + '</div>';
     ov.innerHTML = h;
     on('#pzBack', function () { hub = 1; view = ''; list(); }); on('#pzTop', pzTop); on('#pzQzP', qzPanel);
     function bkAllSet(st) { api('/api/puzzle/ball-all', { state: st }).then(function (r) { if (r && r.ok) { S.bookAll = r.bookAll || {}; list(); } else window.alert((r && r.error) || 'Xato'); }).catch(function () { window.alert('Xato'); }); }
-    on('#pzAllO', function () { bkAllSet('open'); }); on('#pzAllL', function () { bkAllSet('lock'); });
+    on('#pzAllO', function () { bkAllSet('open'); }); on('#pzAllL', function () { bkAllSet('lock'); }); on('#pzAllN', function () { bkAllSet(''); });
     on('#pzUV', function () { try { localStorage.setItem('pzUserView', userView() ? '0' : '1'); } catch (e) {} list(); });
     on('#pzGo', function () { var mo = mainOrder(), nx = mo.filter(function (p) { return (S.solved || []).indexOf(p.id) < 0; })[0] || mo[0]; window.__pzMapKey = ''; if (nx) play(nx); }); on('#pzNew', function () { newPz(0, ''); });
     on('#pzNF', function () {
@@ -993,13 +997,13 @@
     return !prevFull;   // oldingi kitob 100/100 bo‘lmaguncha yopiq
   }
   function bookHtml(b, k) {
-    var lk = bkLocked(b);
+    var lk = bkLocked(b), AD = S.admin && !userView();
     var n = b.arr.length, d = nDone(b.arr), done = n && d === n, cov = S.books && S.books.cov && S.books.cov[b.key];
     var seed = (b.kind === 's' ? 0 : b.kind === 'm' ? 4 : 2) + b.n - 1 + (b.kind === 'e' ? k : 0);
     return '<div class="pzBk' + (lk ? ' lk' : '') + '" data-bk="' + b.key + '"' + (lk ? ' style="position:relative;filter:grayscale(1) brightness(.6)"' : '') + '>' + (lk ? '<span style="position:absolute;inset:0;z-index:3;display:flex;align-items:center;justify-content:center;pointer-events:none">' + LOCK_BIG + '</span>' : '') + (cov ? '<img src="/api/pzbook/cov?k=' + b.key + '&v=' + cov + '" alt="">' : natSvg(seed, b.key)) + (done ? '<span class="rib"></span>' : '') +
       '<div class="fr"></div><div class="tt">' + (b.kind === 'e' ? (function () { var pt = b.title.split(' · '); return '<small>' + esc(pt.length > 1 ? pt[0].toUpperCase() : 'ETYUD') + '</small><span class="sm">' + esc(pt.length > 1 ? pt.slice(1).join(' · ') : b.title) + '</span>'; })() : '<small>' + (b.kind === 's' ? 'SODDA' : 'MURAKKAB') + '</small><span>' + b.n + '-kitob</span>') + '</div>' +
-      (S.admin && (S.bookAll || {})[b.key] ? '<span style="position:absolute;left:8px;top:8px;z-index:4;font-size:14px;font-weight:800;color:#fff;width:26px;height:26px;line-height:26px;text-align:center;border-radius:13px;background:' + ((S.bookAll || {})[b.key] === 'open' ? '#2e7d4f' : '#8a2a3a') + '">' + ((S.bookAll || {})[b.key] === 'open' ? '✓' : '🔒') + '</span>' : '') +
-      (S.admin ? '<button class="mo" data-bm="' + b.key + '">⋯</button>' : '') +
+      (AD && (S.bookAll || {})[b.key] ? '<span style="position:absolute;left:8px;top:8px;z-index:4;font-size:14px;font-weight:800;color:#fff;width:26px;height:26px;line-height:26px;text-align:center;border-radius:13px;background:' + ((S.bookAll || {})[b.key] === 'open' ? '#2e7d4f' : '#8a2a3a') + '">' + ((S.bookAll || {})[b.key] === 'open' ? '✓' : '🔒') + '</span>' : '') +
+      (AD ? '<button class="mo" data-bm="' + b.key + '">⋯</button>' : '') +
       '<div class="pl"><b>' + n + (b.kind === 'e' ? ' ta etyud' : ' ta masala') + '</b><i><u style="width:' + (n ? Math.round(d / n * 100) : 0) + '%"></u></i><small>' + (done ? 'Tugatilgan' : d + ' / ' + n) + (d ? ' · ★ ' + bookStars(b) : '') + '</small></div></div>';
   }
   // kitob ichi: mundarija (raqamlar to'ri)
@@ -1010,7 +1014,7 @@
     h += '<div class="pzbr" style="height:8px;border-radius:4px;background:rgba(255,255,255,.1);overflow:hidden;margin:0 2px 12px"><i style="display:block;height:100%;width:' + (n ? Math.round(d / n * 100) : 0) + '%;background:#e9c46a"></i></div>';
     if (nx) h += '<button class="pzNc" id="pzBkGo">' + pzMini(nx.board, 0, 1) + '<span class="t"><small>' + (d ? 'DAVOM ETTIRISH' : 'BOSHLASH') + '</small><b>' + (b.from + b.arr.indexOf(nx)) + '-masala</b><span>' + (nx.side === 'w' ? 'Oq yuradi' : 'Qora yuradi') + '</span></span><span class="go">Yechish</span></button>';
     var fi = b.arr.indexOf(nx);
-    h += '<div class="pzMd">' + b.arr.map(function (p, i) { var ok = sv.indexOf(p.id) >= 0, st = (S.stars || {})[p.id] || 0, lk = !S.admin && fi >= 0 && i > fi && !ok; return '<button data-bi="' + i + '" class="' + (ok ? 'ok s' + st : '') + (p === nx ? ' nx' : '') + (lk ? ' lk' : '') + '"' + (lk ? ' disabled' : '') + '>' + (lk ? LOCK_SM : (b.from + i) + (ok ? '<i>' + '★★★'.slice(0, st) + '<u>' + '★★★'.slice(st) + '</u></i>' : '')) + '</button>'; }).join('') + '</div><div style="height:64px"></div></div>';
+    h += '<div class="pzMd">' + b.arr.map(function (p, i) { var ok = sv.indexOf(p.id) >= 0, st = (S.stars || {})[p.id] || 0, lk = !(S.admin && !userView()) && fi >= 0 && i > fi && !ok; return '<button data-bi="' + i + '" class="' + (ok ? 'ok s' + st : '') + (p === nx ? ' nx' : '') + (lk ? ' lk' : '') + '"' + (lk ? ' disabled' : '') + '>' + (lk ? LOCK_SM : (b.from + i) + (ok ? '<i>' + '★★★'.slice(0, st) + '<u>' + '★★★'.slice(st) + '</u></i>' : '')) + '</button>'; }).join('') + '</div><div style="height:64px"></div></div>';
     ov.innerHTML = h; ov.scrollTop = 0;
     on('#pzBack', function () { curBook = null; list(); });
     on('#pzBkGo', function () { play(nx); });
@@ -1030,7 +1034,7 @@
     api('/api/puzzle/bfind', { q: q.trim() }).then(function (r) {
       var L = (r && r.list) || []; if (!L.length) { window.alert('Topilmadi'); return; }
       pzSheet('Topildi: ' + L.length, L.map(function (x) { return [x.name + ' (' + x.id + ')', function () {
-        api('/api/puzzle/bopen', { uid: x.id, key: b.key, on: !!on }).then(function (rr) { if (rr && rr.ok) { if (on) { S.bopen = S.bopen || {}; S.bopen[b.key] = 1; } window.alert(on ? 'Kitob ochildi' : 'Kitob yopildi'); } else window.alert((rr && rr.error) || 'Xato'); });
+        api('/api/puzzle/bopen', { uid: x.id, key: b.key, on: !!on }).then(function (rr) { if (rr && rr.ok) { window.alert((on ? 'Kitob ochildi: ' : 'Kitob yopildi: ') + x.name); } else window.alert((rr && rr.error) || 'Xato'); });
       }]; }));
     }).catch(function () { window.alert('Xato'); });
   }
@@ -1115,7 +1119,7 @@
     var c = document.createElement('style'); c.id = 'pzNCss';
     c.textContent = '#spPz .pzN{text-align:left;margin:-14px;padding:14px;min-height:100%;background:radial-gradient(120% 50% at 50% -10%,#2a2470 0,#0b0e1a 60%)}' +
       '.pzNh{display:flex;align-items:center;gap:10px;margin:2px 0 10px}.pzNb{width:40px;height:40px;flex:none;border:0;border-radius:12px;background:rgba(255,255,255,.08);color:#fff;font-size:22px}.pzNt b{display:block;font-size:23px}.pzNt small{display:block;opacity:.65;font-size:12.5px;margin-top:2px}' +
-      '.pzNp{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.pzNp button{border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:8px 14px;background:rgba(255,255,255,.08);color:#fff;font-weight:700;font-size:13.5px}.pzNp .pr{background:#6b5cf0;border-color:#6b5cf0}' +
+      '.pzNp{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.pzNp button{border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:8px 14px;background:rgba(255,255,255,.08);color:#fff;font-weight:700;font-size:13.5px}.pzNp .pr{background:#6b5cf0;border-color:#6b5cf0}.pzNp button.on{color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.55)}.pzNp button.on.o{background:#2e7d4f;border-color:#2e7d4f}.pzNp button.on.l{background:#8a2a3a;border-color:#8a2a3a}.pzNp button.on.n{background:#2563eb;border-color:#2563eb}.pzNp button.uv{background:#b45309;border-color:#b45309}' +
       '.pzNc{width:100%;border:0;color:#fff;text-align:left;display:flex;gap:12px;align-items:center;border-radius:20px;padding:12px;margin-bottom:16px;background:linear-gradient(135deg,#6b5cf0,#a855f7 60%,#ec4899);box-shadow:0 10px 26px rgba(107,92,240,.35);font-family:inherit}' +
       '.pzNc .t{flex:1;min-width:0}.pzNc small{display:block;font-size:11px;letter-spacing:1px;opacity:.85;font-weight:800}.pzNc b{display:block;font-size:16px;margin:3px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pzNc .t>span{font-size:12.5px;opacity:.9}.pzNc .go{background:#fff;color:#5b21b6;border-radius:14px;padding:10px 13px;font-weight:900;font-size:14px;flex:none}' +
       '.pzNs{display:flex;justify-content:space-between;font-size:12px;letter-spacing:1.2px;font-weight:800;color:#a9a4d8;margin:2px 2px 9px}' +

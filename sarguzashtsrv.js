@@ -77,9 +77,16 @@ function nSt(ids) { return Math.ceil(ids.length / ST); }
 function stIds(ids, st) { return ids.slice(st * ST, st * ST + ST); }
 function castleOf(ids) { const n = nSt(ids); return n >= 2 ? n - 1 : -1; }
 function cnt(ids, sv) { let c = 0; ids.forEach(id => { if (sv.has(id)) c++; }); return c; }
-function landOpen(bk, sv) { if (bk.i === 0) return true; const pv = bk.W[bk.i - 1].ids; return cnt(pv, sv) >= pv.length || cnt(bk.ids, sv) > 0; }
-function stOpen(bk, st, sv) {
-  if (!landOpen(bk, sv)) return false; if (st === 0) return true;
+// admin qarori: kitob hamma uchun ochiq/qulf yoki shu o'yinchiga ochilgan (Sodda/Murakkab; 1-kitob doim ochiq)
+function bkOver(bk, u) {
+  if (bk.w === 'e' || bk.i === 0) return null;
+  const k = bk.w + bk.i, o = bk.w + ':' + bk.i, A = store.db.pzBookAll || {}, a = A[k] || A[o];
+  if (a === 'open') return true; if (a === 'lock') return false;
+  const ob = (u && u.pzOpenB) || {}; return (ob[k] || ob[o]) ? true : null;
+}
+function landOpen(bk, sv, u) { if (bk.i === 0) return true; const ov = bkOver(bk, u); if (ov !== null) return ov; const pv = bk.W[bk.i - 1].ids; return cnt(pv, sv) >= pv.length || cnt(bk.ids, sv) > 0; }
+function stOpen(bk, st, sv, u) {
+  if (!landOpen(bk, sv, u)) return false; if (st === 0) return true;
   const pv = stIds(bk.ids, st - 1); return cnt(pv, sv) >= pv.length || cnt(stIds(bk.ids, st), sv) > 0;
 }
 function my(u) { const m = u.adv = u.adv || {}; m.q = m.q || {}; m.ch = m.ch || {}; m.cs = m.cs || {}; return m; }
@@ -90,9 +97,9 @@ function guest(uid, u) {
   ['s', 'm'].forEach(w => {
     const W = world(w);
     W.forEach((b, i) => {
-      const bk = { w, i, W, ids: b.ids }; if (!landOpen(bk, sv)) return;
+      const bk = { w, i, W, ids: b.ids }; if (!landOpen(bk, sv, u)) return;
       const cs = castleOf(b.ids);
-      for (let st = 0; st < nSt(b.ids); st++) { if (st === cs) continue; const s = stIds(b.ids, st); if (cnt(s, sv) < s.length && stOpen(bk, st, sv)) c.push({ k: b.k, st }); }
+      for (let st = 0; st < nSt(b.ids); st++) { if (st === cs) continue; const s = stIds(b.ids, st); if (cnt(s, sv) < s.length && stOpen(bk, st, sv, u)) c.push({ k: b.k, st }); }
     });
   });
   if (!c.length) return null;
@@ -157,7 +164,7 @@ function handle(req, res, p, h) {
     let j = {}; try { j = JSON.parse(body); } catch (e) {}
     const u = store.getOrCreate(tk), m = my(u), sv = new Set(u.solved || []);
     const bk = j.k ? bookOf(String(j.k)) : null, st = Math.floor(Number(j.st));
-    const okSt = () => bk && st >= 0 && st < nSt(bk.ids) && (adm || stOpen(bk, st, sv));
+    const okSt = () => bk && st >= 0 && st < nSt(bk.ids) && (adm || stOpen(bk, st, sv, u));
     if (p === '/api/adv/q') {   // bekat savoli
       if (!okSt() || st === castleOf(bk.ids)) return h.send(res, 400, { error: 'Bekat yopiq' });
       const key = j.k + ':' + st; if (key in m.q) return h.send(res, 200, { done: m.q[key] });
@@ -184,7 +191,7 @@ function handle(req, res, p, h) {
       if (!bk) return h.send(res, 400, { error: 'Kitob topilmadi' });
       const cs = castleOf(bk.ids); if (cs < 0) return h.send(res, 400, { error: 'Qal‘a yo‘q' });
       if (j.op === 'stop') { if (m.tr && m.tr.k === j.k) m.tr = null; store.save(); return h.send(res, 200, { my: m }); }
-      if (!adm && !stOpen(bk, cs, sv)) return h.send(res, 400, { error: 'Qal‘a hali yopiq' });
+      if (!adm && !stOpen(bk, cs, sv, u)) return h.send(res, 400, { error: 'Qal‘a hali yopiq' });
       m.tr = { k: String(j.k), i: 0, err: 0, cf: 0, at: Date.now() }; store.save();
       return h.send(res, 200, { my: m, ids: stIds(bk.ids, cs) });
     }

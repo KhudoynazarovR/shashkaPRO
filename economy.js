@@ -59,17 +59,17 @@ function penalty(id, why) {
 // 📚 kitob tartibi: kitob oldingisi 100/100 bo'lmaguncha qulf; kitob ichida masalalar ketma-ket
 function bookOrder(u, id) {
   let B; try { B = require('./pzbooks.js').build(); } catch (e) { return { ok: true }; }
-  const sv = u.solved || [];
+  const sv = u.solved || [], BA = store.db.pzBookAll || {}, OB = u.pzOpenB || {};
   for (const sh of ['s', 'm']) {
     const books = (B && B[sh]) || [];
     for (let i = 0; i < books.length; i++) {
       const ids = books[i], idx = ids.indexOf(id);
       if (idx < 0) continue;
-      const key = sh + ':' + i;
-      const _ba = (store.db.pzBookAll || {})[key];   // admin: hamma uchun 'open' yoki 'lock'
+      const key = sh + i, old = sh + ':' + i;   // kalit mijozdagidek: 's1' (eski yozuv 's:1' ham o‘qiladi)
+      const _ba = BA[key] || BA[old];   // admin: hamma uchun 'open' yoki 'lock' (1-kitob doim ochiq)
       if (_ba === 'open') return { ok: true };
-      if (_ba === 'lock') return { ok: false, why: 'locked' };
-      if ((u.pzOpenB || {})[key]) return { ok: true };
+      if (_ba === 'lock' && i > 0) return { ok: false, why: 'locked' };
+      if (OB[key] || OB[old]) return { ok: true };
       const prevFull = i === 0 || books[i - 1].every(x => sv.includes(x));
       if (i > 0 && !prevFull) return { ok: false, why: 'locked' };   // oldingi kitob 100/100 bo‘lmaguncha yopiq
       const f = ids.findIndex(x => !sv.includes(x));
@@ -78,6 +78,12 @@ function bookOrder(u, id) {
     }
   }
   return { ok: true };
+}
+// 📅 kunlik masala: mijozdagi ro‘yxat tartibida (no bo‘yicha + etyudlar), kuni UTC+5. Kitob tartibidan ozod — tanga beriladi.
+function dayPzId() {
+  const L = (store.db.puzzles || []).slice().sort((x, y) => (x.no || 0) - (y.no || 0)).map(x => x.id);
+  try { require('./etudes.js').puzzleList().forEach(x => L.push(x.id)); } catch (e) {}
+  return L.length ? L[Math.floor((Date.now() + 18e6) / 864e5) % L.length] : '';
 }
 
 function claimDaily(id) {
@@ -663,10 +669,10 @@ function handle(req, res, url) {
     let _etF = [], _etL = [], _etN = {}, _etP = {}; try { const _E = require('./etudes.js'); _etL = _E.puzzleList(); _etF = _E.FOLDERS.filter(f => _etL.some(x => x.folder === f)); _etN = _E.ETF; _etP = _E.ETP; } catch (e) {}
     const _fo = (store.db.pzFolders || []).slice(); { const _ki = _fo.indexOf('Kombinatsiyalar'); _fo.splice(_ki >= 0 ? _ki + 1 : 0, 0, ..._etF); }
     let _bk = null; try { const _B = require('./pzbooks.js'); _bk = Object.assign({ cov: _B.covers() }, _B.build()); } catch (e) { console.log('[kitob]', e.message); }
-    send(res, 200, { bookAll: store.db.pzBookAll || {}, books: _bk, qz: _adm ? (function () { try { return require('./quiz.js').ids(); } catch (e) { return []; } })() : undefined, reels: _adm ? (function () { try { return require('./reelgen.js').usedIds(); } catch (e) { return []; } })() : undefined, etf: _etN, etp: _etP, folders: _fo, settings: store.db.pzSettings || {}, dayFolder: (function () { try { return require('./quests.js').dayFolder(); } catch (e) { return ''; } })(), chanFolders: (function () { try { return require('./kanal.js').folders(); } catch (e) { return []; } })(), hideLv: store.db.pzHideLv || [], best: _u.pzBest || {}, inv: _u.pzInv || null, ranks: require('./pzranks.js').RANKS, topInv: (function () { const m = require('./pzranks.js'); m.watch(store); return m.top(store); })(), promo: Date.parse(process.env.PZ_PROMO_END || '2026-10-25T23:59:59+05:00'), admin: _adm, link: process.env.TG_APP_LINK || '', myId: String(_tg.id), solved: _u.solved || [], stars: _u.pzStars || {}, bopen: _u.pzOpenB || {}, heroAv: _u.pzHero || '', list: (() => { const _c = {}; Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { _c[i] = (_c[i] || 0) + 1; })); return store.db.puzzles.slice().sort((x, y) => (x.no || 0) - (y.no || 0)).map(x => Object.assign({}, x, { cnt: _c[x.id] || 0 })); })(), etl: (() => { const _c = {}; Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { if (i[0] === 'e') _c[i] = (_c[i] || 0) + 1; })); return _etL.map(x => [x.id.slice(2), x.no, x.level, x.b32, x.t, _c[x.id] || 0]); })() });
+    send(res, 200, { dayPz: dayPzId(), bookAll: store.db.pzBookAll || {}, books: _bk, qz: _adm ? (function () { try { return require('./quiz.js').ids(); } catch (e) { return []; } })() : undefined, reels: _adm ? (function () { try { return require('./reelgen.js').usedIds(); } catch (e) { return []; } })() : undefined, etf: _etN, etp: _etP, folders: _fo, settings: store.db.pzSettings || {}, dayFolder: (function () { try { return require('./quests.js').dayFolder(); } catch (e) { return ''; } })(), chanFolders: (function () { try { return require('./kanal.js').folders(); } catch (e) { return []; } })(), hideLv: store.db.pzHideLv || [], best: _u.pzBest || {}, inv: _u.pzInv || null, ranks: require('./pzranks.js').RANKS, topInv: (function () { const m = require('./pzranks.js'); m.watch(store); return m.top(store); })(), promo: Date.parse(process.env.PZ_PROMO_END || '2026-10-25T23:59:59+05:00'), admin: _adm, link: process.env.TG_APP_LINK || '', myId: String(_tg.id), solved: _u.solved || [], stars: _u.pzStars || {}, bopen: _u.pzOpenB || {}, heroAv: _u.pzHero || '', list: (() => { const _c = {}; Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { _c[i] = (_c[i] || 0) + 1; })); return store.db.puzzles.slice().sort((x, y) => (x.no || 0) - (y.no || 0)).map(x => Object.assign({}, x, { cnt: _c[x.id] || 0 })); })(), etl: (() => { const _c = {}; Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { if (i[0] === 'e') _c[i] = (_c[i] || 0) + 1; })); return _etL.map(x => [x.id.slice(2), x.no, x.level, x.b32, x.t, _c[x.id] || 0]); })() });
     return true;
   }
-  if ((p === '/api/puzzle' || p === '/api/puzzle/del' || p === '/api/puzzle/solved' || p === '/api/puzzle/fail' || p === '/api/puzzle/rename' || p === '/api/puzzle/folder' || p === '/api/puzzle/move' || p === '/api/puzzle/settings' || p === '/api/puzzle/order' || p === '/api/puzzle/edit' || p === '/api/puzzle/renum' || p === '/api/puzzle/merge' || p === '/api/puzzle/dayfolder' || p === '/api/puzzle/chanfolder' || p === '/api/puzzle/err' || p === '/api/puzzle/bopen') && req.method === 'POST') {
+  if ((p === '/api/puzzle' || p === '/api/puzzle/del' || p === '/api/puzzle/solved' || p === '/api/puzzle/fail' || p === '/api/puzzle/rename' || p === '/api/puzzle/folder' || p === '/api/puzzle/move' || p === '/api/puzzle/settings' || p === '/api/puzzle/order' || p === '/api/puzzle/edit' || p === '/api/puzzle/renum' || p === '/api/puzzle/merge' || p === '/api/puzzle/dayfolder' || p === '/api/puzzle/chanfolder' || p === '/api/puzzle/err' || p === '/api/puzzle/bopen' || p === '/api/puzzle/bfind' || p === '/api/puzzle/ball-all' || p === '/api/puzzle/ball') && req.method === 'POST') {
     const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
     readBody(req, 100000, body => {
@@ -694,7 +700,7 @@ function handle(req, res, url) {
         u.pzStars = u.pzStars || {}; if (!(u.pzStars[pz.id] >= _st)) u.pzStars[pz.id] = _st;
         if (!_clean) { u.pzFail = u.pzFail || {}; u.pzFail[pz.id] = 1; }
         if (u.solved.includes(pz.id)) { try { if (require('./quests.js').isDay(pz)) require('./quests.js').bump(_tg.id, 'petrova', 1, pz.id); } catch (e) {} }
-        const _ord = (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).includes(String(_tg.id)) ? { ok: true } : bookOrder(u, pz.id);
+        const _ord = ((process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).includes(String(_tg.id)) || pz.id === dayPzId()) ? { ok: true } : bookOrder(u, pz.id);   // kunlik masala — tartibdan ozod
         if (!u.solved.includes(pz.id)) { const _fast = Date.now() - (u.lastSolve || 0) < 3000; u.lastSolve = Date.now();
           try { const _rf = String(j.ref || ''); if (/^\d{3,15}$/.test(_rf) && _rf !== String(_tg.id) && !u.pzRef && !(u.solved || []).length && Date.now() <= Date.parse(process.env.PZ_PROMO_END || '2026-10-25T23:59:59+05:00')) { const _iv = store.users()[_rf]; if (_iv) { const _day = new Date().toISOString().slice(0, 10); _iv.pzInv = _iv.pzInv || { d: '', n: 0, total: 0 }; if (_iv.pzInv.d !== _day) { _iv.pzInv.d = _day; _iv.pzInv.n = 0; } if (_iv.pzInv.n < 30) { u.pzRef = _rf; _iv.pzInv.n++; _iv.pzInv.total++; _iv.diamonds = (_iv.diamonds || 0) + 100; try { require('./pzranks.js').onInvite(_iv, _rf); } catch (e) {} if (process.env.BOT_TOKEN) fetch('https://api.telegram.org/bot' + process.env.BOT_TOKEN + '/sendMessage', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ chat_id: _rf, text: '🎉 ' + (u.name || 'Yangi o‘yinchi') + ' havolangiz orqali masala yechdi! +100 🪙' }) }).catch(() => {}); } } } } catch (e) {}
           u.solved.push(pz.id); try { const _sd = new Date(Date.now() + 5 * 3600e3).toISOString().slice(0, 10), _yd = new Date(Date.now() + 5 * 3600e3 - 864e5).toISOString().slice(0, 10); if (u.pzLastDay !== _sd) { u.pzStreak = u.pzLastDay === _yd ? (u.pzStreak || 0) + 1 : 1; u.pzLastDay = _sd; } } catch (e) {}   // 🔥 masala seriyasi (ketma-ket kunlar)
@@ -713,9 +719,10 @@ function handle(req, res, url) {
       }
       if (p === '/api/puzzle/ball-all') {   // admin: barcha kitoblar uchun 'open' / 'lock' / '' (oddiy qoida)
         const st = String(j.state || ''); let B = null; try { B = require('./pzbooks.js').build(); } catch (e) {}
-        store.db.pzBookAll = store.db.pzBookAll || {};
-        for (const sh of ['s', 'm']) { const n = ((B && B[sh]) || []).length; for (let i = 0; i < n; i++) { const k = sh + ':' + i; if (st === 'open' || st === 'lock') store.db.pzBookAll[k] = st; else delete store.db.pzBookAll[k]; } }
-        store.save(); return send(res, 200, { ok: true, bookAll: store.db.pzBookAll });
+        const A = store.db.pzBookAll = store.db.pzBookAll || {};
+        Object.keys(A).forEach(k => { if (/^[sm]:?\d+$/.test(k)) delete A[k]; });   // Sodda/Murakkab kitoblari (eski 's:0' yozuvlari ham)
+        if (st === 'open' || st === 'lock') for (const sh of ['s', 'm']) { const n = ((B && B[sh]) || []).length; for (let i = 1; i < n; i++) A[sh + i] = st; }   // 1-kitob doim ochiq
+        store.save(); return send(res, 200, { ok: true, bookAll: A });
       }
       if (p === '/api/puzzle/ball') {   // admin: kitobni hamma uchun ochish ('open'), qulflash ('lock') yoki oddiy qoida ('')
         const key = String(j.key || '').slice(0, 20); if (!key) return send(res, 400, { error: 'key' });

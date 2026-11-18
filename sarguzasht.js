@@ -128,7 +128,13 @@
   }
   function stArr(b, s) { return b.arr.slice(s * 10, s * 10 + 10); }
   function cnt(a) { var c = 0; a.forEach(function (p) { if (isS(p.id)) c++; }); return c; }
-  function landOpen(books, i) { if (C.admin || i === 0) return true; var pv = books[i - 1].arr; return cnt(pv) >= pv.length || cnt(books[i].arr) > 0; }
+  function landOpen(books, i) {
+    if (C.admin || i === 0) return true;
+    var k = books[i].key, S0 = C.S || {}, ba = /^[sm]\d+$/.test(k) ? (S0.bookAll || {})[k] : '';   // admin qarori: hamma uchun ochiq/qulf yoki shu o‘yinchiga ochilgan
+    if (ba === 'open' || (ba !== 'lock' && /^[sm]\d+$/.test(k) && (S0.bopen || {})[k])) return true;
+    if (ba === 'lock') return false;
+    var pv = books[i - 1].arr; return cnt(pv) >= pv.length || cnt(books[i].arr) > 0;
+  }
   function stOpen(b, s) { if (C.admin || s === 0) return true; var pv = stArr(b, s - 1); return cnt(pv) >= pv.length || cnt(stArr(b, s)) > 0; }
   function nameOf(b, i) { var L = (D.lands || {})[b.key] || {}; if (L.name) return L.name; var k = i + OFF[W[0]] ; return NAMES[k % NAMES.length] + (k >= NAMES.length ? ' ' + (Math.floor(k / NAMES.length) + 1) : ''); }
   function themeOf(i) { return (i + { s: 0, m: 1, e: 8 }[W[0]]) % 9; }   // tog'larda — qarag'ayzor, cho'lda — vohalar bilan boshlanadi
