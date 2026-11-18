@@ -6,13 +6,13 @@
 ;(function () {
   if (window.__spTheme) return; window.__spTheme = 1;
   var T = {
-    w: { name: 'Yog‘och', icon: '', bg1: '#2a1d14', bg2: '#1b130d', nav: '#16100b', pat: 'wood', acc: '#81b64c', h: null, line: 'rgba(255,255,255,.08)',
+    w: { name: 'Yog‘och', icon: '', hdr: '#2a1d14', bg1: '#2a1d14', bg2: '#1b130d', nav: '#16100b', pat: 'wood', acc: '#81b64c', h: null, line: 'rgba(255,255,255,.08)',
       v: { card: 'rgba(38,27,19,.66)', cline: 'rgba(255,255,255,.10)', mute: '#cdbfae', mute2: '#a89886', on: 'rgba(93,138,47,.35)', onl: 'rgba(129,182,76,.7)', pill: '#5d8a2f', fade: 'rgba(38,27,19,1)', btn: '#2a1f17', btnSh: '#120c08' } },
-    e: { name: 'Samarqand', icon: '', bg1: '#121c63', mid: '#0b1240', bg2: '#070a28', nav: '#0a0d33', pat: 'sam', acc: '#3fa34d', h: null, line: 'rgba(232,196,106,.28)' },
+    e: { name: 'Samarqand', icon: '', hdr: '#121c63', bg1: '#121c63', mid: '#0b1240', bg2: '#070a28', nav: '#0a0d33', pat: 'sam', acc: '#3fa34d', h: null, line: 'rgba(232,196,106,.28)' },
     a: { name: 'Tungi ko‘k', icon: '🌙', bg1: '#1c1854', bg2: '#110e33', nav: '#0e0c2b', chk: 'rgba(255,255,255,.035)', acc: '#3fa34d', h: null },
     b: { name: 'Grafit', icon: '⚫', bg1: '#22201d', bg2: '#161512', nav: '#121110', chk: 'rgba(255,255,255,.03)', acc: '#629924', h: 38, s: 0.07, tx: 0.05 },
     c: { name: 'Zumrad', icon: '🟢', bg1: '#123328', bg2: '#0a1c16', nav: '#08150f', chk: 'rgba(255,255,255,.035)', acc: '#3fa34d', h: 158, s: 0.45, tx: 0.25 },
-    d: { name: 'Kunduzgi', icon: '☀️', bg1: '#f6f7fb', bg2: '#e8ebf3', nav: '#ffffff', chk: 'rgba(40,40,120,.045)', acc: '#2f9e44', h: null, mode: 'light', line: 'rgba(30,30,90,.10)' }
+    d: { name: 'Kunduzgi', icon: '☀️', hdr: '#ffffff', bg1: '#f6f7fb', bg2: '#e8ebf3', nav: '#ffffff', chk: 'rgba(40,40,120,.045)', acc: '#2f9e44', h: null, mode: 'light', line: 'rgba(30,30,90,.10)' }
   };
   // 🌗 Avto: Telegram'ning mavzusi bo'yicha (kunduzgi → D, tungi → A)
   function tgLight() { try { var W = window.Telegram && Telegram.WebApp; return !!(W && W.colorScheme === 'light'); } catch (e) { return false; } }
@@ -50,8 +50,17 @@
       'linear-gradient(45deg,' + c + ' 25%,transparent 25%,transparent 75%,' + c + ' 75%) 0 0/44px 44px,' +
       'linear-gradient(45deg,' + c + ' 25%,transparent 25%,transparent 75%,' + c + ' 75%) 22px 22px/44px 44px,' + t.bg1;
   }
-  function boot() { if (!document.head) return setTimeout(boot, 10); st.textContent = css(cur()); if (!st.parentNode) document.head.appendChild(st); }
+  // 📱 Telegram'ning tepadagi paneli, orqa fon va pastki panel rangi — mavzuga mos (Bot API 6.9+ / 7.10+; eski versiyada o'zgarmaydi)
+  function tgColors() {
+    var t = T[cur()], W = window.Telegram && Telegram.WebApp; window.__spHdr = t.hdr || t.bg1;
+    if (!W || !W.isVersionAtLeast) return;
+    try { if (W.isVersionAtLeast('6.9')) { W.setHeaderColor(t.hdr || t.bg1); W.setBackgroundColor(t.bg2); } } catch (e) {}
+    try { if (W.setBottomBarColor && W.isVersionAtLeast('7.10')) W.setBottomBarColor(t.nav); } catch (e) {}
+  }
+  window.spTgColors = tgColors;
+  function boot() { if (!document.head) return setTimeout(boot, 10); st.textContent = css(cur()); if (!st.parentNode) document.head.appendChild(st); tgColors(); }
   boot();
+  document.addEventListener('DOMContentLoaded', tgColors); window.addEventListener('load', function () { tgColors(); setTimeout(tgColors, 1500); });
 
   // ---- rang almashtirish. B, C: binafsha/ko'k → mavzu tusi (yorug'lik saqlanadi). D (kunduzgi): to'q fon → och, och matn → to'q.
   function parse(c) { var m = /rgba?\(([^)]+)\)/.exec(c); if (!m) return null; var p = m[1].split(',').map(function (x) { return parseFloat(x); }); return { r: p[0], g: p[1], b: p[2], a: p.length > 3 ? p[3] : 1 }; }
@@ -160,11 +169,11 @@
     mo.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
     sweep();
   }
-  function set(k) { ls('spTheme', k); st.textContent = css(cur()); unpaint(); watch(); }
+  function set(k) { ls('spTheme', k); st.textContent = css(cur()); unpaint(); watch(); tgColors(); }
   function start() {
     if (!document.body) return setTimeout(start, 50);
     watch(); setInterval(function () { if (active()) sweep(); }, 4000);
-    try { var W = window.Telegram && Telegram.WebApp; if (W && W.onEvent) W.onEvent('themeChanged', function () { if (ls('spTheme') === 'auto' || !ls('spTheme')) { st.textContent = css(cur()); unpaint(); watch(); } }); } catch (e) {}
+    try { var W = window.Telegram && Telegram.WebApp; if (W && W.onEvent) W.onEvent('themeChanged', function () { tgColors(); if (ls('spTheme') === 'auto' || !ls('spTheme')) { st.textContent = css(cur()); unpaint(); watch(); } }); } catch (e) {}
   }
   start();
 

@@ -138,7 +138,7 @@ try{Object.assign(S,JSON.parse(localStorage.getItem('sp_s2')||'{}'))}catch(e){}
 if(!/^(classic|green|blue|gray|walnut|purple|sand|ocean|rose|olive|photo|edeon)$/.test(S.th))S.th='edeon';
 const TG=window.Telegram&&Telegram.WebApp;
 if(TG){try{TG.ready();TG.expand();if(TG.disableVerticalSwipes)TG.disableVerticalSwipes();
- TG.setHeaderColor&&TG.setHeaderColor('bg_color');TG.setBackgroundColor&&TG.setBackgroundColor('bg_color')}catch(e){}}
+ if(window.spTgColors)window.spTgColors();else{TG.setHeaderColor&&TG.setHeaderColor('bg_color');TG.setBackgroundColor&&TG.setBackgroundColor('bg_color')}}catch(e){}}
 const hap=t=>{try{TG&&TG.HapticFeedback&&TG.HapticFeedback.impactOccurred(t)}catch(e){}};
 const sv=()=>{try{localStorage.setItem('sp_s2',JSON.stringify(S))}catch(e){}};
 if(!S.v2){S.ps='img';S.pz='90';S.v2=1;sv()}if(!S.v3){S.th='edeon';S.v3=1;sv()}
