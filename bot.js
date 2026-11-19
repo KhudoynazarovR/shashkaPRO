@@ -44,10 +44,10 @@ function roomLink(id) {
 
 setTimeout(() => { try { require('./grp.js').setLink(roomLink); } catch (e) {} }, 0);
 function playMarkup(id) {
-  return { inline_keyboard: [[{ text: "♟️ O‘ynash", url: roomLink(id) }]] };
+  return { inline_keyboard: [[{ text: "🎮 O‘ynash", url: roomLink(id) }]] };
 }
 
-const TEXT = "♟️ Shashka — yangi xona tayyor!\nBirinchi kirgan oq, ikkinchisi qora, qolganlar tomoshabin.";
+const TEXT = "🎮 Shashka — yangi xona tayyor!\nBirinchi kirgan oq, ikkinchisi qora, qolganlar tomoshabin.";
 
 function kbFor(msg) {
   if (!msg.chat || msg.chat.type !== "private") return undefined;
