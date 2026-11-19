@@ -411,7 +411,7 @@ function createRooms({ send, clients, onFinish }) {
         st.save();
       }
     } catch (e) { console.log('Arxiv xatosi:', e.message); }
-    broadcast(room, { type: "roomFinished", roomId: room.id, winner, reason: room.reason, clock: room.clock, text: room.drawText || undefined }); try { require('./gcard.js').touch(room); } catch (e) {} try { require('./grp.js').roomFinished(room); } catch (e) {} try { afterFinish(room, winner); } catch (e) { console.error("[afterFinish]", e); }
+    broadcast(room, { type: "roomFinished", roomId: room.id, winner, reason: room.reason, clock: room.clock, text: room.drawText || undefined }); try { require('./gcard.js').touch(room); } catch (e) {} try { require('./grp.js').roomFinished(room); } catch (e) {} try { require('./chatrate.js').finished(room); } catch (e) { console.log('[chatrate]', e.message); } try { afterFinish(room, winner); } catch (e) { console.error("[afterFinish]", e); }
     if (typeof onFinish === "function") {
       try { onFinish(room); } catch (e) { console.error("[onFinish]", e); }
       setTimeout(function () { try { if (room.eloD) broadcast(room, { type: "roomElo", roomId: room.id, eloD: room.eloD, wu: room.white && room.white.uid, bu: room.black && room.black.uid }); } catch (e) {} }, 400);

@@ -31,7 +31,7 @@
   var ROOM_RE = /^[A-Za-z0-9_-]{3,64}$/;
   var q = new URLSearchParams(location.search);
   // 🪟 zal ichidagi oynada bo'lsa — sahifani qayta yuklamay, oynani yopamiz
-  function rcLeave() { try { if (window.__spEmb && window.parent !== window && window.parent.rcClose) { window.parent.rcClose(); return; } } catch (e) {} location.href = location.pathname; }
+  function rcLeave() { try { if (window.__spEmb && window.parent !== window && window.parent.rcClose) { window.parent.rcClose(); return; } } catch (e) {} try { var _w = window.Telegram && window.Telegram.WebApp, _u = (_w && _w.initDataUnsafe) || {}; if (_u.start_param) sessionStorage.setItem("spSpLeft", _u.start_param + "|" + (_u.hash || "")); } catch (e) {} location.href = location.pathname; }   // havola (startapp) xonasidan zalga: index.html dagi qo'riqchi o'sha xonani qayta ochmaydi
 
   function loadTg(cb) {
     if (window.Telegram && window.Telegram.WebApp) return cb();

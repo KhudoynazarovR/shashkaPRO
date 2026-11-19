@@ -188,13 +188,9 @@ async function onMessage(msg) {
   }
   if (name === "/top" || name === "/reyting") { await require("./grp.js").cmdTop(msg); return; }
   if (name === "/kubok") { await require("./grp.js").cmdTour(msg, text.split(/\s+/).slice(1).join(" ")); return; }
-  if (name === "/new" || name === "/shashka") {
-    const id = newRoomId();
-    await api("sendMessage", {
-      chat_id: msg.chat.id,
-      text: TEXT,
-      reply_markup: playMarkup(id)
-    });
+  if (name === "/new" || name === "/shashka") {   // 🎞 GIF karta; xonadagi o'yin reytingga yoziladi (chatrate.js)
+    const CR = require("./chatrate.js"), id = CR.newId();
+    await CR.sendCard(msg.chat.id, TEXT + "\nNatija reytingga yoziladi.", playMarkup(id));
   } else if (name === "/start" || name === "/help") {
     if (msg.chat.type === "private") {
       const _bn = process.env.BANNER_FILE_ID || require("./store.js").db.banner;
@@ -226,7 +222,7 @@ async function onMessage(msg) {
 
 async function onInline(q) {
   { const kr = require('./kanal.js').inlineResults(q); if (kr) { await api('answerInlineQuery', { inline_query_id: q.id, cache_time: 0, is_personal: true, results: kr }); return; } }   // 📤 kanal masalasini do'stga yuborish
-  const id = newRoomId(), G = require("./gcard.js"), from = String((q.from && (q.from.first_name || q.from.username)) || "").slice(0, 30);
+  const id = require("./chatrate.js").newId(), G = require("./gcard.js"), from = String((q.from && (q.from.first_name || q.from.username)) || "").slice(0, 30);   // imzoli nom: o'yin reytingga yoziladi
   const o = G.parseOpt(q.query), tcC = (o.tc || "").replace("+", "p").replace(".", "d");
   const results = [];
   const ph = G.url(id, from, 0);
@@ -236,7 +232,7 @@ async function onInline(q) {
   if (shImg.startsWith('http')) results.push({
     type: 'article', id: 's_' + id + '_' + (tcC || '0') + '_' + o.col, thumbnail_url: shImg, thumbnail_width: 1000, thumbnail_height: 700,
     title: '🎮 Shashka o‘ynash' + (o.tc ? ' · ' + o.tc : ''), description: 'Siz: ' + mine + ' · birinchi kirgan raqib bo‘ladi. Masalan: 3+2 qora',
-    input_message_content: { message_text: '🎮 <b>Shashka o‘ynash</b>' + (o.tc ? ' · ⏱ ' + o.tc : '') + '\n🎯 <b>' + from.replace(/[<>&]/g, '') + '</b> raqib qidiryapti — bosing va o‘ynang! 👇', parse_mode: 'HTML', link_preview_options: { url: shImg, prefer_large_media: true, show_above_text: true } },
+    input_message_content: { message_text: '🎮 <b>Shashka o‘ynash</b>' + (o.tc ? ' · ⏱ ' + o.tc : '') + '\n🎯 <b>' + from.replace(/[<>&]/g, '') + '</b> raqib qidiryapti — bosing va o‘ynang! 👇\nNatija reytingga yoziladi.', parse_mode: 'HTML', link_preview_options: { url: shImg, prefer_large_media: true, show_above_text: true } },
     reply_markup: { inline_keyboard: [[{ text: '▶ O‘yinga kirish', url: roomLink(id) }]] }
   });
   // 🧠 Xotira kartasi
