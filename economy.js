@@ -250,13 +250,13 @@ function handle(req, res, url) {
   if (p.startsWith('/api/av/bot') && req.method === 'GET') {
     const a = ((store.db.botAv || {})[decodeURIComponent(p.slice(8))]) || '';
     const m = /^data:image\/jpeg;base64,(.+)$/.exec(a);
-    if (!m) { res.writeHead(404); res.end(); return true; }
+    if (!m) { res.writeHead(404, { 'Cache-Control': 'public, max-age=600' }); res.end(); return true; }   // rasmi yo'q bot — telefon 10 daqiqa qayta so'ramasin
     res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=3600' }); res.end(Buffer.from(m[1], 'base64')); return true;   // ⚡ bot rasmlari 1 soat saqlanadi
   }
   if (p.startsWith('/api/av/') && req.method === 'GET') {
     const _u = store.users()[decodeURIComponent(p.slice(8))];
     const _m = /^data:image\/jpeg;base64,(.+)$/.exec(store.avOf(_u));
-    if (!_m) { res.writeHead(404); res.end(); return true; }
+    if (!_m) { res.writeHead(404, { 'Cache-Control': 'public, max-age=300' }); res.end(); return true; }   // rasmi yo'q — telefon 5 daqiqa qayta so'ramasin
     res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=300' });
     res.end(Buffer.from(_m[1], 'base64'));
     return true;

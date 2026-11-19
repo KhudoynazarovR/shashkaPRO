@@ -271,6 +271,9 @@ function serveFile(req, res) {
     // ⚡ keyin yuklanadigan skriptlar (homex.js, dragon.js, tarena.js …) ham telefonda saqlanadi: manziliga &d=<deploy> qo'shiladi,
     // server uni o'zgarmas deb beradi — takroriy ochilishda bu fayllar uchun serverga so'rov ketmaydi. /api/botadmin bir marta so'raladi.
     if (!html.includes("__spD")) html = html.replace("<head>", '<head><script>(function(){var D=window.__spD="' + VER + '";function fx(u){try{var a=new URL(u,location.href);if(a.origin!==location.origin||!/\\.js$/.test(a.pathname)||a.searchParams.has("h")||a.searchParams.has("d"))return u;a.searchParams.set("d",D);return a.pathname+a.search}catch(e){return u}}try{var P=HTMLScriptElement.prototype,ds=Object.getOwnPropertyDescriptor(P,"src");if(ds&&ds.set)Object.defineProperty(P,"src",{get:ds.get,set:function(v){ds.set.call(this,fx(v))},configurable:true,enumerable:ds.enumerable});var sa=Element.prototype.setAttribute;Element.prototype.setAttribute=function(n,v){if(this.tagName==="SCRIPT"&&String(n).toLowerCase()==="src")v=fx(v);return sa.call(this,n,v)}}catch(e){}try{var F=window.fetch,C={};if(F)window.fetch=function(u,o){if(u==="/api/botadmin"&&!(o&&o.method&&o.method!=="GET")){var p=C[u]||(C[u]=F.call(window,u,o));return p.then(function(r){return r.clone()})}return F.apply(this,arguments)}}catch(e){}})();</script>');
+    // ⚡ bosh sahifa ma'lumotlari bitta /api/boot so'rovi bilan, sahifa boshidayoq (Telegram ma'lumoti URL dagi #tgWebAppData dan).
+    // Modullar odatdagidek fetch("/api/...") qiladi — birinchi so'rov tayyor javobdan beriladi, keyingilari serverga ketadi.
+    if (!html.includes("__spBoot")) html = html.replace("<head>", '<head><script>/*__spBoot*/(function(){try{if(/[?&](emb|pad)=1/.test(location.search))return;var d=new URLSearchParams(location.hash.slice(1)).get("tgWebAppData")||"";if(!d||!window.fetch||!window.Response)return;var uid="";try{uid=JSON.parse(new URLSearchParams(d).get("user")||"{}").id||""}catch(e){}var L=' + JSON.stringify(BOOT_API) + ';if(uid)L.push("/api/user/"+uid);var F=window.fetch,t0=Date.now(),B=null,W=[];function fl(){var w=W;W=[];w.forEach(function(f){f()})}F.call(window,"/api/boot",{headers:{"x-init-data":d}}).then(function(r){return r.ok?r.json():{}}).then(function(j){B=j||{};fl()},function(){B={};fl()});setTimeout(function(){if(!B){B={};fl()}},3500);function tk(u){var e=B&&B[u];if(!e||e.u)return null;e.u=1;return new Response(JSON.stringify(e.j),{status:e.s||200,headers:{"Content-Type":"application/json"}})}window.fetch=function(u,o){if(typeof u==="string"&&L.indexOf(u)>=0&&!(o&&o.method&&o.method!=="GET")&&Date.now()-t0<20000){var g=arguments;if(B){var r=tk(u);if(r)return Promise.resolve(r)}else return new Promise(function(ok){W.push(function(){var r=tk(u);ok(r||F.apply(window,g))})})}return F.apply(this,arguments)}}catch(e){}})();</script>');
     if (!html.includes("theme.js")) html = html.replace("</head>", '<script src="/theme.js"></script>\n</head>');   // 🎨 mavzu: shrift va fon — sahifa chizilishidan oldin
     if (!html.includes("rules-bridge.js")) {
       html = html.replace("</body>", '<script src="/rules-bridge.js"></script>\n</body>');
@@ -323,8 +326,47 @@ const server = http.createServer((req, res) => {
     try { if (!res.headersSent) { res.writeHead(500, { "Content-Type": "application/json" }); } res.end('{"error":"server"}'); } catch (er) {}
   }
 });
+// ⚡ /api/boot — bosh sahifa ochilganda kerak bo'ladigan GET so'rovlar bitta so'rovda.
+// Telefon serverga 15 marta emas, bir marta boradi (har borish ~0.3 s). Har bir so'rov odatdagi yo'l bilan
+// (handleReq) bajariladi — javoblar o'zgarmaydi. Sekin javob 1.5 s dan oshsa kiritilmaydi, mijoz uni o'zi so'raydi.
+const BOOT_API = ["/api/uicfg", "/api/quests", "/api/botadmin", "/api/dragon", "/api/daraxt", "/api/shop", "/api/puzzles/day", "/api/archive", "/api/layout", "/api/home", "/api/leaders", "/api/balance", "/api/league", "/api/premium"];
+function bootReq(req, res) {
+  let me = null; try { me = require("./auth").verifyInitData(req.headers["x-init-data"] || "", process.env.BOT_TOKEN); } catch (e) {}
+  if (!me) { res.writeHead(401, { "Content-Type": "application/json" }); return res.end('{"error":"auth"}'); }
+  const list = BOOT_API.concat(["/api/user/" + me.id]), out = {};
+  let left = list.length, done = false;
+  const fin = () => {
+    if (done) return; done = true; clearTimeout(tm);
+    const b = Buffer.from(JSON.stringify(out)), h = { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" };
+    if (/\bgzip\b/.test(String(req.headers["accept-encoding"] || "")) && b.length > 1024) { const z = _zlib.gzipSync(b, { level: 6 }); h["Content-Encoding"] = "gzip"; h["Content-Length"] = z.length; res.writeHead(200, h); return res.end(z); }
+    h["Content-Length"] = b.length; res.writeHead(200, h); res.end(b);
+  };
+  const tm = setTimeout(fin, 1500);
+  for (const pth of list) {
+    const hd = Object.assign({}, req.headers); delete hd["accept-encoding"]; delete hd["if-none-match"]; delete hd["if-modified-since"];
+    const fr = Object.create(req); fr.url = pth; fr.method = "GET"; fr.headers = hd;
+    const ch = [], hdrs = {}; let st = 200, ended = false;
+    const one = ok => {
+      if (ended) return; ended = true;
+      if (ok && st === 200) { try { out[pth] = { s: st, j: JSON.parse(Buffer.concat(ch).toString("utf8")) }; } catch (e) {} }
+      if (--left <= 0) fin();
+    };
+    const fs_ = {
+      statusCode: 200, headersSent: false, writableEnded: false, finished: false,
+      setHeader(k, v) { hdrs[String(k).toLowerCase()] = v; }, getHeader(k) { return hdrs[String(k).toLowerCase()]; }, removeHeader(k) { delete hdrs[String(k).toLowerCase()]; },
+      hasHeader(k) { return String(k).toLowerCase() in hdrs; },
+      writeHead(s, a, b) { st = s; this.statusCode = s; const o = typeof a === "object" && a ? a : b; if (o) for (const k in o) hdrs[k.toLowerCase()] = o[k]; this.headersSent = true; return this; },
+      write(c) { if (c) ch.push(Buffer.isBuffer(c) ? c : Buffer.from(String(c))); return true; },
+      end(c) { if (c && typeof c !== "function") this.write(c); if (!this.headersSent) st = this.statusCode; this.writableEnded = this.finished = true; one(true); return this; },
+      on() { return this; }, once() { return this; }, emit() { return false; }, flushHeaders() {}, cork() {}, uncork() {}
+    };
+    try { handleReq(fr, fs_); } catch (e) { one(false); }
+  }
+}
 function handleReq(req, res) {
   const url = new URL(req.url, "http://localhost");
+
+  if (url.pathname === "/api/boot" && req.method === "GET") return bootReq(req, res);
 
   if (require("./payments.js").handle(req, res, url)) return;
 

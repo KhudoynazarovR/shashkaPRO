@@ -42,6 +42,8 @@
     ov.addEventListener('touchstart', function () { hide(true); }, { passive: true });
     ov.addEventListener('mousedown', function () { hide(true); });
     D.documentElement.appendChild(ov);   // html ichiga: body bolalarini boshqa skriptlar ko'chiradi
+    // Telegram o'z yuklanish ekranini shu zahoti yopsin: foydalanuvchi darhol bosh sahifa nusxasini (yoki shakllarni) ko'radi
+    try { var T = W.Telegram && W.Telegram.WebApp; if (T && T.ready) { T.ready(); if (T.expand) T.expand(); } } catch (e) {}
 
     // haqiqiy bosh sahifa joyidan siljimay qoldimi
     var t0 = Date.now(), last = '', since = 0;
