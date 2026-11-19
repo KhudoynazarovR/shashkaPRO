@@ -699,6 +699,69 @@
     }
     setInterval(function () { try { rcBarUpd(); } catch (e) {} }, 300);
 
+    // 🏟 «‹ O‘yin zali» — holat qatorining chap chekkasida (o'yinchiga): raqib kutilayotganda, o'yin tugaganda,
+    // do'stlar xonasida esa ikki tomon birinchi yurishni qilmaguncha (☰ Menu → Chiqish bilan bir xil: kerak bo'lsa o'yin bekor qilinadi)
+    // ⚙️ Do'stlar xonasi (chat kartasi, havola): birinchi kirgan (oq) raqib kelguncha vaqt va pozitsiyani tanlaydi — zaldagi «Yangi stol» chiplari
+    if (!document.getElementById("rcZalCss")) {
+      var _zc = document.createElement("style"); _zc.id = "rcZalCss";
+      _zc.textContent =
+        "#rcZalB{all:unset;position:absolute;z-index:30;display:none;align-items:center;gap:3px;height:34px;padding:0 14px 0 8px;border-radius:17px;box-sizing:border-box;font-family:inherit;font-size:14.5px;font-weight:700;line-height:1;background:linear-gradient(135deg,#b84fe3,#7a2fc6);color:#fff;box-shadow:0 4px 14px rgba(150,60,220,.45);cursor:pointer;white-space:nowrap;transform:translateY(-50%);-webkit-tap-highlight-color:transparent}" +
+        "#rcZalB svg{width:19px;height:19px;stroke-width:2.8}#rcZalB:active{transform:translateY(-50%) scale(.96)}" +
+        "#rcCfg{position:absolute;z-index:25;display:none;box-sizing:border-box;background:rgba(34,28,90,.96);border:1px solid #3d3590;border-radius:16px;padding:9px 10px;box-shadow:0 10px 30px rgba(0,0,0,.45);color:#fff;font-family:inherit}" +
+        "#rcCfg .r{display:flex;align-items:center;gap:6px}#rcCfg .r+.r{margin-top:7px}#rcCfg .lb{flex:none;width:80px;font-size:12.5px;opacity:.75;font-weight:600}" +
+        "#rcCfg button{all:unset;flex:1;box-sizing:border-box;text-align:center;border:1px solid #4a42a0;background:#15113d;border-radius:10px;padding:7px 0;font-size:14px;font-weight:700;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent}" +
+        "#rcCfg button.on{border-color:#f59e0b;background:#3a2a05;color:#ffd54a}";
+      document.head.appendChild(_zc);
+    }
+    var elZalB = document.createElement("button"); elZalB.id = "rcZalB"; elZalB.type = "button";
+    elZalB.innerHTML = RC_ICO.back + "<span>O‘yin zali</span>";
+    root.appendChild(elZalB);
+    function zalOk() {
+      if (!st.joined || st.color === "spectator" || st.etude) return false;   // tomoshabinda tepada o'z «‹» tugmasi bor
+      if (st.finished || !bothIn()) return true;
+      return !!st.casual && (st.moves || []).length < 2;
+    }
+    elZalB.onclick = function () {
+      if (!zalOk()) return;
+      if (st.finished || !bothIn()) { rcExit(); return; }
+      if (!confirm("O‘yindan chiqmoqchimisiz?")) return;
+      send({ type: "roomAbort", roomId: roomId });
+      setTimeout(function () { rcExit(); }, 600);
+    };
+    function zalUpd() {
+      var on = zalOk();
+      elZalB.style.display = on ? "flex" : "none";
+      if (!on) { if (elStatus._zal) { elStatus._zal = false; elStatus.style.width = ""; elStatus.style.boxSizing = ""; elStatus.style.paddingLeft = ""; } return; }
+      elStatus._zal = true;
+      var L = elBoard.offsetLeft + 10;   // doska ekran eniga teng bo'lsa ham chekkaga yopishmasin
+      elStatus.style.boxSizing = "border-box"; elStatus.style.width = elBoard.offsetWidth + "px"; elStatus.style.paddingLeft = (elZalB.offsetWidth + 20) + "px";
+      elZalB.style.left = L + "px";
+      elZalB.style.top = (elStatus.offsetTop + elStatus.offsetHeight / 2) + "px";
+    }
+    var elCfg = null, CFG_TC = ["1+1", "2+2", "3+2", "5+3"];
+    function cfgOk() { return !!st.casual && st.joined && st.color === "white" && !bothIn() && !st.finished && !st.vsBot && !st.etude && (st.moves || []).length === 0; }
+    function cfgUpd() {
+      if (!cfgOk()) { if (elCfg) elCfg.style.display = "none"; return; }
+      if (!elCfg) {
+        elCfg = document.createElement("div"); elCfg.id = "rcCfg"; root.appendChild(elCfg);
+        elCfg.onclick = function (e) {
+          var b = e.target && e.target.closest ? e.target.closest("button") : null; if (!b || !cfgOk()) return;
+          if (b.getAttribute("data-tc")) send({ type: "roomSetTime", roomId: roomId, tc: b.getAttribute("data-tc") });
+          else if (b.getAttribute("data-pos")) send({ type: "roomSetPos", roomId: roomId, pos: b.getAttribute("data-pos") });   // IDF qayta bosilsa — yangi qura
+        };
+      }
+      var idf = !!st.opening, k = String(st.tc) + "|" + (idf ? String(st.opening.id || 1) : "");
+      if (elCfg._k !== k) {
+        elCfg._k = k;
+        elCfg.innerHTML = '<div class="r"><div class="lb">⏱ Vaqt</div>' + CFG_TC.map(function (v) { return '<button data-tc="' + v + '"' + (v === st.tc ? ' class="on"' : '') + '>' + v + '</button>'; }).join("") + '</div>' +
+          '<div class="r"><div class="lb">♟ Pozitsiya</div><button data-pos="std"' + (idf ? '' : ' class="on"') + '>Standart</button><button data-pos="idf"' + (idf ? ' class="on"' : '') + '>IDF 780</button></div>';
+      }
+      elCfg.style.display = "block";
+      elCfg.style.left = (elBoard.offsetLeft + 8) + "px"; elCfg.style.width = (elBoard.offsetWidth - 16) + "px";
+      elCfg.style.top = (elBoard.offsetTop + (elBoard.offsetHeight - elCfg.offsetHeight) / 2) + "px";
+    }
+    setInterval(function () { try { zalUpd(); cfgUpd(); } catch (e) {} }, 400);
+
     // ---------- 👁 tomoshabin oynasi ----------
     function spEsc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
     function spAv(x) {   // tomoshabin rasmi yoki ism harfi
@@ -1375,6 +1438,7 @@
       else t = "";
       if (st.color === "spectator" && st.finished && !st.etude) t = "";   // natija tepadagi qatorda
       elStatus.textContent = t;
+      try { zalUpd(); cfgUpd(); } catch (e) {}   // 🏟 «O‘yin zali» va ⚙️ vaqt/pozitsiya tanlovi
       // ♔ etyud tugadi: qayta urinish / ro'yxatga qaytish
       var _eb = document.getElementById("rcEtB");
       if (st.etude && st.finished) {
