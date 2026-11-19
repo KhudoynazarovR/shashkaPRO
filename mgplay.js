@@ -10,7 +10,7 @@ const store = require('./store.js');
 const GL = require('./glicko.js');
 
 const GAMES = {
-  mm: { t: 'Xotira', ic: '🧠', tcs: ['2'], def: '2', min: 4 },
+  mm: { t: 'Xotira', ic: '🧠', tcs: ['30', '2+2', '3+2'], def: '30', min: 4, szs: ['4x6', '6x6'] },   // '30' — har yurishga 30 s; 2+2 / 3+2 — har o'yinchining o'z soati
   ug: { t: 'Ugolki', ic: '🏁', tcs: ['3+2', '5+3', '10+5'], def: '3+2', min: 10 },
   gomoku: { t: 'Gomoku', ic: '⭕', tcs: ['1+1', '3+2', '5+3'], def: '3+2', min: 6 },
   go: { t: 'Go 9×9', ic: '⚪', tcs: ['3+2', '5+3', '10+5'], def: '5+3', min: 10 }
@@ -31,6 +31,9 @@ function TG(method, params) { try { return require('./gcard.js').tg(method, para
 function appLink(sp) { return 'https://t.me/' + (process.env.BOT_USERNAME || 'DraughtsPRObot') + '/' + (process.env.APP_NAME || 'play') + '?startapp=' + sp; }
 function startParam(g, code) { return g === 'mm' ? 'mm_' + code : g === 'ug' ? 'ug_' + code : 'du_' + g + '_' + code; }
 function nameOf(uid) { const u = store.users()[String(uid)]; return u ? String(u.name || 'O‘yinchi').slice(0, 20) : 'O‘yinchi'; }
+function tcOf(g, v) { return GAMES[g].tcs.includes(String(v)) ? String(v) : GAMES[g].def; }
+function szOf(g, v) { const L = GAMES[g] && GAMES[g].szs; return L ? (L.includes(String(v)) ? String(v) : L[0]) : ''; }
+function lbl(g, tc, sz) { return g === 'mm' ? String(sz || '4x6').replace('x', '×') + ' · ' + (tc === '30' ? '30 s' : tc) : tc; }   // «4×6 · 30 s» / «3+2»
 
 // ---------------- ⭐ reyting
 function T(g) { const d = store.db; if (!d.mgr) d.mgr = {}; return d.mgr[g] || (d.mgr[g] = {}); }
@@ -96,12 +99,12 @@ function info(c, g) {
     const b = board(k), i = b.findIndex(x => x.uid === me);
     out.me[k] = Object.assign(pub(k, me), { rank: i >= 0 ? i + 1 : 0, of: b.length });
     out.top[k] = b.slice(0, 5);
-    out.games[k] = { t: GAMES[k].t, ic: GAMES[k].ic, tcs: GAMES[k].tcs };
+    out.games[k] = { t: GAMES[k].t, ic: GAMES[k].ic, tcs: GAMES[k].tcs, szs: GAMES[k].szs || null };
   }
-  const q = Q.get(me); out.q = q ? { g: q.g, tc: q.tc, at: q.at } : null;
+  const q = Q.get(me); out.q = q ? { g: q.g, tc: q.tc, sz: q.sz, at: q.at } : null;
   if (GAMES[g]) {
     out.g = g;
-    out.wait = [...Q.values()].filter(x => x.g === g && x.uid !== me).sort((a, b) => a.at - b.at).slice(0, 20).map(x => ({ uid: x.uid, name: x.name, tc: x.tc, r: pub(g, x.uid).r, p: pub(g, x.uid).p, av: store.avOf(store.users()[x.uid]) ? 1 : 0 }));
+    out.wait = [...Q.values()].filter(x => x.g === g && x.uid !== me).sort((a, b) => a.at - b.at).slice(0, 20).map(x => ({ uid: x.uid, name: x.name, tc: x.tc, sz: x.sz, r: pub(g, x.uid).r, p: pub(g, x.uid).p, av: store.avOf(store.users()[x.uid]) ? 1 : 0 }));
     out.online = online(g, me, pl);
   }
   send(c, out);
@@ -109,17 +112,17 @@ function info(c, g) {
 function full(c, g) { if (!GAMES[g]) return; send(c, { type: 'mgTop', g, list: board(g).slice(0, 100) }); }
 
 // ---------------- 🎲 xona ochish (ikkala o'rin band, 30 s ichida kirmagan — texnik mag'lubiyat)
-function start(g, tc, A, B) {
+function start(g, tc, A, B, sz) {
   const a = { uid: String(A.uid), name: A.name }, b = { uid: String(B.uid), name: B.name };
   let r = null;
   try {
-    if (g === 'mm') r = require('./memroom.js').createTour(a, b, '4x6', -120, () => {}, NOSHOW_MS);
+    if (g === 'mm') r = require('./memroom.js').createMg(a, b, szOf('mm', sz), tc === '30' ? 30 : tc, NOSHOW_MS);
     else if (g === 'ug') r = require('./ugroom.js').createPair(a, b, tc, () => {}, NOSHOW_MS);
     else r = require('./duoroom.js').createPair(a, b, tc, () => {}, NOSHOW_MS, g);
   } catch (e) { console.log('[mg] xona:', e.message); return null; }
   if (!r) return null;
   delete r.onEnd;   // turnir emas: revansh bor, natija — reytingga (xona modulidagi umumiy ilgak orqali)
-  const id = 'mx:' + g + ':' + r.code, tcT = g === 'mm' ? '⚡ 2 daq' : tc;
+  const id = 'mx:' + g + ':' + r.code, tcT = lbl(g, tc, sz);
   pushUid(a.uid, { type: 'mgGo', g, id, opp: b.name, tc: tcT });
   pushUid(b.uid, { type: 'mgGo', g, id, opp: a.name, tc: tcT });
   return r;
@@ -127,7 +130,7 @@ function start(g, tc, A, B) {
 
 // ---------------- ⚔ taklif
 function invId() { let k; do { k = crypto.randomBytes(5).toString('hex'); } while (INV.has(k)); return k; }
-function invText(v) { const G = GAMES[v.g]; return '⚔ <b>' + esc(v.from.name) + '</b> (⭐ ' + pub(v.g, v.from.uid).r + ') sizni <b>' + G.ic + ' ' + esc(G.t) + ' · ' + (v.g === 'mm' ? '⚡ 2 daq' : esc(v.tc)) + '</b> o‘yiniga chaqiryapti'; }
+function invText(v) { const G = GAMES[v.g]; return '⚔ <b>' + esc(v.from.name) + '</b> (⭐ ' + pub(v.g, v.from.uid).r + ') sizni <b>' + G.ic + ' ' + esc(G.t) + ' · ' + esc(lbl(v.g, v.tc, v.sz)) + '</b> o‘yiniga chaqiryapti'; }
 function invEdit(v, line, kb) {
   if (!v.msg) return;
   TG('editMessageText', { chat_id: v.msg.chat, message_id: v.msg.id, parse_mode: 'HTML', text: invText(v) + '\n\n' + line, reply_markup: { inline_keyboard: kb || [] } }).catch(() => {});
@@ -142,22 +145,22 @@ function invite(c, m) {
   const me = String(c.lb.uid), g = String(m.g || ''), to = String(m.to || '');
   if (!GAMES[g]) return send(c, { type: 'mgErr', msg: 'Noma’lum o‘yin' });
   if (!isTg(to) || to === me || !store.users()[to]) return send(c, { type: 'mgErr', msg: 'O‘yinchi topilmadi' });
-  const tc = GAMES[g].tcs.includes(String(m.tc)) ? String(m.tc) : GAMES[g].def;
+  const tc = tcOf(g, m.tc), sz = szOf(g, m.sz);
   for (const v of INV.values()) if (v.from.uid === me) invClose(v, 'cancel');   // bir vaqtda bitta taklif
   Q.delete(me);
-  const v = { id: invId(), g, tc, from: { uid: me, name: String(c.lb.name || nameOf(me)).slice(0, 20) }, to: { uid: to, name: nameOf(to) }, at: Date.now() };
+  const v = { id: invId(), g, tc, sz, from: { uid: me, name: String(c.lb.name || nameOf(me)).slice(0, 20) }, to: { uid: to, name: nameOf(to) }, at: Date.now() };
   INV.set(v.id, v);
   v.tmr = setTimeout(() => invClose(v, 'timeout'), INV_MS); if (v.tmr.unref) v.tmr.unref();
-  const n = pushUid(to, { type: 'mgInviteIn', id: v.id, g, tc, from: { uid: me, name: v.from.name, r: pub(g, me).r, p: pub(g, me).p }, ms: INV_MS });
+  const n = pushUid(to, { type: 'mgInviteIn', id: v.id, g, tc, sz, from: { uid: me, name: v.from.name, r: pub(g, me).r, p: pub(g, me).p }, ms: INV_MS });
   TG('sendMessage', { chat_id: to, parse_mode: 'HTML', text: invText(v), _cat: 'game', reply_markup: { inline_keyboard: [[{ text: '✓ Qabul qilish', callback_data: 'mgA:' + v.id }, { text: '✗ Rad etish', callback_data: 'mgD:' + v.id }]] } })
     .then(r => { if (r && r.ok && r.result) v.msg = { chat: r.result.chat.id, id: r.result.message_id }; if (!INV.has(v.id)) invEdit(v, '⌛ Taklif muddati tugadi'); }).catch(() => {});
-  send(c, { type: 'mgInviteSent', id: v.id, g, tc, name: v.to.name, app: n > 0, ms: INV_MS });
+  send(c, { type: 'mgInviteSent', id: v.id, g, tc, sz, name: v.to.name, app: n > 0, ms: INV_MS });
 }
 function accept(v, viaTg) {
   if (!INV.has(v.id)) return null;
   INV.delete(v.id); clearTimeout(v.tmr);
   Q.delete(v.from.uid); Q.delete(v.to.uid);
-  const r = start(v.g, v.tc, v.from, v.to);
+  const r = start(v.g, v.tc, v.from, v.to, v.sz);
   if (!r) { pushUid(v.from.uid, { type: 'mgInviteRes', id: v.id, ok: false, why: 'err', name: v.to.name }); return null; }
   pushUid(v.from.uid, { type: 'mgInviteRes', id: v.id, ok: true, name: v.to.name });
   if (!viaTg) pushUid(v.to.uid, { type: 'mgInviteGone', id: v.id });
@@ -185,19 +188,19 @@ async function onCallback(q) {
 function queue(c, m) {
   const me = String(c.lb.uid), g = String(m.g || '');
   if (!GAMES[g]) return send(c, { type: 'mgErr', msg: 'Noma’lum o‘yin' });
-  const tc = GAMES[g].tcs.includes(String(m.tc)) ? String(m.tc) : GAMES[g].def;
+  const tc = tcOf(g, m.tc), sz = szOf(g, m.sz);
   Q.delete(me);
   const name = String(c.lb.name || nameOf(me)).slice(0, 20);
-  const opp = [...Q.values()].filter(x => x.g === g && x.tc === tc && x.uid !== me).sort((a, b) => a.at - b.at)[0];
-  if (opp) { Q.delete(opp.uid); if (start(g, tc, opp, { uid: me, name })) return; }
-  Q.set(me, { uid: me, name, g, tc, at: Date.now(), c });
-  send(c, { type: 'mgQueued', g, tc });
+  const opp = [...Q.values()].filter(x => x.g === g && x.tc === tc && x.sz === sz && x.uid !== me).sort((a, b) => a.at - b.at)[0];
+  if (opp) { Q.delete(opp.uid); if (start(g, tc, opp, { uid: me, name }, sz)) return; }
+  Q.set(me, { uid: me, name, g, tc, sz, at: Date.now(), c });
+  send(c, { type: 'mgQueued', g, tc, sz });
 }
 function joinQ(c, m) {
   const me = String(c.lb.uid), q = Q.get(String(m.uid || ''));
   if (!q || q.uid === me) return send(c, { type: 'mgErr', msg: 'Bu o‘yinchi endi kutmayapti' });
   Q.delete(q.uid); Q.delete(me);
-  if (!start(q.g, q.tc, q, { uid: me, name: String(c.lb.name || nameOf(me)).slice(0, 20) })) send(c, { type: 'mgErr', msg: 'O‘yinni ochib bo‘lmadi' });
+  if (!start(q.g, q.tc, q, { uid: me, name: String(c.lb.name || nameOf(me)).slice(0, 20) }, q.sz)) send(c, { type: 'mgErr', msg: 'O‘yinni ochib bo‘lmadi' });
 }
 setInterval(() => {
   const now = Date.now();

@@ -6,7 +6,10 @@ const { verifyInitData } = require('./auth');
 const C = require('./memcore.js');
 const SIZES = { '4x6': [4, 6], '6x6': [6, 6] };
 const REW = { '4x6': 3, '6x6': 5 };
-const TCS = [0, 10, 20, -120];   // >0 — har yurishga soniya, 0 — vaqtsiz, -120 — ⚡ tezkor: butun o'yinga 2 daqiqa
+const TCS = [0, 10, 20, 30, -120];   // >0 — har yurishga soniya, 0 — vaqtsiz, -120 — ⚡ tezkor: butun o'yinga 2 daqiqa
+const FC = { '2+2': { b: 120e3, i: 2e3 }, '3+2': { b: 180e3, i: 2e3 } };   // ⏱ har o'yinchining o'z soati: b — boshida, i — har yurishdan (2-karta) keyin qo'shiladi
+function normTc(v) { if (typeof v === 'string' && FC[v]) return v; const n = +v; return TCS.includes(n) ? n : 0; }
+const IDX = Array.from({ length: 18 }, (_, i) => String(i));   // 🎨 mini o'yinlar markazi xonasi: kartada juftlik raqami, rasmni har o'yinchi o'zi tanlaydi
 const rooms = new Map();       // code -> room
 const byConn = new Map();      // conn id -> code
 const R = () => crypto.randomInt(1e9) / 1e9;
@@ -21,12 +24,23 @@ function who(m) {
   if (!t) return null;
   return { uid: String(t.id), name: String(t.first_name || t.username || 'O‘yinchi').slice(0, 20) };
 }
+// 🎨 har o'yinchining rasmlari (mijoz yuboradi): juftlik raqami -> rasm
+function setSyms(p, arr) {
+  const v = [...new Set(arr.filter(s => typeof s === 'string' && s.length > 0 && s.length <= 12))].slice(0, 40);
+  if (v.length < IDX.length) return;
+  const k = v.join(' '); if (p.symK === k) return;
+  p.symK = k; p.syms = v; p.map = null;
+}
+function mapOf(p) { if (!p) return ANIMALS; if (!p.map) p.map = C.shuffle((p.syms || ANIMALS).slice(), R).slice(0, IDX.length); return p.map; }
+function clkNow(r) { const c = r.clk.slice(); if (r.run && r.S) c[r.S.turn] = Math.max(0, c[r.S.turn] - (Date.now() - r.run)); return c; }
 function view(r, uid) {
   const S = r.S, cards = [];
-  if (S) for (let i = 0; i < S.deck.length; i++) cards.push(S.done[i] ? { s: S.deck[i], o: S.done[i] } : S.up.includes(i) ? { s: S.deck[i] } : null);
+  const pi = r.p.findIndex(x => x.uid === uid), mp = r.pt ? mapOf(r.p[pi >= 0 ? pi : 0]) : null, sym = i => mp ? (mp[+S.deck[i]] || '❔') : S.deck[i];
+  if (S) for (let i = 0; i < S.deck.length; i++) cards.push(S.done[i] ? { s: sym(i), o: S.done[i] } : S.up.includes(i) ? { s: sym(i) } : null);
   const now = Date.now();
   return {
     type: 'mmState', code: r.code, size: r.size, theme: r.theme, tc: r.tc, rules: r.rules, cards,
+    fc: !!r.fc, clk: r.fc && r.clk ? clkNow(r) : null, run: !!(r.fc && r.run), hold: !!r.hold, flag: r.flag != null ? r.flag : null, ns: !!r.ns, mg: !!r.pt, chat: r.chat || [],
     players: r.p.map((x, j) => ({ uid: x.uid, name: x.name, sc: S ? S.sc[j] : 0, on: !!x.ws })), me: r.p.findIndex(x => x.uid === uid),
     turn: S ? S.turn : 0, left: r.tc > 0 && r.deadline ? Math.max(0, r.deadline - now) : 0, blitz: r.tc < 0 && r.blitzEnd ? Math.max(0, r.blitzEnd - now) : 0,
     canSit: !!(r.inline && r.p.length === 1 && r.status === 'wait'), host: r.p[0] ? r.p[0].name : '', pinged: !!r.pinged,
@@ -43,15 +57,46 @@ function push(r) {
 const watching = new Map();   // conn id -> code (tomoshabinlar)
 function arm(r) {
   clearTimeout(r.tmr); r.deadline = 0;
-  if (r.status !== 'play' || r.tc <= 0) return;
+  if (r.status !== 'play' || !(r.tc > 0) || r.hold) return;
   r.deadline = Date.now() + r.tc * 1000;
   r.tmr = setTimeout(() => {   // vaqt tugadi — navbat o'tadi
     if (r.status !== 'play' || r.busy) return;
     C.timeout(r.S); r.ev = { t: 'timeout' }; arm(r); push(r);
   }, r.tc * 1000 + 300);
 }
+// ⏱ 2+2 / 3+2: navbatdagi o'yinchining soati yuradi (raqib kartalarni ko'rib turgan 1,1 s — to'xtaydi)
+function fRun(r) {
+  clearTimeout(r.ftmr); r.run = 0;
+  if (!r.fc || r.status !== 'play' || r.hold || r.busy || !r.S) return;
+  r.run = Date.now(); fArm(r);
+}
+function fArm(r) {
+  clearTimeout(r.ftmr);
+  const left = r.clk[r.S.turn] - (Date.now() - r.run);
+  r.ftmr = setTimeout(() => fCheck(r), Math.max(0, left) + 120);
+}
+function fCheck(r) {
+  if (!r.fc || r.status !== 'play' || !r.run || r.busy) return;
+  const t = r.S.turn, left = r.clk[t] - (Date.now() - r.run);
+  if (left > 0) return fArm(r);
+  r.clk[t] = 0; r.run = 0; flag(r, t);
+}
+function fSpend(r) {   // yurish tugadi (2-karta ochildi): sarflangan vaqt ayiriladi, +i soniya qo'shiladi
+  if (!r.fc || !r.run) return;
+  const t = r.S.turn; r.clk[t] = Math.max(0, r.clk[t] - (Date.now() - r.run)) + r.fc.i;
+  r.run = 0; clearTimeout(r.ftmr);
+}
+function flag(r, t) {   // ⏰ soati tugadi: qolgan juftliklar raqibga o'tadi
+  const S = r.S, o = 1 - t; let n = 0;
+  S.up = [];
+  for (let i = 0; i < S.deck.length; i++) if (!S.done[i]) { S.done[i] = o + 1; n++; }
+  S.sc[o] += n / 2; S.over = true; r.flag = t; r.ev = { t: 'flag', by: t };
+  finish(r);
+}
 function finish(r, quit) {
   if (r.inline) forget(r.code);
+  if (r.fc && r.run && r.S && r.clk) r.clk[r.S.turn] = Math.max(0, r.clk[r.S.turn] - (Date.now() - r.run));
+  clearTimeout(r.ftmr); r.run = 0; r.hold = false;
   r.status = 'over'; clearTimeout(r.tmr); clearTimeout(r.btmr);
   r.winner = quit != null ? 1 - quit : C.winner(r.S); r.quit = quit != null ? quit : null;
   r.gain = [0, 0];
@@ -76,9 +121,12 @@ function deal(r) {
   clearTimeout(r.stmr); r.pinged = 0;
   const [w, h] = SIZES[r.size];
   r.S = C.newGame({ pairs: w * h / 2, symbols: r.symbols, rules: r.rules, rnd: R });
-  r.busy = false; r.status = 'play'; r.winner = null; r.gain = null; r.quit = null; r.rt = null;
+  r.busy = false; r.status = 'play'; r.winner = null; r.gain = null; r.quit = null; r.rt = null; r.flag = null; r.ns = 0;
+  if (r.pt) r.p.forEach(x => { x.map = null; });   // 🎨 har o'yinda rasmlar yangidan tanlanadi
   clearTimeout(r.btmr); r.blitzEnd = 0;
   if (r.tc < 0) { r.blitzEnd = Date.now() + (-r.tc) * 1000; r.btmr = setTimeout(() => { if (r.status === 'play') finish(r); }, -r.tc * 1000 + 200); }
+  r.fc = FC[r.tc] || null; clearTimeout(r.ftmr); r.run = 0;
+  if (r.fc) { r.clk = [r.fc.b, r.fc.b]; fRun(r); }
   arm(r);
 }
 
@@ -111,7 +159,7 @@ function handle(c, m, clients) {
   }
   if (m.type === 'mmCreate') {
     const u = who(m); if (!u) return send(c.ws, { type: 'mmErr', msg: 'Telegram orqali kiring' }), true;
-    const size = SIZES[m.size] ? m.size : '4x6', tc = TCS.includes(+m.tc) ? +m.tc : 0;
+    const size = SIZES[m.size] ? m.size : '4x6', tc = normTc(m.tc);
     const symbols = Array.isArray(m.symbols) ? m.symbols.filter(s => typeof s === 'string' && s.length <= 8).slice(0, 40) : [];
     if (symbols.length < SIZES[size][0] * SIZES[size][1] / 2) return send(c.ws, { type: 'mmErr', msg: 'Rasmlar yetarli emas' }), true;
     const ru = m.rules || {}, rules = { streak: !!ru.streak, shuffle: !!ru.shuffle, black: !!ru.black };
@@ -138,7 +186,9 @@ function handle(c, m, clients) {
       invGone(r, u.uid);
     }
     p.ws = c.ws; p.cid = c.id; p.offAt = 0; p.j = true; byConn.set(c.id, r.code);
+    if (r.pt && Array.isArray(m.syms)) setSyms(p, m.syms);   // 🎨 o'zi tanlagan rasmlar
     if (r.p.length === 2 && r.status === 'wait' && (!(r.inline || r.gt || r.onEnd) || r.p.every(x => x.ws))) deal(r);
+    if (r.hold && r.status === 'play' && r.p.length === 2 && r.p.every(x => x.j)) { r.hold = false; fRun(r); arm(r); }   // ikkalasi ham kirdi — soat yuradi
     push(r);
     return true;
   }
@@ -164,22 +214,33 @@ function handle(c, m, clients) {
   }
   const me = r.p.findIndex(x => x.cid === c.id);
   if (me < 0) return true;
+  if (m.type === 'mmChat') {   // 💬 chat (faqat o'yinchilar), sokinish filtri — mod.js. Doska qayta chizilmasin — alohida xabar
+    const P = r.p[me], now = Date.now(); if (P.lastChat && now - P.lastChat < 400) return true;
+    let t = String(m.text || '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 120); if (!t) return true;
+    try { const M = require('./mod.js'); if (M.isMuted(P.uid)) return true; t = M.censor(t); } catch (e) {}
+    P.lastChat = now; r.chat = r.chat || []; r.chatN = (r.chatN || 0) + 1; r.chat.push({ i: r.chatN, name: P.name, text: t }); if (r.chat.length > 30) r.chat.shift();
+    const o = { type: 'mmChat', code: r.code, chat: r.chat };
+    r.p.forEach(x => send(x.ws, o)); if (r.watch) for (const [, ws] of r.watch) send(ws, o);
+    return true;
+  }
   if (m.type === 'mmFlip') {
     const S = r.S;
-    if (r.status !== 'play' || !S || S.turn !== me || r.busy) return true;
+    if (r.status !== 'play' || !S || S.turn !== me || r.busy || r.hold) return true;
+    if (r.fc && r.run && r.clk[me] - (Date.now() - r.run) <= 0) { r.clk[me] = 0; r.run = 0; clearTimeout(r.ftmr); flag(r, me); return true; }   // ⏰ ulgurmadi
     const res = C.flip(S, Math.floor(+m.i));
     if (!res) return true;
     if (res.match === true) {
       r.ev = res.ev.length ? { t: res.ev.join(','), by: me } : null;
+      fSpend(r);
       if (S.over) return finish(r), true;
-      arm(r); push(r);   // topdi — yana yuradi
+      fRun(r); arm(r); push(r);   // topdi — yana yuradi
     } else if (res.match === false) {
-      r.busy = true; clearTimeout(r.tmr); push(r);
+      r.busy = true; clearTimeout(r.tmr); fSpend(r); push(r);
       setTimeout(() => {
         if (r.status !== 'play') return;
         const e = C.endTurn(S); r.busy = false;
         if (e.shuffled) r.ev = { t: 'shuffle', at: e.shuffled };
-        arm(r); push(r);
+        fRun(r); arm(r); push(r);
       }, 1100);
     } else push(r);
     return true;
@@ -214,6 +275,7 @@ function handle(c, m, clients) {
     return true;
   }
   if (m.type === 'mmLeave') {
+    if (r.hold && r.status === 'play') { r.p[me].ws = null; byConn.delete(c.id); noShow(r, 'left'); return true; }   // raqib hali kirmagan edi — o'yin bekor (reytingsiz)
     if (r.status === 'wait' && me === 0 && !r.onEnd) { invGone(r); byConn.delete(c.id); clearTimeout(r.stmr); rooms.delete(r.code); if (r.inline) forget(r.code); return true; }   // bekor qilindi
     if (r.status === 'wait' && me === 1 && r.inline) { r.p.pop(); byConn.delete(c.id); clearTimeout(r.stmr); r.pinged = 0; push(r); return true; }   // guruh kartasi: qo'shilgan raqib chiqib ketdi — o'rin yana bo'sh
     r.p[me].ws = null; byConn.delete(c.id);
@@ -242,7 +304,7 @@ setInterval(() => {
 }, 30e3).unref();
 function newRoom(o) {
   let k = code(); while (rooms.has(k)) k = code();
-  const size = SIZES[o.size] ? o.size : '4x6', tc = TCS.includes(+o.tc) ? +o.tc : 0;
+  const size = SIZES[o.size] ? o.size : '4x6', tc = normTc(o.tc);
   const rom = o.theme === 'romantic', r = { code: k, size, tc, rules: { streak: false, shuffle: false, black: false }, theme: rom ? 'romantic' : 'animals', symbols: rom ? ROMANTIC : ANIMALS, p: o.p, status: 'wait', at: Date.now(), S: null };
   rooms.set(k, r); return r;
 }
@@ -301,4 +363,23 @@ function createTour(a, b, size, tc, onEnd, noshowMs) {
   deal(r);   // 🔀 turnirda o'yin darhol boshlanadi
   return r;
 }
-module.exports = { handle, onClose, rooms, remember, createTour, createInline, createPair, again, finish, push, SIZES };
+// 🎮 mini o'yinlar markazi (mgplay.js): ikkala o'rin band; kartalar darhol tarqatiladi, soat esa ikkalasi kirganda yuradi.
+// Rasmlarni har o'yinchi o'zi tanlaydi (kartada juftlik raqami). noshowMs ichida kirmagan bo'lsa — o'yin reytingsiz tugaydi.
+function noShow(r, why) {
+  if (r.status === 'over') return;
+  const j = r.p.map(x => !!(x.j && (why !== 'left' || x.ws)));
+  clearTimeout(r.tmr); clearTimeout(r.btmr); clearTimeout(r.ftmr); r.run = 0; r.hold = false;
+  r.status = 'over'; r.winner = j[0] && !j[1] ? 0 : j[1] && !j[0] ? 1 : -1; r.ns = 1; r.quit = null; r.rt = null; r.gain = [0, 0];
+  push(r);
+}
+function createMg(a, b, size, tc, noshowMs) {
+  let k = code(); while (rooms.has(k)) k = code();
+  const r = { code: k, size: SIZES[size] ? size : '4x6', tc: normTc(tc), rules: { streak: false, shuffle: false, black: false }, theme: '', symbols: IDX, pt: true, hold: true,
+    p: [{ uid: String(a.uid), name: a.name, ws: null, offAt: 0 }, { uid: String(b.uid), name: b.name, ws: null, offAt: 0 }], status: 'wait', at: Date.now(), S: null };
+  rooms.set(k, r);
+  deal(r);
+  r.nsT = setTimeout(() => { if (r.hold && r.status === 'play') noShow(r, 'noshow'); }, noshowMs || 30000);
+  if (r.nsT.unref) r.nsT.unref();
+  return r;
+}
+module.exports = { handle, onClose, rooms, remember, createTour, createInline, createPair, createMg, again, finish, push, SIZES, normTc };

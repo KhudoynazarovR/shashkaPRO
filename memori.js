@@ -36,11 +36,18 @@
     animals: { ic: '🐶', t: 'Hayvonlar', s: '🐶🐱🐭🐹🐰🦊🐻🐼🐨🐯🦁🐮🦓🐸🐵🐔🐧🐦🦆🦉🐴🦄🐝🦋🐢🦜🐙🦀🐬🐳🦒🐘' },
     fruits: { ic: '🍐', t: 'Mevalar', s: '🍏🍎🍐🍊🍋🍌🍉🍇🍓🥜🍈🍒🍑🥭🍍🥥🥝🍅🍆🥑🥦🥬🥒🌶️🌽🥕🧄🧅🥔🍠🥐🍯' },
     romantic: { ic: '🌹', t: 'Romantik', s: '💖💘💝💞💗💓🌹🌷🌸🌺🌻💐🦋🦢🕊️🐞🌈⭐🧸🎀🎁💌💍💎🍓🍒🍫🧁🍭🎂🌙✨🕯️🎈🪷🌼' },
-    letters: { ic: '🔤', t: 'Harflar', s: 'A B C D E F G H I J K L M N O P Q R S T U V W X Y Z 1 2 3 4 5 6' }
+    letters: { ic: '🔤', t: 'Harflar', s: 'A B C D E F G H I J K L M N O P Q R S T U V W X Y Z 1 2 3 4 5 6' },
+    // yangi to'plamlar — bo'sh joy bilan ajratilgan (bayroqlar 2 ta belgidan iborat)
+    sport: { ic: '⚽', t: 'Sport', s: '⚽ 🏀 🏈 ⚾ 🎾 🏐 🏉 🎱 🏓 🏸 🥊 🥋 ⛳ 🏒 🏏 🎳 🏹 🎿 ⛸️ 🥅 🏆 🥇 🛹 🚴 🏊 🏄 🤸 🎯' },
+    transport: { ic: '🚗', t: 'Transport', s: '🚗 🚕 🚌 🏎️ 🚓 🚑 🚒 🚚 🚜 🏍️ 🛵 🚲 🛴 🚂 🚇 🚁 ✈️ 🚀 🛸 ⛵ 🚤 🛳️ ⚓ 🚦 🛺 🛶 🚠' },
+    food: { ic: '🍔', t: 'Taomlar', s: '🍔 🍕 🌭 🌮 🌯 🥪 🍟 🍗 🥩 🍳 🥞 🧇 🥐 🥨 🧀 🍝 🍜 🍲 🍣 🍱 🥟 🍤 🍙 🍦 🍩 🍪 🎂 🧁 🍫 🍭 🍿 ☕' },
+    flags: { ic: '🌍', t: 'Bayroqlar', s: '🇺🇿 🇰🇿 🇰🇬 🇹🇯 🇹🇲 🇹🇷 🇦🇿 🇷🇺 🇨🇳 🇯🇵 🇰🇷 🇮🇳 🇵🇰 🇸🇦 🇦🇪 🇪🇬 🇩🇪 🇫🇷 🇮🇹 🇪🇸 🇬🇧 🇺🇸 🇨🇦 🇧🇷 🇦🇷 🇦🇺 🇸🇪 🇬🇷 🇨🇭 🇵🇹' },
+    smileys: { ic: '😀', t: 'Smayliklar', s: '😀 😂 🥰 😍 😎 🤩 🥳 😇 🤔 😴 🤯 😱 😡 🥶 🤠 🤡 👻 👽 🤖 😬 😈 🙈 🤓 😜 🥺 😭 🤗 🤫 😷 🤑' },
+    nature: { ic: '🌳', t: 'Tabiat', s: '🌲 🌴 🌵 🍀 🍁 🍄 🌻 🌷 🌾 🌿 🌺 🌈 ☀️ 🌙 ⭐ ⚡ ❄️ 🔥 🌊 💧 ⛰️ 🌋 🏝️ 🌪️ ☁️ 🌍 🐚 🌸 ⛄ 🌱' }
   };
   function symbols(theme) {
-    var s = THEMES[theme].s;
-    if (theme === 'letters') return s.split(' ');
+    var s = (THEMES[theme] || THEMES.shashka).s;
+    if (s.indexOf(' ') >= 0) return s.split(' ').filter(Boolean);
     return Array.from(s).reduce(function (a, c) { if (/[‍️]/.test(c) && a.length) { a[a.length - 1] += c; } else a.push(c); return a; }, []);
   }
   var SIZES = [{ k: '4x6', w: 4, h: 6, t: '4×6', p: 12, r: 3 }, { k: '6x6', w: 6, h: 6, t: '6×6', p: 18, r: 5 }];
@@ -50,8 +57,12 @@
   var CFG = { size: '4x6', theme: 'shashka', mode: 'bot', lv: 1, tc: 0, rules: {} };
   try { var sv = JSON.parse(localStorage.getItem('spMemCfg2') || 'null'); if (sv) for (var k in CFG) if (sv[k] !== undefined) CFG[k] = sv[k]; } catch (e) {}
   if (!SIZES.some(function (z) { return z.k === CFG.size; })) CFG.size = '4x6';
+  if (!THEMES[CFG.theme]) CFG.theme = 'shashka';
   if (!CFG.rules || typeof CFG.rules !== 'object') CFG.rules = {};
   function saveCfg() { try { localStorage.setItem('spMemCfg2', JSON.stringify(CFG)); } catch (e) {} }
+  // 🎮 mini o'yinlar markazi (mghub.js) shu sozlamalarni ishlatadi: doska va rasmlar
+  window.spMemCfg = function (p) { if (p) { if (p.size && SIZES.some(function (z) { return z.k === p.size; })) CFG.size = p.size; if (p.theme && THEMES[p.theme]) CFG.theme = p.theme; saveCfg(); } return CFG; };
+  window.spMemThemes = { T: THEMES, syms: symbols };
   function sizeOf(k) { return SIZES.filter(function (z) { return z.k === k; })[0] || SIZES[0]; }
 
   function css() {
@@ -79,7 +90,10 @@
       '#spMem .tour{display:flex;align-items:center;gap:12px;background:linear-gradient(110deg,#6b3a00,#c27c0e);border:1px solid #ffd27a;border-radius:16px;padding:12px 14px;margin:6px 0 4px;cursor:pointer;box-shadow:0 0 16px #ffb34744}#spMem .tour b{display:block;font-size:17px}#spMem .tour small{opacity:.85;font-size:12px}' +
       '#spMem .ev{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);z-index:5;background:#000c;border-radius:16px;padding:14px 20px;font:800 20px system-ui;text-align:center;animation:spMemE 1.6s forwards;pointer-events:none}@keyframes spMemE{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}15%{opacity:1;transform:translate(-50%,-50%) scale(1.05)}80%{opacity:1}100%{opacity:0}}' +
       '#spMem table{width:100%;border-collapse:collapse;font-size:14px}#spMem td{padding:6px 4px;border-bottom:1px solid #ffffff14}#spMem tr.me td{color:#ffd54f;font-weight:700}' +
-      '#spMem .code{font:900 34px system-ui;letter-spacing:6px;text-align:center;margin:8px 0;color:#ffd54f}';
+      '#spMem .code{font:900 34px system-ui;letter-spacing:6px;text-align:center;margin:8px 0;color:#ffd54f}' +
+      // ⏱ 2+2 / 3+2 soatlari va 💬 chat tugmasi (gchat.js) — Xotira oynasi ustida, yuqori o'ngda
+      '#spMem .ck{display:flex;justify-content:space-between;gap:8px;margin:-4px 0 10px}#spMem .ck span{min-width:86px;text-align:center;padding:5px 10px;border-radius:10px;background:#ffffff14;font:800 18px system-ui;font-variant-numeric:tabular-nums}#spMem .ck span.on{background:#ffd54f;color:#1a1a1a}#spMem .ck span.lo{background:#e0533d;color:#fff}' +
+      '#gcB{z-index:2147482650!important;top:calc(env(safe-area-inset-top,0px) + 10px)!important;bottom:auto!important;right:12px!important;width:40px!important;height:40px!important;font-size:19px!important;border-radius:12px!important;box-shadow:0 4px 10px rgba(0,0,0,.4)!important}#gcX{z-index:2147482660!important}';
     document.head.appendChild(s);
   }
   function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
@@ -182,6 +196,7 @@
       else if (e === 'bonus') o.push('🔥 ' + (mine ? T('Seriya bonusi +1!') : T('Raqibga seriya bonusi +1')));
       else if (e === 'shuffle') o.push('🔀 ' + T('2 ta karta joy almashdi!'));
       else if (e === 'timeout') o.push('⏰ ' + T('Vaqt tugadi — navbat o‘tdi'));
+      else if (e === 'flag') o.push('⏰ ' + (mine ? T('Vaqtingiz tugadi!') : T('Raqibning vaqti tugadi!')));
     });
     return o.join('<br>');
   }
@@ -286,12 +301,15 @@
     }, 500);
     return true;
   }
-  function endCard(ic, title, sub, again) { if (arguments[0] === '🏆') setTimeout(function () { snd('win'); }, 250);
+  function endCard(ic, title, sub, again, o) {   // o: { quiet — ovoz va aylantirishsiz (qayta chizilganda), back: [matn, fn] }
+    o = o || {};
+    if (ic === '🏆' && !o.quiet) setTimeout(function () { snd('win'); }, 250);
     var m = ov && ov.querySelector('[data-msg]'); if (!m) return;
     m.innerHTML = '<div class="cd end"><div class="big">' + ic + '</div><b style="font-size:20px">' + title + '</b><div style="margin-top:6px;font-size:18px">' + sub + '</div><div data-rw style="margin-top:6px;color:#ffd54f"></div>' +
-      '<button class="go" data-again>↻ ' + T('Yana o‘ynash') + '</button><button class="go g2" data-menu>☰ ' + T('Menyu') + '</button></div>';
-    m.querySelector('[data-again]').onclick = again; m.querySelector('[data-menu]').onclick = menu;
-    m.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      (again ? '<button class="go" data-again>↻ ' + T('Yana o‘ynash') + '</button>' : '') + '<button class="go g2" data-menu>' + (o.back ? o.back[0] : '☰ ' + T('Menyu')) + '</button></div>';
+    if (again) m.querySelector('[data-again]').onclick = again;
+    m.querySelector('[data-menu]').onclick = o.back ? o.back[1] : menu;
+    if (!o.quiet) m.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   // ---------------- 🏆 kunlik turnir (kartalar serverda, har ochish — so'rov)
@@ -361,8 +379,10 @@
     WS = new WebSocket(wsUrl());
     WS.onopen = cb;
     WS.onmessage = function (ev) { var m; try { m = JSON.parse(ev.data); } catch (e) { return; } onNet(m); };
-    WS.onclose = function () { if (NET && NET.code && ov && !NET.left) setTimeout(function () { if (NET && !NET.left) net(function () { WS.send(JSON.stringify({ type: 'mmJoin', init: (tg && tg.initData) || '', code: NET.code })); }); }, 1500); };
+    WS.onclose = function () { if (NET && NET.code && ov && !NET.left) setTimeout(function () { if (NET && !NET.left) net(function () { WS.send(JSON.stringify(joinMsg(NET.code))); }); }, 1500); };
   }
+  // 🎨 markaz o'yinida har kim o'z rasmlarini ko'radi — tanlangan to'plam serverga yuboriladi (boshqa xonalarda e'tiborsiz)
+  function joinMsg(code) { return { type: 'mmJoin', init: (tg && tg.initData) || '', code: code, th: CFG.theme, syms: symbols(CFG.theme) }; }
   function sendN(o) { if (WS && WS.readyState === 1) WS.send(JSON.stringify(o)); }
   function netCreate(pend) {
     stopPoll(); HALL = false;
@@ -406,9 +426,20 @@
     shell(); ov.innerHTML = '<div class="top"><button class="bk" data-x>‹</button><h2>👥 ' + T('Do‘st bilan') + '</h2></div><div class="cd" style="text-align:center">⏳ ' + T('Ulanmoqda…') + '</div>';
     ov.querySelector('[data-x]').onclick = menu;
     NET = { code: code, left: false };
-    net(function () { sendN({ type: 'mmJoin', init: (tg && tg.initData) || '', code: code }); });
+    net(function () { sendN(joinMsg(code)); });
   }
-  function netLeave() { if (NET && NET.code) { NET.left = true; sendN({ type: NET.watch ? 'mmUnwatch' : 'mmLeave', code: NET.code }); } NET = null; try { if (WS) WS.close(); } catch (e) {} WS = null; }
+  function netLeave() { chatOff(); if (NET && NET.code) { NET.left = true; sendN({ type: NET.watch ? 'mmUnwatch' : 'mmLeave', code: NET.code }); } NET = null; try { if (WS) WS.close(); } catch (e) {} WS = null; }
+  // 💬 o'yin chati (gchat.js — Ugolki/Gomoku/Go bilan bir xil)
+  var CHL = false, CHI = false;
+  function myName() { var s = NET && NET.st; return s && s.players && s.players[s.me] ? s.players[s.me].name : ''; }
+  function chatOn(m) {
+    if (!window.GCHAT) { if (!CHL) { CHL = true; var sc = document.createElement('script'); sc.src = '/gchat.js?v=1'; sc.onload = function () { if (NET && NET.st && !NET.watch && NET.st.status !== 'wait') chatOn(NET.st); }; document.head.appendChild(sc); } return; }
+    if (!CHI) { CHI = true; GCHAT.init(function (t) { if (NET && NET.code && !NET.watch) sendN({ type: 'mmChat', code: NET.code, text: t }); }); }
+    GCHAT.show(true); GCHAT.set(m.chat || [], myName());
+  }
+  function chatOff() { try { if (window.GCHAT && CHI) GCHAT.show(false); } catch (e) {} }
+  function tcLbl(tc) { return typeof tc === 'string' && tc.indexOf('+') > 0 ? '⏱ ' + tc : tc > 0 ? '⏱ ' + tc + ' s' : tc < 0 ? '⚡ ' + (-tc / 60) + ' ' + T('daqiqa') : '∞'; }
+  function fmtC(ms) { var s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ':' + ('0' + s % 60).slice(-2); }
   function rulesTxt(r) { r = r || {}; var o = []; if (r.streak) o.push('🔥'); if (r.shuffle) o.push('🔀'); if (r.black) o.push('💀'); return o.length ? ' · ' + o.join(' ') : ''; }
   function shareLink(code) { return (window.TG_APP_LINK || 'https://t.me/DraughtsPRObot/play') + '?startapp=mm_' + code; }
   function onNet(m) {
@@ -417,7 +448,8 @@
     if (!ov || !NET) return;
     if (NET.bg && m.type === 'mmErr') { NET = null; bgUi('⚠️ ' + esc(T(m.msg))); return; }
     if (m.type === 'mmErr') { ov.innerHTML = '<div class="top"><button class="bk" data-x>‹</button><h2>Xotira</h2></div><div class="cd" style="text-align:center">⚠️ ' + esc(T(m.msg)) + '</div><button class="go g2" data-x2>☰ ' + T('Menyu') + '</button>'; ov.querySelector('[data-x]').onclick = menu; ov.querySelector('[data-x2]').onclick = menu; NET = null; return; }
-    if (m.type === 'mmAgainAsk') { var mm = ov.querySelector('[data-rw]'); if (mm) mm.textContent = '🔁 ' + T('Do‘stingiz yana o‘ynashni xohlayapti'); return; }
+    if (m.type === 'mmAgainAsk') { var mm = ov.querySelector('[data-rw]'); if (mm) mm.textContent = '🔁 ' + T(NET.st && NET.st.mg ? 'Raqib yana o‘ynashni xohlayapti' : 'Do‘stingiz yana o‘ynashni xohlayapti'); return; }
+    if (m.type === 'mmChat') { if (window.GCHAT && CHI && !NET.watch) GCHAT.set(m.chat || [], myName()); return; }   // 💬 doska qayta chizilmaydi
     if (m.type === 'mmPlayers') {   // zaldagi onlayn o'yinchilar
       var pl = ov.querySelector('[data-pl]'); if (!pl) return;
       if (!m.list.length) { pl.innerHTML = '<div class="cd" style="text-align:center">😔 ' + T('Hozir o‘yin zalida hech kim yo‘q. Guruhga yuboring!') + '</div>'; return; }
@@ -439,10 +471,11 @@
       return;
     }
     if (NET.bg && m.status !== 'wait') { NET.bg = false; stopPoll(); hap('ok'); }
+    if (m.watch || m.status === 'wait') chatOff();
     if (m.watch) {   // 📺 tomoshabin
       if (m.status === 'wait') {   // guruh kartasi: raqib kutilmoqda — qo'shilish
         ov.innerHTML = '<div class="top"><button class="bk" data-x>‹</button><h2>🧠 ' + T('Xotira') + '</h2></div>' +
-          '<div class="cd" style="text-align:center;line-height:1.5"><div style="font-size:42px">🧠</div><b>' + esc(m.host || '') + '</b> ' + T('raqib kutyapti') + '<div style="opacity:.7;font-size:13px;margin-top:6px">' + z.t + ' · ' + (m.tc > 0 ? '⏱ ' + m.tc + ' s' : m.tc < 0 ? '⚡ ' + (-m.tc / 60) + ' ' + T('daqiqa') : '∞') + '</div></div>' +
+          '<div class="cd" style="text-align:center;line-height:1.5"><div style="font-size:42px">🧠</div><b>' + esc(m.host || '') + '</b> ' + T('raqib kutyapti') + '<div style="opacity:.7;font-size:13px;margin-top:6px">' + z.t + ' · ' + tcLbl(m.tc) + '</div></div>' +
           (m.canSit ? '<button class="go" data-sit>▶ ' + T('O‘yinga qo‘shilish') + '</button>' : '<div class="cd" style="text-align:center">' + T('Raqib topildi — o‘yin tez orada boshlanadi') + '</div>') +
           '<div class="cd" style="text-align:center;opacity:.75;font-size:13px">' + T('yoki shunchaki tomosha qiling') + ' 👁</div>';
         ov.querySelector('[data-x]').onclick = menu;
@@ -474,7 +507,7 @@
       var stx = pd.all ? '' + T('Zaldagi barcha o‘yinchilarga so‘rov yuborildi. Kim birinchi qabul qilsa — o‘sha bilan o‘ynaysiz!') + ' <span data-an></span>'
         : pd.to ? '📨 <b>' + esc(pd.name || '') + '</b> ' + T('ga taklif yuborildi. Javobini kuting…') : '⏳ ' + T('Do‘stingiz kutilmoqda…');
       ov.innerHTML = '<div class="top"><button class="bk" data-x>‹</button><h2>⏳ ' + T('Raqib kutilmoqda') + '</h2></div>' +
-        '<div class="cd" style="text-align:center;line-height:1.5"><div style="font-size:38px">🧠</div>' + stx + '<div style="opacity:.7;font-size:13px;margin-top:6px">' + z.t + ' · ' + (m.tc > 0 ? '⏱ ' + m.tc + ' s' : m.tc < 0 ? '⚡ ' + (-m.tc / 60) + ' ' + T('daqiqa') : '∞') + rulesTxt(m.rules) + '</div></div>' +
+        '<div class="cd" style="text-align:center;line-height:1.5"><div style="font-size:38px">🧠</div>' + stx + '<div style="opacity:.7;font-size:13px;margin-top:6px">' + z.t + ' · ' + tcLbl(m.tc) + rulesTxt(m.rules) + '</div></div>' +
         '<div data-dec></div><button class="go g2" data-hall>🎮 ' + T('Yana o‘yinchi taklif qilish') + '</button><div data-pl></div>' +
         '<button class="go g2" data-sh>📤 ' + T('Guruhga yoki do‘stga yuborish') + '</button><button class="go g2" data-cancel style="background:#5b2330">❌ ' + T('Bekor qilish') + '</button>';
       ov.querySelector('[data-x]').onclick = menu; ov.querySelector('[data-cancel]').onclick = menu;
@@ -486,6 +519,7 @@
       ov.querySelector('[data-hall]').onclick = function () { var pl = ov.querySelector('[data-pl]'); if (pl) pl.innerHTML = '<div class="cd" style="text-align:center">⏳</div>'; sendN({ type: 'mmPlayers', init: (tg && tg.initData) || '' }); };
       return;
     }
+    var wasOver = NET.pSt === 'over';
     if (m.cards && m.status !== 'wait') {   // onlayn: o'zgarishga qarab ovoz
       var nUp = 0, nOk = 0; m.cards.forEach(function (c) { if (c) { if (c.o) nOk++; else nUp++; } });
       if (NET.pOk != null) {
@@ -495,14 +529,23 @@
       NET.pOk = nOk; NET.pUp = nUp; NET.pSt = m.status;
     }
     var cards = m.cards.map(function (c) { return c ? { s: c.s, up: !c.o, ok: !!c.o, bt: c.o && c.o - 1 !== me } : null; });
-    var P = m.players, myTurn = m.turn === me && m.status === 'play';
+    var P = m.players, myTurn = m.turn === me && m.status === 'play', mg = !!m.mg, OPP = mg ? 'Raqib' : 'Do‘stingiz';
+    var ck = function (i) { return '<span data-ck="' + i + '" class="' + (m.run && m.turn === i ? 'on' : '') + (m.clk[i] < 10000 ? ' lo' : '') + '">' + fmtC(m.clk[i]) + '</span>'; };
+    var timer = m.fc && m.clk ? '<div class="ck">' + ck(me) + ck(op) + '</div>'   // ⏱ 2+2 / 3+2: chapda — siz, o'ngda — raqib
+      : m.tc < 0 ? '<div style="text-align:center;font-weight:800;margin:-4px 0 8px" data-blz>⚡ ' + Math.ceil(m.blitz / 1000) + ' s</div>' : timerBar(m.left, m.tc > 0 ? m.tc * 1000 : 0);
     var h = '<div class="top"><button class="bk" data-x>‹</button><h2>' + T('Xotira') + ' · ' + z.t + '</h2></div>' +
       '<div class="hud"><span class="' + (myTurn ? 'turn' : '') + '">🧑 ' + esc(P[me] ? P[me].name : T('Siz')) + ': <b>' + (P[me] ? P[me].sc : 0) + '</b></span><span>' +
       (m.status === 'over' ? '🏁' : myTurn ? '👉 ' + T('Siz') : '⏳') + '</span><span class="' + (!myTurn && m.status === 'play' ? 'turn' : '') + '">' + (P[op] && !P[op].on ? '📴 ' : '👤 ') + esc(P[op] ? P[op].name : '…') + ': <b>' + (P[op] ? P[op].sc : 0) + '</b></span></div>' +
-      (m.tc < 0 ? '<div style="text-align:center;font-weight:800;margin:-4px 0 8px" data-blz>⚡ ' + Math.ceil(m.blitz / 1000) + ' s</div>' : timerBar(m.left, m.tc > 0 ? m.tc * 1000 : 0)) + boardHtml(z, cards) + '<div class="msg" data-msg>' + (m.status === 'play' ? (myTurn ? '👉 ' + T('Navbat sizda') : '⏳ ' + T('Do‘stingiz yurmoqda…')) : '') + '</div>';
+      timer + boardHtml(z, cards) + '<div class="msg" data-msg>' + (m.status === 'play' ? (m.hold ? '⏳ ' + T('Raqib ulanmoqda…') : myTurn ? '👉 ' + T('Navbat sizda') : '⏳ ' + T(OPP + ' yurmoqda…')) : '') + '</div>';
     ov.innerHTML = h;
-    ov.querySelector('[data-x]').onclick = menu;
-    [].forEach.call(ov.querySelectorAll('[data-i]'), function (e) { e.onclick = function () { if (NET && NET.st && NET.st.turn === NET.st.me && NET.st.status === 'play') { sendN({ type: 'mmFlip', code: NET.code, i: +e.getAttribute('data-i') }); hap(); } }; });
+    var back = function () {   // markaz o'yini: chiqish — mag'lubiyat, shuning uchun so'raladi; keyin markazga qaytadi
+      if (!mg) return menu();
+      if (m.status !== 'play' || m.hold || !NET || !NET.st || NET.st.status !== 'play') return close();
+      var q = T('O‘yindan chiqsangiz, mag‘lubiyat hisoblanadi. Chiqasizmi?');
+      if (tg && tg.showConfirm) tg.showConfirm(q, function (ok) { if (ok) close(); }); else close();
+    };
+    ov.querySelector('[data-x]').onclick = back;
+    [].forEach.call(ov.querySelectorAll('[data-i]'), function (e) { e.onclick = function () { if (NET && NET.st && NET.st.turn === NET.st.me && NET.st.status === 'play' && !NET.st.hold) { sendN({ type: 'mmFlip', code: NET.code, i: +e.getAttribute('data-i') }); hap(); } }; });
     if (G.tm) clearInterval(G.tm);
     if (m.ev && m.ev.t) evShow(evText(m.ev.t, m.ev.by === me));
     if (m.status === 'play' && m.tc < 0 && m.blitz) { var bend = Date.now() + m.blitz; G.tm = setInterval(function () { var e = ov && ov.querySelector('[data-blz]'); if (!e) return clearInterval(G.tm); e.textContent = '⚡ ' + Math.max(0, Math.ceil((bend - Date.now()) / 1000)) + ' s'; }, 250); }
@@ -510,12 +553,19 @@
       var end = Date.now() + m.left;
       G.tm = setInterval(function () { var bar = ov && ov.querySelector('[data-tbar]'); if (!bar) return clearInterval(G.tm); bar.style.width = Math.max(0, (end - Date.now()) / (m.tc * 1000) * 100) + '%'; }, 200);
     }
+    if (m.status === 'play' && m.fc && m.clk && m.run) {   // navbatdagi soat yuradi (server har yurishda aniq qiymatni yuboradi)
+      var c0 = Date.now(), base = m.clk[m.turn], ce = ov.querySelector('[data-ck="' + m.turn + '"]');
+      G.tm = setInterval(function () { if (!ce || !ce.isConnected) return clearInterval(G.tm); var left = base - (Date.now() - c0); ce.textContent = fmtC(left); ce.className = 'on' + (left < 10000 ? ' lo' : ''); }, 200);
+    }
+    if (m.status !== 'wait' && !m.watch) chatOn(m);   // 💬
     if (m.status === 'over') {
-      var win = m.winner === me, draw = m.winner === -1;
-      endCard(win ? '🏆' : draw ? '🤝' : '😔', win ? T('Siz yutdingiz!') : draw ? T('Durang!') : T('Do‘stingiz yutdi'),
+      var win = m.winner === me, draw = m.winner === -1, toHub = mg ? { back: ['‹ ' + T('Mini o‘yinlar'), close], quiet: wasOver } : { quiet: wasOver };
+      if (m.ns) endCard('😴', T('Raqib o‘yinga kirmadi'), '<small>' + T('Reyting o‘zgarmaydi') + '</small>', null, toHub);
+      else endCard(win ? '🏆' : draw ? '🤝' : '😔', win ? T('Siz yutdingiz!') : draw ? T('Durang!') : T(OPP + ' yutdi'),
         (P[me] ? P[me].sc : 0) + ' : ' + (P[op] ? P[op].sc : 0) + (m.quit != null && m.quit !== me ? '<br><small>' + T('Raqib o‘yindan chiqdi') + '</small>' : '') +
+          (m.flag != null ? '<br><small>⏰ ' + (m.flag === me ? T('Vaqtingiz tugadi — qolgan juftliklar raqibga o‘tdi') : T('Raqibning vaqti tugadi — qolgan juftliklar sizga o‘tdi')) + '</small>' : '') +
           (m.rt ? '<br><span style="font-size:16px;font-weight:800">' + (m.rt.capped ? '<small style="font-weight:600;opacity:.8">⭐ Bugun shu raqib bilan reytingli o‘yinlar tugadi (kuniga 3 ta)</small>' : '⭐ ' + m.rt.from + ' → ' + m.rt.to + ' <span style="color:' + (m.rt.to >= m.rt.from ? '#4ade80' : '#f87171') + '">' + (m.rt.to >= m.rt.from ? '+' : '') + (m.rt.to - m.rt.from) + '</span>') + '</span>' : ''),   // ⭐ mini o'yin reytingi (mgplay.js)
-        function () { sendN({ type: 'mmAgain', code: NET.code }); var b = ov.querySelector('[data-again]'); if (b) b.textContent = '⏳ ' + T('Do‘stingiz kutilmoqda…'); });
+        function () { sendN({ type: 'mmAgain', code: NET.code }); var b = ov.querySelector('[data-again]'); if (b) b.textContent = '⏳ ' + T(OPP + ' kutilmoqda…'); }, toHub);
       var rw = ov.querySelector('[data-rw]'); if (rw && m.gain && m.gain[me]) { rw.textContent = '+' + m.gain[me] + ' 🪙'; if (opts.onCoins && !NET.paid) { NET.paid = 1; try { opts.onCoins(m.gain[me]); } catch (e) {} } }
       if (m.status === 'over') NET.paid = NET.paid || 0;
     } else if (NET) NET.paid = 0;

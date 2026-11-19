@@ -6,14 +6,14 @@
 ;(function () {
   if (window.spMgHub) return;
   var G = {
-    mm: { ic: '🧠', n: 'Xotira', s: 'Juftliklarni toping', bg: '#3b82f6,#1e3a8a', ib: '#bfdbfe,#3b82f6', tcs: ['2'] },
+    mm: { ic: '🧠', n: 'Xotira', s: 'Juftliklarni toping', bg: '#3b82f6,#1e3a8a', ib: '#bfdbfe,#3b82f6', tcs: ['30', '2+2', '3+2'] },
     ug: { ic: '🏁', n: 'Ugolki', s: 'Burchakdan burchakka', bg: '#ef4444,#991b1b', ib: '#fecaca,#ef4444', tcs: ['3+2', '5+3', '10+5'] },
     gomoku: { ic: '⭕', n: 'Gomoku', s: '5 talik', bg: '#14b8a6,#115e59', ib: '#99f6e4,#14b8a6', tcs: ['1+1', '3+2', '5+3'] },
     go: { ic: '⚪', n: 'Go 9×9', s: 'Hudud uchun kurash', bg: '#f59e0b,#92400e', ib: '#fde68a,#f59e0b', tcs: ['3+2', '5+3', '10+5'] }
   };
   var ORD = ['mm', 'ug', 'gomoku', 'go'];
   var RULES = {
-    mm: ['Kartalar yopiq holda aralashtirilgan, har birining jufti bor.', 'Navbatingizda 2 ta kartani ochasiz: bir xil bo‘lsa — 1 ochko va yana yurasiz, har xil bo‘lsa — kartalar yopiladi, navbat raqibga o‘tadi.', 'Hamma juftliklar topilganda ko‘p ochko to‘plagan yutadi, teng bo‘lsa — durang.', '⚡ Butun o‘yinga 2 daqiqa beriladi.'],
+    mm: ['Kartalar yopiq holda aralashtirilgan, har birining jufti bor. Doska: 4×6 (12 juftlik) yoki 6×6 (18 juftlik).', 'Navbatingizda 2 ta kartani ochasiz: bir xil bo‘lsa — 1 ochko va yana yurasiz, har xil bo‘lsa — kartalar yopiladi, navbat raqibga o‘tadi.', 'Hamma juftliklar topilganda ko‘p ochko to‘plagan yutadi, teng bo‘lsa — durang.', '30 s — har yurishga 30 soniya. Vaqt tugasa, navbat raqibga o‘tadi.', '2+2 va 3+2 — har o‘yinchining o‘z soati: 2 yoki 3 daqiqa, har yurishdan keyin +2 soniya. Soati tugagan o‘yinchining qolgan juftliklari raqibga o‘tadi.', 'Rasmlarni har kim o‘zi tanlaydi: raqibingiz boshqa rasmlarni ko‘rishi mumkin.'],
     ug: ['Doska 8×8. Har tomonda 12 ta dona: oqlar chap yuqori, qoralar o‘ng pastki burchakda (3×4).', 'Dona 1 katak yonga, oldinga yoki orqaga yuradi (diagonal emas) yoki yonidagi dona ustidan bo‘sh katakka sakraydi — bir yurishda ketma-ket bir necha marta. Urish yo‘q.', 'Hamma 12 donani raqib burchagiga birinchi olib kirgan yutadi. Oq to‘ldirsa, qoraga bitta yurish beriladi — u ham to‘ldirsa, durang.', '40-yurishdan keyin o‘z uyida dona qolgan o‘yinchi yutqazadi. 80 yurishdan keyin manzilga ko‘proq dona kiritgan yutadi.'],
     gomoku: ['Doska 15×15. Qora boshlaydi, navbat bilan bittadan tosh qo‘yiladi.', 'Gorizontal, vertikal yoki diagonal bo‘yicha 5 ta (yoki ko‘proq) toshni qatorga birinchi tergan yutadi.', 'Doska to‘lib qolsa — durang.'],
     go: ['Doska 9×9, qora boshlaydi. Tosh chiziqlar kesishgan nuqtaga qo‘yiladi va surilmaydi.', 'Raqib toshlarini har tomondan o‘rab olsangiz (bo‘sh nuqtasi qolmasa), ular olib tashlanadi.', 'Ko qoidasi: oldingi holatni darhol takrorlab bo‘lmaydi.', 'Ikkala o‘yinchi ketma-ket «Pas» desa, hisob: toshlar + o‘ralgan hudud, oqqa 7.5 ochko (komi). Ko‘p ochko to‘plagan yutadi.']
@@ -25,9 +25,23 @@
   function send(m) { if (window.__lbSend) window.__lbSend(m); }
   function hap(t) { try { Telegram.WebApp.HapticFeedback.impactOccurred(t || 'light'); } catch (e) {} }
   function tcs(g) { return (INFO && INFO.games && INFO.games[g] && INFO.games[g].tcs) || G[g].tcs; }
-  var DEF = { mm: '2', ug: '3+2', gomoku: '3+2', go: '5+3' };   // eng ko'p o'ynaladigan vaqt — birinchi kirganda shu tanlanadi
+  var DEF = { mm: '30', ug: '3+2', gomoku: '3+2', go: '5+3' };   // eng ko'p o'ynaladigan vaqt — birinchi kirganda shu tanlanadi
   function tcOf(g) { var L = tcs(g), t = ls('mgTc_' + g); return L.indexOf(t) >= 0 ? t : L.indexOf(DEF[g]) >= 0 ? DEF[g] : L[0]; }
-  function tcTxt(g, t) { return g === 'mm' ? '⚡ 2 daq' : '⏱ ' + t; }
+  function tcTxt(g, t) { return '⏱ ' + (g === 'mm' && t === '30' ? '30 s' : t); }
+  // 🧠 Xotira: doska va rasmlar (memori.js bilan bir xil sozlama — localStorage spMemCfg2; rasmlar ro'yxati memori.js da)
+  var SZ = [{ k: '4x6', t: '4×6', p: 12 }, { k: '6x6', t: '6×6', p: 18 }];
+  var TH = [['shashka', '♟', 'Shashka'], ['animals', '🐶', 'Hayvonlar'], ['fruits', '🍐', 'Mevalar'], ['romantic', '🌹', 'Romantik'], ['letters', '🔤', 'Harflar'], ['sport', '⚽', 'Sport'],
+    ['transport', '🚗', 'Transport'], ['food', '🍔', 'Taomlar'], ['flags', '🌍', 'Bayroqlar'], ['smileys', '😀', 'Smayliklar'], ['nature', '🌳', 'Tabiat']];
+  var MMSUB = { '30': 'har yurishga', '2+2': '2 daq + 2 s', '3+2': '3 daq + 2 s' };
+  function memCfg(p) {
+    if (window.spMemCfg) return window.spMemCfg(p);
+    var c = {}; try { c = JSON.parse(localStorage.getItem('spMemCfg2') || '{}') || {}; } catch (e) {}
+    if (p) { for (var k in p) c[k] = p[k]; try { localStorage.setItem('spMemCfg2', JSON.stringify(c)); } catch (e) {} }
+    return c;
+  }
+  function szOf() { var s = memCfg().size; return s === '6x6' ? '6x6' : '4x6'; }
+  function thOf() { var t = memCfg().theme; return TH.some(function (x) { return x[0] === t; }) ? t : 'shashka'; }
+  function setTxt(g, tc, sz) { return (g === 'mm' ? String(sz || '4x6').replace('x', '×') + ' · ' : '') + tcTxt(g, tc); }
   function rt(o) { return o ? o.r + (o.p ? '<i>?</i>' : '') : '1500<i>?</i>'; }
   var COL = ['#2563eb', '#db2777', '#16a34a', '#9333ea', '#ea580c', '#0891b2', '#ca8a04', '#dc2626'];
   function av(uid, name, sz, has) {
@@ -62,6 +76,9 @@
     '.mgO .mg-hero{display:flex;align-items:center;gap:14px;padding:14px;border-radius:20px;margin-bottom:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 5px 0 rgba(0,0,0,.28),0 10px 18px rgba(0,0,0,.25)}.mgO .mg-hero .mg-ic{width:62px;height:62px;font-size:36px;border-radius:18px}' +
     '.mgO .mg-hero small{display:block;font-size:12px;opacity:.85}.mgO .mg-hero b{display:block;font-size:28px;font-weight:900;line-height:1.1}.mgO .mg-hero em{display:block;font-style:normal;font-size:12px;opacity:.9;margin-top:2px}' +
     '.mgO .mg-lb{font-size:12px;font-weight:700;color:var(--spMute,#cdbfae);margin:0 2px 8px;letter-spacing:.3px}.mgO .mg-ts{display:flex;gap:6px;margin-bottom:12px}.mgO .mg-ts span{flex:1;text-align:center;padding:10px 0;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;' + GLs + '}.mgO .mg-ts span.on{background:#3a2a05;border-color:#f59e0b;color:#ffd54a}' +
+    '.mgO .mg-ts span small{display:block;font-size:10.5px;font-weight:600;opacity:.75;margin-top:2px}.mgO .mg-ts.mm span{padding:8px 0 7px}' +
+    '.mgO .mg-th{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:14px}.mgO .mg-th span{text-align:center;padding:7px 2px 6px;border-radius:12px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;' + GLs + '}' +
+    '.mgO .mg-th span b{display:block;font-size:22px;line-height:1.2;margin-bottom:1px}.mgO .mg-th span.on{background:#3a2a05;border-color:#f59e0b;color:#ffd54a}' +
     '.mgO .mg-go{display:flex;flex-direction:column;align-items:center;padding:12px;border-radius:18px;font-size:20px;font-weight:900;cursor:pointer;background:' + GR + ';box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 5px 0 #2a6b20;margin-bottom:10px;user-select:none}.mgO .mg-go small{font-size:12px;font-weight:700;opacity:.9}.mgO .mg-go:active{transform:translateY(2px)}' +
     '.mgO .mg-go.q{background:linear-gradient(180deg,#d4a017,#a16207);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 5px 0 #6b4006}' +
     '.mgO .mg-fr{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border-radius:14px;font-size:15px;font-weight:800;margin-bottom:16px;cursor:pointer;' + GLs + '}' +
@@ -123,13 +140,19 @@
     var g = cur, M = G[g], I = INFO || {}, me = (I.me && I.me[g]) || {}, o = overlay('mgGame'), tc = tcOf(g), q = qSt && qSt.g === g;
     var h = '<div class="mg-hd"><div class="mg-bk" data-x="1">‹</div><b>' + M.ic + ' ' + M.n + '</b><span class="mg-ru" data-ru="1">📖 Qoidalar</span></div>';
     h += '<div class="mg-hero" style="background:linear-gradient(160deg,' + M.bg + ')"><div class="mg-ic" style="background:linear-gradient(145deg,' + M.ib + ')">' + M.ic + '</div><div><small>Sizning reytingingiz</small><b>' + rt(me) + '</b><em>' + (me.n ? (me.rank ? me.rank + '-o‘rin · ' : '') + me.n + ' ta o‘yin · ' + (me.w || 0) + ' g‘alaba' : 'Hali o‘ynamagansiz — 1500 dan boshlaysiz') + '</em></div></div>';
-    h += '<div class="mg-lb">⏱ VAQT</div><div class="mg-ts">' + tcs(g).map(function (t) { return '<span data-tc="' + t + '"' + (t === tc ? ' class="on"' : '') + '>' + (g === 'mm' ? '⚡ 2 daqiqa' : t) + '</span>'; }).join('') + '</div>';
-    h += q ? '<div class="mg-go q" data-go="1">⏳ Raqib qidirilmoqda… <span data-qt="1">0:00</span><small>' + tcTxt(g, qSt.tc) + ' · bekor qilish uchun bosing</small></div>'
-      : '<div class="mg-go" data-go="1">▶ O‘ynash<small>' + tcTxt(g, tc) + ' · raqib avtomatik topiladi</small></div>';
+    var sz = g === 'mm' ? szOf() : '';
+    if (g === 'mm') {   // 🧠 doska, vaqt, rasmlar
+      var th = thOf();
+      h += '<div class="mg-lb">📐 DOSKA</div><div class="mg-ts mm">' + SZ.map(function (z) { return '<span data-sz="' + z.k + '"' + (z.k === sz ? ' class="on"' : '') + '>' + z.t + '<small>' + z.p + ' juftlik</small></span>'; }).join('') + '</div>';
+      h += '<div class="mg-lb">⏱ VAQT</div><div class="mg-ts mm">' + tcs(g).map(function (t) { return '<span data-tc="' + t + '"' + (t === tc ? ' class="on"' : '') + '>' + (t === '30' ? '30 s' : t) + '<small>' + (MMSUB[t] || '') + '</small></span>'; }).join('') + '</div>';
+      h += '<div class="mg-lb">🎨 RASMLAR</div><div class="mg-th">' + TH.map(function (x) { return '<span data-th="' + x[0] + '"' + (x[0] === th ? ' class="on"' : '') + '><b>' + x[1] + '</b>' + x[2] + '</span>'; }).join('') + '</div>';
+    } else h += '<div class="mg-lb">⏱ VAQT</div><div class="mg-ts">' + tcs(g).map(function (t) { return '<span data-tc="' + t + '"' + (t === tc ? ' class="on"' : '') + '>' + t + '</span>'; }).join('') + '</div>';
+    h += q ? '<div class="mg-go q" data-go="1">⏳ Raqib qidirilmoqda… <span data-qt="1">0:00</span><small>' + setTxt(g, qSt.tc, qSt.sz) + ' · bekor qilish uchun bosing</small></div>'
+      : '<div class="mg-go" data-go="1">▶ O‘ynash<small>' + setTxt(g, tc, sz) + ' · raqib avtomatik topiladi</small></div>';
     h += '<div class="mg-fr" data-fr="1">👥 Do‘stni chaqirish · Telegram havola</div>';
     var W = I.g === g ? (I.wait || []) : [], O = I.g === g ? (I.online || []) : [];
     h += '<div class="mg-h"><span>Kutayotganlar' + (W.length ? ' <i class="mg-cnt">' + W.length + '</i>' : '') + '</span></div>';
-    h += W.length ? W.map(function (p) { return '<div class="mg-rw">' + av(p.uid, p.name, 38, p.av) + '<div class="mg-tx"><b>' + esc(p.name) + '</b><small>⭐ ' + rt(p) + ' · ' + tcTxt(g, p.tc) + '</small></div><span class="mg-jb" data-jq="' + esc(p.uid) + '">Qo‘shilish</span></div>'; }).join('')
+    h += W.length ? W.map(function (p) { return '<div class="mg-rw">' + av(p.uid, p.name, 38, p.av) + '<div class="mg-tx"><b>' + esc(p.name) + '</b><small>⭐ ' + rt(p) + ' · ' + setTxt(g, p.tc, p.sz) + '</small></div><span class="mg-jb" data-jq="' + esc(p.uid) + '">Qo‘shilish</span></div>'; }).join('')
       : '<div class="mg-em">Hozir hech kim kutmayapti. «O‘ynash»ni bosing — boshqalar sizni shu yerda ko‘radi.</div>';
     h += '<div class="mg-h" style="margin-top:12px"><span>Onlayn' + (O.length ? ' <i class="mg-cnt">' + O.length + '</i>' : '') + '</span></div>';
     h += O.length ? '<div class="mg-onl">' + O.map(function (p) { return '<div class="mg-pc"><div class="mg-aw">' + av(p.uid, p.name, 42, p.av) + '<span class="mg-dot"></span></div><b>' + esc(p.name) + '</b><small>⭐ ' + rt(p) + '</small>' + (p.busy ? '<div class="mg-bz">' + esc(p.busy) + '</div>' : '<span class="mg-ch" data-inv="' + esc(p.uid) + '" data-nm="' + esc(p.name) + '">⚔ Chaqirish</span>') + '</div>'; }).join('') + '</div>'
@@ -137,11 +160,14 @@
     o.innerHTML = h;
     o.querySelector('[data-x]').onclick = function () { o.remove(); cur = null; refresh(); };
     o.querySelector('[data-ru]').onclick = function () { rules(g); };
-    [].forEach.call(o.querySelectorAll('[data-tc]'), function (e) { e.onclick = function () { ls('mgTc_' + g, e.getAttribute('data-tc')); hap(); if (qSt && qSt.g === g) { send({ type: 'mgQueue', g: g, tc: e.getAttribute('data-tc') }); qSt.tc = e.getAttribute('data-tc'); } render(); }; });
+    var requeue = function () { if (qSt && qSt.g === g) { qSt.tc = tcOf(g); qSt.sz = g === 'mm' ? szOf() : ''; send({ type: 'mgQueue', g: g, tc: qSt.tc, sz: qSt.sz }); } };
+    [].forEach.call(o.querySelectorAll('[data-tc]'), function (e) { e.onclick = function () { ls('mgTc_' + g, e.getAttribute('data-tc')); hap(); requeue(); render(); }; });
+    [].forEach.call(o.querySelectorAll('[data-sz]'), function (e) { e.onclick = function () { memCfg({ size: e.getAttribute('data-sz') }); hap(); requeue(); render(); }; });
+    [].forEach.call(o.querySelectorAll('[data-th]'), function (e) { e.onclick = function () { memCfg({ theme: e.getAttribute('data-th') }); hap(); render(); }; });
     o.querySelector('[data-go]').onclick = function () {
       hap('medium');
       if (qSt && qSt.g === g) { send({ type: 'mgCancel' }); qSt = null; render(); return; }
-      qSt = { g: g, tc: tcOf(g), at: Date.now() }; send({ type: 'mgQueue', g: g, tc: qSt.tc }); render();
+      qSt = { g: g, tc: tcOf(g), sz: g === 'mm' ? szOf() : '', at: Date.now() }; send({ type: 'mgQueue', g: g, tc: qSt.tc, sz: qSt.sz }); render();
     };
     o.querySelector('[data-fr]').onclick = function () { friend(g); };
     [].forEach.call(o.querySelectorAll('[data-jq]'), function (e) { e.onclick = function () { hap('medium'); e.textContent = '⏳'; send({ type: 'mgJoinQ', uid: e.getAttribute('data-jq') }); }; });
@@ -181,10 +207,10 @@
 
   // ---------------- ⚔ chaqiruv
   function invite(g, uid, name) {
-    var tc = tcOf(g);
-    outV = { g: g, tc: tc, uid: uid, name: name, at: Date.now(), ms: 60000, id: '' };
+    var tc = tcOf(g), sz = g === 'mm' ? szOf() : '';
+    outV = { g: g, tc: tc, sz: sz, uid: uid, name: name, at: Date.now(), ms: 60000, id: '' };
     if (qSt) { send({ type: 'mgCancel' }); qSt = null; }
-    send({ type: 'mgInvite', g: g, tc: tc, to: uid });
+    send({ type: 'mgInvite', g: g, tc: tc, sz: sz, to: uid });
     outBox();
   }
   function outBox(state) {
@@ -193,7 +219,7 @@
     var M = G[v.g], left = Math.max(0, v.ms - (Date.now() - v.at));
     var top = state === 'declined' ? '😔 ' + esc(v.name) + ' rad etdi' : state === 'timeout' ? '⌛ ' + esc(v.name) + ' javob bermadi' : state === 'err' ? '⚠️ O‘yinni ochib bo‘lmadi' : '⏳ ' + esc(v.name) + ' javobini kutyapmiz…';
     o.innerHTML = '<div class="mg-md"><div class="mg-k">⚔ CHAQIRUV YUBORILDI</div><div class="mg-who">' + av(v.uid, v.name, 64, 1) + '<b>' + esc(v.name) + '</b><small>' + top + '</small></div>' +
-      '<span class="mg-gp" style="background:linear-gradient(160deg,' + M.bg + ')">' + M.ic + ' ' + M.n + ' <em>' + tcTxt(v.g, v.tc) + '</em></span>' +
+      '<span class="mg-gp" style="background:linear-gradient(160deg,' + M.bg + ')">' + M.ic + ' ' + M.n + ' <em>' + setTxt(v.g, v.tc, v.sz) + '</em></span>' +
       (state ? '' : '<div class="mg-bar"><i style="width:' + (left / v.ms * 100) + '%"></i></div><div class="mg-tm">' + Math.ceil(left / 1000) + ' soniya · taklif Telegramga ham yuborildi</div>') +
       '<div class="mg-bb">' + (state ? '<span class="n" data-c="1">Yopish</span>' : '<span class="n" data-cx="1">Bekor qilish</span>') + '</div></div>';
     var c = o.querySelector('[data-c]'); if (c) c.onclick = function () { o.remove(); outV = null; };
@@ -207,7 +233,7 @@
     var left = Math.max(0, (m.ms || 60000) - (Date.now() - inV[m.id].at)); if (!left) { o.remove(); delete inV[m.id]; return; }
     var f = m.from || {};
     o.innerHTML = '<div class="mg-md"><div class="mg-k">⚔ SIZNI O‘YINGA CHAQIRISHDI</div><div class="mg-who">' + av(f.uid, f.name, 64, 1) + '<b>' + esc(f.name) + '</b><small>⭐ ' + f.r + (f.p ? '?' : '') + ' · ' + M.n + '</small></div>' +
-      '<span class="mg-gp" style="background:linear-gradient(160deg,' + M.bg + ')">' + M.ic + ' ' + M.n + ' <em>' + tcTxt(m.g, m.tc) + '</em></span>' +
+      '<span class="mg-gp" style="background:linear-gradient(160deg,' + M.bg + ')">' + M.ic + ' ' + M.n + ' <em>' + setTxt(m.g, m.tc, m.sz) + '</em></span>' +
       '<div class="mg-bar"><i style="width:' + (left / (m.ms || 60000) * 100) + '%"></i></div><div class="mg-tm">' + Math.ceil(left / 1000) + ' soniya qoldi</div>' +
       '<div class="mg-bb"><span class="n" data-no="1">Rad etish</span><span class="y" data-ok="1">✓ Qabul qilish</span></div></div>';
     o.querySelector('[data-no]').onclick = function () { send({ type: 'mgDecline', id: m.id }); o.remove(); delete inV[m.id]; };
@@ -220,14 +246,14 @@
     if (!m || !m.type) return;
     if (m.type === 'mgInfo') {
       INFO = m;
-      if (m.q && !qSt) qSt = { g: m.q.g, tc: m.q.tc, at: m.q.at };
+      if (m.q && !qSt) qSt = { g: m.q.g, tc: m.q.tc, sz: m.q.sz, at: m.q.at };
       if (!m.q && qSt && Date.now() - qSt.at > 3000) qSt = null;
       if (el('mgHub')) hub();
       if (el('mgGame') && cur) render();
       return;
     }
     if (m.type === 'mgTop') return topFill(m);
-    if (m.type === 'mgQueued') { qSt = qSt && qSt.g === m.g ? qSt : { g: m.g, tc: m.tc, at: Date.now() }; qSt.tc = m.tc; if (el('mgGame')) render(); return; }
+    if (m.type === 'mgQueued') { qSt = qSt && qSt.g === m.g ? qSt : { g: m.g, tc: m.tc, at: Date.now() }; qSt.tc = m.tc; qSt.sz = m.sz; if (el('mgGame')) render(); return; }
     if (m.type === 'mgQueueEnd') { qSt = null; if (el('mgGame')) render(); if (m.why === 'timeout') toast('⌛ Raqib topilmadi — qayta urinib ko‘ring yoki onlayn o‘yinchini chaqiring'); return; }
     if (m.type === 'mgGo') {
       qSt = null; outV = null; var oo = el('mgOut'); if (oo) oo.remove();
