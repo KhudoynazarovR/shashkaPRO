@@ -6,14 +6,14 @@
 ;(function () {
   if (window.spMgHub) return;
   var G = {
-    mm: { ic: '🧠', n: 'Xotira', s: 'Juftliklarni toping', bg: '#3b82f6,#1e3a8a', ib: '#bfdbfe,#3b82f6', tcs: ['30', '2+2', '3+2'] },
+    mm: { ic: '🧠', n: 'Xotira', s: 'Juftliklarni toping', bg: '#3b82f6,#1e3a8a', ib: '#bfdbfe,#3b82f6', tcs: ['30', '2+2', '3+2', '5+3'] },
     ug: { ic: '🏁', n: 'Ugolki', s: 'Burchakdan burchakka', bg: '#ef4444,#991b1b', ib: '#fecaca,#ef4444', tcs: ['3+2', '5+3', '10+5'] },
     gomoku: { ic: '⭕', n: 'Gomoku', s: '5 talik', bg: '#14b8a6,#115e59', ib: '#99f6e4,#14b8a6', tcs: ['1+1', '3+2', '5+3'] },
     go: { ic: '⚪', n: 'Go 9×9', s: 'Hudud uchun kurash', bg: '#f59e0b,#92400e', ib: '#fde68a,#f59e0b', tcs: ['3+2', '5+3', '10+5'] }
   };
   var ORD = ['mm', 'ug', 'gomoku', 'go'];
   var RULES = {
-    mm: ['Kartalar yopiq holda aralashtirilgan, har birining jufti bor. Doska: 4×6 (12 juftlik) yoki 6×6 (18 juftlik).', 'Navbatingizda 2 ta kartani ochasiz: bir xil bo‘lsa — 1 ochko va yana yurasiz, har xil bo‘lsa — kartalar yopiladi, navbat raqibga o‘tadi.', 'Hamma juftliklar topilganda ko‘p ochko to‘plagan yutadi, teng bo‘lsa — durang.', '30 s — har yurishga 30 soniya. Vaqt tugasa, navbat raqibga o‘tadi.', '2+2 va 3+2 — har o‘yinchining o‘z soati: 2 yoki 3 daqiqa, har yurishdan keyin +2 soniya. Soati tugagan o‘yinchining qolgan juftliklari raqibga o‘tadi.', 'Rasmlarni har kim o‘zi tanlaydi: raqibingiz boshqa rasmlarni ko‘rishi mumkin.'],
+    mm: ['Kartalar yopiq holda aralashtirilgan, har birining jufti bor. Doska: 4×6 (12 juftlik) yoki 6×6 (18 juftlik).', 'Navbatingizda 2 ta kartani ochasiz: bir xil bo‘lsa — 1 ochko va yana yurasiz, har xil bo‘lsa — kartalar yopiladi, navbat raqibga o‘tadi.', 'Hamma juftliklar topilganda ko‘p ochko to‘plagan yutadi, teng bo‘lsa — durang.', '30 s — har yurishga 30 soniya. Vaqt tugasa, navbat raqibga o‘tadi.', '2+2, 3+2 va 5+3 — har o‘yinchining o‘z soati: 2, 3 yoki 5 daqiqa, har yurishdan keyin +2 soniya (5+3 da +3). Soati tugagan o‘yinchining qolgan juftliklari raqibga o‘tadi.', 'Rasmlarni har kim o‘zi tanlaydi: raqibingiz boshqa rasmlarni ko‘rishi mumkin.'],
     ug: ['Doska 8×8. Har tomonda 12 ta dona: oqlar chap yuqori, qoralar o‘ng pastki burchakda (3×4).', 'Dona 1 katak yonga, oldinga yoki orqaga yuradi (diagonal emas) yoki yonidagi dona ustidan bo‘sh katakka sakraydi — bir yurishda ketma-ket bir necha marta. Urish yo‘q.', 'Hamma 12 donani raqib burchagiga birinchi olib kirgan yutadi. Oq to‘ldirsa, qoraga bitta yurish beriladi — u ham to‘ldirsa, durang.', '40-yurishdan keyin o‘z uyida dona qolgan o‘yinchi yutqazadi. 80 yurishdan keyin manzilga ko‘proq dona kiritgan yutadi.'],
     gomoku: ['Doska 15×15. Qora boshlaydi, navbat bilan bittadan tosh qo‘yiladi.', 'Gorizontal, vertikal yoki diagonal bo‘yicha 5 ta (yoki ko‘proq) toshni qatorga birinchi tergan yutadi.', 'Doska to‘lib qolsa — durang.'],
     go: ['Doska 9×9, qora boshlaydi. Tosh chiziqlar kesishgan nuqtaga qo‘yiladi va surilmaydi.', 'Raqib toshlarini har tomondan o‘rab olsangiz (bo‘sh nuqtasi qolmasa), ular olib tashlanadi.', 'Ko qoidasi: oldingi holatni darhol takrorlab bo‘lmaydi.', 'Ikkala o‘yinchi ketma-ket «Pas» desa, hisob: toshlar + o‘ralgan hudud, oqqa 7.5 ochko (komi). Ko‘p ochko to‘plagan yutadi.']
@@ -32,7 +32,7 @@
   var SZ = [{ k: '4x6', t: '4×6', p: 12 }, { k: '6x6', t: '6×6', p: 18 }];
   var TH = [['shashka', '♟', 'Shashka'], ['animals', '🐶', 'Hayvonlar'], ['fruits', '🍐', 'Mevalar'], ['romantic', '🌹', 'Romantik'], ['letters', '🔤', 'Harflar'], ['sport', '⚽', 'Sport'],
     ['transport', '🚗', 'Transport'], ['food', '🍔', 'Taomlar'], ['flags', '🌍', 'Bayroqlar'], ['smileys', '😀', 'Smayliklar'], ['nature', '🌳', 'Tabiat']];
-  var MMSUB = { '30': 'har yurishga', '2+2': '2 daq + 2 s', '3+2': '3 daq + 2 s' };
+  var MMSUB = { '30': 'har yurishga', '2+2': '2 daq + 2 s', '3+2': '3 daq + 2 s', '5+3': '5 daq + 3 s' };
   function memCfg(p) {
     if (window.spMemCfg) return window.spMemCfg(p);
     var c = {}; try { c = JSON.parse(localStorage.getItem('spMemCfg2') || '{}') || {}; } catch (e) {}

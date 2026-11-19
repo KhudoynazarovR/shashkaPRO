@@ -7,7 +7,7 @@ const C = require('./memcore.js');
 const SIZES = { '4x6': [4, 6], '6x6': [6, 6] };
 const REW = { '4x6': 3, '6x6': 5 };
 const TCS = [0, 10, 20, 30, -120];   // >0 — har yurishga soniya, 0 — vaqtsiz, -120 — ⚡ tezkor: butun o'yinga 2 daqiqa
-const FC = { '2+2': { b: 120e3, i: 2e3 }, '3+2': { b: 180e3, i: 2e3 } };   // ⏱ har o'yinchining o'z soati: b — boshida, i — har yurishdan (2-karta) keyin qo'shiladi
+const FC = { '2+2': { b: 120e3, i: 2e3 }, '3+2': { b: 180e3, i: 2e3 }, '5+3': { b: 300e3, i: 3e3 } };   // ⏱ har o'yinchining o'z soati: b — boshida, i — har yurishdan (2-karta) keyin qo'shiladi
 function normTc(v) { if (typeof v === 'string' && FC[v]) return v; const n = +v; return TCS.includes(n) ? n : 0; }
 const IDX = Array.from({ length: 18 }, (_, i) => String(i));   // 🎨 mini o'yinlar markazi xonasi: kartada juftlik raqami, rasmni har o'yinchi o'zi tanlaydi
 const rooms = new Map();       // code -> room
@@ -32,6 +32,22 @@ function setSyms(p, arr) {
   p.symK = k; p.syms = v; p.map = null;
 }
 function mapOf(p) { if (!p) return ANIMALS; if (!p.map) p.map = C.shuffle((p.syms || ANIMALS).slice(), R).slice(0, IDX.length); return p.map; }
+// ⚙️ o'yin boshlanmagan bo'lsa, stolga birinchi kirgan tanlaydi: doska, vaqt, rasmlar. 'edit' — o'tirgan va ilovada, raqib hali yo'q;
+// 'sit' — guruh kartasi, chaqiruvchi ilovada emas: tomoshabin tanlab «Qo'shilish»ni bosadi
+function cfgMode(r, pi) {
+  if (r.status !== 'wait' || r.pt || r.onEnd || r.gt) return null;
+  if (pi >= 0) { const P = r.p[pi], O = r.p[1 - pi]; return P && P.ws && !(O && O.ws) ? 'edit' : null; }
+  return r.inline && r.p.length === 1 && !r.p[0].ws ? 'sit' : null;
+}
+function applyCfg(r, m) {
+  if (SIZES[m.size]) r.size = m.size;
+  if (m.tc != null) r.tc = normTc(m.tc);
+  if (Array.isArray(m.symbols)) {
+    const v = [...new Set(m.symbols.filter(s => typeof s === 'string' && s.length > 0 && s.length <= 12))].slice(0, 40);
+    if (v.length >= IDX.length) { r.symbols = v; r.theme = String(m.theme || '').slice(0, 20); }
+  }
+  if (r.inline) remember(r.code, { size: r.size, tc: r.tc, theme: r.theme });
+}
 function clkNow(r) { const c = r.clk.slice(); if (r.run && r.S) c[r.S.turn] = Math.max(0, c[r.S.turn] - (Date.now() - r.run)); return c; }
 function view(r, uid) {
   const S = r.S, cards = [];
@@ -41,6 +57,7 @@ function view(r, uid) {
   return {
     type: 'mmState', code: r.code, size: r.size, theme: r.theme, tc: r.tc, rules: r.rules, cards,
     fc: !!r.fc, clk: r.fc && r.clk ? clkNow(r) : null, run: !!(r.fc && r.run), hold: !!r.hold, flag: r.flag != null ? r.flag : null, ns: !!r.ns, mg: !!r.pt, chat: r.chat || [],
+    cfg: cfgMode(r, pi), dro: r.dro != null ? r.dro : null, agreed: !!r.agreed, qwhy: r.qwhy || null,   // ⚙️ sozlash · 🤝 durang taklifi · 🏳 taslim
     players: r.p.map((x, j) => ({ uid: x.uid, name: x.name, sc: S ? S.sc[j] : 0, on: !!x.ws })), me: r.p.findIndex(x => x.uid === uid),
     turn: S ? S.turn : 0, left: r.tc > 0 && r.deadline ? Math.max(0, r.deadline - now) : 0, blitz: r.tc < 0 && r.blitzEnd ? Math.max(0, r.blitzEnd - now) : 0,
     canSit: !!(r.inline && r.p.length === 1 && r.status === 'wait'), host: r.p[0] ? r.p[0].name : '', pinged: !!r.pinged,
@@ -97,8 +114,9 @@ function finish(r, quit) {
   if (r.inline) forget(r.code);
   if (r.fc && r.run && r.S && r.clk) r.clk[r.S.turn] = Math.max(0, r.clk[r.S.turn] - (Date.now() - r.run));
   clearTimeout(r.ftmr); r.run = 0; r.hold = false;
-  r.status = 'over'; clearTimeout(r.tmr); clearTimeout(r.btmr);
-  r.winner = quit != null ? 1 - quit : C.winner(r.S); r.quit = quit != null ? quit : null;
+  r.status = 'over'; clearTimeout(r.tmr); clearTimeout(r.btmr); r.dro = null;
+  r.winner = quit != null ? 1 - quit : r.agreed ? -1 : C.winner(r.S); r.quit = quit != null ? quit : null;
+  if (quit != null && !r.qwhy) r.qwhy = 'left';
   r.gain = [0, 0];
   if (r.winner >= 0) {
     try {
@@ -121,7 +139,7 @@ function deal(r) {
   clearTimeout(r.stmr); r.pinged = 0;
   const [w, h] = SIZES[r.size];
   r.S = C.newGame({ pairs: w * h / 2, symbols: r.symbols, rules: r.rules, rnd: R });
-  r.busy = false; r.status = 'play'; r.winner = null; r.gain = null; r.quit = null; r.rt = null; r.flag = null; r.ns = 0;
+  r.busy = false; r.status = 'play'; r.winner = null; r.gain = null; r.quit = null; r.rt = null; r.flag = null; r.ns = 0; r.dro = null; r.agreed = 0; r.qwhy = null;
   if (r.pt) r.p.forEach(x => { x.map = null; });   // 🎨 har o'yinda rasmlar yangidan tanlanadi
   clearTimeout(r.btmr); r.blitzEnd = 0;
   if (r.tc < 0) { r.blitzEnd = Date.now() + (-r.tc) * 1000; r.btmr = setTimeout(() => { if (r.status === 'play') finish(r); }, -r.tc * 1000 + 200); }
@@ -195,6 +213,7 @@ function handle(c, m, clients) {
   if (m.type === 'mmSit') {   // guruh kartasi: tomoshabin raqib bo'ladi
     const u = who(m); if (!u || !r.inline || r.p.length !== 1 || r.status !== 'wait' || r.p[0].uid === u.uid) return true;
     if (r.watch) r.watch.delete(c.id); watching.delete(c.id);
+    if (!r.p[0].ws) applyCfg(r, m);   // ⚙️ chaqiruvchi ilovada emas — stolga birinchi o'tirgan tanlaydi
     r.p.push({ uid: u.uid, name: u.name, ws: c.ws, cid: c.id, offAt: 0 }); byConn.set(c.id, r.code);
     if (r.p[0].ws) deal(r); else pingHost(r, u.name);   // yuboruvchi ilovada emas — botdan xabar, 3 daqiqa kutiladi
     push(r);
@@ -223,9 +242,18 @@ function handle(c, m, clients) {
     r.p.forEach(x => send(x.ws, o)); if (r.watch) for (const [, ws] of r.watch) send(ws, o);
     return true;
   }
+  if (m.type === 'mmCfg') { if (cfgMode(r, me) === 'edit') { applyCfg(r, m); push(r); } return true; }   // ⚙️ doska, vaqt, rasmlar
+  if (m.type === 'mmResign') { if (r.status === 'play' && !r.hold) { r.qwhy = 'resign'; finish(r, me); } return true; }   // 🏳 taslim
+  if (m.type === 'mmDraw') {   // 🤝 durang: taklif; raqib ham bossa — kelishilgan durang
+    if (r.status !== 'play' || r.hold || r.dro === me) return true;
+    if (r.dro === 1 - me) { r.agreed = 1; r.dro = null; finish(r); return true; }
+    r.dro = me; push(r); return true;
+  }
+  if (m.type === 'mmDrawNo') { if (r.dro === 1 - me) { r.dro = null; push(r); } return true; }
   if (m.type === 'mmFlip') {
     const S = r.S;
     if (r.status !== 'play' || !S || S.turn !== me || r.busy || r.hold) return true;
+    if (r.dro === 1 - me) r.dro = null;   // taklifga javob bermay yurdi — rad
     if (r.fc && r.run && r.clk[me] - (Date.now() - r.run) <= 0) { r.clk[me] = 0; r.run = 0; clearTimeout(r.ftmr); flag(r, me); return true; }   // ⏰ ulgurmadi
     const res = C.flip(S, Math.floor(+m.i));
     if (!res) return true;

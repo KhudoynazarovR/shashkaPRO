@@ -52,12 +52,14 @@
   }
   var SIZES = [{ k: '4x6', w: 4, h: 6, t: '4×6', p: 12, r: 3 }, { k: '6x6', w: 6, h: 6, t: '6×6', p: 18, r: 5 }];
   var LV = [{ k: 0, t: '😊 Oson', mem: 0.35 }, { k: 1, t: '😐 O‘rta', mem: 0.65 }, { k: 2, t: '🔥 Qiyin', mem: 0.92 }];
-  var TCS = [{ k: 0, t: '∞ Vaqtsiz' }, { k: 10, t: '⏱ 10 s' }, { k: 20, t: '⏱ 20 s' }, { k: -120, t: '⚡ 2 daqiqa' }];
+  var TCS = [{ k: 30, t: '30 s', s: 'har yurishga' }, { k: '2+2', t: '2+2', s: '2 daq + 2 s' }, { k: '3+2', t: '3+2', s: '3 daq + 2 s' }, { k: '5+3', t: '5+3', s: '5 daq + 3 s' }];
+  var FC = { '2+2': { b: 120e3, i: 2e3 }, '3+2': { b: 180e3, i: 2e3 }, '5+3': { b: 300e3, i: 3e3 } };   // ⏱ har o'yinchining o'z soati: b — boshida, i — har yurishdan keyin
   var RULES = [{ k: 'streak', t: '🔥 Seriya bonusi', d: '3 ta juftlik ketma-ket topilsa +1' }, { k: 'shuffle', t: '🔀 Aralashtirish', d: 'Har 5 ta xatodan keyin 2 karta joy almashadi' }, { k: 'black', t: '💀 Qora karta', d: 'Uni topgan raqibdan 1 ochko oladi' }];
-  var CFG = { size: '4x6', theme: 'shashka', mode: 'bot', lv: 1, tc: 0, rules: {} };
+  var CFG = { size: '4x6', theme: 'shashka', mode: 'bot', lv: 1, tc: 30, rules: {} };
   try { var sv = JSON.parse(localStorage.getItem('spMemCfg2') || 'null'); if (sv) for (var k in CFG) if (sv[k] !== undefined) CFG[k] = sv[k]; } catch (e) {}
   if (!SIZES.some(function (z) { return z.k === CFG.size; })) CFG.size = '4x6';
   if (!THEMES[CFG.theme]) CFG.theme = 'shashka';
+  if (!TCS.some(function (t) { return t.k === CFG.tc; })) CFG.tc = 30;   // eski tanlovlar (∞, 10 s, 20 s, ⚡ 2 daqiqa) — 30 s ga
   if (!CFG.rules || typeof CFG.rules !== 'object') CFG.rules = {};
   function saveCfg() { try { localStorage.setItem('spMemCfg2', JSON.stringify(CFG)); } catch (e) {} }
   // 🎮 mini o'yinlar markazi (mghub.js) shu sozlamalarni ishlatadi: doska va rasmlar
@@ -93,13 +95,21 @@
       '#spMem .code{font:900 34px system-ui;letter-spacing:6px;text-align:center;margin:8px 0;color:#ffd54f}' +
       // ⏱ 2+2 / 3+2 soatlari va 💬 chat tugmasi (gchat.js) — Xotira oynasi ustida, yuqori o'ngda
       '#spMem .ck{display:flex;justify-content:space-between;gap:8px;margin:-4px 0 10px}#spMem .ck span{min-width:86px;text-align:center;padding:5px 10px;border-radius:10px;background:#ffffff14;font:800 18px system-ui;font-variant-numeric:tabular-nums}#spMem .ck span.on{background:#ffd54f;color:#1a1a1a}#spMem .ck span.lo{background:#e0533d;color:#fff}' +
-      '#gcB{z-index:2147482650!important;top:calc(env(safe-area-inset-top,0px) + 10px)!important;bottom:auto!important;right:12px!important;width:40px!important;height:40px!important;font-size:19px!important;border-radius:12px!important;box-shadow:0 4px 10px rgba(0,0,0,.4)!important}#gcX{z-index:2147482660!important}';
+      '#gcB{display:none!important}#gcX{z-index:2147482660!important}' +
+      // ⬇️ pastki tugmalar (shashka xonasidagidek): Chat, Taslim, Durang; durang taklifi — ular ustida
+      '#mmBar{position:fixed;left:0;right:0;bottom:0;z-index:2147482620;display:none;justify-content:space-around;align-items:flex-start;padding:8px 6px calc(env(safe-area-inset-bottom,0px) + 8px);background:#0b1631;box-shadow:0 -6px 18px rgba(0,0,0,.35)}' +
+      '#mmBar button{all:unset;flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;color:#cfd8ee;font:600 12.5px system-ui,sans-serif;position:relative;-webkit-tap-highlight-color:transparent}' +
+      '#mmBar button i{width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:#fff}#mmBar button i svg{width:26px;height:26px;stroke-width:2.4}' +
+      '#mmBar [data-bb=chat] i{background:linear-gradient(135deg,#6f86f2,#7b52d6);box-shadow:0 5px 12px rgba(111,100,230,.4)}#mmBar [data-bb=res] i,#mmBar [data-bb=draw] i{background:linear-gradient(180deg,#ffa726,#fb8c00);box-shadow:0 5px 12px rgba(251,140,0,.38)}' +
+      '#mmBar button.off{opacity:.38}#mmBar .bd{position:absolute;top:-4px;left:calc(50% + 14px);min-width:18px;height:18px;border-radius:9px;background:#e04a3a;color:#fff;font:700 11px/18px system-ui,sans-serif;text-align:center;padding:0 4px;box-sizing:border-box}#mmBar .bd[hidden]{display:none}' +
+      '#mmDraw{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 90px);z-index:2147482630;width:min(94vw,520px);box-sizing:border-box;display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:#1f2d55;color:#fff;font:600 14px system-ui,sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.45)}' +
+      '#mmDraw span{flex:1;line-height:1.35}#mmDraw button{border:0;border-radius:10px;padding:9px 12px;font:700 14px system-ui,sans-serif;color:#fff;background:#3fa34d}#mmDraw [data-n]{background:#5b2330}';
     document.head.appendChild(s);
   }
   function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
 
   var ov = null, opts = {}, G = {}, WS = null, NET = null;
-  function stopAll() { G.over = true; if (G.tm) clearInterval(G.tm); if (G.tt) clearTimeout(G.tt); if (G.bt) clearInterval(G.bt); }
+  function stopAll() { G.over = true; if (G.tm) clearInterval(G.tm); if (G.tt) clearTimeout(G.tt); if (G.bt) clearInterval(G.bt); if (G.ft) clearInterval(G.ft); }
   function close() { stopAll(); netLeave(); if (ov) ov.remove(); ov = null; }
   function shell() { css(); if (!document.getElementById('spMemTidy')) { var _s = document.createElement('style'); _s.id = 'spMemTidy'; _s.textContent = "#spMem .top{margin-bottom:6px!important}#spMem .top h2{font-size:20px!important}#spMem .bk{width:38px!important;height:38px!important;font-size:18px!important}#spMem .sum{padding:6px 10px!important;font-size:12px!important}#spMem .go{padding:10px 6px!important;font-size:14px!important;min-height:0!important;border-radius:12px!important}#spMem .cd{padding:8px 10px!important}#spMem .lb{font-size:13px!important;margin:8px 0 4px!important}#spMem [data-pl]{min-height:44vh!important;padding:6px 10px!important}#spMem [data-live]{min-height:0!important}#spMem [data-sh]{padding:9px!important;font-size:13px!important}"; document.head.appendChild(_s); } if (!ov) { ov = document.createElement('div'); ov.id = 'spMem'; document.body.appendChild(ov); } }
 
@@ -118,7 +128,7 @@
       h += '</div><div class="lb">🤖 ' + T('Bot xotirasi') + '</div><div class="row">';
       LV.forEach(function (l) { h += '<button class="op' + (CFG.lv === l.k ? ' on' : '') + '" data-l="' + l.k + '">' + T(l.t) + '</button>'; });
       h += '</div><div class="lb">⏱ ' + T('Vaqt') + '</div><div class="row">';
-      TCS.forEach(function (t) { h += '<button class="op' + (CFG.tc === t.k ? ' on' : '') + '" data-t="' + t.k + '">' + T(t.t) + '</button>'; });
+      TCS.forEach(function (t) { h += '<button class="op' + (CFG.tc === t.k ? ' on' : '') + '" data-t="' + t.k + '">' + T(t.t) + '<small>' + T(t.s) + '</small></button>'; });
       h += '</div><div class="lb">🎨 ' + T('Rasmlar') + '</div><select data-th>';
       for (var k in THEMES) h += '<option value="' + k + '"' + (CFG.theme === k ? ' selected' : '') + '>' + THEMES[k].ic + '  ' + T(THEMES[k].t) + '</option>';
       h += '</select></div>';
@@ -139,7 +149,7 @@
     if (q('[data-th]')) q('[data-th]').onchange = function () { CFG.theme = this.value; saveCfg(); menu(); };
     [].forEach.call(ov.querySelectorAll('[data-s]'), function (b) { b.onclick = function () { CFG.size = b.getAttribute('data-s'); saveCfg(); menu(); }; });
     [].forEach.call(ov.querySelectorAll('[data-l]'), function (b) { b.onclick = function () { CFG.lv = +b.getAttribute('data-l'); saveCfg(); menu(); }; });
-    [].forEach.call(ov.querySelectorAll('[data-t]'), function (b) { b.onclick = function () { CFG.tc = +b.getAttribute('data-t'); saveCfg(); menu(); }; });
+    [].forEach.call(ov.querySelectorAll('[data-t]'), function (b) { b.onclick = function () { var v = b.getAttribute('data-t'); CFG.tc = FC[v] ? v : +v; saveCfg(); menu(); }; });
     [].forEach.call(ov.querySelectorAll('[data-rule]'), function (b) { b.onclick = function () { var k = b.getAttribute('data-rule'); CFG.rules[k] = !CFG.rules[k]; saveCfg(); menu(); }; });
     q('[data-tour]').onclick = function () { stopPoll(); tourMenu(); };
     q('[data-bot]').onclick = function () { stopPoll(); startBot(); };
@@ -203,6 +213,7 @@
   function startBot() {
     var z = sizeOf(CFG.size);
     G = { z: z, S: MemCore.newGame({ pairs: z.p, symbols: symbols(CFG.theme), rules: CFG.rules }), mv: 0, busy: false, mem: {}, over: false, lv: CFG.lv, tc: CFG.tc, t0: Date.now() };
+    G.fc = FC[G.tc] || null; G.run = 0; G.flag = null; if (G.fc) G.clk = [G.fc.b, G.fc.b];
     if (G.tc < 0) { G.bEnd = Date.now() + (-G.tc) * 1000; G.bt = setInterval(function () { var left = G.bEnd - Date.now(), e = ov && ov.querySelector('[data-blz]'); if (e) e.textContent = '⚡ ' + Math.max(0, Math.ceil(left / 1000)) + ' s'; if (left <= 0) { clearInterval(G.bt); if (!G.over) { G.S.over = true; check(true); } } }, 250); }
     drawBot();
   }
@@ -211,7 +222,8 @@
     var z = G.z;
     var h = '<div class="top"><button class="bk" data-x>‹</button><h2>' + T('Xotira') + ' · ' + z.t + '</h2><button class="bk" data-r style="font-size:20px">↻</button></div>' +
       '<div class="hud"><span data-pme>🧑 ' + T('Siz') + ': <b data-sme>0</b></span><span data-st></span><span data-pbot>🤖 ' + T('Bot') + ': <b data-sbot>0</b></span></div>' +
-      (G.tc < 0 ? '<div style="text-align:center;font-weight:800;margin:-4px 0 8px" data-blz>⚡ ' + (-G.tc) + ' s</div>' : timerBar(1, G.tc > 0 ? G.tc : 0)) +
+      (G.fc ? '<div class="ck"><span data-ck="0">' + fmtC(G.clk[0]) + '</span><span data-ck="1">' + fmtC(G.clk[1]) + '</span></div>'   // ⏱ chapda — siz, o'ngda — bot
+        : G.tc < 0 ? '<div style="text-align:center;font-weight:800;margin:-4px 0 8px" data-blz>⚡ ' + (-G.tc) + ' s</div>' : timerBar(1, G.tc > 0 ? G.tc : 0)) +
       boardHtml(z, cardsOf(G.S, 0)) + '<div class="msg" data-msg></div>';
     ov.innerHTML = h;
     ov.querySelector('[data-x]').onclick = menu;
@@ -231,8 +243,32 @@
   function redraw() {   // aralashtirishdan keyin kartalar mazmuni yangilanadi
     var S = G.S; for (var i = 0; i < S.deck.length; i++) { var e = el(i); if (e) { e.querySelector('u').textContent = S.deck[i]; e.className = 'c' + (S.done[i] ? ' up ok' + (S.done[i] === 2 ? ' bt' : '') : S.up.indexOf(i) >= 0 ? ' up' : ''); e.setAttribute('data-i', i); } }
   }
+  // ⏱ 2+2 / 3+2 / 5+3 (bot bilan): navbatdagi tomonning soati yuradi, har yurishdan keyin +i soniya; soati tugasa qolgan juftliklar raqibga o'tadi
+  function fShow() {
+    [0, 1].forEach(function (k) {
+      var e = ov && ov.querySelector('[data-ck="' + k + '"]'); if (!e) return;
+      var on = !!G.run && G.S.turn === k, left = G.clk[k] - (on ? Date.now() - G.run : 0);
+      e.textContent = fmtC(left); e.className = (on ? 'on' : '') + (left < 10000 ? ' lo' : '');
+    });
+  }
+  function fStart() {
+    if (G.ft) clearInterval(G.ft); G.run = Date.now(); fShow();
+    G.ft = setInterval(function () {
+      if (G.over || !G.run) return clearInterval(G.ft);
+      var t = G.S.turn, left = G.clk[t] - (Date.now() - G.run);
+      fShow();
+      if (left <= 0 && !G.busy) { clearInterval(G.ft); G.clk[t] = 0; G.run = 0; fShow(); fFlag(t); }
+    }, 200);
+  }
+  function fStop() { if (!G.fc || !G.run) return; var t = G.S.turn; G.clk[t] = Math.max(0, G.clk[t] - (Date.now() - G.run)) + G.fc.i; G.run = 0; if (G.ft) clearInterval(G.ft); fShow(); }
+  function fFlag(t) {
+    var S = G.S, o = 1 - t, n = 0; S.up = [];
+    for (var i = 0; i < S.deck.length; i++) if (!S.done[i]) { S.done[i] = o + 1; n++; }
+    S.sc[o] += n / 2; S.over = true; G.flag = t; redraw(); evShow(evText('flag', t === 0)); check(true);
+  }
   function turnStart() {
     if (G.tm) clearInterval(G.tm); if (G.over) return;
+    if (G.fc) fStart();
     if (G.S.turn === 1) { setTimeout(botTurn, 650); return; }
     if (!(G.tc > 0)) return;
     var end = Date.now() + G.tc * 1000;
@@ -251,6 +287,7 @@
     var S = G.S, who = S.turn, pre = S.up.slice(), r = MemCore.flip(S, i);
     if (!r) return false;
     var e = el(i); if (e) e.classList.add('up'); hap(); snd('flip'); remember(i);
+    if (r.match === true || r.match === false) fStop();   // yurish tugadi — soat to'xtaydi (+i soniya)
     if (r.match === true) {
       G.mv++; G.busy = true;
       var a = pre[0], b = i;
@@ -292,7 +329,8 @@
     stopAll(); if (G.bt) clearInterval(G.bt); G.over = true; hud();
     var w = MemCore.winner(G.S), win = w === 0, draw = w === -1;
     setTimeout(function () {
-      endCard(win ? '🏆' : draw ? '🤝' : '🤖', (force ? '⚡ ' + T('Vaqt tugadi!') + '<br>' : '') + (win ? T('Siz yutdingiz!') : draw ? T('Durang!') : T('Bot yutdi')), G.S.sc[0] + ' : ' + G.S.sc[1], function () { stopAll(); startBot(); });
+      endCard(win ? '🏆' : draw ? '🤝' : '🤖', (G.flag == null && force ? '⚡ ' + T('Vaqt tugadi!') + '<br>' : '') + (win ? T('Siz yutdingiz!') : draw ? T('Durang!') : T('Bot yutdi')), G.S.sc[0] + ' : ' + G.S.sc[1] +
+        (G.flag != null ? '<br><small>⏰ ' + T(G.flag === 0 ? 'Vaqtingiz tugadi — qolgan juftliklar botga o‘tdi' : 'Botning vaqti tugadi — qolgan juftliklar sizga o‘tdi') + '</small>' : ''), function () { stopAll(); startBot(); });
       api('/api/memori/done', { n: G.z.k, mode: 'bot', lv: G.lv, mv: Math.max(G.mv, G.z.p), ms: Date.now() - G.t0, win: win, me: G.S.sc[0], bot: G.S.sc[1] }).then(function (d) {
         var rw = ov && ov.querySelector('[data-rw]'); if (!d || !rw) return;
         var t = []; if (d.gain) t.push('+' + d.gain + ' 🪙'); if (d.capped) t.push(T('Bugungi tanga limiti tugadi'));
@@ -434,10 +472,68 @@
   function myName() { var s = NET && NET.st; return s && s.players && s.players[s.me] ? s.players[s.me].name : ''; }
   function chatOn(m) {
     if (!window.GCHAT) { if (!CHL) { CHL = true; var sc = document.createElement('script'); sc.src = '/gchat.js?v=1'; sc.onload = function () { if (NET && NET.st && !NET.watch && NET.st.status !== 'wait') chatOn(NET.st); }; document.head.appendChild(sc); } return; }
-    if (!CHI) { CHI = true; GCHAT.init(function (t) { if (NET && NET.code && !NET.watch) sendN({ type: 'mmChat', code: NET.code, text: t }); }); }
+    if (!CHI) { CHI = true; GCHAT.init(function (t) { if (NET && NET.code && !NET.watch) sendN({ type: 'mmChat', code: NET.code, text: t }); }); GCHAT.onBadge = function (n) { var b = BAR && BAR.querySelector('.bd'); if (b) { b.textContent = n > 9 ? '9+' : n; b.hidden = !n; } }; }
     GCHAT.show(true); GCHAT.set(m.chat || [], myName());
   }
-  function chatOff() { try { if (window.GCHAT && CHI) GCHAT.show(false); } catch (e) {} }
+  function chatOff() { try { if (window.GCHAT && CHI) GCHAT.show(false); } catch (e) {} barOff(); }
+  // ⬇️ pastki tugmalar: 💬 Chat · 🏳 Taslim · 🤝 Durang (shashka xonasidagi belgilar)
+  var BAR = null;
+  var SVG = function (p) { return '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + p + '</svg>'; };
+  var ICO = {
+    chat: SVG('<path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2z"/><path d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1"/>'),
+    flag: SVG('<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" fill="currentColor"/><path d="M4 22v-7"/>'),
+    hand: SVG('<path d="m11 17 2 2a1 1 0 1 0 3-3"/><path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4"/><path d="m21 3 1 11h-2"/><path d="M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3"/><path d="M3 4h8"/>')
+  };
+  function barOn(m) {
+    if (!BAR) {
+      BAR = document.createElement('div'); BAR.id = 'mmBar';
+      BAR.innerHTML = '<button data-bb="chat"><i>' + ICO.chat + '</i>' + T('Chat') + '<b class="bd" hidden></b></button><button data-bb="res"><i>' + ICO.flag + '</i>' + T('Taslim') + '</button><button data-bb="draw"><i>' + ICO.hand + '</i>' + T('Durang') + '</button>';
+      document.body.appendChild(BAR);
+      BAR.querySelector('[data-bb=chat]').onclick = function () { if (window.GCHAT && GCHAT.open) GCHAT.open(); };
+      BAR.querySelector('[data-bb=res]').onclick = function () {
+        var s = NET && NET.st; if (!s || s.status !== 'play' || s.hold) return;
+        var go = function () { if (NET && NET.code) sendN({ type: 'mmResign', code: NET.code }); };
+        if (tg && tg.showConfirm) tg.showConfirm(T('Taslim bo‘lasizmi?'), function (ok) { if (ok) go(); }); else go();
+      };
+      BAR.querySelector('[data-bb=draw]').onclick = function () { var s = NET && NET.st; if (!s || s.status !== 'play' || s.hold || s.dro === s.me) return; sendN({ type: 'mmDraw', code: NET.code }); hap(); };
+    }
+    BAR.style.display = 'flex';
+    var on = m.status === 'play' && !m.hold;
+    BAR.querySelector('[data-bb=res]').classList.toggle('off', !on);
+    BAR.querySelector('[data-bb=draw]').classList.toggle('off', !on || m.dro === m.me);
+    if (ov) ov.style.paddingBottom = 'calc(110px + env(safe-area-inset-bottom,0px))';
+    var dr = document.getElementById('mmDraw');
+    if (!(on && m.dro != null)) { if (dr) dr.remove(); return; }
+    if (!dr) { dr = document.createElement('div'); dr.id = 'mmDraw'; document.body.appendChild(dr); }
+    if (m.dro === m.me) { dr.innerHTML = '<span>🤝 ' + T('Durang taklif qilindi — raqib javobi kutilmoqda') + '</span>'; return; }
+    dr.innerHTML = '<span>🤝 ' + T('Raqib durang taklif qilyapti') + '</span><button data-y>' + T('Qabul') + '</button><button data-n>' + T('Rad etish') + '</button>';
+    dr.querySelector('[data-y]').onclick = function () { sendN({ type: 'mmDraw', code: NET.code }); dr.remove(); };
+    dr.querySelector('[data-n]').onclick = function () { sendN({ type: 'mmDrawNo', code: NET.code }); dr.remove(); };
+  }
+  function barOff() { if (BAR) BAR.style.display = 'none'; var dr = document.getElementById('mmDraw'); if (dr) dr.remove(); if (ov) ov.style.paddingBottom = ''; }
+  // ⚙️ o'yin boshlanmagan bo'lsa, stolga birinchi kirgan tanlaydi (server m.cfg: 'edit' — darhol yuboriladi, 'sit' — «Qo‘shilish» bilan)
+  function cfgVal(m, mode) { if (mode === 'sit') return (NET.sc = NET.sc || { size: m.size, tc: m.tc, theme: THEMES[m.theme] ? m.theme : CFG.theme }); return { size: m.size, tc: m.tc, theme: THEMES[m.theme] ? m.theme : CFG.theme }; }
+  function cfgHtml(m, mode) {
+    var v = cfgVal(m, mode);
+    var h = '<div class="cd" style="text-align:left"><div class="lb" style="margin-top:0">📐 ' + T('Doska') + '</div><div class="row">';
+    SIZES.forEach(function (zz) { h += '<button class="op' + (v.size === zz.k ? ' on' : '') + '" data-cs="' + zz.k + '">' + zz.t + '<small>' + zz.p + ' ' + T('juftlik') + '</small></button>'; });
+    h += '</div><div class="lb">⏱ ' + T('Vaqt') + '</div><div class="row">';
+    TCS.forEach(function (t) { h += '<button class="op' + (String(v.tc) === String(t.k) ? ' on' : '') + '" data-ct="' + t.k + '">' + T(t.t) + '<small>' + T(t.s) + '</small></button>'; });
+    h += '</div><div class="lb">🎨 ' + T('Rasmlar') + '</div><select data-cth>';
+    for (var k in THEMES) h += '<option value="' + k + '"' + (v.theme === k ? ' selected' : '') + '>' + THEMES[k].ic + '  ' + T(THEMES[k].t) + '</option>';
+    return h + '</select></div>';
+  }
+  function cfgBind(m, mode) {
+    var v = cfgVal(m, mode);
+    var apply = function () {
+      if (SIZES.some(function (z) { return z.k === v.size; })) CFG.size = v.size; if (TCS.some(function (t) { return t.k === v.tc; })) CFG.tc = v.tc; if (THEMES[v.theme]) CFG.theme = v.theme; saveCfg();
+      if (mode === 'edit') sendN({ type: 'mmCfg', code: m.code, size: v.size, tc: v.tc, theme: v.theme, symbols: symbols(v.theme) }); else onNet(NET.st);
+      hap();
+    };
+    [].forEach.call(ov.querySelectorAll('[data-cs]'), function (b) { b.onclick = function () { v.size = b.getAttribute('data-cs'); apply(); }; });
+    [].forEach.call(ov.querySelectorAll('[data-ct]'), function (b) { b.onclick = function () { var x = b.getAttribute('data-ct'); v.tc = FC[x] ? x : +x; apply(); }; });
+    var s = ov.querySelector('[data-cth]'); if (s) s.onchange = function () { v.theme = this.value; apply(); };
+  }
   function tcLbl(tc) { return typeof tc === 'string' && tc.indexOf('+') > 0 ? '⏱ ' + tc : tc > 0 ? '⏱ ' + tc + ' s' : tc < 0 ? '⚡ ' + (-tc / 60) + ' ' + T('daqiqa') : '∞'; }
   function fmtC(ms) { var s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ':' + ('0' + s % 60).slice(-2); }
   function rulesTxt(r) { r = r || {}; var o = []; if (r.streak) o.push('🔥'); if (r.shuffle) o.push('🔀'); if (r.black) o.push('💀'); return o.length ? ' · ' + o.join(' ') : ''; }
@@ -474,12 +570,20 @@
     if (m.watch || m.status === 'wait') chatOff();
     if (m.watch) {   // 📺 tomoshabin
       if (m.status === 'wait') {   // guruh kartasi: raqib kutilmoqda — qo'shilish
+        var pick = m.canSit && m.cfg === 'sit', pv = pick ? cfgVal(m, 'sit') : m;   // ⚙️ chaqiruvchi ilovada emas — birinchi o'tirgan tanlaydi
         ov.innerHTML = '<div class="top"><button class="bk" data-x>‹</button><h2>🧠 ' + T('Xotira') + '</h2></div>' +
-          '<div class="cd" style="text-align:center;line-height:1.5"><div style="font-size:42px">🧠</div><b>' + esc(m.host || '') + '</b> ' + T('raqib kutyapti') + '<div style="opacity:.7;font-size:13px;margin-top:6px">' + z.t + ' · ' + tcLbl(m.tc) + '</div></div>' +
+          '<div class="cd" style="text-align:center;line-height:1.5"><div style="font-size:42px">🧠</div><b>' + esc(m.host || '') + '</b> ' + T('raqib kutyapti') + '<div style="opacity:.7;font-size:13px;margin-top:6px">' + sizeOf(pv.size).t + ' · ' + tcLbl(pv.tc) + '</div>' +
+          (pick ? '<div style="font-size:13px;margin-top:6px">' + T('Stolga birinchi siz o‘tirasiz — doska, vaqt va rasmlarni tanlang') + '</div>' : '') + '</div>' +
+          (pick ? cfgHtml(m, 'sit') : '') +
           (m.canSit ? '<button class="go" data-sit>▶ ' + T('O‘yinga qo‘shilish') + '</button>' : '<div class="cd" style="text-align:center">' + T('Raqib topildi — o‘yin tez orada boshlanadi') + '</div>') +
           '<div class="cd" style="text-align:center;opacity:.75;font-size:13px">' + T('yoki shunchaki tomosha qiling') + ' 👁</div>';
         ov.querySelector('[data-x]').onclick = menu;
-        var bs = ov.querySelector('[data-sit]'); if (bs) bs.onclick = function () { sendN({ type: 'mmSit', code: m.code, init: (tg && tg.initData) || '' }); bs.disabled = true; bs.textContent = '⏳'; };
+        if (pick) cfgBind(m, 'sit');
+        var bs = ov.querySelector('[data-sit]'); if (bs) bs.onclick = function () {
+          var o = { type: 'mmSit', code: m.code, init: (tg && tg.initData) || '' };
+          if (pick && NET.sc) { o.size = NET.sc.size; o.tc = NET.sc.tc; o.theme = NET.sc.theme; o.symbols = symbols(NET.sc.theme); }
+          sendN(o); bs.disabled = true; bs.textContent = '⏳';
+        };
         return;
       }
       var cw = m.cards.map(function (c) { return c ? { s: c.s, up: !c.o, ok: !!c.o, bt: c.o === 2 } : null; }), Pw = m.players;
@@ -492,8 +596,10 @@
     }
     if (m.status === 'wait' && m.players && m.players.length === 2) {   // ikkala o'rin band (guruh kubogi / revansh): ikkinchisi kutilmoqda
       var oth = m.players[1 - me] || {};
-      ov.innerHTML = '<div class="top"><button class="bk" data-x>‹</button><h2>⏳ ' + T('Raqib kutilmoqda') + '</h2></div><div class="cd" style="text-align:center;line-height:1.5"><div style="font-size:42px">🧠</div><b>' + esc(oth.name || '') + '</b> ' + T('kirishi bilan o‘yin boshlanadi') + (m.pinged && me === 1 ? '<div style="opacity:.75;font-size:13px;margin-top:8px">📩 ' + T('Unga botdan xabar yuborildi. 3 daqiqada kirmasa, o‘rin bo‘shaydi') + '</div>' : '') + '</div><button class="go g2" data-x2>☰ ' + T('Menyu') + '</button>';
+      ov.innerHTML = '<div class="top"><button class="bk" data-x>‹</button><h2>⏳ ' + T('Raqib kutilmoqda') + '</h2></div><div class="cd" style="text-align:center;line-height:1.5"><div style="font-size:42px">🧠</div><b>' + esc(oth.name || '') + '</b> ' + T('kirishi bilan o‘yin boshlanadi') + '<div style="opacity:.7;font-size:13px;margin-top:6px">' + z.t + ' · ' + tcLbl(m.tc) + '</div>' + (m.pinged && me === 1 ? '<div style="opacity:.75;font-size:13px;margin-top:8px">📩 ' + T('Unga botdan xabar yuborildi. 3 daqiqada kirmasa, o‘rin bo‘shaydi') + '</div>' : '') + '</div>' +
+        (m.cfg === 'edit' ? cfgHtml(m, 'edit') : '') + '<button class="go g2" data-x2>☰ ' + T('Menyu') + '</button>';
       ov.querySelector('[data-x]').onclick = menu; ov.querySelector('[data-x2]').onclick = menu;
+      if (m.cfg === 'edit') cfgBind(m, 'edit');
       return;
     }
     if (m.status === 'wait') {
@@ -508,7 +614,7 @@
         : pd.to ? '📨 <b>' + esc(pd.name || '') + '</b> ' + T('ga taklif yuborildi. Javobini kuting…') : '⏳ ' + T('Do‘stingiz kutilmoqda…');
       ov.innerHTML = '<div class="top"><button class="bk" data-x>‹</button><h2>⏳ ' + T('Raqib kutilmoqda') + '</h2></div>' +
         '<div class="cd" style="text-align:center;line-height:1.5"><div style="font-size:38px">🧠</div>' + stx + '<div style="opacity:.7;font-size:13px;margin-top:6px">' + z.t + ' · ' + tcLbl(m.tc) + rulesTxt(m.rules) + '</div></div>' +
-        '<div data-dec></div><button class="go g2" data-hall>🎮 ' + T('Yana o‘yinchi taklif qilish') + '</button><div data-pl></div>' +
+        (m.cfg === 'edit' ? cfgHtml(m, 'edit') : '') + '<div data-dec></div><button class="go g2" data-hall>🎮 ' + T('Yana o‘yinchi taklif qilish') + '</button><div data-pl></div>' +
         '<button class="go g2" data-sh>📤 ' + T('Guruhga yoki do‘stga yuborish') + '</button><button class="go g2" data-cancel style="background:#5b2330">❌ ' + T('Bekor qilish') + '</button>';
       ov.querySelector('[data-x]').onclick = menu; ov.querySelector('[data-cancel]').onclick = menu;
       ov.querySelector('[data-sh]').onclick = function () {
@@ -516,6 +622,7 @@
         var u = 'https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encodeURIComponent(txt);
         try { if (tg && tg.openTelegramLink) tg.openTelegramLink(u); else window.open(u, '_blank'); } catch (e) { window.open(u, '_blank'); }
       };
+      if (m.cfg === 'edit') cfgBind(m, 'edit');   // ⚙️ do'st kutilmoqda — doska, vaqt, rasmlarni o'zgartirish mumkin
       ov.querySelector('[data-hall]').onclick = function () { var pl = ov.querySelector('[data-pl]'); if (pl) pl.innerHTML = '<div class="cd" style="text-align:center">⏳</div>'; sendN({ type: 'mmPlayers', init: (tg && tg.initData) || '' }); };
       return;
     }
@@ -529,7 +636,7 @@
       NET.pOk = nOk; NET.pUp = nUp; NET.pSt = m.status;
     }
     var cards = m.cards.map(function (c) { return c ? { s: c.s, up: !c.o, ok: !!c.o, bt: c.o && c.o - 1 !== me } : null; });
-    var P = m.players, myTurn = m.turn === me && m.status === 'play', mg = !!m.mg, OPP = mg ? 'Raqib' : 'Do‘stingiz';
+    var P = m.players, myTurn = m.turn === me && m.status === 'play', mg = !!m.mg, OPP = 'Raqib';
     var ck = function (i) { return '<span data-ck="' + i + '" class="' + (m.run && m.turn === i ? 'on' : '') + (m.clk[i] < 10000 ? ' lo' : '') + '">' + fmtC(m.clk[i]) + '</span>'; };
     var timer = m.fc && m.clk ? '<div class="ck">' + ck(me) + ck(op) + '</div>'   // ⏱ 2+2 / 3+2: chapda — siz, o'ngda — raqib
       : m.tc < 0 ? '<div style="text-align:center;font-weight:800;margin:-4px 0 8px" data-blz>⚡ ' + Math.ceil(m.blitz / 1000) + ' s</div>' : timerBar(m.left, m.tc > 0 ? m.tc * 1000 : 0);
@@ -557,12 +664,12 @@
       var c0 = Date.now(), base = m.clk[m.turn], ce = ov.querySelector('[data-ck="' + m.turn + '"]');
       G.tm = setInterval(function () { if (!ce || !ce.isConnected) return clearInterval(G.tm); var left = base - (Date.now() - c0); ce.textContent = fmtC(left); ce.className = 'on' + (left < 10000 ? ' lo' : ''); }, 200);
     }
-    if (m.status !== 'wait' && !m.watch) chatOn(m);   // 💬
+    if (m.status !== 'wait' && !m.watch) { chatOn(m); barOn(m); }   // 💬 · 🏳 · 🤝
     if (m.status === 'over') {
       var win = m.winner === me, draw = m.winner === -1, toHub = mg ? { back: ['‹ ' + T('Mini o‘yinlar'), close], quiet: wasOver } : { quiet: wasOver };
       if (m.ns) endCard('😴', T('Raqib o‘yinga kirmadi'), '<small>' + T('Reyting o‘zgarmaydi') + '</small>', null, toHub);
       else endCard(win ? '🏆' : draw ? '🤝' : '😔', win ? T('Siz yutdingiz!') : draw ? T('Durang!') : T(OPP + ' yutdi'),
-        (P[me] ? P[me].sc : 0) + ' : ' + (P[op] ? P[op].sc : 0) + (m.quit != null && m.quit !== me ? '<br><small>' + T('Raqib o‘yindan chiqdi') + '</small>' : '') +
+        (P[me] ? P[me].sc : 0) + ' : ' + (P[op] ? P[op].sc : 0) + (m.quit != null ? '<br><small>' + T(m.quit === me ? (m.qwhy === 'resign' ? 'Siz taslim bo‘ldingiz' : 'Siz o‘yindan chiqdingiz') : (m.qwhy === 'resign' ? 'Raqib taslim bo‘ldi' : 'Raqib o‘yindan chiqdi')) + '</small>' : '') + (m.agreed ? '<br><small>' + T('Kelishilgan durang') + '</small>' : '') +
           (m.flag != null ? '<br><small>⏰ ' + (m.flag === me ? T('Vaqtingiz tugadi — qolgan juftliklar raqibga o‘tdi') : T('Raqibning vaqti tugadi — qolgan juftliklar sizga o‘tdi')) + '</small>' : '') +
           (m.rt ? '<br><span style="font-size:16px;font-weight:800">' + (m.rt.capped ? '<small style="font-weight:600;opacity:.8">⭐ Bugun shu raqib bilan reytingli o‘yinlar tugadi (kuniga 3 ta)</small>' : '⭐ ' + m.rt.from + ' → ' + m.rt.to + ' <span style="color:' + (m.rt.to >= m.rt.from ? '#4ade80' : '#f87171') + '">' + (m.rt.to >= m.rt.from ? '+' : '') + (m.rt.to - m.rt.from) + '</span>') + '</span>' : ''),   // ⭐ mini o'yin reytingi (mgplay.js)
         function () { sendN({ type: 'mmAgain', code: NET.code }); var b = ov.querySelector('[data-again]'); if (b) b.textContent = '⏳ ' + T(OPP + ' kutilmoqda…'); }, toHub);

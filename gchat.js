@@ -31,15 +31,16 @@
     box.querySelector('#gcF').onsubmit = function (e) { e.preventDefault(); say(inp.value); inp.value = ''; };
   }
   function say(t) { t = String(t || '').trim(); if (!t || !sendFn) return; sendFn(t.slice(0, 120)); }
-  function setOpen(v) { open = v; box.style.display = v ? 'block' : 'none'; if (v) { seen = lastId(); draw(); badge(); setTimeout(function () { ls.scrollTop = ls.scrollHeight; }, 30); } }
+  function setOpen(v) { open = v; box.style.display = v ? 'block' : 'none'; if (v) { seen = lastId(); draw(); setTimeout(function () { ls.scrollTop = ls.scrollHeight; }, 30); } badge(); }
   function lastId() { return list.length ? list[list.length - 1].i || 0 : 0; }
-  function badge() { var n = list.filter(function (m) { return (m.i || 0) > seen && m.name !== me; }).length; bd.textContent = n > 9 ? '9+' : n; bd.style.display = n && !open ? 'flex' : 'none'; }
+  function badge() { var n = list.filter(function (m) { return (m.i || 0) > seen && m.name !== me; }).length; bd.textContent = n > 9 ? '9+' : n; bd.style.display = n && !open ? 'flex' : 'none'; if (root.GCHAT && root.GCHAT.onBadge) try { root.GCHAT.onBadge(open ? 0 : n); } catch (e) {} }
   function draw() {
     ls.innerHTML = list.length ? list.map(function (m) { var mine = m.name === me; return '<div class="m' + (mine ? ' me' : '') + '">' + (mine ? '' : '<b>' + esc(m.name) + '</b>') + esc(m.text) + '</div>'; }).join('') : '<div class="e">Hali xabar yo‘q — salom bering 👋</div>';
     ls.scrollTop = ls.scrollHeight;
   }
   root.GCHAT = {
     init: function (fn) { if (!btn) build(); sendFn = fn; },
+    open: function () { if (btn) setOpen(true); },   // o'z tugmasi bo'lgan sahifalar uchun (masalan, Xotira pastki paneli); onBadge(n) — o'qilmaganlar soni
     show: function (v) { if (!btn) return; shown = !!v; btn.style.display = v ? 'block' : 'none'; document.body.style.paddingBottom = v ? 'calc(80px + env(safe-area-inset-bottom,0px))' : ''; if (!v) setOpen(false); },
     set: function (arr, myName) {
       if (!btn) return; arr = arr || []; me = myName || me;

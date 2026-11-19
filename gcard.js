@@ -141,7 +141,7 @@ function mmInfo(r) {
   let v = r && r.watch ? r.watch.size : 0;
   return { st, a: P[0] ? P[0].name : '', b: P[1] ? P[1].name : '', sa: S ? S.sc[0] : 0, sb: S ? S.sc[1] : 0, turn: S ? S.turn : 0, win: r ? r.winner : null, size: r ? r.size : '4x6', tc: r ? r.tc : 0, found, v };
 }
-function tcTxt(tc) { return tc > 0 ? tc + ' s' : tc < 0 ? '⚡ ' + (-tc / 60) + ' daq' : 'vaqtsiz'; }
+function tcTxt(tc) { return typeof tc === 'string' && tc.indexOf('+') > 0 ? tc : tc > 0 ? tc + ' s' : tc < 0 ? '⚡ ' + (-tc / 60) + ' daq' : 'vaqtsiz'; }   // '2+2' — har o'yinchining o'z soati
 // emoji rasmlari (public/img/emo/<kod>.png) — server emoji shriftini chiza olmaydi
 const EMO = new Map();
 function emo(s) {
