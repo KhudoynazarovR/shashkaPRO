@@ -286,6 +286,13 @@
         var _go = function () { clearInterval(_gt); if (window.mxOpen) window.mxOpen(_gid); };
         toast("<b>" + esc(m.name) + "</b> " + esc(m.gn || "") + (m.k === "host" ? " o‘yinida sizni kutyapti!" : " o‘yiningizga qo‘shildi!") + (_gb ? "" : "<br><span id=\"gmCd\">3</span> soniyadan so‘ng o‘yinga o‘tasiz…"), [["▶ O‘yinga kirish", _go]], _gb ? 30000 : 4000);
         if (!_gb) _gt = setInterval(function () { _gl--; var e = $("gmCd"); if (e) e.textContent = _gl; if (_gl <= 0) _go(); }, 1000);
+      } else if (/^mg[A-Z]/.test(m.type)) {   // 🎮 Mini o'yinlar markazi (mghub.js): navbat, chaqiruv, reyting — kerak bo'lsa skript yuklanadi
+        var _mgQ = window.__mgQ = window.__mgQ || [];
+        if (window.spMgMsg) { try { window.spMgMsg(m); } catch (e) {} }
+        else if (m.type === "mgInviteIn" || m.type === "mgGo" || _mgQ.loading) {
+          _mgQ.push(m);
+          if (!_mgQ.loading) { _mgQ.loading = 1; var _mgs = document.createElement("script"); _mgs.src = "/mghub.js?v=1"; _mgs.onload = function () { var q = window.__mgQ || []; window.__mgQ = []; q.forEach(function (x) { try { window.spMgMsg(x); } catch (e) {} }); }; document.head.appendChild(_mgs); }
+        }
       } else if (m.type === "lbToast") {
         toast(esc(m.text), null, 7000);
       } else if (m.type === "error" && (panelOpen || Date.now() - (window.__siAt || 0) < 5000)) {

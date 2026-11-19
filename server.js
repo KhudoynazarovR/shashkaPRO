@@ -171,7 +171,7 @@ function leaveClient(c) {
 }
 
 const BLOCKED = new Set([
-  "quests.js", "leagues.js", "weblogin.js", "social.js", "elon.js", "eco.js", "vrules.js", "kanal.js", "tgcoin.js", "reelgen.js", "memguard.js", "chatrate.js",
+  "quests.js", "leagues.js", "weblogin.js", "social.js", "elon.js", "eco.js", "vrules.js", "kanal.js", "tgcoin.js", "reelgen.js", "memguard.js", "chatrate.js", "mgplay.js",
   "server.js", "rooms.js", "mod.js", "ref.js", "premium.js", "gift.js", "region.js", "ach.js", "season.js", "cheat.js", "endgame.js", "corr.js", "gif.js", "alert.js", "notify.js", "kkbook.js", "kkadm.js", "cpustat.js", "kkfix.js", "kkrep.js", "posdb.js", "dragonsrv.js", "daraxtsrv.js", "sarguzashtsrv.js", "pzext.js", "pzchk.js", "pzbooks.js", "pzcheck.js", "wager.js", "economy.js", "store.js", "payments.js", "etudes.js", "pzrush.js", "pzbattle.js", "pztour.js", "draw-rules.js", "lobby.js", "users.json", "package.json", "package-lock.json"
 ]);
 
@@ -472,6 +472,7 @@ wss.on("connection", (ws, req) => {
     if (require("./ugroom.js").handle(c, m)) return;
     if (require("./duoroom.js").handle(c, m)) return;
     if (require("./rpsroom.js").handle(c, m)) return;
+    if (require("./mgplay.js").handle(c, m)) return;   // 🎮 mini o'yinlar markazi: navbat, chaqiruv, reyting
 
     // Zal va turnir (lb...) xabarlari
     if (lobbyApi.handle(c, m)) return;
@@ -704,6 +705,7 @@ wss.on("connection", (ws, req) => {
     try { require("./ugroom.js").onClose(c); } catch (e) {}
     try { require("./duoroom.js").onClose(c); } catch (e) {}
     try { require("./rpsroom.js").onClose(c); } catch (e) {}
+    try { require("./mgplay.js").onClose(c); } catch (e) {}
     leaveClient(c);
     roomsApi.onClose(c);
     lobbyApi.onClose(c);

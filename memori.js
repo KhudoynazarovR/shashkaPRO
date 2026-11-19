@@ -513,7 +513,8 @@
     if (m.status === 'over') {
       var win = m.winner === me, draw = m.winner === -1;
       endCard(win ? '🏆' : draw ? '🤝' : '😔', win ? T('Siz yutdingiz!') : draw ? T('Durang!') : T('Do‘stingiz yutdi'),
-        (P[me] ? P[me].sc : 0) + ' : ' + (P[op] ? P[op].sc : 0) + (m.quit != null && m.quit !== me ? '<br><small>' + T('Raqib o‘yindan chiqdi') + '</small>' : ''),
+        (P[me] ? P[me].sc : 0) + ' : ' + (P[op] ? P[op].sc : 0) + (m.quit != null && m.quit !== me ? '<br><small>' + T('Raqib o‘yindan chiqdi') + '</small>' : '') +
+          (m.rt ? '<br><span style="font-size:16px;font-weight:800">' + (m.rt.capped ? '<small style="font-weight:600;opacity:.8">⭐ Bugun shu raqib bilan reytingli o‘yinlar tugadi (kuniga 3 ta)</small>' : '⭐ ' + m.rt.from + ' → ' + m.rt.to + ' <span style="color:' + (m.rt.to >= m.rt.from ? '#4ade80' : '#f87171') + '">' + (m.rt.to >= m.rt.from ? '+' : '') + (m.rt.to - m.rt.from) + '</span>') + '</span>' : ''),   // ⭐ mini o'yin reytingi (mgplay.js)
         function () { sendN({ type: 'mmAgain', code: NET.code }); var b = ov.querySelector('[data-again]'); if (b) b.textContent = '⏳ ' + T('Do‘stingiz kutilmoqda…'); });
       var rw = ov.querySelector('[data-rw]'); if (rw && m.gain && m.gain[me]) { rw.textContent = '+' + m.gain[me] + ' 🪙'; if (opts.onCoins && !NET.paid) { NET.paid = 1; try { opts.onCoins(m.gain[me]); } catch (e) {} } }
       if (m.status === 'over') NET.paid = NET.paid || 0;

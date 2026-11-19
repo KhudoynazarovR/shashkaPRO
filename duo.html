@@ -245,6 +245,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
     var r = G.st.res; hap(r === G.me ? 'success' : r === 0 ? 'warning' : 'error'); setTimeout(function () { GSND.play(r === 0 ? 'draw' : r === G.me && !G.watch ? 'win' : 'lose'); }, 250);
     var d = document.createElement('div'); d.className = 'mod'; d.id = 'fin';
     d.innerHTML = '<div class="cd"><div style="font-size:48px">' + (r === 0 ? '🤝' : r === G.me ? '🏆' : '😔') + '</div><h2>' + (r === 0 ? 'Durang' : G.watch ? 'O‘yin tugadi' : r === G.me ? 'G‘alaba!' : 'Mag‘lubiyat') + '</h2><div class="muted">' + esc(why()) + '</div>' +
+      (G.m && G.m.rt && !G.watch ? '<div style="margin:10px 0 2px;font-size:17px;font-weight:800">' + (G.m.rt.capped ? '<span style="font-size:13px;font-weight:600;opacity:.8">⭐ Bugun shu raqib bilan reytingli o‘yinlar tugadi (kuniga 3 ta)</span>' : '⭐ ' + G.m.rt.from + ' → ' + G.m.rt.to + ' <span style="color:' + (G.m.rt.to >= G.m.rt.from ? '#4ade80' : '#f87171') + '">' + (G.m.rt.to >= G.m.rt.from ? '+' : '') + (G.m.rt.to - G.m.rt.from) + '</span>') + '</div>' : '') +   // ⭐ mini o'yin reytingi (mgplay.js)
       (G.watch || (G.m && G.m.tour) ? '' : '<button class="go" id="agn">🔁 Revansh</button>') + '<button class="go g2" id="fm">☰ Menyu</button><button class="go g2" id="fv">👁 Doskani ko‘rish</button></div>';
     document.body.appendChild(d);
     var a = document.getElementById('agn'); if (a) a.onclick = function () { snd({ type: 'duAgain', code: G.code }); this.textContent = '⏳ Raqib kutilmoqda…'; };

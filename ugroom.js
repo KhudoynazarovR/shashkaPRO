@@ -25,7 +25,8 @@ function view(r, uid) {
     res: S && S.over ? S.res : null, why: S ? S.why : '',
     players: r.p.map(x => ({ name: x.name, side: x.side || 0, on: !!x.ws, j: !!x.j })),
     me: (r.p.find(x => x.uid === uid) || {}).side || 0, mi: r.p.findIndex(x => x.uid === uid), inl: !!r.inline,
-    clk: clocks(r), draw: r.draw || 0, chat: r.chat || [], tour: !!r.onEnd, again: r.again ? Object.keys(r.again).map(Number) : []
+    clk: clocks(r), draw: r.draw || 0, chat: r.chat || [], tour: !!r.onEnd, again: r.again ? Object.keys(r.again).map(Number) : [],
+    rt: r.rt ? MG().rtView(r.rt, uid) : null   // ⭐ mini o'yin reytingi o'zgarishi (mgplay.js)
   };
 }
 function push(r) { r.p.forEach(x => send(x.ws, view(r, x.uid))); if (r.watch) for (const ws of r.watch.values()) send(ws, view(r, '')); }
@@ -38,14 +39,20 @@ function end(r, res, why) {
   clearTimeout(r.tmr); clearTimeout(r.nsT); r.status = 'over';
   if (r.onEnd && !r.reported) { r.reported = 1; try { r.onEnd(res, { why, plies: r.S ? r.S.ply : 0 }); } catch (e) { console.log('[' + 'mix]', e.message); } }
   if (r.S && !r.S.over) { r.S.over = true; r.S.res = res; r.S.why = why; }
+  rateEnd(r, res, why);
   r.at = Date.now(); r.draw = 0; push(r);
   if (r.inline) { card(r); forget(r.code); }
+}
+function MG() { return require('./mgplay.js'); }
+function rateEnd(r, res, why) {   // ⭐ o'yin tugadi — mini o'yin reytingi (1-tomon a, 2-tomon b)
+  try { const a = r.p.find(x => x.side === 1), b = r.p.find(x => x.side === 2); r.rt = a && b ? MG().rated('ug', a.uid, b.uid, res, { why, plies: r.S ? r.S.ply : 0 }) : null; } catch (e) { r.rt = null; }
 }
 function begin(r) {
   if (r.fixed) { r.p[0].side = 1; r.p[1].side = 2; r.fixed = false; r.games = 1; } else {
   const flip = crypto.randomInt(2) === 1;   // ranglar tasodifiy (keyingi o'yinlarda almashadi)
   if (r.games) { r.p.forEach(x => { x.side = x.side === 1 ? 2 : 1; }); } else { r.p[0].side = flip ? 2 : 1; r.p[1].side = flip ? 1 : 2; }
   r.games = (r.games || 0) + 1; }
+  r.rt = null;
   r.S = U.start(); r.status = 'play'; r.draw = 0; r.again = null;
   r.clk = [r.tc * 1000, r.tc * 1000]; r.runAt = Date.now(); r.at = Date.now();
   clearTimeout(r.stmr); r.pinged = 0;

@@ -25,8 +25,8 @@
     return o;
   };
   // 🔀 Miks turnir (admin): har tur — boshqa o'yin. Tanlash tartibi = turlar tartibi
-  var MG = [['mm', '🧠', 'Xotira', '⚡2 daq'], ['sh', '⚫', 'Shashka', '3+2'], ['ug', '🏁', 'Ugolki', '3+2'], ['chess', '♟', 'Shaxmat', '3+2'], ['go', '⚪', 'Go 9×9', '5+3'], ['gomoku', '⭕', 'Gomoku', '3+2'], ['pod', '🔄', 'Poddavki', '3+2']];
-  var MIX = ['mm', 'sh', 'ug', 'chess', 'go'], wasMix = false;
+  var MG = [['mm', '🧠', 'Xotira', '⚡2 daq'], ['sh', '⚫', 'Shashka', '3+2'], ['ug', '🏁', 'Ugolki', '3+2'], ['go', '⚪', 'Go 9×9', '5+3'], ['gomoku', '⭕', 'Gomoku', '3+2']];   // ♟ Shaxmat, 🔄 Poddavki olib tashlangan
+  var MIX = ['mm', 'sh', 'ug', 'gomoku', 'go'], wasMix = false;
   function mixUi(on) {
     var k = g('lbTk'); if (!k) return;
     if (window.__isAdmin && !k.querySelector('option[value="mix"]')) { var op = document.createElement('option'); op.value = 'mix'; op.textContent = '🔀 Miks'; k.appendChild(op); }
@@ -101,7 +101,7 @@
       if (!Q) return;
       var set = function (id, v) { var el = g(id); if (!el) return; el.value = v; try { el.dispatchEvent(new Event('change', { bubbles: true })); } catch (x) {} try { el.dispatchEvent(new Event('input', { bubbles: true })); } catch (x) {} };
       set('lbTn', Q.n); set('lbTk', Q.k); set('lbTtb', Q.tb); set('lbTti', Q.ti); set('lbTdur', Q.dur); set('lbTp', Q.p); set('lbTflag', Q.fl); set('lbTpz', String(Q.pz));
-      if (b.getAttribute('data-q') === 'mix') { MIX = ['mm', 'sh', 'ug', 'chess', 'go']; set('lbTiv', '60'); }
+      if (b.getAttribute('data-q') === 'mix') { MIX = ['mm', 'sh', 'ug', 'gomoku', 'go']; set('lbTiv', '60'); }
       if (b.getAttribute('data-q') === 'kubok') { rc.checked = true; days = [6]; rc.onchange(); drawDays(); var bz = g('lbTbz'); if (bz) bz.checked = false; }
     };
     if (window.lbSend) window.lbSend({ type: 'lbRecList' });

@@ -250,18 +250,8 @@ async function onInline(q) {
   if (mres) { if (/xotira|memori|памят|romant/i.test(mq)) results.unshift(mres); else results.push(mres); }
   // 🏁♟⚪⭕🔄 boshqa 2 kishilik o'yinlar kartasi: guruhda birinchi bosgan — raqib
   try {
-    const UGL = [['ug', /ugolk|уголк|burchak/i, 'Ugolki', '12 dona · burchakdan burchakka'], ['chess', /shaxmat|chess|шахмат/i, 'Shaxmat', 'Klassik shaxmat'], ['go', /\bgo\b|го\b/i, 'Go 9×9', 'Hudud uchun kurash'], ['gomoku', /gomoku|гомоку|5\s*talik/i, 'Gomoku', '5 tasini qatorga tering'], ['pod', /podd?avk|padavk|поддавк/i, 'Poddavki', 'Teskari shashka']];
+    const UGL = [['ug', /ugolk|уголк|burchak/i, 'Ugolki', '12 dona · burchakdan burchakka'], ['go', /\bgo\b|го\b/i, 'Go 9×9', 'Hudud uchun kurash'], ['gomoku', /gomoku|гомоку|5\s*talik/i, 'Gomoku', '5 tasini qatorga tering']];   // ♟ Shaxmat, 🔄 Poddavki va ✊ Tosh-qaychi-qog'oz olib tashlangan
     const tm = /(\d{1,2})\s*\+\s*(\d{1,2})/.exec(mq), base = (process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || '').replace(/\/$/, '');
-    if (base) {   // ✊✌️✋ Tosh-qaychi-qog'oz: 2–8 kishi
-      const rn = /\b(5|10|15)\s*tur/i.exec(mq), rounds = rn ? +rn[1] : 10;
-      const code = (() => { const a = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789", bb = crypto.randomBytes(6); let x = ""; for (let i = 0; i < 6; i++) x += a[bb[i] % a.length]; return x; })();
-      const link = roomLink('rp_' + code), img = base + '/img/gc/rp.jpg';
-      require('./rpsroom.js').remember(code, { uid: String(q.from.id), name: from.slice(0, 20) || 'O‘yinchi', rounds, link, img });
-      const r0 = { type: 'article', id: 'u_rp_' + code, thumbnail_url: img, thumbnail_width: 1000, thumbnail_height: 700, title: '✊✌️✋ Tosh-qaychi-qog‘oz · ' + rounds + ' tur', description: '2–8 kishi · ochko bo‘yicha · guruhdagilar bosib qo‘shiladi. Masalan: tosh 5 tur',
-        input_message_content: { message_text: '✊✌️✋ <b>Tosh-qaychi-qog‘oz</b> · ' + rounds + ' tur\n👥 1 kishi: ' + from.replace(/[<>&]/g, '') + '\nBosing va qo‘shiling! (2–8 kishi)', parse_mode: 'HTML', link_preview_options: { url: img, prefer_large_media: true, show_above_text: true } },
-        reply_markup: { inline_keyboard: [[{ text: '▶ Qo‘shilish', url: link }]] } };
-      if (/tosh|qaychi|qog|rps|камень/i.test(mq)) results.unshift(r0); else results.push(r0);
-    }
     if (base) for (const [g, re, nm, ds] of UGL) {
       const mod = require(g === 'ug' ? './ugroom.js' : './duoroom.js'), ic = { ug: '🏁', chess: '♟', go: '⚪', gomoku: '⭕', pod: '🔄' }[g];
       const tc0 = tm && ['1+1', '3+2', '5+3', '10+5'].includes(tm[1] + '+' + tm[2]) ? tm[1] + '+' + tm[2] : /vaqtsiz|∞/i.test(mq) ? '0' : g === 'go' ? '5+3' : '3+2';
@@ -311,6 +301,7 @@ async function start() {
     try { if (q.data && q.data.indexOf('pzr:') === 0 && await require('./pzchk.js').onCallback(q)) return; } catch (e) { console.log('[pzchk]', e.message); }
     try { if (q.data && q.data.indexOf('kn:') === 0 && await require('./kanal.js').onCallback(q)) return; } catch (e) { console.log('[kanal]', e.message); }
     try { if (q.data && q.data.indexOf('mg:') === 0 && await require('./memguard.js').onCallback(q)) return; } catch (e) { console.log('[xotira]', e.message); }
+    try { if (q.data && /^mg[AD]:/.test(q.data) && await require('./mgplay.js').onCallback(q)) return; } catch (e) { console.log('[mg]', e.message); }   // ⚔ mini o'yinga taklif: Qabul / Rad
     try { if (q.data && q.data.indexOf('ig:') === 0 && await require('./social.js').onCallback(q)) return; } catch (e) { console.log('[ig]', e.message); }
     try { if (q.data && q.data.indexOf('el:') === 0 && await require('./elon.js').onCallback(q)) return; } catch (e) { console.log('[elon]', e.message); }
     try { if (q.data && q.data.indexOf('md:') === 0 && await require('./mod.js').onCallback(q)) return; } catch (e) { console.log('[mod]', e.message); }

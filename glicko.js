@@ -144,4 +144,4 @@ function view(u) {
 }
 function botView(uid) { const o = botP(uid); const rd = age({ rd: o.rd, at: o.at }, Date.now()).rd; return { r: Math.round(o.elo), prov: rd > PROV, n: o.n || 0, w: o.w || 0, l: o.l || 0, dr: o.dr || 0 }; }
 const BOTN = { bot_easy: 'Shogird BOT', bot_mid: 'Jangchi BOT', bot: 'Yo‘lbars BOT', bot_pro: 'Arslon BOT', bot_gm: 'Sulton BOT', bot_champ: 'Legend BOT', bot_monster: 'Monster BOT', bot_terminator: 'Terminator BOT', bot_kingkong: 'King Kong BOT' };
-module.exports = { BOT0, BOTN, rate, view, botView, catOf, ensure, CATS, LBL, PROV, isBot, weekKey };
+module.exports = { BOT0, BOTN, rate, view, botView, catOf, ensure, CATS, LBL, PROV, isBot, weekKey, step, age, fresh };   // step/age — mgplay.js (mini o'yinlar reytingi)

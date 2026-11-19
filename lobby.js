@@ -2180,7 +2180,7 @@ function createLobby({ send, clients, roomsApi }) {
   }
 
   const pushUid = (uid, msg) => { const cs = connsOf(String(uid)).filter(c => !c.lb.inRoom); cs.forEach(c => send(c.ws, msg)); return cs.length; };   // 📲 ilova ichidagi xabar (masalan: guruh kartasidagi o'yinga do'st qo'shildi)
-  return { handle, onClose, onRoomFinished, tournaments, arenaTick, pushUid };
+  return { handle, onClose, onRoomFinished, tournaments, arenaTick, pushUid, players: playersList };   // players — mgplay.js (mini o'yinlar: onlayn ro'yxat)
 }
 
 module.exports = { createLobby };

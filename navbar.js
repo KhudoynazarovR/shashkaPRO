@@ -606,51 +606,16 @@
     if (window.spMemori) window.spMemori();
     else { var sm = document.createElement('script'); sm.src = '/memori.js?v=9'; sm.onload = function () { window.spMemori(); }; document.head.appendChild(sm); }
   }
+  // 🎮 yangi Mini o'yinlar markazi (mghub.js): Xotira, Ugolki, Gomoku, Go — reyting, shohsupa, raqib qidirish, chaqiruv, qoidalar
   function hub() {
-    if (document.getElementById('nvMiniHub')) return;
-    var o = document.createElement('div'); o.id = 'nvMiniHub';
-    o.style.cssText = 'position:fixed;inset:0;z-index:99998;background:radial-gradient(circle at 50% 0,#1a1450 0,#0b0e1a 60%);color:#fff;overflow:auto;padding:calc(14px + env(safe-area-inset-top,0px)) 14px calc(24px + env(safe-area-inset-bottom,0px))';
-    var L = [   // [belgi, nom, izoh, ranglar, 🤖 bot, 👥 do'st]
-      ['🧠', 'Xotira', 'Juftliklarni toping', '#0f6fb0,#0a3b6b', 'mem', 'mem'],
-      ['🏁', 'Ugolki', '12 dona · burchakdan burchakka', '#b91c1c,#f97316', '/ugolki.html', 'ug'],
-      ['♟️', 'Shaxmat', 'Klassik shaxmat', '#1e40af,#3b82f6', '', 'chess'],
-      ['⚪', 'Go 9×9', 'Hudud uchun kurash', '#92400e,#d4a24c', '', 'go'],
-      ['⭕', 'Gomoku', '5 talik', '#475569,#64748b', '/gomoku.html', 'gomoku'],
-      ['🔄', 'Padavki shashka', 'Yutqazgan yutadi', '#0f766e,#14b8a6', '/?pad=1', 'pod'],
-      ['✊', 'Tosh-qaychi-qog‘oz', '2–8 kishi · ochko bo‘yicha', '#7c3aed,#db2777', null, 'rp'],
-    ];
-    var h = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><button id="nvMiniX" style="width:44px;height:44px;border:0;border-radius:12px;background:rgba(255,255,255,.1);color:#fff;font-size:22px">‹</button><b style="font-size:22px">🎮 Mini o‘yinlar</b></div>';
-    var BS = 'flex:1;text-align:center;padding:9px 6px;border-radius:10px;font-size:14px;font-weight:700';
-    L.forEach(function (r, i) {
-      var c = r[3].split(',');
-      h += '<div data-i="' + i + '" style="padding:14px;margin-bottom:10px;border-radius:16px;background:linear-gradient(135deg,' + c[0] + '55,' + c[1] + '22);border:1px solid ' + c[0] + 'aa;cursor:pointer">' +
-        '<div style="display:flex;align-items:center;gap:12px"><span style="width:46px;height:46px;flex:none;display:flex;align-items:center;justify-content:center;font-size:34px;line-height:1">' + r[0] + '</span><div style="flex:1;min-width:0"><b style="display:block;font-size:17px">' + r[1] + '</b><small style="opacity:.75;font-size:13px">' + r[2] + '</small></div></div>' +
-        '<div style="display:flex;gap:8px;margin-top:10px">' + (r[4] === null ? '' : r[4] ? '<span data-b="1" style="' + BS + ';background:rgba(255,255,255,.12)">🤖 Bot bilan</span>' : '<span style="' + BS + ';background:rgba(255,255,255,.05);opacity:.45">🤖 tez orada</span>') + '<span data-d="1" style="' + BS + ';background:#3fa34d">👥 Do‘st bilan</span></div></div>';
-    });
-    o.innerHTML = h;
-    document.body.appendChild(o);
-    o.querySelector('#nvMiniX').onclick = function () { o.remove(); };
-    [].forEach.call(o.querySelectorAll('[data-i]'), function (el) {
-      el.onclick = function (e) {
-        var r = L[+el.getAttribute('data-i')];
-        var dost = !r[4] || (e && e.target && e.target.closest && e.target.closest('[data-d]'));
-        if (dost && r[5] === 'mem') { o.remove(); mem(); return; }   // Xotira: o'z oynasida do'st bilan bo'limi bor
-        if (dost && r[5] === 'ug') { fr('/ugolki.html?m=net'); return; }
-        if (dost && r[5] === 'rp') { fr('/rps.html?m=net'); return; }
-        if (dost && r[5]) { fr('/duo.html?g=' + r[5]); return; }   // 👥 do'st bilan (onlayn)
-        if (r[4] === 'mem') { o.remove(); mem(); }
-        else if (r[4] === 'lid') {
-          var u = 'https://lidraughts.org/analysis';
-          if (window.Telegram && Telegram.WebApp && Telegram.WebApp.openLink) Telegram.WebApp.openLink(u); else window.open(u, '_blank');
-        } else fr(r[4]);
-      };
-    });
+    if (window.spMgHub) return window.spMgHub();
+    var s = document.createElement('script'); s.src = '/mghub.js?v=1'; s.onload = function () { if (window.spMgHub) window.spMgHub(); }; document.head.appendChild(s);
   }
   setInterval(function () {
     var m = document.getElementById('nvMemRow');
     if (!m || m.dataset.mini) return;
     m.dataset.mini = '1';
-    m.innerHTML = '<span style="font-size:26px;flex:none">🎮</span><div><b style="display:block;font-size:15px">Mini o‘yinlar</b><div style="opacity:.8;font-size:12px">Xotira · Ugolki · Shaxmat · Go</div></div>';
+    m.innerHTML = '<span style="font-size:26px;flex:none">🎮</span><div><b style="display:block;font-size:15px">Mini o‘yinlar</b><div style="opacity:.8;font-size:12px">Xotira · Ugolki · Gomoku · Go</div></div>';
     m.style.background = 'linear-gradient(110deg,#4c1d95,#7c3aed)';
     m.style.borderColor = '#a78bfa';
     m.onclick = hub;

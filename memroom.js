@@ -30,7 +30,8 @@ function view(r, uid) {
     players: r.p.map((x, j) => ({ uid: x.uid, name: x.name, sc: S ? S.sc[j] : 0, on: !!x.ws })), me: r.p.findIndex(x => x.uid === uid),
     turn: S ? S.turn : 0, left: r.tc > 0 && r.deadline ? Math.max(0, r.deadline - now) : 0, blitz: r.tc < 0 && r.blitzEnd ? Math.max(0, r.blitzEnd - now) : 0,
     canSit: !!(r.inline && r.p.length === 1 && r.status === 'wait'), host: r.p[0] ? r.p[0].name : '', pinged: !!r.pinged,
-    status: r.status, winner: r.winner, quit: r.quit != null ? r.quit : null, gain: r.gain || null, ev: r.ev || null
+    status: r.status, winner: r.winner, quit: r.quit != null ? r.quit : null, gain: r.gain || null, ev: r.ev || null,
+    rt: r.rt ? require('./mgplay.js').rtView(r.rt, uid) : null   // ⭐ mini o'yin reytingi o'zgarishi
   };
 }
 function push(r) {
@@ -66,6 +67,7 @@ function finish(r, quit) {
       }
     } catch (e) { console.log('[xotira]', e.message); }
   }
+  try { const S = r.S; r.rt = r.p.length === 2 ? require('./mgplay.js').rated('mm', r.p[0].uid, r.p[1].uid, r.winner === 0 ? 1 : r.winner === 1 ? 2 : 0, { why: quit != null ? 'resign' : 'game', plies: S ? (S.sc[0] + S.sc[1] + (S.att || 0)) : 0 }) : null; } catch (e) { r.rt = null; }   // ⭐ reyting
   try { require('./grp.js').mmFinished(r); } catch (e) { console.log('[grp]', e.message); }
   if (r.onEnd && !r.reported) { r.reported = 1; clearTimeout(r.nsT); try { r.onEnd(r.winner === 0 ? 1 : r.winner === 1 ? 2 : 0, { why: quit != null ? 'resign' : 'game', plies: r.S ? 10 : 0 }); } catch (e) { console.log('[mix]', e.message); } }   // 🔀 Miks turnir
   push(r);
@@ -74,7 +76,7 @@ function deal(r) {
   clearTimeout(r.stmr); r.pinged = 0;
   const [w, h] = SIZES[r.size];
   r.S = C.newGame({ pairs: w * h / 2, symbols: r.symbols, rules: r.rules, rnd: R });
-  r.busy = false; r.status = 'play'; r.winner = null; r.gain = null; r.quit = null;
+  r.busy = false; r.status = 'play'; r.winner = null; r.gain = null; r.quit = null; r.rt = null;
   clearTimeout(r.btmr); r.blitzEnd = 0;
   if (r.tc < 0) { r.blitzEnd = Date.now() + (-r.tc) * 1000; r.btmr = setTimeout(() => { if (r.status === 'play') finish(r); }, -r.tc * 1000 + 200); }
   arm(r);
