@@ -7,7 +7,7 @@
   if (window.spMgHub) return;
   var G = {
     mm: { ic: '🧠', n: 'Xotira', s: 'Juftliklarni toping', bg: '#3b82f6,#1e3a8a', ib: '#bfdbfe,#3b82f6', tcs: ['30', '2+2', '3+2', '5+3'] },
-    ug: { ic: '🏁', n: 'Ugolki', s: 'Burchakdan burchakka', bg: '#ef4444,#991b1b', ib: '#fecaca,#ef4444', tcs: ['3+2', '5+3', '10+5'] },
+    ug: { ic: '🏁', n: 'Ugolki', s: 'Burchakdan burchakka', bg: '#ef4444,#991b1b', ib: '#fecaca,#ef4444', tcs: ['3+2', '5+3', '10+0'] },
     gomoku: { ic: '⭕', n: 'Gomoku', s: '5 talik', bg: '#14b8a6,#115e59', ib: '#99f6e4,#14b8a6', tcs: ['1+1', '3+2', '5+3'] },
     go: { ic: '⚪', n: 'Go 9×9', s: 'Hudud uchun kurash', bg: '#f59e0b,#92400e', ib: '#fde68a,#f59e0b', tcs: ['3+2', '5+3', '10+5'] }
   };

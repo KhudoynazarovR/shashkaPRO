@@ -3,7 +3,10 @@
 const crypto = require('crypto');
 const { verifyInitData } = require('./auth');
 const U = require('./ugcore.js');
-const TCS = { '0': [0, 0], '3+2': [180, 2], '5+3': [300, 3], '10+5': [600, 5] };
+const TCS = { '0': [0, 0], '3+2': [180, 2], '5+3': [300, 3], '10+5': [600, 5], '10+0': [600, 0] };
+const PICK = ['3+2', '5+3', '10+0'];   // ⏱ o'yin boshlanguncha stolga birinchi kirgan tanlaydi
+// raqib hali kirmagan (yoki ilovada emas) va o'yin boshlanmagan — shu o'yinchi vaqtni o'zgartira oladi
+function cfgOk(r, pi) { const P = r.p[pi], O = r.p[1 - pi]; return r.status === 'wait' && !r.onEnd && !!P && !!P.ws && !(O && O.ws); }
 const rooms = new Map();     // code -> xona
 const byConn = new Map();    // conn id -> code
 function code() { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', b = crypto.randomBytes(6); let s = ''; for (let i = 0; i < 6; i++) s += a[b[i] % a.length]; return s; }
@@ -25,6 +28,7 @@ function view(r, uid) {
     res: S && S.over ? S.res : null, why: S ? S.why : '',
     players: r.p.map(x => ({ name: x.name, side: x.side || 0, on: !!x.ws, j: !!x.j })),
     me: (r.p.find(x => x.uid === uid) || {}).side || 0, mi: r.p.findIndex(x => x.uid === uid), inl: !!r.inline,
+    cfg: cfgOk(r, r.p.findIndex(x => x.uid === uid)), tcs: PICK,   // ⏱ vaqtni tanlash mumkinmi
     clk: clocks(r), draw: r.draw || 0, chat: r.chat || [], tour: !!r.onEnd, again: r.again ? Object.keys(r.again).map(Number) : [],
     rt: r.rt ? MG().rtView(r.rt, uid) : null   // ⭐ mini o'yin reytingi o'zgarishi (mgplay.js)
   };
@@ -92,6 +96,11 @@ function handle(c, m) {
     try { const M = require('./mod.js'); if (M.isMuted(me.uid)) return true; t = M.censor(t); } catch (e) {}
     me.lastChat = now; r.chat = r.chat || []; r.chatN = (r.chatN || 0) + 1; r.chat.push({ i: r.chatN, name: me.name, text: t }); if (r.chat.length > 30) r.chat.shift();
     push(r); return true;
+  }
+  if (m.type === 'ugCfg') {   // ⏱ stolga birinchi kirgan: 3+2 · 5+3 · 10+0
+    const k = String(m.tc || '');
+    if (cfgOk(r, r.p.indexOf(me)) && PICK.includes(k)) { r.tcK = k; r.tc = TCS[k][0]; r.inc = TCS[k][1]; if (r.inline) { remember(r.code, { tc: k }); card(r); } push(r); }
+    return true;
   }
   const S = r.S;
   if (m.type === 'ugMove') {

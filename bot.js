@@ -254,7 +254,7 @@ async function onInline(q) {
     const tm = /(\d{1,2})\s*\+\s*(\d{1,2})/.exec(mq), base = (process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || '').replace(/\/$/, '');
     if (base) for (const [g, re, nm, ds] of UGL) {
       const mod = require(g === 'ug' ? './ugroom.js' : './duoroom.js'), ic = { ug: '🏁', chess: '♟', go: '⚪', gomoku: '⭕', pod: '🔄' }[g];
-      const tc0 = tm && ['1+1', '3+2', '5+3', '10+5'].includes(tm[1] + '+' + tm[2]) ? tm[1] + '+' + tm[2] : /vaqtsiz|∞/i.test(mq) ? '0' : g === 'go' ? '5+3' : '3+2';
+      const tc0 = tm && ['1+1', '3+2', '5+3', '10+5', '10+0'].includes(tm[1] + '+' + tm[2]) ? tm[1] + '+' + tm[2] : /vaqtsiz|∞/i.test(mq) ? '0' : g === 'go' ? '5+3' : '3+2';
       const code = (() => { const a = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789", bb = crypto.randomBytes(6); let x = ""; for (let i = 0; i < 6; i++) x += a[bb[i] % a.length]; return x; })();
       const link = roomLink(g === 'ug' ? 'ug_' + code : 'du_' + g + '_' + code), img = base + '/img/gc/' + g + '.jpg';
       mod.remember(code, { uid: String(q.from.id), name: from.slice(0, 20) || 'O‘yinchi', g: g === 'ug' ? undefined : g, tc: tc0, link, img });

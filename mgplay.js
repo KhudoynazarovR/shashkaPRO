@@ -11,7 +11,7 @@ const GL = require('./glicko.js');
 
 const GAMES = {
   mm: { t: 'Xotira', ic: '🧠', tcs: ['30', '2+2', '3+2', '5+3'], def: '30', min: 4, szs: ['4x6', '6x6'] },   // '30' — har yurishga 30 s; 2+2 / 3+2 / 5+3 — har o'yinchining o'z soati
-  ug: { t: 'Ugolki', ic: '🏁', tcs: ['3+2', '5+3', '10+5'], def: '3+2', min: 10 },
+  ug: { t: 'Ugolki', ic: '🏁', tcs: ['3+2', '5+3', '10+0'], def: '3+2', min: 10 },
   gomoku: { t: 'Gomoku', ic: '⭕', tcs: ['1+1', '3+2', '5+3'], def: '3+2', min: 6 },
   go: { t: 'Go 9×9', ic: '⚪', tcs: ['3+2', '5+3', '10+5'], def: '5+3', min: 10 }
 };

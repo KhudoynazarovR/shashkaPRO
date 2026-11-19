@@ -93,14 +93,18 @@ svg.path{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-even
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   var LS = { get: function (k, d) { try { var v = localStorage.getItem('ug_' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }, set: function (k, v) { try { localStorage.setItem('ug_' + k, JSON.stringify(v)); } catch (e) {} } };
   var LV = [[1, '🐣 Shogird', 'boshlovchilar uchun'], [2, '🧑 O‘rtacha', '1 yurish oldindan ko‘radi'], [3, '🧠 Kuchli', '3 yurish oldindan ko‘radi']];
-  var TC = [['0', '∞ Vaqtsiz'], ['3+2', '3+2'], ['5+3', '5+3'], ['10+5', '10+5']];
+  var TC = [['3+2', '3+2'], ['5+3', '5+3'], ['10+0', '10+0']];
+  function tcSaved() { var t = LS.get('tc', '3+2'); return TC.some(function (x) { return x[0] === t; }) ? t : '3+2'; }
+  // ⏱ o'yin boshlanguncha stolga birinchi kirgan vaqtni tanlaydi (server m.cfg)
+  function tcPick(m) { return m.cfg ? '<div class="muted" style="margin-top:10px;font-weight:600">⏱ Vaqtni tanlang — raqib kirguncha o‘zgartirish mumkin</div><div class="chips" id="tcp" style="justify-content:center;margin-top:8px">' + (m.tcs || ['3+2', '5+3', '10+0']).map(function (t) { return '<button data-v="' + t + '"' + (t === m.tc ? ' class="on"' : '') + '>' + t + '</button>'; }).join('') + '</div>' : ''; }
+  function tcBind(m) { var el = document.getElementById('tcp'); if (!el) return; el.onclick = function (e) { var b = e.target.closest('button'); if (!b || b.classList.contains('on')) return; var v = b.getAttribute('data-v'); LS.set('tc', v); [].forEach.call(el.children, function (x) { x.classList.toggle('on', x === b); }); hap('sel'); snd({ type: 'ugCfg', code: m.code, tc: v }); }; }
   var G = null;   // joriy o'yin: {mode:'bot'|'net', st, me, lv, hist, sel, ...}
   var WS = null, NET = null, tick = null;
 
   // ---------- menyu
   function menu() {
     stopNet(); G = null; GCHAT.show(false);
-    var lv = LS.get('lv', 2), side = LS.get('side', 1), tc = LS.get('tc', '3+2');
+    var lv = LS.get('lv', 2), side = LS.get('side', 1), tc = tcSaved();
     A.innerHTML = '<div class="top"><b>🏁 Ugolki</b><span style="margin-left:auto"></span>' + GSND.btn() + '</div>' +
       '<div class="cd" style="font-size:13px;line-height:1.55;color:#d6d3f5">🎯 12 donani raqib burchagiga <b>birinchi</b> bo‘lib olib kiring.<br>↔ 1 katak yoki ⤴ dona ustidan sakrash (ketma-ket bir necha marta) · diagonal yo‘q · urish yo‘q<br>⚠️ 40-yurishdan keyin o‘z uyingizda dona qolsa — mag‘lubiyat</div>' +
       '<div class="sec">🤖 BOT BILAN</div><div class="cd"><div class="chips" id="lv">' + LV.map(function (l) { return '<button data-v="' + l[0] + '"' + (l[0] === lv ? ' class="on"' : '') + '>' + l[1] + '</button>'; }).join('') + '</div>' +
@@ -114,7 +118,7 @@ svg.path{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-even
     pick('lv', 'lv', 1, lvd); pick('sd', 'side', 1); pick('tc', 'tc', 0); lvd(); GSND.bind(A);
     if (/[?&]m=net/.test(location.search) && !window.__ugNet) { window.__ugNet = 1; var nt = document.getElementById('tc'); if (nt) setTimeout(function () { nt.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100); }
     document.getElementById('bgo').onclick = function () { startBot(LS.get('lv', 2), LS.get('side', 1)); };
-    document.getElementById('ngo').onclick = function () { NET = { create: 1 }; waitUi(null); net(function () { snd({ type: 'ugCreate', tc: LS.get('tc', '3+2'), init: initData() }); }); };
+    document.getElementById('ngo').onclick = function () { NET = { create: 1 }; waitUi(null); net(function () { snd({ type: 'ugCreate', tc: tcSaved(), init: initData() }); }); };
   }
 
   // ---------- bot bilan
@@ -153,7 +157,7 @@ svg.path{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-even
   }
   function waitUi(code, joining) {   // kod ko'rsatilmaydi — faqat havola
     A.innerHTML = '<div class="top"><button class="bk" id="bk">‹</button><b>' + (joining ? '⏳ Ulanmoqda…' : '👥 Do‘st kutilmoqda') + '</b></div>' +
-      '<div class="cd" style="text-align:center"><div style="font-size:42px">🏁</div>' + (joining ? '<div class="muted">O‘yinga ulanmoqda…</div>' : code ? '<div class="muted" style="margin:6px 0">Havola do‘stingizga yuborildi. U bosishi bilan o‘yin boshlanadi.</div><button class="go" id="sh">📤 Yana yuborish</button><button class="go g2" id="cp">🔗 Havolani nusxalash</button>' : '<div class="muted">Xona ochilmoqda…</div>') + '</div>';
+      '<div class="cd" style="text-align:center"><div style="font-size:42px">🏁</div>' + (joining ? '<div class="muted">O‘yinga ulanmoqda…</div>' : code ? '<div class="muted" style="margin:6px 0">Havola do‘stingizga yuborildi. U bosishi bilan o‘yin boshlanadi.</div><button class="go" id="sh">📤 Yana yuborish</button><button class="go g2" id="cp">🔗 Havolani nusxalash</button>' : '<div class="muted">Xona ochilmoqda…</div>') + '<div id="tcw"></div></div>';
     document.getElementById('bk').onclick = menu;
     var sh = document.getElementById('sh'); if (sh) sh.onclick = function () { share(code); };
     var cp = document.getElementById('cp'); if (cp) cp.onclick = function () { try { navigator.clipboard.writeText(link(code)); cp.textContent = '✅ Nusxalandi'; } catch (e) { prompt('Havola:', link(code)); } };
@@ -174,7 +178,7 @@ svg.path{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-even
         G = { mode: 'wait', code: m.code, st: UG.start(), me: mySide, watch: true, sel: -1, names: {}, m: m, hist: [] };
         G.names[mySide] = (m.players[m.mi] || {}).name || myName(); G.names[3 - mySide] = (m.mi === 1 ? hn : fn) || 'Raqib kutilmoqda…';
         draw();
-        var stE = A.querySelector('.st'); if (stE) { stE.innerHTML = '⏳ ' + tx; stE.style.lineHeight = '1.5'; }
+        var stE = A.querySelector('.st'); if (stE) { stE.innerHTML = '⏳ ' + tx + tcPick(m); stE.style.lineHeight = '1.5'; tcBind(m); }
         var btE = A.querySelector('.btns'); if (btE) btE.style.display = 'none';
         var bkE = document.getElementById('bk'); if (bkE) bkE.onclick = menu;
         return;
@@ -182,7 +186,7 @@ svg.path{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-even
       A.innerHTML = '<div class="top"><button class="bk" id="bk">‹</button><b>⏳ Kutilmoqda</b></div><div class="cd" style="text-align:center;line-height:1.6"><div style="font-size:42px">' + '🏁' + '</div>' + tx + '</div>';
       document.getElementById('bk').onclick = menu; return;
     }
-    if (m.status === 'wait') { if (!NET.waitShown) { NET.waitShown = 1; waitUi(m.code); if (NET.create) share(m.code); } return; }
+    if (m.status === 'wait') { if (!NET.waitShown) { NET.waitShown = 1; waitUi(m.code); if (NET.create) share(m.code); } var tw = document.getElementById('tcw'); if (tw) { tw.innerHTML = tcPick(m); tcBind(m); } return; }
     var was = G && G.mode === 'net' ? G.st : null, wasOver = was && was.over;
     var st = { b: m.b.split('').map(Number), turn: m.turn, ply: m.ply, last: m.last, pend: m.pend, over: m.res != null, res: m.res, why: m.why };
     G = G && G.mode === 'net' && G.code === m.code ? G : { mode: 'net', code: m.code, sel: -1, names: {} };
