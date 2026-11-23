@@ -85,13 +85,22 @@
 #tlList .r .btns .cta{flex:2;background:linear-gradient(90deg,#6366f1,#8b5cf6)}
 #tlList .r .btns button:active{filter:brightness(.88);transform:translateY(1px)}
 `; document.head.appendChild(c4);
+  var c5 = document.createElement('style'); c5.textContent = `/*tlCardV5*/
+#tlList .r{box-shadow:none!important;background:rgba(0,0,0,.38)!important;border-color:rgba(255,255,255,.13)!important}
+#tlList .r::before{display:none!important}
+#tlList .r .b-reg{background:rgba(91,141,239,.22)!important}
+#tlList .r .b-run{background:rgba(76,224,138,.16)!important}
+#tlList .r .b-fin{background:rgba(255,255,255,.09)!important}
+#tlList .r .rw{margin:7px 0}
+#tlList .r .sbar{margin:10px 0 4px;font-size:14px}
+`; document.head.appendChild(c5);
 
   var tab = 'live', sig = '';
   function rowOf(t, u) {
     var sp = speed(t.tc), ps = t.players || [], bots = 0, hum = 0, inn = false, now = Date.now();
     ps.forEach(function (p) { if (p.bot) bots++; else hum++; if (String(p.uid) === u && !p.withdrawn) inn = true; });
     var kind = t.mix ? '🔀 Miks · ' + t.mix.length + ' o‘yin' : t.type === 'arena' ? '' : t.type === 'swiss' ? 'Shveytsariya' + (t.roundsWanted ? ' · ' + t.roundsWanted + ' tur' : '') : t.type === 'olympic' || t.type === 'ko' ? 'Olimpiya tizimi' : 'Turnir';
-    var name = String(t.name || 'Turnir').replace(/^[^\p{L}\p{N}]+\s*/u, '');
+    var name = String(t.name || 'Turnir').replace(/^[^\p{L}\p{N}]+\s*/u, '').replace(/[\s\p{Extended_Pictographic}\uFE0F]+$/u, '');
     var empty = !hum && !bots && t.status !== 'finished';
     var sub = (t.tc && t.tc !== '∞' && !t.mix ? esc(tcTxt(t.tc)) + ' ' + sp[1] + ' · ' : '') + (kind ? kind + ' · ' : '') + (empty ? '<span class="y">Bo‘sh — qo‘shiling!</span>' : hum + ' o‘yinchi') + (bots ? ' · 🤖 ' + bots : '') +
       ((t.clubIds || []).length ? ' · 👥 ' + ((t.clubIds || []).length > 1 ? 'klublar jangi' : 'klub') : '') + (t.prize ? ' · <span class="p">🏆 ' + t.prize + '</span>' : '') + (inn ? ' · <span class="y">✓ siz</span>' : '');
@@ -112,7 +121,7 @@
     var top0 = ps.filter(function (p) { return p.games > 0 || p.score > 0; })[0] || ps[0];
     var bcl = t.status === 'running' ? 'b-run' : t.status === 'finished' ? 'b-fin' : 'b-reg';
     var btx = t.status === 'running' ? 'O‘ynalmoqda' : t.status === 'finished' ? 'Tugagan' : 'Faol';
-    var sbt = t.status === 'running' ? (t.ending ? 'Yakunlanmoqda…' : 'O‘ynalmoqda' + (t.round ? ' · ' + t.round + (t.rounds ? ' / ' + t.rounds : '') + '-tur' : '') + (t.endAt ? ' · tugashiga ' + dur(t.endAt - now) : '')) : t.status === 'finished' ? 'Yakunlandi' + (top0 ? ' · 🥇 ' + esc(String(top0.name || '').replace(/^🤖\s*/, '').slice(0, 18)) : '') : (t.startAt ? (t.startAt > now ? 'Boshlanishiga ' + dur(t.startAt - now) : 'Boshlanmoqda') : 'Ro‘yxat ochiq');
+    var sbt = t.status === 'running' ? (t.ending ? 'Yakunlanmoqda…' : 'O‘ynalmoqda' + (t.round ? ' · ' + t.round + (t.rounds ? ' / ' + t.rounds : '') + '-tur' : '') + (t.endAt ? ' · tugashiga ' + dur(t.endAt - now) : '')) : t.status === 'finished' ? 'Yakunlandi' + (top0 ? ' · 🥇 ' + esc(String(top0.name || '').replace(/^🤖\s*/, '').slice(0, 18)) : '') : (t.startAt ? (t.startAt > now ? 'Boshlanishiga ' + dur(t.startAt - now) + ' · ' + (dayLbl(t.startAt) || 'Bugun ') + f2(new Date(t.startAt).getHours()) + ':' + f2(new Date(t.startAt).getMinutes()) : 'Boshlanmoqda') : 'Ro‘yxat ochiq');
     var R = function (ic, tx) { return '<div class="rw"><i>' + ic + '</i><span>' + tx + '</span></div>'; };
     var fmtTx = (t.pos === 'idf' ? 'IDF 780' : 'Standart') + (t.tc && t.tc !== '∞' && !t.mix ? ' · ' + esc(tcTxt(t.tc)) + (sp[1] ? ' ' + sp[1] : '') : '') + (kind ? ' · ' + kind : '');
     var feat = '';
@@ -120,7 +129,7 @@
     feat += '<span class="c">' + (t.rated === false ? '🤝 Reytingsiz' : '⭐ Reytingli') + '</span>';
     if ((t.clubIds || []).length) feat += '<span class="c">🛡 ' + ((t.clubIds || []).length > 1 ? 'klublar jangi' : 'klub') + '</span>';
     var cta = t.status === 'finished' ? 'Natijalar' : inn ? 'Turnirga kirish' : 'Qatnashaman';
-    return '<div class="r' + (inn ? ' me' : '') + scl + '" data-tid="' + esc(t.id) + '"><div class="hd"><span class="i ' + spk + '">' + (t.mix ? '🔀' : t.type === 'arena' ? sp[0] : '🏆') + '</span><b class="nm">' + esc(name) + '</b><span class="bdg ' + bcl + '">' + btx + '</span></div><div class="sbar ' + bcl + '">⏳ ' + sbt + '</div>' + (t.startAt ? R('📅', 'Boshlanish: <b>' + dt(t.startAt) + '</b>') : '') + R('♟', fmtTx) + '<div class="ft">' + feat + '</div>' + R('👥', 'Ishtirokchilar: <b>' + hum + '</b>' + (bots ? ' · 🤖 ' + bots : '') + (empty ? ' · <span class="y">qo‘shiling!</span>' : '')) + (t.prize ? R('🪙', 'Mukofot: <b>' + t.prize + '</b> (' + (t.places || 3) + ' o‘ringa)') : '') + (t.creatorName ? R('👤', 'Yaratuvchi: <b class="cr">' + esc(t.creatorName) + '</b>') : '') + '<div class="btns">' + (t.status === 'finished' ? '' : '<button type="button">👁 Kuzatish</button>') + '<button type="button" class="cta">' + cta + '</button></div></div>';
+    return '<div class="r' + (inn ? ' me' : '') + scl + '" data-tid="' + esc(t.id) + '"><div class="hd"><span class="i ' + spk + '">' + (t.mix ? '🔀' : t.type === 'arena' ? sp[0] : '🏆') + '</span><b class="nm">' + esc(name) + '</b><span class="bdg ' + bcl + '">' + btx + '</span></div><div class="sbar ' + bcl + '">⏳ ' + sbt + '</div>' + R('♟', fmtTx) + '<div class="ft">' + feat + '</div>' + R('👥', 'Ishtirokchilar: <b>' + hum + '</b>' + (bots ? ' · 🤖 ' + bots : '') + (empty ? ' · <span class="y">qo‘shiling!</span>' : '')) + (t.prize ? R('🪙', 'Mukofot: <b>' + t.prize + '</b> (' + (t.places || 3) + ' o‘ringa)') : '') + (t.creatorName ? R('👤', 'Yaratuvchi: <b class="cr">' + esc(t.creatorName) + '</b>') : '') + '<div class="btns">' + (t.status === 'running' ? '<button type="button">👁 Kuzatish</button>' : '') + '<button type="button" class="cta">' + cta + '</button></div></div>';
   }
   function render() {
     var bx = g('lbT'); if (!bx) return;
