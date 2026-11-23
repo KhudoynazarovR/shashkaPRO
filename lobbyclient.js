@@ -54,7 +54,7 @@
     else if (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param && !/^(ref_|pz_|pf_|go_|shop_|pb_|pzt_|ntf_|mm_|ug_|du_|rp_|prem$|corr_|perf$)/.test(tg.initDataUnsafe.start_param)) curRoom = String(tg.initDataUnsafe.start_param);
     // havola orqali kirish: startapp=lbt_<turnir> / lbs_<sians> yoki ?t= / ?s=
     var linkTid = "", linkSid = "", linkFid = "";
-    if (/^lbt_/.test(curRoom)) { linkTid = curRoom.slice(4); curRoom = ""; window.__tvLinkTid = linkTid; }
+    if (/^lbt_/.test(curRoom)) { var _tp = curRoom.slice(4), _rm = _tp.match(/^(.+)_r(\d{3,15})$/); if (_rm) { _tp = _rm[1]; window.__tRefInv = _rm[2]; } linkTid = _tp; curRoom = ""; window.__tvLinkTid = linkTid; }
     else if (/^lbs_/.test(curRoom)) { linkSid = curRoom.slice(4); curRoom = ""; }
     else if (/^lbf_/.test(curRoom)) { linkFid = curRoom.slice(4); curRoom = ""; }
     else {
@@ -1011,6 +1011,7 @@
       }
       setInterval(function () {
         try {
+          if (window.__tRefInv && S.me && !window.__tRefDone && !localStorage.getItem("tRefSent_" + window.__tRefInv)) { window.__tRefDone = true; localStorage.setItem("tRefSent_" + window.__tRefInv, "1"); sendMsg({ type: "lbTRef", ref: window.__tRefInv }); }
           if (!sent && /^ref_/.test(sp) && S.me && !localStorage.getItem("refSent")) {
             sent = true; localStorage.setItem("refSent", "1"); sendMsg({ type: "lbRef", ref: sp });
           }

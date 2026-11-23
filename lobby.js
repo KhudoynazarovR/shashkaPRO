@@ -1905,6 +1905,27 @@ function createLobby({ send, clients, roomsApi }) {
         push();
         break;
       }
+      case 'lbTRef': {
+        if (!c.lb || !c.lb.tg) break;
+        const inv = String(m.ref || '').replace(/[^0-9]/g, '');
+        if (!inv || inv === String(me.uid)) break;
+        const rj = require('./ref.js').join(me.uid, inv);
+        if (rj) { toast(rj.inviter, '👋 Do‘stingiz ' + rj.name + ' qo‘shildi! 3 ta o‘yin o‘ynasa +100 🪙'); push(); break; }
+        const st0 = require('./store.js');
+        if (!st0.users()[inv]) break;
+        const db0 = st0.db, TR = db0.tRef = db0.tRef || { seen: {}, day: '', c: {} };
+        const dy = new Date(Date.now() + 5 * 3600e3).toISOString().slice(0, 10);
+        if (TR.day !== dy) { TR.day = dy; TR.c = {}; }
+        const kk = inv + ':' + me.uid;
+        if (TR.seen[kk] || (TR.c[inv] || 0) >= 50) break;
+        TR.seen[kk] = 1; TR.c[inv] = (TR.c[inv] || 0) + 5;
+        require('./economy.js').add(inv, 5, 'ref-tour');
+        st0.save();
+        const msg0 = '🏆 ' + (me.name || 'O‘yinchi') + ' havolangiz orqali turnirga keldi: +5 🪙';
+        toast(inv, msg0);
+        try { tgCall('sendMessage', { chat_id: Number(inv), text: msg0 }).catch(() => {}); } catch (e) {}
+        break;
+      }
       case 'lbRef': {
         if (!c.lb || !c.lb.tg) break;
         const r = require('./ref.js').join(me.uid, m.ref);   // 👥 bonus endi o'yinlar soniga qarab (ref.js)
