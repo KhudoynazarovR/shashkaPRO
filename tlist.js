@@ -94,6 +94,7 @@
 #tlList .r .rw{margin:7px 0}
 #tlList .r .sbar{margin:10px 0 4px;font-size:14px}
 `; document.head.appendChild(c5);
+  var c6 = document.createElement('style'); c6.textContent = '/*tlShareV1*/#tlList .r .btns .shr{flex:0 0 52px;font-size:19px;padding:0}'; document.head.appendChild(c6);
 
   var tab = 'live', sig = '';
   function rowOf(t, u) {
@@ -129,7 +130,7 @@
     feat += '<span class="c">' + (t.rated === false ? '🤝 Reytingsiz' : '⭐ Reytingli') + '</span>';
     if ((t.clubIds || []).length) feat += '<span class="c">🛡 ' + ((t.clubIds || []).length > 1 ? 'klublar jangi' : 'klub') + '</span>';
     var cta = t.status === 'finished' ? 'Natijalar' : inn ? 'Turnirga kirish' : 'Qatnashaman';
-    return '<div class="r' + (inn ? ' me' : '') + scl + '" data-tid="' + esc(t.id) + '"><div class="hd"><span class="i ' + spk + '">' + (t.mix ? '🔀' : t.type === 'arena' ? sp[0] : '🏆') + '</span><b class="nm">' + esc(name) + '</b><span class="bdg ' + bcl + '">' + btx + '</span></div><div class="sbar ' + bcl + '">⏳ ' + sbt + '</div>' + R('♟', fmtTx) + '<div class="ft">' + feat + '</div>' + R('👥', 'Ishtirokchilar: <b>' + hum + '</b>' + (bots ? ' · 🤖 ' + bots : '') + (empty ? ' · <span class="y">qo‘shiling!</span>' : '')) + (t.prize ? R('🪙', 'Mukofot: <b>' + t.prize + '</b> (' + (t.places || 3) + ' o‘ringa)') : '') + (t.creatorName ? R('👤', 'Yaratuvchi: <b class="cr">' + esc(t.creatorName) + '</b>') : '') + '<div class="btns">' + (t.status === 'running' ? '<button type="button">👁 Kuzatish</button>' : '') + '<button type="button" class="cta">' + cta + '</button></div></div>';
+    return '<div class="r' + (inn ? ' me' : '') + scl + '" data-tid="' + esc(t.id) + '"><div class="hd"><span class="i ' + spk + '">' + (t.mix ? '🔀' : t.type === 'arena' ? sp[0] : '🏆') + '</span><b class="nm">' + esc(name) + '</b><span class="bdg ' + bcl + '">' + btx + '</span></div><div class="sbar ' + bcl + '">⏳ ' + sbt + '</div>' + R('♟', fmtTx) + '<div class="ft">' + feat + '</div>' + R('👥', 'Ishtirokchilar: <b>' + hum + '</b>' + (bots ? ' · 🤖 ' + bots : '') + (empty ? ' · <span class="y">qo‘shiling!</span>' : '')) + (t.prize ? R('🪙', 'Mukofot: <b>' + t.prize + '</b> (' + (t.places || 3) + ' o‘ringa)') : '') + (t.creatorName ? R('👤', 'Yaratuvchi: <b class="cr">' + esc(t.creatorName) + '</b>') : '') + '<div class="btns"><button type="button" class="shr" data-share="' + esc(t.id) + '" title="Ulashish">📤</button>' + (t.status === 'running' ? '<button type="button">👁 Kuzatish</button>' : '') + '<button type="button" class="cta">' + cta + '</button></div></div>';
   }
   function render() {
     var bx = g('lbT'); if (!bx) return;
@@ -147,7 +148,7 @@
       g('tlAdd').onclick = function () { if (window.lbTPlus) window.lbTPlus(); try { enhanceForm(); } catch (e) {} var f = g('lbTform'); if (f && f.style.display !== 'none') setTimeout(function () { f.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 50); };
       tb.onclick = function (e) { var b = e.target.closest('[data-tb]'); if (!b) return; tab = b.getAttribute('data-tb'); [].forEach.call(tb.children, function (x) { x.classList.toggle('on', x === b); }); sig = ''; render(); };
       tb.__set = function (k) { tab = k; [].forEach.call(tb.children, function (x) { x.classList.toggle('on', x.getAttribute('data-tb') === k); }); };
-      ls.onclick = function (e) { var r = e.target.closest('[data-tid]'); if (!r) return; var id = r.getAttribute('data-tid'); if (window.tvOpen) window.tvOpen(id); };
+      ls.onclick = function (e) { var sh = e.target.closest('[data-share]'); if (sh) { var rr = sh.closest('[data-tid]'); var tid = sh.getAttribute('data-share'); var nm = ((rr && rr.querySelector('.nm')) || {}).textContent || 'Turnir'; var sb = ((rr && rr.querySelector('.sbar')) || {}).textContent || ''; var base = window.TG_APP_LINK || 'https://t.me/DraughtsPRObot/play'; var url = base + '?startapp=lbt_' + encodeURIComponent(tid); var txt = '🏆 ' + nm + '\n' + sb.replace('⏳', '').trim() + '\nShashkaPRO turniriga qo‘shiling!'; var su = 'https://t.me/share/url?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(txt); try { var tgw = window.Telegram && window.Telegram.WebApp; if (tgw && tgw.openTelegramLink) tgw.openTelegramLink(su); else window.open(su, '_blank'); } catch (x) { window.open(su, '_blank'); } return; } var r = e.target.closest('[data-tid]'); if (!r) return; var id = r.getAttribute('data-tid'); if (window.tvOpen) window.tvOpen(id); };
     }
     // 👥 Klublar tabi: mavjud klublar paneli (#lbClubs) shu yerga ko'chadi; boshqa tablarda yashirin
     var club = tab === 'club', cl = g('lbClubs'), lsE = g('tlList'), tbE = g('tlTabs');
