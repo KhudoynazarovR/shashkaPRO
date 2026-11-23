@@ -649,12 +649,21 @@ function createLobby({ send, clients, roomsApi }) {
   function ratedGames(uid) { try { const u = require('./store').users()[String(uid)]; return u ? (Number(u.games) || ((u.wins || 0) + (u.losses || 0) + (u.draws || 0))) : 0; } catch (e) { return 0; } }
   function olyElo(uid) { try { const u = require('./store').users()[String(uid)]; return u ? (Number(u.elo) || 1000) : 1000; } catch (e) { return 1000; } }
 
+  function roundDm(uid, oppName, t, tcTxt) {   // 🔔 yangi tur: ilovada bo'lmagan o'yinchiga bot xabari
+    try {
+      if (!/^\d+$/.test(String(uid)) || connsOf(uid).length) return;
+      try { if (!require('./notify.js').allowed(uid, 'arena')) return; } catch (e) {}
+      const al = (process.env.TG_APP_LINK || process.env.APP_LINK || '').replace(/\/$/, '') || 'https://t.me/DraughtsPRObot/play';
+      tgCall('sendMessage', { chat_id: Number(uid), text: '⚔️ ' + t.name + ' · ' + t.round + '-tur boshlandi!\nRaqibingiz: ' + String(oppName || '').replace(/^🤖\s*/, '').slice(0, 30) + (tcTxt ? '\n⏱ ' + tcTxt : '') + '\nKechiksangiz, texnik mag‘lubiyat berilishi mumkin.', reply_markup: { inline_keyboard: [[{ text: '▶ O‘yinga kirish', url: al + '?startapp=lbt_' + t.id }]] } }).catch(() => {});
+    } catch (e) {}
+  }
   function olyOpenBoard(t, b, tcN) {
     const W = t.players.get(b.white), B = t.players.get(b.black);
     if (!W || !B) return;
     openRoom(b.roomId, tcN, W, B, false, t.pos === 'idf' ? pickOpening() : null);
     sendUid(b.white, { type: 'lbGo', roomId: b.roomId, reason: 'tournament', tname: t.name, round: t.round, color: 'white', opponent: B.name, tc: tcN });
     sendUid(b.black, { type: 'lbGo', roomId: b.roomId, reason: 'tournament', tname: t.name, round: t.round, color: 'black', opponent: W.name, tc: tcN });
+    roundDm(b.white, B.name, t, tcN); roundDm(b.black, W.name, t, tcN);
     const nid = b.roomId, rn = t.round;
     const to = setTimeout(() => { if (t.status === 'running' && t.round === rn && !b.done && b.roomId === nid) forfeitIdle(b); }, NOSHOW_MS);
     if (to.unref) to.unref();
@@ -792,6 +801,7 @@ function createLobby({ send, clients, roomsApi }) {
       roomToBoard.set(roomId, { t, b: board });
       sendUid(w.uid, { type: 'lbGo', roomId, reason: 'tournament', tname: t.name, round: t.round, color: 'white', opponent: b.name, tc: tcR });
       sendUid(b.uid, { type: 'lbGo', roomId, reason: 'tournament', tname: t.name, round: t.round, color: 'black', opponent: w.name, tc: tcR });
+      roundDm(w.uid, b.name, t, tcR); roundDm(b.uid, w.name, t, tcR);
     });
     sysChat(t, { sys: 'round', text: t.round + '-tur boshlandi · ' + t.cur.length + ' ta doska' });
     const roundNo = t.round;
