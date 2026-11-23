@@ -1437,15 +1437,28 @@ document.head.appendChild(_as); }
       var h = "";
       window.__tOpen = window.__tOpen || {};
     (function () { if (document.getElementById("tkStyle")) return; var st = document.createElement("style"); st.id = "tkStyle"; st.textContent = `
-.lbtk{background:#151a38;border:1px solid #2a3160;border-radius:20px;padding:14px;margin:12px 0}
-.lbtk>div:first-child{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:18px}
+.lbtk{background:linear-gradient(160deg,#181e45,#12162f);border:1px solid #2a3160;border-radius:18px;padding:14px;margin:12px 0}
+.lbtk.lbta{border-color:#5b4a9e}
+.tkh{display:flex;align-items:center;gap:10px;cursor:pointer}
+.tki{width:44px;height:44px;border-radius:12px;background:#222a5a;display:flex;align-items:center;justify-content:center;font-size:22px;flex:none}
+.lbtk.lbta .tki{background:#3a2f6e}
+.tkn{flex:1;min-width:0;font-size:17px;font-weight:700;color:#fff;line-height:1.25;word-break:break-word}
+.tkn small{display:block;font-size:12px;font-weight:400;color:#8f97c8;margin-top:3px}
 .tkb{font-size:12px;padding:5px 10px;border-radius:10px;white-space:nowrap;font-weight:600;background:#1d2a5c;color:#7ea6ff}
 .tkb_running{background:#143d33;color:#2ecc71}
 .tkb_finished{background:#2a2f4a;color:#9aa0c0}
-.lbtk .muted{margin-top:6px}
+.tks{margin-top:12px;padding:9px 12px;border-radius:10px;font-size:14px;font-weight:600;background:#1b2350;color:#9fb8ff}
+.tks_running{background:#143d33;color:#4ee08a}
+.tks_finished{background:#2a2f4a;color:#9aa0c0}
+.tkg{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.tkc{font-size:12px;padding:5px 10px;border-radius:8px;background:#1e2552;color:#c3c9ee}
+.tkf{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 12px;margin-top:12px;font-size:13px;color:#8f97c8}
+.tkf b{color:#fff}
 .tkd{color:#aab0d6;font-size:14px;margin:6px 0}
 .tkd b{color:#fff}
-.lbtk .row{margin-top:10px;gap:8px;flex-wrap:wrap}
+.lbtk .muted{margin-top:6px}
+.lbtk .row{margin-top:12px;gap:8px;flex-wrap:wrap}
+.lbtk .row button{flex:1 1 calc(50% - 8px);min-width:110px}
 .lbtk .tbody{border:1px solid #2a3160;border-radius:14px;margin-top:12px}
 .lbtk table{width:100%;border-collapse:collapse;font-size:14px}
 .lbtk th{color:#8087b8;font-size:11px;text-transform:uppercase;text-align:left;padding:9px 8px;background:#1c2250}
@@ -1464,8 +1477,15 @@ document.head.appendChild(_as); }
         if (t.prize > 0) _ex.push("🪙 Mukofot: " + t.prize + " (" + (t.places || 3) + " o‘ringa)");
         if (arena) _ex.push(t.berserk === false ? "⚡ Berserk yo‘q" : "⚡ Berserk");
         _ex.push(t.rated === false ? "🤝 Reytingsiz" : "⭐ Reytingli");
-        if (_ex.length) st += (st ? "<br>" : "") + _ex.join(" · ");
-        h += "<div class=\"card lbtk " + (arena ? "lbta" : "lbts") + "\" id=\"lbtc_" + esc(t.id) + "\"><div style=\"cursor:pointer\" onclick=\"lbTog('" + esc(t.id) + "')\"><b>" + (arena ? "⚔️" : "🏆") + " " + esc(t.name) + " ▾</b><span class=\"tkb tkb_" + t.status + "\">" + (t.status === "reg" ? "Ro‘yxat ochiq" : (t.status === "running" ? "O‘ynalmoqda" : "Tugagan")) + "</span></div><div class=\"muted\">⏱ " + esc(t.tc) + " · " + (t.pos === "idf" ? "IDF 780" : "♟ Standart") + "</div><div class=\"tkd\">" + st + "</div><div class=\"tkd\">👥 Ishtirokchilar: <b>" + t.players.length + "</b></div><div class=\"tkd\">👤 Yaratuvchi: <b>" + esc(t.creatorName) + "</b>" + "</div><div class=\"row\">";
+        var _st0 = st; if (_ex.length) st += (st ? "<br>" : "") + _ex.join(" · ");
+        var _bs = t.status === "reg" ? "Ro‘yxat ochiq" : (t.status === "running" ? "O‘ynalmoqda" : "Tugagan");
+        var _chips = _ex.map(function (x) { return "<span class=\"tkc\">" + x + "</span>"; }).join("");
+        h += "<div class=\"card lbtk " + (arena ? "lbta" : "lbts") + "\" id=\"lbtc_" + esc(t.id) + "\">" +
+          "<div class=\"tkh\" onclick=\"lbTog('" + esc(t.id) + "')\"><div class=\"tki\">" + (arena ? "⚔️" : "🏆") + "</div><div class=\"tkn\">" + esc(t.name) + "<small>⏱ " + esc(t.tc) + " · " + (t.pos === "idf" ? "IDF 780" : "♟ Standart") + "</small></div><span class=\"tkb tkb_" + t.status + "\">" + _bs + "</span></div>" +
+          (_st0 ? "<div class=\"tks tks_" + t.status + "\">" + _st0 + "</div>" : "") +
+          "<div class=\"tkg\">" + _chips + "</div>" +
+          "<div class=\"tkf\"><span>👥 Ishtirokchilar: <b>" + t.players.length + "</b></span><span>👤 Yaratuvchi: <b>" + esc(t.creatorName) + "</b></span></div>" +
+          "<div class=\"row\">";
         h += "<button class=\"sec\" data-a=\"tlink\" data-id=\"" + esc(t.id) + "\" data-n=\"" + esc(t.name) + "\">🔗 Havola</button>";
         if (t.status === "reg") {
           if (!joined) h += "<button data-a=\"tj\" data-id=\"" + t.id + "\">Qo‘shilish</button>";
