@@ -42,6 +42,27 @@
     '#tlList .w{text-align:right;font-size:12.5px;color:#d6ccbd;white-space:nowrap;flex:none}#tlList .w b{display:block;color:#fff;font-size:15px}#tlList .w b.l{color:#6cc04a}' +
     '#tlList .e{padding:28px 10px;text-align:center;color:var(--spMute,#b9ab98)}#tlList .e button{margin-top:12px;border:0;border-radius:12px;padding:11px 18px;background:#81b64c;color:#fff;font-weight:700;font-size:15px}';
   var stl = document.createElement('style'); stl.textContent = css; document.head.appendChild(stl);
+  var ccss = document.createElement('style'); ccss.textContent = `/*tlCardV2*/
+#tlList .r{display:block;padding:12px;margin:8px 0;border:1px solid rgba(255,255,255,.1);border-radius:16px;background:rgba(255,255,255,.05);box-shadow:inset 4px 0 0 var(--ac,#5b8def)}
+#tlList .r.s-run{--ac:#6cc04a}
+#tlList .r.s-fin{--ac:#7b8196}
+#tlList .r.me{background:rgba(108,192,74,.1);border-color:rgba(108,192,74,.4)}
+#tlList .r .top{display:flex;align-items:flex-start;gap:12px}
+#tlList .r .i{width:44px;height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:24px;flex:none;background:rgba(255,255,255,.08)}
+#tlList .r .i.k-gp,#tlList .r .i.k-mx{background:rgba(170,120,255,.24)}
+#tlList .r .i.k-bl{background:rgba(91,141,239,.26)}
+#tlList .r .i.k-bz{background:rgba(255,140,60,.24)}
+#tlList .r .i.k-rp{background:rgba(108,192,74,.22)}
+#tlList .r .i.k-kl{background:rgba(64,200,190,.22)}
+#tlList .r .i.k-tr{background:rgba(245,183,43,.22)}
+#tlList .r .t{padding-top:2px}
+#tlList .r .t b{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.3;word-break:break-word}
+#tlList .r .w{padding-top:1px}
+#tlList .r .chs{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+#tlList .r .c{font-size:12.5px;padding:4px 9px;border-radius:8px;background:rgba(255,255,255,.08);color:#d6ccbd}
+#tlList .r .c.p{background:rgba(245,183,43,.16);color:#f5b72b}
+#tlList .r .c.y{background:rgba(134,239,172,.14);color:#86efac}
+`; document.head.appendChild(ccss);
 
   var tab = 'live', sig = '';
   function rowOf(t, u) {
@@ -56,7 +77,16 @@
     if (t.status === 'running') w = t.ending ? '<b class="l">yakunlanmoqda</b>oxirgi o‘yinlar' : t.endAt ? '<b class="l">' + dur(t.endAt - now) + '</b>tugashiga' : '<b class="l">' + (t.round ? t.round + '-tur' : 'jonli') + '</b>' + (t.rounds ? t.rounds + ' turdan' : 'o‘ynalmoqda');
     else if (t.status === 'reg') w = t.startAt ? '<b>' + dayLbl(t.startAt) + f2(new Date(t.startAt).getHours()) + ':' + f2(new Date(t.startAt).getMinutes()) + '</b>' + (t.startAt > now ? dur(t.startAt - now) + ' qoldi' : 'boshlanmoqda') : '<b>Ro‘yxat</b>ochiq';
     else { var top = ps.filter(function (p) { return p.games > 0 || p.score > 0; })[0] || ps[0]; w = '<b>' + (top ? '🥇 ' + esc(String(top.name || '').replace(/^🤖\s*/, '').slice(0, 14)) : 'Tugadi') + '</b>' + (t.endAt ? dayLbl(t.endAt) + f2(new Date(t.endAt).getHours()) + ':' + f2(new Date(t.endAt).getMinutes()) : 'tugadi'); }
-    return '<div class="r' + (inn ? ' me' : '') + '" data-tid="' + esc(t.id) + '"><span class="i">' + (t.mix ? '🔀' : t.type === 'arena' ? sp[0] : '🏆') + '</span><div class="t"><b>' + esc(name) + '</b><small>' + sub + '</small></div><div class="w">' + w + '</div></div>';
+    var spk = t.mix ? 'k-mx' : t.type === 'arena' ? (sp[1] === 'Giper' ? 'k-gp' : sp[1] === 'Bullet' ? 'k-bl' : sp[1] === 'Blits' ? 'k-bz' : sp[1] === 'Tezkor' ? 'k-rp' : 'k-kl') : 'k-tr';
+    var scl = t.status === 'running' ? ' s-run' : t.status === 'finished' ? ' s-fin' : '';
+    var ch = '';
+    if (t.tc && t.tc !== '∞' && !t.mix) ch += '<span class="c">⏱ ' + esc(tcTxt(t.tc)) + (sp[1] ? ' · ' + sp[1] : '') + '</span>';
+    if (kind) ch += '<span class="c">' + kind + '</span>';
+    ch += empty ? '<span class="c y">Bo‘sh — qo‘shiling!</span>' : '<span class="c">👥 ' + hum + (bots ? ' · 🤖 ' + bots : '') + '</span>';
+    if ((t.clubIds || []).length) ch += '<span class="c">🛡 ' + ((t.clubIds || []).length > 1 ? 'klublar jangi' : 'klub') + '</span>';
+    if (t.prize) ch += '<span class="c p">🏆 ' + t.prize + '</span>';
+    if (inn) ch += '<span class="c y">✓ siz</span>';
+    return '<div class="r' + (inn ? ' me' : '') + scl + '" data-tid="' + esc(t.id) + '"><div class="top"><span class="i ' + spk + '">' + (t.mix ? '🔀' : t.type === 'arena' ? sp[0] : '🏆') + '</span><div class="t"><b>' + esc(name) + '</b></div><div class="w">' + w + '</div></div><div class="chs">' + ch + '</div></div>';
   }
   function render() {
     var bx = g('lbT'); if (!bx) return;
