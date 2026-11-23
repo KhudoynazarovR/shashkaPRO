@@ -237,7 +237,7 @@
               post("/api/social/like", { uid: String(d.id) }).then(function (r) { lb.disabled = false; if (r.likes != null) lb.innerHTML = "❤️ " + r.likes + (r.ok ? " · rahmat!" : ""); if (r.error) { lb.innerHTML = "❤️ " + (r.likes != null ? r.likes + " · " : "") + esc(r.error); } });
             });
             fetch("/api/social/user?uid=" + encodeURIComponent(d.id), { headers: { "x-init-data": (tg && tg.initData) || "" } }).then(function (r) { return r.json(); }).then(function (r) {
-              if (!r || r.error) return; lb.innerHTML = (r.liked ? "❤️ " : "🤍 ") + r.likes + (r.liked ? " · bugun yoqtirdingiz" : " · Yoqdi"); lb.title = r.rank;
+              if (!r || r.error) return; lb.innerHTML = (r.liked ? "❤️ " : "🤍 ") + r.likes + (r.liked ? " · yoqtirdingiz" : " · Yoqdi"); lb.title = r.rank;
             }).catch(function () {});
           })();
           var my = d.myDiamonds || 0, F = d.giftFee || [0.05, 5];

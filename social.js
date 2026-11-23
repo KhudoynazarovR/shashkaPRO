@@ -29,9 +29,9 @@ function like(me, uid) {
   if (me === String(uid)) return { error: 'O‘zingizga like bosib bo‘lmaydi' };
   if ((a.games || 0) < 3) return { error: 'Like bosish uchun kamida 3 ta o‘yin o‘ynang' };
   b.lkBy = b.lkBy || {};
-  if (b.lkBy[me] === day()) return { error: 'Bugun allaqachon like bosgansiz', likes: b.lk || 0, liked: true };
+  if (b.lkBy[me]) return { error: 'Siz allaqachon like bosgansiz', likes: b.lk || 0, liked: true };
   b.lkBy[me] = day(); b.lk = (b.lk || 0) + 1;
-  const ks = Object.keys(b.lkBy); if (ks.length > 400) for (const k of ks.slice(0, ks.length - 400)) delete b.lkBy[k];
+  const ks = Object.keys(b.lkBy); if (ks.length > 20000) for (const k of ks.slice(0, ks.length - 20000)) delete b.lkBy[k];
   store.save();
   return { ok: true, likes: b.lk, liked: true };
 }
@@ -115,7 +115,7 @@ function handle(req, res, p, h) {
     if (p === '/api/social/me') return h.send(res, 200, { rank: rankOf(u), ranks: RANKS, likes: u.lk || 0, login: u.login || '', hasPass: !!u.pw,
       ig: { bonus: IGB, posts: (u.ig || []).slice(-10).reverse().map(x => ({ url: x.url, st: x.st, at: x.at })), ok: u.igOk || 0 } }), true;
     if (p === '/api/social/user') { const id = String(url.searchParams.get('uid') || ''), x = users()[id]; if (!x) return h.send(res, 200, { error: 'none' }), true;
-      return h.send(res, 200, { likes: x.lk || 0, liked: !!(x.lkBy && x.lkBy[me] === day()), rank: rankOf(x).name }), true; }
+      return h.send(res, 200, { likes: x.lk || 0, liked: !!(x.lkBy && x.lkBy[me]), rank: rankOf(x).name }), true; }
     if (p === '/api/social/igtop') return h.send(res, 200, { list: igTop() }), true;
     h.send(res, 404, { error: 'none' }); return true;
   }
