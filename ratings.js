@@ -240,6 +240,7 @@
               if (!r || r.error) return; lb.innerHTML = (r.liked ? "❤️ " : "🤍 ") + r.likes + (r.liked ? " · yoqtirdingiz" : " · Yoqdi"); lb.title = r.rank;
             }).catch(function () {});
           })();
+          (function () { mk('💬 Izohlar', 'linear-gradient(90deg,#4f46e5,#7c3aed)', function () { if (window.spBio) window.spBio(String(d.id), d.name || ''); }); })();
           var my = d.myDiamonds || 0, F = d.giftFee || [0.05, 5];
           function fee(n) { return Math.max(F[1], Math.ceil(n * F[0])); }
           if (window.lbChallengeUid) {

@@ -104,6 +104,49 @@ function passLogin(ip, login, pw) {
   return { user: { id: Number(uid), first_name: String(u.name || login).slice(0, 40) } };
 }
 
+// ---------- 💬 bio izohlari
+const BIO_MAX = 200, BIO_LEN = 200, BIO_DAY = 20, BIO_WRITE_PREMIUM = true;
+function bioShape(owner, oid, e, me) {
+  const us = users(), a = us[e.f] || {};
+  let r = null;
+  if (e.r) { const q = (owner.bio || []).find(z => z.id === e.r); if (q) r = { n: nm(us[q.f]), tx: String(q.tx).slice(0, 80) }; }
+  return { id: e.id, f: e.f, n: nm(a), vip: store.isPremium(a), tx: e.tx, t: e.t, r, del: me === String(oid) || me === e.f || ADM().includes(me) };
+}
+function bioList(me, uid, before) {
+  const x = users()[String(uid)]; if (!x) return { error: 'O‘yinchi topilmadi' };
+  const b = +before || Infinity, pool = (x.bio || []).filter(e => e.id < b), page = pool.slice(-30);
+  const canWrite = !BIO_WRITE_PREMIUM || store.isPremium(users()[me] || {}) || ADM().includes(me);
+  return { list: page.map(e => bioShape(x, uid, e, me)), more: pool.length > page.length, n: (x.bio || []).length, canWrite };
+}
+function bioPost(me, uid, text, reply) {
+  const us = users(), a = us[me], x = us[String(uid)];
+  if (!a || !x) return { error: 'O‘yinchi topilmadi' };
+  if (BIO_WRITE_PREMIUM && !store.isPremium(a) && !ADM().includes(me)) return { error: 'Izoh yozish faqat Premium uchun', prem: true };
+  try { if (require('./mod.js').isMuted(me)) return { error: 'Yozish vaqtincha yopiq' }; } catch (e) {}
+  let tx = String(text || '').replace(/\s+/g, ' ').trim().slice(0, BIO_LEN);
+  if (!tx) return { error: 'Izoh bo‘sh' };
+  try { const c = require('./mod.js').censor(tx); if (typeof c === 'string' && c) tx = c; } catch (e) {}
+  const d = day(); if (!a.bioDay || a.bioDay.d !== d) a.bioDay = { d, n: 0 };
+  if (a.bioDay.n >= BIO_DAY) return { error: 'Bugungi izoh limiti tugadi' };
+  x.bio = x.bio || []; x.bioSeq = (x.bioSeq || 0) + 1;
+  const e = { id: x.bioSeq, f: me, tx, t: Date.now() };
+  const rid = +reply; if (rid && x.bio.some(z => z.id === rid)) e.r = rid;
+  x.bio.push(e); if (x.bio.length > BIO_MAX) x.bio.splice(0, x.bio.length - BIO_MAX);
+  a.bioDay.n++;
+  if (String(uid) !== me && /^\d+$/.test(String(uid)) && Date.now() - (x.bioNt || 0) > 6 * 3600e3) {
+    x.bioNt = Date.now();
+    tg('sendMessage', { chat_id: uid, parse_mode: 'HTML', text: '💬 <b>' + esc(nm(a)) + '</b> profilingizga izoh yozdi: ' + esc(tx.slice(0, 80)) });
+  }
+  store.save();
+  return { ok: true, item: bioShape(x, uid, e, me) };
+}
+function bioDel(me, uid, id) {
+  const x = users()[String(uid)]; if (!x || !x.bio) return { error: 'Topilmadi' };
+  const i = x.bio.findIndex(e => e.id === +id); if (i < 0) return { error: 'Topilmadi' };
+  if (me !== String(uid) && me !== x.bio[i].f && !ADM().includes(me)) return { error: 'Ruxsat yo‘q' };
+  x.bio.splice(i, 1); store.save(); return { ok: true };
+}
+
 // ---------- HTTP: /api/social/*
 function handle(req, res, p, h) {
   if (!p.startsWith('/api/social/')) return false;
@@ -116,11 +159,14 @@ function handle(req, res, p, h) {
       ig: { bonus: IGB, posts: (u.ig || []).slice(-10).reverse().map(x => ({ url: x.url, st: x.st, at: x.at })), ok: u.igOk || 0 } }), true;
     if (p === '/api/social/user') { const id = String(url.searchParams.get('uid') || ''), x = users()[id]; if (!x) return h.send(res, 200, { error: 'none' }), true;
       return h.send(res, 200, { likes: x.lk || 0, liked: !!(x.lkBy && x.lkBy[me]), rank: rankOf(x).name }), true; }
+    if (p === '/api/social/bio') return h.send(res, 200, bioList(me, url.searchParams.get('uid'), url.searchParams.get('before'))), true;
     if (p === '/api/social/igtop') return h.send(res, 200, { list: igTop() }), true;
     h.send(res, 404, { error: 'none' }); return true;
   }
   h.readBody(req, 2000, body => {
     let j = {}; try { j = JSON.parse(body); } catch (e) {}
+    if (p === '/api/social/bio') return h.send(res, 200, bioPost(me, j.uid, j.text, j.reply));
+    if (p === '/api/social/biodel') return h.send(res, 200, bioDel(me, j.uid, j.id));
     if (p === '/api/social/like') return h.send(res, 200, like(me, j.uid));
     if (p === '/api/social/ig') return h.send(res, 200, igSubmit(me, j.url));
     if (p === '/api/social/setpass') return h.send(res, 200, setPass(me, j.login, j.password));
