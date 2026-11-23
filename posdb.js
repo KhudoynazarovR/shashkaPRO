@@ -69,7 +69,7 @@ function ldIdx() {
   return LD;
 }
 let BOOK = null;
-function book() { if (BOOK) return BOOK; try { BOOK = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'book.json'), 'utf8')); } catch (e) { BOOK = {}; } return BOOK; }
+function book() { if (BOOK) return BOOK; try { BOOK = require('./bookcache.js').get(); } catch (e) { BOOK = {}; } return BOOK; }
 
 // 📖 Debyut nomlari: debyut.js dagi kutubxonadan — har debyutning yakuniy pozitsiyasi → nomi (yurish tartibidan qat'i nazar)
 let OPN = null;
