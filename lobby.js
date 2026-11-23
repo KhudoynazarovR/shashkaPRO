@@ -1905,6 +1905,17 @@ function createLobby({ send, clients, roomsApi }) {
         push();
         break;
       }
+      case 'lbTNotify': {
+        if (!c.lb || !c.lb.tg) { toast(me.uid, 'Eslatma uchun Telegram orqali kiring'); break; }
+        const tn = tournaments.get(String(m.tid));
+        if (!tn || tn.status !== 'reg' || !tn.startAt || tn.startAt <= Date.now()) { toast(me.uid, 'Bu turnir uchun eslatma kerak emas'); break; }
+        tn.watch = tn.watch || {};
+        if (m.on === false) { delete tn.watch[String(me.uid)]; toast(me.uid, '🔕 Eslatma o‘chirildi'); break; }
+        if (Object.keys(tn.watch).length >= 3000) break;
+        tn.watch[String(me.uid)] = 1;
+        toast(me.uid, '🔔 Eslatma yoqildi: turnirdan 15 daqiqa oldin xabar beramiz');
+        break;
+      }
       case 'lbTRef': {
         if (!c.lb || !c.lb.tg) break;
         const inv = String(m.ref || '').replace(/[^0-9]/g, '');
@@ -2095,6 +2106,13 @@ function createLobby({ send, clients, roomsApi }) {
         const msg = { chat_id: Number(p.uid), text: '⏰ ' + title + '\n' + mins + ' daqiqadan keyin boshlanadi!\n⏱ ' + t.tc + (t.prize ? ' · 💰 ' + t.prize : '') + ' · 👥 ' + t.players.size + '\nTayyor turing 💪' };
         if (url) msg.reply_markup = { inline_keyboard: [[{ text: '▶ Turnirga kirish', url }]] };
         tgCall('sendMessage', msg).catch(() => {});
+      }
+      for (const wuid of Object.keys(t.watch || {})) {
+        if (!/^\d+$/.test(wuid) || [...t.players.values()].some(p => String(p.uid) === wuid)) continue;
+        try { if (!require('./notify.js').allowed(wuid, 'arena')) continue; } catch (e) {}
+        const wm = { chat_id: Number(wuid), text: '🔔 ' + title + '\n' + mins + ' daqiqadan keyin boshlanadi!\n⏱ ' + t.tc + (t.prize ? ' · 💰 ' + t.prize : '') + ' · 👥 ' + t.players.size + '\nSiz eslatma yoqgan edingiz 💪' };
+        if (url) wm.reply_markup = { inline_keyboard: [[{ text: '▶ Turnirga kirish', url }]] };
+        tgCall('sendMessage', wm).catch(() => {});
       }
       if (t.announce) { try { require('./tposter.js').remind(t); } catch (e) {} }
       console.log('[turnir] 15 daqiqa eslatmasi:', t.name);
