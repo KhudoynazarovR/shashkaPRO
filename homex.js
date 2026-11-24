@@ -442,9 +442,6 @@
     P + '.hzLvB s.p2:not(.spImgPc){background:' + B + '!important;box-shadow:' + SH + '}',
     P + '.hzLvB s.p3:not(.spImgPc){background:' + WK + '!important;box-shadow:' + SK + '}',
     P + '.hzLvB s.p4:not(.spImgPc){background:' + BK + '!important;box-shadow:' + SK + '}',
-    P + '.hzLvC:only-child{flex:1 0 100%!important;display:grid!important;grid-template-columns:46% 1fr;column-gap:14px;align-items:center;align-content:center}',
-    P + '.hzLvC:only-child>*{grid-column:2}',
-    P + '.hzLvC:only-child>.hzLvB{grid-column:1;grid-row:1 / span 6}'
   ].join('');
   var s = document.createElement('style'); s.id = 'hzLvLook'; s.textContent = css;
   document.head.appendChild(s);
