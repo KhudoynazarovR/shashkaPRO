@@ -175,9 +175,17 @@
         if (!document.getElementById("spPrRingCss")) { var _rs = document.createElement("style"); _rs.id = "spPrRingCss"; _rs.textContent = "@keyframes spPrSpin{to{transform:rotate(360deg)}}.spPrRing{position:relative;width:110px;height:110px;margin:0 auto;display:flex;align-items:center;justify-content:center}.spPrRing::before{content:'';position:absolute;inset:0;border-radius:50%;background:conic-gradient(#ffd54a,#b8860b,#fff3b0,#c98a00,#ffd54a);animation:spPrSpin 3s linear infinite;box-shadow:0 0 18px #f5b72b99}.spPrRing>*{position:relative;z-index:1}.spPrRing>b{position:absolute;top:-14px;left:50%;transform:translateX(-50%) rotate(-8deg);font-size:26px;z-index:2}"; document.head.appendChild(_rs); }
         var av = d.hasAv ? "<img src=\"/api/av/" + encodeURIComponent(d.id) + "\" style=\"width:96px;height:96px;border-radius:50%;object-fit:cover;border:4px solid " + (d.premium ? "#0b0e1a" : "#f5b72b") + "\">" : "<div style=\"width:96px;height:96px;border-radius:50%;background:#1a00a8;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:44px;border:4px solid " + (d.premium ? "#0b0e1a" : "#f5b72b") + "\">👤</div>";
         if (d.premium) av = "<div class=\"spPrRing\"><b>👑</b>" + av.replace("margin:0 auto;", "") + "</div>";
-        box.innerHTML = av + "<div style=\"font-size:21px;font-weight:700;margin-top:10px\">" + esc(d.name) + (d.premium ? " 👑" : "") + "</div>" + (d.elchi ? "<div style=\"font-size:12px;color:#f5b72b;margin-top:2px\">🏅 Elchi</div>" : "") + (d.region ? "<div style=\"font-size:12px;color:#7ee08a;margin-top:2px\">📍 " + esc(d.region) + "</div>" : "") + (d.titles && d.titles.length ? "<div style=\"font-size:12px;color:#ffd54a;margin-top:4px\">" + d.titles.map(esc).join("<br>") + "</div>" : "") +
+        box.innerHTML = av +
+          "<div style=\"margin-top:9px\"><span id=\"pcLkPill\" style=\"display:inline-flex;align-items:center;gap:6px;padding:5px 13px;border-radius:20px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.18);font-size:14px;font-weight:700\">\u2661 " + (d.likes || 0) + "</span></div>" +
+          "<div style=\"font-size:21px;font-weight:700;margin-top:8px\">" + esc(d.name) + (d.premium ? " 👑" : "") + "</div>" + (d.elchi ? "<div style=\"font-size:12px;color:#f5b72b;margin-top:2px\">🏅 Elchi</div>" : "") + (d.region ? "<div style=\"font-size:12px;color:#7ee08a;margin-top:2px\">📍 " + esc(d.region) + "</div>" : "") + (d.titles && d.titles.length ? "<div style=\"font-size:12px;color:#ffd54a;margin-top:4px\">" + d.titles.map(esc).join("<br>") + "</div>" : "") +
+          "<div style=\"margin-top:9px\"><span style=\"display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:22px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.18);font-size:14.5px;font-weight:600\">\u2B50 Reyting: <b style=\"color:#ffd76a\">" + (d.elo || (d.rt && d.rt.blits ? d.rt.blits.r : 1500)) + "</b>" +
+          (d.vip ? "<span style=\"padding:3px 10px;border-radius:14px;background:linear-gradient(180deg,#ffd76a,#e0a120);color:#3a2500;font-size:12.5px;font-weight:800\">👑 VIP</span>" : d.premium ? "<span style=\"padding:3px 10px;border-radius:14px;background:linear-gradient(180deg,#c9a7ff,#8a5ae0);color:#1d0f3a;font-size:12.5px;font-weight:800\">Premium</span>" : "") + "</span></div>" +
+          "<div style=\"margin-top:7px;font-size:13px;color:#cfd3f5;opacity:.85\">" + ((window.lbIsOnline && window.lbIsOnline(d.id)) ? "🕐 Onlayn" : "🕐 Oflayn") + "</div>" +
           (d.bhunt && d.bhunt.length ? "<div id=\"pfBh\" style=\"display:inline-flex;align-items:center;gap:8px;margin-top:8px;padding:4px 12px 4px 4px;border-radius:14px;background:linear-gradient(135deg,#2a3fa8,#101a5c);border:1.5px solid #ffcf3a;cursor:pointer\"><img src=\"/img/bhunt_s.png\" style=\"width:30px;height:33px\"><b style=\"color:#ffd34d;font-size:14px\">Botlar ovchisi" + (d.bhunt.length > 1 ? " ×" + d.bhunt.length : "") + "</b></div><div id=\"pfBhL\" style=\"display:none;margin-top:6px;font-size:12.5px;color:#cfd8ff;line-height:1.6\">" + d.bhunt.map(function (b) { var t = new Date(b.at + 5 * 3600e3); return t.getUTCDate() + "-" + ["yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul", "avgust", "sentabr", "oktabr", "noyabr", "dekabr"][t.getUTCMonth()] + " " + t.getUTCFullYear() + ", " + String(t.getUTCHours()).padStart(2, "0") + ":" + String(t.getUTCMinutes()).padStart(2, "0") + " — " + esc(b.n) + (b.s ? " (" + b.s + " ochko)" : ""); }).join("<br>") + "</div>" : "") +
           "<div id=\"pcBioQ\" style=\"position:relative;margin:10px auto 0;max-width:330px;text-align:left;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:11px 13px 11px 30px;font-size:14px;line-height:1.45;color:" + (d.bio ? "#eee9ff" : "#9ba3d6") + ";cursor:pointer\"><span style=\"position:absolute;left:9px;top:3px;font-size:24px;color:#ffffff55\">\u201C</span>" + (d.bio ? esc(d.bio) : "Izoh yozish uchun bosing") + "</div>" +
+          "<div style=\"display:flex;gap:10px;justify-content:center;margin-top:11px\">" +
+          "<button id=\"pcCm\" style=\"border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.33);color:#fff;border-radius:18px;padding:9px 18px;font-size:15px;font-weight:700\">💬 0</button>" +
+          "<button id=\"pcLk\" style=\"border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.33);color:#fff;border-radius:18px;padding:9px 18px;font-size:15px;font-weight:700\">\u2661 " + (d.likes || 0) + "</button></div>" +
           (d.rt ? "<div style=\"display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:16px 0 0\">" + [["bullet", "🚀", "Bullet"], ["blits", "⚡", "Blits"], ["rapid", "⏱", "Rapid"], ["corr", "📮", "Yozishma"]].map(function (c) { var x = d.rt[c[0]] || { r: 1500, prov: true, n: 0 }; return "<div style=\"background:#161a3a;border:1px solid #262b5a;border-radius:14px;padding:8px 2px\"><div style=\"font-size:18px\">" + c[1] + "</div><b style=\"font-size:16px\">" + x.r + (x.prov ? "<span style=\"opacity:.55\">?</span>" : "") + "</b><div style=\"font-size:10.5px;opacity:.6\">" + c[2] + " · " + x.n + "</div></div>"; }).join("") + "</div>" : "") +
           "<div style=\"display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 16px\">" +
           cell("🪙", d.diamonds, "Tanga") + cell("🏆", d.wins, "G‘alaba") +
@@ -231,16 +239,26 @@
             m.innerHTML = "<div style='width:100%;max-width:360px;background:#141833;color:#fff;border:1px solid #2c3270;border-radius:22px;padding:18px 16px;text-align:center;font-family:inherit'>" + html + "</div>";
             document.body.appendChild(m); return m;
           }
-          (function () {   // ❤️ profilga like (kuniga 1 marta) va 🎖 unvon
-            var lb = mk("❤️ Yoqdi", "linear-gradient(90deg,#be123c,#f43f5e)", function () {
-              lb.disabled = true;
-              post("/api/social/like", { uid: String(d.id) }).then(function (r) { lb.disabled = false; if (r.likes != null) lb.innerHTML = "❤️ " + r.likes + (r.ok ? " · rahmat!" : ""); if (r.error) { lb.innerHTML = "❤️ " + (r.likes != null ? r.likes + " · " : "") + esc(r.error); } });
-            });
+          (function () {   // ❤️ like va 💬 izohlar — yuqoridagi tugmalar
+            var lk = box.querySelector('#pcLk'), cm = box.querySelector('#pcCm'), pill = box.querySelector('#pcLkPill');
+            if (cm) cm.onclick = function () { if (window.spBio) window.spBio(String(d.id), d.name || ''); };
+            if (lk) lk.onclick = function () {
+              lk.disabled = true;
+              post("/api/social/like", { uid: String(d.id) }).then(function (r) {
+                lk.disabled = false;
+                if (r.likes != null) { lk.innerHTML = (r.ok ? "❤️ " : "\u2661 ") + r.likes; if (pill) pill.innerHTML = "\u2661 " + r.likes; }
+                if (r.error) { lk.title = r.error; lk.innerHTML = "\u2661 " + (r.likes != null ? r.likes : 0); }
+              });
+            };
             fetch("/api/social/user?uid=" + encodeURIComponent(d.id), { headers: { "x-init-data": (tg && tg.initData) || "" } }).then(function (r) { return r.json(); }).then(function (r) {
-              if (!r || r.error) return; lb.innerHTML = (r.liked ? "❤️ " : "🤍 ") + r.likes + (r.liked ? " · yoqtirdingiz" : " · Yoqdi"); lb.title = r.rank;
+              if (!r || r.error) return;
+              if (lk) lk.innerHTML = (r.liked ? "❤️ " : "\u2661 ") + r.likes;
+              if (pill) pill.innerHTML = (r.liked ? "❤️ " : "\u2661 ") + r.likes;
+            }).catch(function () {});
+            fetch("/api/social/bio?uid=" + encodeURIComponent(d.id), { headers: { "x-init-data": (tg && tg.initData) || "" } }).then(function (r) { return r.json(); }).then(function (r) {
+              if (r && r.n != null && cm) cm.innerHTML = "💬 " + r.n;
             }).catch(function () {});
           })();
-          (function () { mk('💬 Izohlar', 'linear-gradient(90deg,#4f46e5,#7c3aed)', function () { if (window.spBio) window.spBio(String(d.id), d.name || ''); }); })();
           (function () { var q = box.querySelector('#pcBioQ'); if (q) q.onclick = function () { if (window.spBio) window.spBio(String(d.id), d.name || ''); }; })();
           var my = d.myDiamonds || 0, F = d.giftFee || [0.05, 5];
           function fee(n) { return Math.max(F[1], Math.ceil(n * F[0])); }
