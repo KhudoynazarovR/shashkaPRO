@@ -79,14 +79,15 @@
     var H = { 'x-init-data': (tgw && tgw.initData) || '', 'Content-Type': 'application/json' };
     var E = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
     var old = document.getElementById('spBioOv'); if (old) old.remove();
-    var items = [], more = false, canWrite = false, reply = null, busy = false;
+    var items = [], more = false, canWrite = false, reply = null, busy = false, bioOff = false, isOwn = false;
     var ov = document.createElement('div'); ov.id = 'spBioOv';
     ov.style.cssText = 'position:fixed;inset:0;z-index:99990;background:rgba(0,0,0,.55);display:flex;align-items:flex-end';
     ov.innerHTML = '<div style="width:100%;max-height:88vh;display:flex;flex-direction:column;background:#141833;color:#fff;border-radius:22px 22px 0 0;padding:14px 14px calc(env(safe-area-inset-bottom,0px) + 12px);box-sizing:border-box;font-family:inherit">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><b style="font-size:17px">💬 Bio izohlari' + (name ? ' · ' + E(name) : '') + '</b><button id="spBioX" style="border:0;background:#262b5a;color:#fff;border-radius:10px;width:36px;height:36px;font-size:16px">✕</button></div>' +
+      '<div id="spBioC" style="display:none;gap:8px;margin-bottom:10px"></div>' +
       '<div id="spBioL" style="flex:1;min-height:120px;overflow:auto"></div><div id="spBioF" style="margin-top:10px"></div></div>';
     document.body.appendChild(ov);
-    var L = ov.querySelector('#spBioL'), F = ov.querySelector('#spBioF');
+    var L = ov.querySelector('#spBioL'), F = ov.querySelector('#spBioF'), C = ov.querySelector('#spBioC');
     ov.onclick = function (e) { if (e.target === ov) ov.remove(); };
     ov.querySelector('#spBioX').onclick = function () { ov.remove(); };
     function tm(t) { var d = new Date(t), p = function (n) { return (n < 10 ? '0' : '') + n; }; return p(d.getDate()) + '.' + p(d.getMonth() + 1) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()); }
@@ -103,8 +104,27 @@
       }).join('');
       L.innerHTML = h; if (stick) L.scrollTop = L.scrollHeight;
     }
+    function owner() {   // 🔒 profil egasi: izohlarni yopish/ochish va tozalash
+      if (!isOwn) { C.style.display = 'none'; return; }
+      C.style.display = 'flex';
+      C.innerHTML = '<button id="spBioLk" style="flex:1;border:0;border-radius:12px;padding:11px;font-weight:700;font-size:14px;' +
+        (bioOff ? 'background:#7a2b2b;color:#ffd9d9' : 'background:#262b5a;color:#fff') + '">' + (bioOff ? '🔒 Izohlar yopiq — ochish' : '🔓 Izohlarni yopish') + '</button>' +
+        '<button id="spBioCl" style="flex:none;border:0;border-radius:12px;padding:11px 14px;background:#262b5a;color:#fff;font-weight:700;font-size:14px">🧹 Tozalash</button>';
+      C.querySelector('#spBioLk').onclick = function () {
+        fetch('/api/social/biolock', { method: 'POST', headers: H, body: JSON.stringify({ uid: uid, off: !bioOff }) })
+          .then(function (r) { return r.json(); })
+          .then(function (j) { if (j && j.ok) { bioOff = !!j.off; owner(); foot(); } });
+      };
+      C.querySelector('#spBioCl').onclick = function () {
+        if (!confirm('Hamma izoh o‘chirilsinmi?')) return;
+        fetch('/api/social/bioclear', { method: 'POST', headers: H, body: JSON.stringify({ uid: uid }) })
+          .then(function (r) { return r.json(); })
+          .then(function (j) { if (j && j.ok) { items = []; more = false; draw(false); } });
+      };
+    }
     function foot() {
       var cur = F.querySelector('#spBioI'), v = cur ? cur.value : '';
+      if (bioOff && !isOwn) { F.innerHTML = '<div style="text-align:center;opacity:.75;font-size:14px">🔒 Bu profilda izohlar yopiq</div>'; return; }
       if (!canWrite) {
         F.innerHTML = '<div style="text-align:center;opacity:.75;font-size:14px;margin-bottom:8px">Izoh yozish faqat Premium obunachilar uchun</div><button id="spBioP" style="width:100%;border:0;border-radius:12px;padding:12px;background:linear-gradient(90deg,#f59e0b,#fbbf24);color:#1a1205;font-weight:800;font-size:15px">👑 Premium</button>';
         var pb = F.querySelector('#spBioP'); if (pb) pb.onclick = function () { if (window.premGo) window.premGo(); };
@@ -141,10 +161,42 @@
       fetch('/api/social/bio?uid=' + encodeURIComponent(uid) + (before ? '&before=' + before : ''), { headers: H }).then(function (r) { return r.json(); })
         .then(function (j) {
           if (!j || j.error) { L.innerHTML = '<div style="text-align:center;opacity:.7;padding:24px 0">Yuklanmadi</div>'; return; }
-          items = before ? j.list.concat(items) : j.list; more = !!j.more; canWrite = !!j.canWrite; draw(!before); foot();
+          items = before ? j.list.concat(items) : j.list; more = !!j.more; canWrite = !!j.canWrite; bioOff = !!j.off; isOwn = !!j.own; draw(!before); owner(); foot();
         }).catch(function () { L.innerHTML = '<div style="text-align:center;opacity:.7;padding:24px 0">Server bilan aloqa yo‘q</div>'; });
     }
     load(0);
+  };
+
+  // ❤️ kim like bosgan — faqat profil egasi va adminlar
+  window.spLikers = function (uid) {
+    var tgw = window.Telegram && window.Telegram.WebApp;
+    var H = { 'x-init-data': (tgw && tgw.initData) || '', 'Content-Type': 'application/json' };
+    var E = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+    var old = document.getElementById('spLkOv'); if (old) old.remove();
+    var ov = document.createElement('div'); ov.id = 'spLkOv';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:99991;background:rgba(0,0,0,.55);display:flex;align-items:flex-end';
+    ov.innerHTML = '<div style="width:100%;max-height:82vh;display:flex;flex-direction:column;background:#141833;color:#fff;border-radius:22px 22px 0 0;padding:14px 14px calc(env(safe-area-inset-bottom,0px) + 12px);box-sizing:border-box">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><b style="font-size:17px">❤️ Kim yoqtirdi</b>' +
+      '<button id="spLkX" style="border:0;background:#262b5a;color:#fff;border-radius:10px;width:36px;height:36px;font-size:16px">✕</button></div>' +
+      '<div id="spLkL" style="flex:1;min-height:120px;overflow:auto">Yuklanmoqda…</div></div>';
+    document.body.appendChild(ov);
+    ov.onclick = function (e) { if (e.target === ov) ov.remove(); };
+    ov.querySelector('#spLkX').onclick = function () { ov.remove(); };
+    var L = ov.querySelector('#spLkL');
+    fetch('/api/social/likers' + (uid ? '?uid=' + encodeURIComponent(uid) : ''), { headers: H })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j || j.error) { L.innerHTML = '<div style="text-align:center;opacity:.7;padding:24px 0">' + E((j && j.error) || 'Yuklanmadi') + '</div>'; return; }
+        if (!j.list.length) { L.innerHTML = '<div style="text-align:center;opacity:.7;padding:24px 0">Hali hech kim like bosmagan</div>'; return; }
+        L.innerHTML = '<div style="opacity:.7;font-size:13px;margin-bottom:8px">Jami: <b>' + j.n + '</b></div>' + j.list.map(function (x) {
+          return '<div style="display:flex;align-items:center;gap:10px;background:#1c2145;border-radius:14px;padding:9px 10px;margin-bottom:7px">' +
+            '<div style="width:38px;height:38px;border-radius:50%;flex:none;background:#3b3fa8;display:flex;align-items:center;justify-content:center;font-weight:800;position:relative;overflow:hidden">' +
+            E((x.n || '?').charAt(0).toUpperCase()) + '<img src="/api/av/' + encodeURIComponent(x.uid) + '" onerror="this.style.display=\'none\'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></div>' +
+            '<div style="flex:1;min-width:0"><b style="font-size:15px">' + E(x.n) + (x.vip ? ' 👑' : '') + '</b>' +
+            '<div style="opacity:.6;font-size:12.5px">' + E(x.d || '') + (x.elo ? ' · ELO ' + x.elo : '') + '</div></div></div>';
+        }).join('');
+      })
+      .catch(function () { L.innerHTML = '<div style="text-align:center;opacity:.7;padding:24px 0">Server bilan aloqa yo‘q</div>'; });
   };
 
   window.nvProfile = function (pg) {
@@ -260,7 +312,7 @@
           $('pfRk').onclick = function () { if (window.refGo) window.refGo(); };
           $('pfIg').onclick = function () { go('ig'); };
           $('pfPw').onclick = function () { go('pass'); };
-          var rk = $('pfRank'); if (rk && !document.getElementById('pfLk')) { var lk = document.createElement('div'); lk.id = 'pfLk'; lk.className = 'pf-bd'; lk.style.marginRight = '6px'; lk.textContent = '❤️ ' + S.likes; rk.parentNode.insertBefore(lk, rk); var bio = document.createElement('div'); bio.className = 'pf-bd'; bio.style.cssText = 'margin-right:6px;cursor:pointer'; bio.textContent = '💬 Izohlar'; bio.onclick = function () { var tw = window.Telegram && window.Telegram.WebApp, u0 = tw && tw.initDataUnsafe && tw.initDataUnsafe.user; if (u0 && window.spBio) window.spBio(String(u0.id), ''); }; rk.parentNode.insertBefore(bio, rk); }
+          var rk = $('pfRank'); if (rk && !document.getElementById('pfLk')) { var lk = document.createElement('div'); lk.id = 'pfLk'; lk.className = 'pf-bd'; lk.style.marginRight = '6px'; lk.textContent = '❤️ ' + S.likes; lk.style.cursor = 'pointer'; lk.onclick = function () { if (window.spLikers) window.spLikers(''); }; rk.parentNode.insertBefore(lk, rk); var bio = document.createElement('div'); bio.className = 'pf-bd'; bio.style.cssText = 'margin-right:6px;cursor:pointer'; bio.textContent = '💬 Izohlar'; bio.onclick = function () { var tw = window.Telegram && window.Telegram.WebApp, u0 = tw && tw.initDataUnsafe && tw.initDataUnsafe.user; if (u0 && window.spBio) window.spBio(String(u0.id), ''); }; rk.parentNode.insertBefore(bio, rk); }
         }).catch(function () {});
       })();
       [].forEach.call(document.querySelectorAll('[data-ach]'), function (el) { el.onclick = function () { var t = $('pfAchT'); if (t) t.textContent = el.getAttribute('data-ach'); }; });

@@ -36,6 +36,19 @@ function like(me, uid) {
   return { ok: true, likes: b.lk, liked: true };
 }
 
+// ---------- ❤️ kim like bosgan: faqat profil egasi va adminlar ko'radi
+function likers(me, uid) {
+  const id = String(uid || me), x = users()[id];
+  if (!x) return { error: 'O‘yinchi topilmadi' };
+  if (me !== id && !ADM().includes(me)) return { error: 'Bu ro‘yxatni faqat profil egasi ko‘radi' };
+  const us = users(), by = x.lkBy || {};
+  const list = Object.keys(by).map(k => {
+    const a = us[k] || {};
+    return { uid: k, n: nm(a), vip: store.isPremium(a), d: by[k], elo: a.elo || 0 };
+  }).sort((p, q) => String(q.d).localeCompare(String(p.d)) || q.elo - p.elo);
+  return { likes: x.lk || 0, n: list.length, list: list.slice(0, 200) };
+}
+
 // ---------- 📸 Instagram'da ulash
 const IGB = 50, IG_RE = /^https?:\/\/(www\.)?instagram\.com\/(p|reel|reels)\/([A-Za-z0-9_-]{5,40})/i;
 function igSubmit(me, url) {
@@ -115,12 +128,30 @@ function bioShape(owner, oid, e, me) {
 function bioList(me, uid, before) {
   const x = users()[String(uid)]; if (!x) return { error: 'O‘yinchi topilmadi' };
   const b = +before || Infinity, pool = (x.bio || []).filter(e => e.id < b), page = pool.slice(-30);
-  const canWrite = !BIO_WRITE_PREMIUM || store.isPremium(users()[me] || {}) || ADM().includes(me);
-  return { list: page.map(e => bioShape(x, uid, e, me)), more: pool.length > page.length, n: (x.bio || []).length, canWrite };
+  const own = me === String(uid), adm = ADM().includes(me);
+  const canWrite = !x.bioOff && (!BIO_WRITE_PREMIUM || store.isPremium(users()[me] || {}) || adm);
+  return { list: page.map(e => bioShape(x, uid, e, me)), more: pool.length > page.length, n: (x.bio || []).length, canWrite, off: !!x.bioOff, own: own || adm };
+}
+// 🔒 profil egasi izohlarni yopadi/ochadi
+function bioLock(me, uid, off) {
+  const id = String(uid || me), x = users()[id];
+  if (!x) return { error: 'O‘yinchi topilmadi' };
+  if (me !== id && !ADM().includes(me)) return { error: 'Ruxsat yo‘q' };
+  x.bioOff = !!off; store.save();
+  return { ok: true, off: !!x.bioOff };
+}
+// 🧹 profil egasi hamma izohni o'chiradi
+function bioClear(me, uid) {
+  const id = String(uid || me), x = users()[id];
+  if (!x) return { error: 'O‘yinchi topilmadi' };
+  if (me !== id && !ADM().includes(me)) return { error: 'Ruxsat yo‘q' };
+  const n = (x.bio || []).length; x.bio = []; store.save();
+  return { ok: true, n };
 }
 function bioPost(me, uid, text, reply) {
   const us = users(), a = us[me], x = us[String(uid)];
   if (!a || !x) return { error: 'O‘yinchi topilmadi' };
+  if (x.bioOff && me !== String(uid) && !ADM().includes(me)) return { error: 'Bu profilda izohlar yopiq' };
   if (BIO_WRITE_PREMIUM && !store.isPremium(a) && !ADM().includes(me)) return { error: 'Izoh yozish faqat Premium uchun', prem: true };
   try { if (require('./mod.js').isMuted(me)) return { error: 'Yozish vaqtincha yopiq' }; } catch (e) {}
   let tx = String(text || '').replace(/\s+/g, ' ').trim().slice(0, BIO_LEN);
@@ -133,7 +164,17 @@ function bioPost(me, uid, text, reply) {
   const rid = +reply; if (rid && x.bio.some(z => z.id === rid)) e.r = rid;
   x.bio.push(e); if (x.bio.length > BIO_MAX) x.bio.splice(0, x.bio.length - BIO_MAX);
   a.bioDay.n++;
-  if (String(uid) !== me && /^\d+$/.test(String(uid)) && Date.now() - (x.bioNt || 0) > 6 * 3600e3) {
+  // ↩️ javob bo'lsa — izoh egasiga xabar (profil egasidan alohida)
+  let rTo = '';
+  if (e.r) {
+    const q = x.bio.find(z => z.id === e.r);
+    if (q && String(q.f) !== me && /^\d+$/.test(String(q.f))) {
+      rTo = String(q.f);
+      tg('sendMessage', { chat_id: Number(rTo), parse_mode: 'HTML',
+        text: '↩️ <b>' + esc(nm(a)) + '</b> izohingizga javob yozdi\n\n<i>Siz:</i> ' + esc(String(q.tx).slice(0, 60)) + '\n<b>Javob:</b> ' + esc(tx.slice(0, 120)) + '\n\n👤 ' + esc(nm(x)) + ' profilida' });
+    }
+  }
+  if (String(uid) !== me && String(uid) !== rTo && /^\d+$/.test(String(uid)) && Date.now() - (x.bioNt || 0) > 6 * 3600e3) {
     x.bioNt = Date.now();
     tg('sendMessage', { chat_id: uid, parse_mode: 'HTML', text: '💬 <b>' + esc(nm(a)) + '</b> profilingizga izoh yozdi: ' + esc(tx.slice(0, 80)) });
   }
@@ -160,6 +201,7 @@ function handle(req, res, p, h) {
     if (p === '/api/social/user') { const id = String(url.searchParams.get('uid') || ''), x = users()[id]; if (!x) return h.send(res, 200, { error: 'none' }), true;
       return h.send(res, 200, { likes: x.lk || 0, liked: !!(x.lkBy && x.lkBy[me]), rank: rankOf(x).name }), true; }
     if (p === '/api/social/bio') return h.send(res, 200, bioList(me, url.searchParams.get('uid'), url.searchParams.get('before'))), true;
+    if (p === '/api/social/likers') return h.send(res, 200, likers(me, url.searchParams.get('uid') || me)), true;
     if (p === '/api/social/igtop') return h.send(res, 200, { list: igTop() }), true;
     h.send(res, 404, { error: 'none' }); return true;
   }
@@ -167,6 +209,8 @@ function handle(req, res, p, h) {
     let j = {}; try { j = JSON.parse(body); } catch (e) {}
     if (p === '/api/social/bio') return h.send(res, 200, bioPost(me, j.uid, j.text, j.reply));
     if (p === '/api/social/biodel') return h.send(res, 200, bioDel(me, j.uid, j.id));
+    if (p === '/api/social/biolock') return h.send(res, 200, bioLock(me, j.uid, j.off));
+    if (p === '/api/social/bioclear') return h.send(res, 200, bioClear(me, j.uid));
     if (p === '/api/social/like') return h.send(res, 200, like(me, j.uid));
     if (p === '/api/social/ig') return h.send(res, 200, igSubmit(me, j.url));
     if (p === '/api/social/setpass') return h.send(res, 200, setPass(me, j.login, j.password));
