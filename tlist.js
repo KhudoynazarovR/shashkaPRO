@@ -162,6 +162,14 @@
 #tlList .r .rw.tlAv .av i.a6,#tlList .r .pod i.a6{background:linear-gradient(135deg,#6ad0c0,#1f8d7d)}
 #tlList .r .rw.tlAv .av i.mo{background:linear-gradient(135deg,#8a6a3a,#4e3819)!important;font-size:11px!important}
 #tlList .r .mine{margin-top:10px;font:700 13px system-ui;color:#c2ea92;background:rgba(154,212,85,.13);border:1px solid rgba(154,212,85,.22);border-radius:11px;padding:9px 11px}
+#tlList .r .spB{margin-top:11px;background:rgba(255,214,130,.07);border:1px solid rgba(255,196,96,.25);border-radius:14px;padding:10px 11px}
+#tlList .r .spH{display:flex;justify-content:space-between;font:800 13px system-ui;color:#ffd76a;margin-bottom:7px}
+#tlList .r .spL{display:flex;align-items:center;gap:9px;padding:4px 0;font:600 13.5px system-ui;color:#efe2c8}
+#tlList .r .spL i{width:26px;height:26px;border-radius:50%;flex:none;font-style:normal;text-align:center;font:800 12px/26px system-ui;color:#fff}
+#tlList .r .spL span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#tlList .r .spL b.bs{font:800 10.5px system-ui;color:#2a1a00;background:linear-gradient(180deg,#ffdf8d,#e0a120);border-radius:8px;padding:2px 7px}
+#tlList .r .spL em{font-style:normal;font-weight:900;color:#ffd76a}
+#tlList .r .spM{font:600 12px system-ui;color:#9d8a6c;margin-top:5px}
 #tlList .r .crl{margin-top:9px;font:600 12.5px system-ui;color:#9d8a6c}
 #tlList .r .crl b{color:#d9c8a8;font-weight:800}
 #tlList .r .btns{margin-top:13px!important;gap:8px!important}
@@ -216,6 +224,84 @@
   function fmtN(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
   function avCls(uid) { var s = String(uid || ''), h = 0; for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 997; return 'a' + (h % 6 + 1); }
   function ini(n) { n = String(n || '').replace(/^[^0-9A-Za-zА-Яа-яЎўҚқҒғҲҳ]+/, '').trim(); return esc((n.charAt(0) || '•').toUpperCase()); }
+  // 💰 homiylik oynasi
+  function sheet(title, html) {
+    var ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;z-index:2147482900;background:rgba(0,0,0,.6);display:flex;align-items:flex-end';
+    ov.innerHTML = '<div style="width:100%;max-height:88vh;overflow:auto;background:#1b1209;color:#f2e9da;border:1px solid rgba(255,196,96,.3);border-radius:22px 22px 0 0;padding:14px 14px calc(env(safe-area-inset-bottom,0px) + 14px);box-sizing:border-box">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><b style="font-size:17px">' + title + '</b>' +
+      '<button data-x="1" style="border:0;background:rgba(255,255,255,.1);color:#fff;border-radius:10px;width:36px;height:36px;font-size:16px">✕</button></div>' + html + '</div>';
+    document.body.appendChild(ov);
+    ov.onclick = function (e) { if (e.target === ov || e.target.closest('[data-x]')) ov.remove(); };
+    return ov;
+  }
+  function sponsor(tid) {
+    var t = (St() && St().tournaments || []).filter(function (x) { return String(x.id) === String(tid); })[0] || {};
+    var ov = sheet('💰 Homiy bo‘lish',
+      '<div style="font-size:14px;color:#c9b793;line-height:1.5;margin-bottom:12px">«' + esc(t.name || '') + '» mukofot jamg‘armasiga qo‘shasiz. Eng kami <b style="color:#ffd76a">100 tanga</b>. Homiylik qilgach botga chiroyli rasm yuboriladi.</div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">' + [100, 300, 500, 1000, 5000].map(function (n) {
+        return '<button data-s="' + n + '" style="flex:1;min-width:84px;border:1px solid rgba(255,214,130,.35);background:rgba(255,255,255,.07);color:#ffd76a;border-radius:12px;padding:11px 6px;font-weight:800;font-size:15px">' + n + '</button>';
+      }).join('') + '</div>' +
+      '<input id="spSum" type="number" min="100" placeholder="Boshqa miqdor (100 dan ko‘p)" style="width:100%;box-sizing:border-box;padding:12px;border-radius:12px;border:1px solid #4a3a1c;background:#120c05;color:#fff;font-size:16px;margin-bottom:10px">' +
+      '<button id="spGo" style="width:100%;border:0;border-radius:13px;padding:14px;font-weight:800;font-size:16px;color:#3a2500;background:linear-gradient(180deg,#ffdf8d,#e0a120)">💰 Homiylik qilish</button>' +
+      '<div id="spErr" style="color:#ff9a9a;font-size:13.5px;min-height:18px;margin-top:8px"></div>');
+    var inp = ov.querySelector('#spSum');
+    ov.querySelectorAll('[data-s]').forEach(function (b) { b.onclick = function () { inp.value = b.getAttribute('data-s'); }; });
+    ov.querySelector('#spGo').onclick = function () {
+      var n = Math.floor(Number(inp.value) || 0);
+      if (n < 100) { ov.querySelector('#spErr').textContent = 'Eng kami 100 tanga'; return; }
+      if (window.lbSend) window.lbSend({ type: 'lbTSponsor', tid: tid, sum: n });
+      ov.remove();
+    };
+  }
+  // ⋯ tashkilotchi amallari
+  function actions(tid) {
+    var t = (St() && St().tournaments || []).filter(function (x) { return String(x.id) === String(tid); })[0] || {};
+    var reg = t.status === 'reg';
+    var ov = sheet('⋯ Amallar',
+      (reg && !t.startAt ? '<button data-a="start" class="aB">▶ Boshlash</button>' : '') +
+      (reg ? '<button data-a="invite" class="aB">📣 Chaqirish</button>' : '') +
+      '<button data-a="ann" class="aB">📨 Guruhga yuborish</button>' +
+      '<div class="aT">⏱ Vaqtni siljitish</div>' +
+      '<div style="display:flex;gap:8px;margin-bottom:10px">' + [['+15', 15], ['+1 soat', 60], ['+1 kun', 1440], ['−15', -15]].map(function (p) {
+        return '<button data-add="' + p[1] + '" style="flex:1;border:1px solid rgba(255,214,130,.3);background:rgba(255,255,255,.07);color:#ffd76a;border-radius:12px;padding:11px 4px;font-weight:800;font-size:14px">' + p[0] + '</button>';
+      }).join('') + '</div>' +
+      '<button data-a="edit" class="aB">✏️ Nom, mukofot, davomiylik</button>' +
+      (reg ? '<button data-a="cancel" class="aB d">🗑 Turnirni o‘chirish</button>' : ''));
+    var st = document.createElement('style');
+    st.textContent = '.aB{width:100%;border:0;border-radius:13px;padding:13px;margin-bottom:8px;background:#2b1f10;color:#f2e9da;font-size:15.5px;font-weight:700;text-align:left}.aB.d{background:#4a1b1b;color:#ffd9d9}.aT{font-size:11.5px;letter-spacing:1px;color:#9d8a6c;margin:12px 2px 7px;font-weight:800}';
+    ov.appendChild(st);
+    ov.querySelectorAll('[data-add]').forEach(function (b) {
+      b.onclick = function () { if (window.lbSend) window.lbSend({ type: 'lbTEdit', tid: tid, addMin: Number(b.getAttribute('data-add')) }); ov.remove(); };
+    });
+    ov.querySelectorAll('[data-a]').forEach(function (b) {
+      b.onclick = function () {
+        var a = b.getAttribute('data-a');
+        if (a === 'start') window.lbSend({ type: 'lbTStart', tid: tid });
+        else if (a === 'invite') window.lbSend({ type: 'lbTInvite', tid: tid });
+        else if (a === 'ann') window.lbSend({ type: 'lbTAnnList', tid: tid });
+        else if (a === 'cancel') { if (!confirm('Turnir o‘chirilsinmi?')) return; window.lbSend({ type: 'lbTCancel', tid: tid }); }
+        else if (a === 'edit') {
+          var nm2 = prompt('Turnir nomi:', t.name || ''); if (nm2 === null) return;
+          var pz = prompt('Mukofot (tanga):', String(t.prize || 0)); if (pz === null) return;
+          var du = prompt('Davomiyligi (daqiqa):', String(t.durationMin || 60)); if (du === null) return;
+          window.lbSend({ type: 'lbTEdit', tid: tid, name: nm2, prize: Number(pz) || 0, duration: Number(du) || 0 });
+        }
+        ov.remove();
+      };
+    });
+  }
+  // 💰 homiylar ro'yxati
+  function spRow(t) {
+    var sp = (t.sponsors || []).slice().sort(function (a, b) { return b.sum - a.sum; });
+    if (!sp.length) return '';
+    var tot = sp.reduce(function (n, x) { return n + (x.sum || 0); }, 0);
+    var top = sp.slice(0, 3).map(function (x, i) {
+      return '<div class="spL"><i class="' + avCls(x.uid) + '">' + ini(x.name) + '</i><span>' + esc(String(x.name || '').slice(0, 14)) + (i === 0 ? ' <b class="bs">bosh homiy</b>' : '') + '</span><em>' + fmtN(x.sum) + '</em></div>';
+    }).join('');
+    return '<div class="spB"><div class="spH">💰 Homiylar<span>' + fmtN(tot) + ' tanga</span></div>' + top +
+      (sp.length > 3 ? '<div class="spM">yana ' + (sp.length - 3) + ' homiy</div>' : '') + '</div>';
+  }
   // 🥇 jonli turnirda top-3
   function podium(t) {
     var ps = (t.players || []).filter(function (p) { return (p.score || 0) > 0 || p.games > 0; }).slice(0, 3);
@@ -336,9 +422,11 @@
       '<span class="t2"><b class="nm">' + esc(name) + '</b><small>' + fmtTx + '</small></span>' + pz + '</div>' +
       '<div class="sbar ' + bcl + '"><span class="lbl">' + P.lbl + '</span><span class="val">' + P.val + '</span><span class="when">' + P.when + '</span></div>' +
       '<div class="pbar ' + bcl + '"><i style="width:' + pct(t, now) + '%"></i></div>' +
-      '<div class="ft">' + feat + '</div>' + (t.status === 'running' ? podium(t) : '') + avRow + myLine(t, u) +
+      '<div class="ft">' + feat + '</div>' + (t.status === 'running' ? podium(t) : '') + avRow + myLine(t, u) + spRow(t) +
       (t.creatorName ? '<div class="crl">Tashkilotchi: <b>' + esc(t.creatorName) + '</b>' + (t.prize ? ' · ' + (t.places || 3) + ' o‘ringa' : '') + '</div>' : '') +
-      '<div class="btns"><button type="button" class="shr" data-share="' + esc(t.id) + '" title="Ulashish">🔗</button>' + (t.status === 'reg' && t.startAt > Date.now() && !inn ? '<button type="button" class="shr bel" data-bell="' + esc(t.id) + '" data-x="' + ((function () { try { return localStorage.getItem('tBell_' + t.id) === '1'; } catch (x) { return false; } })() ? ' on" data-on="1">🔔✓' : '">🔔') + '</button>' : '') + (t.status === 'running' ? '<button type="button">👁 Kuzatish</button>' : '') + '<button type="button" class="cta">' + cta + '</button></div></div>';
+      '<div class="btns"><button type="button" class="shr" data-share="' + esc(t.id) + '" title="Ulashish">🔗</button>' + (t.status === 'reg' && t.startAt > Date.now() && !inn ? '<button type="button" class="shr bel" data-bell="' + esc(t.id) + '" data-x="' + ((function () { try { return localStorage.getItem('tBell_' + t.id) === '1'; } catch (x) { return false; } })() ? ' on" data-on="1">🔔✓' : '">🔔') + '</button>' : '') + (t.status === 'running' ? '<button type="button">👁 Kuzatish</button>' : '') +
+      (t.status !== 'finished' ? '<button type="button" class="shr" data-spn="' + esc(t.id) + '" title="Homiy bo‘lish">💰</button>' : '') +
+      ((t.status !== 'finished' && (String(t.creatorUid) === String(u) || window.__isAdmin)) ? '<button type="button" class="shr" data-act="' + esc(t.id) + '" title="Amallar">⋯</button>' : '') + '<button type="button" class="cta">' + cta + '</button></div></div>';
   }
   function render() {
     var bx = g('lbT'); if (!bx) return;
@@ -356,7 +444,10 @@
       g('tlAdd').onclick = function () { if (window.lbTPlus) window.lbTPlus(); try { enhanceForm(); } catch (e) {} var f = g('lbTform'); if (f && f.style.display !== 'none') setTimeout(function () { f.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 50); };
       tb.onclick = function (e) { var b = e.target.closest('[data-tb]'); if (!b) return; tab = b.getAttribute('data-tb'); [].forEach.call(tb.children, function (x) { x.classList.toggle('on', x === b); }); sig = ''; render(); };
       tb.__set = function (k) { tab = k; [].forEach.call(tb.children, function (x) { x.classList.toggle('on', x.getAttribute('data-tb') === k); }); };
-      ls.onclick = function (e) { var tkc = e.target.closest('[data-tk]'); if (tkc) { e.preventDefault(); tkBuy(); return; } var bl = e.target.closest('[data-bell]'); if (bl) { var bid = bl.getAttribute('data-bell'), k = 'tBell_' + bid, on = true; try { on = localStorage.getItem(k) !== '1'; if (on) localStorage.setItem(k, '1'); else localStorage.removeItem(k); } catch (x) {} bl.classList.toggle('on', on); bl.textContent = on ? '🔔✓' : '🔔'; if (window.lbSend) window.lbSend({ type: 'lbTNotify', tid: bid, on: on }); return; } var sh = e.target.closest('[data-share]'); if (sh) { var rr = sh.closest('[data-tid]'); var tid = sh.getAttribute('data-share'); var nm = ((rr && rr.querySelector('.nm')) || {}).textContent || 'Turnir'; var sb = ((rr && rr.querySelector('.sbar')) || {}).textContent || ''; var base = window.TG_APP_LINK || 'https://t.me/DraughtsPRObot/play'; var _tw = window.Telegram && window.Telegram.WebApp, _uid = _tw && _tw.initDataUnsafe && _tw.initDataUnsafe.user && _tw.initDataUnsafe.user.id; var url = base + '?startapp=lbt_' + encodeURIComponent(tid) + (_uid ? '_r' + _uid : ''); var txt = '🏆 ' + nm + '\n' + sb.replace('⏳', '').trim() + '\nShashkaPRO turniriga qo‘shiling!'; var su = 'https://t.me/share/url?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(txt); try { var tgw = window.Telegram && window.Telegram.WebApp; if (tgw && tgw.openTelegramLink) tgw.openTelegramLink(su); else window.open(su, '_blank'); } catch (x) { window.open(su, '_blank'); } return; } var r = e.target.closest('[data-tid]'); if (!r) return; var id = r.getAttribute('data-tid'); if (window.tvOpen) window.tvOpen(id); };
+      ls.onclick = function (e) {
+        var spb = e.target.closest('[data-spn]'); if (spb) { e.preventDefault(); sponsor(spb.getAttribute('data-spn')); return; }
+        var acb = e.target.closest('[data-act]'); if (acb) { e.preventDefault(); actions(acb.getAttribute('data-act')); return; }
+        var tkc = e.target.closest('[data-tk]'); if (tkc) { e.preventDefault(); tkBuy(); return; } var bl = e.target.closest('[data-bell]'); if (bl) { var bid = bl.getAttribute('data-bell'), k = 'tBell_' + bid, on = true; try { on = localStorage.getItem(k) !== '1'; if (on) localStorage.setItem(k, '1'); else localStorage.removeItem(k); } catch (x) {} bl.classList.toggle('on', on); bl.textContent = on ? '🔔✓' : '🔔'; if (window.lbSend) window.lbSend({ type: 'lbTNotify', tid: bid, on: on }); return; } var sh = e.target.closest('[data-share]'); if (sh) { var rr = sh.closest('[data-tid]'); var tid = sh.getAttribute('data-share'); var nm = ((rr && rr.querySelector('.nm')) || {}).textContent || 'Turnir'; var sb = ((rr && rr.querySelector('.sbar')) || {}).textContent || ''; var base = window.TG_APP_LINK || 'https://t.me/DraughtsPRObot/play'; var _tw = window.Telegram && window.Telegram.WebApp, _uid = _tw && _tw.initDataUnsafe && _tw.initDataUnsafe.user && _tw.initDataUnsafe.user.id; var url = base + '?startapp=lbt_' + encodeURIComponent(tid) + (_uid ? '_r' + _uid : ''); var txt = '🏆 ' + nm + '\n' + sb.replace('⏳', '').trim() + '\nShashkaPRO turniriga qo‘shiling!'; var su = 'https://t.me/share/url?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(txt); try { var tgw = window.Telegram && window.Telegram.WebApp; if (tgw && tgw.openTelegramLink) tgw.openTelegramLink(su); else window.open(su, '_blank'); } catch (x) { window.open(su, '_blank'); } return; } var r = e.target.closest('[data-tid]'); if (!r) return; var id = r.getAttribute('data-tid'); if (window.tvOpen) window.tvOpen(id); };
     }
     // 👥 Klublar tabi: mavjud klublar paneli (#lbClubs) shu yerga ko'chadi; boshqa tablarda yashirin
     var club = tab === 'club', cl = g('lbClubs'), lsE = g('tlList'), tbE = g('tlTabs');

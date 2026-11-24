@@ -336,4 +336,55 @@ async function announceTo(t, ids) {
   console.log('[tposter] tanlangan e\'lon:', t.name, JSON.stringify(out));
   return out;
 }
-module.exports = { announceTo, hvbResPng, hvbResult, cancelAnn, hvbPng, isHvb, today, announce, remind, result, annSvg, resSvg, png, dayStr, hm };
+
+// ---------- 💰 HOMIY portreti: homiylik qilgan odamga yuboriladi
+function sponsorSvg(t, sp, top) {
+  const SW = 1080, SH = 1350, SC = SW / 2;
+  const T = (xx, y, txt, fs, fill, w, a) => '<text x="' + xx + '" y="' + y + '" font-family="' + F + '" font-size="' + fs + '" font-weight="' + (w || 700) + '" fill="' + fill + '"' + (a ? ' text-anchor="' + a + '"' : '') + '>' + x(txt) + '</text>';
+  const nm2 = noEmo(String(sp.name || 'Homiy')).slice(0, 20) || 'Homiy';
+  const ini = (nm2.trim()[0] || '?').toUpperCase();
+  const gold = !top;
+  const c1 = gold ? '#2b1c08' : '#2a1358', c2 = gold ? '#180f05' : '#1a0c3c', c3 = gold ? '#0d0803' : '#0b0520';
+  const acc = gold ? '#ffd36a' : '#d9c2ff', accD = gold ? '#cf9212' : '#8a5ae0';
+  let sq = '';
+  for (let r = 0; r < 8; r++) for (let c = 0; c < 9; c++) if ((r + c) % 2) sq += '<rect x="' + (c * 120) + '" y="' + (r * 120) + '" width="120" height="120"/>';
+  let s = '<svg xmlns="http://www.w3.org/2000/svg" width="' + SW + '" height="' + SH + '" viewBox="0 0 ' + SW + ' ' + SH + '">' +
+    '<defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + c1 + '"/><stop offset=".5" stop-color="' + c2 + '"/><stop offset="1" stop-color="' + c3 + '"/></linearGradient>' +
+    '<radialGradient id="shl" cx=".5" cy=".1" r=".62"><stop offset="0" stop-color="' + acc + '" stop-opacity=".34"/><stop offset="1" stop-color="' + acc + '" stop-opacity="0"/></radialGradient>' +
+    '<linearGradient id="pl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + (gold ? '#ffe9a9' : '#e9d6ff') + '"/><stop offset="1" stop-color="' + accD + '"/></linearGradient>' +
+    '<linearGradient id="avg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="' + (gold ? '#ff9f61' : '#7cc8ff') + '"/><stop offset="1" stop-color="' + (gold ? '#d94e28' : '#2f5fd0') + '"/></linearGradient>' +
+    '<radialGradient id="cn3" cx=".35" cy=".3" r=".75"><stop offset="0" stop-color="#fff3b0"/><stop offset=".3" stop-color="#fcd34d"/><stop offset=".75" stop-color="#d97706"/><stop offset="1" stop-color="#92400e"/></radialGradient></defs>' +
+    '<rect width="' + SW + '" height="' + SH + '" fill="url(#sg)"/><rect width="' + SW + '" height="' + SH + '" fill="url(#shl)"/>' +
+    '<g transform="translate(0,' + (SH - 470) + ')" fill="#fff" opacity=".055">' + sq + '</g>' +
+    '<rect x="28" y="28" width="' + (SW - 56) + '" height="' + (SH - 56) + '" rx="40" fill="none" stroke="' + acc + '" stroke-opacity=".45" stroke-width="3"/>';
+  s += T(SC, 118, 'SHASHKAPRO', 30, '#e3c489', 800, 'middle');
+  s += T(SC, 212, (top ? 'BOSH HOMIY' : 'HOMIY'), 78, acc, 900, 'middle');
+  s += T(SC, 262, (top ? 'ENG KATTA HOMIYLIK' : 'MUKOFOT JAMG‘ARMASIGA'), 28, gold ? '#c9ab74' : '#b9a3e8', 700, 'middle');
+  const cy = 470, R = 140;
+  s += '<circle cx="' + SC + '" cy="' + cy + '" r="' + (R + 12) + '" fill="none" stroke="' + acc + '" stroke-width="11"/>';
+  s += '<circle cx="' + SC + '" cy="' + cy + '" r="' + R + '" fill="url(#avg)"/>';
+  s += T(SC, cy + 46, ini, 128, '#fff', 900, 'middle');
+  s += T(SC, 712, nm2, 60, '#fff', 900, 'middle');
+  const sum = fmt(sp.sum || 0), pw = 330 + String(sum).length * 36;
+  s += '<rect x="' + (SC - pw / 2) + '" y="762" width="' + pw + '" height="110" rx="34" fill="url(#pl)"/>';
+  s += '<circle cx="' + (SC - pw / 2 + 66) + '" cy="817" r="34" fill="url(#cn3)" stroke="#92400e" stroke-width="3"/>' +
+       '<circle cx="' + (SC - pw / 2 + 66) + '" cy="817" r="25" fill="none" stroke="#fde68a" stroke-width="2"/>' +
+       T(SC - pw / 2 + 66, 830, 'T', 30, '#92400e', 900, 'middle');
+  s += T(SC + 56, 838, sum + '  TANGA', 50, '#3a2500', 900, 'middle');
+  s += T(SC, 952, '«' + noEmo(t.name).slice(0, 24) + '» turniriga', 34, gold ? '#e0cfae' : '#d8cdf0', 600, 'middle');
+  s += T(SC, 1000, (top ? 'eng katta homiylikni qildi' : 'homiylik qildi'), 34, gold ? '#e0cfae' : '#d8cdf0', 600, 'middle');
+  s += '<rect x="' + (SC - 300) + '" y="1052" width="600" height="84" rx="26" fill="rgba(255,255,255,.08)" stroke="' + acc + '" stroke-opacity=".4"/>';
+  s += T(SC, 1106, 'Mukofot jamg‘armasi: ' + fmt(t.prize || 0), 34, acc, 700, 'middle');
+  s += T(SC, SH - 70, 'Siz ham homiy bo‘ling: @' + BOT(), 30, gold ? '#b89a68' : '#a994d6', 700, 'middle');
+  return s + '</svg>';
+}
+async function sponsorSend(t, sp, top) {
+  try {
+    const buf = await png(sponsorSvg(t, sp, top));
+    const cap = (top ? '👑 <b>Bosh homiy</b>' : '💰 <b>Homiy</b>') + '\n\n«' + h(t.name) + '» turniriga <b>' + fmt(sp.sum) + '</b> tanga homiylik qildingiz.\n🏆 Mukofot jamg‘armasi: <b>' + fmt(t.prize || 0) + '</b>\n\nRahmat! Rasmni do‘stlaringizga ulashing.';
+    if (!buf) return tg('sendMessage', { chat_id: Number(sp.uid), text: cap.replace(/<[^>]+>/g, ''), parse_mode: 'HTML' });
+    return sendPhoto(Number(sp.uid), buf, cap);
+  } catch (e) { console.log('[tposter] homiy', e.message); return null; }
+}
+
+module.exports = { sponsorSvg, sponsorSend, announceTo, hvbResPng, hvbResult, cancelAnn, hvbPng, isHvb, today, announce, remind, result, annSvg, resSvg, png, dayStr, hm };

@@ -353,7 +353,7 @@ function createLobby({ send, clients, roomsApi }) {
       id: t.id, name: t.name, tc: t.tc, status: t.status, pos: t.pos || 'std',
       roundsWanted: t.roundsWanted || 0, interval: t.interval || 0,
       type: t.type || 'swiss', durationMin: t.durationMin || 0, awards: t.awards || [], prize: t.prize || 0, places: t.places || 0, berserk: t.berserk !== false, rated: t.rated !== false, tc: t.tc || "", pos: t.pos || "std", startAt: t.startAt || 0, endAt: t.endAt || 0, ending: !!t.ending,
-      creatorUid: t.creatorUid, creatorName: t.creatorName, created: t.created || 0, clubIds: t.clubIds || [], clubs: clubStandings(t),
+      creatorUid: t.creatorUid, creatorName: t.creatorName, created: t.created || 0, sponsors: (t.sponsors || []).slice(-10), clubIds: t.clubIds || [], clubs: clubStandings(t),
       round: t.round, rounds: t.rounds, nextAt: t.nextAt || 0,
       players: t.flag ? arenaStandings(t).map(p => Object.assign({}, p, require('./flags.js').badge(p.uid) || {})) : (t.type === 'arena' ? arenaStandings(t) : standings(t)),
       flag: !!t.flag, desc: t.desc || '', rec: t.rec || null, regs: t.flag ? require('./flags.js').regStandings(arenaStandings(t)).map(r => ({ r: r.r, k: r.k, c: r.c, n: r.n, score: r.score })) : [],
@@ -1983,6 +1983,59 @@ function createLobby({ send, clients, roomsApi }) {
         return handleInner(c, { type: 'lbRespond', id: ch.id, accept: true });
       }
       case 'lbShare': { handleShare(c, m); break; }
+      case 'lbTEdit': {   // ✏️ tashkilotchi: nom, mukofot, davomiylik, boshlanish vaqtini o'zgartirish / uzaytirish
+        const t = tournaments.get(String(m.tid));
+        if (!t) break;
+        if (t.creatorUid !== me.uid && !economy.isAdmin(me.uid)) { err(c, 'Faqat tashkilotchi o‘zgartira oladi'); break; }
+        if (t.status === 'finished' || t.ending) { err(c, 'Turnir tugagan'); break; }
+        const addMin = Math.max(-720, Math.min(10080, Math.floor(Number(m.addMin) || 0)));
+        if (addMin) {
+          if (t.status === 'reg') {
+            if (!t.startAt) { err(c, 'Bu turnir vaqtsiz — darhol boshlanadi'); break; }
+            const nd = t.startAt + addMin * 60e3;
+            if (nd < Date.now() + 60e3) { err(c, 'Vaqt o‘tib ketgan'); break; }
+            t.startAt = nd;
+          } else {
+            if (!t.endAt) { err(c, 'Bu turnirda tugash vaqti yo‘q'); break; }
+            t.endAt = Math.max(Date.now() + 60e3, t.endAt + addMin * 60e3);
+          }
+        }
+        // mukofot o'zgarishi — avval to'lovni tekshiramiz, keyin hammasini qo'llaymiz
+        if (m.prize != null && t.status === 'reg' && t.creatorUid !== 'sys') {
+          const np = Math.max(0, Math.floor(Number(m.prize) || 0)), old = t.prize || 0, diff = np - old;
+          if (diff > 0) {
+            if (!economy.spend(me.uid, diff, 'tournament_prize_add')) { err(c, 'Tanga yetmadi: yana ' + diff + ' kerak'); push(); break; }
+            t.prizePaid = (t.prizePaid || 0) + diff;
+          } else if (diff < 0) {
+            const back = Math.min(-diff, t.prizePaid || 0);
+            if (back) { economy.refund(me.uid, back, 'refund_prize_cut'); t.prizePaid = (t.prizePaid || 0) - back; }
+          }
+          t.prize = np;
+        }
+        if (typeof m.name === 'string' && m.name.trim()) t.name = m.name.trim().slice(0, 30);
+        if (m.duration != null && t.status === 'reg') t.durationMin = Math.max(5, Math.min(600, Math.floor(Number(m.duration) || 0)));
+        for (const pp of t.players.values()) if (pp.uid !== me.uid) toast(pp.uid, '✏️ ' + t.name + ' yangilandi' + (addMin ? ' · vaqt ' + (addMin > 0 ? '+' : '') + addMin + ' daqiqa' : ''));
+        push();
+        break;
+      }
+      case 'lbTSponsor': {   // 💰 homiylik: eng kami 100 tanga, mukofot jamg'armasiga qo'shiladi
+        const t = tournaments.get(String(m.tid));
+        if (!t || t.status === 'finished' || t.ending) { err(c, 'Turnir tugagan'); break; }
+        const sum = Math.floor(Number(m.sum) || 0);
+        if (sum < 100) { err(c, 'Homiylik eng kami 100 tanga'); break; }
+        if (!economy.spend(me.uid, sum, 'tournament_sponsor')) { err(c, 'Tangangiz yetmaydi'); break; }
+        t.prize = (t.prize || 0) + sum;
+        t.sponsors = t.sponsors || [];
+        const ex = t.sponsors.find(x => String(x.uid) === String(me.uid));
+        if (ex) ex.sum += sum; else t.sponsors.push({ uid: me.uid, name: me.name || 'Homiy', sum });
+        const _sp = ex || t.sponsors[t.sponsors.length - 1];
+        const _top = t.sponsors.slice().sort((a2, b2) => b2.sum - a2.sum)[0];
+        try { require('./tposter.js').sponsorSend(t, _sp, String(_top && _top.uid) === String(me.uid) && t.sponsors.length > 1); } catch (e) {}
+        if (t.creatorUid && t.creatorUid !== 'sys' && String(t.creatorUid) !== String(me.uid))
+          toast(t.creatorUid, '💰 ' + (me.name || 'Homiy') + ' turniringizga ' + sum + ' tanga homiylik qildi');
+        push();
+        break;
+      }
       case 'lbTCancel': {
         const t = tournaments.get(String(m.tid));
         if (!t || (t.creatorUid !== me.uid && !economy.isAdmin(me.uid)) || t.status !== 'reg') break;
