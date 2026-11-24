@@ -73,6 +73,25 @@
     if (m < 1440) return Math.floor(m / 60) + ' soat oldin';
     return Math.floor(m / 1440) + ' kun oldin';
   }
+  // ⌨️ klaviatura chiqqanda pastki oyna uning ostida qolmasin
+  window.spKb = function (ov) {
+    var sheet = ov && ov.firstElementChild; if (!sheet) return;
+    var vv = window.visualViewport;
+    function up() {
+      var gap = vv ? Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)) : 0;
+      sheet.style.transform = gap ? 'translateY(-' + gap + 'px)' : '';
+      sheet.style.maxHeight = (vv ? Math.round(vv.height * 0.92) : Math.round(window.innerHeight * 0.88)) + 'px';
+      sheet.style.overflowY = 'auto';
+    }
+    up();
+    if (vv) { vv.addEventListener('resize', up); vv.addEventListener('scroll', up); }
+    var mo = new MutationObserver(function () {
+      if (!document.body.contains(ov)) { if (vv) { vv.removeEventListener('resize', up); vv.removeEventListener('scroll', up); } mo.disconnect(); }
+    });
+    mo.observe(document.body, { childList: true });
+    return up;
+  };
+
     window.spBio = function (uid, name) {
     uid = String(uid);
     var tgw = window.Telegram && window.Telegram.WebApp;
@@ -88,6 +107,7 @@
       '<div id="spBioL" style="flex:1;min-height:120px;overflow:auto"></div><div id="spBioF" style="margin-top:10px"></div></div>';
     document.body.appendChild(ov);
     var L = ov.querySelector('#spBioL'), F = ov.querySelector('#spBioF'), C = ov.querySelector('#spBioC');
+    var kbUp = window.spKb ? window.spKb(ov) : null;
     ov.onclick = function (e) { if (e.target === ov) ov.remove(); };
     ov.querySelector('#spBioX').onclick = function () { ov.remove(); };
     function tm(t) { var d = new Date(t), p = function (n) { return (n < 10 ? '0' : '') + n; }; return p(d.getDate()) + '.' + p(d.getMonth() + 1) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()); }
@@ -133,6 +153,7 @@
       var rp = reply ? '<div style="display:flex;justify-content:space-between;gap:8px;font-size:13px;opacity:.8;margin-bottom:6px"><span>↩ ' + E(reply.n) + ': ' + E(String(reply.tx).slice(0, 40)) + '</span><span data-a="cx" style="cursor:pointer">✕</span></div>' : '';
       F.innerHTML = rp + '<div style="display:flex;gap:8px"><input id="spBioI" maxlength="200" placeholder="Izoh yozing…" style="flex:1;min-width:0;padding:10px;border-radius:10px;border:1px solid #2c3270;background:#0d1024;color:#fff;font-size:16px"><button id="spBioG" style="flex:none;border:0;border-radius:10px;padding:0 16px;background:#81b64c;color:#fff;font-size:18px">➤</button></div><div id="spBioE" style="color:#ff8a8a;font-size:13px;min-height:16px;margin-top:4px"></div>';
       var ii = F.querySelector('#spBioI'); ii.value = v;
+      ii.onfocus = function () { setTimeout(function () { if (kbUp) kbUp(); }, 250); };
       F.querySelector('#spBioG').onclick = send;
       ii.onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); send(); } };
     }
@@ -183,6 +204,7 @@
     ov.onclick = function (e) { if (e.target === ov) ov.remove(); };
     ov.querySelector('#spLkX').onclick = function () { ov.remove(); };
     var L = ov.querySelector('#spLkL');
+    if (window.spKb) window.spKb(ov);
     fetch('/api/social/likers' + (uid ? '?uid=' + encodeURIComponent(uid) : ''), { headers: H })
       .then(function (r) { return r.json(); })
       .then(function (j) {
@@ -293,7 +315,9 @@
             '<button id="pfBioD" style="flex:none;border:0;border-radius:12px;padding:12px 16px;background:#7a2b2b;color:#ffd9d9;font-weight:700;font-size:15px">O‘chirish</button></div>' +
             '<div id="pfBioE" style="color:#ff8a8a;font-size:13px;min-height:16px;margin-top:6px"></div></div>';
           document.body.appendChild(ov);
+          var kb = window.spKb ? window.spKb(ov) : null;
           var ta = ov.querySelector('#pfBioI'), nn = ov.querySelector('#pfBioN'), er = ov.querySelector('#pfBioE');
+          ta.onfocus = function () { setTimeout(function () { if (kb) kb(); }, 250); };
           ta.value = txt.textContent || ''; nn.textContent = ta.value.length + ' / 120';
           ta.oninput = function () { nn.textContent = ta.value.length + ' / 120'; };
           ov.onclick = function (e) { if (e.target === ov) ov.remove(); };

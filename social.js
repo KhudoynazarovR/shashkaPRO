@@ -129,7 +129,7 @@ function bioList(me, uid, before) {
   const x = users()[String(uid)]; if (!x) return { error: 'O‘yinchi topilmadi' };
   const b = +before || Infinity, pool = (x.bio || []).filter(e => e.id < b), page = pool.slice(-30);
   const own = me === String(uid), adm = ADM().includes(me);
-  const canWrite = !x.bioOff && (!BIO_WRITE_PREMIUM || store.isPremium(users()[me] || {}) || adm);
+  const canWrite = own || adm || (!x.bioOff && (!BIO_WRITE_PREMIUM || store.isPremium(users()[me] || {})));
   return { list: page.map(e => bioShape(x, uid, e, me)), more: pool.length > page.length, n: (x.bio || []).length, canWrite, off: !!x.bioOff, own: own || adm };
 }
 // 🔒 profil egasi izohlarni yopadi/ochadi
@@ -152,7 +152,7 @@ function bioPost(me, uid, text, reply) {
   const us = users(), a = us[me], x = us[String(uid)];
   if (!a || !x) return { error: 'O‘yinchi topilmadi' };
   if (x.bioOff && me !== String(uid) && !ADM().includes(me)) return { error: 'Bu profilda izohlar yopiq' };
-  if (BIO_WRITE_PREMIUM && !store.isPremium(a) && !ADM().includes(me)) return { error: 'Izoh yozish faqat Premium uchun', prem: true };
+  if (BIO_WRITE_PREMIUM && me !== String(uid) && !store.isPremium(a) && !ADM().includes(me)) return { error: 'Izoh yozish faqat Premium uchun', prem: true };
   try { if (require('./mod.js').isMuted(me)) return { error: 'Yozish vaqtincha yopiq' }; } catch (e) {}
   let tx = String(text || '').replace(/\s+/g, ' ').trim().slice(0, BIO_LEN);
   if (!tx) return { error: 'Izoh bo‘sh' };
