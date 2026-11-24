@@ -907,6 +907,8 @@
     elBerserk.textContent = "⚡ Berserk";
     elBerserk.className = elResign.className;
     elBerserk.style.display = "none";
+    // ⚡ pastki panel ustida suzib turadi — ekrandan chiqib ketmaydi
+    elBerserk.dataset.fx = "1";
     elResign.parentNode.insertBefore(elBerserk, elResign);
     elBerserk.onclick = function () {
       if (st.finished || st.color === "spectator") return;
@@ -1497,7 +1499,10 @@
       elDrawOffer.style.display = (playing && st.moves.length >= 2 && st.canDraw && !st.drawOffer) ? "" : "none";
       var canBz = playing && st.arena && !st.noBerserk && st.berserk && !st.berserk[st.color] &&
         (st.color === "white" ? st.moves.length === 0 : st.moves.length <= 1);
-      elBerserk.style.display = canBz ? "" : "none";
+      if (canBz) {
+        elBerserk.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:calc(104px + env(safe-area-inset-bottom,0px));z-index:70;border:0;border-radius:16px;padding:13px 26px;font:800 17px system-ui;color:#2a1a00;background:linear-gradient(180deg,#ffdf8d,#e0a120);box-shadow:0 5px 0 #9b6b0d,0 10px 26px rgba(0,0,0,.5);white-space:nowrap';
+        if (elBerserk.parentNode !== document.body) document.body.appendChild(elBerserk);
+      } else elBerserk.style.display = "none";
       if (!st.finished && st.drawOffer && st.color !== "spectator") {
         elDraw.style.display = "";
         var mine = st.drawOffer === st.color;

@@ -76,7 +76,7 @@ const MIX_G = {
 const validStart = v => { v = Number(v); const n = Date.now(); return v >= n + 60000 && v <= n + 183 * 86400000 ? Math.floor(v) : 0; };   // aniq boshlanish: 1 daqiqadan 6 oygacha             // boshlanishgacha kutish (daqiqa)
 const ARENA_MAX_PLAYERS = 200;
 const ARENA_FIRE_AFTER = 2;                          // ketma-ket shuncha g'alabadan keyin olov yonadi
-const ARENA_PAIR_DELAY_MS = Number(process.env.ARENA_PAIR_DELAY_MS || 5000);       // o'yin tugagach juftlashgacha
+const ARENA_PAIR_DELAY_MS = Number(process.env.ARENA_PAIR_DELAY_MS || 1500);       // o'yin tugagach juftlashgacha (tezroq: 5s → 1.5s)
 const ARENA_REMATCH_WAIT_MS = Number(process.env.ARENA_REMATCH_WAIT_MS || 15000);  // bir xil raqibga qaytishdan oldin kutish
 const ARENA_NOSHOW_MS = Number(process.env.ARENA_NOSHOW_MS || 30000);              // o'yinga kirmaganlar uchun kutish
 const ARENA_MIN_DRAW_PLIES = Number(process.env.ARENA_MIN_DRAW_PLIES || 20);       // lidraughts: 10 yurishdan (20 yarim-yurish) oldingi durangga ochko yo'q
@@ -2272,7 +2272,7 @@ function createLobby({ send, clients, roomsApi }) {
   // 📅 kunlik jadval o'chirilgan (admin so'rovi): turnirlar endi faqat qo'lda yoki 🔁 doimiy andozadan yaratiladi
   // setInterval(() => { try { schedTick(); } catch (e) { console.log("[jadval] xato:", e.message); } }, 30000).unref();
   setInterval(remindTick, 5000).unref();
-  setInterval(arenaTick, 2000).unref();
+  setInterval(arenaTick, 800).unref();   // juftlash tekshiruvi tez-tez
 
   // xo'jayin navbati va soatlari xonalarda o'zgaradi, shuning uchun ishlayotgan simullarni tez-tez yangilaymiz
   setInterval(() => { if ([...simuls.values()].some(x => x.status === 'running')) push(); }, 2000).unref();
