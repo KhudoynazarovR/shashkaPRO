@@ -5,7 +5,7 @@ const DIR = path.join(__dirname, "engine"), BIN = process.env.KESTO_BIN || path.
 const SRC = [path.join(DIR, "bridge.c"), path.join(DIR, "KestoG.C")];
 let ready = false, busy = 0;
 let COLETTE = {}; try { COLETTE = JSON.parse(fs.readFileSync(path.join(__dirname, "partiyalar", "colette_moves.json"), "utf8")); console.log("[Colette uslubi] pozitsiyalar:", Object.keys(COLETTE).length); } catch (e) {}
-let BOOK = {}; try { BOOK = JSON.parse(fs.readFileSync(path.join(__dirname, "book.json"), "utf8")); console.log("[Kitob] pozitsiyalar:", Object.keys(BOOK).length); } catch (e) { console.log("[Kitob] book.json yo'q"); }
+let BOOK = {}; try { BOOK = require('./bookcache.js').get(); console.log("[Kitob] pozitsiyalar:", Object.keys(BOOK).length); } catch (e) { console.log("[Kitob] book.json yo'q"); }
 
 function fresh() {
   try { const b = fs.statSync(BIN).mtimeMs; return SRC.every(f => fs.statSync(f).mtimeMs <= b); } catch (e) { return false; }

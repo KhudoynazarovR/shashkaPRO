@@ -148,7 +148,7 @@ function importBooks(sc, depthPly, by) {
   const r = D(); if (!okScope(sc)) return 0;
   let C = {}, B = {};
   try { C = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'partiyalar', 'colette_moves.json'), 'utf8')); } catch (e) {}
-  try { B = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'book.json'), 'utf8')); } catch (e) {}
+  try { B = require('./bookcache.js').get(); } catch (e) {}
   const S = r.sc[sc] || (r.sc[sc] = {}); let add = 0; const seen = new Set();
   for (const me of [1, -1]) {
     const q = [[init(), 1, 0]];
@@ -270,7 +270,7 @@ function fillOne(b, s, cb) {
 }
 let _C = null, _B = null;
 function colette() { if (!_C) try { _C = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'partiyalar', 'colette_moves.json'), 'utf8')); } catch (e) { _C = {}; } return _C; }
-function bookJ() { if (!_B) try { _B = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'book.json'), 'utf8')); } catch (e) { _B = {}; } return _B; }
+function bookJ() { if (!_B) try { _B = require('./bookcache.js').get(); } catch (e) { _B = {}; } return _B; }
 function fillStart(by) {
   if (FILL.run) return FILL;
   try { FILL.q = fillQueue(); } catch (e) { FILL.err = e.message; return FILL; }

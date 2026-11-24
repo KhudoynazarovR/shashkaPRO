@@ -649,12 +649,21 @@ function createLobby({ send, clients, roomsApi }) {
   function ratedGames(uid) { try { const u = require('./store').users()[String(uid)]; return u ? (Number(u.games) || ((u.wins || 0) + (u.losses || 0) + (u.draws || 0))) : 0; } catch (e) { return 0; } }
   function olyElo(uid) { try { const u = require('./store').users()[String(uid)]; return u ? (Number(u.elo) || 1000) : 1000; } catch (e) { return 1000; } }
 
+  function roundDm(uid, oppName, t, tcTxt) {   // 🔔 yangi tur: ilovada bo'lmagan o'yinchiga bot xabari
+    try {
+      if (!/^\d+$/.test(String(uid)) || connsOf(uid).length) return;
+      try { if (!require('./notify.js').allowed(uid, 'arena')) return; } catch (e) {}
+      const al = (process.env.TG_APP_LINK || process.env.APP_LINK || '').replace(/\/$/, '') || 'https://t.me/DraughtsPRObot/play';
+      tgCall('sendMessage', { chat_id: Number(uid), text: '⚔️ ' + t.name + ' · ' + t.round + '-tur boshlandi!\nRaqibingiz: ' + String(oppName || '').replace(/^🤖\s*/, '').slice(0, 30) + (tcTxt ? '\n⏱ ' + tcTxt : '') + '\nKechiksangiz, texnik mag‘lubiyat berilishi mumkin.', reply_markup: { inline_keyboard: [[{ text: '▶ O‘yinga kirish', url: al + '?startapp=lbt_' + t.id }]] } }).catch(() => {});
+    } catch (e) {}
+  }
   function olyOpenBoard(t, b, tcN) {
     const W = t.players.get(b.white), B = t.players.get(b.black);
     if (!W || !B) return;
     openRoom(b.roomId, tcN, W, B, false, t.pos === 'idf' ? pickOpening() : null);
     sendUid(b.white, { type: 'lbGo', roomId: b.roomId, reason: 'tournament', tname: t.name, round: t.round, color: 'white', opponent: B.name, tc: tcN });
     sendUid(b.black, { type: 'lbGo', roomId: b.roomId, reason: 'tournament', tname: t.name, round: t.round, color: 'black', opponent: W.name, tc: tcN });
+    roundDm(b.white, B.name, t, tcN); roundDm(b.black, W.name, t, tcN);
     const nid = b.roomId, rn = t.round;
     const to = setTimeout(() => { if (t.status === 'running' && t.round === rn && !b.done && b.roomId === nid) forfeitIdle(b); }, NOSHOW_MS);
     if (to.unref) to.unref();
@@ -792,6 +801,7 @@ function createLobby({ send, clients, roomsApi }) {
       roomToBoard.set(roomId, { t, b: board });
       sendUid(w.uid, { type: 'lbGo', roomId, reason: 'tournament', tname: t.name, round: t.round, color: 'white', opponent: b.name, tc: tcR });
       sendUid(b.uid, { type: 'lbGo', roomId, reason: 'tournament', tname: t.name, round: t.round, color: 'black', opponent: w.name, tc: tcR });
+      roundDm(w.uid, b.name, t, tcR); roundDm(b.uid, w.name, t, tcR);
     });
     sysChat(t, { sys: 'round', text: t.round + '-tur boshlandi · ' + t.cur.length + ' ta doska' });
     const roundNo = t.round;
@@ -1905,6 +1915,38 @@ function createLobby({ send, clients, roomsApi }) {
         push();
         break;
       }
+      case 'lbTNotify': {
+        if (!c.lb || !c.lb.tg) { toast(me.uid, 'Eslatma uchun Telegram orqali kiring'); break; }
+        const tn = tournaments.get(String(m.tid));
+        if (!tn || tn.status !== 'reg' || !tn.startAt || tn.startAt <= Date.now()) { toast(me.uid, 'Bu turnir uchun eslatma kerak emas'); break; }
+        tn.watch = tn.watch || {};
+        if (m.on === false) { delete tn.watch[String(me.uid)]; toast(me.uid, '🔕 Eslatma o‘chirildi'); break; }
+        if (Object.keys(tn.watch).length >= 3000) break;
+        tn.watch[String(me.uid)] = 1;
+        toast(me.uid, '🔔 Eslatma yoqildi: turnirdan 15 daqiqa oldin xabar beramiz');
+        break;
+      }
+      case 'lbTRef': {
+        if (!c.lb || !c.lb.tg) break;
+        const inv = String(m.ref || '').replace(/[^0-9]/g, '');
+        if (!inv || inv === String(me.uid)) break;
+        const rj = require('./ref.js').join(me.uid, inv);
+        if (rj) { toast(rj.inviter, '👋 Do‘stingiz ' + rj.name + ' qo‘shildi! 3 ta o‘yin o‘ynasa +100 🪙'); push(); break; }
+        const st0 = require('./store.js');
+        if (!st0.users()[inv]) break;
+        const db0 = st0.db, TR = db0.tRef = db0.tRef || { seen: {}, day: '', c: {} };
+        const dy = new Date(Date.now() + 5 * 3600e3).toISOString().slice(0, 10);
+        if (TR.day !== dy) { TR.day = dy; TR.c = {}; }
+        const kk = inv + ':' + me.uid;
+        if (TR.seen[kk] || (TR.c[inv] || 0) >= 50) break;
+        TR.seen[kk] = 1; TR.c[inv] = (TR.c[inv] || 0) + 5;
+        require('./economy.js').add(inv, 5, 'ref-tour');
+        st0.save();
+        const msg0 = '🏆 ' + (me.name || 'O‘yinchi') + ' havolangiz orqali turnirga keldi: +5 🪙';
+        toast(inv, msg0);
+        try { tgCall('sendMessage', { chat_id: Number(inv), text: msg0 }).catch(() => {}); } catch (e) {}
+        break;
+      }
       case 'lbRef': {
         if (!c.lb || !c.lb.tg) break;
         const r = require('./ref.js').join(me.uid, m.ref);   // 👥 bonus endi o'yinlar soniga qarab (ref.js)
@@ -2074,6 +2116,13 @@ function createLobby({ send, clients, roomsApi }) {
         const msg = { chat_id: Number(p.uid), text: '⏰ ' + title + '\n' + mins + ' daqiqadan keyin boshlanadi!\n⏱ ' + t.tc + (t.prize ? ' · 💰 ' + t.prize : '') + ' · 👥 ' + t.players.size + '\nTayyor turing 💪' };
         if (url) msg.reply_markup = { inline_keyboard: [[{ text: '▶ Turnirga kirish', url }]] };
         tgCall('sendMessage', msg).catch(() => {});
+      }
+      for (const wuid of Object.keys(t.watch || {})) {
+        if (!/^\d+$/.test(wuid) || [...t.players.values()].some(p => String(p.uid) === wuid)) continue;
+        try { if (!require('./notify.js').allowed(wuid, 'arena')) continue; } catch (e) {}
+        const wm = { chat_id: Number(wuid), text: '🔔 ' + title + '\n' + mins + ' daqiqadan keyin boshlanadi!\n⏱ ' + t.tc + (t.prize ? ' · 💰 ' + t.prize : '') + ' · 👥 ' + t.players.size + '\nSiz eslatma yoqgan edingiz 💪' };
+        if (url) wm.reply_markup = { inline_keyboard: [[{ text: '▶ Turnirga kirish', url }]] };
+        tgCall('sendMessage', wm).catch(() => {});
       }
       if (t.announce) { try { require('./tposter.js').remind(t); } catch (e) {} }
       console.log('[turnir] 15 daqiqa eslatmasi:', t.name);

@@ -839,7 +839,31 @@
       var spec = st.color === "spectator" && st.joined;
       root.classList.toggle("rcSpec", spec);
       var sh = document.getElementById("spSH"), dg = document.getElementById("spDG");
-      if (!spec) { if (sh) sh.remove(); if (dg) dg.remove(); var a0 = document.getElementById("spDA"); if (a0) a0.remove(); return; }
+      if (!spec) { if (sh) sh.remove(); if (dg) dg.remove(); var a0 = document.getElementById("spDA"); if (a0) a0.remove();
+      (function () {
+        var pc = document.getElementById("spPC");
+        if (st.color === "spectator") { if (pc) pc.remove(); return; }
+        var L = spList(), n = st.spectators || L.length;
+        if (!n) { if (pc) pc.remove(); return; }
+        if (!document.getElementById("spPCcss")) { var cs = document.createElement("style"); cs.id = "spPCcss"; cs.textContent = "#spPC{width:min(94vw,520px);display:flex;justify-content:flex-end;margin:0 0 6px;box-sizing:border-box;position:relative}#spPC .sv{all:unset;display:flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;border-radius:99px;background:rgba(0,0,0,.28);cursor:pointer}#spPC .avs{display:flex}#spPC .avs span{width:26px;height:26px;border-radius:50%;border:2px solid #fff;margin-left:-9px;display:flex;align-items:center;justify-content:center;color:#fff;font:700 12px system-ui,sans-serif;box-sizing:border-box;overflow:hidden;background-size:cover;background-position:center}#spPC .sv b{display:flex;align-items:center;gap:4px;font:700 14px system-ui,sans-serif;color:#e8dccb}#spPC .sv b svg{width:17px;height:17px}#spPC #spSL{position:absolute;right:0;top:100%;z-index:60;margin-top:4px;min-width:190px;max-height:260px;overflow:auto;background:#1f2a22;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,.4)}#spPC #spSL h4{margin:0 0 8px;font:700 13px system-ui,sans-serif;color:#cfc5b5}#spPC #spSL div{display:flex;align-items:center;gap:8px;padding:4px 0;font:600 14px system-ui,sans-serif;color:#f3ebe0}#spPC #spSL div span{width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font:700 12px system-ui,sans-serif;overflow:hidden;background-size:cover;background-position:center;flex:none}"; document.head.appendChild(cs); }
+        if (!pc) {
+          pc = document.createElement("div"); pc.id = "spPC";
+          pc.innerHTML = '<button class="sv"><div class="avs"></div><b>' + RC_ICO.eye + "<span></span></b></button>";
+          root.insertBefore(pc, elTop);
+          pc.querySelector(".sv").onclick = function (e) {
+            e.stopPropagation();
+            var l = document.getElementById("spSL"); if (l) { l.remove(); return; }
+            var L2 = spList(); l = document.createElement("div"); l.id = "spSL";
+            l.innerHTML = "<h4>Tomoshabinlar · " + (st.spectators || L2.length) + "</h4>" + L2.map(function (x) { return "<div>" + spAv(x) + spEsc(x.n) + "</div>"; }).join("");
+            pc.appendChild(l);
+            setTimeout(function () { document.addEventListener("click", function cl() { var q = document.getElementById("spSL"); if (q) q.remove(); document.removeEventListener("click", cl); }); }, 0);
+          };
+        }
+        var ah = L.slice(0, 3).map(spAv).join("");
+        var avs = pc.querySelector(".avs"); if (avs._h !== ah) { avs._h = ah; avs.innerHTML = ah; }
+        pc.querySelector(".sv b span").textContent = String(n);
+      })();
+ return; }
       if (!sh) {
         sh = document.createElement("div"); sh.id = "spSH";
         sh.innerHTML = '<button class="bk" aria-label="Zalga">' + RC_ICO.back + '</button><div class="tt"><i></i><span></span></div><button class="sv"><div class="avs"></div><b>' + RC_ICO.eye + "<span></span></b></button>";
@@ -1484,7 +1508,7 @@
       renderTc();
       renderChat();
       elInfo.textContent = (st.color === "spectator" ? ""   // tomoshabinlar soni va rasmlari tepada
-        : (st.spectators ? "👁 Tomoshabinlar: " + st.spectators + ((st.specNames || []).length ? " (" + st.specNames.join(", ") + ")" : "") : "")) +
+        : "") +
         (bothIn() && !st.finished && !st.clockRunning && !st.vsBot && st.timeMs && st.color !== "spectator"
           ? (st.spectators ? "\n" : "") + "⏱ " + st.tc + " (daqiqa + soniya)\n⏳ Birinchi yurish 15 soniya ichida qilinmasa, texnik mag‘lubiyat"
           : "");

@@ -1,6 +1,6 @@
 const fs = require("fs");
 let BOOK = null;
-const book = () => BOOK || (BOOK = JSON.parse(fs.readFileSync(__dirname + "/book.json", "utf8")));
+const book = () => BOOK || (BOOK = require('./bookcache.js').get());
 const key = b => { let s = ""; for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) { const p = b[r][c]; s += p === "w" ? "1" : p === "b" ? "-1" : p === "W" ? "2" : p === "B" ? "-2" : "0"; } return s; };
 function start() { return Array.from({ length: 8 }, (_, r) => Array.from({ length: 8 }, (_, c) => (r + c) % 2 === 1 ? (r < 3 ? "b" : r > 4 ? "w" : null) : null)); }
 const sq = (r, c) => "abcdefgh"[c] + (8 - r);

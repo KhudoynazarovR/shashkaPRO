@@ -42,13 +42,67 @@
     '#tlList .w{text-align:right;font-size:12.5px;color:#d6ccbd;white-space:nowrap;flex:none}#tlList .w b{display:block;color:#fff;font-size:15px}#tlList .w b.l{color:#6cc04a}' +
     '#tlList .e{padding:28px 10px;text-align:center;color:var(--spMute,#b9ab98)}#tlList .e button{margin-top:12px;border:0;border-radius:12px;padding:11px 18px;background:#81b64c;color:#fff;font-weight:700;font-size:15px}';
   var stl = document.createElement('style'); stl.textContent = css; document.head.appendChild(stl);
+  var ccss = document.createElement('style'); ccss.textContent = `/*tlCardV2*/
+#tlList .r{display:block;padding:12px;margin:8px 0;border:1px solid rgba(255,255,255,.1);border-radius:16px;background:rgba(255,255,255,.05);box-shadow:inset 4px 0 0 var(--ac,#5b8def)}
+#tlList .r.s-run{--ac:#6cc04a}
+#tlList .r.s-fin{--ac:#7b8196}
+#tlList .r.me{background:rgba(108,192,74,.1);border-color:rgba(108,192,74,.4)}
+#tlList .r .top{display:flex;align-items:flex-start;gap:12px}
+#tlList .r .i{width:44px;height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:24px;flex:none;background:rgba(255,255,255,.08)}
+#tlList .r .i.k-gp,#tlList .r .i.k-mx{background:rgba(170,120,255,.24)}
+#tlList .r .i.k-bl{background:rgba(91,141,239,.26)}
+#tlList .r .i.k-bz{background:rgba(255,140,60,.24)}
+#tlList .r .i.k-rp{background:rgba(108,192,74,.22)}
+#tlList .r .i.k-kl{background:rgba(64,200,190,.22)}
+#tlList .r .i.k-tr{background:rgba(245,183,43,.22)}
+#tlList .r .t{padding-top:2px}
+#tlList .r .t b{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.3;word-break:break-word}
+#tlList .r .w{padding-top:1px}
+#tlList .r .chs{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+#tlList .r .c{font-size:12.5px;padding:4px 9px;border-radius:8px;background:rgba(255,255,255,.08);color:#d6ccbd}
+#tlList .r .c.p{background:rgba(245,183,43,.16);color:#f5b72b}
+#tlList .r .c.y{background:rgba(134,239,172,.14);color:#86efac}
+`; document.head.appendChild(ccss);
+  var c4 = document.createElement('style'); c4.textContent = `/*tlCardV4*/
+#tlList .r{padding:14px;margin:12px 0;border-radius:20px;background:linear-gradient(160deg,#181e45,#12162f);border:1px solid #2a3160}
+#tlList .r::before{display:none}
+#tlList .r.me{border-color:rgba(108,192,74,.5)}
+#tlList .r .hd{display:flex;align-items:center;gap:12px}
+#tlList .r .hd .i{width:46px;height:46px;font-size:25px;border-radius:14px}
+#tlList .r .nm{flex:1;min-width:0;font-size:18px;font-weight:800;line-height:1.25;word-break:break-word}
+#tlList .r .bdg{font-size:12.5px;font-weight:700;padding:5px 11px;border-radius:10px;white-space:nowrap}
+#tlList .r .b-run{background:#143d33;color:#4ee08a}
+#tlList .r .b-reg{background:#1d2a5c;color:#8fb0ff}
+#tlList .r .b-fin{background:#2a2f4a;color:#9aa0c0}
+#tlList .r .sbar{margin:12px 0 6px;padding:10px 12px;border-radius:12px;font-size:14.5px;font-weight:700}
+#tlList .r .rw{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;color:#aab0d6;margin:9px 0;line-height:1.35}
+#tlList .r .rw i{font-style:normal;width:22px;text-align:center;flex:none}
+#tlList .r .rw b{color:#fff}
+#tlList .r .rw b.cr{color:#8fa4ff}
+#tlList .r .ft{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 4px 32px}
+#tlList .r .btns{display:flex;gap:8px;margin-top:14px}
+#tlList .r .btns button{flex:1;border:0;border-radius:14px;height:46px;font-size:15px;font-weight:700;color:#fff;background:rgba(255,255,255,.09)}
+#tlList .r .btns .cta{flex:2;background:linear-gradient(90deg,#6366f1,#8b5cf6)}
+#tlList .r .btns button:active{filter:brightness(.88);transform:translateY(1px)}
+`; document.head.appendChild(c4);
+  var c5 = document.createElement('style'); c5.textContent = `/*tlCardV5*/
+#tlList .r{box-shadow:none!important;background:rgba(0,0,0,.38)!important;border-color:rgba(255,255,255,.13)!important}
+#tlList .r::before{display:none!important}
+#tlList .r .b-reg{background:rgba(91,141,239,.22)!important}
+#tlList .r .b-run{background:rgba(76,224,138,.16)!important}
+#tlList .r .b-fin{background:rgba(255,255,255,.09)!important}
+#tlList .r .rw{margin:7px 0}
+#tlList .r .sbar{margin:10px 0 4px;font-size:14px}
+`; document.head.appendChild(c5);
+  var c6 = document.createElement('style'); c6.textContent = '/*tlShareV1*/#tlList .r .btns .shr{flex:0 0 52px;font-size:19px;padding:0}'; document.head.appendChild(c6);
+  var c7 = document.createElement('style'); c7.textContent = '/*tlBellV1*/#tlList .r .btns .bel{flex:0 0 62px;font-size:17px;padding:0}#tlList .r .btns .bel.on{background:rgba(76,224,138,.22);color:#4ee08a}'; document.head.appendChild(c7);
 
   var tab = 'live', sig = '';
   function rowOf(t, u) {
     var sp = speed(t.tc), ps = t.players || [], bots = 0, hum = 0, inn = false, now = Date.now();
     ps.forEach(function (p) { if (p.bot) bots++; else hum++; if (String(p.uid) === u && !p.withdrawn) inn = true; });
     var kind = t.mix ? '🔀 Miks · ' + t.mix.length + ' o‘yin' : t.type === 'arena' ? '' : t.type === 'swiss' ? 'Shveytsariya' + (t.roundsWanted ? ' · ' + t.roundsWanted + ' tur' : '') : t.type === 'olympic' || t.type === 'ko' ? 'Olimpiya tizimi' : 'Turnir';
-    var name = String(t.name || 'Turnir').replace(/^[^\p{L}\p{N}]+\s*/u, '');
+    var name = String(t.name || 'Turnir').replace(/^[^\p{L}\p{N}]+\s*/u, '').replace(/[\s\p{Extended_Pictographic}\uFE0F]+$/u, '');
     var empty = !hum && !bots && t.status !== 'finished';
     var sub = (t.tc && t.tc !== '∞' && !t.mix ? esc(tcTxt(t.tc)) + ' ' + sp[1] + ' · ' : '') + (kind ? kind + ' · ' : '') + (empty ? '<span class="y">Bo‘sh — qo‘shiling!</span>' : hum + ' o‘yinchi') + (bots ? ' · 🤖 ' + bots : '') +
       ((t.clubIds || []).length ? ' · 👥 ' + ((t.clubIds || []).length > 1 ? 'klublar jangi' : 'klub') : '') + (t.prize ? ' · <span class="p">🏆 ' + t.prize + '</span>' : '') + (inn ? ' · <span class="y">✓ siz</span>' : '');
@@ -56,7 +110,28 @@
     if (t.status === 'running') w = t.ending ? '<b class="l">yakunlanmoqda</b>oxirgi o‘yinlar' : t.endAt ? '<b class="l">' + dur(t.endAt - now) + '</b>tugashiga' : '<b class="l">' + (t.round ? t.round + '-tur' : 'jonli') + '</b>' + (t.rounds ? t.rounds + ' turdan' : 'o‘ynalmoqda');
     else if (t.status === 'reg') w = t.startAt ? '<b>' + dayLbl(t.startAt) + f2(new Date(t.startAt).getHours()) + ':' + f2(new Date(t.startAt).getMinutes()) + '</b>' + (t.startAt > now ? dur(t.startAt - now) + ' qoldi' : 'boshlanmoqda') : '<b>Ro‘yxat</b>ochiq';
     else { var top = ps.filter(function (p) { return p.games > 0 || p.score > 0; })[0] || ps[0]; w = '<b>' + (top ? '🥇 ' + esc(String(top.name || '').replace(/^🤖\s*/, '').slice(0, 14)) : 'Tugadi') + '</b>' + (t.endAt ? dayLbl(t.endAt) + f2(new Date(t.endAt).getHours()) + ':' + f2(new Date(t.endAt).getMinutes()) : 'tugadi'); }
-    return '<div class="r' + (inn ? ' me' : '') + '" data-tid="' + esc(t.id) + '"><span class="i">' + (t.mix ? '🔀' : t.type === 'arena' ? sp[0] : '🏆') + '</span><div class="t"><b>' + esc(name) + '</b><small>' + sub + '</small></div><div class="w">' + w + '</div></div>';
+    var spk = t.mix ? 'k-mx' : t.type === 'arena' ? (sp[1] === 'Giper' ? 'k-gp' : sp[1] === 'Bullet' ? 'k-bl' : sp[1] === 'Blits' ? 'k-bz' : sp[1] === 'Tezkor' ? 'k-rp' : 'k-kl') : 'k-tr';
+    var scl = t.status === 'running' ? ' s-run' : t.status === 'finished' ? ' s-fin' : '';
+    var ch = '';
+    if (t.tc && t.tc !== '∞' && !t.mix) ch += '<span class="c">⏱ ' + esc(tcTxt(t.tc)) + (sp[1] ? ' · ' + sp[1] : '') + '</span>';
+    if (kind) ch += '<span class="c">' + kind + '</span>';
+    ch += empty ? '<span class="c y">Bo‘sh — qo‘shiling!</span>' : '<span class="c">👥 ' + hum + (bots ? ' · 🤖 ' + bots : '') + '</span>';
+    if ((t.clubIds || []).length) ch += '<span class="c">🛡 ' + ((t.clubIds || []).length > 1 ? 'klublar jangi' : 'klub') + '</span>';
+    if (t.prize) ch += '<span class="c p">🏆 ' + t.prize + '</span>';
+    if (inn) ch += '<span class="c y">✓ siz</span>';
+    var dt = function (ts) { var d = new Date(ts); return f2(d.getDate()) + '.' + f2(d.getMonth() + 1) + '.' + d.getFullYear() + ' ' + f2(d.getHours()) + ':' + f2(d.getMinutes()); };
+    var top0 = ps.filter(function (p) { return p.games > 0 || p.score > 0; })[0] || ps[0];
+    var bcl = t.status === 'running' ? 'b-run' : t.status === 'finished' ? 'b-fin' : 'b-reg';
+    var btx = t.status === 'running' ? 'O‘ynalmoqda' : t.status === 'finished' ? 'Tugagan' : 'Faol';
+    var sbt = t.status === 'running' ? (t.ending ? 'Yakunlanmoqda…' : 'O‘ynalmoqda' + (t.round ? ' · ' + t.round + (t.rounds ? ' / ' + t.rounds : '') + '-tur' : '') + (t.endAt ? ' · tugashiga ' + dur(t.endAt - now) : '')) : t.status === 'finished' ? 'Yakunlandi' + (top0 ? ' · 🥇 ' + esc(String(top0.name || '').replace(/^🤖\s*/, '').slice(0, 18)) : '') : (t.startAt ? (t.startAt > now ? 'Boshlanishiga ' + dur(t.startAt - now) + ' · ' + (dayLbl(t.startAt) || 'Bugun ') + f2(new Date(t.startAt).getHours()) + ':' + f2(new Date(t.startAt).getMinutes()) : 'Boshlanmoqda') : 'Ro‘yxat ochiq');
+    var R = function (ic, tx) { return '<div class="rw"><i>' + ic + '</i><span>' + tx + '</span></div>'; };
+    var fmtTx = (t.pos === 'idf' ? 'IDF 780' : 'Standart') + (t.tc && t.tc !== '∞' && !t.mix ? ' · ' + esc(tcTxt(t.tc)) + (sp[1] ? ' ' + sp[1] : '') : '') + (kind ? ' · ' + kind : '');
+    var feat = '';
+    if (t.type === 'arena') feat += '<span class="c">' + (t.berserk === false ? '⚡ Berserk yo‘q' : '⚡ Berserk') + '</span>';
+    feat += '<span class="c">' + (t.rated === false ? '🤝 Reytingsiz' : '⭐ Reytingli') + '</span>';
+    if ((t.clubIds || []).length) feat += '<span class="c">🛡 ' + ((t.clubIds || []).length > 1 ? 'klublar jangi' : 'klub') + '</span>';
+    var cta = t.status === 'finished' ? 'Natijalar' : inn ? 'Turnirga kirish' : 'Qatnashaman';
+    return '<div class="r' + (inn ? ' me' : '') + scl + '" data-tid="' + esc(t.id) + '"><div class="hd"><span class="i ' + spk + '">' + (t.mix ? '🔀' : t.type === 'arena' ? sp[0] : '🏆') + '</span><b class="nm">' + esc(name) + '</b><span class="bdg ' + bcl + '">' + btx + '</span></div><div class="sbar ' + bcl + '">⏳ ' + sbt + '</div>' + R('♟', fmtTx) + '<div class="ft">' + feat + '</div>' + R('👥', 'Ishtirokchilar: <b>' + hum + '</b>' + (bots ? ' · 🤖 ' + bots : '') + (empty ? ' · <span class="y">qo‘shiling!</span>' : '')) + (t.prize ? R('🪙', 'Mukofot: <b>' + t.prize + '</b> (' + (t.places || 3) + ' o‘ringa)') : '') + (t.creatorName ? R('👤', 'Yaratuvchi: <b class="cr">' + esc(t.creatorName) + '</b>') : '') + '<div class="btns"><button type="button" class="shr" data-share="' + esc(t.id) + '" title="Ulashish">📤</button>' + (t.status === 'reg' && t.startAt > Date.now() && !inn ? '<button type="button" class="shr bel" data-bell="' + esc(t.id) + '" data-x="' + ((function () { try { return localStorage.getItem('tBell_' + t.id) === '1'; } catch (x) { return false; } })() ? ' on" data-on="1">🔔✓' : '">🔔') + '</button>' : '') + (t.status === 'running' ? '<button type="button">👁 Kuzatish</button>' : '') + '<button type="button" class="cta">' + cta + '</button></div></div>';
   }
   function render() {
     var bx = g('lbT'); if (!bx) return;
@@ -74,7 +149,7 @@
       g('tlAdd').onclick = function () { if (window.lbTPlus) window.lbTPlus(); try { enhanceForm(); } catch (e) {} var f = g('lbTform'); if (f && f.style.display !== 'none') setTimeout(function () { f.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 50); };
       tb.onclick = function (e) { var b = e.target.closest('[data-tb]'); if (!b) return; tab = b.getAttribute('data-tb'); [].forEach.call(tb.children, function (x) { x.classList.toggle('on', x === b); }); sig = ''; render(); };
       tb.__set = function (k) { tab = k; [].forEach.call(tb.children, function (x) { x.classList.toggle('on', x.getAttribute('data-tb') === k); }); };
-      ls.onclick = function (e) { var r = e.target.closest('[data-tid]'); if (!r) return; var id = r.getAttribute('data-tid'); if (window.tvOpen) window.tvOpen(id); };
+      ls.onclick = function (e) { var bl = e.target.closest('[data-bell]'); if (bl) { var bid = bl.getAttribute('data-bell'), k = 'tBell_' + bid, on = true; try { on = localStorage.getItem(k) !== '1'; if (on) localStorage.setItem(k, '1'); else localStorage.removeItem(k); } catch (x) {} bl.classList.toggle('on', on); bl.textContent = on ? '🔔✓' : '🔔'; if (window.lbSend) window.lbSend({ type: 'lbTNotify', tid: bid, on: on }); return; } var sh = e.target.closest('[data-share]'); if (sh) { var rr = sh.closest('[data-tid]'); var tid = sh.getAttribute('data-share'); var nm = ((rr && rr.querySelector('.nm')) || {}).textContent || 'Turnir'; var sb = ((rr && rr.querySelector('.sbar')) || {}).textContent || ''; var base = window.TG_APP_LINK || 'https://t.me/DraughtsPRObot/play'; var _tw = window.Telegram && window.Telegram.WebApp, _uid = _tw && _tw.initDataUnsafe && _tw.initDataUnsafe.user && _tw.initDataUnsafe.user.id; var url = base + '?startapp=lbt_' + encodeURIComponent(tid) + (_uid ? '_r' + _uid : ''); var txt = '🏆 ' + nm + '\n' + sb.replace('⏳', '').trim() + '\nShashkaPRO turniriga qo‘shiling!'; var su = 'https://t.me/share/url?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(txt); try { var tgw = window.Telegram && window.Telegram.WebApp; if (tgw && tgw.openTelegramLink) tgw.openTelegramLink(su); else window.open(su, '_blank'); } catch (x) { window.open(su, '_blank'); } return; } var r = e.target.closest('[data-tid]'); if (!r) return; var id = r.getAttribute('data-tid'); if (window.tvOpen) window.tvOpen(id); };
     }
     // 👥 Klublar tabi: mavjud klublar paneli (#lbClubs) shu yerga ko'chadi; boshqa tablarda yashirin
     var club = tab === 'club', cl = g('lbClubs'), lsE = g('tlList'), tbE = g('tlTabs');

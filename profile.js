@@ -73,6 +73,80 @@
     if (m < 1440) return Math.floor(m / 60) + ' soat oldin';
     return Math.floor(m / 1440) + ' kun oldin';
   }
+    window.spBio = function (uid, name) {
+    uid = String(uid);
+    var tgw = window.Telegram && window.Telegram.WebApp;
+    var H = { 'x-init-data': (tgw && tgw.initData) || '', 'Content-Type': 'application/json' };
+    var E = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+    var old = document.getElementById('spBioOv'); if (old) old.remove();
+    var items = [], more = false, canWrite = false, reply = null, busy = false;
+    var ov = document.createElement('div'); ov.id = 'spBioOv';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:99990;background:rgba(0,0,0,.55);display:flex;align-items:flex-end';
+    ov.innerHTML = '<div style="width:100%;max-height:88vh;display:flex;flex-direction:column;background:#141833;color:#fff;border-radius:22px 22px 0 0;padding:14px 14px calc(env(safe-area-inset-bottom,0px) + 12px);box-sizing:border-box;font-family:inherit">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><b style="font-size:17px">💬 Bio izohlari' + (name ? ' · ' + E(name) : '') + '</b><button id="spBioX" style="border:0;background:#262b5a;color:#fff;border-radius:10px;width:36px;height:36px;font-size:16px">✕</button></div>' +
+      '<div id="spBioL" style="flex:1;min-height:120px;overflow:auto"></div><div id="spBioF" style="margin-top:10px"></div></div>';
+    document.body.appendChild(ov);
+    var L = ov.querySelector('#spBioL'), F = ov.querySelector('#spBioF');
+    ov.onclick = function (e) { if (e.target === ov) ov.remove(); };
+    ov.querySelector('#spBioX').onclick = function () { ov.remove(); };
+    function tm(t) { var d = new Date(t), p = function (n) { return (n < 10 ? '0' : '') + n; }; return p(d.getDate()) + '.' + p(d.getMonth() + 1) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()); }
+    function av(x) { return '<div style="width:38px;height:38px;border-radius:50%;flex:none;background:#3b3fa8;display:flex;align-items:center;justify-content:center;font-weight:800;position:relative;overflow:hidden">' + E((x.n || '?').charAt(0).toUpperCase()) + '<img src="/api/av/' + encodeURIComponent(x.f) + '" onerror="this.style.display=\'none\'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></div>'; }
+    function draw(stick) {
+      var h = more ? '<button data-a="old" style="width:100%;border:0;border-radius:12px;padding:10px;margin-bottom:8px;background:#262b5a;color:#fff;font-size:14px">⌃ Eskilarini yuklash</button>' : '';
+      if (!items.length) h += '<div style="text-align:center;opacity:.6;padding:24px 0">Hali izoh yo‘q</div>';
+      h += items.map(function (x) {
+        return '<div style="display:flex;gap:10px;background:#1c2145;border-radius:14px;padding:10px;margin-bottom:8px">' + av(x) +
+          '<div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between;gap:8px"><b style="font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + E(x.n) + (x.vip ? ' 👑' : '') + '</b><span style="opacity:.55;font-size:12px;flex:none">' + tm(x.t) + '</span></div>' +
+          (x.r ? '<div style="border-left:3px solid #8e3bf0;background:rgba(142,59,240,.15);padding:4px 8px;margin:4px 0;font-size:13px"><b>' + E(x.r.n) + '</b><br>' + E(x.r.tx) + '</div>' : '') +
+          '<div style="font-size:15px;word-break:break-word;margin-top:2px">' + E(x.tx) + '</div>' +
+          '<div style="margin-top:4px;font-size:13px;opacity:.75"><span data-a="re" data-id="' + x.id + '" style="cursor:pointer;margin-right:14px">↩ Javob</span>' + (x.del ? '<span data-a="del" data-id="' + x.id + '" style="cursor:pointer">🗑</span>' : '') + '</div></div></div>';
+      }).join('');
+      L.innerHTML = h; if (stick) L.scrollTop = L.scrollHeight;
+    }
+    function foot() {
+      var cur = F.querySelector('#spBioI'), v = cur ? cur.value : '';
+      if (!canWrite) {
+        F.innerHTML = '<div style="text-align:center;opacity:.75;font-size:14px;margin-bottom:8px">Izoh yozish faqat Premium obunachilar uchun</div><button id="spBioP" style="width:100%;border:0;border-radius:12px;padding:12px;background:linear-gradient(90deg,#f59e0b,#fbbf24);color:#1a1205;font-weight:800;font-size:15px">👑 Premium</button>';
+        var pb = F.querySelector('#spBioP'); if (pb) pb.onclick = function () { if (window.premGo) window.premGo(); };
+        return;
+      }
+      var rp = reply ? '<div style="display:flex;justify-content:space-between;gap:8px;font-size:13px;opacity:.8;margin-bottom:6px"><span>↩ ' + E(reply.n) + ': ' + E(String(reply.tx).slice(0, 40)) + '</span><span data-a="cx" style="cursor:pointer">✕</span></div>' : '';
+      F.innerHTML = rp + '<div style="display:flex;gap:8px"><input id="spBioI" maxlength="200" placeholder="Izoh yozing…" style="flex:1;min-width:0;padding:10px;border-radius:10px;border:1px solid #2c3270;background:#0d1024;color:#fff;font-size:16px"><button id="spBioG" style="flex:none;border:0;border-radius:10px;padding:0 16px;background:#81b64c;color:#fff;font-size:18px">➤</button></div><div id="spBioE" style="color:#ff8a8a;font-size:13px;min-height:16px;margin-top:4px"></div>';
+      var ii = F.querySelector('#spBioI'); ii.value = v;
+      F.querySelector('#spBioG').onclick = send;
+      ii.onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); send(); } };
+    }
+    F.onclick = function (e) { var el = e.target.closest ? e.target.closest('[data-a="cx"]') : null; if (el) { reply = null; foot(); } };
+    function send() {
+      var i = F.querySelector('#spBioI'), er = F.querySelector('#spBioE'); if (!i || busy) return;
+      var t = i.value.trim(); if (!t) { er.textContent = 'Izoh yozing'; return; }
+      busy = true;
+      fetch('/api/social/bio', { method: 'POST', headers: H, body: JSON.stringify({ uid: uid, text: t, reply: reply ? reply.id : 0 }) })
+        .then(function (r) { return r.json(); })
+        .then(function (j) { busy = false; if (j && j.ok) { items.push(j.item); reply = null; draw(true); i.value = ''; foot(); } else if (er) er.textContent = (j && j.error) || 'Xato'; })
+        .catch(function () { busy = false; if (er) er.textContent = 'Server bilan aloqa yo‘q'; });
+    }
+    L.onclick = function (e) {
+      var el = e.target.closest ? e.target.closest('[data-a]') : null; if (!el) return;
+      var a = el.getAttribute('data-a'), id = +el.getAttribute('data-id');
+      if (a === 'old') load(items.length ? items[0].id : 0);
+      else if (a === 're') { var it = items.filter(function (z) { return z.id === id; })[0]; if (it) { reply = it; foot(); var q = F.querySelector('#spBioI'); if (q) q.focus(); } }
+      else if (a === 'del') {
+        if (!confirm('Izoh o‘chirilsinmi?')) return;
+        fetch('/api/social/biodel', { method: 'POST', headers: H, body: JSON.stringify({ uid: uid, id: id }) }).then(function (r) { return r.json(); })
+          .then(function (j) { if (j && j.ok) { items = items.filter(function (z) { return z.id !== id; }); draw(false); } });
+      }
+    };
+    function load(before) {
+      fetch('/api/social/bio?uid=' + encodeURIComponent(uid) + (before ? '&before=' + before : ''), { headers: H }).then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (!j || j.error) { L.innerHTML = '<div style="text-align:center;opacity:.7;padding:24px 0">Yuklanmadi</div>'; return; }
+          items = before ? j.list.concat(items) : j.list; more = !!j.more; canWrite = !!j.canWrite; draw(!before); foot();
+        }).catch(function () { L.innerHTML = '<div style="text-align:center;opacity:.7;padding:24px 0">Server bilan aloqa yo‘q</div>'; });
+    }
+    load(0);
+  };
+
   window.nvProfile = function (pg) {
     var u = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) || {};
     var name = ((u.first_name || '') + ' ' + (u.last_name || '')).trim() || 'Mehmon';
@@ -186,7 +260,7 @@
           $('pfRk').onclick = function () { if (window.refGo) window.refGo(); };
           $('pfIg').onclick = function () { go('ig'); };
           $('pfPw').onclick = function () { go('pass'); };
-          var rk = $('pfRank'); if (rk && !document.getElementById('pfLk')) { var lk = document.createElement('div'); lk.id = 'pfLk'; lk.className = 'pf-bd'; lk.style.marginRight = '6px'; lk.textContent = '❤️ ' + S.likes; rk.parentNode.insertBefore(lk, rk); }
+          var rk = $('pfRank'); if (rk && !document.getElementById('pfLk')) { var lk = document.createElement('div'); lk.id = 'pfLk'; lk.className = 'pf-bd'; lk.style.marginRight = '6px'; lk.textContent = '❤️ ' + S.likes; rk.parentNode.insertBefore(lk, rk); var bio = document.createElement('div'); bio.className = 'pf-bd'; bio.style.cssText = 'margin-right:6px;cursor:pointer'; bio.textContent = '💬 Izohlar'; bio.onclick = function () { var tw = window.Telegram && window.Telegram.WebApp, u0 = tw && tw.initDataUnsafe && tw.initDataUnsafe.user; if (u0 && window.spBio) window.spBio(String(u0.id), ''); }; rk.parentNode.insertBefore(bio, rk); }
         }).catch(function () {});
       })();
       [].forEach.call(document.querySelectorAll('[data-ach]'), function (el) { el.onclick = function () { var t = $('pfAchT'); if (t) t.textContent = el.getAttribute('data-ach'); }; });
