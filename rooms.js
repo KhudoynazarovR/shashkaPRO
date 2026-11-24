@@ -672,6 +672,7 @@ const srvBotOn = room => !!(room && room.vsBot && room.botCfg && room.botCfg.id 
       const list = [];
       for (const r of rooms.values()) {
         if (!r.white || !r.black || r.finished) continue;
+        if (r.vsBot && !r.botStarted) continue;   // boshlanmagan bot xonasi jonli stollarda ko‘rinmaydi
         if (![...r.members].some(id => { const cl = clients.get(id); return cl && colorOf(r, cl); })) continue;
         list.push({
           id: r.id, vsBot: !!r.vsBot, white: r.white.name, black: r.black.name, tc: r.tc, wElo: _liveElo(r.white), bElo: _liveElo(r.black),
