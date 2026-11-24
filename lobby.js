@@ -1988,6 +1988,11 @@ function createLobby({ send, clients, roomsApi }) {
         if (!t) break;
         if (t.creatorUid !== me.uid && !economy.isAdmin(me.uid)) { err(c, 'Faqat tashkilotchi o‘zgartira oladi'); break; }
         if (t.status === 'finished' || t.ending) { err(c, 'Turnir tugagan'); break; }
+        if (m.startAt != null && t.status === 'reg') {   // 📅 aniq sana va vaqt
+          const ts = Math.floor(Number(m.startAt) || 0);
+          if (!ts || ts < Date.now() + 30e3) { err(c, 'Vaqt o‘tib ketgan yoki noto‘g‘ri'); break; }
+          t.startAt = ts;
+        }
         const addMin = Math.max(-720, Math.min(10080, Math.floor(Number(m.addMin) || 0)));
         if (addMin) {
           if (t.status === 'reg') {

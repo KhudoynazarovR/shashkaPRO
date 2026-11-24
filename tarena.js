@@ -246,7 +246,7 @@
       if (!mp || mp.withdrawn) jb += '<button class="taJ" data-a="join">▶ QATNASHISH</button>';
       else jb += t.status === 'running' ? '<button class="taJ p" data-a="pause">⏸ PAUZA</button>' : '<button class="taJ p" data-a="leave"><svg viewBox="0 0 24 24" width="18" height="18" style="vertical-align:-3px;margin-right:6px" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/></svg>TARK ETISH</button>';
     }
-    if (adm) jb = '<button class="taJ" data-a="menu">⋯ Amallar</button> ' + jb;
+    adm = '';   // ⋯ Amallar endi turnir kartasida (tlist) — ichkarida takrorlanmaydi
     g('taJw').innerHTML = jb;
     g('taMenu').innerHTML = adm;
     // jadval

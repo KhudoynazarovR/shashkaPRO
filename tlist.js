@@ -266,6 +266,7 @@
       '<div style="display:flex;gap:8px;margin-bottom:10px">' + [['+15', 15], ['+1 soat', 60], ['+1 kun', 1440], ['−15', -15]].map(function (p) {
         return '<button data-add="' + p[1] + '" style="flex:1;border:1px solid rgba(255,214,130,.3);background:rgba(255,255,255,.07);color:#ffd76a;border-radius:12px;padding:11px 4px;font-weight:800;font-size:14px">' + p[0] + '</button>';
       }).join('') + '</div>' +
+      '<button data-a="when" class="aB">📅 Aniq sana va vaqt</button>' +
       '<button data-a="edit" class="aB">✏️ Nom, mukofot, davomiylik</button>' +
       (reg ? '<button data-a="cancel" class="aB d">🗑 Turnirni o‘chirish</button>' : ''));
     var st = document.createElement('style');
@@ -281,6 +282,22 @@
         else if (a === 'invite') window.lbSend({ type: 'lbTInvite', tid: tid });
         else if (a === 'ann') window.lbSend({ type: 'lbTAnnList', tid: tid });
         else if (a === 'cancel') { if (!confirm('Turnir o‘chirilsinmi?')) return; window.lbSend({ type: 'lbTCancel', tid: tid }); }
+        else if (a === 'when') {
+          var cur = t.startAt ? new Date(t.startAt) : new Date(Date.now() + 36e5);
+          var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+          var val = cur.getFullYear() + '-' + pad(cur.getMonth() + 1) + '-' + pad(cur.getDate()) + 'T' + pad(cur.getHours()) + ':' + pad(cur.getMinutes());
+          var ov2 = sheet('📅 Boshlanish vaqti',
+            '<input id="whIn" type="datetime-local" value="' + val + '" style="width:100%;box-sizing:border-box;padding:13px;border-radius:12px;border:1px solid #4a3a1c;background:#120c05;color:#fff;font-size:16px;margin-bottom:10px">' +
+            '<button id="whGo" style="width:100%;border:0;border-radius:13px;padding:14px;font-weight:800;font-size:16px;color:#3a2500;background:linear-gradient(180deg,#ffdf8d,#e0a120)">Saqlash</button>');
+          ov2.querySelector('#whGo').onclick = function () {
+            var v = ov2.querySelector('#whIn').value; if (!v) return;
+            var ts = new Date(v).getTime();
+            if (!ts || ts < Date.now() + 30000) { alert('Vaqt o‘tib ketgan'); return; }
+            window.lbSend({ type: 'lbTEdit', tid: tid, startAt: ts });
+            ov2.remove();
+          };
+          ov.remove(); return;
+        }
         else if (a === 'edit') {
           var nm2 = prompt('Turnir nomi:', t.name || ''); if (nm2 === null) return;
           var pz = prompt('Mukofot (tanga):', String(t.prize || 0)); if (pz === null) return;
@@ -447,7 +464,7 @@
       ls.onclick = function (e) {
         var spb = e.target.closest('[data-spn]'); if (spb) { e.preventDefault(); sponsor(spb.getAttribute('data-spn')); return; }
         var acb = e.target.closest('[data-act]'); if (acb) { e.preventDefault(); actions(acb.getAttribute('data-act')); return; }
-        var tkc = e.target.closest('[data-tk]'); if (tkc) { e.preventDefault(); tkBuy(); return; } var bl = e.target.closest('[data-bell]'); if (bl) { var bid = bl.getAttribute('data-bell'), k = 'tBell_' + bid, on = true; try { on = localStorage.getItem(k) !== '1'; if (on) localStorage.setItem(k, '1'); else localStorage.removeItem(k); } catch (x) {} bl.classList.toggle('on', on); bl.textContent = on ? '🔔✓' : '🔔'; if (window.lbSend) window.lbSend({ type: 'lbTNotify', tid: bid, on: on }); return; } var sh = e.target.closest('[data-share]'); if (sh) { var rr = sh.closest('[data-tid]'); var tid = sh.getAttribute('data-share'); var nm = ((rr && rr.querySelector('.nm')) || {}).textContent || 'Turnir'; var sb = ((rr && rr.querySelector('.sbar')) || {}).textContent || ''; var base = window.TG_APP_LINK || 'https://t.me/DraughtsPRObot/play'; var _tw = window.Telegram && window.Telegram.WebApp, _uid = _tw && _tw.initDataUnsafe && _tw.initDataUnsafe.user && _tw.initDataUnsafe.user.id; var url = base + '?startapp=lbt_' + encodeURIComponent(tid) + (_uid ? '_r' + _uid : ''); var txt = '🏆 ' + nm + '\n' + sb.replace('⏳', '').trim() + '\nShashkaPRO turniriga qo‘shiling!'; var su = 'https://t.me/share/url?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(txt); try { var tgw = window.Telegram && window.Telegram.WebApp; if (tgw && tgw.openTelegramLink) tgw.openTelegramLink(su); else window.open(su, '_blank'); } catch (x) { window.open(su, '_blank'); } return; } var r = e.target.closest('[data-tid]'); if (!r) return; var id = r.getAttribute('data-tid'); if (window.tvOpen) window.tvOpen(id); };
+        var tkc = e.target.closest('[data-tk]'); if (tkc) { e.preventDefault(); tkBuy(); return; } var bl = e.target.closest('[data-bell]'); if (bl) { var bid = bl.getAttribute('data-bell'), k = 'tBell_' + bid, on = true; try { on = localStorage.getItem(k) !== '1'; if (on) localStorage.setItem(k, '1'); else localStorage.removeItem(k); } catch (x) {} bl.classList.toggle('on', on); bl.textContent = on ? '🔔✓' : '🔔'; if (window.lbSend) window.lbSend({ type: 'lbTNotify', tid: bid, on: on }); return; } var sh = e.target.closest('[data-share]'); if (sh) { var rr = sh.closest('[data-tid]'); var tid = sh.getAttribute('data-share'); var nm = ((rr && rr.querySelector('.nm')) || {}).textContent || 'Turnir'; var sb = ((rr && rr.querySelector('.sbar')) || {}).textContent || ''; var base = window.TG_APP_LINK || 'https://t.me/DraughtsPRObot/play'; var _tw = window.Telegram && window.Telegram.WebApp, _uid = _tw && _tw.initDataUnsafe && _tw.initDataUnsafe.user && _tw.initDataUnsafe.user.id; var url = base + '?startapp=lbt_' + encodeURIComponent(tid) + (_uid ? '_r' + _uid : ''); var txt = '🏆 ' + nm + '\n' + sb.replace('⏳', '').trim() + '\nShashkaPRO turniriga qo‘shiling!'; var su = 'https://t.me/share/url?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(txt); try { var tgw = window.Telegram && window.Telegram.WebApp; if (tgw && tgw.openTelegramLink) tgw.openTelegramLink(su); else window.open(su, '_blank'); } catch (x) { window.open(su, '_blank'); } return; } var jb2 = e.target.closest('.cta[data-join]'); if (jb2) { e.preventDefault(); if (window.lbSend) window.lbSend({ type: 'lbTJoin', tid: jb2.getAttribute('data-join') }); return; } var r = e.target.closest('[data-tid]'); if (!r) return; var id = r.getAttribute('data-tid'); if (window.tvOpen) window.tvOpen(id); };
     }
     // 👥 Klublar tabi: mavjud klublar paneli (#lbClubs) shu yerga ko'chadi; boshqa tablarda yashirin
     var club = tab === 'club', cl = g('lbClubs'), lsE = g('tlList'), tbE = g('tlTabs');
