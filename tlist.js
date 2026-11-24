@@ -175,7 +175,10 @@
 #tlList .r .btns{margin-top:13px!important;gap:8px!important}
 #tlList .r .btns button{border-radius:14px!important;height:50px!important;font-size:16px!important;font-weight:800!important;
  background:rgba(255,255,255,.08)!important;color:#f0e5d0!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)!important}
-#tlList .r .btns .cta{flex:2;color:#16260a!important;background:linear-gradient(180deg,#a8e163,#6ea52c)!important;box-shadow:0 4px 0 #46700f!important}
+#tlList .r .btns.ico{margin-top:11px!important;gap:8px}
+#tlList .r .btns.ico button{flex:1!important;height:46px!important;font-size:17px!important;padding:0!important}
+#tlList .r .btns.ico+.btns{margin-top:8px!important}
+#tlList .r .btns .cta{flex:1;color:#16260a!important;background:linear-gradient(180deg,#a8e163,#6ea52c)!important;box-shadow:0 4px 0 #46700f!important}
 #tlList .r.s-run .btns .cta{background:linear-gradient(180deg,#7ee8a2,#2f9b5b)!important;box-shadow:0 4px 0 #1b5e35!important}
 #tlList .r .btns button:active{transform:translateY(2px);filter:brightness(.95)}
 #tlList .r .bdg{background:rgba(255,255,255,.08)!important;color:#e3d6bd!important}
@@ -441,9 +444,9 @@
       '<div class="pbar ' + bcl + '"><i style="width:' + pct(t, now) + '%"></i></div>' +
       '<div class="ft">' + feat + '</div>' + (t.status === 'running' ? podium(t) : '') + avRow + myLine(t, u) + spRow(t) +
       (t.creatorName ? '<div class="crl">Tashkilotchi: <b>' + esc(t.creatorName) + '</b>' + (t.prize ? ' · ' + (t.places || 3) + ' o‘ringa' : '') + '</div>' : '') +
-      '<div class="btns"><button type="button" class="shr" data-share="' + esc(t.id) + '" title="Ulashish">🔗</button>' + (t.status === 'reg' && t.startAt > Date.now() && !inn ? '<button type="button" class="shr bel" data-bell="' + esc(t.id) + '" data-x="' + ((function () { try { return localStorage.getItem('tBell_' + t.id) === '1'; } catch (x) { return false; } })() ? ' on" data-on="1">🔔✓' : '">🔔') + '</button>' : '') + (t.status === 'running' ? '<button type="button">👁 Kuzatish</button>' : '') +
+      '<div class="btns ico"><button type="button" class="shr" data-share="' + esc(t.id) + '" title="Ulashish">🔗</button>' + (t.status === 'reg' && t.startAt > Date.now() && !inn ? '<button type="button" class="shr bel" data-bell="' + esc(t.id) + '" data-x="' + ((function () { try { return localStorage.getItem('tBell_' + t.id) === '1'; } catch (x) { return false; } })() ? ' on" data-on="1">🔔✓' : '">🔔') + '</button>' : '') + (t.status === 'running' ? '<button type="button">👁 Kuzatish</button>' : '') +
       (t.status !== 'finished' ? '<button type="button" class="shr" data-spn="' + esc(t.id) + '" title="Homiy bo‘lish">💰</button>' : '') +
-      ((t.status !== 'finished' && (String(t.creatorUid) === String(u) || window.__isAdmin)) ? '<button type="button" class="shr" data-act="' + esc(t.id) + '" title="Amallar">⋯</button>' : '') + '<button type="button" class="cta">' + cta + '</button></div></div>';
+      ((t.status !== 'finished' && (String(t.creatorUid) === String(u) || window.__isAdmin)) ? '<button type="button" class="shr" data-act="' + esc(t.id) + '" title="Amallar">⋯</button>' : '') + '</div><div class="btns"><button type="button" class="cta"' + (!inn && t.status !== 'finished' ? ' data-join="' + esc(t.id) + '"' : '') + '>' + cta + '</button></div></div>';
   }
   function render() {
     var bx = g('lbT'); if (!bx) return;
