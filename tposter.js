@@ -77,6 +77,8 @@ function annSvg(t) {
   s += '<rect x="' + (CX - tagW / 2) + '" y="88" width="' + tagW + '" height="52" rx="26" fill="rgba(255,255,255,.18)" stroke="rgba(255,255,255,.35)" stroke-width="2"/>';
   s += '<text x="' + CX + '" y="124" font-family="' + F + '" font-size="24" font-weight="900" fill="#fff" text-anchor="middle" letter-spacing="3">' + tagTxt + '</text>';
   s += '<text x="' + CX + '" y="240" font-family="' + F + '" font-size="' + (name.length > 22 ? 58 : 70) + '" font-weight="900" fill="#fff" text-anchor="middle">' + x(name) + '</text>';
+  // tashkilotchi ismi (yaratuvchi) — sarlavha ostida
+  { const org = noEmo(String(t.creatorName || '')).slice(0, 26); if (org && t.creatorUid !== 'sys') s += '<text x="' + CX + '" y="278" font-family="' + F + '" font-size="24" font-weight="700" fill="#fff" fill-opacity=".85" text-anchor="middle">Tashkilotchi: ' + x(org) + '</text>'; }
   // ma’lumot kartalari: sana (kalendar), vaqt (soat), mukofot (tanga)
   const items = [];
   { const dp = dt.split(', '); items.push({ kind: 'cal', big: dp[1] || dt, small: (dp[0] || 'SANA').toUpperCase() }); }
@@ -148,6 +150,7 @@ function annCap(t) {
   c += (t.rated === false ? '🤝 Reytingsiz' : '⭐ Reytingli') + '\n';
   if (t.flag) c += '🏳️ Viloyatingiz uchun o‘ynang — eng yaxshi 5 o‘yinchi ochkosi viloyatga!\n';
   if (t.prize > 0) c += '💰 Mukofot fondi: <b>' + fmt(t.prize) + '</b>\n';
+  if (t.creatorName && t.creatorUid !== 'sys') c += '👤 Tashkilotchi: <b>' + h(t.creatorName) + '</b>\n';
   if (t.desc) c += '\n' + h(t.desc) + '\n';
   return c + '\n👇 Qo‘shilish uchun tugmani bosing';
 }

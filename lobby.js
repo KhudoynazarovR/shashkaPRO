@@ -353,7 +353,7 @@ function createLobby({ send, clients, roomsApi }) {
       id: t.id, name: t.name, tc: t.tc, status: t.status, pos: t.pos || 'std',
       roundsWanted: t.roundsWanted || 0, interval: t.interval || 0,
       type: t.type || 'swiss', durationMin: t.durationMin || 0, awards: t.awards || [], prize: t.prize || 0, places: t.places || 0, berserk: t.berserk !== false, rated: t.rated !== false, tc: t.tc || "", pos: t.pos || "std", startAt: t.startAt || 0, endAt: t.endAt || 0, ending: !!t.ending,
-      creatorUid: t.creatorUid, creatorName: t.creatorName, clubIds: t.clubIds || [], clubs: clubStandings(t),
+      creatorUid: t.creatorUid, creatorName: t.creatorName, created: t.created || 0, clubIds: t.clubIds || [], clubs: clubStandings(t),
       round: t.round, rounds: t.rounds, nextAt: t.nextAt || 0,
       players: t.flag ? arenaStandings(t).map(p => Object.assign({}, p, require('./flags.js').badge(p.uid) || {})) : (t.type === 'arena' ? arenaStandings(t) : standings(t)),
       flag: !!t.flag, desc: t.desc || '', rec: t.rec || null, regs: t.flag ? require('./flags.js').regStandings(arenaStandings(t)).map(r => ({ r: r.r, k: r.k, c: r.c, n: r.n, score: r.score })) : [],
@@ -1470,19 +1470,28 @@ function createLobby({ send, clients, roomsApi }) {
       if (!_cj.ok) { err(c, 'Qatnashish uchun ' + _cj.need + ' 🪙 kerak'); return true; }
       const ret = handleInner(c, m);
       t0.fee = t0.fee || {};
-      if (t0.players.has(uid)) { t0.paid.add(uid); t0.fee[uid] = _cj.fee; } else economy.refund(uid, _cj.fee, 'refund_join');
+      if (t0.players.has(uid)) {
+        t0.paid.add(uid); t0.fee[uid] = _cj.fee;
+        // 🎟 tashkilotchi ulushi: har bir ishtirokchi uchun bir marta
+        t0.hostPaid = t0.hostPaid || new Set();
+        if (String(t0.creatorUid) !== String(uid) && !t0.hostPaid.has(uid)) {
+          t0.hostPaid.add(uid);
+          const hs = economy.hostShare(t0.creatorUid, !!_cj.tkt);
+          if (hs) toast(t0.creatorUid, '🎟 ' + t0.name + ': yangi ishtirokchi · +' + hs + ' 🪙');
+        }
+      } else if (_cj.fee) economy.refund(uid, _cj.fee, 'refund_join');
       return ret;
     }
     if (m.type === 'lbTLeave' && t0 && t0.status === 'reg' && t0.paid && t0.paid.has(uid)) {
       const ret = handleInner(c, m);
-      if (!t0.players.has(uid)) { t0.paid.delete(uid); economy.refund(uid, (t0.fee && t0.fee[uid]) || FEE.JOIN_FEE, 'refund_leave'); }
+      if (!t0.players.has(uid)) { t0.paid.delete(uid); const _f = t0.fee && t0.fee[uid] != null ? t0.fee[uid] : FEE.JOIN_FEE; if (_f) economy.refund(uid, _f, 'refund_leave'); }
       return ret;
     }
     if (m.type === 'lbTCancel' && t0 && t0.status === 'reg' && (t0.creatorUid === uid || economy.isAdmin(uid))) {
       const ret = handleInner(c, m);
       if (!tournaments.has(t0.id)) {
         if (t0.prizePaid && t0.creatorUid !== 'sys') economy.refund(t0.creatorUid, t0.prizePaid, 'refund_create');
-        for (const p of (t0.paid || [])) economy.refund(p, (t0.fee && t0.fee[p]) || FEE.JOIN_FEE, 'refund_join');
+        for (const p of (t0.paid || [])) { const _f = t0.fee && t0.fee[p] != null ? t0.fee[p] : FEE.JOIN_FEE; if (_f) economy.refund(p, _f, 'refund_join'); }
       }
       return ret;
     }

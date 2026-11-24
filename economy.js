@@ -121,9 +121,29 @@ function chargeCreate(id) {
   return spend(id, CFG.CREATE_COST, 'tournament_create') ? { ok: true } : { ok: false, error: 'no_diamonds', need: CFG.CREATE_COST };
 }
 function joinFee(id) { return store.isPremium(user(id) || {}) ? Math.ceil(CFG.JOIN_FEE / 2) : CFG.JOIN_FEE; }   // 👑 50% chegirma
+
+// 🎟 CHIPTA: 20 🪙 — 24 soat davomida turnirlarga cheksiz kirish (Premiumga yarim narx)
+const TKT = { PRICE: 20, HOURS: 24, HOST: 5, HOST_FEE: 3 };
+function ticketPrice(id) { return store.isPremium(user(id) || {}) ? Math.ceil(TKT.PRICE / 2) : TKT.PRICE; }
+function ticketLeft(id) { const u = user(id); const t = u && u.tkt ? u.tkt - Date.now() : 0; return t > 0 ? t : 0; }
+function buyTicket(id) {
+  const u = user(id); if (!u) return { ok: false, error: 'no_user' };
+  if (ticketLeft(id)) return { ok: true, until: u.tkt, already: true };
+  const p = ticketPrice(id);
+  if (!spend(id, p, 'ticket')) return { ok: false, error: 'no_diamonds', need: p };
+  u.tkt = Date.now() + TKT.HOURS * 3600e3; store.save();
+  return { ok: true, until: u.tkt, paid: p };
+}
 function chargeJoin(id) {
+  if (ticketLeft(id)) return { ok: true, fee: 0, tkt: true };   // 🎟 chipta bor — kirish bepul
   const f = joinFee(id);
   return spend(id, f, 'tournament_join') ? { ok: true, fee: f } : { ok: false, error: 'no_diamonds', need: f };
+}
+// Tashkilotchiga ulush: chipta bilan kirgan uchun 5 🪙, to'lov bilan kirgan uchun 3 🪙
+function hostShare(creatorId, byTicket) {
+  if (!creatorId || creatorId === 'sys') return 0;
+  const n = byTicket ? TKT.HOST : TKT.HOST_FEE;
+  return add(creatorId, n, 'host_share') ? n : 0;
 }
 function refund(id, n, why) { return add(id, n, why || 'refund'); }
 
@@ -185,6 +205,13 @@ function handle(req, res, url) {
   } catch (e) {}
   if (p === '/api/season' && req.method === 'GET') { const _t = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN); if (!_t) { send(res, 401, { error: 'auth' }); return true; } send(res, 200, require('./season.js').view(_t.id)); return true; }
   if (p === '/api/wager' && req.method === 'GET') { const W = require('./wager.js'); send(res, 200, { stakes: W.STAKES, fee: W.FEE, top: W.top() }); return true; }
+  if (p === '/api/ticket') {   // 🎟 chipta: holati (GET) va sotib olish (POST)
+    const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
+    if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
+    const uid = String(_tg.id); store.getOrCreate(_tg);
+    if (req.method === 'GET') { send(res, 200, { left: ticketLeft(uid), price: ticketPrice(uid), hours: TKT.HOURS, balance: balance(uid) }); return true; }
+    if (req.method === 'POST') { const r = buyTicket(uid); send(res, r.ok ? 200 : 400, Object.assign(r, { left: ticketLeft(uid), price: ticketPrice(uid), balance: balance(uid) })); return true; }
+  }
   if (p === '/api/pzext/judge') { if (require('./pzext.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }   // 🧩 chala kombinatsiyani oxirigacha o'ynash
   if (p.startsWith('/api/daraxt')) { if (require('./daraxtsrv.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }   // 🌳 tanga daraxti
   if (p.startsWith('/api/adv')) { if (require('./sarguzashtsrv.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }   // 🗺 sarguzasht xaritasi
@@ -1046,4 +1073,4 @@ function handle(req, res, url) {
   return false;
 }
 
-module.exports = { pzRenum, CFG, balance, penalty, bookOrder, add, spend, claimDaily, rewardWin, chargeCreate, chargeJoin, joinFee, refund, finishTournament, hostBonus, isAdmin, handle };
+module.exports = { pzRenum, CFG, balance, penalty, bookOrder, add, spend, claimDaily, rewardWin, chargeCreate, chargeJoin, joinFee, refund, finishTournament, hostBonus, isAdmin, handle, TKT, ticketPrice, ticketLeft, buyTicket, hostShare };
