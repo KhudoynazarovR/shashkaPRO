@@ -371,7 +371,7 @@
       var pct = d.games ? Math.round(d.wins * 100 / d.games) : 0;
       $('pfRank').textContent = rank(d.wins) + (d.premium ? ' · 👑 Premium' : '');
       (function () {   // 🪪 hero: reyting, bio, izoh va like tugmalari
-        var rt = $('pfRt'); if (rt) rt.innerHTML = '⭐ Reyting: <b>' + (d.elo || 1000) + '</b>' + (d.premium ? '<span class="pf-vip">👑 VIP</span>' : '');
+        var rt = $('pfRt'); if (rt) rt.innerHTML = '⭐ Reyting: <b>' + (d.elo || 1000) + '</b>' + (d.adm ? '<span class="pf-vip">👑 VIP</span>' : d.premium ? '<span class="pf-vip" style="background:linear-gradient(180deg,#c9a7ff,#8a5ae0);color:#1d0f3a">Premium</span>' : '');
         var q = $('pfBioQ');
         if (q) {
           if (d.bio) { q.className = 'pf-bioq'; q.innerHTML = '<span>' + esc(d.bio) + '</span>'; }

@@ -1072,7 +1072,7 @@ function handle(req, res, url) {
       name: u.name, elo: u.elo || 1000, diamonds: u.diamonds || 0,
       wins: u.wins || 0, losses: u.losses || 0, draws: u.draws || 0, games: u.games || 0,
       streak: u.streak || 0, bestStreak: u.bestStreak || 0, hist: u.hist || [],
-      created: u.created || 0, avatar: store.avOf(u), bio: u.bio || '', log: (u.log || []).slice(-10).reverse(), premium: store.isPremium(u)
+      created: u.created || 0, avatar: store.avOf(u), bio: u.bio || '', log: (u.log || []).slice(-10).reverse(), premium: store.isPremium(u), adm: isAdmin(String(tg.id))
     });
     return true;
   }
