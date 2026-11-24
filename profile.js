@@ -266,6 +266,53 @@
       };
       $('pfRank').parentNode.appendChild(bt);
       $('pfRank').parentNode.appendChild(fi);
+
+      // ✍️ o'zi haqida (bio) — profil ostida ko'rinadi, faqat Premium yozadi
+      (function () {
+        var box = document.createElement('div');
+        box.id = 'pfBioBox';
+        box.style.cssText = 'margin:10px auto 0;max-width:340px;text-align:center';
+        var txt = document.createElement('div');
+        txt.id = 'pfBioTx';
+        txt.style.cssText = 'font-size:13.5px;color:#e9e3ff;opacity:.9;line-height:1.45;margin-bottom:6px;word-break:break-word';
+        txt.textContent = d.bio || '';
+        var eb = document.createElement('button');
+        eb.id = 'pfBioEd';
+        eb.textContent = d.bio ? '✍️ Bio o‘zgartirish' : (d.premium ? '✍️ Bio yozish' : '✍️ Bio yozish 👑');
+        eb.style.cssText = 'border:0;border-radius:14px;padding:8px 16px;background:#ffffff33;color:#fff;font-size:13px';
+        eb.onclick = function () {
+          if (!d.premium) { eb.textContent = '👑 Bio faqat Premium uchun'; if (window.premGo) window.premGo(); setTimeout(function () { eb.textContent = '✍️ Bio yozish 👑'; }, 2500); return; }
+          var ov = document.createElement('div');
+          ov.style.cssText = 'position:fixed;inset:0;z-index:99992;background:rgba(0,0,0,.55);display:flex;align-items:flex-end';
+          ov.innerHTML = '<div style="width:100%;background:#141833;color:#fff;border-radius:22px 22px 0 0;padding:14px 14px calc(env(safe-area-inset-bottom,0px) + 12px);box-sizing:border-box">' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><b style="font-size:17px">✍️ O‘zingiz haqingizda</b>' +
+            '<button id="pfBioX" style="border:0;background:#262b5a;color:#fff;border-radius:10px;width:36px;height:36px;font-size:16px">✕</button></div>' +
+            '<textarea id="pfBioI" maxlength="120" rows="3" placeholder="Masalan: Surxondaryodan, blits yaxshi ko‘raman" style="width:100%;box-sizing:border-box;padding:10px;border-radius:12px;border:1px solid #2c3270;background:#0d1024;color:#fff;font-size:15px;resize:none"></textarea>' +
+            '<div id="pfBioN" style="text-align:right;font-size:12px;opacity:.6;margin:4px 2px 8px">0 / 120</div>' +
+            '<div style="display:flex;gap:8px"><button id="pfBioS" style="flex:1;border:0;border-radius:12px;padding:12px;background:#81b64c;color:#fff;font-weight:700;font-size:15px">Saqlash</button>' +
+            '<button id="pfBioD" style="flex:none;border:0;border-radius:12px;padding:12px 16px;background:#7a2b2b;color:#ffd9d9;font-weight:700;font-size:15px">O‘chirish</button></div>' +
+            '<div id="pfBioE" style="color:#ff8a8a;font-size:13px;min-height:16px;margin-top:6px"></div></div>';
+          document.body.appendChild(ov);
+          var ta = ov.querySelector('#pfBioI'), nn = ov.querySelector('#pfBioN'), er = ov.querySelector('#pfBioE');
+          ta.value = txt.textContent || ''; nn.textContent = ta.value.length + ' / 120';
+          ta.oninput = function () { nn.textContent = ta.value.length + ' / 120'; };
+          ov.onclick = function (e) { if (e.target === ov) ov.remove(); };
+          ov.querySelector('#pfBioX').onclick = function () { ov.remove(); };
+          function save(v) {
+            fetch('/api/bio', { method: 'POST', headers: { 'x-init-data': (tg && tg.initData) || '', 'Content-Type': 'application/json' }, body: JSON.stringify({ bio: v }) })
+              .then(function (r) { return r.json(); })
+              .then(function (j) {
+                if (j && j.ok) { txt.textContent = v; d.bio = v; eb.textContent = v ? '✍️ Bio o‘zgartirish' : '✍️ Bio yozish'; ov.remove(); }
+                else er.textContent = (j && j.error) || 'Saqlanmadi';
+              }).catch(function () { er.textContent = 'Server bilan aloqa yo‘q'; });
+          }
+          ov.querySelector('#pfBioS').onclick = function () { save(ta.value.trim()); };
+          ov.querySelector('#pfBioD').onclick = function () { ta.value = ''; save(''); };
+          setTimeout(function () { ta.focus(); }, 100);
+        };
+        box.appendChild(txt); box.appendChild(eb);
+        $('pfRank').parentNode.appendChild(box);
+      })();
       var h = '<div class="pf-grid">' +
         card('📈', 'linear-gradient(135deg,#22c1ff,#0be3ff)', d.elo, 'ELO') +
         card('⭐', 'linear-gradient(135deg,#fbbf24,#f59e0b)', d.bestStreak, 'Eng yaxshi seriya') +
