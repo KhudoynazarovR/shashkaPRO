@@ -95,6 +95,14 @@
 #tlList .r .sbar{margin:10px 0 4px;font-size:14px}
 `; document.head.appendChild(c5);
   var c6 = document.createElement('style'); c6.textContent = '/*tlShareV1*/#tlList .r .btns .shr{flex:0 0 52px;font-size:19px;padding:0}'; document.head.appendChild(c6);
+  var c8 = document.createElement('style'); c8.textContent = `/*tlAvatarV1*/
+#tlList .r .rw.tlAv{display:flex;align-items:center;gap:10px}
+#tlList .r .rw.tlAv .av{display:flex;flex:0 0 auto}
+#tlList .r .rw.tlAv .av i{width:30px;height:30px;border-radius:50%;margin-left:-9px;border:2px solid rgba(255,255,255,.22);background:#3b4a7a;color:#e6ecff;font:700 13px/26px system-ui;font-style:normal;text-align:center;overflow:hidden;display:block;flex:0 0 auto}
+#tlList .r .rw.tlAv .av i:first-child{margin-left:0}
+#tlList .r .rw.tlAv .av i img{width:100%;height:100%;object-fit:cover;display:block}
+#tlList .r .rw.tlAv .av i.mo{background:#56659c;font-size:12px;letter-spacing:-.5px}
+`; document.head.appendChild(c8);
   var c7 = document.createElement('style'); c7.textContent = '/*tlBellV1*/#tlList .r .btns .bel{flex:0 0 62px;font-size:17px;padding:0}#tlList .r .btns .bel.on{background:rgba(76,224,138,.22);color:#4ee08a}'; document.head.appendChild(c7);
 
   var tab = 'live', sig = '';
@@ -125,13 +133,25 @@
     var btx = t.status === 'running' ? 'O‘ynalmoqda' : t.status === 'finished' ? 'Tugagan' : 'Faol';
     var sbt = t.status === 'running' ? (t.ending ? 'Yakunlanmoqda…' : 'O‘ynalmoqda' + (t.round ? ' · ' + t.round + (t.rounds ? ' / ' + t.rounds : '') + '-tur' : '') + (t.endAt ? ' · tugashiga ' + dur(t.endAt - now) : '')) : t.status === 'finished' ? 'Yakunlandi' + (top0 ? ' · 🥇 ' + esc(String(top0.name || '').replace(/^🤖\s*/, '').slice(0, 18)) : '') : (t.startAt ? (t.startAt > now ? 'Boshlanishiga ' + dur(t.startAt - now) + ' · ' + (dayLbl(t.startAt) || 'Bugun ') + f2(new Date(t.startAt).getHours()) + ':' + f2(new Date(t.startAt).getMinutes()) : 'Boshlanmoqda') : 'Ro‘yxat ochiq');
     var R = function (ic, tx) { return '<div class="rw"><i>' + ic + '</i><span>' + tx + '</span></div>'; };
+    // 👥 ishtirokchilar yuzi: 5 ta avatar + «+N», keyin soni
+    var avRow = (function () {
+      var L = ps.filter(function (p) { return !p.withdrawn && !p.bot; });
+      if (!L.length) return R('👥', '<span class="y">Hali hech kim qo‘shilmagan — birinchi bo‘ling</span>');
+      var ini = function (n) { n = String(n || '').replace(/^[^0-9A-Za-zА-Яа-яЎўҚқҒғҲҳ]+/, '').trim(); return esc((n.charAt(0) || '?').toUpperCase()); };
+      var a = L.slice(0, 5).map(function (p) {
+        return /^\d+$/.test(String(p.uid))
+          ? '<i><img src="/api/av/' + encodeURIComponent(p.uid) + '" alt="" onerror="this.parentNode.textContent=\'' + ini(p.name) + '\'"></i>'
+          : '<i>' + ini(p.name) + '</i>';
+      }).join('') + (L.length > 5 ? '<i class="mo">+' + (L.length - 5) + '</i>' : '');
+      return '<div class="rw tlAv"><span class="av">' + a + '</span><span><b>' + hum + '</b> ishtirokchi' + (bots ? ' · 🤖 ' + bots : '') + '</span></div>';
+    })();
     var fmtTx = (t.pos === 'idf' ? 'IDF 780' : 'Standart') + (t.tc && t.tc !== '∞' && !t.mix ? ' · ' + esc(tcTxt(t.tc)) + (sp[1] ? ' ' + sp[1] : '') : '') + (kind ? ' · ' + kind : '');
     var feat = '';
     if (t.type === 'arena') feat += '<span class="c">' + (t.berserk === false ? '⚡ Berserk yo‘q' : '⚡ Berserk') + '</span>';
     feat += '<span class="c">' + (t.rated === false ? '🤝 Reytingsiz' : '⭐ Reytingli') + '</span>';
     if ((t.clubIds || []).length) feat += '<span class="c">🛡 ' + ((t.clubIds || []).length > 1 ? 'klublar jangi' : 'klub') + '</span>';
     var cta = t.status === 'finished' ? 'Natijalar' : inn ? 'Turnirga kirish' : 'Qatnashaman';
-    return '<div class="r' + (inn ? ' me' : '') + scl + '" data-tid="' + esc(t.id) + '"><div class="hd"><span class="i ' + spk + '">' + (t.mix ? '🔀' : t.type === 'arena' ? sp[0] : '🏆') + '</span><b class="nm">' + esc(name) + '</b><span class="bdg ' + bcl + '">' + btx + '</span></div><div class="sbar ' + bcl + '">⏳ ' + sbt + '</div>' + R('♟', fmtTx) + '<div class="ft">' + feat + '</div>' + R('👥', 'Ishtirokchilar: <b>' + hum + '</b>' + (bots ? ' · 🤖 ' + bots : '') + (empty ? ' · <span class="y">qo‘shiling!</span>' : '')) + (t.prize ? R('🪙', 'Mukofot: <b>' + t.prize + '</b> (' + (t.places || 3) + ' o‘ringa)') : '') + (t.creatorName ? R('👤', 'Yaratuvchi: <b class="cr">' + esc(t.creatorName) + '</b>') : '') + '<div class="btns"><button type="button" class="shr" data-share="' + esc(t.id) + '" title="Ulashish">📤</button>' + (t.status === 'reg' && t.startAt > Date.now() && !inn ? '<button type="button" class="shr bel" data-bell="' + esc(t.id) + '" data-x="' + ((function () { try { return localStorage.getItem('tBell_' + t.id) === '1'; } catch (x) { return false; } })() ? ' on" data-on="1">🔔✓' : '">🔔') + '</button>' : '') + (t.status === 'running' ? '<button type="button">👁 Kuzatish</button>' : '') + '<button type="button" class="cta">' + cta + '</button></div></div>';
+    return '<div class="r' + (inn ? ' me' : '') + scl + '" data-tid="' + esc(t.id) + '"><div class="hd"><span class="i ' + spk + '">' + (t.mix ? '🔀' : t.type === 'arena' ? sp[0] : '🏆') + '</span><b class="nm">' + esc(name) + '</b><span class="bdg ' + bcl + '">' + btx + '</span></div><div class="sbar ' + bcl + '">⏳ ' + sbt + '</div>' + R('♟', fmtTx) + '<div class="ft">' + feat + '</div>' + avRow +(t.prize ? R('🪙', 'Mukofot: <b>' + t.prize + '</b> (' + (t.places || 3) + ' o‘ringa)') : '') + (t.creatorName ? R('👤', 'Yaratuvchi: <b class="cr">' + esc(t.creatorName) + '</b>') : '') + '<div class="btns"><button type="button" class="shr" data-share="' + esc(t.id) + '" title="Ulashish">🔗</button>' + (t.status === 'reg' && t.startAt > Date.now() && !inn ? '<button type="button" class="shr bel" data-bell="' + esc(t.id) + '" data-x="' + ((function () { try { return localStorage.getItem('tBell_' + t.id) === '1'; } catch (x) { return false; } })() ? ' on" data-on="1">🔔✓' : '">🔔') + '</button>' : '') + (t.status === 'running' ? '<button type="button">👁 Kuzatish</button>' : '') + '<button type="button" class="cta">' + cta + '</button></div></div>';
   }
   function render() {
     var bx = g('lbT'); if (!bx) return;
