@@ -315,7 +315,8 @@ function handle(req, res, url) {
         if (!/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(a) || a.length > 150000) return send(res, 400, { error: 'bad_image' });
         u.avatar = a;
       } else {
-        u.bio = String(j.bio || '').replace(/[\u0000-\u001f<>]/g, ' ').trim().slice(0, 120);
+        u.about = String(j.bio || '').replace(/[\u0000-\u001f<>]/g, ' ').trim().slice(0, 120);
+        if (typeof u.bio === 'string') u.bio = [];   // eski to'qnashuvni tozalash
       }
       store.save();
       send(res, 200, { ok: true });
@@ -385,7 +386,7 @@ function handle(req, res, url) {
       wins: _u.wins || 0, losses: _u.losses || 0, draws: _u.draws || 0, games: _u.games || 0,
       bestStreak: _u.bestStreak || 0, tournWins: _u.tournWins || 0,
       rt: (function () { try { return require('./glicko.js').view(_u); } catch (e) { return null; } })(),
-      bio: _u.bio || '', hasAv: !!store.avOf(_u), premium: !!store.isPremium(_u), lastSeen: _u.lastSeen || 0, elchi: require('./ref.js').elchi(_u), region: _u.region || '', titles: (_u.titles || []).slice(-3).reverse().map(x => x.t), bhunt: (_u.bhunt || []).slice(-20).reverse(), ach: (require('./ach.js').sync(_id, { quiet: true }), require('./ach.js').list(_id, false)),
+      bio: (typeof _u.about === 'string' ? _u.about : (typeof _u.bio === 'string' ? _u.bio : '')), hasAv: !!store.avOf(_u), premium: !!store.isPremium(_u), lastSeen: _u.lastSeen || 0, elchi: require('./ref.js').elchi(_u), region: _u.region || '', titles: (_u.titles || []).slice(-3).reverse().map(x => x.t), bhunt: (_u.bhunt || []).slice(-20).reverse(), ach: (require('./ach.js').sync(_id, { quiet: true }), require('./ach.js').list(_id, false)),
       stones: (() => { const S = store.db.shop || [], eq = _u.equipped === '-' ? '' : (_u.equipped || ((S.find(x => x.def) || {}).id) || ''); return S.filter(x => x.def || (_u.owned || []).includes(x.id)).slice(0, 24).map(x => ({ id: x.id, name: x.name, eq: x.id === eq })); })(),
       myDiamonds: ((store.users()[String(_tg.id)] || {}).diamonds) || 0, giftFee: [require('./gift.js').FEE_PCT, require('./gift.js').FEE_MIN],
       ...(isAdmin(_tg.id) ? { adm: true, sanc: require('./mod.js').info(_id), cheat: require('./cheat.js').stats(_id), dgw: require('./dgwatch.js').allowed(_id), dgwAdm: require('./dgwatch.js').isAdmin(_id) } : {})
@@ -1072,7 +1073,7 @@ function handle(req, res, url) {
       name: u.name, elo: u.elo || 1000, diamonds: u.diamonds || 0,
       wins: u.wins || 0, losses: u.losses || 0, draws: u.draws || 0, games: u.games || 0,
       streak: u.streak || 0, bestStreak: u.bestStreak || 0, hist: u.hist || [],
-      created: u.created || 0, avatar: store.avOf(u), bio: u.bio || '', log: (u.log || []).slice(-10).reverse(), premium: store.isPremium(u), adm: isAdmin(String(tg.id))
+      created: u.created || 0, avatar: store.avOf(u), bio: (typeof u.about === 'string' ? u.about : (typeof u.bio === 'string' ? u.bio : '')), log: (u.log || []).slice(-10).reverse(), premium: store.isPremium(u), adm: isAdmin(String(tg.id))
     });
     return true;
   }

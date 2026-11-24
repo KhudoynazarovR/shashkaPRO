@@ -153,6 +153,11 @@ function handle(req, res, p, h) {
     const to = String(j.uid || '');
     if (!store.users()[to]) { h.send(res, 404, { error: 'Foydalanuvchi topilmadi' }); return; }
     if (j.act === 'undo') { unpunish(to, 'all'); h.send(res, 200, { ok: true, sanc: info(to) }); return; }
+    if (j.act === 'bhunt') {   // 🎖 «Botlar ovchisi» nishonini olib tashlash
+      const u = store.users()[to], n = (u.bhunt || []).length;
+      u.bhunt = []; store.save();
+      h.send(res, 200, { ok: true, bhunt: [], removed: n, sanc: info(to) }); return;
+    }
     if (j.act !== 'chat' && j.act !== 'play') { h.send(res, 400, { error: 'act' }); return; }
     const pn = punish(to, j.act, String(j.reason || '').trim() || 'Admin qarori', me);
     h.send(res, 200, { ok: true, days: pn.days, until: pn.until, sanc: info(to) });

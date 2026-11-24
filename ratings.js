@@ -177,7 +177,7 @@
         if (d.premium) av = "<div class=\"spPrRing\"><b>👑</b>" + av.replace("margin:0 auto;", "") + "</div>";
         box.innerHTML = av + "<div style=\"font-size:21px;font-weight:700;margin-top:10px\">" + esc(d.name) + (d.premium ? " 👑" : "") + "</div>" + (d.elchi ? "<div style=\"font-size:12px;color:#f5b72b;margin-top:2px\">🏅 Elchi</div>" : "") + (d.region ? "<div style=\"font-size:12px;color:#7ee08a;margin-top:2px\">📍 " + esc(d.region) + "</div>" : "") + (d.titles && d.titles.length ? "<div style=\"font-size:12px;color:#ffd54a;margin-top:4px\">" + d.titles.map(esc).join("<br>") + "</div>" : "") +
           (d.bhunt && d.bhunt.length ? "<div id=\"pfBh\" style=\"display:inline-flex;align-items:center;gap:8px;margin-top:8px;padding:4px 12px 4px 4px;border-radius:14px;background:linear-gradient(135deg,#2a3fa8,#101a5c);border:1.5px solid #ffcf3a;cursor:pointer\"><img src=\"/img/bhunt_s.png\" style=\"width:30px;height:33px\"><b style=\"color:#ffd34d;font-size:14px\">Botlar ovchisi" + (d.bhunt.length > 1 ? " ×" + d.bhunt.length : "") + "</b></div><div id=\"pfBhL\" style=\"display:none;margin-top:6px;font-size:12.5px;color:#cfd8ff;line-height:1.6\">" + d.bhunt.map(function (b) { var t = new Date(b.at + 5 * 3600e3); return t.getUTCDate() + "-" + ["yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul", "avgust", "sentabr", "oktabr", "noyabr", "dekabr"][t.getUTCMonth()] + " " + t.getUTCFullYear() + ", " + String(t.getUTCHours()).padStart(2, "0") + ":" + String(t.getUTCMinutes()).padStart(2, "0") + " — " + esc(b.n) + (b.s ? " (" + b.s + " ochko)" : ""); }).join("<br>") + "</div>" : "") +
-          (d.bio ? "<div style=\"font-size:13px;color:#a9b0ff;margin-top:6px\">" + esc(d.bio) + "</div>" : "") +
+          "<div id=\"pcBioQ\" style=\"position:relative;margin:10px auto 0;max-width:330px;text-align:left;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:11px 13px 11px 30px;font-size:14px;line-height:1.45;color:" + (d.bio ? "#eee9ff" : "#9ba3d6") + ";cursor:pointer\"><span style=\"position:absolute;left:9px;top:3px;font-size:24px;color:#ffffff55\">\u201C</span>" + (d.bio ? esc(d.bio) : "Izoh yozish uchun bosing") + "</div>" +
           (d.rt ? "<div style=\"display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:16px 0 0\">" + [["bullet", "🚀", "Bullet"], ["blits", "⚡", "Blits"], ["rapid", "⏱", "Rapid"], ["corr", "📮", "Yozishma"]].map(function (c) { var x = d.rt[c[0]] || { r: 1500, prov: true, n: 0 }; return "<div style=\"background:#161a3a;border:1px solid #262b5a;border-radius:14px;padding:8px 2px\"><div style=\"font-size:18px\">" + c[1] + "</div><b style=\"font-size:16px\">" + x.r + (x.prov ? "<span style=\"opacity:.55\">?</span>" : "") + "</b><div style=\"font-size:10.5px;opacity:.6\">" + c[2] + " · " + x.n + "</div></div>"; }).join("") + "</div>" : "") +
           "<div style=\"display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 16px\">" +
           cell("🪙", d.diamonds, "Tanga") + cell("🏆", d.wins, "G‘alaba") +
@@ -241,6 +241,7 @@
             }).catch(function () {});
           })();
           (function () { mk('💬 Izohlar', 'linear-gradient(90deg,#4f46e5,#7c3aed)', function () { if (window.spBio) window.spBio(String(d.id), d.name || ''); }); })();
+          (function () { var q = box.querySelector('#pcBioQ'); if (q) q.onclick = function () { if (window.spBio) window.spBio(String(d.id), d.name || ''); }; })();
           var my = d.myDiamonds || 0, F = d.giftFee || [0.05, 5];
           function fee(n) { return Math.max(F[1], Math.ceil(n * F[0])); }
           if (window.lbChallengeUid) {
@@ -343,7 +344,7 @@
           function paint() {
             w.innerHTML = "<div style=\"font-size:13px;color:#ff9aa8;font-weight:700;margin-bottom:4px\">🛡 Admin</div>" + line("chat", "💬", "Chat") + line("play", "🎮", "O‘yin") +
               (d.cheat ? "<div style=\"font-size:13px;margin:3px 0\">🕵️ Dragon bilan moslik: <b style=\"color:" + (d.cheat.avg >= 80 ? "#ff6b7f" : "#7ee08a") + "\">" + d.cheat.avg + "%</b> (" + d.cheat.n + " ta g‘alaba tahlili)</div>" : "") +
-              "<div style=\"display:flex;gap:6px;margin-top:8px\">" + act("chat", "💬 Chat ⛔", "#8a5a00") + act("play", "🎮 O‘yin ⛔", "#a3263a") + act("undo", "↩️ Bekor", "#3a3f6b") + "</div>";
+              "<div style=\"display:flex;gap:6px;margin-top:8px\">" + act("chat", "💬 Chat ⛔", "#8a5a00") + act("play", "🎮 O‘yin ⛔", "#a3263a") + act("undo", "↩️ Bekor", "#3a3f6b") + (d.bhunt && d.bhunt.length ? act("bhunt", "🎖 Ovchi ⛔", "#6b4f00") : "") + "</div>";
             if (d.dgw !== undefined) w.innerHTML += "<div style=\"display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px\"><span style=\"flex:1\">🐉 Dragon kuzatuvi: <b style=\"color:" + (d.dgw ? "#7ee08a" : "#ff6b7f") + "\">" + (d.dgwAdm ? "admin — doim yoniq" : d.dgw ? "yoqiq" : "o‘chiq") + "</b></span>" +
               (d.dgwAdm ? "" : "<button data-dgw=\"1\" style=\"border:0;border-radius:12px;padding:9px 12px;font-size:13px;color:#fff;background:" + (d.dgw ? "#a3263a" : "#2e7d32") + "\">" + (d.dgw ? "O‘chirish" : "Yoqish") + "</button>") + "</div>";   // 🐉 tomoshabin tahlili shu odamga
             var _dgb = w.querySelector("[data-dgw]");
@@ -357,12 +358,18 @@
             [].forEach.call(w.querySelectorAll("[data-ma]"), function (b) {
               b.onclick = function () {
                 var a = b.getAttribute("data-ma"), reason = "";
-                if (a !== "undo") { reason = prompt("Sabab (masalan: so‘kinish, chiterlik):", a === "play" ? "Chiterlik" : "Haqorat / so‘kinish"); if (reason === null) return; }
+                if (a === "bhunt") { if (!confirm("“" + d.name + "” dan «Botlar ovchisi» nishoni olib tashlansinmi?")) return; }
+                else if (a !== "undo") { reason = prompt("Sabab (masalan: so‘kinish, chiterlik):", a === "play" ? "Chiterlik" : "Haqorat / so‘kinish"); if (reason === null) return; }
                 else if (!confirm("“" + d.name + "” dan barcha faol jazolar olib tashlansinmi?")) return;
                 b.disabled = true;
                 fetch("/api/mod", { method: "POST", headers: { "Content-Type": "application/json", "x-init-data": (tg && tg.initData) || "" }, body: JSON.stringify({ uid: d.id, act: a, reason: reason }) })
                   .then(function (r) { return r.json(); })
-                  .then(function (j) { if (j.error) { alert(j.error); b.disabled = false; return; } d.sanc = j.sanc; paint(); })
+                  .then(function (j) {
+                    if (j.error) { alert(j.error); b.disabled = false; return; }
+                    d.sanc = j.sanc;
+                    if (j.bhunt) { d.bhunt = j.bhunt; var bh = box.querySelector("#pfBh"), bl = box.querySelector("#pfBhL"); if (bh) bh.remove(); if (bl) bl.remove(); }
+                    paint();
+                  })
                   .catch(function () { alert("Server bilan aloqa yo‘q"); b.disabled = false; });
               };
             });

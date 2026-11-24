@@ -122,12 +122,17 @@ const BIO_MAX = 200, BIO_LEN = 200, BIO_DAY = 20, BIO_WRITE_PREMIUM = true;
 function bioShape(owner, oid, e, me) {
   const us = users(), a = us[e.f] || {};
   let r = null;
-  if (e.r) { const q = (owner.bio || []).find(z => z.id === e.r); if (q) r = { n: nm(us[q.f]), tx: String(q.tx).slice(0, 80) }; }
+  if (e.r) { const q = bioArr(owner).find(z => z.id === e.r); if (q) r = { n: nm(us[q.f]), tx: String(q.tx).slice(0, 80) }; }
   return { id: e.id, f: e.f, n: nm(a), vip: store.isPremium(a), tx: e.tx, t: e.t, r, del: me === String(oid) || me === e.f || ADM().includes(me) };
+}
+// 🩹 eski ma'lumot: u.bio matn bo'lib qolgan bo'lsa — about ga ko'chiramiz, izohlar massivini tiklaymiz
+function bioArr(x) {
+  if (!Array.isArray(x.bio)) { if (typeof x.bio === 'string' && x.bio) x.about = x.about || x.bio; x.bio = []; }
+  return x.bio;
 }
 function bioList(me, uid, before) {
   const x = users()[String(uid)]; if (!x) return { error: 'O‘yinchi topilmadi' };
-  const b = +before || Infinity, pool = (x.bio || []).filter(e => e.id < b), page = pool.slice(-30);
+  const b = +before || Infinity, pool = bioArr(x).filter(e => e.id < b), page = pool.slice(-30);
   const own = me === String(uid), adm = ADM().includes(me);
   const canWrite = own || adm || (!x.bioOff && (!BIO_WRITE_PREMIUM || store.isPremium(users()[me] || {})));
   return { list: page.map(e => bioShape(x, uid, e, me)), more: pool.length > page.length, n: (x.bio || []).length, canWrite, off: !!x.bioOff, own: own || adm };
@@ -145,7 +150,7 @@ function bioClear(me, uid) {
   const id = String(uid || me), x = users()[id];
   if (!x) return { error: 'O‘yinchi topilmadi' };
   if (me !== id && !ADM().includes(me)) return { error: 'Ruxsat yo‘q' };
-  const n = (x.bio || []).length; x.bio = []; store.save();
+  const n = bioArr(x).length; x.bio = []; store.save();
   return { ok: true, n };
 }
 function bioPost(me, uid, text, reply) {
@@ -159,7 +164,7 @@ function bioPost(me, uid, text, reply) {
   try { const c = require('./mod.js').censor(tx); if (typeof c === 'string' && c) tx = c; } catch (e) {}
   const d = day(); if (!a.bioDay || a.bioDay.d !== d) a.bioDay = { d, n: 0 };
   if (a.bioDay.n >= BIO_DAY) return { error: 'Bugungi izoh limiti tugadi' };
-  x.bio = x.bio || []; x.bioSeq = (x.bioSeq || 0) + 1;
+  bioArr(x); x.bioSeq = (x.bioSeq || 0) + 1;
   const e = { id: x.bioSeq, f: me, tx, t: Date.now() };
   const rid = +reply; if (rid && x.bio.some(z => z.id === rid)) e.r = rid;
   x.bio.push(e); if (x.bio.length > BIO_MAX) x.bio.splice(0, x.bio.length - BIO_MAX);
@@ -182,7 +187,7 @@ function bioPost(me, uid, text, reply) {
   return { ok: true, item: bioShape(x, uid, e, me) };
 }
 function bioDel(me, uid, id) {
-  const x = users()[String(uid)]; if (!x || !x.bio) return { error: 'Topilmadi' };
+  const x = users()[String(uid)]; if (!x || !bioArr(x).length) return { error: 'Topilmadi' };
   const i = x.bio.findIndex(e => e.id === +id); if (i < 0) return { error: 'Topilmadi' };
   if (me !== String(uid) && me !== x.bio[i].f && !ADM().includes(me)) return { error: 'Ruxsat yo‘q' };
   x.bio.splice(i, 1); store.save(); return { ok: true };
