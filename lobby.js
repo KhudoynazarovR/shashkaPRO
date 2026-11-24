@@ -1477,7 +1477,7 @@ function createLobby({ send, clients, roomsApi }) {
         if (String(t0.creatorUid) !== String(uid) && !t0.hostPaid.has(uid)) {
           t0.hostPaid.add(uid);
           const hs = economy.hostShare(t0.creatorUid, !!_cj.tkt);
-          if (hs) toast(t0.creatorUid, '🎟 ' + t0.name + ': yangi ishtirokchi · +' + hs + ' 🪙');
+          if (hs) toast(t0.creatorUid, t0.name + ': yangi ishtirokchi · +' + hs + ' tanga');
         }
       } else if (_cj.fee) economy.refund(uid, _cj.fee, 'refund_join');
       return ret;
