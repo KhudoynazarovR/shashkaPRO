@@ -3979,3 +3979,57 @@ if(document.readyState==='complete')setTimeout(init,1500);else window.addEventLi
 })();
 /* TANGA DARAXTI — bosh sahifa kartasi (daraxt.js) */
 ;(function(){var s=document.createElement("script");s.src="/daraxt.js?v=2";document.head.appendChild(s)})();
+
+/* TAVA — turnir kartasida ishtirokchilar yuzi (avatarlar) + soni; ulashish ikonkasi 🔗 */
+;(function(){
+if(document.getElementById('tavaCss'))return;
+var css=[
+'.tavR{display:flex!important;align-items:center;gap:9px;margin:10px 0 2px}',
+'.tavR .av{display:flex;flex:0 0 auto}',
+'.tavR .av i{width:30px;height:30px;border-radius:50%;margin-left:-9px;border:2px solid rgba(255,255,255,.22);background:#2b3a6a;color:#e6ecff;font:700 13px/26px system-ui;font-style:normal;text-align:center;overflow:hidden;display:block;flex:0 0 auto}',
+'.tavR .av i:first-child{margin-left:0}',
+'.tavR .av i img{width:100%;height:100%;object-fit:cover;display:block}',
+'.tavR .av i.mo{background:#46568f;font-size:12px;letter-spacing:-.5px}',
+'.tavR .n{font-size:14px;font-weight:700;color:#c9d2ff;min-width:0}',
+'.tavR.z .n{color:#9b9a97;font-weight:600}'
+].join('');
+var st=document.createElement('style');st.id='tavaCss';st.textContent=css;document.head.appendChild(st);
+function S(){try{return window.__lb?window.__lb.S:null}catch(e){return null}}
+function ini(n){n=String(n||'').replace(/^[^0-9A-Za-zА-Яа-яЎўҚқҒғҲҳ]+/,'').trim();return (n.charAt(0)||'?').toUpperCase()}
+function run(){
+  var s=S(),T=(s&&s.tournaments)||[];
+  for(var q=0;q<T.length;q++){(function(t){
+    var card=document.getElementById('lbtc_'+t.id);if(!card)return;
+    var lk=card.querySelector('[data-a="tlink"]');
+    if(lk&&!lk.children.length&&lk.textContent.indexOf('🔗')<0)lk.textContent='🔗';
+    var ps=(t.players||[]).filter(function(p){return !p.withdrawn}),n=ps.length;
+    var sig=n+'|'+ps.slice(0,6).map(function(p){return p.uid}).join(',');
+    var el=card.querySelector('.tavR');
+    if(el&&el.getAttribute('data-s')===sig)return;
+    if(!el){
+      el=document.createElement('div');el.className='tavR';
+      var row=card.querySelector('.tvRow')||card.querySelector('.row');
+      if(row&&row.parentNode===card)card.insertBefore(el,row);else card.appendChild(el);
+    }
+    el.setAttribute('data-s',sig);el.textContent='';
+    el.classList.toggle('z',!n);
+    var box=document.createElement('div');box.className='av';
+    ps.slice(0,5).forEach(function(p){
+      var c=document.createElement('i');
+      if(/^\d+$/.test(String(p.uid))){
+        var im=document.createElement('img');im.alt='';im.src='/api/av/'+encodeURIComponent(p.uid);
+        im.onerror=function(){c.textContent=ini(p.name)};c.appendChild(im);
+      }else c.textContent=ini(p.name);
+      box.appendChild(c);
+    });
+    if(n>5){var m=document.createElement('i');m.className='mo';m.textContent='+'+(n-5);box.appendChild(m)}
+    if(n)el.appendChild(box);
+    var nm=document.createElement('span');nm.className='n';
+    nm.textContent=n?n+' ishtirokchi':'Hali hech kim qo‘shilmagan — birinchi bo‘ling';
+    el.appendChild(nm);
+    var kids=card.querySelectorAll('.tkd');
+    for(var i=0;i<kids.length;i++)if(/Ishtirokchilar/.test(kids[i].textContent))kids[i].style.setProperty('display','none','important');
+  })(T[q])}
+}
+setInterval(function(){try{run()}catch(e){}},600);
+})();
