@@ -205,6 +205,20 @@ function handle(req, res, url) {
   } catch (e) {}
   if (p === '/api/season' && req.method === 'GET') { const _t = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN); if (!_t) { send(res, 401, { error: 'auth' }); return true; } send(res, 200, require('./season.js').view(_t.id)); return true; }
   if (p === '/api/wager' && req.method === 'GET') { const W = require('./wager.js'); send(res, 200, { stakes: W.STAKES, fee: W.FEE, top: W.top() }); return true; }
+  if (p === '/api/name' && req.method === 'POST') {   // ✏️ ism o'zgartirish (Premium)
+    const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
+    if (!_tg) { send(res, 401, { error: 'auth' }); return true; }
+    const u = store.getOrCreate(_tg);
+    readBody(req, 4096, d => {
+      let j = {}; try { j = JSON.parse(d || '{}'); } catch (e) { return send(res, 400, { error: 'bad' }); }
+      const nm = String(j.name || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 28);
+      if (nm.length < 2) return send(res, 400, { error: 'Ism juda qisqa' });
+      if (!store.isPremium(u) && !isAdmin(String(_tg.id))) return send(res, 400, { error: 'Ism o‘zgartirish faqat Premium uchun', prem: true });
+      u.name = nm; store.save();
+      send(res, 200, { ok: true, name: nm });
+    });
+    return true;
+  }
   if (p === '/api/ticket') {   // 🎟 chipta: holati (GET) va sotib olish (POST)
     const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!_tg) { send(res, 401, { error: 'auth' }); return true; }

@@ -19,7 +19,21 @@
     '.pf-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #20244d;font-size:14px}' +
     '.pf-row:last-child{border:0}' +
     '.pf-bt{width:100%;border:0;border-radius:16px;padding:14px;font-size:16px;font-weight:600;color:#fff;background:linear-gradient(90deg,#8e3bf0,#e03a8c)}' +
-    '.pf-bt:disabled{opacity:.5}';
+    '.pf-bt:disabled{opacity:.5}' +
+    '.pf-cover{position:absolute;inset:0;background-size:cover;background-position:center;filter:blur(18px) saturate(1.2);transform:scale(1.25);opacity:.55}' +
+    '.pf-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,6,30,.35),rgba(10,6,30,.82))}' +
+    '.pf-hero>*{position:relative;z-index:2}' +
+    '.pf-lk{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:6px 14px;border-radius:20px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.18);font-size:14px;font-weight:700}' +
+    '.pf-rt{display:inline-flex;align-items:center;gap:8px;margin-top:9px;padding:8px 16px;border-radius:22px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.18);font-size:14.5px;font-weight:600}' +
+    '.pf-rt b{color:#ffd76a}' +
+    '.pf-vip{padding:3px 10px;border-radius:14px;background:linear-gradient(180deg,#ffd76a,#e0a120);color:#3a2500;font-size:12.5px;font-weight:800}' +
+    '.pf-on{margin-top:7px;font-size:13px;color:#cfd3f5;opacity:.85}' +
+    '.pf-bioq{margin:11px auto 0;max-width:340px;text-align:left;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:11px 13px;font-size:14px;line-height:1.45;color:#eee9ff;position:relative}' +
+    '.pf-bioq:before{content:"\\201C";position:absolute;left:8px;top:2px;font-size:26px;color:#ffffff55}' +
+    '.pf-bioq span{display:block;padding-left:18px;word-break:break-word}' +
+    '.pf-bioq.empty span{opacity:.6}' +
+    '.pf-acts{display:flex;gap:10px;justify-content:center;margin-top:11px}' +
+    '.pf-acts button{border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.33);color:#fff;border-radius:18px;padding:9px 18px;font-size:15px;font-weight:700}';
   document.head.appendChild(css);
   var rc = document.createElement('style');
   rc.textContent =
@@ -221,14 +235,132 @@
       .catch(function () { L.innerHTML = '<div style="text-align:center;opacity:.7;padding:24px 0">Server bilan aloqa yo‘q</div>'; });
   };
 
+  // ⚙️ Sozlamalar — hamma profil sozlamasi bitta joyda
+  window.spSettings = function () {
+    var tgw = window.Telegram && window.Telegram.WebApp;
+    var H = { 'x-init-data': (tgw && tgw.initData) || '', 'Content-Type': 'application/json' };
+    var my = (tgw && tgw.initDataUnsafe && tgw.initDataUnsafe.user && tgw.initDataUnsafe.user.id) || '';
+    var E = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+    var old = document.getElementById('pfSetOv'); if (old) old.remove();
+    var ov = document.createElement('div'); ov.id = 'pfSetOv';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:2147482750;background:rgba(0,0,0,.55);display:flex;align-items:flex-end';
+    var rows = [
+      ['ph', '📷', 'Profil rasmini o‘zgartirish', ''],
+      ['nm', '👤', 'Ismni o‘zgartirish', ''],
+      ['bio', '✍️', 'Bio yozish', ''],
+      ['prem', '👑', 'Premium sozlamalari', ''],
+      ['inv', '🎁', 'Do‘stlarni taklif qilish', ''],
+      ['blk', '🚫', 'Bloklanganlar', ''],
+      ['rul', '📖', 'O‘yin qoidalari', '']
+    ];
+    ov.innerHTML = '<div style="width:100%;max-height:88vh;overflow:auto;background:#141833;color:#fff;border-radius:22px 22px 0 0;padding:14px 14px calc(env(safe-area-inset-bottom,0px) + 12px);box-sizing:border-box">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><b style="font-size:18px">⚙️ Sozlamalar</b>' +
+      '<button id="pfSetX" style="border:0;background:#262b5a;color:#fff;border-radius:10px;width:36px;height:36px;font-size:16px">✕</button></div>' +
+      rows.map(function (r) {
+        return '<button data-a="' + r[0] + '" style="width:100%;display:flex;align-items:center;gap:12px;border:0;border-radius:14px;padding:13px 12px;margin-bottom:8px;background:#1c2145;color:#fff;font-size:15.5px;text-align:left">' +
+          '<span style="font-size:19px;width:24px;flex:none">' + r[1] + '</span><span style="flex:1">' + r[2] + '</span>' +
+          '<span id="pfSet_' + r[0] + '" style="font-size:13px;opacity:.65">' + r[3] + '</span></button>';
+      }).join('') + '</div>';
+    document.body.appendChild(ov);
+    if (window.spKb) window.spKb(ov);
+    ov.onclick = function (e) { if (e.target === ov) ov.remove(); };
+    ov.querySelector('#pfSetX').onclick = function () { ov.remove(); };
+    var lockOff = false;
+    function tag(k, v) { var el = ov.querySelector('#pfSet_' + k); if (el) el.textContent = v; }
+
+    function blocked() {
+      var ids = [];
+      try { ids = (window.lbState && window.lbState().blocked) || (window.__lb && window.__lb.S && window.__lb.S.blocked) || []; } catch (e) {}
+      return ids.map(String);
+    }
+    tag('blk', blocked().length ? blocked().length + ' ta' : 'yo‘q');
+    ov.onclick = function (e) {
+      if (e.target === ov) { ov.remove(); return; }
+      var b = e.target.closest('[data-a]'); if (!b) return;
+      var a = b.getAttribute('data-a');
+      if (a === 'ph') { ov.remove(); var u = document.getElementById('pfUp'); if (u) u.click(); return; }
+      if (a === 'bio') { ov.remove(); var eb = document.getElementById('pfBioEd'); if (eb) eb.click(); return; }
+      if (a === 'lk') { ov.remove(); if (window.spLikers) window.spLikers(''); return; }
+      if (a === 'cm') { ov.remove(); if (window.spBio) window.spBio(String(my), ''); return; }
+      if (a === 'prem') { ov.remove(); if (window.premGo) window.premGo(); return; }
+      if (a === 'inv') {
+        try {
+          var l = 'https://t.me/DraughtsPRObot/play?startapp=ref_' + my;
+          var u2 = 'https://t.me/share/url?url=' + encodeURIComponent(l) + '&text=' + encodeURIComponent('♟ Keling, shashka o‘ynaymiz! ShashkaPRO — Telegram’dagi shashka.');
+          if (tgw && tgw.openTelegramLink) tgw.openTelegramLink(u2); else window.open(u2, '_blank');
+        } catch (e) {}
+        return;
+      }
+      if (a === 'nm') {
+        var cur = (tgw && tgw.initDataUnsafe && tgw.initDataUnsafe.user && tgw.initDataUnsafe.user.first_name) || '';
+        var nv = prompt('Yangi ism (2–28 belgi):', document.querySelector('.pf-nm') ? document.querySelector('.pf-nm').textContent : cur);
+        if (nv == null) return;
+        fetch('/api/name', { method: 'POST', headers: H, body: JSON.stringify({ name: nv }) })
+          .then(function (r) { return r.json(); }).then(function (j) {
+            if (j && j.ok) { var e1 = document.querySelector('.pf-nm'); if (e1) e1.textContent = j.name; tag('nm', 'saqlandi'); }
+            else tag('nm', (j && j.error) || 'xato');
+          }).catch(function () { tag('nm', 'xato'); });
+        return;
+      }
+      if (a === 'rul') {
+        var rv = document.createElement('div');
+        rv.style.cssText = 'position:fixed;inset:0;z-index:2147482800;background:#101430;color:#fff;overflow:auto;padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 16px);font-size:15px;line-height:1.55';
+        rv.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><b style="font-size:18px">📖 O‘yin qoidalari</b>' +
+          '<button id="pfRulX" style="border:0;background:#262b5a;color:#fff;border-radius:10px;width:36px;height:36px;font-size:16px">✕</button></div>' +
+          '<p><b>Doska va donalar.</b> 8×8 doska, har tomonda 12 dona. Oq boshlaydi.</p>' +
+          '<p><b>Yurish.</b> Oddiy dona diagonal bo‘yicha oldinga bir katak yuradi.</p>' +
+          '<p><b>Urish majburiy.</b> Urish imkoniyati bo‘lsa, urish shart. Oddiy dona oldinga ham, orqaga ham uradi. Eng ko‘p dona uriladigan yo‘l tanlanadi.</p>' +
+          '<p><b>Damka.</b> Oxirgi qatorga yetgan dona damkaga aylanadi: diagonal bo‘yicha istalgan masofaga yuradi va uradi.</p>' +
+          '<p><b>G‘alaba.</b> Raqibning hamma donasi urilsa yoki yuradigan yurishi qolmasa — g‘alaba.</p>' +
+          '<p><b>Durang.</b> Kelishuv bilan, yoki takrorlanish va 15 yurish davomida urish bo‘lmasa.</p>' +
+          '<p><b>Vaqt.</b> Soat tugasa — yutqazasiz. Fischer qo‘shimchasi (masalan 3+2) har yurishdan keyin vaqt qo‘shadi.</p>' +
+          '<p><b>Berserk.</b> Turnirda vaqtning yarmi bilan o‘ynaysiz, g‘alaba uchun qo‘shimcha ochko olasiz.</p>';
+        document.body.appendChild(rv);
+        rv.querySelector('#pfRulX').onclick = function () { rv.remove(); };
+        return;
+      }
+      if (a === 'blk') {
+        var ids = blocked();
+        var box = document.createElement('div');
+        box.style.cssText = 'background:#11152f;border-radius:14px;padding:10px;margin:0 0 8px';
+        box.innerHTML = ids.length
+          ? ids.map(function (u) {
+              return '<div style="display:flex;align-items:center;gap:10px;padding:7px 4px"><div style="width:34px;height:34px;border-radius:50%;background:#2c3470;overflow:hidden;flex:none"><img src="/api/av/' + encodeURIComponent(u) + '" onerror="this.style.display=\'none\'" style="width:100%;height:100%;object-fit:cover"></div>' +
+                '<span style="flex:1;font-size:14.5px">ID ' + E(u) + '</span>' +
+                '<button data-unb="' + E(u) + '" style="border:0;border-radius:10px;padding:8px 12px;background:#2e7d32;color:#fff;font-size:13px;font-weight:700">Chiqarish</button></div>';
+            }).join('')
+          : '<div style="opacity:.7;font-size:14px;padding:6px 4px">Bloklangan hech kim yo‘q</div>';
+        if (b.nextSibling && b.nextSibling.dataset && b.nextSibling.dataset.blkBox) { b.nextSibling.remove(); return; }
+        box.dataset.blkBox = '1';
+        b.parentNode.insertBefore(box, b.nextSibling);
+        box.onclick = function (ev) {
+          var ub = ev.target.closest('[data-unb]'); if (!ub) return;
+          var u = ub.getAttribute('data-unb');
+          if (window.lbBlock) window.lbBlock(u, false);
+          ub.parentNode.remove();
+          tag('blk', blocked().length ? blocked().length + ' ta' : 'yo‘q');
+        };
+        return;
+      }
+    };
+  };
+
   window.nvProfile = function (pg) {
     var u = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) || {};
     var name = ((u.first_name || '') + ' ' + (u.last_name || '')).trim() || 'Mehmon';
     var av = u.id
       ? '<img class="pf-av" src="/api/av/' + u.id + '?t=' + Date.now() + '" onerror="this.outerHTML=&quot;<div class=pf-av>👤</div>&quot;">'
       : '<div class="pf-av">👤</div>';
-    pg.innerHTML = '<div class="pf-hero"><div class="pf-ring">' + av + sparks() + '</div>' +
+    pg.innerHTML = '<div class="pf-hero">' +
+      (u.id ? '<div class="pf-cover" style="background-image:url(/api/av/' + u.id + ')"></div>' : '') + '<div class="pf-shade"></div>' +
+      '<button id="pfGear" title="Sozlamalar" style="position:absolute;top:14px;right:14px;z-index:3;border:0;border-radius:14px;width:42px;height:42px;background:rgba(255,255,255,.18);color:#fff;font-size:19px">⚙️</button>' +
+      '<div class="pf-ring">' + av + sparks() + '</div>' +
+      '<div><span class="pf-lk" id="pfLk">♡ 0</span></div>' +
       '<div class="pf-nm">' + esc(name) + '</div>' +
+      '<div><span class="pf-rt" id="pfRt">⭐ Reyting: <b>…</b></span></div>' +
+      '<div class="pf-on" id="pfOn">🕐 Onlayn</div>' +
+      '<div class="pf-bioq empty" id="pfBioQ"><span>Bio yozilmagan — bosib yozing</span></div>' +
+      '<div class="pf-acts"><button id="pfCmB">💬 0</button><button id="pfLkB">♡ 0</button></div>' +
       '<div class="pf-bd" id="pfRank">…</div></div><div id="pfBody"></div>';
     if (!initData) {
       $('pfBody').innerHTML = '<div class="pf-box" style="color:#8a8db8">Statistika uchun Telegram orqali kiring.</div>';
@@ -238,6 +370,25 @@
       if (d.error) { $('pfBody').innerHTML = '<div class="pf-box">Yuklab bo‘lmadi</div>'; return; }
       var pct = d.games ? Math.round(d.wins * 100 / d.games) : 0;
       $('pfRank').textContent = rank(d.wins) + (d.premium ? ' · 👑 Premium' : '');
+      (function () {   // 🪪 hero: reyting, bio, izoh va like tugmalari
+        var rt = $('pfRt'); if (rt) rt.innerHTML = '⭐ Reyting: <b>' + (d.elo || 1000) + '</b>' + (d.premium ? '<span class="pf-vip">👑 VIP</span>' : '');
+        var q = $('pfBioQ');
+        if (q) {
+          if (d.bio) { q.className = 'pf-bioq'; q.innerHTML = '<span>' + esc(d.bio) + '</span>'; }
+          q.onclick = function () { var eb = document.getElementById('pfBioEd'); if (eb) eb.click(); };
+        }
+        var cb = $('pfCmB'), lb = $('pfLkB'), lk = $('pfLk');
+        if (cb) cb.onclick = function () { if (window.spBio) window.spBio(String(u.id || ''), name); };
+        if (lb) lb.onclick = function () { if (window.spLikers) window.spLikers(''); };
+        if (lk) lk.onclick = function () { if (window.spLikers) window.spLikers(''); };
+        var H2 = { 'x-init-data': initData };
+        fetch('/api/social/likers', { headers: H2 }).then(function (r) { return r.json(); }).then(function (j) {
+          if (!j || j.n == null) return; if (lk) lk.textContent = '♡ ' + (j.likes || j.n); if (lb) lb.textContent = '♡ ' + (j.likes || j.n);
+        }).catch(function () {});
+        if (u.id) fetch('/api/social/bio?uid=' + u.id, { headers: H2 }).then(function (r) { return r.json(); }).then(function (j) {
+          if (j && j.n != null && cb) cb.textContent = '💬 ' + j.n;
+        }).catch(function () {});
+      })();
       (function () { var rg = document.querySelector('.pf-ring'); if (!rg) return; rg.classList.add(d.premium ? 'pr' : 'np'); if (d.premium && !rg.querySelector('.pf-crown')) { var cr = document.createElement('span'); cr.className = 'pf-crown'; cr.textContent = '👑'; rg.appendChild(cr); } })();   // 👑 Premium ramka
       (function () {   // 👑 Premium tugmasi
         var pb = document.createElement('button'); pb.id = 'pfPrem';
@@ -255,7 +406,7 @@
       
       var bt = document.createElement('button');
       bt.id = 'pfUp'; bt.textContent = d.premium ? '📷 Rasm qo‘yish' : '📷 Rasm qo‘yish 👑';
-      bt.style.cssText = 'display:block;margin:10px auto 0;border:0;border-radius:14px;padding:8px 16px;background:#ffffff33;color:#fff;font-size:13px';
+      bt.style.cssText = 'display:none;margin:10px auto 0;border:0;border-radius:14px;padding:8px 16px;background:#ffffff33;color:#fff;font-size:13px';
       var fi = document.createElement('input'); fi.type = 'file'; fi.accept = 'image/*'; fi.style.display = 'none';
       bt.onclick = function () {   // 🖼 profil rasmi — faqat Premium
         if (!d.premium) { bt.textContent = '👑 Rasm qo‘yish Premium uchun'; if (window.premGo) window.premGo(); setTimeout(function () { bt.textContent = '📷 Rasm qo‘yish 👑'; }, 2500); return; }
@@ -288,12 +439,13 @@
       };
       $('pfRank').parentNode.appendChild(bt);
       $('pfRank').parentNode.appendChild(fi);
+      (function () { var gr = document.getElementById('pfGear'); if (gr) gr.onclick = function () { if (window.spSettings) window.spSettings(); }; })();
 
       // ✍️ o'zi haqida (bio) — profil ostida ko'rinadi, faqat Premium yozadi
       (function () {
         var box = document.createElement('div');
         box.id = 'pfBioBox';
-        box.style.cssText = 'margin:10px auto 0;max-width:340px;text-align:center';
+        box.style.cssText = 'display:none';
         var txt = document.createElement('div');
         txt.id = 'pfBioTx';
         txt.style.cssText = 'font-size:13.5px;color:#e9e3ff;opacity:.9;line-height:1.45;margin-bottom:6px;word-break:break-word';
@@ -326,7 +478,12 @@
             fetch('/api/bio', { method: 'POST', headers: { 'x-init-data': (tg && tg.initData) || '', 'Content-Type': 'application/json' }, body: JSON.stringify({ bio: v }) })
               .then(function (r) { return r.json(); })
               .then(function (j) {
-                if (j && j.ok) { txt.textContent = v; d.bio = v; eb.textContent = v ? '✍️ Bio o‘zgartirish' : '✍️ Bio yozish'; ov.remove(); }
+                if (j && j.ok) {
+                  txt.textContent = v; d.bio = v; eb.textContent = v ? '✍️ Bio o‘zgartirish' : '✍️ Bio yozish';
+                  var q2 = document.getElementById('pfBioQ');
+                  if (q2) { q2.className = v ? 'pf-bioq' : 'pf-bioq empty'; q2.innerHTML = '<span>' + (v ? esc(v) : 'Bio yozilmagan — bosib yozing') + '</span>'; }
+                  ov.remove();
+                }
                 else er.textContent = (j && j.error) || 'Saqlanmadi';
               }).catch(function () { er.textContent = 'Server bilan aloqa yo‘q'; });
           }
