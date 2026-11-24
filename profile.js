@@ -100,7 +100,7 @@
     var old = document.getElementById('spBioOv'); if (old) old.remove();
     var items = [], more = false, canWrite = false, reply = null, busy = false, bioOff = false, isOwn = false;
     var ov = document.createElement('div'); ov.id = 'spBioOv';
-    ov.style.cssText = 'position:fixed;inset:0;z-index:99990;background:rgba(0,0,0,.55);display:flex;align-items:flex-end';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:2147482600;background:rgba(0,0,0,.55);display:flex;align-items:flex-end';
     ov.innerHTML = '<div style="width:100%;max-height:88vh;display:flex;flex-direction:column;background:#141833;color:#fff;border-radius:22px 22px 0 0;padding:14px 14px calc(env(safe-area-inset-bottom,0px) + 12px);box-sizing:border-box;font-family:inherit">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><b style="font-size:17px">💬 Bio izohlari' + (name ? ' · ' + E(name) : '') + '</b><button id="spBioX" style="border:0;background:#262b5a;color:#fff;border-radius:10px;width:36px;height:36px;font-size:16px">✕</button></div>' +
       '<div id="spBioC" style="display:none;gap:8px;margin-bottom:10px"></div>' +
@@ -195,7 +195,7 @@
     var E = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
     var old = document.getElementById('spLkOv'); if (old) old.remove();
     var ov = document.createElement('div'); ov.id = 'spLkOv';
-    ov.style.cssText = 'position:fixed;inset:0;z-index:99991;background:rgba(0,0,0,.55);display:flex;align-items:flex-end';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:2147482650;background:rgba(0,0,0,.55);display:flex;align-items:flex-end';
     ov.innerHTML = '<div style="width:100%;max-height:82vh;display:flex;flex-direction:column;background:#141833;color:#fff;border-radius:22px 22px 0 0;padding:14px 14px calc(env(safe-area-inset-bottom,0px) + 12px);box-sizing:border-box">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><b style="font-size:17px">❤️ Kim yoqtirdi</b>' +
       '<button id="spLkX" style="border:0;background:#262b5a;color:#fff;border-radius:10px;width:36px;height:36px;font-size:16px">✕</button></div>' +
@@ -305,7 +305,7 @@
         eb.onclick = function () {
           if (!d.premium) { eb.textContent = '👑 Bio faqat Premium uchun'; if (window.premGo) window.premGo(); setTimeout(function () { eb.textContent = '✍️ Bio yozish 👑'; }, 2500); return; }
           var ov = document.createElement('div');
-          ov.style.cssText = 'position:fixed;inset:0;z-index:99992;background:rgba(0,0,0,.55);display:flex;align-items:flex-end';
+          ov.style.cssText = 'position:fixed;inset:0;z-index:2147482700;background:rgba(0,0,0,.55);display:flex;align-items:flex-end';
           ov.innerHTML = '<div style="width:100%;background:#141833;color:#fff;border-radius:22px 22px 0 0;padding:14px 14px calc(env(safe-area-inset-bottom,0px) + 12px);box-sizing:border-box">' +
             '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><b style="font-size:17px">✍️ O‘zingiz haqingizda</b>' +
             '<button id="pfBioX" style="border:0;background:#262b5a;color:#fff;border-radius:10px;width:36px;height:36px;font-size:16px">✕</button></div>' +
