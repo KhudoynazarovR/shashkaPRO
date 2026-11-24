@@ -424,3 +424,28 @@
   document.addEventListener('visibilitychange', function () { if (!document.hidden) load(true); });
   window.hxRefresh = function () { load(true); };
 })();
+
+;(function () {
+  if (document.getElementById('hzLvLook')) return;
+  var P = 'html body #lbPanel #hzLive ';
+  var W = 'radial-gradient(circle at 50% 50%,transparent 0 33%,rgba(0,0,0,.2) 34% 39%,transparent 41%),radial-gradient(circle at 36% 30%,#fff 0%,#f2f2f2 42%,#c9c9c9 100%)';
+  var B = 'radial-gradient(circle at 50% 50%,transparent 0 33%,rgba(255,255,255,.16) 34% 39%,transparent 41%),radial-gradient(circle at 36% 30%,#606060 0%,#272727 46%,#080808 100%)';
+  var WK = 'radial-gradient(circle at 50% 50%,#f0a81c 0 17%,rgba(0,0,0,.25) 18% 21%,transparent 23%),' + W;
+  var BK = 'radial-gradient(circle at 50% 50%,#f5b82e 0 17%,rgba(0,0,0,.4) 18% 21%,transparent 23%),' + B;
+  var SH = '0 2px 3px rgba(0,0,0,.55),inset 0 1px 1px rgba(255,255,255,.55),inset 0 -2px 3px rgba(0,0,0,.2)!important';
+  var SK = '0 0 0 1.5px #f5b82e,0 0 7px rgba(245,184,46,.7),0 2px 3px rgba(0,0,0,.5)!important';
+  var css = [
+    P + '.hzLvC{background:linear-gradient(160deg,rgba(255,255,255,.11),rgba(255,255,255,.04))!important;box-shadow:0 6px 18px rgba(0,0,0,.35),inset 0 0 0 1px rgba(255,255,255,.1)!important}',
+    P + '.hzLvB{border-radius:6px!important;overflow:hidden;background:#5a3a1c!important;box-shadow:0 0 0 3px #5a3a1c,0 0 0 4px rgba(255,214,150,.35),0 8px 16px rgba(0,0,0,.5)!important}',
+    P + '.hzLvB s{width:84%!important;height:84%!important}',
+    P + '.hzLvB s.p1:not(.spImgPc){background:' + W + '!important;box-shadow:' + SH + '}',
+    P + '.hzLvB s.p2:not(.spImgPc){background:' + B + '!important;box-shadow:' + SH + '}',
+    P + '.hzLvB s.p3:not(.spImgPc){background:' + WK + '!important;box-shadow:' + SK + '}',
+    P + '.hzLvB s.p4:not(.spImgPc){background:' + BK + '!important;box-shadow:' + SK + '}',
+    P + '.hzLvC:only-child{flex:1 0 100%!important;display:grid!important;grid-template-columns:46% 1fr;column-gap:14px;align-items:center;align-content:center}',
+    P + '.hzLvC:only-child>*{grid-column:2}',
+    P + '.hzLvC:only-child>.hzLvB{grid-column:1;grid-row:1 / span 6}'
+  ].join('');
+  var s = document.createElement('style'); s.id = 'hzLvLook'; s.textContent = css;
+  document.head.appendChild(s);
+})();
