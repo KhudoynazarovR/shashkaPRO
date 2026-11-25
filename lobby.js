@@ -339,11 +339,18 @@ function createLobby({ send, clients, roomsApi }) {
     if (!t.clubIds || !t.clubIds.length) return [];
     const st = t.type === 'arena' ? arenaStandings(t) : standings(t);
     const by = new Map(t.clubIds.map(id => [id, []]));
-    for (const p of st) { const cid = clubsApi.clubOfIn(p.uid, t.clubIds); if (cid) by.get(cid).push(+p.score || 0); }
-    return [...by].map(([id, a]) => {
-      a.sort((x, y) => y - x);
-      return { id, name: clubsApi.nameOf(id), players: a.length, score: Math.round(a.slice(0, 5).reduce((s, x) => s + x, 0) * 10) / 10 };
-    }).sort((a, b) => b.score - a.score);
+    for (const p of st) { const cid = clubsApi.clubOfIn(p.uid, t.clubIds); if (cid) by.get(cid).push({ s: +p.score || 0, e: olyElo(p.uid) || 0 }); }
+    const out = [...by].map(([id, a]) => {
+      const top = a.slice().sort((x, y) => y.s - x.s).slice(0, 5);                    // eng yaxshi 5 o'yinchi ochkosi
+      const score = Math.round(top.reduce((s, x) => s + x.s, 0) * 10) / 10;
+      const rsum = a.slice().sort((x, y) => y.e - x.e).slice(0, 5).reduce((s, x) => s + x.e, 0);   // ⚔ eng yaxshi 5 reyting yig'indisi
+      return { id, name: clubsApi.nameOf(id), players: a.length, score, rsum, elo: clubsApi.eloOf(id),
+        avg: Math.round(score / Math.max(1, top.length) * 10) / 10 };                  // o'rtacha — a'zo soni ta'sir qilmasligi uchun
+    });
+    // o'yin boshlanmagan bo'lsa — a'zolar reytingi yig'indisi bo'yicha, keyin ochko bo'yicha
+    const played = out.some(x => x.score > 0);
+    return played ? out.sort((a, b) => b.score - a.score || b.rsum - a.rsum)
+                  : out.sort((a, b) => b.rsum - a.rsum || b.elo - a.elo);
   }
 
   function promoInfo() {
@@ -1012,7 +1019,20 @@ function createLobby({ send, clients, roomsApi }) {
       if (t.daily || t.sched) { const _st = require('./store'); _st.db.dailyFans = _st.db.dailyFans || {}; for (const p of t.players.values()) if (/^\d+$/.test(String(p.uid))) _st.db.dailyFans[p.uid] = Date.now(); _st.save(); }
     }
     const top = st[0] ? st[0].name : '-';
-    if (t.clubIds && t.clubIds.length) { const cs = clubStandings(t); if (cs.length > 1) { clubsApi.award(cs); if (cs[0]) for (const p of t.players.values()) toast(p.uid, '🏅 Klublar hisobida g‘olib: ' + cs[0].name + ' (' + cs[0].score + ')'); } }
+    if (t.clubIds && t.clubIds.length) {
+      const cs = clubStandings(t);
+      if (cs.length > 1) {
+        clubsApi.award(cs);
+        const rt = clubsApi.rate(cs.map(c => ({ id: c.id, avg: c.avg, n: c.players })));   // 🏆 klub reytingi yangilanadi
+        const rBy = new Map(rt.map(x => [x.id, x]));
+        if (cs[0]) for (const p of t.players.values()) {
+          let ln = '🏅 Klublar hisobida g‘olib: ' + cs[0].name + ' (' + cs[0].score + ')';
+          const my = rBy.get(clubsApi.clubOfIn(p.uid, t.clubIds));
+          if (my) ln += '\n🏆 ' + my.name + ' reytingi: ' + my.before + ' → ' + my.after + ' (' + (my.d >= 0 ? '+' : '') + my.d + ')';
+          toast(p.uid, ln);
+        }
+      }
+    }
     try {
       if (st[0] && st[0].score > 0 && t.players.size >= MIN_T_PLAYERS) {
         const _st = require('./store'), _u = _st.users()[String(st[0].uid)];

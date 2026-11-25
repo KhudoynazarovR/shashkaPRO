@@ -219,8 +219,15 @@
     var cl = t.clubs || [], ch = '';
     if (cl.length) {
       var md2 = ['🥇', '🥈', '🥉'];
+      var fmtN3 = function (n) { return String(n || 0).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); };
       ch = '<div class="taCard" style="margin-top:10px"><h4>👥 Klublar jangi · eng yaxshi 5 o‘yinchi</h4>' + cl.map(function (c, i) {
-        return '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.09)"><span style="width:26px;text-align:center">' + (md2[i] || (i + 1)) + '</span><b style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + nm(c.name) + '</b><small style="color:var(--spMute,#b9ab98)">' + (c.players || 0) + ' o‘yinchi</small><b style="min-width:40px;text-align:right;color:#f5b72b">' + (c.score || 0) + '</b></div>';
+        return '<div style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.09);font-size:14px">' +
+          '<div style="display:flex;align-items:center;gap:8px"><span style="width:26px;text-align:center">' + (md2[i] || (i + 1)) + '</span>' +
+          '<b style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + nm(c.name) + '</b>' +
+          '<span style="padding:2px 9px;border-radius:999px;background:rgba(245,183,43,.13);color:#f5b72b;font-weight:800;font-size:13px">🏆 ' + fmtN3(c.elo || 1000) + '</span>' +
+          '<b style="min-width:28px;text-align:right">' + (c.score || 0) + '</b>' +
+          '<small style="opacity:.55;min-width:48px;text-align:right">' + (c.players || 0) + ' kishi</small></div>' +
+          (c.rsum ? '<div style="margin:3px 0 0 34px;font-size:12.5px;color:var(--spMute,#b9ab98)">⚔ ' + fmtN3(c.rsum) + ' <span style="opacity:.6">· eng yaxshi 5 reyting</span></div>' : '') + '</div>';
       }).join('') + '</div>';
     }
     if (t.flag && (t.regs || []).length) {   // 🏳️ viloyatlar hisobi: eng yaxshi 5 o'yinchi
@@ -232,7 +239,7 @@
         return '<div class="taReg" data-reg="' + esc(r.r) + '" style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.09);font-size:14px">' +
           '<div style="display:flex;align-items:center;gap:8px"><span style="width:24px;text-align:center">' + (md3[i] || (i + 1)) + '</span>' + bdg(r.k, r.c) +
           '<span style="width:96px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(r.r) + '</span><span style="flex:1;height:9px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden"><i style="display:block;height:100%;width:' + Math.round((r.score || 0) * 100 / mx) + '%;background:' + r.c + '"></i></span>' +
-          '<b style="min-width:30px;text-align:right">' + r.score + '</b><small style="opacity:.55;min-width:30px;text-align:right">' + r.n + ' ki.</small></div>' +
+          '<b style="min-width:30px;text-align:right">' + r.score + '</b><small style="opacity:.55;min-width:46px;text-align:right">' + r.n + ' kishi</small></div>' +
           (lead ? '<div style="margin:3px 0 0 56px;font-size:12.5px;color:var(--spMute,#b9ab98)">' + lead + '</div>' : '') + '</div>';
       }).join('') + '</div>' + ch;
     }

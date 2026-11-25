@@ -10,11 +10,11 @@ const clubs = new Map();
 try {
   for (const c of JSON.parse(fs.readFileSync(FILE, 'utf8')))
     clubs.set(c.id, { id: c.id, name: c.name, desc: c.desc || '', leaderUid: c.leaderUid, leaderName: c.leaderName, created: c.created,
-      open: c.open !== false, img: c.img || '', pts: c.pts || 0, tw: c.tw || 0, members: new Map(c.members), pending: new Map(c.pending || []), admins: new Set(c.admins || [c.leaderUid]) });
+      open: c.open !== false, img: c.img || '', pts: c.pts || 0, tw: c.tw || 0, elo: c.elo || 1000, tn: c.tn || 0, members: new Map(c.members), pending: new Map(c.pending || []), admins: new Set(c.admins || [c.leaderUid]) });
 } catch (e) {}
 const toRow = c => ({ ...c, members: [...c.members], pending: [...c.pending], admins: [...c.admins] });
 const fromRow = c => ({ id: c.id, name: c.name, desc: c.desc || '', leaderUid: c.leaderUid, leaderName: c.leaderName, created: c.created,
-  open: c.open !== false, img: c.img || '', pts: c.pts || 0, tw: c.tw || 0, members: new Map(c.members), pending: new Map(c.pending || []), admins: new Set(c.admins || [c.leaderUid]) });
+  open: c.open !== false, img: c.img || '', pts: c.pts || 0, tw: c.tw || 0, elo: c.elo || 1000, tn: c.tn || 0, members: new Map(c.members), pending: new Map(c.pending || []), admins: new Set(c.admins || [c.leaderUid]) });
 let pool = null, ready = false, lastJ = '';
 async function writeDb() {
   if (!pool || !ready) return;
@@ -61,7 +61,7 @@ const SYS_BOTS = [['bot_easy', 'Shogird'], ['bot_mid', 'Jangchi'], ['bot', 'Yo�
 const isEnvAdm = uid => (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(uid));
 function ensureSys() {
   let c = clubs.get(SYS);
-  if (!c) { c = { id: SYS, name: '🤖 Botlar klubi', desc: 'Tizim klubi: botlar jamoasi. Faqat admin turnirga qo‘sha oladi.', leaderUid: 'sys', leaderName: 'ShashkaPRO', created: Date.now(), open: false, img: '', pts: 0, tw: 0, members: new Map(SYS_BOTS), pending: new Map(), admins: new Set() }; clubs.set(SYS, c); }
+  if (!c) { c = { id: SYS, name: '🤖 Botlar klubi', desc: 'Tizim klubi: botlar jamoasi. Faqat admin turnirga qo‘sha oladi.', leaderUid: 'sys', leaderName: 'ShashkaPRO', created: Date.now(), open: false, img: '', pts: 0, tw: 0, elo: 1000, tn: 0, members: new Map(SYS_BOTS), pending: new Map(), admins: new Set() }; clubs.set(SYS, c); }
   if (c.members.size !== SYS_BOTS.length) c.members = new Map(SYS_BOTS);
   c.open = false; if (c.pending.size) c.pending = new Map(); if (c.admins.size) c.admins = new Set();
   return c;
@@ -76,7 +76,7 @@ function list(uid) {
     return {
       id: c.id, name: c.name, desc: c.desc, leaderUid: c.leaderUid, leaderName: c.leaderName,
       count: c.members.size, joined: c.members.has(uid), open: c.open, img: c.img,
-      isAdmin: adm, requested: c.pending.has(uid), pts: c.pts || 0, tw: c.tw || 0,
+      isAdmin: adm, requested: c.pending.has(uid), pts: c.pts || 0, tw: c.tw || 0, elo: c.elo || 1000, tn: c.tn || 0,
       pend: adm ? [...c.pending].slice(0, 50).map(([u, n]) => ({ uid: u, name: n })) : [],
       members: [...c.members].slice(0, 30).map(([u, n]) => ({ uid: u, name: n, admin: c.admins.has(u) }))
     };
@@ -176,8 +176,32 @@ function check(uid, raw) {
 function inAny(uid, ids) { return ids.some(id => { const c = clubs.get(id); return !!c && c.members.has(uid); }); }
 function clubOfIn(uid, ids) { for (const id of ids) { const c = clubs.get(id); if (c && c.members.has(uid)) return id; } return null; }
 function nameOf(id) { const c = clubs.get(id); return c ? c.name : '?'; }
+function eloOf(id) { const c = clubs.get(id); return c ? (c.elo || 1000) : 1000; }
+
+// 🏆 klub reytingi: hamma 1000 dan boshlaydi. Turnir tugagach klublar juft-juft solishtiriladi (Elo).
+// rows: [{ id, avg, n }] — avg: eng yaxshi 5 a'zoning o'rtacha ochkosi, n: qatnashgan a'zo soni
+function rate(rows) {
+  const A = (rows || []).filter(r => clubs.get(r.id) && (r.n || 0) >= 2);   // kamida 2 a'zo chiqqan klublar
+  if (A.length < 2) return [];
+  const out = [];
+  for (const r of A) {
+    const c = clubs.get(r.id), Ra = c.elo || 1000, K = (c.tn || 0) < 5 ? 40 : 20;   // dastlabki 5 turnir — tezroq
+    let d = 0;
+    for (const o of A) {
+      if (o.id === r.id) continue;
+      const Rb = clubs.get(o.id).elo || 1000, tot = (r.avg || 0) + (o.avg || 0);
+      const S = tot > 0 ? (r.avg || 0) / tot : 0.5;                      // haqiqiy natija
+      const E = 1 / (1 + Math.pow(10, (Rb - Ra) / 1200));                // kutilgan natija (arenada ochko nisbati 0.4–0.6 atrofida bo'lgani uchun yumshoq shkala)
+      d += K * (S - E);
+    }
+    out.push({ id: r.id, name: c.name, before: Ra, d: Math.max(-50, Math.min(50, Math.round(d))) });
+  }
+  for (const o of out) { const c = clubs.get(o.id); c.elo = Math.max(100, (c.elo || 1000) + o.d); c.tn = (c.tn || 0) + 1; o.after = c.elo; }
+  save();
+  return out;
+}
 function award(cs) {
   cs.forEach((x, i) => { const c = clubs.get(x.id); if (!c) return; c.pts = (c.pts || 0) + x.score; if (i === 0 && x.score > 0) c.tw = (c.tw || 0) + 1; });
   save();
 }
-module.exports = { list, act, check, inAny, clubOfIn, nameOf, award, SYS, sysBots: () => SYS_BOTS.map(b => b[0]) };
+module.exports = { list, act, check, inAny, clubOfIn, nameOf, eloOf, award, rate, SYS, sysBots: () => SYS_BOTS.map(b => b[0]) };
