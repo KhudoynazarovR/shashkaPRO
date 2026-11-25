@@ -907,6 +907,8 @@
         h += '<div class="pzNs"><span>DARAJALAR</span><span>' + RR.length + ' ta daraja · ' + fmtN(tot) + ' ta</span></div><div class="rkL">' + RR.map(function (r) { return rkCard(r); }).join('') + '</div>';
         h += '<div class="pzNs" style="margin-top:18px"><span>ALOHIDA BO‘LIMLAR</span><span></span></div><div class="rkL">' +
           (DR.arr.length ? rkCard(DR) : '') +
+          linkCard('deb', 'Debyutlar', 'Ochilishlarni ko‘ring va yod oling', '37 ta', 'data-go="deb"') +
+          linkCard('trp', 'Debyut tuzoqlari', 'Xatoni jazolang · Kozirev kitobi', '208 ta', 'data-go="trap"') +
           (AD ? sideCard('fo', 'To‘plamlar', 'Papkalar · faqat admin', S.list, 'data-shv="f"') : '') + '</div>';
         h += '<div style="height:64px"></div></div>';
       } else if (shelf === 'e') {
@@ -933,6 +935,13 @@
     ov.innerHTML = h;
     on('#pzBack', function () { if (shelf) { shelf = ''; return list(); } hub = 1; view = ''; list(); }); on('#pzTop', pzTop); on('#pzQzP', qzPanel);
     Array.prototype.forEach.call(ov.querySelectorAll('[data-shv]'), function (e) { e.onclick = function () { shelf = e.getAttribute('data-shv'); list(); ov.scrollTop = 0; }; });
+    Array.prototype.forEach.call(ov.querySelectorAll('[data-go]'), function (e) {   // 📖 Debyutlar · 🪤 Tuzoqlar
+      e.onclick = function () {
+        var k = e.getAttribute('data-go');
+        var run = function (fn, src) { if (window[fn]) window[fn](); else { var sc = document.createElement('script'); sc.src = src; sc.onload = function () { window[fn](); }; document.head.appendChild(sc); } };
+        if (k === 'deb') run('spDebut', '/debyut.js?v=3'); else if (k === 'trap') run('spTraps', '/tuzoq.js?v=3');
+      };
+    });
     Array.prototype.forEach.call(ov.querySelectorAll('[data-rk]'), function (e) { e.onclick = function (ev) { if (ev.target.closest('[data-rm]')) return; var r = rankByKey(e.getAttribute('data-rk')); if (r) rankView(r); }; });
     Array.prototype.forEach.call(ov.querySelectorAll('[data-rm]'), function (e) { e.onclick = function (ev) { ev.stopPropagation(); var r = rankByKey(e.getAttribute('data-rm')); if (r) rankMenu(r); }; });
     function bkAllSet(st) { api('/api/puzzle/ball-all', { state: st }).then(function (r) { if (r && r.ok) { S.bookAll = r.bookAll || {}; list(); } else window.alert((r && r.error) || 'Xato'); }).catch(function () { window.alert('Xato'); }); }
@@ -1015,7 +1024,8 @@
     r3: { lb: '3', c1: '#e7a96b', c2: '#8a4f22' }, r2: { lb: '2', c1: '#e2e8f0', c2: '#64748b' }, r1: { lb: '1', c1: '#fde68a', c2: '#c27c0e' },
     kms: { lb: 'KMS', c1: '#6ee7b7', c2: '#047857', full: 'Sport ustasiligiga nomzod' }, ms: { lb: 'MS', c1: '#a5b4fc', c2: '#4338ca', full: 'Sport ustasi' },
     gm: { lb: 'GM', c1: '#fda4af', c2: '#9f1239', full: 'Grossmeyster' }, dr: { lb: '½', c1: '#93c5fd', c2: '#1d4ed8' },
-    et: { lb: 'E', c1: '#e9d5ff', c2: '#7e22ce' }, fo: { lb: 'T', c1: '#fcd34d', c2: '#92400e' }, '': { lb: '–', c1: '#a8a29e', c2: '#57534e' }
+    et: { lb: 'E', c1: '#e9d5ff', c2: '#7e22ce' }, fo: { lb: 'T', c1: '#fcd34d', c2: '#92400e' },
+    deb: { lb: 'D', c1: '#8fb3ff', c2: '#1e40af' }, trp: { lb: '🪤', c1: '#ff8fa3', c2: '#9f1239' }, '': { lb: '–', c1: '#a8a29e', c2: '#57534e' }
   };
   var RKDEF = [{ k: 'r3', t: '3-daraja', min: 1, max: 3 }, { k: 'r2', t: '2-daraja', min: 4, max: 4 }, { k: 'r1', t: '1-daraja', min: 5, max: 5 }, { k: 'kms', t: 'KMS', min: 6, max: 6 }, { k: 'ms', t: 'MS', min: 7, max: 8 }, { k: 'gm', t: 'GM', min: 9, max: 999 }];
   function fmtN(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
@@ -1076,6 +1086,11 @@
     var V = RKV[k], n = arr.length, d = 0, m = svMap(); arr.forEach(function (p) { if (m[p.id]) d++; }); var pc = n ? Math.round(d / n * 100) : 0;
     return '<div class="rkC" ' + attr + ' style="--rc:' + V.c2 + ';--rc1:' + V.c1 + '"><span class="ew">' + rkEmb(k, 46) + '</span><div class="tx"><div class="h"><b>' + esc(title) + '</b><span>' + fmtN(n) + ' ta</span></div><div class="s">' + esc(sub) + '</div>' +
       '<div class="br"><i style="width:' + pc + '%"></i></div><div class="f"><span>' + fmtN(d) + ' / ' + fmtN(n) + '</span><span>' + pc + '%</span></div></div><span class="gt">›</span></div>';
+  }
+  // 📖 bo'limga o'tish kartasi (jarayon chizig'isiz) — Debyutlar va Debyut tuzoqlari uchun
+  function linkCard(k, title, sub, badge, attr) {
+    var V = RKV[k] || RKV[''];
+    return '<div class="rkC" ' + attr + ' style="--rc:' + V.c2 + ';--rc1:' + V.c1 + '"><span class="ew">' + rkEmb(k, 46) + '</span><div class="tx"><div class="h"><b>' + esc(title) + '</b><span>' + esc(badge) + '</span></div><div class="s">' + esc(sub) + '</div></div><span class="gt">›</span></div>';
   }
   // yengil doska rasmi: katakchalar — bitta naqsh (#rkChk), donalar — doirachalar
   function rkThumb(b) {

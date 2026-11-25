@@ -166,12 +166,9 @@
   IMG.etude = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 112 112"><defs><linearGradient id="k" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffe08a"/><stop offset="1" stop-color="#c8860f"/></linearGradient></defs><rect x="4" y="4" width="104" height="104" rx="24" fill="#2a1a08"/><ellipse cx="56" cy="80" rx="32" ry="12" fill="#111"/><rect x="24" y="62" width="64" height="18" fill="#1d1d1d"/><ellipse cx="56" cy="62" rx="32" ry="12" fill="#333" stroke="#000" stroke-width="2"/><ellipse cx="56" cy="62" rx="16" ry="6" fill="none" stroke="#e8a10f" stroke-width="3"/><path d="M34 44l8-20 14 14 14-14 8 20z" fill="url(#k)" stroke="#8a5a00" stroke-width="2"/><circle cx="42" cy="22" r="4" fill="#ffe08a"/><circle cx="56" cy="34" r="4" fill="#ffe08a"/><circle cx="70" cy="22" r="4" fill="#ffe08a"/></svg>');
   var CARDS = [
     { k: 'daily', t: 'Kunlik masala', s: 'Har kuni yangi masala', r: '+10', c1: '#1f56c4', c2: '#0e2f7c', bd: '#74a8ff', sh: '#0a1f55' },
-    { k: 'map', t: 'Sarguzasht xaritasi', s: 'O‘lkalar, bekatlar, sandiqlar va qal‘alar', r: '', c1: '#d97706', c2: '#7c2d12', bd: '#fcd34d', sh: '#451a03' },
     { k: 'rush', t: 'Puzzle Rush', s: '3 daqiqa · 3 ta xato', r: '+15', c1: '#d2281c', c2: '#7a0f0c', bd: '#ff8a68', sh: '#4f0907' },
     { k: 'battle', t: 'Puzzle Battle', s: 'Boshqa o‘yinchilar bilan bellash!', r: '+20', c1: '#6f2fcc', c2: '#391280', bd: '#bb94ff', sh: '#240a54' },
     { k: 'pzt', t: 'Masala turniri', s: 'Hamma bir vaqtda · soniyagacha', r: 'Fond', c1: '#0f8a6c', c2: '#05463a', bd: '#5ee0b0', sh: '#032a22' },
-    { k: 'deb', t: 'Debyutlar', s: 'Ochilishlarni ko‘ring va yod oling', r: '', c1: '#2563eb', c2: '#1e1b6b', bd: '#8fb3ff', sh: '#120f45' },
-    { k: 'trap', t: 'Debyut tuzoqlari', s: 'Xatoni jazolang · Kozirev kitobi', r: '', c1: '#e11d48', c2: '#6d0a22', bd: '#ff8fa3', sh: '#3f0614' },
     { k: 'custom', t: 'Maxsus masalalar', s: 'Daraja va papkalar bo‘yicha', r: '+25', c1: '#128ca3', c2: '#0a4d5d', bd: '#63dcee', sh: '#06303a' }
   ];
   function coinText(ctx) {
