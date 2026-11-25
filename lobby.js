@@ -328,7 +328,10 @@ function createLobby({ send, clients, roomsApi }) {
       elo: olyElo(p.uid), d: p.elo0 ? olyElo(p.uid) - p.elo0 : 0, sheet: (p.sheet || '').slice(-40), perf: arenaPerf(p), bh: bhN(p.uid)
     }));
     // lidraughts: ochko, teng bo'lsa turnirdagi samaradorlik (performance), keyin shu ochkoga birinchi yetgan
-    arr.sort((a, b) => b.score - a.score || b.perf - a.perf || a.at - b.at || a.name.localeCompare(b.name));
+    // o'yin boshlanmagan bo'lsa — reyting bo'yicha, keyin ochko/samaradorlik bo'yicha
+    const played = arr.some(x => x.games > 0 || x.score > 0);
+    if (!played) arr.sort((a, b) => b.elo - a.elo || a.name.localeCompare(b.name));
+    else arr.sort((a, b) => b.score - a.score || b.perf - a.perf || a.at - b.at || a.name.localeCompare(b.name));
     return arr;
   }
 
