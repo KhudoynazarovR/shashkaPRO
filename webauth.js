@@ -6,7 +6,8 @@
   var KEY = 'spAuth', W = window;
   W.Telegram = W.Telegram || {};
   var tg = W.Telegram.WebApp;
-  if (tg && tg.initData) return; // Telegram ichida
+  function unpre0() { try { var h = document.documentElement; h.className = String(h.className).replace(/\bspPre\b/g, ''); var q = document.getElementById('spLoginPre'); if (q) q.remove(); } catch (e) {} }
+  if (tg && tg.initData) { unpre0(); return; }   // Telegram ichida — oldindan chizilgan kirish ekrani kerak emas
   if (!tg) { // telegram-web-app.js yuklanmagan bo'lsa — oddiy almashtiruvchi
     var noop = function () {};
     tg = W.Telegram.WebApp = { initData: '', initDataUnsafe: {}, ready: noop, expand: noop, close: noop, onEvent: noop, offEvent: noop, setHeaderColor: noop, setBackgroundColor: noop, openLink: function (u) { W.open(u, '_blank'); }, openTelegramLink: function (u) { W.location.href = u; }, HapticFeedback: { impactOccurred: noop, notificationOccurred: noop, selectionChanged: noop }, BackButton: { show: noop, hide: noop, onClick: noop, offClick: noop }, MainButton: { show: noop, hide: noop, onClick: noop, offClick: noop, setText: noop }, platform: 'web', version: '6.0', colorScheme: 'dark', themeParams: {} };
@@ -16,7 +17,7 @@
   try { if ('serviceWorker' in navigator) W.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); }); } catch (e) {}
   function load() { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { return null; } }
   function save(a) { try { localStorage.setItem(KEY, JSON.stringify(a)); } catch (e) {} }
-  function unpre() { try { document.documentElement.className = String(document.documentElement.className).replace(/\bspPre\b/g, ''); var p = document.getElementById('spLoginPre'); if (p) p.remove(); } catch (e) {} }
+  var unpre = unpre0;
   function apply(a) {
     unpre();
     var unsafe = { user: a.user, auth_date: Math.floor(a.at / 1000) };
