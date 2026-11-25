@@ -79,6 +79,7 @@ function handle(req, res, p, h) {
     if (u.region === r) return h.send(res, 200, view(uid));
     if (u.region && u.regionAt && Date.now() - u.regionAt < CHANGE_DAYS * 86400e3) return h.send(res, 400, { error: 'Viloyatni ' + CHANGE_DAYS + ' kunda bir marta o‘zgartirish mumkin' });
     u.region = r; u.regionAt = Date.now(); store.save();
+    try { require('./clubs.js').syncRegion(uid, u.name); } catch (e) {}   // 🏳️ viloyat jamoasiga avtomatik qo'shish
     h.send(res, 200, view(uid));
   });
   return true;

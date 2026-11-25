@@ -83,6 +83,30 @@ function ensureRegions() {
   }
 }
 function regOfUser(uid) { try { const b = require('./flags.js').badge(uid); return b ? b.reg : ''; } catch (e) { return ''; } }
+// 🔄 viloyatini belgilagan hamma o'yinchi o'z viloyat jamoasiga avtomatik qo'shiladi
+function syncRegion(uid, nameHint) {
+  ensureRegions();
+  const u = String(uid), r = regOfUser(u);
+  let ch = false;
+  for (const c of clubs.values()) {
+    if (!isReg(c)) continue;
+    const want = !!r && c.reg === r;
+    if (want && !c.members.has(u)) { c.members.set(u, String(nameHint || nameOfUser(u) || 'O‘yinchi').slice(0, 32)); ch = true; }
+    else if (!want && c.members.has(u)) { c.members.delete(u); c.admins.delete(u); ch = true; }
+  }
+  if (ch) save();
+  return ch;
+}
+function nameOfUser(u) { try { const x = (require('./store.js').users() || {})[String(u)]; return x ? (x.name || x.first_name || '') : ''; } catch (e) { return ''; } }
+function syncAllRegions() {   // server ishga tushganda bir marta
+  try {
+    const us = require('./store.js').users() || {};
+    let n = 0;
+    for (const id of Object.keys(us)) { if (!/^\d+$/.test(id)) continue; if (syncRegion(id, us[id].name)) n++; }
+    if (n) console.log('Viloyat jamoalari yangilandi:', n, 'o‘yinchi');
+  } catch (e) { console.log('Viloyat jamoalari xatosi:', e.message); }
+}
+setTimeout(syncAllRegions, 4000);
 const isReg = c => !!c && String(c.id).indexOf(REG_PRE) === 0;
 // 👑 kapitan: oddiy klubda — rahbar, viloyat klubida — adminlar tayinlagan kapitan
 function capOfClub(c) {
@@ -123,8 +147,9 @@ function act(me, m) {
   if (c && c.id === SYS && !(sysAdm && m.type === 'lbClubImg')) return { error: 'Botlar klubi — tizim klubi, uni o‘zgartirib bo‘lmaydi' };
   if (c && String(c.id).indexOf(REG_PRE) === 0) {   // 🏳️ viloyat klubi: faqat kirish/chiqish, rasmni admin qo'yadi
     const capOk = isCap(c, uid) || isEnvAdm(uid);
-    const ok = m.type === 'lbClubJoin' || m.type === 'lbClubLeave' || m.type === 'lbClubChat'
+    const ok = m.type === 'lbClubJoin' || m.type === 'lbClubChat'
       || (capOk && (m.type === 'lbClubImg' || m.type === 'lbClubSet'));
+    if (m.type === 'lbClubLeave') return { error: 'Viloyat jamoasidan chiqib bo‘lmaydi — profilda viloyatni o‘zgartiring' };
     if (!ok) return { error: 'Viloyat klubi — tizim klubi, uni o‘zgartirib bo‘lmaydi' };
     if (m.type === 'lbClubJoin') {
       const r = regOfUser(uid);
@@ -259,4 +284,4 @@ function award(cs) {
   cs.forEach((x, i) => { const c = clubs.get(x.id); if (!c) return; c.pts = (c.pts || 0) + x.score; if (i === 0 && x.score > 0) c.tw = (c.tw || 0) + 1; });
   save();
 }
-module.exports = { list, act, check, inAny, clubOfIn, nameOf, eloOf, award, rate, SYS, sysBots: () => SYS_BOTS.map(b => b[0]) };
+module.exports = { list, act, check, inAny, clubOfIn, nameOf, eloOf, award, rate, syncRegion, syncAllRegions, SYS, sysBots: () => SYS_BOTS.map(b => b[0]) };
