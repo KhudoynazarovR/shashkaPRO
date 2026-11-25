@@ -10,11 +10,11 @@ const clubs = new Map();
 try {
   for (const c of JSON.parse(fs.readFileSync(FILE, 'utf8')))
     clubs.set(c.id, { id: c.id, name: c.name, desc: c.desc || '', reg: c.reg || '', leaderUid: c.leaderUid, leaderName: c.leaderName, created: c.created,
-      open: c.open !== false, img: c.img || '', pts: c.pts || 0, tw: c.tw || 0, elo: c.elo || 1000, tn: c.tn || 0, members: new Map(c.members), pending: new Map(c.pending || []), admins: new Set(c.admins || [c.leaderUid]) });
+      open: c.open !== false, img: c.img || '', imgAt: c.imgAt || 0, pts: c.pts || 0, tw: c.tw || 0, elo: c.elo || 1000, tn: c.tn || 0, members: new Map(c.members), pending: new Map(c.pending || []), admins: new Set(c.admins || [c.leaderUid]) });
 } catch (e) {}
 const toRow = c => ({ ...c, members: [...c.members], pending: [...c.pending], admins: [...c.admins] });
 const fromRow = c => ({ id: c.id, name: c.name, desc: c.desc || '', reg: c.reg || '', leaderUid: c.leaderUid, leaderName: c.leaderName, created: c.created,
-  open: c.open !== false, img: c.img || '', pts: c.pts || 0, tw: c.tw || 0, elo: c.elo || 1000, tn: c.tn || 0, members: new Map(c.members), pending: new Map(c.pending || []), admins: new Set(c.admins || [c.leaderUid]) });
+  open: c.open !== false, img: c.img || '', imgAt: c.imgAt || 0, pts: c.pts || 0, tw: c.tw || 0, elo: c.elo || 1000, tn: c.tn || 0, members: new Map(c.members), pending: new Map(c.pending || []), admins: new Set(c.admins || [c.leaderUid]) });
 let pool = null, ready = false, lastJ = '';
 async function writeDb() {
   if (!pool || !ready) return;
@@ -123,21 +123,37 @@ function chatPush(c, uid, name, text) {
   if (c.chat.length > 60) c.chat = c.chat.slice(-60);
 }
 
+// ⚡ Yengil ro'yxat: har holat yuborishda hamma mijozga ketadi — rasm, a'zolar va chat bu yerda YO'Q.
+// (Avval 35 klub × 30 a'zo × rasm = bitta mijozga ~500 KB edi; shuning uchun turnirda qotardi.)
 function list(uid) {
   ensureSys(); ensureRegions();
-  return [...clubs.values()].sort((a, b) => b.members.size - a.members.size).slice(0, 60).map(c => {
-    const adm = c.admins.has(uid) || (c.id === SYS && isEnvAdm(uid));
-    return {
-      id: c.id, name: c.name, desc: c.desc, leaderUid: c.leaderUid, leaderName: c.leaderName,
-      count: c.members.size, joined: c.members.has(uid), open: c.open, img: c.img,
-      isAdmin: adm, requested: c.pending.has(uid), pts: c.pts || 0, tw: c.tw || 0, elo: c.elo || 1000, tn: c.tn || 0, reg: c.reg || '',
-      cap: capOfClub(c), canEdit: isCap(c, uid) || (isReg(c) && isEnvAdm(uid)) || (!isReg(c) && String(c.leaderUid) === String(uid)),
-      chat: c.members.has(uid) ? (c.chat || []).slice(-30) : [],
-      pend: adm ? [...c.pending].slice(0, 50).map(([u, n]) => ({ uid: u, name: n })) : [],
-      members: [...c.members].slice(0, 30).map(([u, n]) => ({ uid: u, name: n, admin: c.admins.has(u), elo: eloOfUser(u) }))
-    };
-  });
+  return [...clubs.values()].sort((a, b) => b.members.size - a.members.size).slice(0, 60).map(c => ({
+    id: c.id, name: c.name, count: c.members.size, joined: c.members.has(uid), open: c.open,
+    hasImg: !!c.img, iv: c.imgAt || 0, requested: c.pending.has(uid),
+    tw: c.tw || 0, elo: c.elo || 1000, reg: c.reg || '',
+    isAdmin: c.admins.has(uid) || (c.id === SYS && isEnvAdm(uid)),
+    pendN: (c.admins.has(uid) || (c.id === SYS && isEnvAdm(uid))) ? c.pending.size : 0
+  }));
 }
+
+// 🔍 Bitta klubning to'liq ma'lumoti — faqat ochib turgan mijozga yuboriladi
+function one(uid, cid) {
+  ensureSys(); ensureRegions();
+  const c = clubs.get(String(cid || '')); if (!c) return null;
+  const adm = c.admins.has(uid) || (c.id === SYS && isEnvAdm(uid));
+  return {
+    id: c.id, name: c.name, desc: c.desc, leaderUid: c.leaderUid, leaderName: c.leaderName,
+    count: c.members.size, joined: c.members.has(uid), open: c.open, hasImg: !!c.img, iv: c.imgAt || 0,
+    isAdmin: adm, requested: c.pending.has(uid), pts: c.pts || 0, tw: c.tw || 0, elo: c.elo || 1000, tn: c.tn || 0, reg: c.reg || '',
+    cap: capOfClub(c), canEdit: isCap(c, uid) || (isReg(c) && isEnvAdm(uid)) || (!isReg(c) && String(c.leaderUid) === String(uid)),
+    chat: c.members.has(uid) ? (c.chat || []).slice(-30) : [],
+    pend: adm ? [...c.pending].slice(0, 50).map(([u, n]) => ({ uid: u, name: n })) : [],
+    members: [...c.members].slice(0, 60).map(([u, n]) => ({ uid: u, name: n, admin: c.admins.has(u), elo: eloOfUser(u) }))
+  };
+}
+
+// 🖼 klub rasmi — HTTP orqali beriladi (brauzer keshlaydi), holat yuborishda emas
+function imgOf(cid) { const c = clubs.get(String(cid || '')); return c ? (c.img || '') : ''; }
 
 function act(me, m) {
   const uid = me.uid, name = me.name;
@@ -166,7 +182,7 @@ function act(me, m) {
       if (countOf(uid) >= MAX_PER_USER) return { error: 'Siz eng ko‘pi bilan ' + MAX_PER_USER + ' ta klubda bo‘la olasiz' };
       const id = 'c' + crypto.randomBytes(4).toString('hex');
       clubs.set(id, { id, name: nm, desc: clean(m.desc, 300), leaderUid: uid, leaderName: name, created: Date.now(),
-        open: m.open !== false, img: okImg(m.img) ? m.img : '', members: new Map([[uid, name]]), pending: new Map(), admins: new Set([uid]) });
+        open: m.open !== false, img: okImg(m.img) ? m.img : '', imgAt: Date.now(), members: new Map([[uid, name]]), pending: new Map(), admins: new Set([uid]) });
       save(); return { ok: 1 };
     }
     case 'lbClubJoin': {
@@ -234,7 +250,7 @@ function act(me, m) {
     case 'lbClubImg': {
       if (!adm && !isCap(c, uid) && !(isReg(c) && isEnvAdm(uid))) return { error: 'Rasmni faqat kapitan qo‘ya oladi' };
       if (!okImg(m.img)) return { error: 'Rasm noto‘g‘ri yoki juda katta' };
-      c.img = m.img; save(); return { ok: 1 };
+      c.img = m.img; c.imgAt = Date.now(); save(); return { ok: 1 };
     }
     case 'lbClubDisband': {
       if (!c || c.leaderUid !== uid) return { error: 'Faqat klub rahbari yopa oladi' };
@@ -284,4 +300,4 @@ function award(cs) {
   cs.forEach((x, i) => { const c = clubs.get(x.id); if (!c) return; c.pts = (c.pts || 0) + x.score; if (i === 0 && x.score > 0) c.tw = (c.tw || 0) + 1; });
   save();
 }
-module.exports = { list, act, check, inAny, clubOfIn, nameOf, eloOf, award, rate, syncRegion, syncAllRegions, SYS, sysBots: () => SYS_BOTS.map(b => b[0]) };
+module.exports = { list, one, imgOf, act, check, inAny, clubOfIn, nameOf, eloOf, award, rate, syncRegion, syncAllRegions, SYS, sysBots: () => SYS_BOTS.map(b => b[0]) };

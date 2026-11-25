@@ -78,6 +78,7 @@ const ARENA_MAX_PLAYERS = 200;
 const ARENA_FIRE_AFTER = 2;                          // ketma-ket shuncha g'alabadan keyin olov yonadi
 const ARENA_PAIR_DELAY_MS = Number(process.env.ARENA_PAIR_DELAY_MS || 1500);       // o'yin tugagach juftlashgacha (tezroq: 5s → 1.5s)
 const ARENA_REMATCH_WAIT_MS = Number(process.env.ARENA_REMATCH_WAIT_MS || 15000);  // bir xil raqibga qaytishdan oldin kutish
+const ARENA_END_GRACE_MS = Number(process.env.ARENA_END_GRACE_MS || 60000);       // vaqt tugagach tugamagan o'yinlarni ko'pi bilan shuncha kutamiz
 const ARENA_NOSHOW_MS = Number(process.env.ARENA_NOSHOW_MS || 30000);              // o'yinga kirmaganlar uchun kutish
 const ARENA_MIN_DRAW_PLIES = Number(process.env.ARENA_MIN_DRAW_PLIES || 20);       // lidraughts: 10 yurishdan (20 yarim-yurish) oldingi durangga ochko yo'q
 const ARENA_MIN_GAMES = [0, 5, 10, 20, 50];
@@ -362,6 +363,8 @@ function createLobby({ send, clients, roomsApi }) {
     return {
       id: t.id, name: t.name, tc: t.tc, status: t.status, pos: t.pos || 'std',
       roundsWanted: t.roundsWanted || 0, interval: t.interval || 0,
+      // 🪙 tanga taqsimoti — faqat turnir tugagach (ilovada ham ko'rinsin, nafaqat Telegramdagi posterda)
+      pay: t.status === 'finished' ? { grp: t.payRegSum || [], top: t.payTop || [], mem: (t.payReg || []).filter(x => x.amt > 0).slice(0, 40) } : null,
       type: t.type || 'swiss', durationMin: t.durationMin || 0, awards: t.awards || [], prize: t.prize || 0, places: t.places || 0, berserk: t.berserk !== false, rated: t.rated !== false, tc: t.tc || "", pos: t.pos || "std", startAt: t.startAt || 0, endAt: t.endAt || 0, ending: !!t.ending,
       creatorUid: t.creatorUid, creatorName: t.creatorName, created: t.created || 0, sponsors: (t.sponsors || []).slice(-10), clubIds: t.clubIds || [], clubs: clubStandings(t),
       round: t.round, rounds: t.rounds, nextAt: t.nextAt || 0,
@@ -406,8 +409,17 @@ function createLobby({ send, clients, roomsApi }) {
       outgoing: [...challenges.values()].filter(x => x.fromUid === uid)
         .map(x => ({ id: x.id, toUid: x.toUid, tc: x.tc }))
         .concat([...friends.values()].filter(f => f.fromUid === uid && f.toUid && Date.now() - f.at < BINV_TTL).map(f => ({ id: f.id, toUid: f.toUid, tc: f.tc, bot: 1 }))),
-      clubs: clubsApi.list(uid)
+      ...clubsPart(c, uid),
+      clubOne: c.lb.cview ? clubsApi.one(uid, c.lb.cview) : null   // 🔍 faqat ochib turgan klubning to'liq ma'lumoti
     };
+  }
+  // 👥 klublar ro'yxati o'zgarmagan bo'lsa qayta yuborilmaydi (mijoz oldingisini saqlab turadi)
+  function clubsPart(c, uid) {
+    let cl; try { cl = clubsApi.list(uid); } catch (e) { return {}; }
+    const j = JSON.stringify(cl);
+    if (c.lb.clSent === j) return {};
+    c.lb.clSent = j;
+    return { clubs: cl };
   }
   function sharedJson() {
     const sh = {
@@ -1023,6 +1035,9 @@ function createLobby({ send, clients, roomsApi }) {
         });
         const T3 = el.length >= 3 ? [50, 30, 20] : el.length === 2 ? [60, 40] : [100];
         T3.forEach((pc, i) => { const amt = Math.floor(topPool * pc / 100); t.payTop.push({ uid: el[i].uid, name: el[i].name, amt }); (t.awards = t.awards || []).push({ uid: el[i].uid, name: el[i].name, place: i + 1, amt }); if (amt > 0 && economy.add(el[i].uid, amt, 'tournament_prize_' + (i + 1))) toast(el[i].uid, '🏆 ' + (i + 1) + '-o‘rin mukofoti: +' + amt + ' tanga'); });
+        // yaxlitlashdan qolgan tangalar yo'qolmasin — umumiy g'olibga qo'shiladi
+        const rest = t.prize - t.payReg.reduce((a, x) => a + x.amt, 0) - t.payTop.reduce((a, x) => a + x.amt, 0);
+        if (rest > 0 && t.payTop[0] && economy.add(t.payTop[0].uid, rest, 'tournament_prize_rest')) { t.payTop[0].amt += rest; if (t.awards && t.awards[0]) t.awards[0].amt += rest; }
         sh = [];
       }
       sh.forEach((pc, i) => {
@@ -1197,6 +1212,12 @@ function createLobby({ send, clients, roomsApi }) {
     b.winner = room.winner;
     t.cur = t.cur.filter(x => x !== b);
     roomToBoard.delete(room.id);
+    if (t.status === 'finished') {   // ⏱ turnir allaqachon yakunlangan: ochko qo'shilmaydi, reyting va tanga odatdagidek
+      const w = t.players.get(b.white), k = t.players.get(b.black);
+      if (w) w.busy = false; if (k) k.busy = false;
+      if (!(w && w.bot) && !(k && k.bot)) payWin(room, b.white, b.black, t.id); else if (!(w && w.bot && k && k.bot)) botRated(room);
+      push(); return;
+    }
     const pw = t.players.get(b.white), pb = t.players.get(b.black);
     const now = Date.now();
     (t.hist = t.hist || []).push({ white: b.white, black: b.black, whiteName: pw ? pw.name : '?', blackName: pb ? pb.name : '?', winner: b.winner || 'draw', at: now }); /*TVHIST*/
@@ -1255,8 +1276,16 @@ function createLobby({ send, clients, roomsApi }) {
       }
       if (t.status === 'reg' && now >= t.startAt) startArena(t);
       if (t.status !== 'running') continue;
-      if (!t.ending && now >= t.endAt) { t.ending = true; push(); }
-      if (t.ending) { if (!t.cur.length) finishT(t); continue; } // boshlangan o'yinlar oxirigacha o'ynaladi
+      if (!t.ending && now >= t.endAt) { t.ending = true; t.endingAt = now; push(); }
+      // ⏱ vaqt tugadi: boshlangan o'yinlar tugashini kutamiz, lekin ko'pi bilan ARENA_END_GRACE_MS.
+      // Shundan keyin natija e'lon qilinadi — bitta cho'zilgan o'yin butun turnirni ushlab turmasin.
+      if (t.ending) {
+        if (!t.cur.length || now - (t.endingAt || now) >= ARENA_END_GRACE_MS) {
+          if (t.cur.length) console.log('[arena] ' + t.name + ': ' + t.cur.length + ' o‘yin tugamadi, natija kutilmasdan e‘lon qilindi');
+          finishT(t);
+        }
+        continue;
+      }
       arenaPair(t);
     }
   }
@@ -1959,6 +1988,11 @@ function createLobby({ send, clients, roomsApi }) {
         if (!sm || sm.hostUid !== me.uid || sm.status !== 'reg') break;
         simuls.delete(sm.id);
         for (const p of sm.players.values()) toast(p.uid, '🎭 ' + sm.name + ' bekor qilindi');
+        push();
+        break;
+      }
+      case 'lbClubView': {   // 🔍 mijoz klub sahifasini ochdi/yopdi — to'liq ma'lumot faqat shunga yuboriladi
+        c.lb.cview = m.cid ? String(m.cid).slice(0, 40) : '';
         push();
         break;
       }

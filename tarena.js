@@ -193,10 +193,10 @@
     g('taNm').textContent = '🏆 ' + t.name;
     var cd = '', sub = '';
     if (t.status === 'reg') { cd = t.startAt ? fmt(t.startAt - now) : ''; sub = t.startAt ? 'Boshlanishiga' : 'Ro‘yxat ochiq'; }
-    else if (t.status === 'running') { if (t.ending) { sub = '⌛ Yakunlanmoqda — o‘yinlar tugashi kutilmoqda'; } else { cd = fmt(t.endAt - now); sub = 'Tugashiga'; } }
+    else if (t.status === 'running') { if (t.ending) { sub = '⌛ Yakunlanmoqda — natija 1 daqiqagacha e‘lon qilinadi'; } else { cd = fmt(t.endAt - now); sub = 'Tugashiga'; } }
     else sub = '🏁 Arena tugadi';
     g('taCd').textContent = cd; g('taSub').textContent = sub + ' · ' + (t.players || []).length + ' o‘yinchi';
-    var sig = JSON.stringify([t.status, t.ending, t.players, t.boards, page, me(), t.minGames, t.prize, t.clubs, t.awards, !!(t.endAt && t.endAt - now < 60000)]);
+    var sig = JSON.stringify([t.status, t.ending, t.players, t.boards, page, me(), t.minGames, t.prize, t.clubs, t.awards, t.pay, !!(t.endAt && t.endAt - now < 60000)]);
     if (sig !== sigMain) { sigMain = sig; renderMain(t); }
     var cs = JSON.stringify(t.chat || []); if (cs !== sigChat) { sigChat = cs; renderChat(t); }
   }
@@ -322,7 +322,26 @@
     var tc = tcInfo(t.tc), inf = '<div class="taInf"><span class="ic">' + tc.icon + '</span><div><b>' + tc.txt + '</b> · ' + tc.name + ' · ' + (t.durationMin || 0) + ' daq<br>' + (t.rated === false ? '🤝 Reytingsiz' : '⭐ Reytingli') + ' · Arena' + (t.flag ? ' · 🏳️ Bayroqli' : '') + (t.berserk ? ' · ⚡ Berserk' : '') + (t.pos === 'idf' ? ' · IDF pozitsiyalar' : '') + '</div></div>' + (t.desc ? '<div class="taLn">📝 ' + esc(t.desc) + '</div>' : '');
     if (t.prize > 0) {
       var aw = (t.awards || []).filter(function (x) { return x.amt > 0; }), mdl = ['🥇', '🥈', '🥉'];
+      var pay = t.pay || null, hasPay = fin && pay && ((pay.grp && pay.grp.length) || (pay.mem && pay.mem.length) || (pay.top && pay.top.length));
       if (!fin) inf += '<div class="taLn">🏆 Mukofot jamg‘armasi: <b>' + t.prize + '</b> tanga · ' + (t.places || 3) + ' o‘ringa</div>';
+      else if (hasPay) {   // 🪙 to'liq taqsimot: jamoa ulushi + o'yinchilar + eng yaxshilar
+        inf += '<div class="taLn">🏆 Mukofot jamg‘armasi: <b>' + t.prize + '</b> tanga</div>';
+        if (pay.grp && pay.grp.length) {
+          inf += '<div class="taLn">' + (t.flag ? '🏳️ Viloyatlar' : '👥 Klublar') + ' ulushi (60%): ' +
+            pay.grp.map(function (x, i) { return (mdl[i] || (i + 1) + '.') + ' ' + nm(x.r) + ' — <b>' + x.amt + '</b>'; }).join(' · ') + ' tanga</div>';
+        }
+        if (pay.mem && pay.mem.length) {
+          var gr = {}, ord = [];
+          pay.mem.forEach(function (x) { var k = x.reg || ''; if (!gr[k]) { gr[k] = []; ord.push(k); } gr[k].push(x); });
+          inf += '<div class="taLn">🪙 Jamoa a‘zolariga: ' + ord.map(function (k) {
+            return (k ? nm(k) + ': ' : '') + gr[k].map(function (x) { return nm(x.name) + ' <b>' + x.amt + '</b>'; }).join(', ');
+          }).join(' · ') + '</div>';
+        }
+        if (pay.top && pay.top.length) {
+          inf += '<div class="taLn">⭐ Eng yaxshi o‘yinchilar (40%): ' +
+            pay.top.map(function (x, i) { return (mdl[i] || (i + 1) + '.') + ' ' + nm(x.name) + ' — <b>' + x.amt + '</b>'; }).join(' · ') + ' tanga</div>';
+        }
+      }
       else if (aw.length) inf += '<div class="taLn">🏆 Mukofotlar: ' + aw.map(function (x) { return (mdl[x.place - 1] || x.place + '.') + ' ' + nm(x.name) + ' — <b>' + x.amt + '</b>'; }).join(' · ') + ' tanga</div>';
       else inf += '<div class="taLn">🏆 Mukofot berilmadi: arenada birorta ham o‘yin o‘ynalmadi' + (t.flag ? '' : ', jamg‘arma tashkilotchiga qaytarildi') + '.</div>';
     }

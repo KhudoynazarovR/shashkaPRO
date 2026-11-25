@@ -254,6 +254,7 @@
 
     function onMsg(m) {
       if (m.type === "lbState") {
+        if (!m.clubs && S && S.clubs) m.clubs = S.clubs;   // 👥 ro'yxat o'zgarmasa server qayta yubormaydi
         S = m; if (m.now) window.__lbSkew = m.now - Date.now(); renderBadge(); if ($("tblOv")) renderTables(); if (panelOpen) renderAll(); renderIncoming(); updateSimulBtn();
         if (linkTid && !inRoom) openLinked("t");
         if (linkSid && !inRoom) openLinked("s");
@@ -863,8 +864,8 @@
     };
     window.lbCA = function (act, id, u) {
       var n0 = $("lbCn"), d0 = $("lbCdsc"); if (n0) clubN = n0.value; if (d0) clubD = d0.value;
-      if (act === "cv") { clubView = id; clubAll = false; }
-      else if (act === "cb") { clubView = null; }
+      if (act === "cv") { clubView = id; clubAll = false; sendMsg({ type: "lbClubView", cid: id }); }
+      else if (act === "cb") { clubView = null; sendMsg({ type: "lbClubView", cid: "" }); }
       else if (act === "ca") { clubAll = !clubAll; }
       else if (act === "cj") sendMsg({ type: "lbClubJoin", cid: id });
       else if (act === "cl") sendMsg({ type: "lbClubLeave", cid: id });
@@ -900,6 +901,7 @@
     };
     function cav(c, big) {
       var sz = big ? 64 : 44, st = "width:" + sz + "px;height:" + sz + "px;flex:none";
+      if (c.hasImg && c.id) return "<div class=\"lbav2\" style=\"" + st + ";background:url(/api/clubav/" + encodeURIComponent(c.id) + "?v=" + (c.iv || 0) + ") center/cover\"></div>";
       if (c.img) return "<div class=\"lbav2\" style=\"" + st + ";background:url(" + esc(c.img) + ") center/cover\"></div>";
       return "<div class=\"lbav2\" style=\"" + st + "\">" + esc((c.name || "?").charAt(0).toUpperCase()) + "</div>";
     }
@@ -915,8 +917,13 @@
       var ae = document.activeElement;
       if (ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA") && el.contains(ae)) return;
       var cs = S.clubs || [], me = S.me ? S.me.uid : "", h = "";
-      var cur = clubView ? cs.filter(function (x) { return x.id === clubView; })[0] : null;
-      if (clubView && !cur) clubView = null;
+      // to'liq ma'lumot serverdan faqat ochilgan klub uchun keladi (S.clubOne); kelguncha yengil qatordan ko'rsatamiz
+      var cur = null;
+      if (clubView) {
+        var lite = cs.filter(function (x) { return x.id === clubView; })[0];
+        cur = (S.clubOne && S.clubOne.id === clubView) ? S.clubOne : (lite ? { id: lite.id, name: lite.name, count: lite.count, open: lite.open, hasImg: lite.hasImg, iv: lite.iv, joined: lite.joined, requested: lite.requested, elo: lite.elo, tw: lite.tw, desc: "", members: null, chat: [], pend: [], cap: null, canEdit: false, isAdmin: false, leaderUid: "" } : null);
+        if (!cur) clubView = null;
+      }
       box.classList.toggle("lbhide", !!cur);
       if (cur) {
         var lead = cur.leaderUid === me, adm = !!cur.isAdmin, canEd = !!cur.canEdit, isRg = /^reg_/.test(cur.id);
@@ -955,7 +962,8 @@
           h += "</div>";
         }
         h += "<div class=\"lbsec\">👥 A‘ZOLAR · " + cur.count + "</div><div>";
-        cur.members.forEach(function (m) {
+        if (!cur.members) h += "<div class=\"muted\">Yuklanmoqda…</div>";
+        (cur.members || []).forEach(function (m) {
           var isL = String(m.uid) === String(cur.leaderUid), isC = !!(cur.cap && String(cur.cap.uid) === String(m.uid));
           h += "<div class=\"lbcm\"><span>" + (isC ? "👑 " : (m.admin ? "⭐ " : "")) + esc(m.name) + (String(m.uid) === String(me) ? " 👈" : "") + (m.elo ? " <b style=\"color:#f5b72b\">" + m.elo + "</b>" : "") + "</span><span>" +
             (lead && !isL ? "<button class=\"sec\" onclick=\"lbCA('cm','" + cur.id + "','" + esc(m.uid) + "')\">" + (m.admin ? "⭐✕" : "⭐") + "</button> " : "") +
