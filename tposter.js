@@ -299,15 +299,31 @@ async function result(t, st, regs, pay, all) {
       regs.slice(0, 5).forEach((r, i) => { c += (med[i] || (i + 1) + '.') + ' ' + h(r.k) + ' ' + h(r.r) + ' — ' + r.score + '\n'; });
       c += '\n';
     }
-    if (t.prize > 0) c += '🏆 Mukofot fondi: ' + fmt(t.prize) + ' 💰\n\n';
-    if (pay && pay.reg && pay.reg.length) { c += '👑 G‘olib viloyat o‘yinchilari:\n'; pay.reg.forEach((p, i) => { c += (med[i] || (i + 1) + '.') + ' ' + h(p.name) + ' — ' + fmt(p.amt) + ' 💰\n'; }); c += '\n'; }
+    if (t.prize > 0) c += '🏆 Mukofot fondi: ' + fmt(t.prize) + ' tanga\n\n';
+    if (pay && pay.regSum && pay.regSum.length) {   // 🏳️ 1-2-3 viloyat ulushi
+      c += '👑 Viloyatlar ulushi:\n';
+      pay.regSum.forEach((r, i) => { c += (med[i] || (i + 1) + '.') + ' ' + h(r.k) + ' ' + h(r.r) + ' — ' + fmt(r.amt) + ' tanga\n'; });
+      c += '\n';
+    }
+    if (pay && pay.reg && pay.reg.length) {
+      const w = pay.reg.filter(p => !p.place || p.place === 1);
+      if (w.length) { c += '👑 G‘olib viloyat o‘yinchilari:\n'; w.forEach((p, i) => { c += (med[i] || (i + 1) + '.') + ' ' + h(p.name) + ' — ' + fmt(p.amt) + ' tanga\n'; }); c += '\n'; }
+    }
     c += '⭐ Eng yaxshi o‘yinchilar:\n';
-    st.slice(0, 3).forEach((p, i) => { const a = pay && pay.top && pay.top[i]; c += med[i] + ' ' + (p.rg ? (/^[A-Z]+$/.test(p.rg) ? h(p.rg) + ' ' : p.rg + ' ') : '') + h(p.name) + ' — ' + p.score + ' ochko' + (a && a.amt ? ' · ' + fmt(a.amt) + ' 💰' : '') + '\n'; });
+    st.slice(0, 3).forEach((p, i) => { const a = pay && pay.top && pay.top[i]; c += med[i] + ' ' + (p.rg ? (/^[A-Z]+$/.test(p.rg) ? h(p.rg) + ' ' : p.rg + ' ') : '') + h(p.name) + ' — ' + p.score + ' ochko' + (a && a.amt ? ' · ' + fmt(a.amt) + ' tanga' : '') + '\n'; });
     const games = Math.round(st.reduce((a, p) => a + (p.games || 0), 0) / 2);
     c += '\n🎮 ' + games + ' o‘yin · ' + st.length + ' o‘yinchi';
     const buf = await png(resSvg(t, st, regs));
     const extra = t.annMsg ? { reply_parameters: { message_id: t.annMsg, allow_sending_without_reply: true } } : {};
-    await sendPhoto(CH(), buf, c, { inline_keyboard: [[{ text: '🎮 ShashkaPRO', url: APP() }]] }, extra);
+    if (c.length > 1020) c = c.slice(0, Math.max(0, c.lastIndexOf('\n', 1020)));   // Telegram izoh chegarasi — qator chegarasidan kesamiz
+    const kb = { inline_keyboard: [[{ text: '🎮 ShashkaPRO', url: APP() }]] };
+    const r = await sendPhoto(CH(), buf, c, kb, extra);
+    let fid = ''; try { const a = r.result.photo; fid = a[a.length - 1].file_id; } catch (e) {}
+    const GR = Array.from(new Set((store.db.groups || []).map(String).concat(String(process.env.T_GROUPS || '').split(','), String(process.env.EXTRA_GROUP_IDS || '').split(',')).map(z => z.trim()).filter(Boolean)));
+    for (const g of GR) {   // 👥 natija bot admin bo'lgan guruhlarga ham
+      const ex = (t.annGrp && t.annGrp[g]) ? { reply_parameters: { message_id: t.annGrp[g], allow_sending_without_reply: true } } : {};
+      try { if (fid) await tg('sendPhoto', Object.assign({ chat_id: g, photo: fid, caption: c.slice(0, 1024), parse_mode: 'HTML', reply_markup: kb }, ex)); else await sendPhoto(g, buf, c, kb, ex); } catch (e) {}
+    }
   } catch (e) { console.log('[tposter] natija xato', e.message); }
 }
 async function today(t) {

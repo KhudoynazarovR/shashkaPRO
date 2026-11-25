@@ -50,9 +50,7 @@ function regStandings(players) {
     return { r, k: REG[r][0], c: REG[r][1], n: a.length, score: Math.round(top.reduce((s, x) => s + x.score, 0) * 10) / 10, top, rsum,
       best: best ? { uid: best.uid, name: best.name, elo: best.elo || 0 } : null, cap: capOf(r) };
   });
-  // o'yin boshlanmagan bo'lsa — 5 ta eng yaxshi reyting yig'indisi bo'yicha, keyin ochko bo'yicha
-  const played = out.some(x => x.score > 0);
-  return played ? out.sort((x, y) => y.score - x.score || y.rsum - x.rsum || y.n - x.n)
-                : out.sort((x, y) => y.rsum - x.rsum || y.n - x.n);
+  // standart saralash (klublar bilan bir xil): ochko → eng yaxshi 5 reyting yig'indisi → ishtirokchi soni
+  return out.sort((x, y) => y.score - x.score || y.rsum - x.rsum || y.n - x.n);
 }
 module.exports = { REG, COUNTRIES, badge, regStandings, capOf, setCap, capsAll };

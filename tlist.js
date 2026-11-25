@@ -270,7 +270,7 @@
         return '<button data-add="' + p[1] + '" style="flex:1;border:1px solid rgba(255,214,130,.3);background:rgba(255,255,255,.07);color:#ffd76a;border-radius:12px;padding:11px 4px;font-weight:800;font-size:14px">' + p[0] + '</button>';
       }).join('') + '</div>' +
       '<button data-a="when" class="aB">📅 Aniq sana va vaqt</button>' +
-      '<button data-a="edit" class="aB">✏️ Nom, mukofot, davomiylik</button>' +
+      '<button data-a="edit" class="aB">✏️ Turnir sozlamalari</button>' +
       (reg ? '<button data-a="cancel" class="aB d">🗑 Turnirni o‘chirish</button>' : ''));
     var st = document.createElement('style');
     st.textContent = '.aB{width:100%;border:0;border-radius:13px;padding:13px;margin-bottom:8px;background:#2b1f10;color:#f2e9da;font-size:15.5px;font-weight:700;text-align:left}.aB.d{background:#4a1b1b;color:#ffd9d9}.aT{font-size:11.5px;letter-spacing:1px;color:#9d8a6c;margin:12px 2px 7px;font-weight:800}';
@@ -301,15 +301,72 @@
           };
           ov.remove(); return;
         }
-        else if (a === 'edit') {
-          var nm2 = prompt('Turnir nomi:', t.name || ''); if (nm2 === null) return;
-          var pz = prompt('Mukofot (tanga):', String(t.prize || 0)); if (pz === null) return;
-          var du = prompt('Davomiyligi (daqiqa):', String(t.durationMin || 60)); if (du === null) return;
-          window.lbSend({ type: 'lbTEdit', tid: tid, name: nm2, prize: Number(pz) || 0, duration: Number(du) || 0 });
-        }
+        else if (a === 'edit') { ov.remove(); editSheet(tid); return; }
         ov.remove();
       };
     });
+  }
+  // ✏️ turnir sozlamalari: nom, mukofot, davomiylik, vaqt nazorati, pozitsiya, berserk, reyting, chat, 🏳️ viloyatlar
+  function editSheet(tid) {
+    var t = (St() && St().tournaments || []).filter(function (x) { return String(x.id) === String(tid); })[0] || {};
+    var reg = t.status === 'reg', adm = !!window.__isAdmin;
+    var TC = ['1+0', '2+1', '3+2', '5+3', '10+5'];
+    var inp = 'width:100%;box-sizing:border-box;padding:12px;border-radius:12px;border:1px solid #4a3a1c;background:#120c05;color:#fff;font-size:16px';
+    var lab = 'font-size:11.5px;letter-spacing:1px;color:#9d8a6c;margin:12px 2px 6px;font-weight:800';
+    function chips(id, arr, cur) {
+      return '<div id="' + id + '" style="display:flex;gap:7px;flex-wrap:wrap">' + arr.map(function (p) {
+        var on = String(p[1]) === String(cur);
+        return '<button data-v="' + p[1] + '" style="flex:1;min-width:62px;border:1px solid ' + (on ? '#ffd76a' : 'rgba(255,255,255,.14)') + ';background:' + (on ? 'rgba(255,214,130,.16)' : 'rgba(255,255,255,.05)') + ';color:' + (on ? '#ffd76a' : '#e8ddcc') + ';border-radius:11px;padding:10px 6px;font-weight:800;font-size:14px">' + p[0] + '</button>';
+      }).join('') + '</div>';
+    }
+    var html =
+      '<div style="' + lab + '">NOM</div><input id="eNm" value="' + String(t.name || '').replace(/"/g, '&quot;') + '" maxlength="30" style="' + inp + '">' +
+      '<div style="display:flex;gap:9px">' +
+        '<div style="flex:1"><div style="' + lab + '">MUKOFOT (TANGA)</div><input id="ePz" type="number" min="0" value="' + (t.prize || 0) + '" style="' + inp + '"' + (reg ? '' : ' disabled') + '></div>' +
+        '<div style="flex:1"><div style="' + lab + '">DAVOMIYLIK (DAQ.)</div><input id="eDu" type="number" min="5" max="600" value="' + (t.durationMin || 60) + '" style="' + inp + '"' + (reg ? '' : ' disabled') + '></div>' +
+      '</div>' +
+      (reg ? '<div style="' + lab + '">VAQT NAZORATI</div>' + chips('eTc', TC.map(function (x) { return [x, x]; }), t.tc || '3+2') : '') +
+      (reg ? '<div style="' + lab + '">BOSHLANG‘ICH HOLAT</div>' + chips('ePos', [['Standart', 'std'], ['Tasodifiy (IDF)', 'idf']], t.pos || 'std') : '') +
+      (reg ? '<div style="' + lab + '">BERSERK</div>' + chips('eBz', [['Yoniq', '1'], ['O‘chiq', '0']], t.berserk !== false ? '1' : '0') : '') +
+      (reg ? '<div style="' + lab + '">REYTINGGA TA’SIR</div>' + chips('eRt', [['Ha', '1'], ['Yo‘q', '0']], t.rated !== false ? '1' : '0') : '') +
+      (reg ? '<div style="' + lab + '">CHAT</div>' + chips('eCh', [['Ochiq', '1'], ['Yopiq', '0']], t.chatOff ? '0' : '1') : '') +
+      (reg && adm && (t.type === 'arena') ? '<div style="' + lab + '">🏳️ VILOYATLAR KUBOGI</div>' + chips('eFl', [['Ha', '1'], ['Yo‘q', '0']], t.flag ? '1' : '0') : '') +
+      '<div style="' + lab + '">IZOH</div><input id="eDs" value="' + String(t.desc || '').replace(/"/g, '&quot;') + '" maxlength="200" placeholder="ixtiyoriy" style="' + inp + '">' +
+      '<button id="eGo" style="width:100%;border:0;border-radius:13px;padding:14px;margin-top:14px;font-weight:800;font-size:16px;color:#3a2500;background:linear-gradient(180deg,#ffdf8d,#e0a120)">Saqlash</button>';
+    var ov = sheet('✏️ Turnir sozlamalari', html);
+    var pick = {};
+    ['eTc', 'ePos', 'eBz', 'eRt', 'eCh', 'eFl'].forEach(function (id) {
+      var box = ov.querySelector('#' + id); if (!box) return;
+      pick[id] = box.querySelector('[data-v]') ? null : null;
+      Array.prototype.forEach.call(box.querySelectorAll('[data-v]'), function (b) {
+        b.onclick = function () {
+          pick[id] = b.getAttribute('data-v');
+          Array.prototype.forEach.call(box.querySelectorAll('[data-v]'), function (x) {
+            var on = x === b;
+            x.style.borderColor = on ? '#ffd76a' : 'rgba(255,255,255,.14)';
+            x.style.background = on ? 'rgba(255,214,130,.16)' : 'rgba(255,255,255,.05)';
+            x.style.color = on ? '#ffd76a' : '#e8ddcc';
+          });
+        };
+      });
+    });
+    ov.querySelector('#eGo').onclick = function () {
+      var o = { type: 'lbTEdit', tid: tid };
+      var nm2 = ov.querySelector('#eNm').value.trim(); if (nm2) o.name = nm2;
+      if (reg) {
+        o.prize = Number(ov.querySelector('#ePz').value) || 0;
+        o.duration = Number(ov.querySelector('#eDu').value) || 0;
+        o.desc = ov.querySelector('#eDs').value;
+        if (pick.eTc) o.tc = pick.eTc;
+        if (pick.ePos) o.pos = pick.ePos;
+        if (pick.eBz) o.berserk = pick.eBz === '1';
+        if (pick.eRt) o.rated = pick.eRt === '1';
+        if (pick.eCh) o.chat = pick.eCh === '1';
+        if (pick.eFl) o.flag = pick.eFl === '1';
+      }
+      if (window.lbSend) window.lbSend(o);
+      ov.remove();
+    };
   }
   // 💰 homiylar ro'yxati
   function spRow(t) {
