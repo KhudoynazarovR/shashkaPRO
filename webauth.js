@@ -16,7 +16,9 @@
   try { if ('serviceWorker' in navigator) W.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); }); } catch (e) {}
   function load() { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { return null; } }
   function save(a) { try { localStorage.setItem(KEY, JSON.stringify(a)); } catch (e) {} }
+  function unpre() { try { document.documentElement.className = String(document.documentElement.className).replace(/\bspPre\b/g, ''); var p = document.getElementById('spLoginPre'); if (p) p.remove(); } catch (e) {} }
   function apply(a) {
+    unpre();
     var unsafe = { user: a.user, auth_date: Math.floor(a.at / 1000) };
     try { tg.initData = a.initData; tg.initDataUnsafe = unsafe; } catch (e) {}
     if (tg.initData !== a.initData) { // xususiyat yozib bo'lmasa — o'ram obyekt
@@ -66,6 +68,7 @@
       '<button id="spLgBtn">✈️ Telegram orqali kirish</button><button id="spLgP" style="background:#2b2475;box-shadow:0 4px 0 #160f4a">🔑 Login va parol bilan</button><div id="spLgF" style="display:none;width:100%;max-width:340px"><input id="spLgL" autocomplete="username" placeholder="Login"><input id="spLgW" type="password" autocomplete="current-password" placeholder="Parol"><button id="spLgPg" style="margin-top:6px">Kirish</button></div><div class="st" id="spLgSt">Telegram yoki Google hisobingiz bilan kiring — tangalar, reyting va natijalar saqlanadi.</div>' +
       '<div class="lng" data-noi18n="1"><span data-l="uz">O‘zbekcha</span> · <span data-l="ru">Русский</span> · <span data-l="en">English</span></div>';
     document.documentElement.appendChild(el);
+    try { var _pre = document.getElementById('spLoginPre'); if (_pre) _pre.remove(); } catch (e) {}   // ⚡ oldindan chizilgan ko'rinish o'rnini beradi
     var btn = el.querySelector('#spLgBtn'), gb = el.querySelector('#spLgG'), st = el.querySelector('#spLgSt'), poll = null;
     Array.prototype.forEach.call(el.querySelectorAll('.lng [data-l]'), function (s) {
       if (s.getAttribute('data-l') === (W.SP_LANG || 'uz')) s.className = 'on';
