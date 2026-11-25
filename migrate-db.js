@@ -20,14 +20,25 @@ const ssl = u => (/\.render\.com|sslmode=require/.test(String(u)) ? { rejectUnau
 
   await b.query('create table if not exists kv (k text primary key, v jsonb not null)');
   const was = (await b.query('select count(*)::int n from kv')).rows[0].n;
-  const rows = (await a.query('select k, v from kv')).rows;
+  const rows = (await a.query('select k, v::text as vt from kv')).rows;   // matn ko'rinishida olamiz
   console.log('eski bazada ' + rows.length + ' qator, yangi bazada ' + was + ' qator');
 
-  let n = 0, t0 = Date.now();
+  if (process.env.WIPE === '1' && was) { await b.query('delete from kv'); console.log('🧹 yangi bazadagi ' + was + ' qator o‘chirildi'); }
+
+  // Postgres json yolg'iz surrogat (yarim emoji) va \u0000 ni qabul qilmaydi — tozalaymiz
+  const BAD = /[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]|\u0000/g;
+  let n = 0, fixed = 0, bad = 0, t0 = Date.now();
   for (const r of rows) {
-    await b.query('insert into kv(k, v) values($1, $2) on conflict (k) do update set v = excluded.v', [r.k, r.v]);
-    if (++n % 50 === 0) console.log('  ' + n + '/' + rows.length);
+    let v = r.vt;
+    if (BAD.test(v)) { BAD.lastIndex = 0; v = v.replace(BAD, ''); fixed++; } else BAD.lastIndex = 0;
+    try {
+      await b.query('insert into kv(k, v) values($1, $2::jsonb) on conflict (k) do update set v = excluded.v', [r.k, v]);
+      n++;
+    } catch (e) { bad++; console.log('  ⚠️ ' + r.k + ': ' + e.message.slice(0, 60)); }
+    if ((n + bad) % 50 === 0) console.log('  ' + (n + bad) + '/' + rows.length);
   }
+  if (fixed) console.log('🧼 tozalangan qatorlar: ' + fixed);
+  if (bad) console.log('⚠️ ko‘chmagan qatorlar: ' + bad);
   const now = (await b.query('select count(*)::int n from kv')).rows[0].n;
   console.log('🏁 ko‘chirildi: ' + n + ' qator · yangi bazada jami ' + now + ' qator · ' + Math.round((Date.now() - t0) / 1000) + ' s');
 
