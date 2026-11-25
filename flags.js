@@ -39,7 +39,8 @@ function regStandings(players) {
     if (p.bot || /^bot/.test(String(p.uid))) continue;
     const b = badge(p.uid); if (!b) continue;
     const k = b.reg; if (!by.has(k)) by.set(k, []);
-    by.get(k).push({ uid: p.uid, name: p.name, score: +p.score || 0, elo: +p.elo || (((store.users() || {})[String(p.uid)] || {}).elo || 0) });
+    const su = (store.users() || {})[String(p.uid)] || {};
+    by.get(k).push({ uid: p.uid, name: p.name, score: +p.score || 0, elo: +p.elo || (su.elo || 0), av: !!store.avOf(su) });   // av — profil rasmi bormi
   }
   const out = [...by].map(([r, a]) => {
     a.sort((x, y) => y.score - x.score);
@@ -47,7 +48,7 @@ function regStandings(players) {
     const byElo = a.slice().sort((x, y) => (y.elo || 0) - (x.elo || 0));
     const best = byElo[0] || null;                                        // eng yuqori reytingli a'zo
     const rsum = byElo.slice(0, 5).reduce((s, x) => s + (x.elo || 0), 0);  // eng yaxshi 5 ta reyting yig'indisi
-    return { r, k: REG[r][0], c: REG[r][1], n: a.length, score: Math.round(top.reduce((s, x) => s + x.score, 0) * 10) / 10, top, rsum,
+    return { r, k: REG[r][0], c: REG[r][1], n: a.length, score: Math.round(top.reduce((s, x) => s + x.score, 0) * 10) / 10, top, all: a, rsum,
       best: best ? { uid: best.uid, name: best.name, elo: best.elo || 0 } : null, cap: capOf(r) };
   });
   // standart saralash (klublar bilan bir xil): ochko → eng yaxshi 5 reyting yig'indisi → ishtirokchi soni

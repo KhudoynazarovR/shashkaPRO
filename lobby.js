@@ -369,7 +369,7 @@ function createLobby({ send, clients, roomsApi }) {
       creatorUid: t.creatorUid, creatorName: t.creatorName, created: t.created || 0, sponsors: (t.sponsors || []).slice(-10), clubIds: t.clubIds || [], clubs: clubStandings(t),
       round: t.round, rounds: t.rounds, nextAt: t.nextAt || 0,
       players: t.flag ? arenaStandings(t).map(p => Object.assign({}, p, require('./flags.js').badge(p.uid) || {})) : (t.type === 'arena' ? arenaStandings(t) : standings(t)),
-      flag: !!t.flag, desc: t.desc || '', rec: t.rec || null, regs: t.flag ? require('./flags.js').regStandings(arenaStandings(t)).map(r => ({ r: r.r, k: r.k, c: r.c, n: r.n, score: r.score, rsum: r.rsum, best: r.best, cap: r.cap, top: (r.top || []).slice(0, 5).map(x => ({ uid: x.uid, name: x.name, score: x.score, elo: x.elo })) })) : [],
+      flag: !!t.flag, desc: t.desc || '', rec: t.rec || null, regs: t.flag ? require('./flags.js').regStandings(arenaStandings(t)).map(r => ({ r: r.r, k: r.k, c: r.c, n: r.n, score: r.score, rsum: r.rsum, best: r.best, cap: r.cap, top: (r.all || r.top || []).slice(0, 40).map(x => ({ uid: x.uid, name: x.name, score: x.score, elo: x.elo, av: !!x.av })) })) : [],   // hamma a'zo (dastlabki 5 tasi hisobga kiradi)
       minGames: t.minGames || 0, mix: t.mix || null,
       boards: t.cur.map(b => ({
         board: b.board, roomId: b.roomId, white: b.white, black: b.black,

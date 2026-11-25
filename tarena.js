@@ -75,6 +75,12 @@
     '#taP .taPod div{flex:1;max-width:120px;text-align:center;border-radius:12px 12px 4px 4px;padding:10px 6px;background:rgba(30,22,16,.85)}' +
     '#taP .taPod div b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#taP .taPod div em{font-style:normal;font-size:26px;display:block}#taP .taPod div small{color:#f5b72b;font-weight:800}' +
     '#taP .taPod .p1{padding-top:22px;background:linear-gradient(180deg,#8a6a12,rgba(30,22,16,.85))}' +
+    // 🖼 shohsupadagi profil rasmi: dumaloq surat, pastki burchakda medal
+    '#taP .taPav{position:relative;display:block;width:56px;height:56px;margin:0 auto 7px;border-radius:50%;background:#3b3fa8;overflow:visible}' +
+    '#taP .taPav i{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:800;font-size:22px;color:#fff;border-radius:50%;overflow:hidden}' +
+    '#taP .taPav img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%;z-index:1}' +
+    '#taP .taPav em{position:absolute;right:-4px;bottom:-4px;z-index:2;font-size:20px;display:block;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}' +
+    '#taP .taPod .p1 .taPav{width:66px;height:66px;box-shadow:0 0 0 3px rgba(255,215,106,.55)}' +
     '#taP .taFt{display:grid;grid-template-columns:repeat(8,1fr);width:100%;max-width:360px;margin:6px auto;border:4px solid #7a4016;border-radius:4px;box-sizing:border-box}' +
     '#taP .taFt i{aspect-ratio:1;display:flex;align-items:center;justify-content:center}#taP .taFt i.l{background:#f3bb86}#taP .taFt i.d{background:#7b2f13}' +
     '#taP .taFt u{display:block;width:80%;height:80%;border-radius:50%;box-shadow:inset 0 -3px 0 rgba(0,0,0,.35),0 1px 2px #0008;position:relative}' +
@@ -205,16 +211,51 @@
     var ps = plist(t), fin = t.status === 'finished', u = me(), mi = myIdx(t), mp = mi >= 0 ? ps[mi] : null, n = Math.max(1, Math.ceil(ps.length / PER));
     if (page < 0) page = mi >= 0 ? Math.floor(mi / PER) : 0;
     if (page > n - 1) page = n - 1;
+    // 🪙 har bir o'yinchi yutgan tanga: jamoa ulushi + shaxsiy mukofot
+    var coinOf = {};
+    if (fin && t.pay) {
+      ((t.pay.mem) || []).forEach(function (x) { coinOf[String(x.uid)] = (coinOf[String(x.uid)] || 0) + (x.amt || 0); });
+      ((t.pay.top) || []).forEach(function (x) { coinOf[String(x.uid)] = (coinOf[String(x.uid)] || 0) + (x.amt || 0); });
+      ((t.awards) || []).forEach(function (x) { if (!(t.pay.top || []).length) coinOf[String(x.uid)] = (coinOf[String(x.uid)] || 0) + (x.amt || 0); });
+    }
+    var fmtC = function (n) { return String(n || 0).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); };
     // podium
     var pod = '';
     if (t.status === 'finished') {
       var top = ps.filter(function (p) { return p.games > 0; }).slice(0, 3);
       if (top.length) {
         var ord = [1, 0, 2], md = ['🥇', '🥈', '🥉'];
-        pod = '<div class="taPod">' + ord.map(function (i) { var p = top[i]; if (!p) return '<span style="flex:1;max-width:120px"></span>'; return '<div class="p' + (i + 1) + '"><em>' + md[i] + '</em><b>' + nm(p.name) + '</b><small>' + p.score + ' ochko</small></div>'; }).join('') + '</div>';
+        pod = '<div class="taPod">' + ord.map(function (i) {
+          var p = top[i]; if (!p) return '<span style="flex:1;max-width:120px"></span>';
+          var cn = coinOf[String(p.uid)] || 0, id = String(p.uid == null ? '' : p.uid);
+          var ini = esc(String(p.name || '?').replace(/[^\p{L}\p{N}]/gu, '').charAt(0).toUpperCase() || '?');
+          var av = '<span class="taPav"><i>' + ini + '</i>' +
+            (/^\d+$/.test(id) ? '<img src="/api/av/' + encodeURIComponent(id) + '" alt="" onerror="this.remove()">' : '') +
+            '<em>' + md[i] + '</em></span>';
+          return '<div class="p' + (i + 1) + '">' + av + '<b>' + nm(p.name) + '</b><small>' + p.score + ' ochko</small>' +
+            (cn ? '<small style="display:block;color:#ffd76a">🪙 ' + fmtC(cn) + '</small>' : '') + '</div>';
+        }).join('') + '</div>';
       }
     }
     g('taPod').innerHTML = pod;
+    // 🪙 tanga taqsimoti — turnir tugagach podiumdan keyin birinchi bo'lib chiqadi
+    var payCard = '';
+    if (fin && t.pay && t.prize > 0) {
+      var pz = t.pay, md4 = ['🥇', '🥈', '🥉'];
+      var memBy = {};
+      (pz.mem || []).forEach(function (x) { var k = x.reg || ''; (memBy[k] = memBy[k] || []).push(x); });
+      var gRows = (pz.grp || []).map(function (x, i) {
+        var mm = (memBy[x.r] || []).map(function (y) { return esc(String(y.name || '').slice(0, 16)) + ' <b>' + fmtC(y.amt) + '</b>'; }).join(' · ');
+        return '<div style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.09);font-size:14px">' +
+          '<div style="display:flex;align-items:center;gap:8px"><span style="width:24px;text-align:center">' + (md4[i] || (i + 1)) + '</span>' +
+          (x.k ? bdg(x.k, '') : '') + '<span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(x.r || x.name || '') + '</span>' +
+          '<b style="min-width:64px;text-align:right;color:#f5b72b;font-size:15px">' + fmtC(x.amt) + '</b></div>' +
+          (mm ? '<div style="margin:3px 0 0 32px;font-size:12.5px;color:var(--spMute,#b9ab98);line-height:1.5">' + mm + '</div>' : '') + '</div>';
+      }).join('');
+      var tRow = (pz.top || []).length ? '<div style="padding-top:9px;font-size:12.5px;color:var(--spMute,#b9ab98);line-height:1.5">⭐ Eng yaxshi o‘yinchilar: ' +
+        pz.top.map(function (x, i) { return (md4[i] || (i + 1) + '.') + ' ' + esc(String(x.name || '').slice(0, 16)) + ' <b style="color:#f5b72b">' + fmtC(x.amt) + '</b>'; }).join(' · ') + '</div>' : '';
+      if (gRows || tRow) payCard = '<div class="taCard" style="margin-top:10px"><h4>🪙 Tanga taqsimoti · jamg‘arma ' + fmtC(t.prize) + '</h4>' + gRows + tRow + '</div>';
+    }
     // 👥 klublar jangi (lichess Team Battle kabi): har klubning eng yaxshi 5 o'yinchisi ochkolari yig'indisi
     var cl = t.clubs || [], ch = '';
     if (cl.length) {
@@ -226,7 +267,12 @@
           '<b style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + nm(c.name) + '</b>' +
           '<small style="opacity:.6;min-width:60px;text-align:center">' + (c.players || 0) + ' kishi</small>' +
           '<b style="min-width:42px;text-align:right;color:#f5b72b;font-size:15px">' + (c.score || 0) + '</b></div>' +
-          (c.rsum ? '<div style="margin:3px 0 0 34px;font-size:12.5px;color:var(--spMute,#b9ab98)">⚔ ' + fmtN3(c.rsum) + ' <span style="opacity:.6">· eng yaxshi 5 reyting</span></div>' : '') + '</div>';
+          (function () {
+            var bk = (c.top || []).slice(0, 5).filter(function (x) { return (x.score || x.s || 0) > 0; }).map(function (x) { return x.score || x.s; }).join('+');
+            var cc = ((t.pay || {}).grp || []).filter(function (x) { return (x.name || x.r) === c.name; })[0];
+            var ln = (bk ? bk + ' ' : '') + (c.rsum ? '<span style="float:right;color:#8fb0ff">⚔ ' + fmtN3(c.rsum) + '</span>' : '') + (cc ? ' <b style="color:#f5b72b">· 🪙 ' + fmtN3(cc.amt) + '</b>' : '');
+            return ln ? '<div style="margin:3px 0 0 34px;font-size:12.5px;color:var(--spMute,#b9ab98)">' + ln + '</div>' : '';
+          })() + '</div>';
       }).join('') + '</div>';
     }
     if (t.flag && (t.regs || []).length) {   // 🏳️ viloyatlar hisobi: eng yaxshi 5 o'yinchi
@@ -235,9 +281,13 @@
         var fmtN2 = function (n) { return String(n || 0).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); };
         // eng kuchli a'zo — ismi va reytingi; kapitan bo'lsa 👑 bilan
         var bst = r.best, isCap = !!(bst && r.cap && String(r.cap.uid) === String(bst.uid));
-        var lead = (bst ? (isCap ? '👑 ' : '') + esc(String(bst.name || '').slice(0, 14)) + (bst.elo ? ' <b style="color:#dcd2c4">' + bst.elo + '</b>' : '')
-                        : (r.cap ? '👑 ' + esc(String(r.cap.name || '').slice(0, 14)) : '')) +
-          (r.rsum ? '<span style="float:right;color:#8fb0ff">⚔ ' + fmtN2(r.rsum) + '</span>' : '');
+        var brk = (r.top || []).slice(0, 5).filter(function (x) { return (x.score || 0) > 0; }).map(function (x) { return x.score; }).join('+');
+        var rCoin = ((t.pay || {}).grp || []).filter(function (x) { return x.r === r.r; })[0];
+        var lead = (brk ? brk + ' ' : '') +
+          (bst ? '<span style="opacity:.85">· ' + (isCap ? '👑 ' : '') + esc(String(bst.name || '').slice(0, 12)) + (bst.elo ? ' <b style="color:#dcd2c4">' + bst.elo + '</b>' : '') + '</span>'
+               : (r.cap ? '· 👑 ' + esc(String(r.cap.name || '').slice(0, 12)) : '')) +
+          (rCoin ? ' <b style="color:#f5b72b">· 🪙 ' + fmtN2(rCoin.amt) + '</b>' : '') +
+          (r.rsum && !rCoin ? '<span style="float:right;color:#8fb0ff">⚔ ' + fmtN2(r.rsum) + '</span>' : '');
         return '<div class="taReg" data-reg="' + esc(r.r) + '" style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.09);font-size:14px">' +
           '<div style="display:flex;align-items:center;gap:8px"><span style="width:24px;text-align:center">' + (md3[i] || (i + 1)) + '</span>' + bdg(r.k, r.c) +
           '<span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(r.r) + '</span>' +
@@ -246,7 +296,7 @@
           (lead ? '<div style="margin:3px 0 0 56px;font-size:12.5px;color:var(--spMute,#b9ab98)">' + lead + '</div>' : '') + '</div>';
       }).join('') + '</div>' + ch;
     }
-    g('taClubs').innerHTML = ch;
+    g('taClubs').innerHTML = payCard + ch;   // 🪙 taqsimot eng tepada
     // 🗺 viloyat qatorini bosish: a'zolar ro'yxati va kapitan
     Array.prototype.forEach.call(P.querySelectorAll('.taReg'), function (el) {
       el.style.cursor = 'pointer';
@@ -257,16 +307,25 @@
         var isCap = cap && String(cap.uid) === String((window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user || {}).id || '');
         var ov = document.createElement('div');
         ov.style.cssText = 'position:fixed;inset:0;z-index:2147483100;background:rgba(0,0,0,.6);display:flex;align-items:flex-end';
+        var coinOf = {}; ((t.pay || {}).mem || []).forEach(function (x) { coinOf[String(x.uid)] = x.amt; });
+        var gSum = ((t.pay || {}).grp || []).filter(function (x) { return x.r === key; })[0];
         var rows = (R2.top || []).map(function (x, j) {
-          return '<div style="display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid rgba(255,255,255,.08)">' +
-            '<span style="width:22px;opacity:.6">' + (j + 1) + '</span><b style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(x.name || '') + '</b>' +
+          var cn = coinOf[String(x.uid)] || 0, off = j >= 5;   // 6-o'rindan keyingilar jamoa hisobiga kirmaydi
+          var ini = esc(String(x.name || '?').charAt(0).toUpperCase());
+          var avh = '<span style="width:30px;height:30px;flex:none;border-radius:50%;background:#3b3fa8;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;overflow:hidden;position:relative">' + ini +
+            (x.av ? '<img src="/api/av/' + encodeURIComponent(x.uid) + '" onerror="this.remove()" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">' : '') + '</span>';
+          return '<div style="display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid rgba(255,255,255,.08)' + (off ? ';opacity:.55' : '') + '">' +
+            '<span style="width:22px;opacity:.6">' + (j + 1) + '</span>' + avh +
+            '<b style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(x.name || '') + '</b>' +
             '<small style="opacity:.6">' + (x.elo || '') + '</small><b style="min-width:34px;text-align:right;color:#f5b72b">' + (x.score || 0) + '</b>' +
+            (fin ? '<b style="min-width:58px;text-align:right;color:' + (cn ? '#f5b72b' : 'rgba(255,255,255,.35)') + '">' + (cn ? '🪙 ' + cn : '—') + '</b>' : '') +
             ((adm || isCap) ? '<button data-cap="' + esc(x.uid) + '" style="border:0;border-radius:10px;padding:7px 10px;background:#3a2f66;color:#fff;font-size:12px">👑</button>' : '') + '</div>';
         }).join('');
+        var gLine = gSum ? '<div style="font-size:13.5px;color:#b9c3f0;margin-bottom:10px">🪙 Viloyat ulushi: <b style="color:#f5b72b">' + fmtC(gSum.amt) + '</b> tanga · eng yaxshi 5 o‘yinchiga ochkosiga qarab bo‘lindi</div>' : '';
         ov.innerHTML = '<div style="width:100%;max-height:86vh;overflow:auto;background:#141833;color:#fff;border-radius:20px 20px 0 0;padding:14px 14px calc(env(safe-area-inset-bottom,0px) + 14px);box-sizing:border-box">' +
           '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><b style="font-size:17px">🗺 ' + esc(key) + '</b>' +
           '<button data-x="1" style="border:0;background:#262b5a;color:#fff;border-radius:10px;width:36px;height:36px">✕</button></div>' +
-          '<div style="font-size:13.5px;color:#b9c3f0;margin-bottom:10px">Kapitan: <b style="color:#ffd76a">' + (cap ? esc(cap.name) : 'tayinlanmagan') + '</b> · ' + (R2.n || 0) + ' o‘yinchi</div>' +
+          '<div style="font-size:13.5px;color:#b9c3f0;margin-bottom:' + (gLine ? '4' : '10') + 'px">Kapitan: <b style="color:#ffd76a">' + (cap ? esc(cap.name) : 'tayinlanmagan') + '</b> · ' + (R2.n || 0) + ' o‘yinchi</div>' + gLine +
           (rows || '<div style="opacity:.7;padding:10px 0">Hozircha o‘yinchi yo‘q</div>') +
           ((adm && cap) ? '<button data-cap="" style="width:100%;margin-top:10px;border:0;border-radius:12px;padding:12px;background:#4a1b1b;color:#ffd9d9;font-weight:700">Kapitanni olib tashlash</button>' : '') + '</div>';
         document.body.appendChild(ov);
@@ -322,26 +381,9 @@
     var tc = tcInfo(t.tc), inf = '<div class="taInf"><span class="ic">' + tc.icon + '</span><div><b>' + tc.txt + '</b> · ' + tc.name + ' · ' + (t.durationMin || 0) + ' daq<br>' + (t.rated === false ? '🤝 Reytingsiz' : '⭐ Reytingli') + ' · Arena' + (t.flag ? ' · 🏳️ Bayroqli' : '') + (t.berserk ? ' · ⚡ Berserk' : '') + (t.pos === 'idf' ? ' · IDF pozitsiyalar' : '') + '</div></div>' + (t.desc ? '<div class="taLn">📝 ' + esc(t.desc) + '</div>' : '');
     if (t.prize > 0) {
       var aw = (t.awards || []).filter(function (x) { return x.amt > 0; }), mdl = ['🥇', '🥈', '🥉'];
-      var pay = t.pay || null, hasPay = fin && pay && ((pay.grp && pay.grp.length) || (pay.mem && pay.mem.length) || (pay.top && pay.top.length));
+      var hasPay = fin && payCard;
       if (!fin) inf += '<div class="taLn">🏆 Mukofot jamg‘armasi: <b>' + t.prize + '</b> tanga · ' + (t.places || 3) + ' o‘ringa</div>';
-      else if (hasPay) {   // 🪙 to'liq taqsimot: jamoa ulushi + o'yinchilar + eng yaxshilar
-        inf += '<div class="taLn">🏆 Mukofot jamg‘armasi: <b>' + t.prize + '</b> tanga</div>';
-        if (pay.grp && pay.grp.length) {
-          inf += '<div class="taLn">' + (t.flag ? '🏳️ Viloyatlar' : '👥 Klublar') + ' ulushi (60%): ' +
-            pay.grp.map(function (x, i) { return (mdl[i] || (i + 1) + '.') + ' ' + nm(x.r) + ' — <b>' + x.amt + '</b>'; }).join(' · ') + ' tanga</div>';
-        }
-        if (pay.mem && pay.mem.length) {
-          var gr = {}, ord = [];
-          pay.mem.forEach(function (x) { var k = x.reg || ''; if (!gr[k]) { gr[k] = []; ord.push(k); } gr[k].push(x); });
-          inf += '<div class="taLn">🪙 Jamoa a‘zolariga: ' + ord.map(function (k) {
-            return (k ? nm(k) + ': ' : '') + gr[k].map(function (x) { return nm(x.name) + ' <b>' + x.amt + '</b>'; }).join(', ');
-          }).join(' · ') + '</div>';
-        }
-        if (pay.top && pay.top.length) {
-          inf += '<div class="taLn">⭐ Eng yaxshi o‘yinchilar (40%): ' +
-            pay.top.map(function (x, i) { return (mdl[i] || (i + 1) + '.') + ' ' + nm(x.name) + ' — <b>' + x.amt + '</b>'; }).join(' · ') + ' tanga</div>';
-        }
-      }
+      else if (hasPay) inf += '';   // 🪙 taqsimot tepadagi kartada ko'rsatilgan
       else if (aw.length) inf += '<div class="taLn">🏆 Mukofotlar: ' + aw.map(function (x) { return (mdl[x.place - 1] || x.place + '.') + ' ' + nm(x.name) + ' — <b>' + x.amt + '</b>'; }).join(' · ') + ' tanga</div>';
       else inf += '<div class="taLn">🏆 Mukofot berilmadi: arenada birorta ham o‘yin o‘ynalmadi' + (t.flag ? '' : ', jamg‘arma tashkilotchiga qaytarildi') + '.</div>';
     }
