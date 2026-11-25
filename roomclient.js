@@ -1209,6 +1209,17 @@
         : simpleSteps(st.board, st.selected.r, st.selected.c);
     }
 
+    // 🎯 «Pro avtohod»: borish katagiga tusha oladigan barcha qonuniy yurishlar (urish majburiyligi hisobga olinadi)
+    function movesTo(r, c) {
+      var me = myCode(), caps = allCaptures(st.board, me), out = [];
+      for (var i = 0; i < 8; i++) for (var j = 0; j < 8; j++) {
+        if (!sameSide(st.board[i][j], me)) continue;
+        var steps = caps.length ? captureSteps(st.board, i, j) : simpleSteps(st.board, i, j);
+        for (var k = 0; k < steps.length; k++) if (steps[k].to.r === r && steps[k].to.c === c) out.push(steps[k]);
+      }
+      return out;
+    }
+
     // ---------- chizish ----------
     function nameLine(color) {
       var nm = st[color], on = st[color + "Online"];
@@ -1409,7 +1420,8 @@
           cell.dataset.r = r; cell.dataset.c = c;
           if (lastMv && lastMv.from && lastMv.to &&
               ((lastMv.from.r === r && lastMv.from.c === c) || (lastMv.to.r === r && lastMv.to.c === c))) cell.classList.add("lm");
-          if (st.selected && st.selected.r === r && st.selected.c === c) cell.classList.add("sel"); if (st.pre && ((st.pre.from.r === r && st.pre.from.c === c) || (st.pre.to && st.pre.to.r === r && st.pre.to.c === c))) cell.classList.add("pre");
+          if (st.selected && st.selected.r === r && st.selected.c === c) cell.classList.add("sel");
+          if (st.cand) for (var ci = 0; ci < st.cand.length; ci++) if (st.cand[ci].r === r && st.cand[ci].c === c) cell.classList.add("cand");   // 🎯 shu katakka bora oladigan donalar if (st.pre && ((st.pre.from.r === r && st.pre.from.c === c) || (st.pre.to && st.pre.to.r === r && st.pre.to.c === c))) cell.classList.add("pre");
           for (var k = 0; k < opts.length; k++) {
             if (opts[k].to.r === r && opts[k].to.c === c) cell.classList.add(opts[k].captures.length ? "cp" : "tg");
           }
@@ -1421,7 +1433,7 @@
 
       if (st.anim) { var _A = st.anim; st.anim = null; try { rcAnim(_A); } catch (e) {} }
       try { spSpecUI(); spDgArrows(); } catch (e) {}   // 👁 tomoshabin: tepa qator, Dragon kartasi va strelkalar
-      if (!document.getElementById("rcPreCss")) { var pcs = document.createElement("style"); pcs.id = "rcPreCss"; pcs.textContent = ".cell.pre{box-shadow:inset 0 0 0 4px #4aa3ff!important}body.rcPlaying #rcZal{display:none!important}"; document.head.appendChild(pcs); }
+      if (!document.getElementById("rcPreCss")) { var pcs = document.createElement("style"); pcs.id = "rcPreCss"; pcs.textContent = ".cell.cand{box-shadow:inset 0 0 0 4px #ffd76a!important}.rcDragGhost{position:fixed;z-index:2147483000;pointer-events:none;transform:translate(-50%,-50%);opacity:.9;filter:drop-shadow(0 6px 10px rgba(0,0,0,.5))}.cell.pre{box-shadow:inset 0 0 0 4px #4aa3ff!important}body.rcPlaying #rcZal{display:none!important}"; document.head.appendChild(pcs); }
       if (st.pre && st.finished) st.pre = null;
       if (st.pre && st.pre.to && st.turn === st.color && !st.pending && !st.forced && !st.finished && !botBusy) {
         var pm = st.pre; st.pre = null;
@@ -1525,10 +1537,72 @@
 
     // ---------- bosish ----------
     elBoard.addEventListener("click", function (e) {
+      if (drag.blockClick && Date.now() - drag.blockClick < 400) return;   // sudrab tashlangan edi — ikkinchi marta yurmasin
       var cell = e.target.closest(".cell");
       if (!cell) return;
       onCell(Number(cell.dataset.r), Number(cell.dataset.c));
     });
+
+    // ---------- sudrab yurish (drag & drop) ----------
+    var drag = { on: false, from: null, ghost: null, x: 0, y: 0, moved: false, blockClick: 0 };
+    function cellAt(x, y) {
+      var el = document.elementFromPoint(x, y); el = el && el.closest ? el.closest(".cell") : null;
+      if (el && el.dataset.r != null) return { r: Number(el.dataset.r), c: Number(el.dataset.c) };
+      var b = elBoard.getBoundingClientRect();   // zaxira: doska o'lchamidan hisoblaymiz (ekrandan chiqib qolgan holat)
+      if (x < b.left || x > b.right || y < b.top || y > b.bottom || !b.width) return null;
+      var dc = Math.min(7, Math.max(0, Math.floor((x - b.left) / (b.width / 8))));
+      var dr = Math.min(7, Math.max(0, Math.floor((y - b.top) / (b.height / 8))));
+      var fl = flipped();
+      return { r: fl ? 7 - dr : dr, c: fl ? 7 - dc : dc };
+    }
+    function dragEnd(ok) {
+      if (drag.ghost) { try { drag.ghost.remove(); } catch (e) {} }
+      if (drag.src) { try { drag.src.style.visibility = ""; } catch (e) {} }
+      drag.on = false; drag.ghost = null; drag.src = null; drag.from = null;
+      try { elBoard.style.touchAction = "manipulation"; } catch (e) {}
+      if (ok) drag.blockClick = Date.now();
+    }
+    elBoard.addEventListener("pointerdown", function (e) {
+      if (e.button != null && e.button !== 0) return;
+      if (!st.joined || st.finished || st.pending || st.color === "spectator" || st.turn !== st.color) return;
+      var cell = e.target.closest(".cell"); if (!cell) return;
+      var r = Number(cell.dataset.r), c = Number(cell.dataset.c);
+      if (!sameSide(st.board[r][c], myCode())) return;
+      var pc = cell.querySelector(".pc, .pv, img, div"); if (!pc) return;
+      drag.on = true; drag.moved = false; drag.from = { r: r, c: c }; drag.x = e.clientX; drag.y = e.clientY; drag.src = pc;
+      try { elBoard.style.touchAction = "none"; } catch (e3) {}   // sudrayotganda sahifa siljimasin
+      try { elBoard.setPointerCapture(e.pointerId); } catch (e2) {}
+    }, true);
+    elBoard.addEventListener("pointermove", function (e) {
+      if (!drag.on) return;
+      if (!drag.moved) {
+        if (Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y) < 8) return;   // kichik siljish — oddiy bosish
+        drag.moved = true;
+        onCell(drag.from.r, drag.from.c);   // donani tanlaymiz (mumkin bo'lgan yurishlar yonadi)
+        if (!st.selected || st.selected.r !== drag.from.r || st.selected.c !== drag.from.c) { dragEnd(false); return; }   // bu dona yura olmaydi
+        var sq = elBoard.querySelector('.cell[data-r="' + drag.from.r + '"][data-c="' + drag.from.c + '"]');
+        var src = sq && (sq.querySelector(".pc, .pv") || sq.firstElementChild);
+        if (src) {
+          var rect = src.getBoundingClientRect();
+          drag.ghost = src.cloneNode(true);
+          drag.ghost.className = (drag.ghost.className || "") + " rcDragGhost";
+          drag.ghost.style.width = rect.width + "px"; drag.ghost.style.height = rect.height + "px";
+          document.body.appendChild(drag.ghost);
+          drag.src = src; src.style.visibility = "hidden";
+        }
+      }
+      if (drag.ghost) { drag.ghost.style.left = e.clientX + "px"; drag.ghost.style.top = e.clientY + "px"; }
+      e.preventDefault();
+    }, true);
+    elBoard.addEventListener("pointerup", function (e) {
+      if (!drag.on) return;
+      var moved = drag.moved, from = drag.from, to = moved ? cellAt(e.clientX, e.clientY) : null;
+      dragEnd(moved);
+      if (!moved) return;
+      if (to && (to.r !== from.r || to.c !== from.c)) onCell(to.r, to.c);
+      else render();
+    }, true);
+    elBoard.addEventListener("pointercancel", function () { if (drag.on) { dragEnd(false); render(); } }, true);
 
     function onCell(r, c) {
       if (!st.joined || st.finished || st.pending || (st.vsBot && !st.botStarted)) return;
@@ -1555,7 +1629,14 @@
 
       var o = options();
       for (var j = 0; j < o.length; j++) if (o[j].to.r === r && o[j].to.c === c) mv = o[j];
-      if (mv) sendMove(mv);
+      if (mv) { st.cand = null; sendMove(mv); return; }
+      // 🎯 dona tanlanmagan bo'lsa ham: bo'sh katakni bossangiz, o'sha yerga bora oladigan dona yuradi
+      if (!p) {
+        var cn = movesTo(r, c);
+        if (cn.length === 1) { st.cand = null; st.selected = { r: cn[0].from.r, c: cn[0].from.c }; sendMove(cn[0]); return; }
+        if (cn.length > 1) { st.selected = null; st.cand = cn.map(function (x) { return x.from; }); render(); return; }   // bir nechta dona bora oladi — tanlang
+      }
+      if (st.cand) { st.cand = null; render(); }
     }
 
     function sendMove(mv) { st.pre = null;
