@@ -9,11 +9,11 @@ const IMG_RE = /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/;
 const clubs = new Map();
 try {
   for (const c of JSON.parse(fs.readFileSync(FILE, 'utf8')))
-    clubs.set(c.id, { id: c.id, name: c.name, desc: c.desc || '', leaderUid: c.leaderUid, leaderName: c.leaderName, created: c.created,
+    clubs.set(c.id, { id: c.id, name: c.name, desc: c.desc || '', reg: c.reg || '', leaderUid: c.leaderUid, leaderName: c.leaderName, created: c.created,
       open: c.open !== false, img: c.img || '', pts: c.pts || 0, tw: c.tw || 0, elo: c.elo || 1000, tn: c.tn || 0, members: new Map(c.members), pending: new Map(c.pending || []), admins: new Set(c.admins || [c.leaderUid]) });
 } catch (e) {}
 const toRow = c => ({ ...c, members: [...c.members], pending: [...c.pending], admins: [...c.admins] });
-const fromRow = c => ({ id: c.id, name: c.name, desc: c.desc || '', leaderUid: c.leaderUid, leaderName: c.leaderName, created: c.created,
+const fromRow = c => ({ id: c.id, name: c.name, desc: c.desc || '', reg: c.reg || '', leaderUid: c.leaderUid, leaderName: c.leaderName, created: c.created,
   open: c.open !== false, img: c.img || '', pts: c.pts || 0, tw: c.tw || 0, elo: c.elo || 1000, tn: c.tn || 0, members: new Map(c.members), pending: new Map(c.pending || []), admins: new Set(c.admins || [c.leaderUid]) });
 let pool = null, ready = false, lastJ = '';
 async function writeDb() {
@@ -69,14 +69,29 @@ function ensureSys() {
 ensureSys();
 function countOf(uid) { let n = 0; for (const c of clubs.values()) if (c.members.has(uid)) n++; return n; }
 
+// 🏳️ viloyat klublari — har viloyat uchun bitta tizim klubi. Faqat o'sha viloyat o'yinchilari kira oladi.
+const REG_PRE = 'reg_';
+function regSlug(r) { return REG_PRE + require('./flags.js').REG[r][0].toLowerCase(); }
+function ensureRegions() {
+  let F; try { F = require('./flags.js'); } catch (e) { return; }
+  for (const r of Object.keys(F.REG)) {
+    if (r === 'Chet el') continue;
+    const id = regSlug(r), had = clubs.get(id);
+    if (!had) clubs.set(id, { id, name: '🏳️ ' + r, desc: r + ' viloyati jamoasi — turnirlarda viloyatingiz uchun o‘ynang.', leaderUid: 'sys', leaderName: 'ShashkaPRO',
+      created: Date.now(), open: true, img: '', pts: 0, tw: 0, elo: 1000, tn: 0, members: new Map(), pending: new Map(), admins: new Set(), reg: r });
+    else { had.reg = r; had.open = true; had.leaderUid = 'sys'; }
+  }
+}
+function regOfUser(uid) { try { const b = require('./flags.js').badge(uid); return b ? b.reg : ''; } catch (e) { return ''; } }
+
 function list(uid) {
-  ensureSys();
+  ensureSys(); ensureRegions();
   return [...clubs.values()].sort((a, b) => b.members.size - a.members.size).slice(0, 60).map(c => {
     const adm = c.admins.has(uid) || (c.id === SYS && isEnvAdm(uid));
     return {
       id: c.id, name: c.name, desc: c.desc, leaderUid: c.leaderUid, leaderName: c.leaderName,
       count: c.members.size, joined: c.members.has(uid), open: c.open, img: c.img,
-      isAdmin: adm, requested: c.pending.has(uid), pts: c.pts || 0, tw: c.tw || 0, elo: c.elo || 1000, tn: c.tn || 0,
+      isAdmin: adm, requested: c.pending.has(uid), pts: c.pts || 0, tw: c.tw || 0, elo: c.elo || 1000, tn: c.tn || 0, reg: c.reg || '',
       pend: adm ? [...c.pending].slice(0, 50).map(([u, n]) => ({ uid: u, name: n })) : [],
       members: [...c.members].slice(0, 30).map(([u, n]) => ({ uid: u, name: n, admin: c.admins.has(u) }))
     };
@@ -89,6 +104,15 @@ function act(me, m) {
   const sysAdm = !!(c && c.id === SYS && isEnvAdm(uid));
   const adm = (c && c.admins.has(uid)) || sysAdm;
   if (c && c.id === SYS && !(sysAdm && m.type === 'lbClubImg')) return { error: 'Botlar klubi — tizim klubi, uni o‘zgartirib bo‘lmaydi' };
+  if (c && String(c.id).indexOf(REG_PRE) === 0) {   // 🏳️ viloyat klubi: faqat kirish/chiqish, rasmni admin qo'yadi
+    const ok = m.type === 'lbClubJoin' || m.type === 'lbClubLeave' || (isEnvAdm(uid) && m.type === 'lbClubImg');
+    if (!ok) return { error: 'Viloyat klubi — tizim klubi, uni o‘zgartirib bo‘lmaydi' };
+    if (m.type === 'lbClubJoin') {
+      const r = regOfUser(uid);
+      if (!r) return { error: 'Avval profilda viloyatingizni tanlang' };
+      if (r !== c.reg) return { error: 'Bu klubga faqat ' + c.reg + ' o‘yinchilari kira oladi' };
+    }
+  }
   switch (m.type) {
     case 'lbClubCreate': {
       const nm = clean(m.name, 40);
@@ -167,7 +191,7 @@ function act(me, m) {
 function check(uid, raw) {
   if (!Array.isArray(raw) || !raw.length) return { ids: [] };
   const ids = [...new Set(raw.map(String))].slice(0, 6);
-  ensureSys();
+  ensureSys(); ensureRegions();
   for (const id of ids) if (!clubs.has(id)) return { error: 'Klub topilmadi' };
   if (ids.includes(SYS) && !isEnvAdm(uid)) return { error: 'Botlar klubini faqat admin tanlay oladi' };
   if (!ids.some(id => clubs.get(id).admins.has(uid) || (id === SYS && isEnvAdm(uid)))) return { error: 'Klub turnirini faqat klub admini ocha oladi' };

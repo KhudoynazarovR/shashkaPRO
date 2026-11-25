@@ -867,7 +867,15 @@
       else if (act === "ca") { clubAll = !clubAll; }
       else if (act === "cj") sendMsg({ type: "lbClubJoin", cid: id });
       else if (act === "cl") sendMsg({ type: "lbClubLeave", cid: id });
-      else if (act === "cd") { if (confirm("Klub yopilsinmi?")) { sendMsg({ type: "lbClubDisband", cid: id }); clubView = null; } }
+      else if (act === "cd") {   // Telegram ichida confirm() ishlamaydi — showConfirm orqali
+        var go = function () { sendMsg({ type: "lbClubDisband", cid: id }); clubView = null; renderClubs(); };
+        try {
+          var W = window.Telegram && window.Telegram.WebApp;
+          if (W && W.showConfirm) { W.showConfirm("Klub butunlay yopilsinmi?", function (ok) { if (ok) go(); }); return; }
+        } catch (e) {}
+        if (confirm("Klub butunlay yopilsinmi?")) go();
+        return;
+      }
       else if (act === "ck") sendMsg({ type: "lbClubKick", cid: id, uid: u });
       else if (act === "cy") sendMsg({ type: "lbClubAccept", cid: id, uid: u });
       else if (act === "cx") sendMsg({ type: "lbClubReject", cid: id, uid: u });
@@ -910,7 +918,7 @@
         else h += "<button onclick=\"lbCA('cj','" + cur.id + "')\">" + (cur.open ? "Qo‘shilish" : "So‘rov yuborish") + "</button>";
         if (adm) h += "<button class=\"sec\" onclick=\"lbCA('cp','" + cur.id + "')\">🖼 Rasm</button>" +
           "<button class=\"sec\" onclick=\"lbCA('ct','" + cur.id + "','" + (cur.open ? "0" : "1") + "')\">" + (cur.open ? "🔒 Yopiq qilish" : "🔓 Ochiq qilish") + "</button>" +
-          "<input id=\"lbCfileA\" type=\"file\" accept=\"image/*\" style=\"display:none\" onchange=\"lbCImg(this,'" + cur.id + "')\">";
+          "<input id=\"lbCfileA\" type=\"file\" accept=\"image/*\" style=\"position:absolute;opacity:0;width:1px;height:1px\" onchange=\"lbCImg(this,'" + cur.id + "')\">";
         if (lead) h += "<button class=\"red\" onclick=\"lbCA('cd','" + cur.id + "')\">Klubni yopish</button>";
         h += "</div>";
         if (adm && cur.pend && cur.pend.length) {
@@ -940,7 +948,7 @@
           h += "<div style=\"margin-top:12px\"><div class=\"row\" style=\"margin-bottom:6px\">" + (clubImgData ? cav({ img: clubImgData }, true) : "") +
             "<button class=\"sec\" onclick=\"lbCA('cp','')\">🖼 Klub rasmi</button>" +
             "<button class=\"sec\" onclick=\"lbCA('co')\">" + (clubOpen ? "🔓 Ochiq klub" : "🔒 Yopiq klub") + "</button></div>" +
-            "<input id=\"lbCfile\" type=\"file\" accept=\"image/*\" style=\"display:none\" onchange=\"lbCImg(this,'')\">" +
+            "<input id=\"lbCfile\" type=\"file\" accept=\"image/*\" style=\"position:absolute;opacity:0;width:1px;height:1px\" onchange=\"lbCImg(this,'')\">" +
             "<input id=\"lbCn\" maxlength=\"40\" placeholder=\"Klub nomi\" value=\"" + esc(clubN) + "\" style=\"width:100%;margin-bottom:6px\">" +
             "<textarea id=\"lbCdsc\" maxlength=\"300\" placeholder=\"Tavsif (ixtiyoriy)\">" + esc(clubD) + "</textarea>" +
             "<div class=\"muted\" style=\"margin-bottom:6px\">" + (clubOpen ? "Ochiq klubga hamma darhol qo‘shiladi." : "Yopiq klubga faqat admin ruxsati bilan qo‘shiladi.") + "</div>" +

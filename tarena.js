@@ -233,7 +233,10 @@
       var R = t.regs, md3 = fin ? ['🥇', '🥈', '🥉'] : [];   // medal faqat turnir tugaganda
       ch = '<div class="taCard" style="margin-top:10px"><h4>🗺 Viloyatlar hisobi · eng yaxshi 5 o‘yinchi</h4>' + R.slice(0, 14).map(function (r, i) {
         var fmtN2 = function (n) { return String(n || 0).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); };
-        var lead = (r.cap ? '👑 ' + esc(String(r.cap.name || '').slice(0, 14)) : (r.best ? esc(String(r.best.name || '').slice(0, 14)) + ' ' + (r.best.elo || '') : '')) +
+        // eng kuchli a'zo — ismi va reytingi; kapitan bo'lsa 👑 bilan
+        var bst = r.best, isCap = !!(bst && r.cap && String(r.cap.uid) === String(bst.uid));
+        var lead = (bst ? (isCap ? '👑 ' : '') + esc(String(bst.name || '').slice(0, 14)) + (bst.elo ? ' <b style="color:#dcd2c4">' + bst.elo + '</b>' : '')
+                        : (r.cap ? '👑 ' + esc(String(r.cap.name || '').slice(0, 14)) : '')) +
           (r.rsum ? '<span style="float:right;color:#8fb0ff">⚔ ' + fmtN2(r.rsum) + '</span>' : '');
         return '<div class="taReg" data-reg="' + esc(r.r) + '" style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.09);font-size:14px">' +
           '<div style="display:flex;align-items:center;gap:8px"><span style="width:24px;text-align:center">' + (md3[i] || (i + 1)) + '</span>' + bdg(r.k, r.c) +
