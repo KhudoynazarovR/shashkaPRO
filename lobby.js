@@ -359,7 +359,7 @@ function createLobby({ send, clients, roomsApi }) {
       creatorUid: t.creatorUid, creatorName: t.creatorName, created: t.created || 0, sponsors: (t.sponsors || []).slice(-10), clubIds: t.clubIds || [], clubs: clubStandings(t),
       round: t.round, rounds: t.rounds, nextAt: t.nextAt || 0,
       players: t.flag ? arenaStandings(t).map(p => Object.assign({}, p, require('./flags.js').badge(p.uid) || {})) : (t.type === 'arena' ? arenaStandings(t) : standings(t)),
-      flag: !!t.flag, desc: t.desc || '', rec: t.rec || null, regs: t.flag ? require('./flags.js').regStandings(arenaStandings(t)).map(r => ({ r: r.r, k: r.k, c: r.c, n: r.n, score: r.score })) : [],
+      flag: !!t.flag, desc: t.desc || '', rec: t.rec || null, regs: t.flag ? require('./flags.js').regStandings(arenaStandings(t)).map(r => ({ r: r.r, k: r.k, c: r.c, n: r.n, score: r.score, best: r.best, cap: r.cap, top: (r.top || []).slice(0, 5).map(x => ({ uid: x.uid, name: x.name, score: x.score, elo: x.elo })) })) : [],
       minGames: t.minGames || 0, mix: t.mix || null,
       boards: t.cur.map(b => ({
         board: b.board, roomId: b.roomId, white: b.white, black: b.black,
@@ -2023,6 +2023,22 @@ function createLobby({ send, clients, roomsApi }) {
         if (typeof m.name === 'string' && m.name.trim()) t.name = m.name.trim().slice(0, 30);
         if (m.duration != null && t.status === 'reg') t.durationMin = Math.max(5, Math.min(600, Math.floor(Number(m.duration) || 0)));
         for (const pp of t.players.values()) if (pp.uid !== me.uid) toast(pp.uid, '✏️ ' + t.name + ' yangilandi' + (addMin ? ' · vaqt ' + (addMin > 0 ? '+' : '') + addMin + ' daqiqa' : ''));
+        push();
+        break;
+      }
+      case 'lbTCap': {   // 👑 kapitan tayinlash (admin) yoki topshirish (kapitan)
+        const F = require('./flags.js');
+        const reg = String(m.reg || ''), to = String(m.uid || '');
+        if (!reg) { err(c, 'Viloyat ko‘rsatilmagan'); break; }
+        const cur = F.capOf(reg), adm = economy.isAdmin(me.uid);
+        if (!adm && !(cur && String(cur.uid) === String(me.uid))) { err(c, 'Faqat admin tayinlaydi, kapitan esa topshira oladi'); break; }
+        if (!to) { F.setCap(reg, '', '', me.uid); toast(me.uid, '👑 ' + reg + ': kapitan olib tashlandi'); push(); break; }
+        const b = F.badge(to);
+        if (!b || b.reg !== reg) { err(c, 'Bu o‘yinchi ' + reg + ' viloyatiga tegishli emas'); break; }
+        const u = require('./store').users()[to] || {};
+        const r2 = F.setCap(reg, to, u.name || 'Kapitan', me.uid);
+        toast(to, '👑 Siz ' + reg + ' jamoasiga kapitan etib tayinlandingiz');
+        if (String(me.uid) !== to) toast(me.uid, '👑 ' + reg + ' kapitani: ' + (r2 && r2.name));
         push();
         break;
       }

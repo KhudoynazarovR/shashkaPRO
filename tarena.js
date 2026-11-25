@@ -226,12 +226,47 @@
     if (t.flag && (t.regs || []).length) {   // 🏳️ viloyatlar hisobi: eng yaxshi 5 o'yinchi
       var R = t.regs, mx = Math.max(1, R[0].score || 1), md3 = ['🥇', '🥈', '🥉'];
       ch = '<div class="taCard" style="margin-top:10px"><h4>🗺 Viloyatlar hisobi · eng yaxshi 5 o‘yinchi</h4>' + R.slice(0, 14).map(function (r, i) {
-        return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.09);font-size:14px"><span style="width:24px;text-align:center">' + (md3[i] || (i + 1)) + '</span>' + bdg(r.k, r.c) +
+        var lead = r.cap ? '👑 ' + esc(String(r.cap.name || '').slice(0, 14)) : (r.best ? esc(String(r.best.name || '').slice(0, 14)) + ' ' + (r.best.elo || '') : '');
+        return '<div class="taReg" data-reg="' + esc(r.r) + '" style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.09);font-size:14px">' +
+          '<div style="display:flex;align-items:center;gap:8px"><span style="width:24px;text-align:center">' + (md3[i] || (i + 1)) + '</span>' + bdg(r.k, r.c) +
           '<span style="width:96px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(r.r) + '</span><span style="flex:1;height:9px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden"><i style="display:block;height:100%;width:' + Math.round((r.score || 0) * 100 / mx) + '%;background:' + r.c + '"></i></span>' +
-          '<b style="min-width:30px;text-align:right">' + r.score + '</b><small style="opacity:.55;min-width:30px;text-align:right">' + r.n + ' ki.</small></div>';
+          '<b style="min-width:30px;text-align:right">' + r.score + '</b><small style="opacity:.55;min-width:30px;text-align:right">' + r.n + ' ki.</small></div>' +
+          (lead ? '<div style="margin:3px 0 0 56px;font-size:12.5px;color:var(--spMute,#b9ab98)">' + lead + '</div>' : '') + '</div>';
       }).join('') + '</div>' + ch;
     }
     g('taClubs').innerHTML = ch;
+    // 🗺 viloyat qatorini bosish: a'zolar ro'yxati va kapitan
+    Array.prototype.forEach.call(P.querySelectorAll('.taReg'), function (el) {
+      el.style.cursor = 'pointer';
+      el.onclick = function () {
+        var key = el.getAttribute('data-reg'), R2 = (t.regs || []).filter(function (x) { return x.r === key; })[0];
+        if (!R2) return;
+        var adm = !!(t.adm || window.__isAdmin), cap = R2.cap;
+        var isCap = cap && String(cap.uid) === String((window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user || {}).id || '');
+        var ov = document.createElement('div');
+        ov.style.cssText = 'position:fixed;inset:0;z-index:2147483100;background:rgba(0,0,0,.6);display:flex;align-items:flex-end';
+        var rows = (R2.top || []).map(function (x, j) {
+          return '<div style="display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid rgba(255,255,255,.08)">' +
+            '<span style="width:22px;opacity:.6">' + (j + 1) + '</span><b style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(x.name || '') + '</b>' +
+            '<small style="opacity:.6">' + (x.elo || '') + '</small><b style="min-width:34px;text-align:right;color:#f5b72b">' + (x.score || 0) + '</b>' +
+            ((adm || isCap) ? '<button data-cap="' + esc(x.uid) + '" style="border:0;border-radius:10px;padding:7px 10px;background:#3a2f66;color:#fff;font-size:12px">👑</button>' : '') + '</div>';
+        }).join('');
+        ov.innerHTML = '<div style="width:100%;max-height:86vh;overflow:auto;background:#141833;color:#fff;border-radius:20px 20px 0 0;padding:14px 14px calc(env(safe-area-inset-bottom,0px) + 14px);box-sizing:border-box">' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><b style="font-size:17px">🗺 ' + esc(key) + '</b>' +
+          '<button data-x="1" style="border:0;background:#262b5a;color:#fff;border-radius:10px;width:36px;height:36px">✕</button></div>' +
+          '<div style="font-size:13.5px;color:#b9c3f0;margin-bottom:10px">Kapitan: <b style="color:#ffd76a">' + (cap ? esc(cap.name) : 'tayinlanmagan') + '</b> · ' + (R2.n || 0) + ' o‘yinchi</div>' +
+          (rows || '<div style="opacity:.7;padding:10px 0">Hozircha o‘yinchi yo‘q</div>') +
+          ((adm && cap) ? '<button data-cap="" style="width:100%;margin-top:10px;border:0;border-radius:12px;padding:12px;background:#4a1b1b;color:#ffd9d9;font-weight:700">Kapitanni olib tashlash</button>' : '') + '</div>';
+        document.body.appendChild(ov);
+        ov.onclick = function (e) {
+          if (e.target === ov || e.target.closest('[data-x]')) { ov.remove(); return; }
+          var b2 = e.target.closest('[data-cap]'); if (!b2) return;
+          var uid2 = b2.getAttribute('data-cap');
+          if (window.lbSend) window.lbSend({ type: 'lbTCap', reg: key, uid: uid2 });
+          ov.remove();
+        };
+      };
+    });
     // sahifalash va tugma
     g('taPg').textContent = ps.length ? (page * PER + 1) + '-' + Math.min(ps.length, page * PER + PER) + ' / ' + ps.length : '0';
     var bs = P.querySelectorAll('.taBar button.n');

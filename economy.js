@@ -219,6 +219,7 @@ function handle(req, res, url) {
     });
     return true;
   }
+  if (p === '/api/caps' && req.method === 'GET') { send(res, 200, require('./flags.js').capsAll()); return true; }
   if (p === '/api/ticket') {   // 🎟 chipta: holati (GET) va sotib olish (POST)
     const _tg = verifyInitData(req.headers['x-init-data'] || '', process.env.BOT_TOKEN);
     if (!_tg) { send(res, 401, { error: 'auth' }); return true; }

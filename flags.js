@@ -20,6 +20,19 @@ function badge(uid) {
   return { rg: REG[u.region][0], rc: REG[u.region][1], rn: u.region, reg: u.region };
 }
 // viloyatlar hisobi: har viloyatning eng yaxshi 5 o'yinchisi ochkolari yig'indisi
+
+// 👑 Viloyat kapitani: adminlar tayinlaydi, kapitan boshqasiga topshira oladi
+function capStore() { const st = require('./store.js'); st.db.caps = st.db.caps || {}; return st.db.caps; }
+function capOf(reg) { const c = capStore()[String(reg)]; return c ? { uid: String(c.uid), name: c.name || '', at: c.at || 0 } : null; }
+function setCap(reg, uid, name, by) {
+  const st = require('./store.js'), caps = capStore();
+  if (!uid) delete caps[String(reg)];
+  else caps[String(reg)] = { uid: String(uid), name: String(name || '').slice(0, 32), at: Date.now(), by: String(by || '') };
+  st.save();
+  return capOf(reg);
+}
+function capsAll() { const o = capStore(), out = {}; for (const k in o) out[k] = { uid: String(o[k].uid), name: o[k].name || '' }; return out; }
+
 function regStandings(players) {
   const by = new Map();
   for (const p of players) {
@@ -31,7 +44,9 @@ function regStandings(players) {
   return [...by].map(([r, a]) => {
     a.sort((x, y) => y.score - x.score);
     const top = a.slice(0, 5);
-    return { r, k: REG[r][0], c: REG[r][1], n: a.length, score: Math.round(top.reduce((s, x) => s + x.score, 0) * 10) / 10, top };
+    const best = a.slice().sort((x, y) => (y.elo || 0) - (x.elo || 0))[0] || null;   // eng yuqori reytingli a'zo
+    return { r, k: REG[r][0], c: REG[r][1], n: a.length, score: Math.round(top.reduce((s, x) => s + x.score, 0) * 10) / 10, top,
+      best: best ? { uid: best.uid, name: best.name, elo: best.elo || 0 } : null, cap: capOf(r) };
   }).sort((x, y) => y.score - x.score || y.n - x.n);
 }
-module.exports = { REG, COUNTRIES, badge, regStandings };
+module.exports = { REG, COUNTRIES, badge, regStandings, capOf, setCap, capsAll };
