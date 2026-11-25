@@ -1106,12 +1106,12 @@ function createLobby({ send, clients, roomsApi }) {
     )).sort((a, b) => b.score - a.score || (!a.games && !b.games ? olyElo(b.uid) - olyElo(a.uid) : 0));   // lichess: birinchi tur — reytingi yaqinlar, keyin — turnirdagi o'rni yaqinlar
     const used = new Set();
     let made = false;
-    // 🏳️ viloyatlar kubogi: bir viloyat o'yinchilari o'zaro o'ynamaydi (boshqa iloj bo'lmasa — o'ynaydi)
+    // 🏳️ viloyatlar kubogi: bir viloyat o'yinchilari o'zaro umuman o'ynamaydi
     const regOf = t.flag ? (u => { try { const b = require('./flags.js').badge(u); return b ? b.reg : ''; } catch (e) { return ''; } }) : null;
     for (let i = 0; i < avail.length; i++) {
       const a = avail[i];
       if (used.has(a)) continue;
-      let pick = null, same = null;
+      let pick = null;
       const ra = regOf ? regOf(a.uid) : '';
       for (let j = i + 1; j < avail.length; j++) {
         const b = avail[j];
@@ -1119,12 +1119,10 @@ function createLobby({ send, clients, roomsApi }) {
       if (a.bot && b.bot) continue;   // bot–bot keyingi bosqichda (odamlar birinchi juftlanadi)
       const rematch = a.lastOpp === b.uid || b.lastOpp === a.uid;
         if (rematch && !(now - a.waitingSince >= ARENA_REMATCH_WAIT_MS && now - b.waitingSince >= ARENA_REMATCH_WAIT_MS)) continue;
-        if (regOf && ra && regOf(b.uid) === ra) { if (!same) same = b; continue; }   // bir viloyat — zaxiraga
+        if (regOf && ra && regOf(b.uid) === ra) continue;   // bir viloyat — hech qachon juftlanmaydi
         pick = b; break;
       }
-      // boshqa viloyatdan raqib topilmasa va kutish cho'zilsa — o'z viloyatidagi bilan juftlaymiz
-      if (!pick && same && now - a.waitingSince >= ARENA_PAIR_DELAY_MS + 8000) pick = same;
-      if (!pick) continue;
+      if (!pick) continue;   // boshqa viloyatdan raqib yo'q — kutadi
       used.add(a); used.add(pick);
       startArenaGame(t, a, pick);
       arenaDm(a, '⚔️ ' + t.name + ': yangi tur boshlandi!\nRaqibingiz: ' + String(pick.name || '').slice(0, 30) + '. U sizni kutyapti — ilovaga kirib o‘yinni boshlang.');
