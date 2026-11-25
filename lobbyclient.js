@@ -843,7 +843,8 @@
       b.onclick = function () { go(best.roomId); };
     }
 
-    var clubAll = false, clubView = null, clubOpen = true, clubImgData = "", clubN = "", clubD = "";
+    var clubAll = false, clubView = null, clubOpen = true, clubImgData = "", clubN = "", clubD = "", clubQ = "", clubBio = null;
+    window.lbCQ = function (v) { clubQ = v; clearTimeout(window.__cq); window.__cq = setTimeout(renderClubs, 250); };
     window.lbCImg = function (inp, cid) {
       var f = inp.files && inp.files[0]; if (!f) return;
       var r = new FileReader();
@@ -883,6 +884,17 @@
       else if (act === "ct") sendMsg({ type: "lbClubSet", cid: id, open: u === "1" });
       else if (act === "co") { clubOpen = !clubOpen; }
       else if (act === "cp") { var f = $(id ? "lbCfileA" : "lbCfile"); if (f) f.click(); return; }
+      else if (act === "cbio") { clubBio = id; }
+      else if (act === "cbx") { clubBio = null; }
+      else if (act === "cbs") { var ta = $("lbCbio"); sendMsg({ type: "lbClubSet", cid: id, desc: ta ? ta.value : "" }); clubBio = null; }
+      else if (act === "cc") { var ci = $("lbCch"); var tx = ci ? ci.value.trim() : ""; if (!tx) return; sendMsg({ type: "lbClubChat", cid: id, text: tx }); ci.value = ""; return; }
+      else if (act === "ccall") {   // 📣 a'zolarni turnirga chaqirish
+        var ts = (S.tournaments || []).filter(function (t) { return t.status === "reg" || (t.type === "arena" && t.status === "running"); })
+          .sort(function (a, b) { return (a.startAt || 0) - (b.startAt || 0); });
+        if (!ts.length) { alert("Hozir ochiq turnir yo‘q — avval turnir yarating"); return; }
+        sendMsg({ type: "lbClubCall", cid: id, tid: ts[0].id });
+        return;
+      }
       else if (act === "cn") { sendMsg({ type: "lbClubCreate", name: clubN, desc: clubD, open: clubOpen, img: clubImgData }); clubN = ""; clubD = ""; clubImgData = ""; clubOpen = true; }
       renderClubs();
     };
@@ -895,7 +907,7 @@
       var box = $("lbT"); if (!box) return;
       if (!document.getElementById("lbCStyle")) {
         var st = document.createElement("style"); st.id = "lbCStyle";
-        st.textContent = "#lbT.lbhide #lbTbar,#lbT.lbhide #lbTs,#lbT.lbhide #lbTform{display:none!important}.lbcl{border-radius:18px;background:#161a3a;border:1px solid rgba(255,255,255,.1);padding:14px;margin:8px 0}.lbcr{display:flex;align-items:center;gap:12px;padding:10px;margin-top:8px;border-radius:14px;background:#1e2348;cursor:pointer}.lbav2{width:44px;height:44px;border-radius:12px;background:#3a2fc9;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:18px}.lbcr .lbinf{flex:1}.lbcr .lbinf b{display:block}.lbcr .lbinf small{opacity:.7}.lbl{color:#8b7cff;cursor:pointer}.lbcm{display:flex;justify-content:space-between;align-items:center;padding:8px 2px;border-bottom:1px solid rgba(255,255,255,.07)}" + ".lbcl b,.lbcl .muted{word-break:break-word;overflow-wrap:anywhere}.lbcl textarea{width:100%;box-sizing:border-box;margin-bottom:6px;min-height:64px;resize:vertical}.lbbd{font-size:12px;padding:2px 8px;border-radius:10px;background:#2a3166;margin-left:6px}";
+        st.textContent = "#lbT.lbhide #lbTbar,#lbT.lbhide #lbTs,#lbT.lbhide #lbTform{display:none!important}.lbcl{border-radius:18px;background:#161a3a;border:1px solid rgba(255,255,255,.1);padding:14px;margin:8px 0}.lbcr{display:flex;align-items:center;gap:12px;padding:10px;margin-top:8px;border-radius:14px;background:#1e2348;cursor:pointer}.lbav2{width:44px;height:44px;border-radius:12px;background:#3a2fc9;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:18px}.lbcr .lbinf{flex:1}.lbcr .lbinf b{display:block}.lbcr .lbinf small{opacity:.7}.lbl{color:#8b7cff;cursor:pointer}.lbcm{display:flex;justify-content:space-between;align-items:center;padding:8px 2px;border-bottom:1px solid rgba(255,255,255,.07)}" + ".lbsec{font-size:11px;letter-spacing:.1em;color:#8e97bd;font-weight:800;margin:13px 2px 7px}.lbcapb{margin-top:9px;background:rgba(245,183,43,.12);border:1px solid rgba(245,183,43,.3);border-radius:12px;padding:8px 11px;font-size:14px}.lbbio{margin-top:9px;background:rgba(255,255,255,.05);border:1px dashed rgba(255,255,255,.16);border-radius:12px;padding:9px 11px;font-size:13.5px;line-height:1.45}.lbchat{background:rgba(255,255,255,.04);border-radius:12px;padding:9px;max-height:190px;overflow:auto}.lbmsg{font-size:13.5px;padding:4px 0}.lbmsg b{color:#ffd76a}"+".lbcl b,.lbcl .muted{word-break:break-word;overflow-wrap:anywhere}.lbcl textarea{width:100%;box-sizing:border-box;margin-bottom:6px;min-height:64px;resize:vertical}.lbbd{font-size:12px;padding:2px 8px;border-radius:10px;background:#2a3166;margin-left:6px}";
         document.head.appendChild(st);
       }
       var el = $("lbClubs");
@@ -907,20 +919,34 @@
       if (clubView && !cur) clubView = null;
       box.classList.toggle("lbhide", !!cur);
       if (cur) {
-        var lead = cur.leaderUid === me, adm = !!cur.isAdmin;
+        var lead = cur.leaderUid === me, adm = !!cur.isAdmin, canEd = !!cur.canEdit, isRg = /^reg_/.test(cur.id);
         h += "<div class=\"lbcl\"><div class=\"row\"><button class=\"sec\" onclick=\"lbCA('cb')\">←</button>" + cav(cur, true) +
-          "<b style=\"font-size:18px;flex:1\">" + esc(cur.name) + "</b></div>" +
-          "<div class=\"muted\" style=\"margin-top:8px\">" + (cur.open ? "🔓 Ochiq klub" : "🔒 Yopiq klub") + "</div>" +
-          (cur.desc ? "<div class=\"muted\" style=\"margin:8px 0\">" + esc(cur.desc) + "</div>" : "") +
-          "<div class=\"muted\">👑 Rahbar: " + esc(cur.leaderName) + " · " + cur.count + " a‘zo</div><div class=\"row\" style=\"margin-top:10px;flex-wrap:wrap\">";
+          "<b style=\"font-size:18px;flex:1\">" + esc(cur.name) + "</b>" +
+          (canEd ? "<button class=\"sec\" onclick=\"lbCA('cp','" + cur.id + "')\">🖼 Rasm</button><input id=\"lbCfileA\" type=\"file\" accept=\"image/*\" style=\"position:absolute;opacity:0;width:1px;height:1px\" onchange=\"lbCImg(this,'" + cur.id + "')\">" : "") + "</div>" +
+          "<div class=\"muted\" style=\"margin-top:8px\">" + (cur.open ? "🔓 Ochiq klub" : "🔒 Yopiq klub") + " · " + cur.count + " a‘zo · 🏆 " + (cur.elo || 1000) + (cur.tw ? " · 🏅 " + cur.tw + " g‘alaba" : "") + "</div>" +
+          "<div class=\"lbcapb\">👑 Kapitan: <b>" + (cur.cap && cur.cap.name ? esc(cur.cap.name) : "—") + "</b>" + (!cur.cap ? " <span class=\"muted\">" + (isRg ? "(adminlar tayinlaydi)" : "") + "</span>" : "") + "</div>";
+        if (clubBio === cur.id) {
+          h += "<textarea id=\"lbCbio\" maxlength=\"300\" placeholder=\"Klub haqida: mashg‘ulot vaqti, qoidalar, maqsad…\">" + esc(cur.desc || "") + "</textarea>" +
+            "<div class=\"row\"><button onclick=\"lbCA('cbs','" + cur.id + "')\">Saqlash</button><button class=\"sec\" onclick=\"lbCA('cbx')\">Bekor</button></div>";
+        } else {
+          h += "<div class=\"lbbio\">" + (cur.desc ? esc(cur.desc) : "<span class=\"muted\">Klub haqida hali yozilmagan</span>") +
+            (canEd ? " <span class=\"lbl\" onclick=\"lbCA('cbio','" + cur.id + "')\">✏️ tahrirlash</span>" : "") + "</div>";
+        }
+        h += "<div class=\"row\" style=\"margin-top:10px;flex-wrap:wrap\">";
         if (cur.joined) h += "<button class=\"sec\" onclick=\"lbCA('cl','" + cur.id + "')\">Chiqish</button>";
         else if (cur.requested) h += "<button class=\"sec\" disabled>So‘rov yuborildi ⏳</button>";
         else h += "<button onclick=\"lbCA('cj','" + cur.id + "')\">" + (cur.open ? "Qo‘shilish" : "So‘rov yuborish") + "</button>";
-        if (adm) h += "<button class=\"sec\" onclick=\"lbCA('cp','" + cur.id + "')\">🖼 Rasm</button>" +
-          "<button class=\"sec\" onclick=\"lbCA('ct','" + cur.id + "','" + (cur.open ? "0" : "1") + "')\">" + (cur.open ? "🔒 Yopiq qilish" : "🔓 Ochiq qilish") + "</button>" +
-          "<input id=\"lbCfileA\" type=\"file\" accept=\"image/*\" style=\"position:absolute;opacity:0;width:1px;height:1px\" onchange=\"lbCImg(this,'" + cur.id + "')\">";
-        if (lead) h += "<button class=\"red\" onclick=\"lbCA('cd','" + cur.id + "')\">Klubni yopish</button>";
+        if (canEd) h += "<button onclick=\"lbCA('ccall','" + cur.id + "')\">📣 A‘zolarni chaqirish</button>";
+        if (adm && !isRg) h += "<button class=\"sec\" onclick=\"lbCA('ct','" + cur.id + "','" + (cur.open ? "0" : "1") + "')\">" + (cur.open ? "🔒 Yopiq qilish" : "🔓 Ochiq qilish") + "</button>";
+        if (lead && !isRg) h += "<button class=\"red\" onclick=\"lbCA('cd','" + cur.id + "')\">🗑 Klubni yopish</button>";
         h += "</div>";
+        if (cur.joined) {   // 💬 klub chati
+          var ch = cur.chat || [];
+          h += "<div class=\"lbsec\">💬 KLUB CHATI</div><div class=\"lbchat\" id=\"lbCchBox\">";
+          if (!ch.length) h += "<div class=\"muted\">Hali xabar yo‘q — birinchi bo‘lib yozing</div>";
+          ch.forEach(function (x) { h += "<div class=\"lbmsg\"><b>" + esc(x.name) + ":</b> " + esc(x.text) + "</div>"; });
+          h += "</div><div class=\"row\" style=\"margin-top:7px\"><input id=\"lbCch\" maxlength=\"300\" placeholder=\"Xabar yozing…\" style=\"flex:1\" onkeydown=\"if(event.key==='Enter')lbCA('cc','" + cur.id + "')\"><button onclick=\"lbCA('cc','" + cur.id + "')\">➤</button></div>";
+        }
         if (adm && cur.pend && cur.pend.length) {
           h += "<div style=\"margin-top:12px\"><b>📩 Qo‘shilish so‘rovlari (" + cur.pend.length + ")</b>";
           cur.pend.forEach(function (p) {
@@ -928,22 +954,27 @@
           });
           h += "</div>";
         }
-        h += "<div style=\"margin-top:10px\">";
+        h += "<div class=\"lbsec\">👥 A‘ZOLAR · " + cur.count + "</div><div>";
         cur.members.forEach(function (m) {
-          var isL = m.uid === cur.leaderUid;
-          h += "<div class=\"lbcm\"><span>" + (isL ? "👑 " : (m.admin ? "⭐ " : "")) + esc(m.name) + (m.uid === me ? " 👈" : "") + "</span><span>" +
+          var isL = String(m.uid) === String(cur.leaderUid), isC = !!(cur.cap && String(cur.cap.uid) === String(m.uid));
+          h += "<div class=\"lbcm\"><span>" + (isC ? "👑 " : (m.admin ? "⭐ " : "")) + esc(m.name) + (String(m.uid) === String(me) ? " 👈" : "") + (m.elo ? " <b style=\"color:#f5b72b\">" + m.elo + "</b>" : "") + "</span><span>" +
             (lead && !isL ? "<button class=\"sec\" onclick=\"lbCA('cm','" + cur.id + "','" + esc(m.uid) + "')\">" + (m.admin ? "⭐✕" : "⭐") + "</button> " : "") +
-            (adm && m.uid !== me && !isL && (lead || !m.admin) ? "<button class=\"sec\" onclick=\"lbCA('ck','" + cur.id + "','" + esc(m.uid) + "')\">✕</button>" : "") + "</span></div>";
+            (adm && String(m.uid) !== String(me) && !isL && (lead || !m.admin) ? "<button class=\"sec\" onclick=\"lbCA('ck','" + cur.id + "','" + esc(m.uid) + "')\">✕</button>" : "") + "</span></div>";
         });
         h += "</div></div>";
       } else {
-        var shown = clubAll ? cs : cs.slice(0, 3);
-        h += "<div class=\"lbcl\"><div class=\"row\" style=\"justify-content:space-between\"><b>👥 Klublarga qo‘shiling</b><span class=\"lbl\" onclick=\"lbCA('ca')\">" + (clubAll ? "Yopish" : "Barcha klublar ›") + "</span></div>" +
-          "<div class=\"muted\" style=\"margin-top:6px\">Klub safida o‘ynang va turnirlarda birga qatnashing.</div>";
-        if (!shown.length) h += "<div class=\"muted\" style=\"margin-top:10px\">Hozircha klub yo‘q. Birinchi bo‘lib oching!</div>";
-        shown.forEach(function (c) {
-          h += "<div class=\"lbcr\" onclick=\"lbCA('cv','" + c.id + "')\">" + cav(c, false) + "<div class=\"lbinf\"><b>" + esc(c.name) + "</b><small>" + (c.open ? "🔓 Ochiq" : "🔒 Taklif bilan") + " · " + c.count + " a‘zo" + (c.joined ? " · <span style=\"color:#86efac;font-weight:700\">✓ A‘zosiz</span>" : (c.requested ? " · ⏳ so‘rov yuborilgan" : "")) + "</small></div><span>›</span></div>";
-        });
+        var q = (clubQ || "").toLowerCase();
+        var all = cs.filter(function (c) { return !q || c.name.toLowerCase().indexOf(q) >= 0; });
+        var regs = all.filter(function (c) { return /^reg_/.test(c.id); });
+        var oth = all.filter(function (c) { return !/^reg_/.test(c.id); });
+        h += "<div class=\"lbcl\"><div class=\"row\" style=\"justify-content:space-between\"><b>👥 Klublar</b><span class=\"lbl\" onclick=\"lbCA('ca')\">" + (clubAll ? "Yopish" : "➕ Klub ochish") + "</span></div>" +
+          "<input id=\"lbCq\" placeholder=\"🔍 Klub qidirish…\" value=\"" + esc(clubQ || "") + "\" oninput=\"lbCQ(this.value)\" style=\"width:100%;margin-top:8px\">";
+        function rowOf(c) {
+          return "<div class=\"lbcr\" onclick=\"lbCA('cv','" + c.id + "')\">" + cav(c, false) + "<div class=\"lbinf\"><b>" + esc(c.name) + "</b><small>" + (c.open ? "🔓 Ochiq" : "🔒 Taklif bilan") + " · " + c.count + " a‘zo" + (c.joined ? " · <span style=\"color:#86efac;font-weight:700\">✓ a‘zosiz</span>" : (c.requested ? " · ⏳ so‘rov yuborilgan" : "")) + "</small></div><b style=\"color:#f5b72b\">" + (c.elo || 1000) + "</b><span>›</span></div>";
+        }
+        if (regs.length) { h += "<div class=\"lbsec\">🏳️ VILOYAT JAMOALARI</div>"; regs.forEach(function (c) { h += rowOf(c); }); }
+        if (oth.length) { h += "<div class=\"lbsec\">👥 KLUBLAR</div>"; oth.forEach(function (c) { h += rowOf(c); }); }
+        if (!all.length) h += "<div class=\"muted\" style=\"margin-top:10px\">Topilmadi</div>";
         if (clubAll) {
           h += "<div style=\"margin-top:12px\"><div class=\"row\" style=\"margin-bottom:6px\">" + (clubImgData ? cav({ img: clubImgData }, true) : "") +
             "<button class=\"sec\" onclick=\"lbCA('cp','')\">🖼 Klub rasmi</button>" +

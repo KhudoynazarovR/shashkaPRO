@@ -222,6 +222,7 @@ function createLobby({ send, clients, roomsApi }) {
   const tblOf = uid => [...tables.values()].find(t => t.host.uid === uid || (t.guest && t.guest.uid === uid));
   const pubTbl = t => ({ id: t.id, no: t.no, host: t.host, guest: t.guest, tc: t.tc, stake: t.stake, pos: t.pos, minElo: t.minElo, ready: Object.keys(t.ready), playing: !!t.playing, roomId: t.roomId || null, games: t.games });
   const tournaments = new Map(); // tid -> t
+  const callAt = new Map();      // 📣 klub chaqirig'i: cid -> oxirgi vaqt (10 daqiqada bir marta)
   global.__tRunning = () => { for (const t of tournaments.values()) if (t.status === 'running') return true; return false; };   // 🌐 lidraughts: turnir paytida yangi chaqiruv yo'q
   // ---- Turnirlarni faylga saqlash (qayta ishga tushganda yo'qolmasligi uchun) ----
   const T_FILE = path.join(__dirname, 'tournaments.json');
@@ -1952,7 +1953,7 @@ function createLobby({ send, clients, roomsApi }) {
         push();
         break;
       }
-      case 'lbClubCreate': case 'lbClubJoin': case 'lbClubLeave': case 'lbClubKick': case 'lbClubDisband': case 'lbClubAccept': case 'lbClubReject': case 'lbClubAdmin': case 'lbClubSet': case 'lbClubImg': {
+      case 'lbClubCreate': case 'lbClubJoin': case 'lbClubLeave': case 'lbClubKick': case 'lbClubDisband': case 'lbClubAccept': case 'lbClubReject': case 'lbClubAdmin': case 'lbClubSet': case 'lbClubImg': case 'lbClubChat': {
         const r = clubsApi.act(me, m);
         if (r && r.error) err(c, r.error);
         push();
@@ -2066,6 +2067,25 @@ function createLobby({ send, clients, roomsApi }) {
           if (t.startAt && t.type === 'arena') t.endAt = t.startAt + (t.durationMin || 30) * 60000;
         }
         for (const pp of t.players.values()) if (pp.uid !== me.uid) toast(pp.uid, '✏️ ' + t.name + ' yangilandi' + (addMin ? ' · vaqt ' + (addMin > 0 ? '+' : '') + addMin + ' daqiqa' : ''));
+        push();
+        break;
+      }
+      case 'lbClubCall': {   // 📣 kapitan klub a'zolarini turnirga chaqiradi
+        const cl = (clubsApi.list(me.uid) || []).filter(x => String(x.id) === String(m.cid))[0];
+        if (!cl) { err(c, 'Klub topilmadi'); break; }
+        if (!cl.canEdit) { err(c, 'Faqat klub kapitani chaqira oladi'); break; }
+        const t0 = tournaments.get(String(m.tid));
+        if (!t0 || t0.status === 'finished') { err(c, 'Turnir topilmadi'); break; }
+        const last = (callAt.get(String(m.cid)) || 0);
+        if (Date.now() - last < 10 * 60000) { err(c, 'Chaqiriq 10 daqiqada bir marta yuboriladi'); break; }
+        callAt.set(String(m.cid), Date.now());
+        let n = 0;
+        for (const mb of (cl.members || [])) {
+          if (String(mb.uid) === String(me.uid) || !/^\d+$/.test(String(mb.uid))) continue;
+          if (t0.players.has(String(mb.uid))) continue;
+          toast(mb.uid, '📣 ' + cl.name + ': kapitan sizni turnirga chaqirdi — ' + t0.name); n++;
+        }
+        toast(me.uid, '📣 Chaqiriq yuborildi: ' + n + ' a‘zoga');
         push();
         break;
       }

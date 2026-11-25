@@ -83,6 +83,21 @@ function ensureRegions() {
   }
 }
 function regOfUser(uid) { try { const b = require('./flags.js').badge(uid); return b ? b.reg : ''; } catch (e) { return ''; } }
+const isReg = c => !!c && String(c.id).indexOf(REG_PRE) === 0;
+// 👑 kapitan: oddiy klubda — rahbar, viloyat klubida — adminlar tayinlagan kapitan
+function capOfClub(c) {
+  if (!c) return null;
+  if (isReg(c)) { try { const k = require('./flags.js').capOf(c.reg); return k ? { uid: String(k.uid), name: k.name || '', at: k.at || 0 } : null; } catch (e) { return null; } }
+  return { uid: String(c.leaderUid), name: c.leaderName || '', at: c.created || 0 };
+}
+function eloOfUser(u) { try { const x = (require('./store.js').users() || {})[String(u)]; return x ? (Number(x.elo) || 0) : 0; } catch (e) { return 0; } }
+const isCap = (c, uid) => { const k = capOfClub(c); return !!k && String(k.uid) === String(uid); };
+// 💬 klub chati — oxirgi 60 xabar
+function chatPush(c, uid, name, text) {
+  c.chat = c.chat || [];
+  c.chat.push({ id: crypto.randomBytes(3).toString('hex'), uid: String(uid), name: String(name || '').slice(0, 24), text: String(text || '').replace(/[\u0000-\u001f<>]/g, ' ').trim().slice(0, 300), at: Date.now() });
+  if (c.chat.length > 60) c.chat = c.chat.slice(-60);
+}
 
 function list(uid) {
   ensureSys(); ensureRegions();
@@ -92,8 +107,10 @@ function list(uid) {
       id: c.id, name: c.name, desc: c.desc, leaderUid: c.leaderUid, leaderName: c.leaderName,
       count: c.members.size, joined: c.members.has(uid), open: c.open, img: c.img,
       isAdmin: adm, requested: c.pending.has(uid), pts: c.pts || 0, tw: c.tw || 0, elo: c.elo || 1000, tn: c.tn || 0, reg: c.reg || '',
+      cap: capOfClub(c), canEdit: isCap(c, uid) || (isReg(c) && isEnvAdm(uid)) || (!isReg(c) && String(c.leaderUid) === String(uid)),
+      chat: c.members.has(uid) ? (c.chat || []).slice(-30) : [],
       pend: adm ? [...c.pending].slice(0, 50).map(([u, n]) => ({ uid: u, name: n })) : [],
-      members: [...c.members].slice(0, 30).map(([u, n]) => ({ uid: u, name: n, admin: c.admins.has(u) }))
+      members: [...c.members].slice(0, 30).map(([u, n]) => ({ uid: u, name: n, admin: c.admins.has(u), elo: eloOfUser(u) }))
     };
   });
 }
@@ -105,7 +122,9 @@ function act(me, m) {
   const adm = (c && c.admins.has(uid)) || sysAdm;
   if (c && c.id === SYS && !(sysAdm && m.type === 'lbClubImg')) return { error: 'Botlar klubi — tizim klubi, uni o‘zgartirib bo‘lmaydi' };
   if (c && String(c.id).indexOf(REG_PRE) === 0) {   // 🏳️ viloyat klubi: faqat kirish/chiqish, rasmni admin qo'yadi
-    const ok = m.type === 'lbClubJoin' || m.type === 'lbClubLeave' || (isEnvAdm(uid) && m.type === 'lbClubImg');
+    const capOk = isCap(c, uid) || isEnvAdm(uid);
+    const ok = m.type === 'lbClubJoin' || m.type === 'lbClubLeave' || m.type === 'lbClubChat'
+      || (capOk && (m.type === 'lbClubImg' || m.type === 'lbClubSet'));
     if (!ok) return { error: 'Viloyat klubi — tizim klubi, uni o‘zgartirib bo‘lmaydi' };
     if (m.type === 'lbClubJoin') {
       const r = regOfUser(uid);
@@ -172,11 +191,23 @@ function act(me, m) {
       save(); return { ok: 1 };
     }
     case 'lbClubSet': {
-      if (!adm) return { error: 'Faqat klub adminlari' };
-      c.open = !!m.open; save(); return { ok: 1 };
+      if (!adm && !isCap(c, uid) && !(isReg(c) && isEnvAdm(uid))) return { error: 'Faqat klub adminlari' };
+      if (typeof m.desc === 'string') c.desc = clean(m.desc, 300);                       // 📝 klub haqida — kapitan yozadi
+      if (typeof m.name === 'string' && !isReg(c) && String(c.leaderUid) === String(uid)) {
+        const nm2 = clean(m.name, 40);
+        if (nm2.length >= 3 && ![...clubs.values()].some(x => x.id !== c.id && x.name.toLowerCase() === nm2.toLowerCase())) c.name = nm2;
+      }
+      if (m.open != null && !isReg(c)) c.open = !!m.open;
+      save(); return { ok: 1 };
+    }
+    case 'lbClubChat': {                                                                  // 💬 klub chati
+      if (!c || !c.members.has(uid)) return { error: 'Avval klubga qo‘shiling' };
+      const tx = String(m.text || '').trim();
+      if (!tx) return { ok: 1 };
+      chatPush(c, uid, name, tx); save(); return { ok: 1 };
     }
     case 'lbClubImg': {
-      if (!adm) return { error: 'Rasmni faqat admin qo‘ya oladi' };
+      if (!adm && !isCap(c, uid) && !(isReg(c) && isEnvAdm(uid))) return { error: 'Rasmni faqat kapitan qo‘ya oladi' };
       if (!okImg(m.img)) return { error: 'Rasm noto‘g‘ri yoki juda katta' };
       c.img = m.img; save(); return { ok: 1 };
     }
