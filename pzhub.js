@@ -5,19 +5,21 @@
     if (document.getElementById('pzhCss')) return;
     var s = document.createElement('style'); s.id = 'pzhCss';
     s.textContent =
-      '.pzh{margin:-14px;padding:12px 14px 20px;min-height:calc(100vh - 64px);box-sizing:border-box;text-align:left;color:#fff;font-family:inherit;' +
+      '.pzh{margin:-14px;padding:0 14px 20px;min-height:calc(100vh - 64px);box-sizing:border-box;text-align:left;color:#fff;font-family:inherit;' +
       'background:radial-gradient(120% 60% at 50% 0%,#1c4a2c 0%,#0f2a1d 45%,#0a1410 100%)}' +
-      '.pzhTop{display:flex;align-items:center;justify-content:space-between;gap:8px}' +
-      '.pzhBack{width:44px;height:44px;border-radius:12px;border:2px solid #d9a441;background:linear-gradient(#5a3519,#33200f);color:#ffd77a;font-size:24px;font-weight:700;line-height:1;padding:0;box-shadow:0 3px 0 #1c1007}' +
-      '.pzhMu{width:44px;height:44px;border-radius:12px;border:2px solid #d9a441;background:linear-gradient(#3b2610,#22150a);font-size:20px;line-height:1;padding:0;color:#ffe9a8;box-shadow:0 3px 0 #1c1007}.pzhMu.off{opacity:.55}' +
-      '.pzhCoin{min-width:84px;height:38px;border-radius:19px;border:2px solid #d9a441;background:linear-gradient(#3b2610,#22150a);color:#ffe9a8;font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;gap:6px;padding:0 12px;box-shadow:0 3px 0 #1c1007}' +
+      '.pzhHead{position:relative;margin:0 -14px 12px;overflow:hidden}' +
+      '.pzhHead:after{content:"";position:absolute;left:0;right:0;top:0;height:64px;background:linear-gradient(rgba(6,14,9,.55),rgba(6,14,9,0));pointer-events:none}' +
+      '.pzhTop{position:absolute;left:10px;right:10px;top:8px;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:8px}' +
+      '.pzhBack{width:36px;height:36px;border-radius:50%;border:1.5px solid rgba(217,164,65,.8);background:rgba(14,22,16,.52);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:#ffd77a;font-size:20px;font-weight:700;line-height:1;padding:0;box-shadow:0 2px 6px rgba(0,0,0,.45)}' +
+      '.pzhMu{width:36px;height:36px;border-radius:50%;border:1.5px solid rgba(217,164,65,.8);background:rgba(14,22,16,.52);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);font-size:17px;line-height:1;padding:0;color:#ffe9a8;box-shadow:0 2px 6px rgba(0,0,0,.45)}.pzhMu.off{opacity:.55}' +
+      '.pzhCoin{position:absolute;right:10px;bottom:10px;z-index:2;height:34px;border-radius:17px;border:1.5px solid rgba(217,164,65,.8);background:rgba(14,22,16,.52);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:#ffe9a8;font-weight:800;font-size:15px;display:flex;align-items:center;gap:5px;padding:0 11px;box-shadow:0 2px 6px rgba(0,0,0,.45)}' +
       '.pzhPlaque{margin:2px auto 0;max-width:290px;text-align:center;padding:8px 18px 9px;border-radius:16px;border:3px solid #d9a441;position:relative;' +
       'background:linear-gradient(#7b4a22,#4a2a12);box-shadow:0 5px 0 #24140a,0 0 0 2px #2b180a inset}' +
       '.pzhPlaque .cr{position:absolute;left:50%;top:-17px;transform:translateX(-50%);font-size:26px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5))}' +
       '.pzhPlaque b{display:block;font-family:Georgia,"Times New Roman",serif;font-size:32px;line-height:1.1;font-weight:800;margin-top:6px;' +
       'background:linear-gradient(#fff4c4,#f2b83c);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none}' +
       '.pzhPlaque i{display:block;font-size:13px;color:#ffe3a6;margin-top:2px;opacity:.95}' +
-      '.pzhBan{display:block;width:100%;height:auto;border-radius:16px;margin:12px 0 10px;border:2px solid rgba(217,164,65,.55);box-shadow:0 6px 16px rgba(0,0,0,.45)}' +
+      '.pzhBan{display:block;width:100%;height:auto;margin:0;border:0;border-radius:0}' +
       '.pzhList{display:flex;flex-direction:column;gap:10px}' +
       '.pzhCard{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px 9px 9px;border-radius:18px;border:2px solid var(--bd);color:#fff;text-align:left;cursor:pointer;' +
       'background:linear-gradient(100deg,var(--c1),var(--c2));box-shadow:0 4px 0 var(--sh),0 6px 14px rgba(0,0,0,.35);font-family:inherit;-webkit-tap-highlight-color:transparent;position:relative;overflow:hidden}' +
@@ -178,8 +180,9 @@
   window.pzHub = function (ctx) {
     css();
     var ov = ctx.ov, coin = coinText(ctx), h = '';
-    h += '<div class="pzh"><div class="pzhTop"><span style="display:flex;gap:8px"><button id="pzBack" class="pzhBack" aria-label="Orqaga">‹</button><button id="pzhMu" class="pzhMu" aria-label="Musiqa">' + (muted() ? '🔇' : '🎵') + '</button><button id="pzhSk" class="pzhMu" aria-label="Doska va toshlar">🎨</button></span>' +
-      (coin != null ? '<div class="pzhCoin"><span>🪙</span><span>' + coin + '</span></div>' : '<span></span>') + '</div>';
+    h += '<div class="pzh"><div class="pzhHead"><img class="pzhBan" alt="" src="' + IMG.banner + '">' +   // 🖼 sandiqli rasm tepaga yopishadi, tugmalar uning ustida
+      '<div class="pzhTop"><span style="display:flex;gap:8px"><button id="pzBack" class="pzhBack" aria-label="Orqaga">‹</button><button id="pzhMu" class="pzhMu" aria-label="Musiqa">' + (muted() ? '🔇' : '🎵') + '</button><button id="pzhSk" class="pzhMu" aria-label="Doska va toshlar">🎨</button></span>' +
+      '</div>' + (coin != null ? '<div class="pzhCoin"><span>🪙</span><span>' + coin + '</span></div>' : '') + '</div>';   // 🪙 rasmning pastki o'ng burchagida — yozuvni to'smaydi
     h += '<div class="pzhList">';
     CARDS.forEach(function (c) {
       h += '<button class="pzhCard" data-pzh="' + c.k + '" style="--c1:' + c.c1 + ';--c2:' + c.c2 + ';--bd:' + c.bd + ';--sh:' + c.sh + '">' +
