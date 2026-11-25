@@ -344,7 +344,7 @@
       ];
       window.addEventListener("spEq", function () { try { render(); } catch (e) {} });
       window.addEventListener("spPrem", function () { try { rcmApply(); } catch (e) {} });
-      var rcm = { night: false, sound: true, flat: false, board: -1, pieces: -1, auto: false, autoPro: false, chat: true };
+      var rcm = { night: false, sound: true, flat: false, board: -1, pieces: -1, auto: false, autoPro: false, tapTo: true, drag: true, chat: true };
       try { var rcmSv = JSON.parse(localStorage.getItem(RCM_KEY) || "{}"); for (var rcmK in rcmSv) rcm[rcmK] = rcmSv[rcmK]; } catch (e) {}
       function rcmSave() { try { localStorage.setItem(RCM_KEY, JSON.stringify(rcm)); } catch (e) {} }
       // hamma uchun asosiy doska — «Yog‘och» (tekis klassik ranglar) va odatiy donalar; o'zi boshqa doska tanlaganlarniki o'zgarmaydi
@@ -576,6 +576,8 @@
         var T = [
           ["night", "🌙 Tungi rejim", ""], ["sound", "🔊 Ovoz", ""], ["flat", "◐ Oddiy toshlar", ""],
           ["auto", "⚡ Avtohod", "1 ta yurish yoki urish davomi bo‘lsa, o‘zi yuradi"],
+          ["tapTo", "🎯 Katakni bosib yurish", "Donani tanlamasdan borish katagini bossangiz, o‘sha yerga bora oladigan dona yuradi"],
+          ["drag", "✋ Sudrab yurish", "Donani barmoq bilan sudrab tashlash"],
           
           ["chat", "💬 Chat", ""]
         ];
@@ -1421,19 +1423,28 @@
           if (lastMv && lastMv.from && lastMv.to &&
               ((lastMv.from.r === r && lastMv.from.c === c) || (lastMv.to.r === r && lastMv.to.c === c))) cell.classList.add("lm");
           if (st.selected && st.selected.r === r && st.selected.c === c) cell.classList.add("sel");
-          if (st.cand) for (var ci = 0; ci < st.cand.length; ci++) if (st.cand[ci].r === r && st.cand[ci].c === c) cell.classList.add("cand");   // 🎯 shu katakka bora oladigan donalar if (st.pre && ((st.pre.from.r === r && st.pre.from.c === c) || (st.pre.to && st.pre.to.r === r && st.pre.to.c === c))) cell.classList.add("pre");
+          if (st.cand) for (var ci = 0; ci < st.cand.length; ci++) if (st.cand[ci].r === r && st.cand[ci].c === c) cell.classList.add("cand");   // 🎯 shu katakka bora oladigan donalar
+          if (st.pre && ((st.pre.from.r === r && st.pre.from.c === c) || (st.pre.to && st.pre.to.r === r && st.pre.to.c === c))) cell.classList.add("pre");
           for (var k = 0; k < opts.length; k++) {
             if (opts[k].to.r === r && opts[k].to.c === c) cell.classList.add(opts[k].captures.length ? "cp" : "tg");
           }
           var p = st.board[r][c];
           if (p) cell.appendChild(rcPieceEl(p));
+          if (st.pre && st.pre.to && st.pre.to.r === r && st.pre.to.c === c) { var pg = document.createElement("div"); pg.className = "preGhost"; cell.appendChild(pg); }   // ⏳ oldindan yurish qayerga tushishi
           elBoard.appendChild(cell);
         }
       }
 
       if (st.anim) { var _A = st.anim; st.anim = null; try { rcAnim(_A); } catch (e) {} }
       try { spSpecUI(); spDgArrows(); } catch (e) {}   // 👁 tomoshabin: tepa qator, Dragon kartasi va strelkalar
-      if (!document.getElementById("rcPreCss")) { var pcs = document.createElement("style"); pcs.id = "rcPreCss"; pcs.textContent = ".cell.cand{box-shadow:inset 0 0 0 4px #ffd76a!important}.rcDragGhost{position:fixed;z-index:2147483000;pointer-events:none;transform:translate(-50%,-50%);opacity:.9;filter:drop-shadow(0 6px 10px rgba(0,0,0,.5))}.cell.pre{box-shadow:inset 0 0 0 4px #4aa3ff!important}body.rcPlaying #rcZal{display:none!important}"; document.head.appendChild(pcs); }
+      if (!document.getElementById("rcPreCss")) { var pcs = document.createElement("style"); pcs.id = "rcPreCss"; pcs.textContent = ".cell.cand{box-shadow:inset 0 0 0 4px #ffd76a!important}" +
+        ".rcDragGhost{position:fixed;z-index:2147483000;pointer-events:none;transform:translate(-50%,-50%) scale(1.15);opacity:.95;filter:drop-shadow(0 8px 12px rgba(0,0,0,.55))}" +
+        ".cell.dhov{box-shadow:inset 0 0 0 5px #7dd3fc!important}" +                                  /* sudrayotganda barmoq ostidagi katak */
+        ".cell.pre{box-shadow:inset 0 0 0 100px rgba(74,163,255,.28),inset 0 0 0 4px #4aa3ff!important;animation:rcPre 1.2s ease-in-out infinite}" +
+        "@keyframes rcPre{50%{box-shadow:inset 0 0 0 100px rgba(74,163,255,.14),inset 0 0 0 4px #9ed0ff}}" +
+        ".preGhost{position:absolute;left:10%;top:10%;width:80%;height:80%;border-radius:50%;opacity:.45;pointer-events:none;border:2px dashed #cfe8ff}" +   /* oldindan yurishning borish nuqtasi */
+        ".rcPreTip{position:absolute;left:50%;transform:translateX(-50%);bottom:6px;z-index:5;background:rgba(10,20,40,.82);color:#cfe8ff;border:1px solid #4aa3ff;border-radius:999px;padding:3px 10px;font:700 13px system-ui;pointer-events:none}" +
+        "@media(prefers-reduced-motion:reduce){.cell.pre{animation:none}}" + "body.rcPlaying #rcZal{display:none!important}"; document.head.appendChild(pcs); }
       if (st.pre && st.finished) st.pre = null;
       if (st.pre && st.pre.to && st.turn === st.color && !st.pending && !st.forced && !st.finished && !botBusy) {
         var pm = st.pre; st.pre = null;
@@ -1558,12 +1569,14 @@
     function dragEnd(ok) {
       if (drag.ghost) { try { drag.ghost.remove(); } catch (e) {} }
       if (drag.src) { try { drag.src.style.visibility = ""; } catch (e) {} }
-      drag.on = false; drag.ghost = null; drag.src = null; drag.from = null;
+      var ph = elBoard.querySelector(".cell.dhov"); if (ph) ph.classList.remove("dhov");
+      drag.on = false; drag.ghost = null; drag.src = null; drag.from = null; drag.hov = "";
       try { elBoard.style.touchAction = "manipulation"; } catch (e) {}
       if (ok) drag.blockClick = Date.now();
     }
     elBoard.addEventListener("pointerdown", function (e) {
       if (e.button != null && e.button !== 0) return;
+      if (typeof rcm !== "undefined" && rcm.drag === false) return;   // ✋ sudrab yurish o'chirilgan
       if (!st.joined || st.finished || st.pending || st.color === "spectator" || st.turn !== st.color) return;
       var cell = e.target.closest(".cell"); if (!cell) return;
       var r = Number(cell.dataset.r), c = Number(cell.dataset.c);
@@ -1592,6 +1605,12 @@
         }
       }
       if (drag.ghost) { drag.ghost.style.left = e.clientX + "px"; drag.ghost.style.top = e.clientY + "px"; }
+      var hc = cellAt(e.clientX, e.clientY), hk = hc ? hc.r + "," + hc.c : "";
+      if (hk !== drag.hov) {
+        drag.hov = hk;
+        var prev = elBoard.querySelector(".cell.dhov"); if (prev) prev.classList.remove("dhov");
+        if (hc) { var he = elBoard.querySelector('.cell[data-r="' + hc.r + '"][data-c="' + hc.c + '"]'); if (he) he.classList.add("dhov"); }
+      }
       e.preventDefault();
     }, true);
     elBoard.addEventListener("pointerup", function (e) {
@@ -1631,7 +1650,7 @@
       for (var j = 0; j < o.length; j++) if (o[j].to.r === r && o[j].to.c === c) mv = o[j];
       if (mv) { st.cand = null; sendMove(mv); return; }
       // 🎯 dona tanlanmagan bo'lsa ham: bo'sh katakni bossangiz, o'sha yerga bora oladigan dona yuradi
-      if (!p) {
+      if (!p && (typeof rcm === "undefined" || rcm.tapTo !== false)) {
         var cn = movesTo(r, c);
         if (cn.length === 1) { st.cand = null; st.selected = { r: cn[0].from.r, c: cn[0].from.c }; sendMove(cn[0]); return; }
         if (cn.length > 1) { st.selected = null; st.cand = cn.map(function (x) { return x.from; }); render(); return; }   // bir nechta dona bora oladi — tanlang
