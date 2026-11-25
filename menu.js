@@ -746,7 +746,7 @@
     on('#pzBack', close);
     api('/api/puzzles').then(function (d) {
       if (d.error) { ov.innerHTML = head('🧩 Masalalar') + '<div style="padding:30px">Telegram orqali kiring</div>'; on('#pzBack', close); return; }
-      if (d.etl) { d.etl.forEach(function (a) { var b = blank(), k = 0, r, c; for (r = 0; r < 8; r++) for (c = 0; c < 8; c++) { if ((r + c) % 2 !== 1) continue; var ch = a[3].charAt(k++); b[r][c] = ch === 'w' ? 1 : ch === 'b' ? 2 : ch === 'W' ? 3 : ch === 'B' ? 4 : 0; } d.list.push({ id: 'et' + a[0], no: a[1], level: a[2], side: 'w', board: b, title: ((d.etp || {})[a[0].split('-')[0]] || 'Etyud') + ' ' + a[1] + (a[4] ? ' · ' + a[4] : ''), folder: (d.etf || {})[a[0].split('-')[0]] || 'Etyudlar · ' + a[0].split('-')[0] + '-kitob', et: 1, cnt: a[5] || 0 }); }); delete d.etl; }   // ♔ etyudlar (5 kitob)
+      delete d.etl;   // ♔ etyudlar bo'limi olib tashlandi
       S = d; var _pid = pending; pending = null; var _pz = _pid && S.list.filter(function (x) { return x.id === _pid; })[0]; if (_pz) play(_pz); else list();
     }).catch(function () { ov.innerHTML = head('🧩 Masalalar') + '<div style="padding:30px">Server bilan aloqa yo‘q</div>'; on('#pzBack', close); });
   }
@@ -881,7 +881,8 @@
       all = all.filter(function (x) { return x.arr.length || S.admin; });
       var solvedN = (S.solved || []).length, AD = S.admin && !userView();   // AD: admin ko‘rinishi («Foydalanuvchi ko‘rinishi»da o‘yinchi nima ko‘rsa, shu)
       var RR = ranks(), DR = drRank(), BK = pzBooks();
-      if (shelf !== 'e' && shelf !== 'f') shelf = '';
+      if (shelf === 'e') { shelf = ''; try { localStorage.setItem('pzShelf', ''); } catch (e) {} }   // ♔ etyudlar bo'limi yo'q
+      if (shelf !== 'f') shelf = '';
       if (shelf === 'f' && !AD) shelf = '';
       // daraja qulflari umumiy holati (3-darajadan keyingilar): hammasi ochiq / hammasi qulf / oddiy qoida
       var gK = RR.slice(1).map(function (r) { return (S.bookAll || {})[r.key] || ''; });
@@ -905,7 +906,6 @@
         var tot = 0; RR.forEach(function (r) { tot += r.arr.length; });
         h += '<div class="pzNs"><span>DARAJALAR</span><span>' + RR.length + ' ta daraja · ' + fmtN(tot) + ' ta</span></div><div class="rkL">' + RR.map(function (r) { return rkCard(r); }).join('') + '</div>';
         h += '<div class="pzNs" style="margin-top:18px"><span>ALOHIDA BO‘LIMLAR</span><span></span></div><div class="rkL">' +
-          sideCard('et', 'Etyudlar', 'Klassik etyudlar · ' + BK.e.length + ' ta kitob', BK.e.reduce(function (a, b) { return a.concat(b.arr); }, []), 'data-shv="e"') +
           (DR.arr.length ? rkCard(DR) : '') +
           (AD ? sideCard('fo', 'To‘plamlar', 'Papkalar · faqat admin', S.list, 'data-shv="f"') : '') + '</div>';
         h += '<div style="height:64px"></div></div>';

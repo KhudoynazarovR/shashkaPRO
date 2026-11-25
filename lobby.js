@@ -1732,7 +1732,8 @@ function createLobby({ send, clients, roomsApi }) {
         }
         challenges.set(ch.id, ch);
         sendUid(ch.toUid, { type: 'lbChallengeIn', id: ch.id, fromName: ch.fromName, tc: ch.tc + describeOpts(ch) });
-        setTimeout(() => { if (challenges.get(ch.id) === ch) { challenges.delete(ch.id); toast(ch.fromUid, (to.lb.name || 'O‘yinchi') + ' taklifga javob bermadi'); push(); } }, 60000);   // ⏱ taklif 60 soniya amal qiladi
+        const toNm = (to.lb && to.lb.name) || 'O‘yinchi';   // nomni hozir olamiz: 60 soniyadan keyin u chiqib ketgan bo'lishi mumkin (c.lb = null)
+        setTimeout(() => { if (challenges.get(ch.id) === ch) { challenges.delete(ch.id); toast(ch.fromUid, toNm + ' taklifga javob bermadi'); push(); } }, 60000);   // ⏱ taklif 60 soniya amal qiladi
         push();
         break;
       }

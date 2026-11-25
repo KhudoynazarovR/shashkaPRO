@@ -187,13 +187,35 @@ function readBody(req, max, cb) {
   req.on('end', () => { if (!big) cb(d); });
 }
 
-function send(res, code, obj) {
-  res.writeHead(code, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
-  res.end(JSON.stringify(obj));
+// ⚡ JSON javoblar gzip bilan beriladi (telefonga 5-8 barobar kam ma'lumot ketadi).
+// Katta javoblar asinxron siqiladi — server boshqa o'yinchilarni kutdirib qo'ymaydi.
+const _zl = require('zlib');
+function send(res, code, obj) { return sendStr(res, code, JSON.stringify(obj)); }
+function sendStr(res, code, str) {
+  const body = Buffer.from(str);
+  const h = { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
+  const ae = String((res.req && res.req.headers && res.req.headers['accept-encoding']) || '');
+  const raw = () => { h['Content-Length'] = body.length; res.writeHead(code, h); res.end(body); };
+  if (body.length < 1400 || !/\bgzip\b/.test(ae)) return raw();
+  h['Content-Encoding'] = 'gzip'; h['Vary'] = 'Accept-Encoding';
+  const out = gz => { h['Content-Length'] = gz.length; res.writeHead(code, h); res.end(gz); };
+  if (body.length > 200000) return void _zl.gzip(body, { level: 5 }, (e, gz) => { if (e || !gz) { delete h['Content-Encoding']; return raw(); } out(gz); });
+  try { out(_zl.gzipSync(body, { level: 5 })); } catch (e) { delete h['Content-Encoding']; raw(); }
 }
 
 // HTTP: GET /api/economy, GET /api/balance, POST /api/daily (sarlavha: x-init-data)
 var _ldC = null;   // 🏅 /api/leaders keshi (60 soniya)
+var _pzCache = null; const PZ_CNT_MS = 60000;   // 🧩 masalalar ro'yxati keshi (yechuvchilar sanog'i 1 daqiqada yangilanadi)
+function pzHeavy(store, etL) {
+  const key = [(store.db.puzzles || []).length, store.db.pzVer || 0, (etL || []).length].join(':');
+  if (_pzCache && _pzCache.key === key && Date.now() - _pzCache.at < PZ_CNT_MS) return _pzCache;
+  const c = {};
+  Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { c[i] = (c[i] || 0) + 1; }));
+  const list = (store.db.puzzles || []).slice().sort((x, y) => (x.no || 0) - (y.no || 0)).map(x => Object.assign({}, x, { cnt: c[x.id] || 0 }));
+  const etl = (etL || []).map(x => [x.id.slice(2), x.no, x.level, x.b32, x.t, c[x.id] || 0]);
+  _pzCache = { key, at: Date.now(), list: JSON.stringify(list), etl: JSON.stringify(etl) };
+  return _pzCache;
+}
 function handle(req, res, url) {
   const p = url.pathname;
   if (p.startsWith('/api/quiz')) { try { if (require('./quiz.js').handle(req, res, url)) return true; } catch (e) { console.log('[quiz] api:', e.message); } }   // 🧠 viktorina (admin)
@@ -707,10 +729,14 @@ function handle(req, res, url) {
     if (!store.db.pzRenumV3) { try { const _rc = pzRenumAll(store.db.puzzles, store.db.pzFolders); store.db.pzRenumV3 = 1; if (_rc) store.db.pzVer = (store.db.pzVer || 0) + 1; store.save(); console.log('[pz] barcha papkalar qayta raqamlandi:', _rc); } catch (e) { console.log('[pz] renum', e.message); } }
     const _u = store.users()[String(_tg.id)] || {};
     const _adm = (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean).includes(String(_tg.id));
-    let _etF = [], _etL = [], _etN = {}, _etP = {}; try { const _E = require('./etudes.js'); _etL = _E.puzzleList(); _etF = _E.FOLDERS.filter(f => _etL.some(x => x.folder === f)); _etN = _E.ETF; _etP = _E.ETP; } catch (e) {}
+    const _etF = [], _etL = [], _etN = {}, _etP = {};   // ♔ etyudlar bo'limi olib tashlandi
     const _fo = (store.db.pzFolders || []).slice(); { const _ki = _fo.indexOf('Kombinatsiyalar'); _fo.splice(_ki >= 0 ? _ki + 1 : 0, 0, ..._etF); }
     let _bk = null, _rk = null; try { const _B = require('./pzbooks.js'); _bk = Object.assign({ cov: _B.covers() }, _B.build()); _rk = { list: _B.RANKS, unlock: _B.UNLOCK }; } catch (e) { console.log('[kitob]', e.message); }
-    send(res, 200, { dayPz: dayPzId(), rk: _rk, bookAll: store.db.pzBookAll || {}, books: _bk, qz: _adm ? (function () { try { return require('./quiz.js').ids(); } catch (e) { return []; } })() : undefined, reels: _adm ? (function () { try { return require('./reelgen.js').usedIds(); } catch (e) { return []; } })() : undefined, etf: _etN, etp: _etP, folders: _fo, settings: store.db.pzSettings || {}, dayFolder: (function () { try { return require('./quests.js').dayFolder(); } catch (e) { return ''; } })(), chanFolders: (function () { try { return require('./kanal.js').folders(); } catch (e) { return []; } })(), hideLv: store.db.pzHideLv || [], best: _u.pzBest || {}, inv: _u.pzInv || null, ranks: require('./pzranks.js').RANKS, topInv: (function () { const m = require('./pzranks.js'); m.watch(store); return m.top(store); })(), promo: Date.parse(process.env.PZ_PROMO_END || '2026-10-25T23:59:59+05:00'), admin: _adm, link: process.env.TG_APP_LINK || '', myId: String(_tg.id), solved: _u.solved || [], stars: _u.pzStars || {}, bopen: _u.pzOpenB || {}, heroAv: _u.pzHero || '', list: (() => { const _c = {}; Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { _c[i] = (_c[i] || 0) + 1; })); return store.db.puzzles.slice().sort((x, y) => (x.no || 0) - (y.no || 0)).map(x => Object.assign({}, x, { cnt: _c[x.id] || 0 })); })(), etl: (() => { const _c = {}; Object.values(store.users()).forEach(v => (v.solved || []).forEach(i => { if (i[0] === 'e') _c[i] = (_c[i] || 0) + 1; })); return _etL.map(x => [x.id.slice(2), x.no, x.level, x.b32, x.t, _c[x.id] || 0]); })() });
+    { // ⚡ og'ir qismlar keshlanadi; etyudlar esa faqat so'ralganda yuboriladi (/api/etudes)
+      const _hv = pzHeavy(store, _etL);
+      const _head = JSON.stringify({ dayPz: dayPzId(), rk: _rk, bookAll: store.db.pzBookAll || {}, books: _bk, qz: _adm ? (function () { try { return require('./quiz.js').ids(); } catch (e) { return []; } })() : undefined, reels: _adm ? (function () { try { return require('./reelgen.js').usedIds(); } catch (e) { return []; } })() : undefined, etf: _etN, etp: _etP, folders: _fo, settings: store.db.pzSettings || {}, dayFolder: (function () { try { return require('./quests.js').dayFolder(); } catch (e) { return ''; } })(), chanFolders: (function () { try { return require('./kanal.js').folders(); } catch (e) { return []; } })(), hideLv: store.db.pzHideLv || [], best: _u.pzBest || {}, inv: _u.pzInv || null, ranks: require('./pzranks.js').RANKS, topInv: (function () { const m = require('./pzranks.js'); m.watch(store); return m.top(store); })(), promo: Date.parse(process.env.PZ_PROMO_END || '2026-10-25T23:59:59+05:00'), admin: _adm, link: process.env.TG_APP_LINK || '', myId: String(_tg.id), solved: _u.solved || [], stars: _u.pzStars || {}, bopen: _u.pzOpenB || {}, heroAv: _u.pzHero || '' });
+      sendStr(res, 200, _head.slice(0, -1) + ',"list":' + _hv.list + ',"etl":[]}');
+    }
     return true;
   }
   if ((p === '/api/puzzle' || p === '/api/puzzle/del' || p === '/api/puzzle/solved' || p === '/api/puzzle/fail' || p === '/api/puzzle/rename' || p === '/api/puzzle/folder' || p === '/api/puzzle/move' || p === '/api/puzzle/settings' || p === '/api/puzzle/order' || p === '/api/puzzle/edit' || p === '/api/puzzle/renum' || p === '/api/puzzle/merge' || p === '/api/puzzle/dayfolder' || p === '/api/puzzle/chanfolder' || p === '/api/puzzle/err' || p === '/api/puzzle/bopen' || p === '/api/puzzle/bfind' || p === '/api/puzzle/ball-all' || p === '/api/puzzle/ball' || p === '/api/puzzle/rerank') && req.method === 'POST') {

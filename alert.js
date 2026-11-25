@@ -20,7 +20,12 @@ function report(err, ctx) {
     const s = seen.get(key);
     if (s && now - s.at < WIN) { s.n++; return; }
     const n = s ? s.n : 0; seen.set(key, { at: now, n: 0 });
-    send('🚨 <b>Server xatosi</b>\n<code>' + esc(msg) + '</code>' + (loc ? '\n📍 ' + esc(loc) : '') + (ctx ? ' · ' + esc(ctx) : '') + (n ? '\n🔁 Oldingi 10 daqiqada yana: ' + n + ' marta' : ''));
+    // 🔎 o'z fayllarimizdagi dastlabki 3 qator — xato qayerdan kelganini aniq ko'rsatadi
+    const frames = String(err && err.stack || '').split('\n').slice(1)
+      .filter(x => /\.js:\d+:\d+/.test(x) && !/node:|node_modules/.test(x))
+      .slice(0, 3).map(x => x.trim().replace(/^at\s+/, '').replace(/(?:[^\s(]*\/)+(?=[^/\s]+\.js:)/g, ''));
+    send('🚨 <b>Server xatosi</b>\n<code>' + esc(msg) + '</code>' + (loc ? '\n📍 ' + esc(loc) : '') + (ctx ? ' · ' + esc(ctx) : '') +
+      (frames.length ? '\n<code>' + esc(frames.join('\n')) + '</code>' : '') + (n ? '\n🔁 Oldingi 10 daqiqada yana: ' + n + ' marta' : ''));
   } catch (e) {}
 }
 function list() {
