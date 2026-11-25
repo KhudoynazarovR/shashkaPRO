@@ -340,12 +340,13 @@ function createLobby({ send, clients, roomsApi }) {
     if (!t.clubIds || !t.clubIds.length) return [];
     const st = t.type === 'arena' ? arenaStandings(t) : standings(t);
     const by = new Map(t.clubIds.map(id => [id, []]));
-    for (const p of st) { const cid = clubsApi.clubOfIn(p.uid, t.clubIds); if (cid) by.get(cid).push({ s: +p.score || 0, e: olyElo(p.uid) || 0 }); }
+    for (const p of st) { const cid = clubsApi.clubOfIn(p.uid, t.clubIds); if (cid) by.get(cid).push({ uid: p.uid, name: p.name, s: +p.score || 0, e: olyElo(p.uid) || 0 }); }
     const out = [...by].map(([id, a]) => {
       const top = a.slice().sort((x, y) => y.s - x.s).slice(0, 5);                    // eng yaxshi 5 o'yinchi ochkosi
       const score = Math.round(top.reduce((s, x) => s + x.s, 0) * 10) / 10;
       const rsum = a.slice().sort((x, y) => y.e - x.e).slice(0, 5).reduce((s, x) => s + x.e, 0);   // ⚔ eng yaxshi 5 reyting yig'indisi
       return { id, name: clubsApi.nameOf(id), players: a.length, score, rsum, elo: clubsApi.eloOf(id),
+        top: top.map(x => ({ uid: x.uid, name: x.name, score: x.s })),
         avg: Math.round(score / Math.max(1, top.length) * 10) / 10 };                  // o'rtacha — a'zo soni ta'sir qilmasligi uchun
     });
     // standart saralash (viloyatlar bilan bir xil): ochko → eng yaxshi 5 reyting yig'indisi → ishtirokchi soni
@@ -998,18 +999,26 @@ function createLobby({ send, clients, roomsApi }) {
       const el = st.filter(x => x.games > 0 && !x.bot && (t.type === "arena" || !x.withdrawn));
       const PZT = { 3: [50,30,20], 4: [40,28,20,12], 5: [35,25,18,13,9], 6: [30,22,17,13,10,8], 7: [28,20,15,12,10,8,7], 8: [26,19,15,12,10,8,5,5], 9: [24,18,14,11,10,8,6,5,4], 10: [22,17,13,11,9,8,7,5,4,4] };
       let sh = el.length >= 3 ? PZT[Math.min(t.places || 3, el.length)] : el.length === 2 ? [60, 40] : el.length === 1 ? [100] : [];
-      if (t.flag && el.length) {   // 🏳️ bayroqli: 60% viloyatlarga (1-2-3 o'rin 60/25/15), 40% individual 1-2-3 (50/30/20)
-        const regsAll = require('./flags.js').regStandings(el), scored = regsAll.filter(r => r.score > 0).slice(0, 3);
-        const regPool = scored.length ? Math.floor(t.prize * 0.6) : 0, topPool = t.prize - regPool;
+      // 🏳️ viloyat yoki 👥 klub turniri: 60% jamoalarga (1-2-3 o'rin 60/25/15), 40% shaxsiy 1-2-3 (50/30/20)
+      let grp = null, gIcon = '', gWord = '';
+      if (t.flag && el.length) {
+        grp = require('./flags.js').regStandings(el).filter(r => r.score > 0).slice(0, 3).map(r => ({ name: r.r, k: r.k, score: r.score, top: r.top }));
+        gIcon = '🏳️'; gWord = 'Viloyatingiz';
+      } else if (t.clubIds && t.clubIds.length && el.length) {
+        grp = clubStandings(t).filter(x => x.score > 0).slice(0, 3).map(x => ({ name: x.name, k: '', score: x.score, top: x.top }));
+        gIcon = '👥'; gWord = 'Klubingiz';
+      }
+      if (grp && grp.length) {
+        const gPool = Math.floor(t.prize * 0.6), topPool = t.prize - gPool;
         t.payReg = []; t.payTop = []; t.payRegSum = [];
-        const RW = [60, 25, 15], wTot = scored.reduce((s, r, i) => s + RW[i], 0) || 1;
-        scored.forEach((r, i) => {
-          const pool = Math.floor(regPool * RW[i] / wTot), md = ['g‘olib', '2-o‘rin', '3-o‘rin'][i];
-          t.payRegSum.push({ r: r.r, k: r.k, place: i + 1, amt: pool });
-          r.top.forEach(p => {
-            const amt = Math.floor(pool * p.score / r.score);
-            if (amt > 0 && economy.add(p.uid, amt, 'tournament_region')) toast(p.uid, '🏳️ Viloyatingiz ' + md + '! Mukofot: +' + amt + ' tanga');
-            t.payReg.push({ uid: p.uid, name: p.name, amt, reg: r.r, k: r.k, place: i + 1 });
+        const RW = [60, 25, 15], wTot = grp.reduce((a2, r, i) => a2 + RW[i], 0) || 1;
+        grp.forEach((r, i) => {
+          const pool = Math.floor(gPool * RW[i] / wTot), md = ['g‘olib', '2-o‘rin', '3-o‘rin'][i];
+          t.payRegSum.push({ r: r.name, k: r.k, place: i + 1, amt: pool });
+          (r.top || []).forEach(p => {
+            const amt = Math.floor(pool * (p.score || 0) / (r.score || 1));
+            if (amt > 0 && economy.add(p.uid, amt, 'tournament_region')) toast(p.uid, gIcon + ' ' + gWord + ' ' + md + '! Mukofot: +' + amt + ' tanga');
+            t.payReg.push({ uid: p.uid, name: p.name, amt, reg: r.name, k: r.k, place: i + 1 });
           });
         });
         const T3 = el.length >= 3 ? [50, 30, 20] : el.length === 2 ? [60, 40] : [100];

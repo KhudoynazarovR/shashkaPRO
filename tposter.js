@@ -111,35 +111,96 @@ function annSvg(t) {
   if (t.flag) { const R = require('./flags.js').REG; const ks = ['Surxondaryo', 'Toshkent', 'Samarqand', 'Andijon']; let fx = CX - (ks.length * 96 - 12) / 2; for (const k of ks) { s += regBadge(fx, 652, R[k][0], R[k][1], 84, 48, 22); fx += 96; } }
   return s + '</svg>';
 }
-function resSvg(t, st, regs) {
-  const name = noEmo(t.name).slice(0, 30), d = tz(t.startAt || Date.now());
-  let s = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '">' + bg();
-  s += '<text x="70" y="90" font-family="' + F + '" font-size="30" font-weight="900" fill="#fbbf24" letter-spacing="2">TURNIR NATIJASI</text>';
-  s += '<text x="70" y="160" font-family="' + F + '" font-size="58" font-weight="900" fill="#fff">' + x(name + ' · ' + String(d.getUTCDate()).padStart(2, '0') + '.' + String(d.getUTCMonth() + 1).padStart(2, '0')) + '</text>';
-  const win = regs && regs.length ? regs[0] : null, p1 = st[0];
-  if (win) {
-    s += regBadge(70, 200, win.k, win.c, 150, 96, 46) + '<text x="244" y="228" font-family="' + F + '" font-size="27" fill="#fff" opacity=".9">G‘olib viloyat</text>';
-    s += '<text x="244" y="280" font-family="' + F + '" font-size="54" font-weight="900" fill="#fbbf24">' + x(win.r) + '</text><text x="244" y="318" font-family="' + F + '" font-size="25" fill="#fff" opacity=".85">' + x(win.score + ' ochko · eng yaxshi 5 o‘yinchi') + '</text>';
-  } else if (p1) {
-    s += '<text x="70" y="235" font-family="' + F + '" font-size="27" fill="#fff" opacity=".9">G‘olib</text><text x="70" y="295" font-family="' + F + '" font-size="58" font-weight="900" fill="#fbbf24">' + x(noEmo(p1.name).slice(0, 24)) + '</text><text x="70" y="335" font-family="' + F + '" font-size="25" fill="#fff" opacity=".85">' + x(p1.score + ' ochko') + '</text>';
+function resSvg(t, st, regs, pay) {
+  // 🟩 natija posteri: yashil mato fon, shashka katakchalari, lenta va konfetti (1080×1350)
+  const RW = 1080, RH = 1350, name = noEmo(t.name).slice(0, 26), d = tz(t.endAt || t.startAt || Date.now());
+  const dt = String(d.getUTCDate()).padStart(2, '0') + '.' + String(d.getUTCMonth() + 1).padStart(2, '0') + '.' + d.getUTCFullYear();
+  let s = '<svg xmlns="http://www.w3.org/2000/svg" width="' + RW + '" height="' + RH + '">';
+  s += '<defs>' +
+    '<radialGradient id="fg" cx="50%" cy="6%" r="95%"><stop offset="0%" stop-color="#13624a"/><stop offset="45%" stop-color="#0b3d2e"/><stop offset="100%" stop-color="#04211a"/></radialGradient>' +
+    '<radialGradient id="vg" cx="50%" cy="40%" r="75%"><stop offset="45%" stop-color="#000" stop-opacity="0"/><stop offset="100%" stop-color="#000" stop-opacity=".55"/></radialGradient>' +
+    '<linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffd977" stop-opacity=".30"/><stop offset="100%" stop-color="#ffbe3c" stop-opacity=".07"/></linearGradient>' +
+    '<linearGradient id="rib" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f0506a"/><stop offset="100%" stop-color="#c01030"/></linearGradient>' +
+    '<pattern id="chk" width="150" height="150" patternUnits="userSpaceOnUse"><rect width="75" height="75" fill="#fff" fill-opacity=".055"/><rect x="75" y="75" width="75" height="75" fill="#fff" fill-opacity=".055"/></pattern>' +
+    '<radialGradient id="rm" cx="50%" cy="31%" r="52%"><stop offset="35%" stop-color="#fff" stop-opacity="0"/><stop offset="100%" stop-color="#fff" stop-opacity="1"/></radialGradient>' +
+    '<mask id="chkm"><rect width="' + RW + '" height="' + RH + '" fill="url(#rm)"/></mask>' +
+    '</defs>';
+  s += '<rect width="' + RW + '" height="' + RH + '" fill="url(#fg)"/>';
+  s += '<g mask="url(#chkm)"><rect width="' + RW + '" height="' + RH + '" fill="url(#chk)"/></g>';
+  // oltin nurlar
+  let ry = '';
+  for (let a = 0; a < 360; a += 15) ry += '<path d="M540 430 L' + (540 + 1400 * Math.cos((a - 2.6) * Math.PI / 180)) + ' ' + (430 + 1400 * Math.sin((a - 2.6) * Math.PI / 180)) + ' L' + (540 + 1400 * Math.cos((a + 2.6) * Math.PI / 180)) + ' ' + (430 + 1400 * Math.sin((a + 2.6) * Math.PI / 180)) + ' Z" fill="#ffd678" fill-opacity=".13"/>';
+  s += '<g>' + ry + '</g><rect width="' + RW + '" height="' + RH + '" fill="url(#vg)"/>';
+  // konfetti — chekkalarda va tepada, matnni to'smaydi
+  const CC = ['#ffc93c', '#e03b52', '#4ade80', '#38bdf8', '#f472b6', '#ffffff', '#a78bfa'];
+  let seed = 7; const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+  let cf = '';
+  for (let i = 0; i < 110; i++) {
+    let cx0 = rnd() * RW, cy0 = rnd() * (RH + 40) - 40;
+    if (cy0 > 230 && cy0 < 1180 && cx0 > 60 && cx0 < RW - 60) cx0 = rnd() < .5 ? rnd() * 60 : RW - rnd() * 60;
+    const w0 = 9 + rnd() * 12, h0 = 11 + rnd() * 16, rt = -60 + rnd() * 120, c0 = CC[i % CC.length], op = (0.4 + rnd() * 0.6).toFixed(2);
+    cf += rnd() < .22
+      ? '<circle cx="' + cx0.toFixed(0) + '" cy="' + cy0.toFixed(0) + '" r="' + (w0 / 2).toFixed(0) + '" fill="' + c0 + '" fill-opacity="' + op + '"/>'
+      : '<rect x="' + cx0.toFixed(0) + '" y="' + cy0.toFixed(0) + '" width="' + w0.toFixed(0) + '" height="' + h0.toFixed(0) + '" rx="2" fill="' + c0 + '" fill-opacity="' + op + '" transform="rotate(' + rt.toFixed(0) + ' ' + cx0.toFixed(0) + ' ' + cy0.toFixed(0) + ')"/>';
   }
-  const col = (x0, title, rows) => {
-    let o = '<text x="' + x0 + '" y="392" font-family="' + F + '" font-size="22" font-weight="700" fill="#fff" opacity=".85" letter-spacing="1">' + x(title) + '</text>';
+  s += cf;
+  // sarlavha
+  s += '<text x="62" y="84" font-family="' + F + '" font-size="27" font-weight="900" fill="#e4cfa4" letter-spacing="5">YAKUNLANDI</text>';
+  s += '<text x="' + (RW - 62) + '" y="84" font-family="' + F + '" font-size="27" font-weight="800" fill="#e4cfa4" letter-spacing="3" text-anchor="end">' + x(dt) + '</text>';
+  s += '<text x="62" y="172" font-family="' + F + '" font-size="' + (name.length > 20 ? 62 : 74) + '" font-weight="900" fill="#fff">' + x(name) + '</text>';
+  s += '<text x="62" y="218" font-family="' + F + '" font-size="28" fill="#dcc79d">' + x(tcTxt(t.tc) + ' · ' + (t.durationMin || 60) + ' daqiqa · ' + (t.flag ? 'viloyatlar jangi' : (t.clubIds && t.clubIds.length ? 'klublar jangi' : kindTxt(t)))) + '</text>';
+  // lenta
+  s += '<path d="M250 268 h170 v56 h-170 l28 -28 Z" fill="#8e1226"/><path d="M830 268 h-170 v56 h170 l-28 -28 Z" fill="#8e1226"/>';
+  s += '<rect x="356" y="246" width="368" height="92" rx="18" fill="url(#rib)" stroke="#ffffff" stroke-opacity=".26" stroke-width="3"/>';
+  s += '<text x="540" y="308" font-family="' + F + '" font-size="44" font-weight="900" fill="#fff" letter-spacing="10" text-anchor="middle">G‘OLIB</text>';
+  // g'olib karta
+  const win = regs && regs.length ? regs[0] : null, p1 = st[0];
+  const wName = win ? win.r : (p1 ? noEmo(p1.name).slice(0, 18) : '—');
+  const wScore = win ? win.score : (p1 ? p1.score : 0);
+  const wSub = win ? ((win.n || 0) + ' o‘yinchi · ' + win.score + ' ochko') : (p1 ? (p1.games || 0) + ' o‘yin · ' + p1.score + ' ochko' : '');
+  s += '<rect x="62" y="372" width="956" height="162" rx="30" fill="url(#gold)" stroke="#ffce5a" stroke-opacity=".75" stroke-width="3"/>';
+  if (win && win.k) s += regBadge(102, 410, win.k, win.c, 128, 86, 40);
+  s += '<text x="' + (win && win.k ? 258 : 110) + '" y="455" font-family="' + F + '" font-size="' + (String(wName).length > 14 ? 46 : 56) + '" font-weight="900" fill="#fff">' + x(wName) + '</text>';
+  s += '<text x="' + (win && win.k ? 258 : 110) + '" y="496" font-family="' + F + '" font-size="26" fill="#f4ddad">' + x(wSub) + '</text>';
+  s += '<text x="978" y="478" font-family="' + F + '" font-size="80" font-weight="900" fill="#ffc93c" text-anchor="end">' + x(wScore) + '</text>';
+  // 2-4 o'rin
+  const rest = (regs && regs.length ? regs.slice(1, 4).map(r => ({ k: r.k, c: r.c, n: r.r, v: r.score })) : st.slice(1, 4).map(p => ({ k: p.rg && /^[A-Z]+$/.test(p.rg) ? p.rg : null, c: p.rc, n: noEmo(p.name).slice(0, 20), v: p.score })));
+  rest.forEach((r, i) => {
+    const y = 566 + i * 78;
+    s += '<rect x="62" y="' + y + '" width="956" height="66" rx="18" fill="#ffffff" fill-opacity=".07" stroke="#ffffff" stroke-opacity=".07" stroke-width="2"/>';
+    s += '<circle cx="110" cy="' + (y + 33) + '" r="19" fill="' + (['#d6dbe6', '#e0975a', '#9aa3b2'][i] || '#9aa3b2') + '"/><text x="110" y="' + (y + 41) + '" font-family="' + F + '" font-size="21" font-weight="900" fill="#20170a" text-anchor="middle">' + (i + 2) + '</text>';
+    let nx = 146;
+    if (r.k) { s += regBadge(nx, y + 16, r.k, r.c, 84, 36, 19); nx += 100; }
+    s += '<text x="' + nx + '" y="' + (y + 44) + '" font-family="' + F + '" font-size="32" font-weight="700" fill="#fff">' + x(r.n) + '</text>';
+    s += '<text x="978" y="' + (y + 45) + '" font-family="' + F + '" font-size="34" font-weight="900" fill="#ffc93c" text-anchor="end">' + x(r.v) + '</text>';
+  });
+  // ikki quti: eng yaxshi o'yinchilar / mukofot
+  const by = 566 + rest.length * 78 + 16, bh = 236;
+  const box = (bx, bw, title, rows, num) => {
+    let o = '<rect x="' + bx + '" y="' + by + '" width="' + bw + '" height="' + bh + '" rx="22" fill="#ffffff" fill-opacity=".07" stroke="#ffffff" stroke-opacity=".08" stroke-width="2"/>';
+    o += '<text x="' + (bx + 26) + '" y="' + (by + 44) + '" font-family="' + F + '" font-size="22" font-weight="900" fill="#e4cfa4" letter-spacing="2">' + x(title) + '</text>';
     rows.slice(0, 3).forEach((r, i) => {
-      const y = 412 + i * 66, gold = i === 0;
-      o += '<rect x="' + x0 + '" y="' + y + '" width="552" height="56" rx="16" fill="' + (gold ? '#fbbf24' : 'rgba(255,255,255,.12)') + '"/>';
-      o += '<circle cx="' + (x0 + 35) + '" cy="' + (y + 28) + '" r="17" fill="' + (['#fff', '#d6dbe6', '#e0975a'][i]) + '"/><text x="' + (x0 + 35) + '" y="' + (y + 35) + '" font-family="' + F + '" font-size="19" font-weight="900" fill="#222" text-anchor="middle">' + (i + 1) + '</text>';
-      let nx = x0 + 66;
-      if (r.k) { o += regBadge(nx, y + 11, r.k, r.c, 64, 34, 17); nx += 76; }
-      o += '<text x="' + nx + '" y="' + (y + 37) + '" font-family="' + F + '" font-size="25" font-weight="700" fill="' + (gold ? '#2a1a00' : '#fff') + '">' + x(noEmo(r.n).slice(0, 20)) + '</text>';
-      o += '<text x="' + (x0 + 532) + '" y="' + (y + 37) + '" font-family="' + F + '" font-size="25" font-weight="800" fill="' + (gold ? '#2a1a00' : '#fff') + '" text-anchor="end">' + x(r.v) + '</text>';
+      const y = by + 92 + i * 48;
+      o += '<text x="' + (bx + 26) + '" y="' + y + '" font-family="' + F + '" font-size="29" font-weight="600" fill="#fff">' + x((num ? (i + 1) + '. ' : '') + r[0]) + '</text>';
+      o += '<text x="' + (bx + bw - 26) + '" y="' + y + '" font-family="' + F + '" font-size="29" font-weight="900" fill="#ffc93c" text-anchor="end">' + x(r[1]) + '</text>';
     });
     return o;
   };
-  if (regs && regs.length) s += col(70, 'VILOYATLAR', regs.map(r => ({ k: r.k, c: r.c, n: r.r, v: r.score })));
-  s += col(regs && regs.length ? 658 : 70, 'ENG YAXSHI O‘YINCHILAR', st.map(p => ({ k: p.rg && /^[A-Z]+$/.test(p.rg) ? p.rg : null, c: p.rc, n: p.name, v: p.score })));
+  s += box(62, 468, 'ENG YAXSHI O‘YINCHILAR', st.slice(0, 3).map(p => [noEmo(p.name).slice(0, 14), p.score]), true);
+  const pz = [];
+  if (t.prize > 0) {
+    pz.push(['Jami', fmt(t.prize)]);
+    const gs = pay && pay.regSum && pay.regSum.length ? pay.regSum.reduce((a, r) => a + (r.amt || 0), 0) : 0;
+    if (gs) { pz.push([t.flag ? 'G‘olib viloyat' : 'G‘olib klub', fmt((pay.regSum[0] || {}).amt || 0)]); pz.push(['Shaxsiy 1–3', fmt(t.prize - gs)]); }
+    else pz.push(['Shaxsiy 1–3', fmt(t.prize)]);
+  }
+  s += box(550, 468, pz.length ? 'MUKOFOT · TANGA' : 'TURNIR', pz.length ? pz : [['O‘yinchilar', st.length], ['O‘yinlar', Math.round(st.reduce((a, p) => a + (p.games || 0), 0) / 2)]]);
+  // pastki qator
   const games = Math.round(st.reduce((a, p) => a + (p.games || 0), 0) / 2);
-  s += '<text x="70" y="684" font-family="' + F + '" font-size="24" fill="#fff" opacity=".75">@' + x(BOT()) + '</text><text x="1210" y="684" font-family="' + F + '" font-size="24" fill="#fff" opacity=".75" text-anchor="end">' + x(games + ' o‘yin · ' + st.length + ' o‘yinchi') + '</text>';
+  const fy = by + bh + 62;
+  s += '<line x1="62" y1="' + (fy - 34) + '" x2="1018" y2="' + (fy - 34) + '" stroke="#ffffff" stroke-opacity=".14" stroke-width="2"/>';
+  s += '<text x="62" y="' + fy + '" font-family="' + F + '" font-size="29" fill="#dcc79d">' + x(games + ' o‘yin · ' + st.length + ' o‘yinchi') + '</text>';
+  s += '<text x="1018" y="' + fy + '" font-family="' + F + '" font-size="29" fill="#dcc79d" text-anchor="end">@' + x(BOT()) + '</text>';
   return s + '</svg>';
 }
 // ---------- e'lon
@@ -301,19 +362,19 @@ async function result(t, st, regs, pay, all) {
     }
     if (t.prize > 0) c += '🏆 Mukofot fondi: ' + fmt(t.prize) + ' tanga\n\n';
     if (pay && pay.regSum && pay.regSum.length) {   // 🏳️ 1-2-3 viloyat ulushi
-      c += '👑 Viloyatlar ulushi:\n';
-      pay.regSum.forEach((r, i) => { c += (med[i] || (i + 1) + '.') + ' ' + h(r.k) + ' ' + h(r.r) + ' — ' + fmt(r.amt) + ' tanga\n'; });
+      c += (t.flag ? '👑 Viloyatlar ulushi:\n' : '👑 Klublar ulushi:\n');
+      pay.regSum.forEach((r, i) => { c += (med[i] || (i + 1) + '.') + ' ' + (r.k ? h(r.k) + ' ' : '') + h(r.r) + ' — ' + fmt(r.amt) + ' tanga\n'; });
       c += '\n';
     }
     if (pay && pay.reg && pay.reg.length) {
       const w = pay.reg.filter(p => !p.place || p.place === 1);
-      if (w.length) { c += '👑 G‘olib viloyat o‘yinchilari:\n'; w.forEach((p, i) => { c += (med[i] || (i + 1) + '.') + ' ' + h(p.name) + ' — ' + fmt(p.amt) + ' tanga\n'; }); c += '\n'; }
+      if (w.length) { c += (t.flag ? '👑 G‘olib viloyat o‘yinchilari:\n' : '👑 G‘olib klub o‘yinchilari:\n'); w.forEach((p, i) => { c += (med[i] || (i + 1) + '.') + ' ' + h(p.name) + ' — ' + fmt(p.amt) + ' tanga\n'; }); c += '\n'; }
     }
     c += '⭐ Eng yaxshi o‘yinchilar:\n';
     st.slice(0, 3).forEach((p, i) => { const a = pay && pay.top && pay.top[i]; c += med[i] + ' ' + (p.rg ? (/^[A-Z]+$/.test(p.rg) ? h(p.rg) + ' ' : p.rg + ' ') : '') + h(p.name) + ' — ' + p.score + ' ochko' + (a && a.amt ? ' · ' + fmt(a.amt) + ' tanga' : '') + '\n'; });
     const games = Math.round(st.reduce((a, p) => a + (p.games || 0), 0) / 2);
     c += '\n🎮 ' + games + ' o‘yin · ' + st.length + ' o‘yinchi';
-    const buf = await png(resSvg(t, st, regs));
+    const buf = await png(resSvg(t, st, regs, pay));
     const extra = t.annMsg ? { reply_parameters: { message_id: t.annMsg, allow_sending_without_reply: true } } : {};
     if (c.length > 1020) c = c.slice(0, Math.max(0, c.lastIndexOf('\n', 1020)));   // Telegram izoh chegarasi — qator chegarasidan kesamiz
     const kb = { inline_keyboard: [[{ text: '🎮 ShashkaPRO', url: APP() }]] };
