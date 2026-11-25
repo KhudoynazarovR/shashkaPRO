@@ -226,7 +226,9 @@
     if (t.flag && (t.regs || []).length) {   // 🏳️ viloyatlar hisobi: eng yaxshi 5 o'yinchi
       var R = t.regs, mx = Math.max(1, R[0].score || 1), md3 = ['🥇', '🥈', '🥉'];
       ch = '<div class="taCard" style="margin-top:10px"><h4>🗺 Viloyatlar hisobi · eng yaxshi 5 o‘yinchi</h4>' + R.slice(0, 14).map(function (r, i) {
-        var lead = r.cap ? '👑 ' + esc(String(r.cap.name || '').slice(0, 14)) : (r.best ? esc(String(r.best.name || '').slice(0, 14)) + ' ' + (r.best.elo || '') : '');
+        var fmtN2 = function (n) { return String(n || 0).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); };
+        var lead = (r.cap ? '👑 ' + esc(String(r.cap.name || '').slice(0, 14)) : (r.best ? esc(String(r.best.name || '').slice(0, 14)) + ' ' + (r.best.elo || '') : '')) +
+          (r.rsum ? '<span style="float:right;color:#8fb0ff">⚔ ' + fmtN2(r.rsum) + '</span>' : '');
         return '<div class="taReg" data-reg="' + esc(r.r) + '" style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.09);font-size:14px">' +
           '<div style="display:flex;align-items:center;gap:8px"><span style="width:24px;text-align:center">' + (md3[i] || (i + 1)) + '</span>' + bdg(r.k, r.c) +
           '<span style="width:96px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(r.r) + '</span><span style="flex:1;height:9px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden"><i style="display:block;height:100%;width:' + Math.round((r.score || 0) * 100 / mx) + '%;background:' + r.c + '"></i></span>' +

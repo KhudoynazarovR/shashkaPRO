@@ -359,7 +359,7 @@ function createLobby({ send, clients, roomsApi }) {
       creatorUid: t.creatorUid, creatorName: t.creatorName, created: t.created || 0, sponsors: (t.sponsors || []).slice(-10), clubIds: t.clubIds || [], clubs: clubStandings(t),
       round: t.round, rounds: t.rounds, nextAt: t.nextAt || 0,
       players: t.flag ? arenaStandings(t).map(p => Object.assign({}, p, require('./flags.js').badge(p.uid) || {})) : (t.type === 'arena' ? arenaStandings(t) : standings(t)),
-      flag: !!t.flag, desc: t.desc || '', rec: t.rec || null, regs: t.flag ? require('./flags.js').regStandings(arenaStandings(t)).map(r => ({ r: r.r, k: r.k, c: r.c, n: r.n, score: r.score, best: r.best, cap: r.cap, top: (r.top || []).slice(0, 5).map(x => ({ uid: x.uid, name: x.name, score: x.score, elo: x.elo })) })) : [],
+      flag: !!t.flag, desc: t.desc || '', rec: t.rec || null, regs: t.flag ? require('./flags.js').regStandings(arenaStandings(t)).map(r => ({ r: r.r, k: r.k, c: r.c, n: r.n, score: r.score, rsum: r.rsum, best: r.best, cap: r.cap, top: (r.top || []).slice(0, 5).map(x => ({ uid: x.uid, name: x.name, score: x.score, elo: x.elo })) })) : [],
       minGames: t.minGames || 0, mix: t.mix || null,
       boards: t.cur.map(b => ({
         board: b.board, roomId: b.roomId, white: b.white, black: b.black,
@@ -1106,18 +1106,24 @@ function createLobby({ send, clients, roomsApi }) {
     )).sort((a, b) => b.score - a.score || (!a.games && !b.games ? olyElo(b.uid) - olyElo(a.uid) : 0));   // lichess: birinchi tur — reytingi yaqinlar, keyin — turnirdagi o'rni yaqinlar
     const used = new Set();
     let made = false;
+    // 🏳️ viloyatlar kubogi: bir viloyat o'yinchilari o'zaro o'ynamaydi (boshqa iloj bo'lmasa — o'ynaydi)
+    const regOf = t.flag ? (u => { try { const b = require('./flags.js').badge(u); return b ? b.reg : ''; } catch (e) { return ''; } }) : null;
     for (let i = 0; i < avail.length; i++) {
       const a = avail[i];
       if (used.has(a)) continue;
-      let pick = null;
+      let pick = null, same = null;
+      const ra = regOf ? regOf(a.uid) : '';
       for (let j = i + 1; j < avail.length; j++) {
         const b = avail[j];
         if (used.has(b)) continue;
       if (a.bot && b.bot) continue;   // bot–bot keyingi bosqichda (odamlar birinchi juftlanadi)
       const rematch = a.lastOpp === b.uid || b.lastOpp === a.uid;
         if (rematch && !(now - a.waitingSince >= ARENA_REMATCH_WAIT_MS && now - b.waitingSince >= ARENA_REMATCH_WAIT_MS)) continue;
+        if (regOf && ra && regOf(b.uid) === ra) { if (!same) same = b; continue; }   // bir viloyat — zaxiraga
         pick = b; break;
       }
+      // boshqa viloyatdan raqib topilmasa va kutish cho'zilsa — o'z viloyatidagi bilan juftlaymiz
+      if (!pick && same && now - a.waitingSince >= ARENA_PAIR_DELAY_MS + 8000) pick = same;
       if (!pick) continue;
       used.add(a); used.add(pick);
       startArenaGame(t, a, pick);

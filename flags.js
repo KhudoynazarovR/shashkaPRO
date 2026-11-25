@@ -39,14 +39,20 @@ function regStandings(players) {
     if (p.bot || /^bot/.test(String(p.uid))) continue;
     const b = badge(p.uid); if (!b) continue;
     const k = b.reg; if (!by.has(k)) by.set(k, []);
-    by.get(k).push({ uid: p.uid, name: p.name, score: +p.score || 0 });
+    by.get(k).push({ uid: p.uid, name: p.name, score: +p.score || 0, elo: +p.elo || (((store.users() || {})[String(p.uid)] || {}).elo || 0) });
   }
-  return [...by].map(([r, a]) => {
+  const out = [...by].map(([r, a]) => {
     a.sort((x, y) => y.score - x.score);
     const top = a.slice(0, 5);
-    const best = a.slice().sort((x, y) => (y.elo || 0) - (x.elo || 0))[0] || null;   // eng yuqori reytingli a'zo
-    return { r, k: REG[r][0], c: REG[r][1], n: a.length, score: Math.round(top.reduce((s, x) => s + x.score, 0) * 10) / 10, top,
+    const byElo = a.slice().sort((x, y) => (y.elo || 0) - (x.elo || 0));
+    const best = byElo[0] || null;                                        // eng yuqori reytingli a'zo
+    const rsum = byElo.slice(0, 5).reduce((s, x) => s + (x.elo || 0), 0);  // eng yaxshi 5 ta reyting yig'indisi
+    return { r, k: REG[r][0], c: REG[r][1], n: a.length, score: Math.round(top.reduce((s, x) => s + x.score, 0) * 10) / 10, top, rsum,
       best: best ? { uid: best.uid, name: best.name, elo: best.elo || 0 } : null, cap: capOf(r) };
-  }).sort((x, y) => y.score - x.score || y.n - x.n);
+  });
+  // o'yin boshlanmagan bo'lsa — 5 ta eng yaxshi reyting yig'indisi bo'yicha, keyin ochko bo'yicha
+  const played = out.some(x => x.score > 0);
+  return played ? out.sort((x, y) => y.score - x.score || y.rsum - x.rsum || y.n - x.n)
+                : out.sort((x, y) => y.rsum - x.rsum || y.n - x.n);
 }
 module.exports = { REG, COUNTRIES, badge, regStandings, capOf, setCap, capsAll };
