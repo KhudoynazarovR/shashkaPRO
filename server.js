@@ -263,10 +263,10 @@ function serveFile(req, res) {
     // Telegramdan tashqarida kirish (sayt / Play Market ilovasi) — boshqa skriptlardan oldin
     if (!html.includes("webauth.js")) html = html.replace('<script src="https://telegram.org/js/telegram-web-app.js"></script>', '<script src="https://telegram.org/js/telegram-web-app.js"></script><script src="/webauth.js?v=4"></script><script src="/i18n.js?v=11"></script><link rel="manifest" href="/app/manifest.webmanifest"><meta name="theme-color" content="#1b1150"><link rel="apple-touch-icon" href="/app/apple-180.png">');
     if (!html.includes("aiview.js")) {
-      html = html.replace("</body>", '<script src="/aiview.js?v=' + VER + '"></script>\n</body>');
+      html = html.replace("</body>", '<script src="/aiview.js?v=' + VER + '" defer></script>\n</body>');
     }
     if (!html.includes("sound.js")) {
-      html = html.replace("</body>", '<script src="/sound.js"></script>\n</body>');
+      html = html.replace("</body>", '<script src="/sound.js" defer></script>\n</body>');
     }
     // ⚡ keyin yuklanadigan skriptlar (homex.js, dragon.js, tarena.js …) ham telefonda saqlanadi: manziliga &d=<deploy> qo'shiladi,
     // server uni o'zgarmas deb beradi — takroriy ochilishda bu fayllar uchun serverga so'rov ketmaydi. /api/botadmin bir marta so'raladi.
@@ -276,34 +276,34 @@ function serveFile(req, res) {
     if (!html.includes("__spBoot")) html = html.replace("<head>", '<head><script>/*__spBoot*/(function(){try{if(/[?&](emb|pad)=1/.test(location.search))return;var d=new URLSearchParams(location.hash.slice(1)).get("tgWebAppData")||"";if(!d||!window.fetch||!window.Response)return;var uid="";try{uid=JSON.parse(new URLSearchParams(d).get("user")||"{}").id||""}catch(e){}var L=' + JSON.stringify(BOOT_API) + ';if(uid)L.push("/api/user/"+uid);var F=window.fetch,t0=Date.now(),B=null,W=[];function fl(){var w=W;W=[];w.forEach(function(f){f()})}F.call(window,"/api/boot",{headers:{"x-init-data":d}}).then(function(r){return r.ok?r.json():{}}).then(function(j){B=j||{};fl()},function(){B={};fl()});setTimeout(function(){if(!B){B={};fl()}},3500);function tk(u){var e=B&&B[u];if(!e||e.u)return null;e.u=1;return new Response(JSON.stringify(e.j),{status:e.s||200,headers:{"Content-Type":"application/json"}})}window.fetch=function(u,o){if(typeof u==="string"&&L.indexOf(u)>=0&&!(o&&o.method&&o.method!=="GET")&&Date.now()-t0<20000){var g=arguments;if(B){var r=tk(u);if(r)return Promise.resolve(r)}else return new Promise(function(ok){W.push(function(){var r=tk(u);ok(r||F.apply(window,g))})})}return F.apply(this,arguments)}}catch(e){}})();</script>');
     if (!html.includes("theme.js")) html = html.replace("</head>", '<script src="/theme.js"></script>\n</head>');   // 🎨 mavzu: shrift va fon — sahifa chizilishidan oldin
     if (!html.includes("rules-bridge.js")) {
-      html = html.replace("</body>", '<script src="/rules-bridge.js"></script>\n</body>');
+      html = html.replace("</body>", '<script src="/rules-bridge.js" defer></script>\n</body>');
     }
     // 🔗 guruhdagi havola orqali xonaga kirilganda: bosh ekran/boshqa doska ko'rinib o'tmasin — darhol "ulanmoqda" pardasi
     if (!html.includes("rcBoot")) html = html.replace(/<body([^>]*)>/i, '<body$1><script>(function(){try{var s=new URLSearchParams(location.search).get("tgWebAppStartParam")||"";if(!s){var h=new URLSearchParams(location.hash.slice(1)).get("tgWebAppData");if(h)s=new URLSearchParams(h).get("start_param")||"";}if(!new URLSearchParams(location.search).get("room")&&!/^[A-Za-z0-9-]{6,32}$/.test(s))return;var d=document.createElement("div");d.id="rcBoot";d.style.cssText="position:fixed;inset:0;z-index:2147483646;background:#0b1026;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font:600 18px system-ui,sans-serif;gap:14px";d.innerHTML="<div style=\\"font-size:54px;animation:rcB 1s ease-in-out infinite alternate\\">♟</div><div>O‘yinga ulanmoqda…</div><style>@keyframes rcB{to{transform:translateY(-10px) scale(1.1)}}</style>";(document.body||document.documentElement).appendChild(d);setTimeout(function(){if(d.parentNode)d.parentNode.removeChild(d)},9000);}catch(e){}})();</script>');
     // 🖼 bosh sahifa ochilishda sakramasin: oxirgi ko'rinish darhol, haqiqiysi tayyor bo'lgach almashadi (homesnap.js ichki skript)
     if (!html.includes("spSnapOv")) { try { const _hs = fs.readFileSync(path.join(__dirname, "homesnap.js"), "utf8"); html = html.replace(/<body([^>]*)>/i, m0 => m0 + "<script>" + _hs + "</script>"); } catch (e) {} }
     if (!html.includes("roomclient.js")) {
-      html = html.replace("</body>", '<script src="/roomclient.js?v=' + String(process.env.RENDER_GIT_COMMIT || Date.now()).slice(0, 8) + '"></script>\n</body>');
+      html = html.replace("</body>", '<script src="/roomclient.js?v=' + String(process.env.RENDER_GIT_COMMIT || Date.now()).slice(0, 8) + '" defer></script>\n</body>');
     }
     if (!html.includes("profile.js")) {
-      html = html.replace("</body>", '<script src="/profile.js?v=' + VER + '"></script>\n</body>');
+      html = html.replace("</body>", '<script src="/profile.js?v=' + VER + '" defer></script>\n</body>');
     }
     if (!html.includes("navbar.js")) {
-      html = html.replace("</body>", '<script src="/navbar.js?v=' + String(process.env.RENDER_GIT_COMMIT || Date.now()).slice(0, 8) + '"></script>\n</body>');
+      html = html.replace("</body>", '<script src="/navbar.js?v=' + String(process.env.RENDER_GIT_COMMIT || Date.now()).slice(0, 8) + '" defer></script>\n</body>');
     }
-    if (!html.includes("voice.js")) html = html.replace("</body>", '<script src="/voice.js?v=4"></script>\n</body>');
+    if (!html.includes("voice.js")) html = html.replace("</body>", '<script src="/voice.js?v=4" defer></script>\n</body>');
     if (!html.includes("ratings.js")) {
-      html = html.replace("</body>", '<script src="/ratings.js?v=' + VER + '"></script>\n</body>');
+      html = html.replace("</body>", '<script src="/ratings.js?v=' + VER + '" defer></script>\n</body>');
     }
-    if (!html.includes("perf.js")) html = html.replace("</body>", '<script src="/perf.js?v=' + VER + '"></script>\n</body>');
+    if (!html.includes("perf.js")) html = html.replace("</body>", '<script src="/perf.js?v=' + VER + '" defer></script>\n</body>');
     if (!html.includes("/menu.js")) {
-      html = html.replace("</body>", '<script src="/menu.js?v=' + VER + '"></script>\n</body>');
+      html = html.replace("</body>", '<script src="/menu.js?v=' + VER + '" defer></script>\n</body>');
     }
     if (!html.includes("dailyq.js")) {
-      html = html.replace("</body>", '<script src="/sharecard.js?v=' + String(process.env.RENDER_GIT_COMMIT || Date.now()).slice(0, 8) + '"></script>\n<script src="/dailyq.js?v=' + String(process.env.RENDER_GIT_COMMIT || Date.now()).slice(0, 8) + '"></script>\n<script src="/leagueview.js?v=' + String(process.env.RENDER_GIT_COMMIT || Date.now()).slice(0, 8) + '"></script>\n</body>');
+      html = html.replace("</body>", '<script src="/sharecard.js?v=' + String(process.env.RENDER_GIT_COMMIT || Date.now()).slice(0, 8) + '" defer></script>\n<script src="/dailyq.js?v=' + String(process.env.RENDER_GIT_COMMIT || Date.now()).slice(0, 8) + '" defer></script>\n<script src="/leagueview.js?v=' + String(process.env.RENDER_GIT_COMMIT || Date.now()).slice(0, 8) + '" defer></script>\n</body>');
     }
     if (!html.includes("lobbyclient.js")) {
-      html = html.replace("</body>", '<script src="/lobbyclient.js?v=' + String(process.env.RENDER_GIT_COMMIT || Date.now()).slice(0, 8) + '"></script>\n</body>');
+      html = html.replace("</body>", '<script src="/lobbyclient.js?v=' + String(process.env.RENDER_GIT_COMMIT || Date.now()).slice(0, 8) + '" defer></script>\n</body>');
     }
     if (typeof req !== "undefined" && /[?&]pad=1/.test(req.url || "")) html = html.replace(/<script src="\/(navbar|menu|lobbyclient|roomclient|profile|ratings|dailyq|sharecard|voice)\.js[^"]*"><\/script>\n?/g, "");
     html = html.replace(/(lobbyclient|roomclient|sound)\.js(\?v=[0-9a-zA-Z]+)?/g, "$1.js?v=" + VER);
@@ -315,8 +315,11 @@ function serveFile(req, res) {
   }
 
   if (TXT.has(ext)) { const _st = fs.statSync(file), _hq = new URL(req.url, "http://localhost").searchParams.get("h"); return sendSmart(req, res, { "Content-Type": types[ext], "Cache-Control": ((_hq && _hq === fileHash(requested)) || new URL(req.url, "http://localhost").searchParams.get("d") === VER) ? "public, max-age=31536000, immutable" : "no-cache" }, ext.slice(1) + "-" + _st.size + "-" + Math.floor(_st.mtimeMs), () => fs.readFileSync(file)); }
-  { const _sp = new URL(req.url, "http://localhost").searchParams;   // ⚡ versiyali rasm/ovoz (?v=…) — 30 kun telefonda saqlanadi
-    res.writeHead(200, { "Content-Type": types[ext], "Cache-Control": (_sp.get("v") || _sp.get("d") === VER) ? "public, max-age=2592000" : "no-cache" }); }
+  { const _sp = new URL(req.url, "http://localhost").searchParams;   // ⚡ versiyali rasm/ovoz (?v=…) — 30 kun, versiyasizi — 1 kun + ETag (takroriy kirishda qayta yuklanmaydi)
+    const _st2 = fs.statSync(file), _tag2 = 'W/"' + ext.slice(1) + '-' + _st2.size + '-' + Math.floor(_st2.mtimeMs) + '"';
+    const _cc2 = (_sp.get("v") || _sp.get("d") === VER) ? "public, max-age=2592000, immutable" : "public, max-age=86400";
+    if (String(req.headers["if-none-match"] || "").indexOf(_tag2) >= 0) { res.writeHead(304, { "ETag": _tag2, "Cache-Control": _cc2 }); return res.end(); }
+    res.writeHead(200, { "Content-Type": types[ext], "ETag": _tag2, "Cache-Control": _cc2, "Content-Length": _st2.size }); }
   fs.createReadStream(file).pipe(res);
 }
 
