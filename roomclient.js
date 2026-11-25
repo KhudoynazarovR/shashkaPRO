@@ -1428,7 +1428,7 @@
         setTimeout(function () { try { if (st.turn !== st.color || st.pending || st.forced || st.finished || st.optN > 0) { st.selected = null; render(); return; }   // holat o'zgargan — oldindan yurish bekor
           st.selected = pm.from; var po = options(), pf = null; st.selected = null;
           for (var q = 0; q < po.length; q++) if (po[q].to.r === pm.to.r && po[q].to.c === pm.to.c) pf = po[q];
-          if (pf) sendMove(pf); else render(); } catch (e) {} }, 120);
+          if (pf) sendMove(pf); else render(); } catch (e) {} }, 0);   // oldindan yurish darhol bajariladi
       }
       try { var _br = elBoard.getBoundingClientRect(), _want = (document.documentElement.clientWidth - _br.width) / 2, _ml = parseFloat(getComputedStyle(elBoard).marginLeft) || 0; if (Math.abs(_br.left - _want) > 0.5) elBoard.style.setProperty("margin-left", (_ml + _want - _br.left) + "px", "important"); } catch (e) {}
       if (!st.finished && !st.vsBot && st.joined && bothIn() && (st.moves || []).length < 2) { var _fk = st.moves.length + ":" + st.turn; if (st._fmK !== _fk) { st._fmK = _fk; st._fmAt = Date.now(); } } else { st._fmK = null; st._fmAt = 0; }

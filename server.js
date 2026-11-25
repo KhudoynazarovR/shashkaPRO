@@ -426,11 +426,21 @@ const wss = new WebSocketServer({ server, maxPayload: 64 * 1024 });   // 🛡 bi
 const _mg = require('./memguard.js');
 _mg.reg('gzip', _gzc);
 // 💓 har 30 s da ping: javob bermagan (uzilib qolgan) ulanish yopiladi va xotiradan chiqadi
-setInterval(() => { wss.clients.forEach(ws => { if (ws.isAlive === false) { try { ws.terminate(); } catch (e) {} return; } ws.isAlive = false; try { ws.ping(); } catch (e) {} }); }, 30000).unref();
+setInterval(() => { const now = Date.now(); wss.clients.forEach(ws => {
+  if (ws.lastPong && now - ws.lastPong > 35000) { try { ws.terminate(); } catch (e) {} return; }   // 35 s javob yo'q — uzilgan
+  ws._pingAt = now; try { ws.ping(); } catch (e) {}
+}); }, 5000).unref();   // 💓 har 5 s: ham tiriklik, ham kechikishni (ping) o'lchash
 const WS_RATE = Number(process.env.WS_RATE || 40);   // 🛡 bitta ulanishdan soniyasiga eng ko'pi shuncha xabar
 
 wss.on("connection", (ws, req) => {
-  ws.isAlive = true; ws.on("pong", () => { ws.isAlive = true; });
+  ws.isAlive = true; ws.lastPong = Date.now();
+  ws.on("pong", () => {   // ⏱ tarmoq kechikishi: borib-kelish vaqtining yarmi (soatdan ayirish uchun)
+    ws.isAlive = true; ws.lastPong = Date.now();
+    if (ws._pingAt) {
+      const rtt = Date.now() - ws._pingAt;
+      if (rtt >= 0 && rtt < 5000) { ws.rtt = ws.rtt ? Math.round(ws.rtt * 0.7 + rtt * 0.3) : rtt; c.lagMs = Math.min(700, Math.round(ws.rtt / 2)); c.rttMs = ws.rtt; }
+    }
+  });
   const _rl = { t: Date.now(), n: 0, bad: 0 };
   const c = {
     id: id("player"),

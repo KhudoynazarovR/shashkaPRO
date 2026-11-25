@@ -626,7 +626,9 @@ const srvBotOn = room => !!(room && room.vsBot && room.botCfg && room.botCfg.id 
       const now = Date.now();
       const wasRunning = clockRunning(room);
       if (wasRunning) {
-        if (!kkFrozen(room, col)) room.clock[col] -= now - room.turnStartedAt;
+        // ⏱ kechikish kompensatsiyasi: o'yinchining tarmoq kechikishi soatidan yechilmaydi (eng ko'pi 700 ms)
+        const lag = Math.min(700, Math.max(0, Number(c && c.lagMs) || 0));
+        if (!kkFrozen(room, col)) room.clock[col] -= Math.max(0, (now - room.turnStartedAt) - lag);
         if (room.clock[col] <= 0) {
           room.clock[col] = 0;
           finish(room, other(col), "timeout");
