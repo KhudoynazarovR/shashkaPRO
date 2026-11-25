@@ -114,11 +114,11 @@
   function hint() {
     var h = document.getElementById('pzhHint'), need = MU.isOn() && !MU.running() && document.querySelector('.pzh');
     if (need && !h) {
-      var r = document.querySelector('.pzhPlaque'); if (!r) return;
+      var r = document.querySelector('.pzhList'); if (!r) return;
       h = document.createElement('div'); h.id = 'pzhHint';
       h.style.cssText = 'text-align:center;margin:10px auto 0;font-size:13px;color:#ffe9a8;background:rgba(0,0,0,.4);border:1px solid rgba(217,164,65,.5);border-radius:14px;padding:5px 12px;width:fit-content';
       h.textContent = '🎵 Musiqa uchun ekranga bir marta teging';
-      r.parentNode.insertBefore(h, r.nextSibling);
+      r.parentNode.insertBefore(h, r);
     } else if (!need && h) h.parentNode.removeChild(h);
   }
   function dbg() {
@@ -166,7 +166,6 @@
   IMG.etude = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 112 112"><defs><linearGradient id="k" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffe08a"/><stop offset="1" stop-color="#c8860f"/></linearGradient></defs><rect x="4" y="4" width="104" height="104" rx="24" fill="#2a1a08"/><ellipse cx="56" cy="80" rx="32" ry="12" fill="#111"/><rect x="24" y="62" width="64" height="18" fill="#1d1d1d"/><ellipse cx="56" cy="62" rx="32" ry="12" fill="#333" stroke="#000" stroke-width="2"/><ellipse cx="56" cy="62" rx="16" ry="6" fill="none" stroke="#e8a10f" stroke-width="3"/><path d="M34 44l8-20 14 14 14-14 8 20z" fill="url(#k)" stroke="#8a5a00" stroke-width="2"/><circle cx="42" cy="22" r="4" fill="#ffe08a"/><circle cx="56" cy="34" r="4" fill="#ffe08a"/><circle cx="70" cy="22" r="4" fill="#ffe08a"/></svg>');
   var CARDS = [
     { k: 'daily', t: 'Kunlik masala', s: 'Har kuni yangi masala', r: '+10', c1: '#1f56c4', c2: '#0e2f7c', bd: '#74a8ff', sh: '#0a1f55' },
-    { k: 'rush', t: 'Puzzle Rush', s: '3 daqiqa · 3 ta xato', r: '+15', c1: '#d2281c', c2: '#7a0f0c', bd: '#ff8a68', sh: '#4f0907' },
     { k: 'battle', t: 'Puzzle Battle', s: 'Boshqa o‘yinchilar bilan bellash!', r: '+20', c1: '#6f2fcc', c2: '#391280', bd: '#bb94ff', sh: '#240a54' },
     { k: 'pzt', t: 'Masala turniri', s: 'Hamma bir vaqtda · soniyagacha', r: 'Fond', c1: '#0f8a6c', c2: '#05463a', bd: '#5ee0b0', sh: '#032a22' },
     { k: 'custom', t: 'Maxsus masalalar', s: 'Daraja va papkalar bo‘yicha', r: '+25', c1: '#128ca3', c2: '#0a4d5d', bd: '#63dcee', sh: '#06303a' }
@@ -181,8 +180,6 @@
     var ov = ctx.ov, coin = coinText(ctx), h = '';
     h += '<div class="pzh"><div class="pzhTop"><span style="display:flex;gap:8px"><button id="pzBack" class="pzhBack" aria-label="Orqaga">‹</button><button id="pzhMu" class="pzhMu" aria-label="Musiqa">' + (muted() ? '🔇' : '🎵') + '</button><button id="pzhSk" class="pzhMu" aria-label="Doska va toshlar">🎨</button></span>' +
       (coin != null ? '<div class="pzhCoin"><span>🪙</span><span>' + coin + '</span></div>' : '<span></span>') + '</div>';
-    h += '<div class="pzhPlaque"><span class="cr">👑</span><b>Masalalar</b><i>Aqlingni sinab ko‘r!</i></div>';
-    h += '<img class="pzhBan" alt="" src="' + IMG.banner + '">';
     h += '<div class="pzhList">';
     CARDS.forEach(function (c) {
       h += '<button class="pzhCard" data-pzh="' + c.k + '" style="--c1:' + c.c1 + ';--c2:' + c.c2 + ';--bd:' + c.bd + ';--sh:' + c.sh + '">' +
@@ -192,7 +189,7 @@
         (c.k === 'daily' && ctx.dailyDone ? '<span class="pzhOk">✓</span>' : '') +
         '</button>';
     });
-    h += '</div><div class="pzhFoot">Har bir masala — yangi g‘alaba!</div></div>';
+    h += '</div></div>';
     ov.innerHTML = h;
     var b = ov.querySelector('#pzBack'); if (b) b.onclick = ctx.back;
     var skLoad = function (cb) { if (window.spSkin) return cb && cb(); var ss = document.createElement('script'); ss.src = '/skin.js?v=1'; ss.onload = function () { if (cb) cb(); }; document.head.appendChild(ss); };
