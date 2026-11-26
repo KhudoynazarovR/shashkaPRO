@@ -616,7 +616,11 @@ function handle(req, res, url) {
     readBody(req, 4000, body => {
       let j = {};
       try { j = JSON.parse(body); } catch (e) {}
-      require('./kestoai.js').move(j, r => send(res, r.code || 200, r));
+      // 🐉 DragonBOT alohida dvigatelda (Skifi); qolganlari KestoG da
+      const _eng = j && j.eng === 'dragon' ? './dragonai.js' : './kestoai.js';
+      let E = null; try { E = require(_eng); } catch (e) { E = require('./kestoai.js'); }
+      if (_eng !== './kestoai.js' && !(E.isReady && E.isReady())) E = require('./kestoai.js');   // Dragon tayyor bo'lmasa — o'yin to'xtamaydi
+      E.move(j, r => send(res, r.code || 200, r));
     });
     return true;
   }

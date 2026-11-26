@@ -11,7 +11,7 @@ const C2 = (RD_MAX * RD_MAX - 60 * 60) / 365;   // kuniga rd o'sishi (bir yilda 
 const CATS = ['bullet', 'blits', 'rapid', 'corr'];
 const LBL = { bullet: '🚀 Bullet', blits: '⚡ Blits', rapid: '⏱ Rapid', corr: '📮 Yozishma' };
 // botlarning boshlang'ich kuchi (taxminiy) — «?» bilan, o'yinlarda o'zi to'g'rilanadi
-const BOT0 = { bot_easy: 900, bot_mid: 1150, bot: 1400, bot_pro: 1650, bot_gm: 1850, bot_champ: 2000, bot_monster: 2200, bot_terminator: 2350, bot_kingkong: 2500 };
+const BOT0 = { bot_easy: 900, bot_mid: 1150, bot: 1400, bot_pro: 1650, bot_gm: 1850, bot_champ: 2000, bot_monster: 2200, bot_terminator: 2350, bot_kingkong: 2500, bot_dragon: 2550 };
 
 // lichess kabi: '1+1' → bullet (100 s), '2+2'/'3+2'/'5+3' → blits, '10+5' → rapid; '∞' (bot bilan vaqtsiz) → rapid; 'corr' → corr
 function catOf(tc) {
@@ -143,5 +143,5 @@ function view(u) {
   return o;
 }
 function botView(uid) { const o = botP(uid); const rd = age({ rd: o.rd, at: o.at }, Date.now()).rd; return { r: Math.round(o.elo), prov: rd > PROV, n: o.n || 0, w: o.w || 0, l: o.l || 0, dr: o.dr || 0 }; }
-const BOTN = { bot_easy: 'Shogird BOT', bot_mid: 'Jangchi BOT', bot: 'Yo‘lbars BOT', bot_pro: 'Arslon BOT', bot_gm: 'Sulton BOT', bot_champ: 'Legend BOT', bot_monster: 'Monster BOT', bot_terminator: 'Terminator BOT', bot_kingkong: 'King Kong BOT' };
+const BOTN = { bot_easy: 'Shogird BOT', bot_mid: 'Jangchi BOT', bot: 'Yo‘lbars BOT', bot_pro: 'Arslon BOT', bot_gm: 'Sulton BOT', bot_champ: 'Legend BOT', bot_monster: 'Monster BOT', bot_terminator: 'Terminator BOT', bot_kingkong: 'King Kong BOT', bot_dragon: 'DragonBOT' };
 module.exports = { BOT0, BOTN, rate, view, botView, catOf, ensure, CATS, LBL, PROV, isBot, weekKey, step, age, fresh };   // step/age — mgplay.js (mini o'yinlar reytingi)

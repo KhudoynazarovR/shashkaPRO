@@ -118,7 +118,7 @@
           (s.admin ? '<button data-pn="' + esc(c.id) + '">' + (c.pin ? 'Yechish' : 'Mahkamlash') + '</button>' : '') +
           (s.admin || c.mine ? '<button class="del" data-cd="' + esc(c.id) + '">o‘chirish</button>' : '') + '</div></div></div>';
       }).join('') || '<div style="opacity:.6;font-size:13px;padding:6px 0">Hali izoh yo‘q — birinchi bo‘ling</div>') + '</div>';
-    if (s.admin) h += '<div class="ad"><b>ADMIN</b><button data-a="ds">Tavsifni tahrirlash</button><button data-a="sq">Avatar rasmi (kvadrat)</button><button data-a="wide">Keng rasm</button><button data-a="nt">Kutganlarga xabar yuborish</button><input type="file" accept="image/*" id="drF" style="display:none"></div>';
+    if (s.admin) h += '<div class="ad"><b>ADMIN</b><button data-a="op" style="display:block;width:100%;border:0;border-radius:10px;padding:9px;margin-bottom:6px;font-weight:700;color:#fff;background:' + (s.open ? '#7a1d1d' : '#1d7a3a') + '">' + (s.open ? 'Hammaga yopish (hozir ochiq)' : 'Hammaga ochish (hozir faqat admin)') + '</button><button data-a="ds">Tavsifni tahrirlash</button><button data-a="sq">Avatar rasmi (kvadrat)</button><button data-a="wide">Keng rasm</button><button data-a="nt">Kutganlarga xabar yuborish</button><input type="file" accept="image/*" id="drF" style="display:none"></div>';
     ov.innerHTML = h + '</div>';
     ov.querySelector('[data-c]').onclick = closeOv;
     ov.querySelector('[data-t]').onclick = function () { if (busy) return; busy = true; render(); api('/api/dragon/toggle', {}).then(function (j) { busy = false; if (j && !j.error) { setS(j); paint(); } render(); try { Telegram.WebApp.HapticFeedback.notificationOccurred('success'); } catch (e) {} }); };
@@ -132,6 +132,11 @@
     [].forEach.call(ov.querySelectorAll('[data-lk]'), function (b) { b.onclick = function () { api('/api/dragon/like', { id: b.getAttribute('data-lk') }).then(function (j) { if (j && !j.error) { setS(j); render(); } }); }; });
     [].forEach.call(ov.querySelectorAll('[data-cd]'), function (b) { b.onclick = function () { if (!confirm('Izoh o‘chirilsinmi?')) return; api('/api/dragon/cdel', { id: b.getAttribute('data-cd') }).then(function (j) { if (j && !j.error) { setS(j); render(); } }); }; });
     if (s.admin) {
+      ov.querySelector('[data-a="op"]').onclick = function () {
+        var on = !s.open;
+        if (!confirm(on ? 'DragonBOT hamma foydalanuvchilarga ochilsinmi?' : 'DragonBOT yopilsinmi? Faqat admin o‘ynay oladi.')) return;
+        api('/api/dragon/open', { open: on }).then(function (j) { if (j && !j.error) { setS(j); render(); } else alert((j && j.error) || 'Xato'); });
+      };
       ov.querySelector('[data-a="ds"]').onclick = function () { var t = prompt('DragonBOT tavsifi (400 belgigacha):', s.desc || ''); if (t == null) return; api('/api/dragon/desc', { text: t }).then(function (j) { if (j && !j.error) { setS(j); render(); } }); };
       var f = ov.querySelector('#drF'), kind = 'sq';
       [].forEach.call(ov.querySelectorAll('[data-a="sq"],[data-a="wide"]'), function (b) { b.onclick = function () { kind = b.getAttribute('data-a'); f.value = ''; f.click(); }; });

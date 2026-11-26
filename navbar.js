@@ -431,7 +431,7 @@
     var w = document.createElement('span'); w.style.display = 'contents';
     var im = document.createElement('img');
     im.src = '/api/av/' + encodeURIComponent(uid);
-    im.onerror = function () { var i = document.createElement('i'); i.textContent = uid === 'bot_monster' ? '👹' : uid === 'bot_terminator' ? '🦾' : uid === 'bot_kingkong' ? '🦍' : '🤖'; im.replaceWith(i); };
+    im.onerror = function () { var i = document.createElement('i'); i.textContent = uid === 'bot_monster' ? '👹' : uid === 'bot_terminator' ? '🦾' : uid === 'bot_kingkong' ? '🦍' : uid === 'bot_dragon' ? '🐉' : '🤖'; im.replaceWith(i); };
     w.appendChild(im);
     return w;
   }

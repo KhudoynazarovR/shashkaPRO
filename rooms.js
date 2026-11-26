@@ -239,7 +239,7 @@ function createRooms({ send, clients, onFinish }) {
       tc: room.tc,
       tcs: room.vsBot ? BOT_TCS : Object.keys(TCS).filter(k => k !== "0.5+0" && k !== "7+5"),
       vsBot: !!room.vsBot, etude: room.etude || null, botUid: (room.vsBot ? ((botColorOf(room) === 'white' ? room.white : room.black) || {}).uid : null) || null, botStarted: !!room.botStarted, botColor: botColorOf(room),
-      srvBot: srvBotOn(room), botSecs: botSecsFor(room), botBlunder: room.botCfg ? room.botCfg.blunder : 0,
+      srvBot: srvBotOn(room), botSecs: botSecsFor(room), botBlunder: room.botCfg ? room.botCfg.blunder : 0, botEng: (room.botCfg && room.botCfg.eng) || "",
       rmOk: rmOk(room), arena: !!room.arena, noBerserk: !!room.noBerserk, voice: !!room.voice, voiceSaid: room.voiceSaid || null,
       opening: room.opening,
       berserk: room.berserk,
@@ -312,7 +312,7 @@ function createRooms({ send, clients, onFinish }) {
   }
 
   
-  const BOT_COINS = { bot_easy: 1, bot_mid: 2, bot: 3, bot_pro: 5, bot_gm: 8, bot_champ: 12, bot_monster: 25, bot_terminator: 40, bot_kingkong: 65 };
+  const BOT_COINS = { bot_easy: 1, bot_mid: 2, bot: 3, bot_pro: 5, bot_gm: 8, bot_champ: 12, bot_monster: 25, bot_terminator: 40, bot_kingkong: 65, bot_dragon: 80 };
   const BOT_DAILY = 20, BOT_MIN_PLIES = 8;
   function botReward(room, winner) {
     if (!room.vsBot || !winner || (room.moves || []).length < BOT_MIN_PLIES) return;

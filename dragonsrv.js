@@ -13,7 +13,7 @@ function view(uid) {
     n: L.length, me: !!d.w[uid], my: d.w[uid] ? L.findIndex(x => x[0] === String(uid)) + 1 : 0,
     first: L.slice(0, 20).map(([id, at], i) => ({ i: i + 1, uid: id, name: nm(id), at, mine: id === uid })),
     recent: L.slice(-5).reverse().map(([id]) => id),
-    sq: !!d.sq, wide: !!d.wide, v: d.v || 0, admin: isAdm(uid),
+    sq: !!d.sq, wide: !!d.wide, v: d.v || 0, admin: isAdm(uid), open: !!d.open,
     desc: d.desc == null ? DEF_DESC : d.desc,
     now: Date.now(),
     cm: Object.entries(d.cm).map(([id, c]) => ({ id, uid: cu(id, c), name: nm(cu(id, c)), t: c.t, at: c.at, n: Object.keys(c.lk || {}).length, liked: !!(c.lk || {})[uid], mine: cu(id, c) === uid, pin: d.pin === id,
@@ -58,6 +58,8 @@ function handle(req, res, p, h) {
     if (p === '/api/dragon/like') { const c = d.cm[String(j.id || j.uid)]; if (c) { c.lk = c.lk || {}; if (c.lk[uid]) delete c.lk[uid]; else c.lk[uid] = 1; store.save(); } return h.send(res, 200, view(uid)); }
     if (p === '/api/dragon/toggle') { if (d.w[uid]) delete d.w[uid]; else d.w[uid] = Date.now(); store.save(); return h.send(res, 200, view(uid)); }
     if (!isAdm(uid)) return h.send(res, 403, { error: 'Faqat admin' });
+    // 🐉 botni hammaga ochish / yopish. Yopiq bo'lsa botlar ro'yxatida faqat adminga ko'rinadi va faqat admin o'ynaydi.
+    if (p === '/api/dragon/open') { d.open = j.open === undefined ? !d.open : !!j.open; store.save(); console.log('[dragon] bot', d.open ? 'hammaga ochildi' : 'yopildi', '· admin', uid); return h.send(res, 200, view(uid)); }
     if (p === '/api/dragon/pin') { const id = String(j.id || ''); if (d.pin === id || !d.cm[id]) delete d.pin; else d.pin = id; store.save(); return h.send(res, 200, view(uid)); }
     if (p === '/api/dragon/desc') { d.desc = String(j.text || '').replace(/[<>]/g, '').trim().slice(0, 400); store.save(); return h.send(res, 200, view(uid)); }
     if (p === '/api/dragon/setimg') {

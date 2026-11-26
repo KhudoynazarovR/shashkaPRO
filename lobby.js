@@ -30,8 +30,12 @@ const BOTS = [
   { uid: 'bot_champ', name: 'Legend BOT', secs: 3, blunder: 0 },
   { uid: 'bot_monster', name: 'Monster BOT', secs: 5, blunder: 0 },
   { uid: 'bot_terminator', name: 'Terminator BOT', secs: 10, blunder: 0 },
-  { uid: 'bot_kingkong', name: 'King Kong BOT', secs: 15, blunder: 0, ponder: true, soon: process.env.KINGKONG_OPEN !== '1' }   // 🦍 eng kuchli: raqib o'ylayotganda ham o'ylaydi, saboqlar bazada saqlanadi
+  { uid: 'bot_kingkong', name: 'King Kong BOT', secs: 15, blunder: 0, ponder: true, soon: process.env.KINGKONG_OPEN !== '1' },   // 🦍 eng kuchli: raqib o'ylayotganda ham o'ylaydi, saboqlar bazada saqlanadi
+  { uid: 'bot_dragon', name: 'DragonBOT', secs: 10, blunder: 0, eng: 'dragon', adm: true }   // 🐉 Skifi dvigateli. adm — hozircha faqat admin; admin ochganda hammaga (store.db.dragon.open)
 ];
+// 🐉 DragonBOT hammaga ochilganmi (admin /api/dragon/open dan o'zgartiradi)
+const dragOpen = () => { try { const d = require('./store').db.dragon; return !!(d && d.open); } catch (e) { return false; } };
+const botSeen = (b, who) => !b.soon && (!b.adm || dragOpen() || economy.isAdmin(who));   // adm bot: ochilmagan bo'lsa faqat adminga
 const PREM_BOTS = new Set(['bot_champ', 'bot_monster', 'bot_terminator', 'bot_kingkong']);   // 👑 faqat Premium bilan
 function botPow(b) {   // admin belgilagan foiz (1-100) → o'ylash vaqti va tasodifiy yurish ehtimoli
   try {
@@ -40,7 +44,7 @@ function botPow(b) {   // admin belgilagan foiz (1-100) → o'ylash vaqti va tas
   } catch (e) {}
   return { secs: b.secs, blunder: b.blunder };
 }
-const botByUid = uid => BOTS.find(b => b.uid === uid && !b.soon) || null;
+const botByUid = (uid, who) => BOTS.find(b => b.uid === uid && botSeen(b, who)) || null;
 const botAny = uid => BOTS.find(b => b.uid === uid) || null;   // faqat admin tanlovi uchun ('soon' ham bo'ladi)
    // 'soon' — hali e'lon qilingan, o'ynab bo'lmaydi
 const BOT_TCS = ['1+1', '2+2', '3+2', '5+3'];
@@ -287,7 +291,7 @@ function createLobby({ send, clients, roomsApi }) {
     const seen = new Map();
     for (const c of lbClients()) {
       const p = seen.get(c.lb.uid);
-      if (!p) { let su = null; try { su = require('./store').users()[String(c.lb.uid)]; } catch (e) {} seen.set(c.lb.uid, { uid: c.lb.uid, name: c.lb.name, busy: !!c.lb.inRoom, elo: (c.isBot ? botElo(c.lb.uid) : 0) || (su && su.elo) || 1000, gems: (su && su.diamonds) || 0, wins: (su && su.wins) || 0, hasAv: !!(su && require('./store').avOf(su)) || (!!c.isBot && !!botX(c.lb.uid).a), bot: !!c.isBot, prem: !!(su && require('./store').isPremium(su)) }); }
+      if (!p) { let su = null; try { su = require('./store').users()[String(c.lb.uid)]; } catch (e) {} const _bd = c.isBot ? botAny(c.lb.uid) : null; seen.set(c.lb.uid, { uid: c.lb.uid, name: c.lb.name, busy: !!c.lb.inRoom, elo: (c.isBot ? botElo(c.lb.uid) : 0) || (su && su.elo) || 1000, gems: (su && su.diamonds) || 0, wins: (su && su.wins) || 0, hasAv: !!(su && require('./store').avOf(su)) || (!!c.isBot && !!botX(c.lb.uid).a), bot: !!c.isBot, prem: !!(su && require('./store').isPremium(su)), ...((_bd && _bd.adm && !dragOpen()) ? { adm: 1 } : {}) }); }   // adm: 1 — ro'yxatda faqat adminga ko'rinadi
       else { p.busy = p.busy && !!c.lb.inRoom; if (c.isBot) { p.elo = botElo(c.lb.uid) || p.elo; const x = botX(c.lb.uid); p.hasAv = !!x.a; if (x.n) p.name = x.n; } }
     }
     const _out = [...seen.values()];
@@ -400,7 +404,7 @@ function createLobby({ send, clients, roomsApi }) {
     const uid = c.lb.uid;
     return {
       type: 'lbState', now: Date.now(),
-      me: { uid, name: c.lb.name, prem: (() => { try { const st = require('./store'); return !!st.isPremium(st.users()[String(uid)] || {}); } catch (e) { return false; } })() }, ...friendState(uid, onSet),
+      me: { uid, name: c.lb.name, adm: economy.isAdmin(uid) || undefined, prem: (() => { try { const st = require('./store'); return !!st.isPremium(st.users()[String(uid)] || {}); } catch (e) { return false; } })() }, ...friendState(uid, onSet),
       inQueue: queue.has(uid), myQueueTc: (queue.get(uid) || {}).tc || null,
       seekers: [...queue.values()].reduce((o, x) => { if (x.uid !== uid && connsOf(x.uid).length) { const k = x.tc + (x.voice ? 'v' : '') + (x.stake ? 's' + x.stake : ''); o[k] = (o[k] || 0) + 1; } return o; }, {}),
       myStake: (queue.get(uid) || {}).stake || 0,
@@ -483,7 +487,7 @@ function createLobby({ send, clients, roomsApi }) {
     const hw = o && o.color === 'black' ? false : o && o.color === 'random' ? Math.random() < 0.5 : true;
     const H = { uid: human.uid, name: human.name }, B = { uid: bot.uid, name: bot.name, clientId: 'ai_' + bot.uid };
     roomsApi.create(roomId, {
-      tc, vsBot: true, opening, botCfg: Object.assign({ id: bot.uid, ponder: !!bot.ponder }, botPow(bot)),
+      tc, vsBot: true, opening, botCfg: Object.assign({ id: bot.uid, ponder: !!bot.ponder, eng: bot.eng || '' }, botPow(bot)),
       white: hw ? H : B,
       black: hw ? B : H
     });
@@ -1720,13 +1724,15 @@ function createLobby({ send, clients, roomsApi }) {
         { const cd = rejCd.get(me.uid + '>' + to.lb.uid); if (cd && cd > Date.now()) return err(c, (to.lb.name || 'O‘yinchi') + ' taklifingizni rad etdi. Qayta taklif ' + Math.ceil((cd - Date.now()) / 60000) + ' daqiqadan keyin'), true; }
         if (challenges.size > 500) return err(c, 'Hozir band, keyinroq urinib ko‘ring'), true;
         const ch = { id: 'c' + hex(4), fromUid: me.uid, fromName: me.name, toUid: to.lb.uid, tc: tcOf(m.tc), ...cleanOpts(m), at: Date.now() };
-        if (botByUid(ch.toUid)) ch.stake = 0;   // botga tikib bo'lmaydi
+        const _bAny = botAny(ch.toUid);
+        if (_bAny && !botSeen(_bAny, me.uid)) return err(c, _bAny.name + ' hozircha yopiq'), true;   // 🐉 adm bot: ochilmaguncha faqat admin
+        if (_bAny) ch.stake = 0;   // botga tikib bo'lmaydi
         if (ch.stake) { const e = require('./wager.js').can(me.uid, ch.stake); if (e) return err(c, e), true; }
-        if (botByUid(ch.toUid)) {   // bot taklifni darhol qabul qiladi
-          if (PREM_BOTS.has(ch.toUid)) { const st = require('./store'); if (!st.isPremium(st.users()[String(me.uid)] || {})) { send(c.ws, { type: 'lbNeedPrem', bot: botByUid(ch.toUid).name }); return err(c, '👑 ' + botByUid(ch.toUid).name + ' bilan faqat Premium foydalanuvchilar o‘ynay oladi'), true; } }
+        if (_bAny) {   // bot taklifni darhol qabul qiladi
+          if (PREM_BOTS.has(ch.toUid)) { const st = require('./store'); if (!st.isPremium(st.users()[String(me.uid)] || {})) { send(c.ws, { type: 'lbNeedPrem', bot: _bAny.name }); return err(c, '👑 ' + _bAny.name + ' bilan faqat Premium foydalanuvchilar o‘ynay oladi'), true; } }
           queue.delete(me.uid);
           ch.tc = botTcOk(m.tc) ? String(m.tc) : '∞'; ch.color = ['white', 'black', 'random'].includes(m.color) ? m.color : 'white';
-          startBotGame({ uid: me.uid, name: me.name }, ch, botByUid(ch.toUid));
+          startBotGame({ uid: me.uid, name: me.name }, ch, _bAny);
           push();
           break;
         }
