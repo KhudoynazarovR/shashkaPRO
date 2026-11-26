@@ -128,8 +128,7 @@ function manCaptures(board, r, c, piece, side, captured) {
 
     const next = cloneBoard(board);
 
-    next[r][c] = null;
-    next[mr][mc] = null;
+    next[r][c] = null;   // 🇹🇷 urilgan dona (mr,mc) doskada qoladi — yurish oxirigacha to'siq
 
     let nextPiece = piece;
 
@@ -201,8 +200,7 @@ function kingCaptures(board, r, c, piece, side, captured) {
             const next = cloneBoard(board);
 
             next[r][c] = null;
-            next[er][ec] = null;
-            next[rr][cc] = piece;
+            next[rr][cc] = piece;   // 🇹🇷 turk zarbasi: urilgan dona yurish oxirigacha doskada qoladi (ustidan o'tib bo'lmaydi)
 
             const nextCaptured = captured.concat([enemySquare]);
 
@@ -246,6 +244,9 @@ function kingCaptures(board, r, c, piece, side, captured) {
 
       // Friendly piece blocks this direction.
       if (colorOf(current) === side) break;
+
+      // 🇹🇷 allaqachon urilgan dona — to'siq: na ustidan o'tiladi, na qayta uriladi
+      if (containsSquare(captured, [rr, cc])) break;
 
       // More than one enemy before landing is impossible.
       if (enemySquare) break;
