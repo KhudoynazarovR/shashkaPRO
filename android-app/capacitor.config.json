@@ -3,7 +3,7 @@
   "appName": "ShashkaPRO",
   "webDir": "www",
   "server": {
-    "url": "https://shashkapro.onrender.com",
+    "url": "https://shashkapro-eu.onrender.com",
     "androidScheme": "https",
     "cleartext": false
   },
