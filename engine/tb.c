@@ -24,7 +24,7 @@ static int CC(int s) { int r = s >> 2; return 2 * (s & 3) + ((r % 2 == 0) ? 1 : 
 static int ins(int r, int c) { return r >= 0 && r < 8 && c >= 0 && c < 8; }
 
 typedef struct { int wm, wk, bm, bk; long long nwm, nwk, nbm, nbk, size; uint8_t *v; int done; } Slice;
-static Slice *SL[5][5][5][5];
+static Slice *SL[MAXP+1][MAXP+1][MAXP+1][MAXP+1];
 
 static long long comb(int n, int k) { return (k < 0 || k > n) ? 0 : Cn[n][k]; }
 /* kombinatsiya raqami: o'sish tartibidagi p[0]<p[1]<... */
@@ -177,13 +177,14 @@ static void evcb(const int *ch, void *x) {
 
 static int maxDist = 0;
 static void solve(Slice *S) {
-  S->v = malloc(S->size); memset(S->v, 0, S->size);
+  S->v = malloc(S->size); if (!S->v) { fprintf(stderr, "Not enough memory for slice\n"); exit(2); } memset(S->v, 0, S->size);
   int b[32], stm; long long valid = 0;
   for (long long i = 0; i < S->size; i++) { if (!boardOf(S, i, b, &stm)) S->v[i] = INV; else valid++; }
   int ext = maxDist;
   /* har pozitsiya uchun bir martalik hisob: bolalar qiymatlari ichida eng yaxshi */
   long long changed = 1; int pass = 0;
   uint8_t *res = malloc(S->size);   /* hal bo'lmagan = 0 */
+  if (!res) { fprintf(stderr, "Not enough memory for solver buffer\n"); exit(2); }
   memcpy(res, S->v, S->size);
   for (pass = 0; ; pass++) {
     changed = 0;
@@ -206,7 +207,9 @@ static void solve(Slice *S) {
   printf("W%d%dB%d%d: %lld pozitsiya, yutish %lld, yutqazish %lld, durang %lld, o'tishlar %d\n", S->wm, S->wk, S->bm, S->bk, valid, w, l, dr, pass);
   fflush(stdout);
   char fn[256]; sprintf(fn, "%s/W%d%dB%d%d.bin", OUT, S->wm, S->wk, S->bm, S->bk);
-  FILE *f = fopen(fn, "wb"); if (f) { fwrite(S->v, 1, S->size, f); fclose(f); }
+  FILE *f = fopen(fn, "wb"); if (!f) { perror(fn); exit(2); }
+  if (fwrite(S->v, 1, S->size, f) != (size_t)S->size) { fclose(f); remove(fn); fprintf(stderr, "Incomplete tablebase write\n"); exit(2); }
+  if (fclose(f) != 0) { remove(fn); exit(2); }
   S->done = 1;
 }
 
@@ -217,6 +220,7 @@ int main(int argc, char **argv) {
     while (1) { for (int s = 0; s < 32; s++) if (scanf("%d", &b[s]) != 1) return 0; if (scanf("%d", &side) != 1) return 0; genMoves(b, side, prcb, NULL); printf("\n"); }
   }
   if (argc > 1) NMAX = atoi(argv[1]);
+  if (NMAX < 2 || NMAX > MAXP) { fprintf(stderr, "Supported piece count: 2..%d\n", MAXP); return 2; }
   if (argc > 2) OUT = argv[2];
   for (int n = 0; n < 40; n++) { Cn[n][0] = 1; for (int k = 1; k < 8; k++) Cn[n][k] = n ? Cn[n - 1][k - 1] + Cn[n - 1][k] : 0; }
   /* tartib: jami donalar soni o'sib boradi, keyin oddiy donalar soni (damkaga chiqish donani kamaytiradi) */
