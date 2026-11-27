@@ -1146,7 +1146,29 @@ function createLobby({ send, clients, roomsApi }) {
     roomToBoard.set(roomId, { t, b: board });
     if (!w.bot) sendUid(w.uid, { type: 'lbGo', roomId, reason: 'arena', tname: t.name, round: 0, color: 'white', opponent: k.name, tc: t.tc });
     if (!k.bot) sendUid(k.uid, { type: 'lbGo', roomId, reason: 'arena', tname: t.name, round: 0, color: 'black', opponent: w.name, tc: t.tc });
-    const timer = setTimeout(() => forfeitIdle(board), ARENA_NOSHOW_MS);
+    // Arena: retry missing room connections before deciding a no-show.
+    const check = (attempt) => {
+      const room = roomsApi.get(roomId);
+      if (board.done || !room || room.finished || room.plies >= 2) return;
+      const online = (p, seat) => p.bot || !!(seat && seat.clientId && clients.has(seat.clientId));
+      const missing = [[w, room.white, 'white', k], [k, room.black, 'black', w]].filter(([p, seat]) => !online(p, seat));
+      if (missing.length && attempt < 3) {
+        for (const [p, seat, color, opp] of missing) {
+          if (!p.withdrawn) sendUid(p.uid, { type: 'lbGo', roomId, reason: 'arena', tname: t.name, round: 0, color, opponent: opp.name, tc: t.tc });
+        }
+        const retry = setTimeout(() => check(attempt + 1), 10000);
+        if (retry.unref) retry.unref();
+        return;
+      }
+      if (missing.length && room.plies === 0) {
+        for (const [p] of missing) { p.withdrawn = true; toast(p.uid, 'Ulanish amalga oshmadi. Qayta qo‘shiling.'); }
+        roomsApi.forfeit(roomId, 'draw', 'arena_cancel');
+        return;
+      }
+      if (!missing.length) roomsApi.forfeit(roomId, room.turn === 'white' ? 'black' : 'white', 'noshow');
+      else forfeitIdle(board);
+    };
+    const timer = setTimeout(() => check(0), ARENA_NOSHOW_MS);
     if (timer.unref) timer.unref();
   }
 
@@ -1217,6 +1239,13 @@ function createLobby({ send, clients, roomsApi }) {
     b.winner = room.winner;
     t.cur = t.cur.filter(x => x !== b);
     roomToBoard.delete(room.id);
+    if (room.reason === 'arena_cancel') {
+      const w = t.players.get(b.white), k = t.players.get(b.black);
+      for (const p of [w, k]) if (p) { p.busy = false; p.waitingSince = Date.now(); }
+      if (w) w.colors.w = Math.max(0, w.colors.w - 1);
+      if (k) k.colors.b = Math.max(0, k.colors.b - 1);
+      push(); return;
+    }
     if (t.status === 'finished') {   // ⏱ turnir allaqachon yakunlangan: ochko qo'shilmaydi, reyting va tanga odatdagidek
       const w = t.players.get(b.white), k = t.players.get(b.black);
       if (w) w.busy = false; if (k) k.busy = false;
@@ -1915,7 +1944,17 @@ function createLobby({ send, clients, roomsApi }) {
         const t = tournaments.get(String(m.tid));
         if (t && t.type === 'arena' && t.status !== 'finished') {
           const p = t.players.get(me.uid);
-          if (p) { if (t.status === 'reg' && t.creatorUid !== me.uid) t.players.delete(me.uid); else p.withdrawn = true; }
+          if (p) {
+            if (t.status === 'reg' && t.creatorUid !== me.uid) t.players.delete(me.uid);
+            else {
+              p.withdrawn = true;
+              for (const b of t.cur.slice()) {
+                if (b.done || (b.white !== p.uid && b.black !== p.uid)) continue;
+                const room = roomsApi.get(b.roomId);
+                if (room && !room.finished && room.plies === 0) roomsApi.forfeit(b.roomId, 'draw', 'arena_cancel');
+              }
+            }
+          }
           push();
           break;
         }
