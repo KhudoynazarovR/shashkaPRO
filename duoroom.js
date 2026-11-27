@@ -30,16 +30,28 @@ function view(r, uid) {
   };
 }
 function push(r) { r.p.forEach(x => send(x.ws, view(r, x.uid))); if (r.watch) for (const ws of r.watch.values()) send(ws, view(r, '')); }
+function arenaFirst(r) {
+  clearTimeout(r.firstT);
+  if (!r.arena || r.status !== 'play' || r.S.ply >= 2) return;
+  const turn = r.S.turn, ply = r.S.ply;
+  r.firstDeadline = Date.now() + 15000;
+  r.firstT = setTimeout(() => {
+    if (r.status !== 'play' || r.S.ply !== ply) return;
+    const on = r.p.map(p => !!p.ws);
+    end(r, !on[0] && !on[1] ? 0 : !on[0] ? 2 : !on[1] ? 1 : turn === 1 ? 2 : 1, 'noshow');
+  }, 15000);
+  if (r.firstT.unref) r.firstT.unref();
+}
 function arm(r) {
   clearTimeout(r.tmr); if (!r.tc || r.status !== 'play') return;
   const s = r.S.turn, left = r.clk[s - 1];
   r.tmr = setTimeout(() => { if (r.status === 'play' && r.S.turn === s) { r.clk[s - 1] = 0; end(r, s === 1 ? 2 : 1, 'time'); } }, Math.max(0, left) + 250);
 }
 function end(r, res, why) {
-  clearTimeout(r.tmr); clearTimeout(r.nsT); r.status = 'over';
-  if (r.onEnd && !r.reported) { r.reported = 1; try { r.onEnd(res, { why, plies: r.S ? r.S.ply : 0 }); } catch (e) { console.log('[' + 'mix]', e.message); } }
+  clearTimeout(r.tmr); clearTimeout(r.nsT); clearTimeout(r.firstT); r.status = 'over';
+  if (r.onEnd && !r.reported) { r.reported = 1; try { r.onEnd(res, { why, plies: r.S ? r.S.ply : 0, noshow: why === 'noshow', noshowBoth: why === 'noshow' && !r.p.some(p => p.ws) }); } catch (e) { console.log('[' + 'mix]', e.message); } }
   if (r.S && !r.S.over) { r.S.over = true; r.S.res = res; r.S.why = why; }
-  rateEnd(r, res, why);
+  if (!r.arena) rateEnd(r, res, why);
   r.at = Date.now(); r.draw = 0; push(r);
   if (r.inline) { card(r); forget(r.code); }
 }
@@ -83,6 +95,7 @@ function handle(c, m) {
     if (r.p.length === 2 && r.status === 'wait' && (!(r.onEnd || r.inline) || r.p.every(x => x.ws))) begin(r);   // turnir / guruh kartasi — ikkalasi ham kirganda
     else if (r.inline && r.status === 'wait' && r.p.length === 2 && !r.p[0].ws) { pingHost(r); card(r); }
     else if (r.inline && r.status === 'wait' && r.p.length === 2 && r.p[0].ws && !r.p[1].ws) pingFriend(r);   // do'st chiqib ketgan — unga xabar
+    if (r.arena && r.p.every(x => x.ws) && !r.firstDeadline && r.S && r.S.ply < 2) arenaFirst(r);
     push(r);
     return true;
   }
@@ -103,7 +116,7 @@ function handle(c, m) {
     if (r.tc) { r.clk[me.side - 1] += r.inc * 1000; r.runAt = now; }
     r.draw = 0; r.at = now;
     if (S.over) { end(r, S.res, S.why); return true; }
-    arm(r); push(r);
+    arenaFirst(r); arm(r); push(r);
     return true;
   }
   if (m.type === 'duResign') { if (r.status === 'play') end(r, me.side === 1 ? 2 : 1, 'resign'); return true; }
@@ -139,12 +152,12 @@ function onClose(c) {
 setInterval(() => {
   const now = Date.now();
   for (const [k, r] of rooms) {
-    if (r.status === 'play') { const off = r.p.find(x => !x.ws && x.offAt && now - x.offAt > 60e3); if (off) end(r, off.side === 1 ? 2 : 1, 'left'); }
+    if (r.status === 'play') { const off = r.p.find(x => !x.ws && x.offAt && now - x.offAt > (r.arena ? 30e3 : 60e3)); if (off) end(r, off.side === 1 ? 2 : 1, 'left'); }
     if (r.inline && r.status === 'wait' && r.p.length === 2 && !r.p[1].ws && r.p[1].offAt && now - r.p[1].offAt > 180e3) { r.p.pop(); clearTimeout(r.stmr); r.pinged = 0; card(r); push(r); }
     const on = r.p.some(x => x.ws);
     if ((!on && now - r.at > 30 * 60e3) || now - r.at > 6 * 3600e3) { clearTimeout(r.tmr); rooms.delete(k); }
   }
-}, 30e3).unref();
+}, 1000).unref();
 // 🔀 Miks turnir: ikkala o'rin oldindan band (a — birinchi yuradi), natija onEnd(res 1|2|0, {why, plies, noshow, noshowBoth}) bilan qaytadi.
 // noshowMs ichida o'yin boshlanmasa: kirgan yutadi, hech kim kirmasa — ikkalasi ham kelmadi.
 function createPair(a, b, tcK, onEnd, noshowMs, g) {
@@ -154,7 +167,7 @@ function createPair(a, b, tcK, onEnd, noshowMs, g) {
     if (!TCS[tcK]) TCS[tcK] = [+tm[1] * 60, +tm[2]];
   } else tcK = TCS[tcK] ? String(tcK) : '3+2';
   let k = code(); while (rooms.has(k)) k = code();
-  const r = { code: k, tcK, tc: TCS[tcK][0], inc: TCS[tcK][1], p: [{ uid: String(a.uid), name: a.name, ws: null, offAt: 0 }, { uid: String(b.uid), name: b.name, ws: null, offAt: 0 }], status: 'wait', at: Date.now(), S: null, fixed: true, onEnd };
+  const r = { code: k, tcK, tc: TCS[tcK][0], inc: TCS[tcK][1], p: [{ uid: String(a.uid), name: a.name, ws: null, offAt: 0 }, { uid: String(b.uid), name: b.name, ws: null, offAt: 0 }], status: 'wait', at: Date.now(), S: null, fixed: true, arena: noshowMs === 15000, onEnd };
   if (g) r.g = g;
   r.nsT = setTimeout(() => {   // ⏱ 30 s: kirmagan — texnik mag'lubiyat (ikkalasi ham kirmasa — ikkalasiga ham)
     if (r.reported || r.status === 'over') return;
