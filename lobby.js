@@ -904,10 +904,15 @@ function createLobby({ send, clients, roomsApi }) {
     // Explicit game identifier; legacy tournaments remain draughts.
     const game = String(m.game || 'sh');
     if (!['sh', 'ug', 'mm', 'go', 'gomoku'].includes(game)) return 'Noma’lum o‘yin turi';
-    if (game !== 'sh') return 'Bu o‘yin uchun Arena hali sinovda';
+    if (game !== 'sh') {
+      if (!sys && !economy.isAdmin(me.uid)) return 'Bu Arena faqat admin sinovida';
+      if (m.kind !== 'arena') return 'Bu o‘yin uchun hozircha faqat Arena mavjud';
+      m = Object.assign({}, m, { rated: false, berserk: false, botIds: [], minGames: 0, pos: 'std', flag: false });
+    }
 
     const adm0 = !!sys || economy.isAdmin(me.uid);
     const cl = clubsApi.check(me.uid, m.clubIds); if (cl.error) return cl.error;
+    if (game !== 'sh' && cl.ids.includes(clubsApi.SYS)) return 'Bu Arena botlarni qo‘llamaydi';
     if (cl.ids.includes(clubsApi.SYS) && m.kind !== 'arena') return 'Botlar klubi faqat arenada ishlaydi';
     if (!adm0 && [...tournaments.values()].filter(x => x.status !== 'finished').length >= MAX_TOURNAMENTS) return 'Turnirlar soni limitga yetdi';   // tugaganlar (24 soat saqlanadi) hisobga kirmaydi; admin va doimiy turnirlarga limit yo'q
     // (bir vaqtda bitta ochiq turnir cheklovi olib tashlandi)
@@ -921,7 +926,7 @@ function createLobby({ send, clients, roomsApi }) {
       const delay = ARENA_STARTS.includes(Number(m.startIn)) ? Number(m.startIn) : 5;
       const startAt = sys ? Number(m.startAt) : (validStart(m.startAt) || (Date.now() + delay * 60000));
       const at = Object.assign({
-        id: hex(3), type: 'arena', name: cleanTitle(m.name) || ('Arena ' + me.name),
+        id: hex(3), type: 'arena', game, name: cleanTitle(m.name) || ('Arena ' + me.name),
         tc: tcOf(m.tc),
         creatorUid: me.uid, creatorName: me.name, status: 'reg', created: Date.now(),
         players: new Map(), round: 0, rounds: 0, cur: [], curBye: null, nextAt: 0,
@@ -1122,6 +1127,7 @@ function createLobby({ send, clients, roomsApi }) {
 
   function startArena(t) {
     if (t.status !== 'reg') return;
+    if (t.game && t.game !== 'sh') t.botIds = [];
     for (const id of [...(t.botIds || []), ...((t.clubIds || []).includes(clubsApi.SYS) ? clubsApi.sysBots() : [])]) {
       const b = botAny(id); if (!b || t.players.has(b.uid)) continue;
       const p = newArenaPlayer({ uid: b.uid, name: '🤖 ' + b.name }); p.bot = true; t.players.set(b.uid, p);
