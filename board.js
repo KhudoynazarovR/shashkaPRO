@@ -419,6 +419,8 @@
     var ov = document.createElement('div'); ov.id = 'spBd';
     ov.style.cssText = 'position:fixed;left:0;right:0;top:0;bottom:0;z-index:100001;background:radial-gradient(circle at 30% 10%,#3a1a7a 0,#241058 50%,#140a33 100%);color:#fff;overflow-y:auto;padding:12px;box-sizing:border-box;font-family:Arial,sans-serif;text-align:center';
     document.body.appendChild(ov);
+    function dwClockText(m,side,now){if(!m||!m.clock||!Number.isFinite(m.clock[side]))return '—';var ms=Math.max(0,m.clock[side]-(m.running&&m.turn===side&&m.turnAt?Math.max(0,now-m.turnAt):0));var sec=Math.ceil(ms/1000);return Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0');}
+    if(g && g.workshop){var dwTimer=setInterval(function(){if(!document.body.contains(ov)){clearInterval(dwTimer);return;}ov.querySelectorAll('[data-dw-clock]').forEach(function(el){el.textContent=dwClockText(ov.dwMatch,Number(el.dataset.dwClock),Date.now());});},250);}
     if(g && g.workshop) ov.dwLive=function(match){
       if(!match || !Array.isArray(match.history)||!match.history.length)return;
       var key=match.game+'|'+match.history.length+'|'+match.a+'|'+match.b;
@@ -1001,7 +1003,7 @@
       if (GI && GI.title) s += '<div style="font-size:14px;margin-bottom:6px">' + String(GI.title).replace(/</g, '&lt;') + '</div>';
       else if (GI) s += '<div style="font-size:14px;margin-bottom:6px">⚪ ' + String(GI.white || '') .replace(/</g, '&lt;') + ' — ⚫ ' + String(GI.black || '').replace(/</g, '&lt;') + '<br><span style="opacity:.8">' + (GI.live ? 'Jonli o‘yin · hozirgi pozitsiyadan' : GI.winner === 'white' ? '🏆 Oq yutdi' : GI.winner === 'black' ? '🏆 Qora yutdi' : '🤝 Durang') + '</span></div>';
       var GS = gameSkin();
-      function dwPlayer(side){return '<div data-dw-side="'+side+'" style="display:flex;align-items:center;justify-content:space-between;padding:8px 4px;font-size:16px;font-weight:700"><span>'+ (side===1?'⚪ ':'⚫ ')+String(side===1?ov.dwMatch.white:ov.dwMatch.black).replace(/[<>&]/g,'')+'</span><span data-dw-clock="'+side+'" style="font-size:23px;font-variant-numeric:tabular-nums">—</span></div>';}
+      function dwPlayer(side){return '<div data-dw-side="'+side+'" style="display:flex;align-items:center;justify-content:space-between;padding:8px 4px;font-size:16px;font-weight:700"><span>'+ (side===1?'⚪ ':'⚫ ')+String(side===1?ov.dwMatch.white:ov.dwMatch.black).replace(/[<>&]/g,'')+'</span><span data-dw-clock="'+side+'" style="font-size:23px;font-variant-numeric:tabular-nums">'+dwClockText(ov.dwMatch,side,Date.now())+'</span></div>';}
       if(g&&g.workshop&&ov.dwMatch) s+=dwPlayer(flip?1:-1);
       s += '<div style="position:relative;width:min(calc(100% + 24px),520px);margin-left:calc((100% - min(calc(100% + 24px),520px)) / 2);box-sizing:border-box"><div id="spBdB" data-th="' + GS.th + '" data-ps="' + GS.ps + '" style="--pz:' + GS.pz + '%;--km:\'' + GS.km + '\';display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);aspect-ratio:1;overflow:hidden;border:0!important;box-shadow:none!important">';
       var lm = (!ed && h.m && S.alm !== false) ? [h.m.path[0], h.m.path[h.m.path.length - 1]] : [], rr, cc, r, c, p, hl, dot;
