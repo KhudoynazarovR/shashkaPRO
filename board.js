@@ -669,6 +669,7 @@
       }).catch(function () { bx.textContent = 'Server bilan aloqa yo‘q'; });
     }
     var A = {
+      dragonlab: function () { if(g && g.workshop) g.workshop(); },
       kk: function () { panel = 'kk'; KK.msg = ''; KK.pend = null; },
       kkteach: function () { kkTeach(); },
       auto: function () { panel = 'auto'; PL = null; AU.msg = ''; },
@@ -1041,7 +1042,7 @@
         if (panel === 'book') s += bookHtml();
         else if (panel === 'engp') s += engHtml(sm);
         else if (panel === 'menu') {
-          s += '<div style="display:grid;grid-template-columns:1fr 1fr">' + mi('flip', '🔄', 'Taxtani aylantirish') + mi('edit', '✏️', 'Taxta muharriri') + mi('play', '🎯', 'Kompyuter bilan mashq qilish') + mi('cont', '♟', 'Shu pozitsiyadan davom etish') + mi('auto', '🤖', 'Kompyuter vs Kompyuter') + mi('learn', '📚', 'O‘rganish') + mi('set', '⚙️', 'Sozlamalar') + ((window.__isAdmin || (window.hzIsAdmin && window.hzIsAdmin())) ? mi('kk', '🦍', 'King Kong ustaxonasi') : '') + '</div>';
+          s += '<div style="display:grid;grid-template-columns:1fr 1fr">' + mi('flip', '🔄', 'Taxtani aylantirish') + mi('edit', '✏️', 'Taxta muharriri') + mi('play', '🎯', 'Kompyuter bilan mashq qilish') + mi('cont', '♟', 'Shu pozitsiyadan davom etish') + mi('auto', '🤖', 'Kompyuter vs Kompyuter') + mi('learn', '📚', 'O‘rganish') + mi('set', '⚙️', 'Sozlamalar') + ((g && g.workshop) ? mi('dragonlab', '🐉', 'Dragon boshqaruvi') : ((window.__isAdmin || (window.hzIsAdmin && window.hzIsAdmin())) ? mi('kk', '🦍', 'King Kong ustaxonasi') : '')) + '</div>';
           s += '<div style="text-align:center;margin-top:6px"><button id="bdA" style="' + sm + ';background:#2e9d6b">📊 Hammasini baholash' + (prog ? ' ' + prog : '') + '</button><button id="bdN" style="' + sm + ';background:#8a2b3a">🗑 Yangi o‘yin</button></div>';
         } else if (panel === 'kk') {
           s += '<div style="font-size:15px;font-weight:700;margin-bottom:6px">🦍 King Kong ustaxonasi</div>';
@@ -1110,7 +1111,6 @@
       }
       s += '</div>';
       ov.innerHTML = s;
-      if(g && g.workshop){var wb=document.createElement('button');wb.textContent='🐉 Dragon ustaxonasi — partiyalar va xotira';wb.style.cssText='display:block;width:100%;margin:12px 0;padding:14px;border:1px solid #64748b;border-radius:8px;background:#202938;color:white;font-weight:700';wb.onclick=g.workshop;ov.appendChild(wb);}
       function on(id, f) { var el = ov.querySelector(id); if (el) el.onclick = f; }
       on('#bdX', function () { ov.remove(); if (g && g.onClose) try { g.onClose(); } catch (e) {} });
       on('#bd0', function () { go(0); }); on('#bd1', function () { go(cur - 1); });
