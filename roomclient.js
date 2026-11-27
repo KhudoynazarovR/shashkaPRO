@@ -719,7 +719,7 @@
     elZalB.innerHTML = RC_ICO.back + "<span>O‘yin zali</span>";
     root.appendChild(elZalB);
     function zalOk() {
-      if (!st.joined || st.color === "spectator" || st.etude) return false;   // tomoshabinda tepada o'z «‹» tugmasi bor
+      if (st.arena || !st.joined || st.color === "spectator" || st.etude) return false;   // tomoshabinda tepada o'z «‹» tugmasi bor
       if (st.finished || !bothIn()) return true;
       return !!st.casual && (st.moves || []).length < 2;
     }
@@ -1084,7 +1084,7 @@
         var s2 = Math.min(1000, st.stake * 2);
         btn("🔁 Revansh: 2× tikish (" + s2 + " 🪙)", function () { st._stRm = true; window.lbStakeRematch(roomId); this.disabled = true; this.textContent = "⏳ Revansh taklifi yuborildi"; });
       }
-      if (!spec && !st.etude && st.finished && st.winner === st.color && window.spShareCard) btn("📸 G‘alabani ulashish", function () { var opp = st.color === "white" ? st.black : st.white; window.spShareCard({ theme: "win", title: "G‘ALABA!", big: "🏆", sub: "Raqib: " + (st.vsBot ? "🤖 " : "") + (opp || ""), sub2: (st.tc ? "⏱ " + st.tc : "") + (st.reason === "timeout" ? " · vaqt bo‘yicha" : ""), cap: "🏆 ShashkaPRO’da " + (opp || "raqib") + "ni yutdim!" }); });
+      if (!spec && !st.arena && !st.etude && st.finished && st.winner === st.color && window.spShareCard) btn("📸 G‘alabani ulashish", function () { var opp = st.color === "white" ? st.black : st.white; window.spShareCard({ theme: "win", title: "G‘ALABA!", big: "🏆", sub: "Raqib: " + (st.vsBot ? "🤖 " : "") + (opp || ""), sub2: (st.tc ? "⏱ " + st.tc : "") + (st.reason === "timeout" ? " · vaqt bo‘yicha" : ""), cap: "🏆 ShashkaPRO’da " + (opp || "raqib") + "ni yutdim!" }); });
       if (false) btn("🎞 GIF qilib ulashish", function () {   // bot GIF yuboradi — u yerdan istalgan chatga ulashiladi
         var b = this; b.disabled = true; b.textContent = "⏳ GIF tayyorlanmoqda…";
         fetch("/api/gif", { method: "POST", headers: { "Content-Type": "application/json", "x-init-data": tg.initData }, body: JSON.stringify({ roomId: roomId }) })
@@ -1486,6 +1486,7 @@
       else if (st.turn === st.color) t = st.forced ? "🔴 Yana urish majburiy!" : "";
       else t = "";
       if (st.color === "spectator" && st.finished && !st.etude) t = "";   // natija tepadagi qatorda
+      if (st.arena && st.finished && st.color !== "spectator") t = "";
       elStatus.textContent = t;
       try { zalUpd(); cfgUpd(); } catch (e) {}   // 🏟 «O‘yin zali» va ⚙️ vaqt/pozitsiya tanlovi
       // ♔ etyud tugadi: qayta urinish / ro'yxatga qaytish
@@ -1961,6 +1962,7 @@
     var spAG0 = -1, spAENext = null;
     window.__spArenaNext = function (m) {   // lobbyclient: keyingi arena o'yini tayyor
       if (!document.getElementById("spAE")) return false;
+      if (spAENext && spAENext.roomId === m.roomId) return true;
       if (window.__spArenaStop) return true;
       spAENext = { roomId: m.roomId, name: String(m.opponent || ""), color: m.color, at: Date.now() };
       spAEDraw(); return true;
@@ -1986,17 +1988,17 @@
     function spAEDraw() {
       var bx = document.getElementById("spAE"); if (!bx) return;
       var t = spArenaT(), me = spArenaMe(t), now = Date.now();
-      var w = st.winner, res = w === "draw" ? "🤝 Durang" : w === st.color ? "🏆 G‘alaba!" : "😔 Mag‘lubiyat";
+      var w = st.winner, res = st.reason === "arena_cancel" ? "O‘yin bekor qilindi" : w === "draw" ? "🤝 Durang" : w === st.color ? "🏆 G‘alaba!" : "😔 Mag‘lubiyat";
       bx.querySelector(".res").textContent = res;
       var pt = "";
-      if (me && spAG0 >= 0 && me.p.games > spAG0) { var d = String(me.p.sheet || "").slice(-1); pt = "+" + (d || "0") + (me.p.fire && w === st.color ? " 🔥" : ""); }
+      if (st.reason !== "arena_cancel" && me && spAG0 >= 0 && me.p.games > spAG0) { var d = String(me.p.sheet || "").slice(-1); pt = "+" + (d || "0") + (me.p.fire && w === st.color ? " 🔥" : ""); }
       bx.querySelector(".pt").textContent = pt;
       var left = t && t.endAt ? Math.max(0, t.endAt - now) : 0, fin = !t || t.status === "finished" || (t.endAt && left <= 0);
       var mmss = Math.floor(left / 60000) + ":" + ("0" + Math.floor(left / 1000) % 60).slice(-2);
       bx.querySelector(".mt").textContent = me ? me.rank + "-o‘rin · " + me.p.score + " ochko" + (fin ? "" : " · " + mmss) : "";
       var cd = bx.querySelector(".cd"), cb = cd.querySelector("b"), sm = bx.querySelector(".nx small"), nb = bx.querySelector(".nx b");
       cd.classList.remove("wait"); cd.style.setProperty("--p", "0%"); cb.textContent = "";
-      if (window.__spArenaStop) { sm.textContent = "Pauzadasiz"; nb.textContent = "«Turnir» da davom etasiz"; bx.querySelector('[data-a="p"]').classList.add("on"); }
+      if (window.__spArenaStop || (me && me.p.withdrawn)) { spAENext = null; sm.textContent = "Pauzadasiz"; nb.textContent = "«Turnir» da davom etasiz"; bx.querySelector('[data-a="p"]').classList.add("on"); }
       else if (spAENext) {
         var sec = Math.max(0, 3 - Math.floor((now - spAENext.at) / 1000)), el = "";
         try { ((t && t.players) || []).forEach(function (q) { if (String(q.name) === spAENext.name && q.elo) el = " · " + q.elo; }); } catch (e) {}
@@ -2021,7 +2023,7 @@
         var ae = document.getElementById("spAE"); if (ae && !st.finished) ae.remove();
         var bar = document.getElementById("spFM");
         var turn = st.turn || (st.moves.length % 2 === 0 ? "white" : "black");
-        var on = !st.finished && st.moves.length < 2 && bothIn() && st.joined && (st.arena || !st.vsBot);
+        var on = !st.arena && !st.finished && st.moves.length < 2 && bothIn() && st.joined && !st.vsBot;
         if (!on) { if (bar) bar.remove(); _fmKey = -1; _fmLast = -1; return; }
         if (_fmKey !== st.moves.length) { _fmKey = st.moves.length; _fmT0 = Date.now(); _fmLast = -1; }
         var left = Math.max(0, 15 - Math.floor((Date.now() - _fmT0) / 1000));
