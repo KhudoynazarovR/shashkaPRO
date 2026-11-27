@@ -363,6 +363,12 @@ function createRooms({ send, clients, onFinish }) {
     room.drawOffer = null;
     room.winner = winner;
     room.reason = reason || null;
+    if (room.arena && room.reason === "arena_cancel") {
+      room.unrated = true;
+      broadcast(room, { type: "roomFinished", roomId: room.id, winner, reason: room.reason, clock: room.clock });
+      if (typeof onFinish === "function") onFinish(room);
+      return;
+    }
     if (room.etude) { try { require('./etudes.js').done(room, winner); } catch (e) { console.log('etude:', e.message); } }
     else try { botReward(room, winner); } catch (e) { console.log('botReward:', e.message); }
     try { h2hRecord(room, winner); } catch (e) { console.log('h2h:', e.message); }
@@ -1077,7 +1083,7 @@ const srvBotOn = room => !!(room && room.vsBot && room.botCfg && ["bot_kingkong"
     const now = Date.now();
     for (const [rid, room] of rooms) {
       if (!global.__spFM) global.__spFM = setInterval(() => { const t0 = Date.now(); for (const rm of rooms.values()) { try {
-        if (rm.gt) continue;   // 🏆 guruh kubogi — bu qoida yo'q, soat o'zi hal qiladi
+        if (rm.gt || rm.arena) continue;   // 🏆 guruh kubogi — bu qoida yo'q, soat o'zi hal qiladi
         if (rm.finished || rm.vsBot || rm.simul || /^S/.test(String(rm.id || "")) || !rm.white || !rm.black || rm.plies >= 2) { if (rm.finished || rm.plies >= 2) rm.waitSince = 0; continue; }
         // 15 soniya har bir birinchi yurish uchun alohida, va faqat navbatdagi o'yinchi xonaga kirgandan keyin sanaladi
         if (rm._fmP !== rm.plies) { rm._fmP = rm.plies; rm.waitSince = 0; }
