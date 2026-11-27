@@ -202,6 +202,21 @@ function sendSmart(req, res, headers, tag, getBuf) {
     res.writeHead(304, { "ETag": etag, "Cache-Control": headers["Cache-Control"], "Vary": "Accept-Encoding" });
     return res.end();
   }
+  // Brotli for static text when supported; retain gzip and identity fallback.
+  const ae = String(req.headers["accept-encoding"] || "");
+  if (ae.split(",").some(v => /^br(?:\s*;|\s*$)/i.test(v.trim()) && !/;\s*q=0(?:\.0*)?\s*$/i.test(v))) {
+    const key = "br:" + tag;
+    let br = _gzc.get(key);
+    if (!br) {
+      const b = getBuf();
+      if (b.length <= 1024) { headers["Content-Length"] = b.length; res.writeHead(200, headers); return res.end(b); }
+      br = _zlib.brotliCompressSync(b, { params: { [_zlib.constants.BROTLI_PARAM_QUALITY]: 4 } });
+      if (_gzc.size > 80) _gzc.clear();
+      _gzc.set(key, br);
+    }
+    headers["Content-Encoding"] = "br"; headers["Content-Length"] = br.length;
+    res.writeHead(200, headers); return res.end(br);
+  }
   if (/\bgzip\b/.test(String(req.headers["accept-encoding"] || ""))) {
     let gz = _gzc.get(tag);
     if (!gz) {
