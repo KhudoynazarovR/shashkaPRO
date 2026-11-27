@@ -60,6 +60,17 @@
   }
   function tick() {
     var f = g('lbTform'); if (!f) return;
+    if (window.__isAdmin && !g('tfGame')) {
+      var sel = g('lbTk'), anchor = sel && sel.closest('.row');
+      if (anchor && anchor.parentNode) {
+        var games = document.createElement('div'); games.id = 'tfGame'; games.className = 'tlCh';
+        games.innerHTML = '<small>O‘YIN TURI</small><div>' + ['sh','ug','mm','go','gomoku'].map(function(v) {
+          var x = MG.find(function(y){return y[0] === v;});
+          return '<button type="button" data-game="'+v+'" '+(v === 'sh' ? 'class="on"' : 'disabled title="Arena sinovda" style="opacity:.55"')+'>'+x[1]+' '+x[2]+'</button>';
+        }).join('') + '</div><small style="opacity:.65">Ugolki, Xotira, Go va Gomoku — tayyorlanmoqda</small>';
+        anchor.parentNode.insertBefore(games, anchor);
+      }
+    }
     try { mixUi(!!(g('lbTk') && g('lbTk').value === 'mix')); } catch (e) {}
     // vaqt natijasi va toifa
     var tb = g('lbTtb'), ti = g('lbTti'), inf = g('lbTtcI');
