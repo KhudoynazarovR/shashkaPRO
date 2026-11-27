@@ -85,10 +85,11 @@ function strength(bot) {
   return { secs: clamp(bot.secs * 0.25 + (e - 1000) / 1000, 0.05, 2), blunder: clamp(bot.blunder - (e - 1000) / 1500, 0, 0.6) };
 }
 
-async function askEngine(board, side, secs) {
+async function askEngine(board, side, secs, bot, damkaPlies) {
+  const E = bot && bot.uid === 'bot_dragon' ? require('./dragonai.js') : K;
   for (let i = 0; i < 15; i++) {
     const r = await new Promise(res => {
-      try { K.move({ board: to64(board), side: side === WHITE ? 1 : -1, time: secs, arena: true }, x => res(x || { error: 'x' })); }
+      try { E.move({ board: to64(board), side: side === WHITE ? 1 : -1, time: secs, arena: true, damkaPlies }, x => res(x || { error: 'x' })); }
       catch (e) { res({ error: 'throw' }); }
     });
     if (r && !r.error) return r;
@@ -104,10 +105,15 @@ function matchMove(moves, r) {
   if (!c.length) return null;
   return c.find(m => (m.captures || []).length === r.jumps) || c[0];
 }
-async function choose(bot, board, side, moves, key) {
+async function choose(bot, board, side, moves, key, damkaPlies) {
   const sg = strength(bot);
   let pick = null, why = 'dvigatel';
   if (moves.length === 1) pick = moves[0];
+  else if (bot.uid === 'bot_dragon') {
+    pick = matchMove(moves, await askEngine(board, side, sg.secs, bot, damkaPlies));
+    if (!pick) throw new Error('Dragon arena engine unavailable');
+    return pick;
+  }
   else if (Math.random() < sg.blunder) { why = 'blunder'; pick = matchMove(moves, await askEngine(board, side, 0.05)); }
   else pick = matchMove(moves, await askEngine(board, side, sg.secs));
   if (!pick) pick = moves[rnd(moves.length)];
@@ -154,7 +160,7 @@ async function playGame(a, b) {
     while (!FAST && K.load && K.load() > 0) await sleep(1000);
     const bot = side === WHITE ? white : black;
     const t0 = Date.now();
-    const mv = await choose(bot, board, side, moves, key);
+    const mv = await choose(bot, board, side, moves, key, dst.kingOnly);
     const el = Date.now() - t0;
     hist[side].push({ key: key, mv: mstr(mv), uid: bot.uid });
     const _b0 = board, _mover = side; board = R.applyMove(board, mv);
