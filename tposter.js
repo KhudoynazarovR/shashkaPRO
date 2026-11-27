@@ -349,6 +349,50 @@ async function hvbResult(t, all, hum, pay) {
     }
   } catch (e) { console.log('[tposter] hvb natija xato', e.message); }
 }
+
+async function podiumPng(t, st, pay, all) {
+  const sh = sharp(); if (!sh || !st.length) return null;
+  const top = st.slice(0, 3);
+  const avatars = await Promise.all(top.map(async p => {
+    try { const b = await avBuf(p.uid, p.bot); return b ? (await sh(b).resize(240,240,{fit:'cover'}).png().toBuffer()).toString('base64') : ''; } catch(e) { return ''; }
+  }));
+  const d = tz(t.endAt || t.startAt || Date.now());
+  const date = String(d.getUTCDate()).padStart(2,'0')+'.'+String(d.getUTCMonth()+1).padStart(2,'0')+'.'+d.getUTCFullYear();
+  const txt = (cx,y,v,size=32,color='#fff',weight=700) => '<text x="'+cx+'" y="'+y+'" text-anchor="middle" font-family="'+F+'" font-size="'+size+'" font-weight="'+weight+'" fill="'+color+'">'+x(v)+'</text>';
+  let svg = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1080" height="1200"><defs><radialGradient id="bg"><stop stop-color="#176449"/><stop offset="1" stop-color="#031810"/></radialGradient>';
+  const metals = [['#fff2a0','#c18b19','#714005'],['#f2f5fa','#9ca7b4','#394653'],['#ffc68c','#b7682e','#63300d']];
+  metals.forEach((m,i)=>{svg+='<linearGradient id="m'+i+'"><stop stop-color="'+m[2]+'"/><stop offset=".45" stop-color="'+m[0]+'"/><stop offset=".65" stop-color="'+m[1]+'"/><stop offset="1" stop-color="'+m[2]+'"/></linearGradient>';});
+  svg+='</defs><rect width="1080" height="1200" fill="url(#bg)"/>';
+  for(let i=0;i<30;i++){let a=i*Math.PI/15;svg+='<path d="M540 420 L'+(540+1600*Math.cos(a))+' '+(420+1600*Math.sin(a))+' L'+(540+1600*Math.cos(a+.07))+' '+(420+1600*Math.sin(a+.07))+' Z" fill="#ffe49b" opacity=".045"/>';}
+  for(let i=0;i<65;i++){let xx=(i*173+29)%1080, yy=(i*97+13)%1200;if(xx<55||xx>1025||yy<65)svg+='<rect x="'+xx+'" y="'+yy+'" width="12" height="20" fill="#f5ca62" opacity=".7" transform="rotate(35 '+xx+' '+yy+')"/>';}
+  svg+='<rect x="35" y="30" width="1010" height="1140" rx="32" fill="none" stroke="#d5a74a" stroke-width="3"/>';
+  svg+=txt(540,100,'SHASHKA PRO',55,'#ffe19a',900);
+  svg+='<rect x="65" y="130" width="950" height="95" rx="24" fill="#092c22" stroke="#e7bc58" stroke-width="3"/>';
+  const title=noEmo(t.name).slice(0,48);svg+=txt(540,190,title,Math.min(46,Math.floor(1500/Math.max(1,title.length))),'#fff',900);
+  svg+='<rect x="285" y="245" width="510" height="65" rx="14" fill="#a51e35" stroke="#f6bc64" stroke-width="2"/>'+txt(540,287,date+' · YAKUNLANDI',30);
+  for(const i of [1,0,2]){
+    const p=top[i];if(!p)continue;
+    const cx=[540,205,875][i], cy=[445,520,550][i], rad=i===0?116:98, base=[745,805,835][i], metal=metals[i][0];
+    svg+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(rad+9)+'" fill="url(#m'+i+')"/><circle cx="'+cx+'" cy="'+cy+'" r="'+rad+'" fill="#263b3a"/>';
+    if(avatars[i])svg+='<clipPath id="av'+i+'"><circle cx="'+cx+'" cy="'+cy+'" r="'+rad+'"/></clipPath><image x="'+(cx-rad)+'" y="'+(cy-rad)+'" width="'+(2*rad)+'" height="'+(2*rad)+'" clip-path="url(#av'+i+')" xlink:href="data:image/png;base64,'+avatars[i]+'"/>';
+    else svg+=txt(cx,cy+32,(noEmo(p.name)||'?').slice(0,1).toUpperCase(),88);
+    if(i===0)svg+='<path d="M490 328 L480 290 L515 309 L540 278 L565 309 L600 290 L590 328 Z" fill="#f8ce59" stroke="#fff1a1" stroke-width="3"/>';
+    const name=noEmo(p.name)||'O‘yinchi', label=name.length>22?name.slice(0,21)+'…':name;
+    svg+='<rect x="'+(cx-151)+'" y="'+(cy+rad+18)+'" width="302" height="104" rx="20" fill="#071d17" stroke="'+metal+'" stroke-width="3"/>';
+    svg+=txt(cx,cy+rad+55,label,Math.min(29,Math.floor(430/Math.max(1,label.length))))+txt(cx,cy+rad+93,p.score+' ochko',32,metal);
+    svg+='<rect x="'+(cx-155)+'" y="'+base+'" width="310" height="'+(970-base)+'" rx="18" fill="url(#m'+i+')"/><ellipse cx="'+cx+'" cy="'+base+'" rx="155" ry="20" fill="'+metal+'"/>';
+    svg+=txt(cx,base+88,String(i+1),82,'#fff4db',900);
+    const award=pay&&pay.top&&pay.top.find(a=>String(a.uid)===String(p.uid));
+    if(award&&award.amt)svg+=txt(cx,947,fmt(award.amt)+' tanga',27,'#fff');
+  }
+  const list=all&&all.length?all:st, games=Math.round(list.reduce((n,p)=>n+(p.games||0),0)/2);
+  svg+='<rect x="65" y="1000" width="950" height="110" rx="22" fill="#092c22" stroke="#d5a74a" stroke-width="2"/>';
+  svg+=txt(290,1043,games+' o‘yin · '+list.length+' o‘yinchi',29)+txt(290,1082,'TURNIR NATIJASI',22,'#e7bc58');
+  svg+=txt(790,1043,'Mukofot fondi',27)+txt(790,1082,fmt(t.prize)+' tanga',35,'#ffe19a');
+  svg+=txt(540,1150,'@'+BOT(),25,'#c4d7ce')+'</svg>';
+  return png(svg);
+}
+
 async function result(t, st, regs, pay, all) {
   if (all && all.length && isHvb(t)) return hvbResult(t, all, st, pay);
   try {
@@ -374,7 +418,7 @@ async function result(t, st, regs, pay, all) {
     st.slice(0, 3).forEach((p, i) => { const a = pay && pay.top && pay.top[i]; c += med[i] + ' ' + (p.rg ? (/^[A-Z]+$/.test(p.rg) ? h(p.rg) + ' ' : p.rg + ' ') : '') + h(p.name) + ' — ' + p.score + ' ochko' + (a && a.amt ? ' · ' + fmt(a.amt) + ' tanga' : '') + '\n'; });
     const games = Math.round(st.reduce((a, p) => a + (p.games || 0), 0) / 2);
     c += '\n🎮 ' + games + ' o‘yin · ' + st.length + ' o‘yinchi';
-    const buf = await png(resSvg(t, st, regs, pay));
+    const buf = (t.type === 'arena' && !(regs && regs.length) ? await podiumPng(t, st, pay, all).catch(() => null) : null) || await png(resSvg(t, st, regs, pay));
     const extra = t.annMsg ? { reply_parameters: { message_id: t.annMsg, allow_sending_without_reply: true } } : {};
     if (c.length > 1020) c = c.slice(0, Math.max(0, c.lastIndexOf('\n', 1020)));   // Telegram izoh chegarasi — qator chegarasidan kesamiz
     const kb = { inline_keyboard: [[{ text: '🎮 ShashkaPRO', url: APP() }]] };
