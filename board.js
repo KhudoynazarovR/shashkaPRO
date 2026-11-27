@@ -1110,7 +1110,10 @@
         s += '<span data-g="' + (i + 1) + '" style="display:inline-block;padding:2px 8px;margin:2px;border-radius:8px;background:' + (cur === i + 1 ? '#6b5cf0' : '#262b66') + ';color:' + bad + '">' + hist[i + 1].n + mk + ((S.engine && !PL) ? ' <small style="opacity:.7;color:#fff">' + evFmt(evOf(i + 1)) + '</small>' : '') + (kd ? ' <small style="color:#ffb347">🦍' + kd + '</small>' : '') + '</span>';
       }
       s += '</div>';
+      var dragonPanel = g && g.workshop ? ov.querySelector('#dwRoot') : null;
+      if (dragonPanel) dragonPanel.remove();
       ov.innerHTML = s;
+      if (dragonPanel) ov.appendChild(dragonPanel);
       function on(id, f) { var el = ov.querySelector(id); if (el) el.onclick = f; }
       on('#bdX', function () { ov.remove(); if (g && g.onClose) try { g.onClose(); } catch (e) {} });
       on('#bd0', function () { go(0); }); on('#bd1', function () { go(cur - 1); });
