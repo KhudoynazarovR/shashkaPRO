@@ -422,7 +422,7 @@
     if(g && g.workshop) ov.dwLive=function(match){
       if(!match || !Array.isArray(match.history)||!match.history.length)return;
       var key=match.game+'|'+match.history.length+'|'+match.a+'|'+match.b;
-      if(ov.dwLiveKey===key)return;ov.dwLiveKey=key;
+      if(ov.dwLiveKey===key)return;ov.dwLiveKey=key;ov.dwMatchRunning=!!match.running;
       hist=match.history.map(function(q){
         var b=Array.from({length:8},function(_,r){return q.board.slice(r*8,r*8+8).map(function(v){return v===1?1:v===-1?2:v===2?3:v===-2?4:0;});});
         var xy=function(i){return [i>>3,i&7];};
@@ -441,7 +441,7 @@
     }
     function go(i) { if (AU.run) auStop('⏸ To‘xtatildi'); cur = Math.max(0, Math.min(hist.length - 1, i)); sel = null; draw(); analyzeCur(); }
     function analyzeCur() {
-      if ((g && g.workshop && ov.dwLiveKey) || !S.engine || PL || panel === 'edit' || (AU && AU.run)) return;
+      if ((g && g.workshop && ov.dwMatchRunning) || !S.engine || PL || panel === 'edit' || (AU && AU.run)) return;
       var h = hist[cur], k = kf(h);
       if (EV[k] || busyK[k] || FAIL[k]) return;
       if (!legal(h.b, h.t).length) return;
