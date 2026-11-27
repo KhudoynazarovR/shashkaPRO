@@ -46,7 +46,7 @@ async function run(s,min,inc){
  }
  if(s.stop)break;
  s.turnAt=null;s.clock={...clock};s.done++;if(result==='draw')s.draws++;else if(result===s.a)s.wins++;else s.losses++;
- L.game({at:Date.now(),white,black,result,ply});
+ L.game({at:Date.now(),white,black,result,ply:s.ply,history:s.history,tc:s.tc});
  }
  s.running=false;s.turnAt=null;
 }
