@@ -383,7 +383,10 @@ async function podiumPng(t, st, pay, all) {
     svg+='<rect x="'+(cx-155)+'" y="'+base+'" width="310" height="'+(970-base)+'" rx="18" fill="url(#m'+i+')"/><ellipse cx="'+cx+'" cy="'+base+'" rx="155" ry="20" fill="'+metal+'"/>';
     svg+=txt(cx,base+88,String(i+1),82,'#fff4db',900);
     const award=pay&&pay.top&&pay.top.find(a=>String(a.uid)===String(p.uid));
-    if(award&&award.amt)svg+=txt(cx,947,fmt(award.amt)+' tanga',27,'#fff');
+    if(award && Number(award.amt)>0) {
+      svg+='<rect x="'+(cx-126)+'" y="914" width="252" height="46" rx="20" fill="#071d17" stroke="'+metal+'" stroke-width="2"/>';
+      svg+=txt(cx,946,fmt(award.amt)+' tanga',30,'#ffe19a',900);
+    }
   }
   const list=all&&all.length?all:st, games=Math.round(list.reduce((n,p)=>n+(p.games||0),0)/2);
   svg+='<rect x="65" y="1000" width="950" height="110" rx="22" fill="#092c22" stroke="#d5a74a" stroke-width="2"/>';
