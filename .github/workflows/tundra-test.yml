@@ -1,0 +1,22 @@
+name: Tundra adapter tests
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - tundraai.js
+      - test/tundraai.test.js
+      - engine/tundra/**
+      - .github/workflows/tundra-test.yml
+permissions:
+  contents: read
+jobs:
+  adapter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test test/tundraai.test.js
+      - run: docker build -t tundra-runtime engine/tundra
+      - run: docker run --rm --entrypoint wine tundra-runtime --version
