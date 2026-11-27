@@ -18,6 +18,7 @@
   window.__tfTc = function () { var b = g('lbTtb'), i = g('lbTti'); return b && i ? b.value + '+' + i.value : (g('lbTtc') || {}).value; };
   window.__tfx = function () {
     var o = { flag: !!(g('lbTflag') && g('lbTflag').value === '1' && g('lbTk') && g('lbTk').value === 'arena'), desc: (g('tfDesc') || {}).value || '' };
+    o.game = (g('tfGame') && g('tfGame').dataset.game) || 'sh';
     if (window.__isAdmin) {
       if (g('tfRec') && g('tfRec').checked) { o.rec = true; o.recDays = days.slice(); }
     }
@@ -66,11 +67,22 @@
         var games = document.createElement('div'); games.id = 'tfGame'; games.className = 'tlCh';
         games.innerHTML = '<small>O‘YIN TURI</small><div>' + ['sh','ug','mm','go','gomoku'].map(function(v) {
           var x = MG.find(function(y){return y[0] === v;});
-          return '<button type="button" data-game="'+v+'" '+(v === 'sh' ? 'class="on"' : 'disabled title="Arena sinovda" style="opacity:.55"')+'>'+x[1]+' '+x[2]+'</button>';
-        }).join('') + '</div><small style="opacity:.65">Ugolki, Xotira, Go va Gomoku — tayyorlanmoqda</small>';
+          return '<button type="button" data-game="'+v+'" '+(v === 'sh' ? 'class="on"' : '')+'>'+x[1]+' '+x[2]+'</button>';
+        }).join('') + '</div><small style="opacity:.65">Yangi o‘yinlar — Arena sinovi; reyting va Berserk o‘chiq</small>';
+        games.dataset.game = 'sh';
+        games.onclick = function(e) {
+          var b = e.target.closest('button[data-game]'); if (!b) return;
+          games.dataset.game = b.dataset.game;
+          games.querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x === b); });
+          if (b.dataset.game !== 'sh' && sel.value !== 'arena') {
+            sel.value = 'arena'; sel.dispatchEvent(new Event('change', {bubbles:true}));
+          }
+        };
         anchor.parentNode.insertBefore(games, anchor);
       }
     }
+    var gameBox = g('tfGame'), kind = g('lbTk');
+    if (gameBox && gameBox.dataset.game !== 'sh' && kind && kind.value !== 'arena') { kind.value = 'arena'; kind.dispatchEvent(new Event('change', {bubbles:true})); }
     try { mixUi(!!(g('lbTk') && g('lbTk').value === 'mix')); } catch (e) {}
     // vaqt natijasi va toifa
     var tb = g('lbTtb'), ti = g('lbTti'), inf = g('lbTtcI');
