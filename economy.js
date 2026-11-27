@@ -315,7 +315,7 @@ function handle(req, res, url) {
     const a = ((store.db.botAv || {})[decodeURIComponent(p.slice(8))]) || '';
     const m = /^data:image\/jpeg;base64,(.+)$/.exec(a);
     if (!m) { res.writeHead(404, { 'Cache-Control': 'public, max-age=600' }); res.end(); return true; }   // rasmi yo'q bot — telefon 10 daqiqa qayta so'ramasin
-    res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=3600' }); res.end(Buffer.from(m[1], 'base64')); return true;   // ⚡ bot rasmlari 1 soat saqlanadi
+    res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=86400' }); res.end(Buffer.from(m[1], 'base64')); return true;   // Bot avatars: cache for 24 hours
   }
   if (p.startsWith('/api/clubav/') && req.method === 'GET') {   // 🖼 klub rasmi — brauzer keshlaydi, holat yuborishda ketmaydi
     let a = ''; try { a = require('./clubs.js').imgOf(decodeURIComponent(p.slice(12).split('?')[0])); } catch (e) {}
