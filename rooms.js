@@ -223,7 +223,8 @@ function createRooms({ send, clients, onFinish }) {
       whiteOnline: isOnline(room.white), canSit: !!(room.inline && !room.finished && (!!room.white !== !!room.black)), sitColor: room.white ? 'black' : 'white',
       blackOnline: isOnline(room.black),
       stake: room.stake || 0,
-      whiteOff: (room.white && room.white.offSince) || 0, blackOff: (room.black && room.black.offSince) || 0, srvNow: Date.now(), claimMs: CLAIM_MS,
+      whiteOff: (room.white && room.white.offSince) || 0, blackOff: (room.black && room.black.offSince) || 0, srvNow: Date.now(), claimMs: room.arena ? 30000 : CLAIM_MS,
+      arenaFirstDeadline: room.arena && room.plies < 2 && !room.finished ? room.arenaFirstDeadline || 0 : 0,
       spectators: [...room.members].filter(id => !colorOf(room, clients.get(id) || {})).length,
       spectatorNames: [...room.members].filter(id => !colorOf(room, clients.get(id) || {})).map(id => room.names.get(id) || "Mehmon").slice(0, 8),
       specList: _specList(room),
@@ -678,6 +679,7 @@ const srvBotOn = room => !!(room && room.vsBot && room.botCfg && ["bot_kingkong"
       if (!m.keepTurn) {
         room.turn = other(room.turn); // ketma-ket olishda keepTurn:true yuboring
         room.plies++; room.waitSince = Date.now();
+        if (room.arena) room.arenaFirstDeadline = room.plies < 2 ? Date.now() + 15000 : 0;
       }
       room.turnStartedAt = now;
       const dres = drawTrack(room, col, m);
@@ -687,6 +689,7 @@ const srvBotOn = room => !!(room && room.vsBot && room.botCfg && ["bot_kingkong"
       }
       broadcast(room, {
         type: "roomMove", roomId, move: m.move, turn: room.turn, color: col,
+        arenaFirstDeadline: room.arena ? room.arenaFirstDeadline || 0 : 0, srvNow: Date.now(),
         clock: currentClock(room), clockRunning: clockRunning(room),
         drawInfo: dres ? (dres.info || null) : undefined,
         canDraw: DRAW.canOfferDraw(room.dr && room.dr.st)
