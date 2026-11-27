@@ -72,6 +72,13 @@ function move(j, cb) {
   if (!ready) return cb({ error: "notready", code: 503 });
   const b = j && j.board, side = (j && j.side > 0) ? 1 : -1;
   if (!Array.isArray(b) || b.length !== 64 || !b.every(v => Number.isInteger(v) && v >= -2 && v <= 2)) return cb({ error: "bad", code: 400 });
+  if (process.env.DRAGON_TB !== "0" && b.filter(Boolean).length <= 5 && Number.isInteger(j.damkaPlies) && j.damkaPlies >= 0 && j.damkaPlies < 30) {
+    try {
+      const t = require("./damka_tb.js").best(b, side, j.damkaPlies);
+      if (t && t.from !== t.to && require("./kkrules.js").moves(b,side).filter(m=>m.from===t.from && m.to===t.to).length===1)
+        return cb({from:t.from,to:t.to,jumps:t.caps.length,ev:Math.sign(t.score)*3000,ms:0,tb:t.res,tbSource:"damka",path:t.path,caps:t.caps});
+    } catch (e) { console.log("[Dragon Damka]", e.message); }
+  }
   // Tablebase first; ambiguous capture paths stay with the engine protocol.
   if (process.env.DRAGON_TB !== "0" && b.reduce((n,v)=>n+(v!==0),0) <= 6) {
     let hit = null;
