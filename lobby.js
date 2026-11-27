@@ -429,7 +429,7 @@ function createLobby({ send, clients, roomsApi }) {
   function sharedJson() {
     const sh = {
       players: playersList(),
-      tournaments: [...tournaments.values()].map(pubT), promo: promoInfo(),
+      tournaments: [...tournaments.values()].filter(t => !(t.rec && t.status === 'reg' && t.startAt > Date.now() + 3600e3)).map(pubT), promo: promoInfo(),
       simuls: [...simuls.values()].map(pubSimul),
       tables: [...tables.values()].map(pubTbl),
       appLink: process.env.TG_APP_LINK || process.env.APP_LINK || ''
@@ -951,7 +951,7 @@ function createLobby({ send, clients, roomsApi }) {
     return t;
   }
   // 🔁 DOIMIY TURNIRLAR: andoza (store.db.tRec) — tanlangan hafta kunlari va soatda turnir o'zi yaratiladi, REC_LEAD_H soat oldin e'lon
-  const REC_LEAD_H = 7 * 24, DN = ['Ya', 'Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh'];
+  const REC_LEAD_H = 1, DN = ['Ya', 'Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh'];
   function recList() { const st = require('./store'); st.db.tRec = st.db.tRec || []; return st.db.tRec; }
   function recSave(me, m) {
     const days = [...new Set((Array.isArray(m.recDays) ? m.recDays : []).map(Number).filter(d => d >= 0 && d <= 6))].sort();
@@ -990,7 +990,8 @@ function createLobby({ send, clients, roomsApi }) {
       }
       for (const k of Object.keys(r.made)) if (Date.parse(k) < now - 14 * 86400e3) delete r.made[k];
     }
-    if (ch) { require('./store').save(); push(); }
+    if (ch) { require('./store').save(); }
+    push(); // oldindan yaratilgan turnirlar ham 1 soat qolganda ko‘rinadi
   }
   setInterval(() => { try { recTick(); } catch (e) { console.log('[doimiy] xato:', e.message); } }, 30000).unref();
   // admin: ro'yxat va boshqaruv (to'xtatish / bu safar o'tkazib yuborish / o'chirish)
@@ -1870,7 +1871,7 @@ function createLobby({ send, clients, roomsApi }) {
       case 'lbTCreate': {
         if (m.rec && economy.isAdmin(me.uid)) {   // 🔁 doimiy turnir: andoza saqlanadi, turnirlar o'zi yaratiladi
           const r = recSave(me, m); if (typeof r === 'string') return err(c, r), true;
-          toast(me.uid, '🔁 Doimiy turnir saqlandi: ' + r.name + ' · ' + r.daysTxt + ' ' + r.time + '. Eng yaqin turnir hozir yaratilib, kanalga e’lon qilinadi; keyingilari — oldingisi boshlangach.');
+          toast(me.uid, '🔁 Doimiy turnir saqlandi: ' + r.name + ' · ' + r.daysTxt + ' ' + r.time + '. Har bir turnir boshlanishidan 1 soat oldin yaratiladi va e’lon qilinadi.');
           recTick(); push(); send(c.ws, { type: 'lbRec', list: recPub() }); break;
         }
         const t = makeT(me, m); if (typeof t === 'string') return err(c, t), true;
@@ -2346,7 +2347,7 @@ function createLobby({ send, clients, roomsApi }) {
   function remindTick() { /*TREMIND*/
     const now = Date.now(), appLink = (process.env.TG_APP_LINK || process.env.APP_LINK || '').replace(/\/$/, '');
     for (const t of tournaments.values()) {   // 📣 e'lon qilingan turnir: 3 soat oldin kanalga «Bugun!» eslatmasi
-      if (t.status !== 'reg' || !t.announce || !t.startAt || t.remind3h) continue;
+      if (t.status !== 'reg' || !t.announce || !t.startAt || t.remind3h || t.rec) continue;
       const lf = t.startAt - now; if (lf > 3 * 3600e3 || lf <= 20 * 60000) continue;
       t.remind3h = true; try { require('./tposter.js').today(t); } catch (e) {}
     }
