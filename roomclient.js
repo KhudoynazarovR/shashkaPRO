@@ -1900,7 +1900,7 @@
           fetch("/api/ai/move", {
             method: "POST",
             headers: { "Content-Type": "application/json", "x-init-data": (tg && tg.initData) || "" },
-            body: JSON.stringify({ board: flatBoard(st.board), side: side === "white" ? 1 : -1, time: secs, maxTime: timed ? secs : undefined, eng: st.botEng || undefined, kk: isKK || undefined, rem: isKK && timed ? Math.round(rem * 10) / 10 : undefined, book: isKK || st.botSecs >= 1, tbAlways: isKK || st.botSecs >= 2 || undefined, wait: !strong && !isKK && isFinite(deadline) ? Math.max(0.15, Math.round(((deadline - Date.now()) / 1000 - lat - 0.5) * 100) / 100) : undefined, room: roomId }),
+            body: JSON.stringify({ board: flatBoard(st.board), side: side === "white" ? 1 : -1, time: secs, maxTime: timed ? secs : undefined, eng: st.botEng || undefined, damkaPlies: st.botEng === 'dragon' ? st.kingOnly : undefined, kk: isKK || undefined, rem: isKK && timed ? Math.round(rem * 10) / 10 : undefined, book: isKK || st.botSecs >= 1, tbAlways: isKK || st.botSecs >= 2 || undefined, wait: !strong && !isKK && isFinite(deadline) ? Math.max(0.15, Math.round(((deadline - Date.now()) / 1000 - lat - 0.5) * 100) / 100) : undefined, room: roomId }),
             signal: ctl ? ctl.signal : undefined
           }).then(function (r) {
             if (r.status === 429 || r.status === 503) return { retry: 1 };
@@ -2090,6 +2090,7 @@
         st.tc = m.tc || "";
         st.tcs = m.tcs || [];
         st.drawOffer = m.drawOffer || null;
+        st.kingOnly = m.kingOnly;
         st.drawInfo = m.drawInfo || null; st.drawText = m.drawText || null; st.canDraw = !!m.canDraw;
         st.arena = !!m.arena;
         st.arenaFirstDeadline = m.arenaFirstDeadline ? Date.now() + (m.arenaFirstDeadline - m.srvNow) : 0;
@@ -2109,6 +2110,7 @@
       } else if (m.type === "roomMove" && m.roomId === roomId) {
         if (m.arenaFirstDeadline !== undefined) st.arenaFirstDeadline = m.arenaFirstDeadline ? Date.now() + (m.arenaFirstDeadline - m.srvNow) : 0;
         st.moves.push(m.move);
+        st.kingOnly = m.kingOnly;
         if (m.drawInfo !== undefined) st.drawInfo = m.drawInfo;
         st.canDraw = !!m.canDraw;
         var _own = m.color === st.color && st.optN > 0; if (_own) st.optN--;
