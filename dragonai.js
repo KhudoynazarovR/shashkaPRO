@@ -96,7 +96,8 @@ function move(j, cb) {
   if (!j.workshop) { try { const t=require('./dragonlearn').pick(j); if(t)return cb(t); } catch(e){} }
   if (queue.length >= 12) return cb({ error: "busy", code: 429 });
   const secs = Math.min(30, Math.max(0.05, Number(j.time) || 1)), t0 = Date.now();
-  run((newGame(b) ? "9 0\n" : "") + encode(b, side, secs), secs, (err, v) => {
+  const depth = Number.isInteger(j.maxDepth) ? Math.max(1, Math.min(40, j.maxDepth)) : 40;
+  run((newGame(b) ? "9 0\n" : "") + "8 " + depth + "\n" + encode(b, side, secs), secs, (err, v) => {
     if (err) return cb({ error: err, code: 500 });
     const from = v[1] * 8 + (7 - v[0]), to = v[3] * 8 + (7 - v[2]);
     if (!(from >= 0 && from < 64 && to >= 0 && to < 64) || from === to) return cb({ error: "nomove", code: 500 });
