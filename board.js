@@ -422,7 +422,7 @@
     if(g && g.workshop) ov.dwLive=function(match){
       if(!match || !Array.isArray(match.history)||!match.history.length)return;
       var key=match.game+'|'+match.history.length+'|'+match.a+'|'+match.b;
-      if(ov.dwLiveKey===key)return;ov.dwLiveKey=key;ov.dwMatchRunning=!!match.running;
+      ov.dwMatch=match;ov.dwMatchRunning=!!match.running;if(ov.dwLiveKey===key)return;ov.dwLiveKey=key;
       hist=match.history.map(function(q){
         var b=Array.from({length:8},function(_,r){return q.board.slice(r*8,r*8+8).map(function(v){return v===1?1:v===-1?2:v===2?3:v===-2?4:0;});});
         var xy=function(i){return [i>>3,i&7];};
@@ -1001,6 +1001,8 @@
       if (GI && GI.title) s += '<div style="font-size:14px;margin-bottom:6px">' + String(GI.title).replace(/</g, '&lt;') + '</div>';
       else if (GI) s += '<div style="font-size:14px;margin-bottom:6px">⚪ ' + String(GI.white || '') .replace(/</g, '&lt;') + ' — ⚫ ' + String(GI.black || '').replace(/</g, '&lt;') + '<br><span style="opacity:.8">' + (GI.live ? 'Jonli o‘yin · hozirgi pozitsiyadan' : GI.winner === 'white' ? '🏆 Oq yutdi' : GI.winner === 'black' ? '🏆 Qora yutdi' : '🤝 Durang') + '</span></div>';
       var GS = gameSkin();
+      function dwPlayer(side){return '<div data-dw-side="'+side+'" style="display:flex;align-items:center;justify-content:space-between;padding:8px 4px;font-size:16px;font-weight:700"><span>'+ (side===1?'⚪ ':'⚫ ')+String(side===1?ov.dwMatch.white:ov.dwMatch.black).replace(/[<>&]/g,'')+'</span><span data-dw-clock="'+side+'" style="font-size:23px;font-variant-numeric:tabular-nums">—</span></div>';}
+      if(g&&g.workshop&&ov.dwMatch) s+=dwPlayer(flip?1:-1);
       s += '<div style="position:relative;width:min(calc(100% + 24px),520px);margin-left:calc((100% - min(calc(100% + 24px),520px)) / 2);box-sizing:border-box"><div id="spBdB" data-th="' + GS.th + '" data-ps="' + GS.ps + '" style="--pz:' + GS.pz + '%;--km:\'' + GS.km + '\';display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);aspect-ratio:1;overflow:hidden;border:0!important;box-shadow:none!important">';
       var lm = (!ed && h.m && S.alm !== false) ? [h.m.path[0], h.m.path[h.m.path.length - 1]] : [], rr, cc, r, c, p, hl, dot;
       for (rr = 0; rr < 8; rr++) for (cc = 0; cc < 8; cc++) {
@@ -1032,6 +1034,7 @@
         s += '<svg viewBox="0 0 8 8" style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none"><defs><marker id="bdAh" markerWidth="3" markerHeight="3" refX="1.6" refY="1.5" orient="auto"><path d="M0,0 L3,1.5 L0,3z" fill="#3fb950"/></marker></defs><line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="#3fb950" stroke-width=".15" stroke-linecap="round" opacity=".8" marker-end="url(#bdAh)"/></svg>';
       }
       s += '</div>';
+      if(g&&g.workshop&&ov.dwMatch) s+=dwPlayer(flip?-1:1);
       var info = '';
       if (ed) info = '✏️ Taxta muharriri';
       else {
