@@ -342,21 +342,21 @@ static int search(int *b, int side, int depth, int alpha, int beta, int ply, Mov
 }
 
 /* ---------- bosh qidiruv ---------- */
-static Move think(int *b, int side, double secs, int *evOut, int *depthOut) {
+static Move think(int *b, int side, double secs, int maxDepth, int *evOut, int *depthOut) {
     TIME_LIMIT = secs; T0 = clock(); STOP = 0; NODES = 0;
     memset(HIST, 0, sizeof(HIST)); memset(KILL, 0, sizeof(KILL));
     Move mv[200]; int n = genMoves(b, side, mv);
-    Move best = mv[0]; int ev = 0, d;
-    for (d = 1; d <= 40; d++) {
+    Move best = mv[0]; int ev = 0, d, completed = 0;
+    for (d = 1; d <= maxDepth; d++) {
         Move cur = best;
         int v = search(b, side, d, -INF, INF, 0, &cur);
         if (STOP) break;
-        best = cur; ev = v;
+        best = cur; ev = v; completed = d;
         if (v > INF - 1000 || v < -INF + 1000) break;
         if ((double)(clock() - T0) / CLOCKS_PER_SEC > secs * 0.5) break;
     }
     *evOut = side > 0 ? ev : -ev;
-    *depthOut = d;
+    *depthOut = completed;
     return best;
 }
 
@@ -394,9 +394,10 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    int color; double secs;
+    int color, maxDepth = 40; double secs;
     while (scanf("%d %lf", &color, &secs) == 2) {
         if (color == 9) { memset(TTAB, 0, (size_t)TT_SIZE * sizeof(TT)); continue; }   /* yangi o'yin: xesh tozalanadi */
+        if (color == 8) { maxDepth = secs >= 1 && secs <= 40 ? (int)secs : 40; continue; }
         int v[32];
         for (int i = 0; i < 32; i++) if (scanf("%d", &v[i]) != 1) return 1;
         /* kelgan tartib: qator y = 0..7 (mijozdagi doska), har qatorda x kamayib boradi */
@@ -410,7 +411,7 @@ int main(int argc, char **argv) {
             }
         }
         int side = color == 1 ? 1 : -1, ev = 0, depth = 0;
-        Move m = think(B, side, secs, &ev, &depth);
+        Move m = think(B, side, secs, maxDepth, &ev, &depth);
         /* javob: KestoG ko'prigi bilan bir xil — idx = y*8 + (7-x), shuning uchun 7-x va y chiqadi */
         int fr = RC[m.from][0], fc = RC[m.from][1], tr = RC[m.to][0], tc = RC[m.to][1];
         printf("%d %d %d %d %d %d\n", 7 - fc, 7 - fr, 7 - tc, 7 - tr, m.ncap, ev);
