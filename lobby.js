@@ -366,7 +366,7 @@ function createLobby({ send, clients, roomsApi }) {
   }
   function pubT(t) {
     return {
-      id: t.id, name: t.name, tc: t.tc, status: t.status, pos: t.pos || 'std',
+      id: t.id, name: t.name, tc: t.tc, status: t.status, pos: t.pos || 'std', game: t.game || 'sh',
       roundsWanted: t.roundsWanted || 0, interval: t.interval || 0,
       // 🪙 tanga taqsimoti — faqat turnir tugagach (ilovada ham ko'rinsin, nafaqat Telegramdagi posterda)
       pay: t.status === 'finished' ? { grp: t.payRegSum || [], top: t.payTop || [], mem: (t.payReg || []).filter(x => x.amt > 0).slice(0, 40) } : null,
@@ -901,6 +901,11 @@ function createLobby({ send, clients, roomsApi }) {
 
   // 🏆 turnir yaratish (qo'lda va 🔁 doimiy andozadan). Xato bo'lsa — matn qaytadi
   function makeT(me, m, sys) {
+    // Explicit game identifier; legacy tournaments remain draughts.
+    const game = String(m.game || 'sh');
+    if (!['sh', 'ug', 'mm', 'go', 'gomoku'].includes(game)) return 'Noma’lum o‘yin turi';
+    if (game !== 'sh') return 'Bu o‘yin uchun Arena hali sinovda';
+
     const adm0 = !!sys || economy.isAdmin(me.uid);
     const cl = clubsApi.check(me.uid, m.clubIds); if (cl.error) return cl.error;
     if (cl.ids.includes(clubsApi.SYS) && m.kind !== 'arena') return 'Botlar klubi faqat arenada ishlaydi';
