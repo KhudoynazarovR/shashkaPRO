@@ -19,7 +19,7 @@ function move(opts,cb){
      if(!res.ok)throw Error('Tundra HTTP '+res.status);
      const r=await res.json();
      if(!r||![r.from,r.to].every(x=>Number.isInteger(x)&&x>=0&&x<64)||r.from===r.to)throw Error('Invalid move');
-     return {from:r.from,to:r.to};
+     return {from:r.from,to:r.to,path:r.path};
    })().then(cb,e=>cb({error:e.message}));
    return;
  }
@@ -30,7 +30,7 @@ function move(opts,cb){
  child.on('error',e=>finish({error:e.message}));
  child.stdin.on('error',e=>finish({error:e.message}));
  child.stdout.on('data',b=>{out+=b;if(out.length>8192)finish({error:'Oversized adapter response'});});
- child.on('close',code=>{if(done)return;if(code!==0)return finish({error:'Tundra adapter failed'});try{const r=JSON.parse(out);if(!r||![r.from,r.to].every(x=>Number.isInteger(x)&&x>=0&&x<64)||r.from===r.to)throw Error('Invalid move');finish({from:r.from,to:r.to});}catch(e){finish({error:e.message});}});
+ child.on('close',code=>{if(done)return;if(code!==0)return finish({error:'Tundra adapter failed'});try{const r=JSON.parse(out);if(!r||![r.from,r.to].every(x=>Number.isInteger(x)&&x>=0&&x<64)||r.from===r.to)throw Error('Invalid move');finish({from:r.from,to:r.to,path:r.path});}catch(e){finish({error:e.message});}});
  child.stdin.end(JSON.stringify({board:opts.board,side:opts.side,time})+'\n');
 }
 module.exports={profile,move};
