@@ -8,6 +8,44 @@ const BIN = path.join(
 );
 
 function move(opts, cb) {
+
+  try {
+    const TBP = require('./tbprobe.js');
+    const R = require('./kkrules.js');
+
+    if (TBP.ready()) {
+      const t = TBP.best(opts.board, opts.side);
+
+      if (t) {
+        const moves = R.moves(opts.board, opts.side);
+        const matches = moves.filter(m =>
+          m.from === t.from && m.to === t.to
+        );
+
+        if (matches.length === 1) {
+          const m = matches[0];
+          const path = [m.from].concat(
+            m.path && m.path.length
+              ? m.path : [m.to]
+          );
+
+          console.log('[Admiral TB]', t.res, t.d);
+
+          return cb({
+            from: m.from,
+            to: m.to,
+            path,
+            jumps: (m.caps || []).length,
+            captured: m.caps || [],
+            tb: t.res
+          });
+        }
+      }
+    }
+  } catch (e) {
+    console.log('[Admiral TB]', e.message);
+  }
+
   const map = {
     0: 0, 1: 1, '-1': 2,
     2: 3, '-2': 4
