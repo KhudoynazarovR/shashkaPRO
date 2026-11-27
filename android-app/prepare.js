@@ -28,6 +28,12 @@ function edit(file, fn) { const p = path.join(ROOT, file); fs.writeFileSync(p, f
     return s;
   });
 
+  // Google Play automatic protection requires API 24 or higher.
+  edit('android/variables.gradle', s => {
+    if (!/minSdkVersion\s*=\s*\d+/.test(s)) throw new Error('minSdkVersion not found');
+    return s.replace(/minSdkVersion\s*=\s*(\d+)/, (_, n) => 'minSdkVersion = ' + Math.max(24, Number(n)));
+  });
+
   // 2) Versiya: har bir GitHub yig'ishida versionCode oshadi (Play shuni talab qiladi)
   edit('android/app/build.gradle', s => s
     .replace(/versionCode\s+\d+/, 'versionCode ' + RUN)
