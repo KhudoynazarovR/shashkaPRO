@@ -68,6 +68,13 @@ function encode(board, side, secs) {
 }
 function newGame(b) { let n = 0; for (const v of b) if (Math.abs(v) === 1) n++; return n === 24 && !b.some(v => Math.abs(v) === 2); }
 
+function tablebaseMove(b,side,t) {
+  if(!t)return null;
+  const matches=require("./kkrules.js").moves(b,side).filter(m=>m.from===t.from&&m.to===t.to);
+  if(matches.length!==1)return null;
+  const m=matches[0];
+  return {from:m.from,to:m.to,jumps:m.caps.length,ev:t.res==="win"?3000-t.d:t.res==="loss"?-3000+t.d:0,ms:0,tb:t.res,path:m.path,caps:m.caps};
+}
 function move(j, cb) {
   if (!ready) return cb({ error: "notready", code: 503 });
   const b = j && j.board, side = (j && j.side > 0) ? 1 : -1;
@@ -96,8 +103,7 @@ function move(j, cb) {
       const TB = require("./tbprobe.js");
       if (TB.ready()) {
         const t = TB.best(b, side);
-        if (t && t.from !== t.to && require("./kkrules.js").moves(b,side).filter(m=>m.from===t.from && m.to===t.to).length===1)
-          hit = {from:t.from,to:t.to,jumps:0,ev:t.res==="win"?3000-t.d:t.res==="loss"?-3000+t.d:0,ms:0,tb:t.res,path:t.path,caps:t.caps};
+        hit = tablebaseMove(b,side,t);
       }
     } catch (e) { console.log("[Dragon TB]", e.message); }
     if (hit) return cb(hit);
