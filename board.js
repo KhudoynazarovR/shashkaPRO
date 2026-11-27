@@ -1110,6 +1110,7 @@
         s += '</div>';
       }
       if (en && e && e.best && !over) s += '<div style="margin:0 -8px">' + pvHtml(h) + '</div>';
+      if (g && g.workshop) s += '<div id="dwSlot"></div>';
       if (!ed && !PL) s += fpHtml();
       if (AU.run && panel !== 'auto') s += '<div style="margin-top:8px">🤖 ' + Math.ceil(cur / 2) + '-yurish… <button data-a="auoff" style="' + sm + ';background:#8a2b3a">⏸ To‘xtatish</button></div>';
       if (PL) s += '<div style="margin-top:8px"><button data-a="stop" style="' + sm + ';background:#8a2b3a">⏹ Mashqni to‘xtatish</button></div>';
@@ -1125,7 +1126,7 @@
       var dragonPanel = g && g.workshop ? ov.querySelector('#dwRoot') : null;
       if (dragonPanel) dragonPanel.remove();
       ov.innerHTML = s;
-      if (dragonPanel) ov.appendChild(dragonPanel);
+      if (dragonPanel) (ov.querySelector('#dwSlot') || ov).appendChild(dragonPanel);
       function on(id, f) { var el = ov.querySelector(id); if (el) el.onclick = f; }
       on('#bdX', function () { ov.remove(); if (g && g.onClose) try { g.onClose(); } catch (e) {} });
       on('#bd0', function () { go(0); }); on('#bd1', function () { go(cur - 1); });
