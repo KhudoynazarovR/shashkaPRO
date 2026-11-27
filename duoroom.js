@@ -148,7 +148,11 @@ setInterval(() => {
 // 🔀 Miks turnir: ikkala o'rin oldindan band (a — birinchi yuradi), natija onEnd(res 1|2|0, {why, plies, noshow, noshowBoth}) bilan qaytadi.
 // noshowMs ichida o'yin boshlanmasa: kirgan yutadi, hech kim kirmasa — ikkalasi ham kelmadi.
 function createPair(a, b, tcK, onEnd, noshowMs, g) {
-  tcK = TCS[tcK] ? String(tcK) : '3+2';
+  const tm = /^(\d{1,2}(?:\.\d{1,2})?)\+(\d{1,2})$/.exec(String(tcK));
+  if (tm && +tm[1] >= 0.25 && +tm[1] <= 60 && +tm[2] <= 30) {
+    tcK = String(tcK);
+    if (!TCS[tcK]) TCS[tcK] = [+tm[1] * 60, +tm[2]];
+  } else tcK = TCS[tcK] ? String(tcK) : '3+2';
   let k = code(); while (rooms.has(k)) k = code();
   const r = { code: k, tcK, tc: TCS[tcK][0], inc: TCS[tcK][1], p: [{ uid: String(a.uid), name: a.name, ws: null, offAt: 0 }, { uid: String(b.uid), name: b.name, ws: null, offAt: 0 }], status: 'wait', at: Date.now(), S: null, fixed: true, onEnd };
   if (g) r.g = g;
