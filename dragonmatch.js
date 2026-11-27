@@ -1,11 +1,11 @@
 'use strict';
 const R=require('./kkrules'), L=require('./dragonlearn');
-const engines={Dragon:require('./dragonai'),KestoG:require('./kestoai')};
+const engines={Dragon:require('./dragonai'),KestoG:require('./kestoai'),'King Kong':require('./kestoai')};
 let state={running:false,done:0,wins:0,draws:0,losses:0};
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 function start(j){
  if(state.running)throw Error('Match already running');
- if(!engines[j.a]||!engines[j.b]||j.a===j.b||![10,50,100,500].includes(j.count)||!['1+0','1+1','3+2','5+0','10+5'].includes(j.tc))throw Error('Invalid match settings');
+ if(!Object.hasOwn(engines,j.a)||!Object.hasOwn(engines,j.b)||j.a===j.b||![10,50,100,500].includes(j.count)||!['1+0','1+1','3+2','5+0','10+5'].includes(j.tc))throw Error('Invalid match settings');
  const [min,inc]=j.tc.split('+').map(Number);
  state={running:true,done:0,wins:0,draws:0,losses:0,a:j.a,b:j.b,count:j.count,tc:j.tc};
  run(state,min,inc).catch(e=>{state.error=e.message;state.running=false;});
@@ -18,10 +18,10 @@ async function run(s,min,inc){
  for(;ply<300&&!s.stop;ply++){
  const moves=R.moves(b,side);if(!moves.length){result=side===1?black:white;break;}
  const key=b.join(',')+'|'+side;seen.set(key,(seen.get(key)||0)+1);if(seen.get(key)>=3)break;
- const E=engines[side===1?white:black],budget=Math.min(5,Math.max(.05,clock[side]/30000+inc*.7));
+ const name=side===1?white:black,E=engines[name],budget=Math.min(5,Math.max(.05,clock[side]/30000+inc*.7));
  const t=Date.now();let r;
  for(let n=0;n<10&&!s.stop;n++){
- r=await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('Engine timeout')),20000);E.move({board:b,side,time:budget,workshop:true},v=>{clearTimeout(timer);resolve(v);});});
+ r=await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('Engine timeout')),20000);E.move({board:b,side,time:budget,maxTime:budget,workshop:true,kk:name==='King Kong',book:name==='King Kong',rem:clock[side]/1000},v=>{clearTimeout(timer);resolve(v);});});
  if(r&&!r.error)break;
  if(!r||!['busy','notready'].includes(r.error))throw Error(r?.error||'Engine error');await pause(500);
  }
