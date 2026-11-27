@@ -359,13 +359,13 @@ async function podiumPng(t, st, pay, all) {
   const d = tz(t.endAt || t.startAt || Date.now());
   const date = String(d.getUTCDate()).padStart(2,'0')+'.'+String(d.getUTCMonth()+1).padStart(2,'0')+'.'+d.getUTCFullYear();
   const txt = (cx,y,v,size=32,color='#fff',weight=700) => '<text x="'+cx+'" y="'+y+'" text-anchor="middle" font-family="'+F+'" font-size="'+size+'" font-weight="'+weight+'" fill="'+color+'">'+x(v)+'</text>';
-  let svg = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1080" height="1200"><defs><radialGradient id="bg"><stop stop-color="#176449"/><stop offset="1" stop-color="#031810"/></radialGradient>';
+  let svg = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1080" height="1370"><defs><radialGradient id="bg"><stop stop-color="#176449"/><stop offset="1" stop-color="#031810"/></radialGradient>';
   const metals = [['#fff2a0','#c18b19','#714005'],['#f2f5fa','#9ca7b4','#394653'],['#ffc68c','#b7682e','#63300d']];
   metals.forEach((m,i)=>{svg+='<linearGradient id="m'+i+'"><stop stop-color="'+m[2]+'"/><stop offset=".45" stop-color="'+m[0]+'"/><stop offset=".65" stop-color="'+m[1]+'"/><stop offset="1" stop-color="'+m[2]+'"/></linearGradient>';});
-  svg+='</defs><rect width="1080" height="1200" fill="url(#bg)"/>';
+  svg+='</defs><rect width="1080" height="1370" fill="url(#bg)"/>';
   for(let i=0;i<30;i++){let a=i*Math.PI/15;svg+='<path d="M540 420 L'+(540+1600*Math.cos(a))+' '+(420+1600*Math.sin(a))+' L'+(540+1600*Math.cos(a+.07))+' '+(420+1600*Math.sin(a+.07))+' Z" fill="#ffe49b" opacity=".045"/>';}
   for(let i=0;i<65;i++){let xx=(i*173+29)%1080, yy=(i*97+13)%1200;if(xx<55||xx>1025||yy<65)svg+='<rect x="'+xx+'" y="'+yy+'" width="12" height="20" fill="#f5ca62" opacity=".7" transform="rotate(35 '+xx+' '+yy+')"/>';}
-  svg+='<rect x="35" y="30" width="1010" height="1140" rx="32" fill="none" stroke="#d5a74a" stroke-width="3"/>';
+  svg+='<rect x="35" y="30" width="1010" height="1310" rx="32" fill="none" stroke="#d5a74a" stroke-width="3"/>';
   svg+=txt(540,100,'SHASHKA PRO',55,'#ffe19a',900);
   svg+='<rect x="65" y="130" width="950" height="95" rx="24" fill="#092c22" stroke="#e7bc58" stroke-width="3"/>';
   const title=noEmo(t.name).slice(0,48);svg+=txt(540,190,title,Math.min(46,Math.floor(1500/Math.max(1,title.length))),'#fff',900);
@@ -392,7 +392,8 @@ async function podiumPng(t, st, pay, all) {
   svg+='<rect x="65" y="1000" width="950" height="110" rx="22" fill="#092c22" stroke="#d5a74a" stroke-width="2"/>';
   svg+=txt(290,1043,games+' o‘yin · '+list.length+' o‘yinchi',29)+txt(290,1082,'TURNIR NATIJASI',22,'#e7bc58');
   svg+=txt(790,1043,'Mukofot fondi',27)+txt(790,1082,fmt(t.prize)+' tanga',35,'#ffe19a');
-  svg+=txt(540,1150,'@'+BOT(),25,'#c4d7ce')+'</svg>';
+  svg+='<rect x="65" y="1130" width="950" height="175" rx="24" fill="#082b21" stroke="#e7bc58" stroke-width="3"/><circle cx="155" cy="1217" r="55" fill="#229ed9"/><path d="M112 1212 L193 1182 L177 1250 L151 1228 L137 1240 L140 1220 Z" fill="#fff"/>';
+  svg+=txt(595,1185,'@'+BOT(),48,'#ffe19a',900)+txt(595,1230,'Onlayn shashka · Kundalik Arena turnirlari',27)+txt(595,1272,'Telegramda botni ishga tushiring!',29,'#e7bc58')+'</svg>';
   return png(svg);
 }
 
