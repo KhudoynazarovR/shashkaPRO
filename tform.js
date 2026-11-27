@@ -19,6 +19,7 @@
   window.__tfx = function () {
     var o = { flag: !!(g('lbTflag') && g('lbTflag').value === '1' && g('lbTk') && g('lbTk').value === 'arena'), desc: (g('tfDesc') || {}).value || '' };
     o.game = (g('tfGame') && g('tfGame').dataset.game) || 'sh';
+    if (['mm','go','gomoku'].includes(o.game)) o.berserk = false;
     if (window.__isAdmin) {
       if (g('tfRec') && g('tfRec').checked) { o.rec = true; o.recDays = days.slice(); }
     }
@@ -68,7 +69,7 @@
         games.innerHTML = '<small>O‘YIN TURI</small><div>' + ['sh','ug','mm','go','gomoku'].map(function(v) {
           var x = MG.find(function(y){return y[0] === v;});
           return '<button type="button" data-game="'+v+'" '+(v === 'sh' ? 'class="on"' : '')+'>'+x[1]+' '+x[2]+'</button>';
-        }).join('') + '</div><small style="opacity:.65">Yangi o‘yinlar — Arena sinovi; reyting va Berserk o‘chiq</small>';
+        }).join('') + '</div><small style="opacity:.65">Yangi o‘yinlar — Arena sinovi; Berserk hozircha Shashkada</small>';
         games.dataset.game = 'sh';
         games.onclick = function(e) {
           var b = e.target.closest('button[data-game]'); if (!b) return;
@@ -82,6 +83,14 @@
       }
     }
     var gameBox = g('tfGame'), kind = g('lbTk');
+    var bz = g('lbTbz');
+    if (bz && gameBox) {
+      var hideBz = ['mm','go','gomoku'].includes(gameBox.dataset.game);
+      var bzLabel = bz.closest('label') || document.querySelector('label[for="lbTbz"]');
+      if (bzLabel) bzLabel.hidden = hideBz;
+      bz.hidden = hideBz;
+      if (hideBz) bz.checked = false;
+    }
     if (gameBox && gameBox.dataset.game !== 'sh' && kind && kind.value !== 'arena') { kind.value = 'arena'; kind.dispatchEvent(new Event('change', {bubbles:true})); }
     try { mixUi(!!(g('lbTk') && g('lbTk').value === 'mix')); } catch (e) {}
     // vaqt natijasi va toifa
