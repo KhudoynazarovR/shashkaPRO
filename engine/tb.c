@@ -180,7 +180,7 @@ static void solve(Slice *S) {
   S->v = malloc(S->size); if (!S->v) { fprintf(stderr, "Not enough memory for slice\n"); exit(2); } memset(S->v, 0, S->size);
   int b[32], stm; long long valid = 0;
   for (long long i = 0; i < S->size; i++) { if (!boardOf(S, i, b, &stm)) S->v[i] = INV; else valid++; }
-  int ext = maxDist;
+  /* Saturated distances must still propagate WDL after pass 127. */
   /* har pozitsiya uchun bir martalik hisob: bolalar qiymatlari ichida eng yaxshi */
   long long changed = 1; int pass = 0;
   uint8_t *res = malloc(S->size);   /* hal bo'lmagan = 0 */
@@ -194,12 +194,12 @@ static void solve(Slice *S) {
       Ev e = { stm ^ 1, S, -1, 1, 0, 0 };
       int n = genMoves(b, stm == 0 ? 1 : -1, evcb, &e);
       if (n == 0) { if (pass == 0) { res[i] = 128; changed++; } continue; }
-      if (e.bestWin == pass && pass > 0) { res[i] = (uint8_t)(pass > 127 ? 127 : pass); changed++; continue; }
-      if (e.allWin && e.maxWin + 1 == pass) { res[i] = (uint8_t)(128 + (pass > 126 ? 126 : pass)); changed++; }
+      if (e.bestWin >= 0 && e.bestWin <= pass && pass > 0) { res[i] = (uint8_t)(pass > 127 ? 127 : pass); changed++; continue; }
+      if (e.allWin && e.maxWin + 1 <= pass) { res[i] = (uint8_t)(128 + (pass > 126 ? 126 : pass)); changed++; }
     }
     memcpy(S->v, res, S->size);
     if (pass > maxDist && changed) maxDist = pass;
-    if (!changed && pass > ext + 1) break;
+    if (!changed && pass > 128) break;
   }
   free(res);
   long long w = 0, l = 0, dr = 0;
@@ -207,9 +207,11 @@ static void solve(Slice *S) {
   printf("W%d%dB%d%d: %lld pozitsiya, yutish %lld, yutqazish %lld, durang %lld, o'tishlar %d\n", S->wm, S->wk, S->bm, S->bk, valid, w, l, dr, pass);
   fflush(stdout);
   char fn[256]; sprintf(fn, "%s/W%d%dB%d%d.bin", OUT, S->wm, S->wk, S->bm, S->bk);
-  FILE *f = fopen(fn, "wb"); if (!f) { perror(fn); exit(2); }
-  if (fwrite(S->v, 1, S->size, f) != (size_t)S->size) { fclose(f); remove(fn); fprintf(stderr, "Incomplete tablebase write\n"); exit(2); }
-  if (fclose(f) != 0) { remove(fn); exit(2); }
+  char tmp[272]; snprintf(tmp, sizeof tmp, "%s.tmp", fn);
+  FILE *f = fopen(tmp, "wb"); if (!f) { perror(tmp); exit(2); }
+  if (fwrite(S->v, 1, S->size, f) != (size_t)S->size) { fclose(f); remove(tmp); fprintf(stderr, "Incomplete tablebase write\n"); exit(2); }
+  if (fclose(f) != 0) { remove(tmp); exit(2); }
+  if (rename(tmp, fn) != 0) { perror(fn); remove(tmp); exit(2); }
   S->done = 1;
 }
 
