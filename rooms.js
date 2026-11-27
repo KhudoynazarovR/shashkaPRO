@@ -245,6 +245,7 @@ function createRooms({ send, clients, onFinish }) {
       opening: room.opening,
       berserk: room.berserk,
       drawOffer: room.drawOffer,
+      kingOnly: room.dr && room.dr.st ? room.dr.st.kingOnly : null,
       drawInfo: (room.dr && room.dr.st && room.dr.st.info) || null,
       drawText: room.drawText || null,
       canDraw: DRAW.canOfferDraw(room.dr && room.dr.st), drawMoves: (room.dr && room.dr.st && room.dr.st.moves) ? { w: room.dr.st.moves.white, b: room.dr.st.moves.black } : null,
@@ -691,6 +692,7 @@ const srvBotOn = room => !!(room && room.vsBot && room.botCfg && ["bot_kingkong"
         type: "roomMove", roomId, move: m.move, turn: room.turn, color: col,
         arenaFirstDeadline: room.arena ? room.arenaFirstDeadline || 0 : 0, srvNow: Date.now(),
         clock: currentClock(room), clockRunning: clockRunning(room),
+        kingOnly: room.dr && room.dr.st ? room.dr.st.kingOnly : null,
         drawInfo: dres ? (dres.info || null) : undefined,
         canDraw: DRAW.canOfferDraw(room.dr && room.dr.st)
       });
