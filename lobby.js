@@ -766,12 +766,12 @@ function createLobby({ send, clients, roomsApi }) {
   }
 
   // 🔀 MIKS TURNIR: har turda boshqa o'yin. Shashka — oddiy xona, qolganlari — o'z modullarida (natija mixDone ga qaytadi)
-  function mixRoom(g, w, b, cb) {
-    const A = { uid: w.uid, name: w.name }, B = { uid: b.uid, name: b.name }, NS = MIX_NOSHOW_MS;   // 30 s ichida kirmagan — texnik mag'lubiyat
+  function mixRoom(g, w, b, cb, opts = {}) {
+    const A = { uid: w.uid, name: w.name }, B = { uid: b.uid, name: b.name }, NS = opts.noshowMs || MIX_NOSHOW_MS;   // 30 s ichida kirmagan — texnik mag'lubiyat
     try {
       if (g === 'mm') return 'mx:mm:' + require('./memroom.js').createTour(A, B, '4x6', -120, cb, NS).code;
-      if (g === 'ug') return 'mx:ug:' + require('./ugroom.js').createPair(A, B, MIX_G.ug.tc, cb, NS).code;
-      return 'mx:' + g + ':' + require('./duoroom.js').createPair(A, B, MIX_G[g].tc, cb, NS, g).code;
+      if (g === 'ug') return 'mx:ug:' + require('./ugroom.js').createPair(A, B, opts.tc || MIX_G.ug.tc, cb, NS).code;
+      return 'mx:' + g + ':' + require('./duoroom.js').createPair(A, B, opts.tc || MIX_G[g].tc, cb, NS, g).code;
     } catch (e) { console.log('[mix] xona:', e.message); return ''; }
   }
   function mixDone(t, b, res, info) {
@@ -1142,6 +1142,18 @@ function createLobby({ send, clients, roomsApi }) {
     const roomId = 'A' + t.id + 'G' + (++t.gameNo);
     w.colors.w++; k.colors.b++;
     w.busy = true; k.busy = true;
+    if (t.game && t.game !== 'sh') {
+      const board = { board: t.gameNo, roomId: '', white: w.uid, black: k.uid, done: false, winner: null, g: t.game };
+      const xid = mixRoom(t.game, w, k, (res, info) => {
+        if (board.done) return;
+        info = info || {};
+        arenaGameDone(t, board, { id: board.roomId, winner: res === 1 ? 'white' : res === 2 ? 'black' : 'draw', plies: info.plies || 0, reason: info.noshow ? 'noshow' : (info.why || ''), noshowBoth: !!info.noshowBoth, unrated: true, tc: t.tc });
+      }, { tc: t.tc, noshowMs: 15000 });
+      if (!xid) { w.busy = k.busy = false; w.colors.w--; k.colors.b--; w.waitingSince = k.waitingSince = Date.now(); return; }
+      board.roomId = xid; t.cur.push(board);
+      for (const [p, opp, color] of [[w,k,'white'],[k,w,'black']]) sendUid(p.uid, { type: 'lbGo', roomId: xid, reason: 'arena', tname: t.name, round: 0, color, opponent: opp.name, tc: t.tc });
+      return;
+    }
     if (w.bot || k.bot) {
       const bt = botAny((w.bot ? w : k).uid), op = t.pos === 'idf' ? pickOpening() : null;
       const side = x => x.bot ? { uid: x.uid, name: x.name, clientId: 'ai_' + x.uid } : { uid: x.uid, name: x.name };
