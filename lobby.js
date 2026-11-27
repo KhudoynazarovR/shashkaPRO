@@ -30,6 +30,7 @@ const BOTS = [
   { uid: 'bot_champ', name: 'Legend BOT', secs: 3, blunder: 0 },
   { uid: 'bot_monster', name: 'Monster BOT', secs: 5, blunder: 0 },
   { uid: 'bot_terminator', name: 'Terminator BOT', secs: 10, blunder: 0 },
+  { uid: 'bot_admiral', name: '⚓ Admiral BOT', secs: 15, blunder: 0, ponder: false },
   { uid: 'bot_kingkong', name: 'King Kong BOT', secs: 15, blunder: 0, ponder: true, soon: process.env.KINGKONG_OPEN !== '1' },   // 🦍 eng kuchli: raqib o'ylayotganda ham o'ylaydi, saboqlar bazada saqlanadi
   { uid: 'bot_dragon', name: 'DragonBOT', secs: 10, blunder: 0, eng: 'dragon', adm: true }   // 🐉 Skifi dvigateli. adm — hozircha faqat admin; admin ochganda hammaga (store.db.dragon.open)
 ];
