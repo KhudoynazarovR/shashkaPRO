@@ -1145,15 +1145,18 @@ function createLobby({ send, clients, roomsApi }) {
     const board = { board: t.gameNo, roomId, white: w.uid, black: k.uid, done: false, winner: null };
     t.cur.push(board);
     roomToBoard.set(roomId, { t, b: board });
+    const initialRoom = roomsApi.get(roomId);
+    if (initialRoom) initialRoom.arenaFirstDeadline = Date.now() + 15000;
     if (!w.bot) sendUid(w.uid, { type: 'lbGo', roomId, reason: 'arena', tname: t.name, round: 0, color: 'white', opponent: k.name, tc: t.tc });
     if (!k.bot) sendUid(k.uid, { type: 'lbGo', roomId, reason: 'arena', tname: t.name, round: 0, color: 'black', opponent: w.name, tc: t.tc });
     // Arena: absolute 15s deadline per first move, even if a seat disconnects.
-    let ply = 0, deadline = Date.now() + 15000;
+    let ply = 0, deadline = initialRoom ? initialRoom.arenaFirstDeadline : Date.now() + 15000;
     const timer = setInterval(() => {
       const room = roomsApi.get(roomId);
       if (board.done || !room || room.finished || room.plies >= 2) { clearInterval(timer); return; }
       const now = Date.now();
-      if (ply !== room.plies) { ply = room.plies; deadline = now + 15000; }
+      if (ply !== room.plies) { ply = room.plies; deadline = room.arenaFirstDeadline || now + 15000; }
+      room.arenaFirstDeadline = deadline;
       if (now < deadline) return;
       const online = (p, seat) => !p.withdrawn && (p.bot || !!(seat && seat.clientId && clients.has(seat.clientId)));
       const wo = online(w, room.white), bo = online(k, room.black);
