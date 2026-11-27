@@ -31,8 +31,17 @@ async function run(s,min,inc){
  if(!r||r.error)throw Error('Engine unavailable');
  clock[side]-=Date.now()-t;if(clock[side]<=0){result=side===1?black:white;break;}
  const candidates=moves.filter(m=>m.from===r.from&&m.to===r.to);
- const m=candidates.find(m=>m.caps.length===r.jumps)|| (candidates.length===1?candidates[0]:null);
- if(!m)throw Error('Illegal or ambiguous engine move');
+ const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+ let exact=candidates.filter(m=>!Number.isInteger(r.jumps)||m.caps.length===r.jumps);
+ if(Array.isArray(r.path)&&r.path.length)exact=exact.filter(m=>same(m.path,r.path)||same([m.from,...m.path],r.path));
+ if(Array.isArray(r.caps))exact=exact.filter(m=>same(m.caps,r.caps));
+ const m=exact.length===1?exact[0]:null;
+ if(!m){
+ const d={at:Date.now(),game:g+1,ply,engine:name,side,board:b.slice(),reply:r,candidates:moves,clock:{...clock},a:s.a,b:s.b,done:s.done};
+ const x=L.db();(x.matchErrors||=[]).push(d);require('./store').save();
+ console.error('[Dragon match move]',JSON.stringify(d));
+ throw Error('Illegal or ambiguous engine move: '+name+' (diagnostic saved)');
+ }
  b=m.board;clock[side]+=inc*1000;side=-side;s.ply=ply+1;s.history.push({board:b.slice(),side,from:m.from,to:m.to,path:m.path,caps:m.caps});s.clock={...clock};s.turn=side;s.turnAt=Date.now();await pause(20);
  }
  if(s.stop)break;
