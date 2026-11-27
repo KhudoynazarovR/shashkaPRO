@@ -1147,38 +1147,22 @@ function createLobby({ send, clients, roomsApi }) {
     roomToBoard.set(roomId, { t, b: board });
     if (!w.bot) sendUid(w.uid, { type: 'lbGo', roomId, reason: 'arena', tname: t.name, round: 0, color: 'white', opponent: k.name, tc: t.tc });
     if (!k.bot) sendUid(k.uid, { type: 'lbGo', roomId, reason: 'arena', tname: t.name, round: 0, color: 'black', opponent: w.name, tc: t.tc });
-    // Arena owns the pre-game timer. Each turn gets a fresh deadline.
-    let ply = -1, readyAt = 0, missingAt = Date.now(), retryAt = 0;
+    // Arena: absolute 15s deadline per first move, even if a seat disconnects.
+    let ply = 0, deadline = Date.now() + 15000;
     const timer = setInterval(() => {
       const room = roomsApi.get(roomId);
       if (board.done || !room || room.finished || room.plies >= 2) { clearInterval(timer); return; }
       const now = Date.now();
-      const online = (p, seat) => p.bot || !!(seat && seat.clientId && clients.has(seat.clientId));
-      const missing = [[w, room.white, 'white', k], [k, room.black, 'black', w]].filter(([p, seat]) => !online(p, seat));
-      if (missing.length) {
-        readyAt = 0;
-        if (!missingAt) missingAt = now;
-        if (now - retryAt >= 10000) {
-          retryAt = now;
-          for (const [p, seat, color, opp] of missing) if (!p.withdrawn) sendUid(p.uid, { type: 'lbGo', roomId, reason: 'arena', tname: t.name, round: 0, color, opponent: opp.name, tc: t.tc });
-        }
-        if (now - missingAt >= ARENA_NOSHOW_MS + 30000) {
-          clearInterval(timer);
-          if (room.plies === 0) {
-            for (const [p] of missing) { p.withdrawn = true; toast(p.uid, 'Ulanish amalga oshmadi. Qayta qo‘shiling.'); }
-            roomsApi.forfeit(roomId, 'draw', 'arena_cancel');
-          } else if (missing.length === 1) roomsApi.forfeit(roomId, missing[0][2] === 'white' ? 'black' : 'white', 'noshow');
-          else roomsApi.forfeit(roomId, 'draw', 'arena_cancel');
-        }
-        return;
-      }
-      missingAt = 0;
-      if (ply !== room.plies || !readyAt) { ply = room.plies; readyAt = now; }
-      if (now - readyAt >= ARENA_NOSHOW_MS) {
-        clearInterval(timer);
-        roomsApi.forfeit(roomId, room.turn === 'white' ? 'black' : 'white', 'noshow');
-      }
-    }, 1000);
+      if (ply !== room.plies) { ply = room.plies; deadline = now + 15000; }
+      if (now < deadline) return;
+      const online = (p, seat) => !p.withdrawn && (p.bot || !!(seat && seat.clientId && clients.has(seat.clientId)));
+      const wo = online(w, room.white), bo = online(k, room.black);
+      clearInterval(timer);
+      if (!wo && !bo) { room.noshowBoth = true; roomsApi.forfeit(roomId, 'draw', 'noshow'); }
+      else if (!wo) roomsApi.forfeit(roomId, 'black', 'noshow');
+      else if (!bo) roomsApi.forfeit(roomId, 'white', 'noshow');
+      else roomsApi.forfeit(roomId, room.turn === 'white' ? 'black' : 'white', 'noshow');
+    }, 100);
     if (timer.unref) timer.unref();
   }
 
