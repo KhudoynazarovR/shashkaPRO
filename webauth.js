@@ -12,6 +12,27 @@
     var noop = function () {};
     tg = W.Telegram.WebApp = { initData: '', initDataUnsafe: {}, ready: noop, expand: noop, close: noop, onEvent: noop, offEvent: noop, setHeaderColor: noop, setBackgroundColor: noop, openLink: function (u) { W.open(u, '_blank'); }, openTelegramLink: function (u) { W.location.href = u; }, HapticFeedback: { impactOccurred: noop, notificationOccurred: noop, selectionChanged: noop }, BackButton: { show: noop, hide: noop, onClick: noop, offClick: noop }, MainButton: { show: noop, hide: noop, onClick: noop, offClick: noop, setText: noop }, platform: 'web', version: '6.0', colorScheme: 'dark', themeParams: {} };
   }
+  // Guest login screen: do not request private widgets without a session.
+  // Preserve server authorization and normal Telegram / Google sessions.
+  if (W.fetch && W.Response) {
+    var originalFetch = W.fetch;
+    W.fetch = function (input, options) {
+      var method = String((options && options.method) || (input && input.method) || 'GET').toUpperCase();
+      if (method === 'GET') {
+        try {
+          var url = new URL(typeof input === 'string' ? input : input.url || String(input), W.location.href);
+          var app = W.Telegram && W.Telegram.WebApp;
+          if (url.origin === W.location.origin && /^\/api\/(dragon|daraxt|ticket)$/.test(url.pathname) && !(app && app.initData)) {
+            var headers = new Headers((options && options.headers) || (input && input.headers) || {});
+            if (!headers.get('x-init-data') && !headers.get('authorization')) {
+              return Promise.resolve(new Response(JSON.stringify({error:'auth'}), {status:200, headers:{'Content-Type':'application/json'}}));
+            }
+          }
+        } catch (e) {}
+      }
+      return originalFetch.apply(this, arguments);
+    };
+  }
   W.SP_WEB = true;
   // ilova rejimi (Play Market / bosh ekranga o'rnatish): oflayn sahifa uchun service worker
   try { if ('serviceWorker' in navigator) W.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); }); } catch (e) {}
