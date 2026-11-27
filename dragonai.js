@@ -72,8 +72,17 @@ function move(j, cb) {
   if (!ready) return cb({ error: "notready", code: 503 });
   const b = j && j.board, side = (j && j.side > 0) ? 1 : -1;
   if (!Array.isArray(b) || b.length !== 64 || !b.every(v => Number.isInteger(v) && v >= -2 && v <= 2)) return cb({ error: "bad", code: 400 });
+  let profile=null;
+  if (!j.workshop && j.eng === 'dragon' && typeof j.dragonMode === 'string') {
+    const defaults={Bullet:[12,250],Blits:[18,300],Rapid:[24,500],Klassik:[30,1000]};
+    if (Object.prototype.hasOwnProperty.call(defaults,j.dragonMode)) {
+      const d=defaults[j.dragonMode];
+      let saved={}; try { saved=require('./dragonlearn').db().profiles?.[j.dragonMode]||{}; } catch(e){}
+      profile=Object.assign({depth:d[0],reserve:d[1],adaptive:true,base:true},saved);
+    }
+  }
   const done=cb; cb=r=>{try{require('./dragonlearn').record(j,r);}catch(e){} done(r);};
-  if (process.env.DRAGON_TB !== "0" && b.filter(Boolean).length <= 5 && Number.isInteger(j.damkaPlies) && j.damkaPlies >= 0 && j.damkaPlies < 30) {
+  if ((!profile || profile.base !== false) && process.env.DRAGON_TB !== "0" && b.filter(Boolean).length <= 5 && Number.isInteger(j.damkaPlies) && j.damkaPlies >= 0 && j.damkaPlies < 30) {
     try {
       const t = require("./damka_tb.js").best(b, side, j.damkaPlies);
       if (t && t.from !== t.to && require("./kkrules.js").moves(b,side).filter(m=>m.from===t.from && m.to===t.to).length===1)
@@ -81,7 +90,7 @@ function move(j, cb) {
     } catch (e) { console.log("[Dragon Damka]", e.message); }
   }
   // Tablebase first; ambiguous capture paths stay with the engine protocol.
-  if (process.env.DRAGON_TB !== "0" && b.reduce((n,v)=>n+(v!==0),0) <= 6) {
+  if ((!profile || profile.base !== false) && process.env.DRAGON_TB !== "0" && b.reduce((n,v)=>n+(v!==0),0) <= 6) {
     let hit = null;
     try {
       const TB = require("./tbprobe.js");
@@ -95,8 +104,14 @@ function move(j, cb) {
   }
   if (!j.workshop) { try { const t=require('./dragonlearn').pick(j); if(t)return cb(t); } catch(e){} }
   if (queue.length >= 12) return cb({ error: "busy", code: 429 });
-  const secs = Math.min(30, Math.max(0.05, Number(j.time) || 1)), t0 = Date.now();
-  const depth = Number.isInteger(j.maxDepth) ? Math.max(1, Math.min(40, j.maxDepth)) : 40;
+  let secs = Math.min(30, Math.max(0.05, Number(j.time) || 1));
+  if(profile && Number.isFinite(j.dragonRemaining) && j.dragonRemaining>0){
+    const available=Math.max(0.05,j.dragonRemaining-profile.reserve/1000);
+    const budget=profile.adaptive ? Math.max(0.05,available/28+Math.max(0,Number(j.dragonIncrement)||0)*0.8) : available;
+    secs=Math.min(secs,available,budget);
+  }
+  const t0=Date.now();
+  const depth = Number.isInteger(j.maxDepth) ? Math.max(1, Math.min(40, j.maxDepth)) : profile ? Math.max(1,Math.min(40,Number(profile.depth)||40)) : 40;
   run((newGame(b) ? "9 0\n" : "") + "8 " + depth + "\n" + encode(b, side, secs), secs, (err, v) => {
     if (err) return cb({ error: err, code: 500 });
     const from = v[1] * 8 + (7 - v[0]), to = v[3] * 8 + (7 - v[2]);
