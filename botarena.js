@@ -140,6 +140,7 @@ function finish(white, black, result, hist, ply) {
   d.arenaLog.forEach((x, i) => { if (i >= 6) { delete x.h; delete x.a; } });
   if (d.arenaLog.length > 30) d.arenaLog.length = 30;
   dirty = true;
+  if (white.uid==='bot_dragon'||black.uid==='bot_dragon') { try { require('./dragonlearn').game({at:Date.now(),white:white.uid,black:black.uid,result,ply,positions:cur.hist,moves:cur.all}); } catch(e){} }
   cur.over = true; cur.result = result; cur.white.elo = sw.elo; cur.black.elo = sb.elo;
 }
 

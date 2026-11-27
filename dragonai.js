@@ -72,6 +72,7 @@ function move(j, cb) {
   if (!ready) return cb({ error: "notready", code: 503 });
   const b = j && j.board, side = (j && j.side > 0) ? 1 : -1;
   if (!Array.isArray(b) || b.length !== 64 || !b.every(v => Number.isInteger(v) && v >= -2 && v <= 2)) return cb({ error: "bad", code: 400 });
+  const done=cb; cb=r=>{try{require('./dragonlearn').record(j,r);}catch(e){} done(r);};
   if (process.env.DRAGON_TB !== "0" && b.filter(Boolean).length <= 5 && Number.isInteger(j.damkaPlies) && j.damkaPlies >= 0 && j.damkaPlies < 30) {
     try {
       const t = require("./damka_tb.js").best(b, side, j.damkaPlies);
@@ -92,6 +93,7 @@ function move(j, cb) {
     } catch (e) { console.log("[Dragon TB]", e.message); }
     if (hit) return cb(hit);
   }
+  if (!j.workshop) { try { const t=require('./dragonlearn').pick(j); if(t)return cb(t); } catch(e){} }
   if (queue.length >= 12) return cb({ error: "busy", code: 429 });
   const secs = Math.min(30, Math.max(0.05, Number(j.time) || 1)), t0 = Date.now();
   run((newGame(b) ? "9 0\n" : "") + encode(b, side, secs), secs, (err, v) => {

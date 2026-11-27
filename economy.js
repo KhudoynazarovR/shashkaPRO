@@ -257,6 +257,7 @@ function handle(req, res, url) {
   if (p === '/api/tuzoq/reel') { if (require('./tuzoqreel.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }   // 🎬 tuzoqdan Reel (admin)
   if (p === '/api/reel') { if (require('./reelgen.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }   // 🎬 masaladan Reel (admin)
   if (p.startsWith('/api/kkadm')) { if (require('./kkadm.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }
+  if (p.startsWith('/api/dragonworkshop/')) return require('./dragonadm').handle(req,res,p,{verifyInitData,send,readBody});
   if (p.startsWith('/api/dragon')) { if (require('./dragonsrv.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }
   if (p === '/api/explore' || p === '/api/ai/multipv') { if (require('./posdb.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }
   if (p.startsWith('/api/kkrep')) { if (require('./kkrep.js').handle(req, res, p, { verifyInitData, send, readBody })) return true; }
