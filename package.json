@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "postinstall": "gcc -O3 -w -o engine/bridge.bin engine/bridge.c -lm || true"
+    "postinstall": "gcc -O3 -w -o engine/bridge.bin engine/bridge.c -lm || true; g++ -std=c++17 -O3 -include cassert engine/admiral/search.cpp -o engine/admiral/admiral.bin"
   },
   "dependencies": {
     "gifenc": "^1.0.3",

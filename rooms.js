@@ -517,7 +517,7 @@ function createRooms({ send, clients, onFinish }) {
     return s;
   } catch (e) { return d; }
 }
-const srvBotOn = room => !!(room && room.vsBot && room.botCfg && room.botCfg.id === "bot_kingkong" && room.tc && room.tc !== "∞");
+const srvBotOn = room => !!(room && room.vsBot && room.botCfg && ["bot_kingkong", "bot_admiral"].includes(room.botCfg.id) && room.tc && room.tc !== "∞");
   function kkSteps(b, m) {   // kkrules yurishi → xona qadamlari (har sakrashda urilgan dona)
     const pts = [m.from].concat(m.path && m.path.length ? m.path : [m.to]), out = [];
     for (let i = 1; i < pts.length; i++) {
@@ -551,6 +551,33 @@ const srvBotOn = room => !!(room && room.vsBot && room.botCfg && room.botCfg.id 
       if (base <= 30 || rem < 3) secs = 0.05;   // juda qisqa o'yin: tayyor bilim (kitob, Colette, xotira, baza) yoki eng qisqa hisob
       const fb = () => play(L[Math.floor(Math.random() * L.length)], "fallback");
       tm = setTimeout(fb, Math.max(600, Math.min(secs * 1000 + 2500, rem * 1000 * 0.3)));
+
+      if (room.botCfg.id === "bot_admiral") {
+        require("./admiralai.js").move({
+          board: b,
+          side,
+          time: secs
+        }, r => {
+          if (done) return;
+
+          const m = r && !r.error && L.find(x => {
+            if (x.from !== r.from || x.to !== r.to) return false;
+            const pts = [x.from].concat(
+              x.path && x.path.length ? x.path : [x.to]
+            );
+            return JSON.stringify(pts) === JSON.stringify(r.path);
+          });
+
+          if (m) return play(m, "admiral");
+
+          console.error("[Admiral]", r);
+          done = true;
+          clearTimeout(tm);
+          room._sbBusy = 0;
+        });
+        return;
+      }
+
       const ask = (k) => require("./kestoai.js").move({ board: b, side, time: secs, maxTime: secs, kk: true, book: true, tbAlways: true, room: room.id, rem: Math.max(0.1, rem), opp: (room[bc === "white" ? "black" : "white"] || {}).name || "", oppElo: (() => { try { const u = require("./store").users()[String((room[bc === "white" ? "black" : "white"] || {}).uid)]; return (u && u.elo) || 0; } catch (e) { return 0; } })(), tcs: base + 40 * inc, tour: /^T.+R\d+B\d+|^A.+G\d+/.test(String(room.id)) || !!room.arena }, r => {
         if (done) return;
         if (r && typeof r.from === "number") return play(L.find(x => x.from === r.from && x.to === r.to) || L[0], "engine");
