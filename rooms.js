@@ -1013,7 +1013,7 @@ const srvBotOn = room => !!(room && room.vsBot && room.botCfg && ["bot_kingkong"
     if (m.type === "roomClaimWin") {   // 🏆 raqib chiqib ketdi — g'alabani olish
       if (!col || !claimable(room)) return true;
       const opp = room[other(col)];
-      if (!opp || isOnline(opp) || !opp.offSince || Date.now() - opp.offSince < CLAIM_MS) return err(c, "Raqib hali qaytishi mumkin — biroz kuting"), true;
+      if (!opp || isOnline(opp) || !opp.offSince || Date.now() - opp.offSince < (room.arena ? 30000 : CLAIM_MS)) return err(c, "Raqib hali qaytishi mumkin — biroz kuting"), true;
       finish(room, col, "abandon");
       return true;
     }
@@ -1071,6 +1071,21 @@ const srvBotOn = room => !!(room && room.vsBot && room.botCfg && ["bot_kingkong"
         const k = room.played + ":" + room.plies + ":" + room.turn;
         if (room._fmKey !== k) { room._fmKey = k; room._fmSince = now; }
         else if (now - room._fmSince >= 30000) { finish(room, other(room.turn), "timeout"); continue; }
+      }
+      // Arena: after both first moves, a disconnected player has 30s to return.
+      if (room.arena && !room.finished && room.white && room.black && room.plies >= 2) {
+        const offline = ["white", "black"].filter(c => {
+          const seat = room[c];
+          if (isBotUid(String(seat.uid)) || isOnline(seat)) { seat.offSince = 0; return false; }
+          if (!seat.offSince) seat.offSince = now;
+          return true;
+        });
+        if (offline.length === 1 && now - room[offline[0]].offSince >= 30000) {
+          finish(room, other(offline[0]), "noshow"); continue;
+        }
+        if (offline.length === 2 && offline.every(c => now - room[c].offSince >= 30000)) {
+          room.noshowBoth = true; finish(room, "draw", "noshow"); continue;
+        }
       }
       if (!clockRunning(room)) continue;
       if (!kkFrozen(room, room.turn) && room.clock[room.turn] - (now - room.turnStartedAt) <= 0) {
