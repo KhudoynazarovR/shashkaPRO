@@ -72,6 +72,19 @@ function move(j, cb) {
   if (!ready) return cb({ error: "notready", code: 503 });
   const b = j && j.board, side = (j && j.side > 0) ? 1 : -1;
   if (!Array.isArray(b) || b.length !== 64 || !b.every(v => Number.isInteger(v) && v >= -2 && v <= 2)) return cb({ error: "bad", code: 400 });
+  // Tablebase first; ambiguous capture paths stay with the engine protocol.
+  if (process.env.DRAGON_TB !== "0" && b.reduce((n,v)=>n+(v!==0),0) <= 6) {
+    let hit = null;
+    try {
+      const TB = require("./tbprobe.js");
+      if (TB.ready()) {
+        const t = TB.best(b, side);
+        if (t && t.from !== t.to && require("./kkrules.js").moves(b,side).filter(m=>m.from===t.from && m.to===t.to).length===1)
+          hit = {from:t.from,to:t.to,jumps:0,ev:t.res==="win"?3000-t.d:t.res==="loss"?-3000+t.d:0,ms:0,tb:t.res,path:t.path,caps:t.caps};
+      }
+    } catch (e) { console.log("[Dragon TB]", e.message); }
+    if (hit) return cb(hit);
+  }
   if (queue.length >= 12) return cb({ error: "busy", code: 429 });
   const secs = Math.min(30, Math.max(0.05, Number(j.time) || 1)), t0 = Date.now();
   run((newGame(b) ? "9 0\n" : "") + encode(b, side, secs), secs, (err, v) => {
