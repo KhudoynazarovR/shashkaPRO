@@ -983,7 +983,7 @@
       var x = en ? evOf(cur) : null, pc = 50 + Math.max(-5, Math.min(5, x == null ? 0 : x)) * 10, s = '';
       var bst = 'border:0;border-radius:14px;padding:12px 16px;background:#6b5cf0;color:#fff;font-size:20px';
       var sm = 'border:0;border-radius:12px;padding:10px 12px;background:#262b66;color:#fff;font-size:14px;margin:3px';
-      s += '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin:-4px 0 6px"><b style="white-space:nowrap">🔬 Tahlil</b><span id="bdInfo" style="flex:1;font-size:13px;opacity:.9;text-align:center;line-height:1.3">@@INFO@@</span><button id="bdX" style="border:0;border-radius:10px;padding:6px 12px;background:#262b66;color:#fff;font-size:16px">⬅️</button></div>';
+      s += '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin:-4px 0 6px"><b style="white-space:nowrap">' + (g && g.workshop ? '🐉 Dragon ustaxonasi' : '🔬 Tahlil') + '</b><span id="bdInfo" style="flex:1;font-size:13px;opacity:.9;text-align:center;line-height:1.3">@@INFO@@</span><button id="bdX" style="border:0;border-radius:10px;padding:6px 12px;background:#262b66;color:#fff;font-size:16px">⬅️</button></div>';
       if (BAD) s += '<div style="font-size:13px;margin-bottom:8px;padding:8px 10px;border-radius:10px;background:#5a1d1d;color:#ffd0d0">⚠️ Bu o‘yin boshqa pozitsiyadan (masalan IDF 780) boshlangan, lekin u arxivga saqlanmagan (eski o‘yin). Faqat ' + (BAD - 1) + ' ta yurish ko‘rsatildi.</div>';
       if (GI && GI.title) s += '<div style="font-size:14px;margin-bottom:6px">' + String(GI.title).replace(/</g, '&lt;') + '</div>';
       else if (GI) s += '<div style="font-size:14px;margin-bottom:6px">⚪ ' + String(GI.white || '') .replace(/</g, '&lt;') + ' — ⚫ ' + String(GI.black || '').replace(/</g, '&lt;') + '<br><span style="opacity:.8">' + (GI.live ? 'Jonli o‘yin · hozirgi pozitsiyadan' : GI.winner === 'white' ? '🏆 Oq yutdi' : GI.winner === 'black' ? '🏆 Qora yutdi' : '🤝 Durang') + '</span></div>';
@@ -1110,6 +1110,7 @@
       }
       s += '</div>';
       ov.innerHTML = s;
+      if(g && g.workshop){var wb=document.createElement('button');wb.textContent='🐉 Dragon ustaxonasi — partiyalar va xotira';wb.style.cssText='display:block;width:100%;margin:12px 0;padding:14px;border:1px solid #64748b;border-radius:8px;background:#202938;color:white;font-weight:700';wb.onclick=g.workshop;ov.appendChild(wb);}
       function on(id, f) { var el = ov.querySelector(id); if (el) el.onclick = f; }
       on('#bdX', function () { ov.remove(); if (g && g.onClose) try { g.onClose(); } catch (e) {} });
       on('#bd0', function () { go(0); }); on('#bd1', function () { go(cur - 1); });

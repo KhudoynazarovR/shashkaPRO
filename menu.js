@@ -269,7 +269,7 @@
     if (a === "@daraxt") { close(); if (window.spDaraxtOpen) window.spDaraxtOpen(); return; }
     if (a === "@deb") { close(); if (window.spDebut) window.spDebut(); else { var _d = document.createElement('script'); _d.src = '/debyut.js?v=3'; _d.onload = function () { window.spDebut(); }; document.head.appendChild(_d); } return; }
     if (a === "@stats") { close(); if (window.spStats) window.spStats(); else { var _s = document.createElement('script'); _s.src = '/statsview.js?v=2'; _s.onload = function () { window.spStats(); }; document.head.appendChild(_s); } return; }
-    if (a === "@dragonworkshop") { close(); if (window.spDragonWorkshopOpen) window.spDragonWorkshopOpen(); else { var ds = document.createElement("script"); ds.src = "/dragonworkshop.js?v=sharedboard1"; ds.onload = function () { window.spDragonWorkshopOpen(); }; ds.onerror = function () { alert("Ustaxona yuklanmadi"); }; document.head.appendChild(ds); } return; }
+    if (a === "@dragonworkshop") { close(); if (window.spDragonWorkshopOpen) window.spDragonWorkshopOpen(); else { var ds = document.createElement("script"); ds.src = "/dragonworkshop.js?v=dragonboard2"; ds.onload = function () { window.spDragonWorkshopOpen(); }; ds.onerror = function () { alert("Ustaxona yuklanmadi"); }; document.head.appendChild(ds); } return; }
     if (a === "@kkadm") { var _go = function () { window.kkPanel(); }; if (window.kkPanel) _go(); else { var _s = document.createElement("script"); _s.src = "/kkpanel.js?v=3"; _s.onload = _go; document.head.appendChild(_s); } return; }
     if (a === "@bpow") { var _bp = document.getElementById("bpBtn"); if (_bp) _bp.click(); return; }
     if (a === "@arena") { close(); if (window.avOpen) window.avOpen(); return; }
