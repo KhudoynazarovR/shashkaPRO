@@ -15,7 +15,9 @@ async function run(s,min,inc){
  for(let g=0;g<s.count&&!s.stop;g++){
  const white=g%2?s.b:s.a,black=g%2?s.a:s.b;
  let b=Array.from({length:64},(_,i)=>((i>>3)+(i&7))%2===1?i<24?-1:i>=40?1:0:0),side=1,ply=0,result='draw',seen=new Map(),clock={1:min*60000,'-1':min*60000};
+ s.game=g+1;s.white=white;s.black=black;s.ply=0;s.history=[{board:b.slice(),side}];s.clock={...clock};
  for(;ply<300&&!s.stop;ply++){
+ s.turn=side;s.clock={...clock};s.turnAt=Date.now();
  const moves=R.moves(b,side);if(!moves.length){result=side===1?black:white;break;}
  const key=b.join(',')+'|'+side;seen.set(key,(seen.get(key)||0)+1);if(seen.get(key)>=3)break;
  const name=side===1?white:black,E=engines[name],budget=Math.min(5,Math.max(.05,clock[side]/30000+inc*.7));
@@ -31,12 +33,12 @@ async function run(s,min,inc){
  const candidates=moves.filter(m=>m.from===r.from&&m.to===r.to);
  const m=candidates.find(m=>m.caps.length===r.jumps)|| (candidates.length===1?candidates[0]:null);
  if(!m)throw Error('Illegal or ambiguous engine move');
- b=m.board;clock[side]+=inc*1000;side=-side;s.ply=ply+1;await pause(20);
+ b=m.board;clock[side]+=inc*1000;side=-side;s.ply=ply+1;s.history.push({board:b.slice(),side,from:m.from,to:m.to,path:m.path,caps:m.caps});s.clock={...clock};s.turn=side;s.turnAt=Date.now();await pause(20);
  }
  if(s.stop)break;
- s.done++;if(result==='draw')s.draws++;else if(result===s.a)s.wins++;else s.losses++;
+ s.turnAt=null;s.clock={...clock};s.done++;if(result==='draw')s.draws++;else if(result===s.a)s.wins++;else s.losses++;
  L.game({at:Date.now(),white,black,result,ply});
  }
- s.running=false;
+ s.running=false;s.turnAt=null;
 }
 module.exports={start,state:()=>state,stop:()=>{state.stop=true;return state;}};
