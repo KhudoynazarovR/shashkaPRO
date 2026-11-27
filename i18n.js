@@ -116,8 +116,15 @@
   }
   var Q = [], pend = false;
   function flush() {
-    pend = false; var q = Q; Q = [];
-    for (var i = 0; i < q.length; i++) { var n = q[i]; if (n.isConnected !== false) walk(n); }
+    pend = false; var q = new Set(Q); Q = [];
+    // Translate each changed subtree once per batch, not once per mutation.
+    q.forEach(function (n) {
+      if (n.isConnected === false) return;
+      for (var p = n.parentNode; p; p = p.parentNode) {
+        if (q.has(p)) return;
+      }
+      walk(n);
+    });
     if (document.title) { var t = trKeep(document.title); if (t !== null && t !== document.title) document.title = t; }
   }
   function push(n) { Q.push(n); if (!pend) { pend = true; (W.queueMicrotask || setTimeout)(flush); } }
