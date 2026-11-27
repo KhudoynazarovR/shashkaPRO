@@ -71,6 +71,7 @@ function best(b, side) {
     else sc = -1000 + v;                       // raqib yutadi: uzoqroq yaxshi
     if (sc > score) { score = sc; pick = m; }
   }
-  return pick ? { from: pick.from, to: pick.to, res: me >= 128 ? 'loss' : me === 0 ? 'draw' : 'win', d: me === 0 ? 0 : me >= 128 ? me - 128 : me } : null;
+  if ((me >= 128 && score >= 0) || (me === 0 && score !== 0) || (me > 0 && me < 128 && score <= 0)) return null;
+  return pick ? { from: pick.from, to: pick.to, path: pick.path, caps: pick.caps, res: me >= 128 ? 'loss' : me === 0 ? 'draw' : 'win', d: me === 0 ? 0 : me >= 128 ? me - 128 : me } : null;
 }
 module.exports = { best, value, ready: () => MAXN > 0, max: () => MAXN };
