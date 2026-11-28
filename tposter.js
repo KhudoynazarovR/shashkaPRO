@@ -261,9 +261,22 @@ async function hvbPng(t) {
   o += '</svg>';
   try { return await sh(f).composite([{ input: Buffer.from(o) }]).jpeg({ quality: 90 }).toBuffer(); } catch (e) { console.log('[tposter] hvb', e.message); return null; }
 }
+async function announcementImage(t) {
+  // This artwork includes the printed start time, game order and prize fund.
+  const start = Number(t.startAt);
+  const posterStart = Date.parse('2026-11-28T19:30:00+05:00');
+  if (Math.floor(start / 60000) === posterStart / 60000 &&
+      Number(t.prize) === 100 && Number(t.places || 3) === 3 &&
+      Array.isArray(t.mix) && t.mix.join(',') === 'mm,sh,ug,gomoku,go') {
+    const path = require('path').join(__dirname, 'public', 'img', 'mix-2026-11-28.jpg');
+    return require('fs').promises.readFile(path);
+  }
+  return (isHvb(t) && await hvbPng(t)) || png(annSvg(t));
+}
+
 async function announce(t) {
   try {
-    const buf = (isHvb(t) && await hvbPng(t)) || await png(annSvg(t));
+    const buf = await announcementImage(t);
     const r = await sendPhoto(CH(), buf, annCap(t), joinKb(t));
     if (r && r.ok && r.result) t.annMsg = r.result.message_id;
     console.log('[tposter] e\'lon:', t.name, r && r.ok ? 'yuborildi' : JSON.stringify(r && r.description));
@@ -472,7 +485,7 @@ async function cancelAnn(t) {   // ❌ turnir bekor qilindi — kanal va guruhla
 }
 // 📣 admin tanlagan joylarga (kanal/guruhlar) e'lon. Bir joyga ikki marta yuborilmaydi.
 async function announceTo(t, ids) {
-  const buf = (isHvb(t) && await hvbPng(t)) || await png(annSvg(t));
+  const buf = await announcementImage(t);
   t.annSentTo = t.annSentTo || {};
   const out = [];
   for (const g of ids) {
