@@ -53,7 +53,32 @@ function coinIcon(cx, cy, r) {
 }
 function chip(xp, y, txt, fill) { const w = 26 + txt.length * 15.5; return { w, s: '<rect x="' + xp + '" y="' + y + '" width="' + w + '" height="50" rx="14" fill="' + (fill || 'rgba(0,0,0,.28)') + '"/><text x="' + (xp + w / 2) + '" y="' + (y + 34) + '" font-family="' + F + '" font-size="25" font-weight="700" fill="#fff" text-anchor="middle">' + x(txt) + '</text>' }; }
 function regBadge(xp, y, k, c, w, hh, fs) { return '<rect x="' + xp + '" y="' + y + '" width="' + w + '" height="' + hh + '" rx="10" fill="' + c + '"/><text x="' + (xp + w / 2) + '" y="' + (y + hh * 0.7) + '" font-family="' + F + '" font-size="' + fs + '" font-weight="900" fill="#fff" text-anchor="middle">' + x(/^[A-Z]+$/.test(k) ? k : 'XORIJ') + '</text>'; }
+function mixSvg(t) {
+  const games = t.mix, cols = Math.min(5, games.length), rows = Math.ceil(games.length / cols), H2 = 530 + rows * 220;
+  const T = (a,b,v,f=26,c='#fff') => '<text x="'+a+'" y="'+b+'" text-anchor="middle" font-family="'+F+'" font-size="'+f+'" font-weight="700" fill="'+c+'">'+x(v)+'</text>';
+  let s = '<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="'+H2+'"><defs><linearGradient id="mixbg" x2="1" y2="1"><stop stop-color="#071c54"/><stop offset="1" stop-color="#1675c9"/></linearGradient></defs><rect width="1280" height="'+H2+'" fill="url(#mixbg)"/>';
+  s += T(640,55,'MIKS TURNIR',30,'#facc15') + T(640,115,noEmo(t.name).slice(0,40),48) + T(640,160,games.length+' o‘yin · 1 chempion!',30);
+  const info = [dayStr(t.startAt),hm(t.startAt)+(t.endAt?' – '+hm(t.endAt):''),fmt(t.prize)+' tanga'];
+  info.forEach((v,i)=>{const a=70+i*390;s+='<rect x="'+a+'" y="190" width="360" height="105" rx="20" fill="#173e81" stroke="#72caff"/>'+T(a+180,230,v,29)+T(a+180,270,['SANA',t.endAt?'BOSHLANISH – TUGASH':'BOSHLANISH','MUKOFOT FONDI'][i],18,'#bce5ff');});
+  games.forEach((g,i)=>{
+    const w=210, a=640-(Math.min(cols,games.length-Math.floor(i/cols)*cols)*230)/2+(i%cols)*230, b=325+Math.floor(i/cols)*220;
+    s+='<rect x="'+a+'" y="'+b+'" width="'+w+'" height="200" rx="18" fill="#12376f" stroke="#70c9ff" stroke-width="2"/>'+T(a+105,b+29,(i+1)+'-tur',20,'#facc15');
+    const bx=a+55, by=b+42, n=g==='go'?9:g==='gomoku'?9:g==='mm'?4:8, step=100/n;
+    s+='<rect x="'+bx+'" y="'+by+'" width="100" height="100" rx="3" fill="'+(g==='go'||g==='gomoku'?'#d9aa65':'#e5e7eb')+'"/>';
+    for(let rr=0;rr<n;rr++)for(let cc=0;cc<n;cc++){
+      const xx=bx+cc*step, yy=by+rr*step;
+      if(g==='go'||g==='gomoku'){if(rr<n-1&&cc<n-1)s+='<rect x="'+(xx+step/2)+'" y="'+(yy+step/2)+'" width="'+step+'" height="'+step+'" fill="none" stroke="#68421e" stroke-width=".7"/>';if((rr*7+cc*3)%13===0)s+='<circle cx="'+(xx+step/2)+'" cy="'+(yy+step/2)+'" r="'+(step*.42)+'" fill="'+((rr+cc)%2?'#fff':'#111827')+'"/>';}
+      else if(g==='mm'){s+='<rect x="'+(xx+2)+'" y="'+(yy+2)+'" width="'+(step-4)+'" height="'+(step-4)+'" rx="4" fill="#2563eb"/>'+T(xx+step/2,yy+step*.72,(rr+cc)%3===0?'★':'?',14);}
+      else {if((rr+cc)%2)s+='<rect x="'+xx+'" y="'+yy+'" width="'+step+'" height="'+step+'" fill="#527a59"/>';if((g==='ug'?(rr<3&&cc<3||rr>4&&cc>4):((rr+cc)%2&&(rr<3||rr>4))))s+='<circle cx="'+(xx+step/2)+'" cy="'+(yy+step/2)+'" r="'+(step*.4)+'" fill="'+(rr<3?'#111827':'#fff')+'" stroke="#64748b" stroke-width=".7"/>';}
+    }
+    s+=T(a+105,b+178,g==='go'?'Go 9×9':noEmo(MIXN[g]||g),24);
+  });
+  const y=345+rows*220;
+  s+='<rect x="410" y="'+y+'" width="460" height="90" rx="22" fill="#facc15"/>'+T(640,y+38,'Qo‘shilish',32,'#172554')+T(640,y+68,'@'+BOT(),21,'#172554');
+  return s+'</svg>';
+}
 function annSvg(t) {
+  if (Array.isArray(t.mix) && t.mix.length) return mixSvg(t);
   // Ko‘k fon, shashka kletkali chekkalar, kalendar/soat/tanga belgilari, sariq «Qo‘shilish» tugmasi
   const name = noEmo(t.name).slice(0, 34);
   const tags = t.mix ? [kindTxt(t), t.mix.length + ' o‘yin', t.rated === false ? 'Reytingsiz' : 'Reytingli'] : [kindTxt(t), tcTxt(t.tc) + ' ' + tcCat(t.tc), t.pos === 'idf' ? 'IDF 780' : 'Standart', t.rated === false ? 'Reytingsiz' : 'Reytingli'].concat(t.flag ? ['Bayroqli'] : []);
@@ -82,7 +107,7 @@ function annSvg(t) {
   // ma’lumot kartalari: sana (kalendar), vaqt (soat), mukofot (tanga)
   const items = [];
   { const dp = dt.split(', '); items.push({ kind: 'cal', big: dp[1] || dt, small: (dp[0] || 'SANA').toUpperCase() }); }
-  items.push({ kind: 'clock', big: tm, small: 'BOSHLANISH – TUGASH' });
+  items.push({ kind: 'clock', big: tm, small: t.endAt ? 'BOSHLANISH – TUGASH' : 'BOSHLANISH' });
   if (t.prize > 0) items.push({ kind: 'coin', big: fmt(t.prize) + ' tanga', small: 'MUKOFOT FONDI' });
   const BW = 320, BH = 110, GAP = 26;
   let bx = CX - (items.length * BW + (items.length - 1) * GAP) / 2;
@@ -102,7 +127,7 @@ function annSvg(t) {
   const chipW = tags.map(tg0 => 26 + tg0.length * 15.5);
   const rowW = chipW.reduce((a, b) => a + b, 0) + (tags.length - 1) * 12;
   let cx = CX - rowW / 2;
-  for (let i = 0; i < tags.length; i++) { s += chip(cx, 440, tags[i]).s.replace('fill="rgba(0,0,0,.28)"', 'fill="#fff" fill-opacity=".95"').replace(/fill="#fff" font-size="25"/, 'fill="#1e3a8a" font-size="25"'); cx += chipW[i] + 12; }
+  for (let i = 0; i < tags.length; i++) { s += chip(cx, 440, tags[i]).s; cx += chipW[i] + 12; }
   // tugma
   s += '<rect x="' + (CX - 230) + '" y="530" width="460" height="92" rx="22" fill="#facc15"/><rect x="' + (CX - 230) + '" y="530" width="460" height="92" rx="22" fill="none" stroke="#ca8a04" stroke-width="4"/>';
   s += '<text x="' + CX + '" y="572" font-family="' + F + '" font-size="34" font-weight="900" fill="#1e293b" text-anchor="middle">Qo‘shilish</text>';
